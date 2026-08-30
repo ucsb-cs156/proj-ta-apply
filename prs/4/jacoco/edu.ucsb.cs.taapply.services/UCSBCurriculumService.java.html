@@ -122,16 +122,20 @@ public class UCSBCurriculumService {
   }
 
   /**
-   * Collapses any run of whitespace in the API's space-padded course ids to a single space, and
-   * trims, so the value used as a primary key is stable and reads cleanly. The API pads the subject
-   * code out to eight characters, so course 156 arrives with three spaces before the number and
-   * leaves here as &quot;CMPSC 156&quot;.
+   * Canonicalizes a course id from the API, stripping trailing whitespace only.
+   *
+   * &lt;p&gt;The leading and internal padding is deliberately preserved. The API returns a fixed-width
+   * field -- subject left-justified in eight characters, then the course number &lt;em&gt;right&lt;/em&gt;
+   * -justified -- so ids arrive as {@code &quot;CMPSC 9 &quot;}, {@code &quot;CMPSC 24 &quot;}, {@code &quot;CMPSC 130A &quot;}.
+   * Because the number is right-justified and a space sorts before any digit, ordinary lexical
+   * ordering of these strings is numerically correct: 9 before 24 before 100. Collapsing the runs
+   * of spaces would destroy that and sort 100 and 130A ahead of 9 and 24.
    */
   public static String normalizeCourseId(String courseId) {
-<span class="fc bfc" id="L131" title="All 2 branches covered.">    if (courseId == null) {</span>
-<span class="fc" id="L132">      return null;</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">    if (courseId == null) {</span>
+<span class="fc" id="L136">      return null;</span>
     }
-<span class="fc" id="L134">    return courseId.trim().replaceAll(&quot;\\s+&quot;, &quot; &quot;);</span>
+<span class="fc" id="L138">    return courseId.stripTrailing();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

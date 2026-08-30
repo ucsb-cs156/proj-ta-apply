@@ -6,7 +6,9 @@ import edu.ucsb.cs.taapply.repository.CourseRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,8 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = &quot;Courses&quot;)
 @RequestMapping(&quot;/api/courses&quot;)
 @RestController
-<span class="fc" id="L23">@Slf4j</span>
-<span class="fc" id="L24">public class CoursesController extends ApiController {</span>
+<span class="fc" id="L25">@Slf4j</span>
+<span class="fc" id="L26">public class CoursesController extends ApiController {</span>
 
   @Autowired CourseRepository courseRepository;
 
@@ -29,7 +31,15 @@ import org.springframework.web.bind.annotation.RestController;
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @GetMapping(&quot;/all&quot;)
   public List&lt;Course&gt; allCourses() {
-<span class="fc" id="L32">    return courseRepository.findAllByOrderByCourseIdAsc();</span>
+    // Sorted here rather than with an ORDER BY. Course ids keep the API's fixed-width padding so
+    // that plain lexical order is numerically correct (see
+    // UCSBCurriculumService.normalizeCourseId), but that relies on a space sorting before a
+    // digit. Postgres' default collation can treat spaces as negligible, which would put 100 and
+    // 130A ahead of 9 and 24; String.compareTo is code-unit order, so it behaves the same on H2
+    // and Postgres regardless of the database's collation.
+<span class="fc" id="L40">    return StreamSupport.stream(courseRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L41">        .sorted(Comparator.comparing(Course::getCourseId))</span>
+<span class="fc" id="L42">        .toList();</span>
   }
 
   @Operation(
@@ -44,15 +54,15 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;needsTa&quot;) @RequestParam boolean needsTa,
       @Parameter(name = &quot;needsUla&quot;) @RequestParam boolean needsUla) {
 
-<span class="fc" id="L47">    Course course =</span>
+<span class="fc" id="L57">    Course course =</span>
         courseRepository
-<span class="fc" id="L49">            .findByCourseId(courseId)</span>
-<span class="fc" id="L50">            .orElseThrow(() -&gt; new EntityNotFoundException(Course.class, courseId));</span>
+<span class="fc" id="L59">            .findByCourseId(courseId)</span>
+<span class="fc" id="L60">            .orElseThrow(() -&gt; new EntityNotFoundException(Course.class, courseId));</span>
 
-<span class="fc" id="L52">    course.setNeedsTa(needsTa);</span>
-<span class="fc" id="L53">    course.setNeedsUla(needsUla);</span>
-<span class="fc" id="L54">    courseRepository.save(course);</span>
-<span class="fc" id="L55">    return course;</span>
+<span class="fc" id="L62">    course.setNeedsTa(needsTa);</span>
+<span class="fc" id="L63">    course.setNeedsUla(needsUla);</span>
+<span class="fc" id="L64">    courseRepository.save(course);</span>
+<span class="fc" id="L65">    return course;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
