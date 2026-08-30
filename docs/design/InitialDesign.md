@@ -65,13 +65,13 @@ Some fields are common to both TA and ULA applications, others are specific, as 
 | first_name | | 	
 | last_name	| | 
 | middle_name	| | 
-| residency_status	| * | |
-| language_exam	| * | | 
+| residency_status	(US Citizen, US Resident, F1 Student Visa, J1 Student Visa, other) | * | |
+| language_exam	(passed or failed, but only if F1 or J1 Student Visa, otherwise "exempt" | * | | 
 | language_exam_date_passed	| * | | 
 | major	| | | 
 | gpa_major	| | | 
 | gpa_overall | | | 
-| class_level | | | 
+| class_level (Phd or MS) | * | | 
 | year_in_program	| | | 
 | graduation_date | | | 
 | coursework_ucsb | | |  
@@ -81,7 +81,11 @@ Some fields are common to both TA and ULA applications, others are specific, as 
 | prev_experience | | | 	 
 | desired_courses | | | 
 | comments | | | 
-| preferred_job	| | | 
-| preferred_hours | | | 
-
-
+| video_link | | * |
+| previous_service_as_ula (number of times) | | * |
+| first_choice_course | | |
+| second_choice_course | | |
+| available_for_lectures_first_choice_course | | |
+| available_for_lectures_second_choice_course | | |
+| available_for_at_least_one_discussion_first_choice_course | | |
+| available_for_at_least_one_discussion_first_choice_course | | |

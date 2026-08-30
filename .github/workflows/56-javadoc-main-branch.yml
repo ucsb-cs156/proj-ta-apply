@@ -1,0 +1,49 @@
+name: "56-javadoc-main-branch: Update javadoc when main branch changes"
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  JAVA_DISTRIBUTION: ${{ vars.JAVA_DISTRIBUTION || 'temurin' }} 
+
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs: 
+  build-javadoc-main:
+    name: Build Javadoc (main branch)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout local code to establish repo
+      uses: actions/checkout@v4
+    - name: Set up Java (version from .java-version file)
+      uses: actions/setup-java@v4
+      with:
+         distribution: ${{ env.JAVA_DISTRIBUTION }} 
+         java-version-file: ./.java-version
+         cache: 'maven'
+         cache-dependency-path: 'pom.xml' 
+    - name: Build javadoc
+      run: mvn -ntp -B -DskipTests javadoc:javadoc
+
+    - name: Deploy 🚀    
+      if: always() # always upload artifacts, even if tests fail
+      uses: Wandalen/wretry.action@master
+      with:
+        action: JamesIves/github-pages-deploy-action@v4
+        attempt_limit: 3
+        attempt_delay: 5000
+        with: |        
+          branch: gh-pages # The branch the action should deploy to.
+          folder: target/reports/apidocs # The folder where mvn -ntp javadoc:javadoc outputs the javadoc files
+          clean: true # Automatically remove deleted files from the deploy branch
+          target-folder: prs/${{ needs.get-pr-num.outputs.pr_number }}/javadoc # The folder that we serve our javadoc files from 

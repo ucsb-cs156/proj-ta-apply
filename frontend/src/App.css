@@ -1,0 +1,4 @@
+/* Intentionally (almost) empty.
+   All of the app's custom CSS is consolidated in index.css, which is loaded
+   once in main.tsx (after bootstrap.css). Add new styles there, in the
+   appropriate section, rather than here. */
