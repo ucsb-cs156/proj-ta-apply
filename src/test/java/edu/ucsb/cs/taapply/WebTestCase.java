@@ -54,6 +54,17 @@ public abstract class WebTestCase {
         new WireMockServer(
             options().port(8090).globalTemplating(true).extensions(new JwtExtensionFactory()));
     WiremockServiceImpl.setupOauthMocks(wireMockServer, "cgaucho@ucsb.edu");
+    // Spring 2021, so UcsbQuarterService derives an end quarter of Fall 2021 (Spring looks two
+    // ahead). With app.startQtrYYYYQ=20211 that gives the dropdowns a fixed 20211..20214 range,
+    // and exercises the real derivation rather than the offline fallback.
+    wireMockServer.stubFor(
+        com.github.tomakehurst.wiremock.client.WireMock.get(
+                com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo(
+                    "/academics/quartercalendar/v1/quarters/current"))
+            .willReturn(
+                com.github.tomakehurst.wiremock.client.WireMock.aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("{\"quarter\":\"20212\"}")));
     wireMockServer.start();
   }
 

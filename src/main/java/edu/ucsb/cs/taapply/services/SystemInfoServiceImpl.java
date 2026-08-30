@@ -31,8 +31,9 @@ public class SystemInfoServiceImpl extends SystemInfoService {
   @Value("${app.startQtrYYYYQ:20211}")
   private String startQtrYYYYQ;
 
-  @Value("${app.endQtrYYYYQ:20254}")
-  private String endQtrYYYYQ;
+  // The end of the range is derived from the quarter UCSB says it currently is, so it keeps
+  // itself current as quarters roll over; only the start needs configuring.
+  @Autowired private UcsbQuarterService ucsbQuarterService;
 
   @Autowired(required = false)
   private GitProperties gitProperties;
@@ -55,7 +56,7 @@ public class SystemInfoServiceImpl extends SystemInfoService {
             .githubUrl(this.sourceRepo + "/commit/" + commitId)
             .subjectArea(this.subjectArea)
             .startQtrYYYYQ(this.startQtrYYYYQ)
-            .endQtrYYYYQ(this.endQtrYYYYQ)
+            .endQtrYYYYQ(ucsbQuarterService.getEndQtrYYYYQ())
             .build();
     log.info("getSystemInfo returns {}", si);
     return si;

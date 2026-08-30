@@ -33,7 +33,8 @@ export default function InstructorsCreatePage({
   const mutation = useBackendMutation(
     objectToAxiosParams,
     { onSuccess },
-    ["/api/admin/instructors/all"], // mutation makes this key stale so that pages relying on it reload
+    // Must match the key the index page reads ("/get"); invalidating "/all" hit nothing.
+    ["/api/admin/instructors/get"],
   );
 
   const onSubmit = async (data: RoleEmailFormFields) => {

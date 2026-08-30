@@ -8,19 +8,17 @@ import SingleButtonJobForm from "main/components/Jobs/SingleButtonJobForm";
 import { useBackendMutation } from "main/utils/useBackend";
 
 export default function AdminJobsPage() {
-  const objectToAxiosParamsUpdateAllJob = () => ({
-    url: "/api/jobs/launch/updateAll",
+  const objectToAxiosParamsTestJob = () => ({
+    url: "/api/jobs/launch/testjob",
     method: "POST",
   });
 
-  const updateAllJobMutation = useBackendMutation(
-    objectToAxiosParamsUpdateAllJob,
-    {},
-    ["/api/jobs/all"],
-  );
+  const testJobMutation = useBackendMutation(objectToAxiosParamsTestJob, {}, [
+    "/api/jobs/all",
+  ]);
 
-  const submitUpdateAllJob = async () => {
-    updateAllJobMutation.mutate();
+  const submitTestJob = async () => {
+    testJobMutation.mutate();
   };
 
   // purge job
@@ -51,12 +49,12 @@ export default function AdminJobsPage() {
 
   const jobLaunchers = [
     {
-      name: "Update All Users",
+      name: "Test Job",
       form: (
         <SingleButtonJobForm
-          callback={submitUpdateAllJob}
+          callback={submitTestJob}
           text={"Start"}
-          testid={"updateAllJob"}
+          testid={"testJob"}
         />
       ),
     },
