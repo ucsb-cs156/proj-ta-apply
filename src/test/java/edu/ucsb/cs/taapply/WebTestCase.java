@@ -9,9 +9,11 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import edu.ucsb.cs.taapply.entity.Admin;
+import edu.ucsb.cs.taapply.entity.GradStudent;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
+import edu.ucsb.cs.taapply.repository.GradStudentRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.wiremock.WiremockServiceImpl;
@@ -32,6 +34,7 @@ public abstract class WebTestCase {
   @Autowired UserRepository userRepository;
   @Autowired AdminRepository adminRepository;
   @Autowired InstructorRepository instructorRepository;
+  @Autowired GradStudentRepository gradStudentRepository;
 
   @LocalServerPort private int port;
 
@@ -63,15 +66,19 @@ public abstract class WebTestCase {
   }
 
   public void setupRegularUser() {
-    setupUser(false, false);
+    setupUser(false, false, false);
   }
 
   public void setupAdminUser() {
-    setupUser(true, false);
+    setupUser(true, false, false);
   }
 
   public void setupInstructorUser() {
-    setupUser(false, true);
+    setupUser(false, true, false);
+  }
+
+  public void setupGradStudentUser() {
+    setupUser(false, false, true);
   }
 
   /**
@@ -94,8 +101,9 @@ public abstract class WebTestCase {
   }
 
   @SuppressWarnings("null")
-  private void setupUser(boolean isAdmin, boolean isInstructor) {
+  private void setupUser(boolean isAdmin, boolean isInstructor, boolean isGradStudent) {
     String email = isInstructor ? "instructor@ucsb.edu" : "cgaucho@ucsb.edu";
+    email = isGradStudent ? "gradstudent@ucsb.edu" : email;
     email = isAdmin ? "admin@ucsb.edu" : email;
 
     User user =
@@ -111,6 +119,9 @@ public abstract class WebTestCase {
     userRepository.save(user);
     if (isInstructor) {
       instructorRepository.save(Instructor.builder().email(email).build());
+    }
+    if (isGradStudent) {
+      gradStudentRepository.save(GradStudent.builder().email(email).build());
     }
     if (isAdmin) {
       adminRepository.save(Admin.builder().email(email).build());

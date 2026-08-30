@@ -14,8 +14,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
- * Verifies that a logged-in user sees their home page, including the projects they own and/or
- * collaborate on.
+ * Verifies that a logged-in user sees the home page, and that it reflects the roles they actually
+ * hold.
  *
  * <p>Prerequisites: the frontend must be built ({@code npm run build} inside {@code frontend/}) so
  * that {@code target/classes/public/index.html} exists. Run with:
@@ -33,23 +33,33 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class HomePageWebIT extends WebTestCase {
 
   @Test
-  public void logged_in_regular_user_sees_home_page() throws Exception {
+  public void logged_in_regular_user_sees_greeting_and_ula_message() throws Exception {
     setupRegularUser();
-    assertThat(page.getByText("Projects You Collaborate On")).isVisible();
-    assertThat(page.getByText("You are not a collaborator on any projects yet.")).isVisible();
+
+    // "Test" comes from the mock OAuth provider's given_name claim, not from the User row the
+    // test seeds: GoogleSignInServiceImpl treats the OIDC token as the source of truth for
+    // profile fields and overwrites the stored values on each sign-in.
+    assertThat(page.getByTestId("HomePageLoggedIn-greeting")).containsText("Welcome, Test.");
+    assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-gradstudent")).not().isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-admin")).not().isVisible();
   }
 
   @Test
-  public void logged_in_instructor_can_create_a_project_and_see_it_listed() throws Exception {
-    setupInstructorUser();
-    assertThat(page.getByText("Your Projects")).isVisible();
+  public void logged_in_admin_sees_the_admin_message() throws Exception {
+    setupAdminUser();
 
-    page.getByText("Create Project").click();
-    page.locator("#name").fill("Citation Graphs");
-    page.locator("#description").fill("A project about citation graphs");
-    page.getByTestId("ProjectModal-submit").click();
+    assertThat(page.getByTestId("HomePageLoggedIn-admin")).isVisible();
+    // Roles are independent: being an admin does not make you a grad student.
+    assertThat(page.getByTestId("HomePageLoggedIn-gradstudent")).not().isVisible();
+  }
 
-    assertThat(page.getByTestId("OwnerProjectTable-cell-row-0-col-name-link"))
-        .containsText("Citation Graphs");
+  @Test
+  public void logged_in_grad_student_sees_the_ta_message_and_not_the_ula_message()
+      throws Exception {
+    setupGradStudentUser();
+
+    assertThat(page.getByTestId("HomePageLoggedIn-gradstudent")).isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).not().isVisible();
   }
 }
