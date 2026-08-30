@@ -25,6 +25,15 @@ public class SystemInfoServiceImpl extends SystemInfoService {
   @Value("${app.sourceRepo:https://github.com/ucsb-cs156/proj-ta-apply}")
   private String sourceRepo;
 
+  @Value("${app.subjectArea:CMPSC}")
+  private String subjectArea;
+
+  @Value("${app.startQtrYYYYQ:20211}")
+  private String startQtrYYYYQ;
+
+  @Value("${app.endQtrYYYYQ:20254}")
+  private String endQtrYYYYQ;
+
   @Autowired(required = false)
   private GitProperties gitProperties;
 
@@ -44,6 +53,9 @@ public class SystemInfoServiceImpl extends SystemInfoService {
             .commitMessage(commitMessage)
             .commitId(commitId)
             .githubUrl(this.sourceRepo + "/commit/" + commitId)
+            .subjectArea(this.subjectArea)
+            .startQtrYYYYQ(this.startQtrYYYYQ)
+            .endQtrYYYYQ(this.endQtrYYYYQ)
             .build();
     log.info("getSystemInfo returns {}", si);
     return si;
