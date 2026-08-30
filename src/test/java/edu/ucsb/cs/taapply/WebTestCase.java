@@ -13,6 +13,7 @@ import edu.ucsb.cs.taapply.entity.GradStudent;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
+import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.GradStudentRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
@@ -35,13 +36,14 @@ public abstract class WebTestCase {
   @Autowired AdminRepository adminRepository;
   @Autowired InstructorRepository instructorRepository;
   @Autowired GradStudentRepository gradStudentRepository;
+  @Autowired protected CourseRepository courseRepository;
 
   @LocalServerPort private int port;
 
   @Value("${app.playwright.headless:true}")
   private boolean runHeadless;
 
-  private static WireMockServer wireMockServer;
+  protected static WireMockServer wireMockServer;
 
   protected Browser browser;
   protected Page page;

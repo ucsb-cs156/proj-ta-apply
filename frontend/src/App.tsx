@@ -7,6 +7,7 @@ import InstructorsIndexPage from "main/pages/Admin/InstructorsIndexPage";
 import InstructorsCreatePage from "main/pages/Admin/InstructorsCreatePage";
 import GradStudentsIndexPage from "main/pages/Admin/GradStudentsIndexPage";
 import GradStudentsCreatePage from "main/pages/Admin/GradStudentsCreatePage";
+import CoursesIndexPage from "main/pages/Admin/CoursesIndexPage";
 import ProtectedPage from "main/pages/Auth/ProtectedPage";
 import NotFoundPage from "main/pages/Auth/NotFoundPage";
 import AboutTaApply from "main/pages/Help/AboutTaApply";
@@ -94,6 +95,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<GradStudentsCreatePage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/courses"
+          element={
+            <ProtectedPage
+              component={<CoursesIndexPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />
