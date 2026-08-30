@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UCSBCurriculumService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">UCSBCurriculumService.java</span></div><h1>UCSBCurriculumService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.ucsb.cs.taapply.models.UcsbCourse;
+import edu.ucsb.cs.taapply.models.UcsbCoursePage;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+/**
+ * Wraps the UCSB Academic Curriculum API, narrowed to what iteration 2 needs: the distinct course
+ * numbers and titles offered in a given subject area, quarter and level.
+ *
+ * &lt;p&gt;Unlike proj-courses' service of the same name, this one requests {@code
+ * includeClassSections=false}, since we want catalog entries rather than offerings, and it follows
+ * pagination rather than assuming a single page of 100 results.
+ */
+@Service
+<span class="fc" id="L31">@Slf4j</span>
+public class UCSBCurriculumService {
+
+  @Autowired private ObjectMapper objectMapper;
+
+  @Value(&quot;${app.ucsb.api.consumer_key}&quot;)
+  private String apiKey;
+
+  @Value(&quot;${app.ucsb.api.host}&quot;)
+  private String apiHost;
+
+<span class="fc" id="L42">  private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);</span>
+<span class="fc" id="L43">  private static final Duration READ_TIMEOUT = Duration.ofSeconds(60);</span>
+
+  /** Level meaning &quot;all levels&quot;; the API has no such code, so the parameter is omitted instead. */
+  public static final String LEVEL_ALL = &quot;A&quot;;
+
+  static final int PAGE_SIZE = 100;
+
+  /** Guards against an unexpected server response paginating forever. */
+  static final int MAX_PAGES = 50;
+
+  public static final String CURRICULUM_ENDPOINT =
+      &quot;{apiHost}/academics/curriculums/v1/classes/search&quot;;
+
+  private final RestTemplate restTemplate;
+
+<span class="fc" id="L58">  public UCSBCurriculumService(RestTemplateBuilder restTemplateBuilder) {</span>
+<span class="fc" id="L59">    this.restTemplate =</span>
+<span class="fc" id="L60">        restTemplateBuilder.connectTimeout(CONNECT_TIMEOUT).readTimeout(READ_TIMEOUT).build();</span>
+<span class="fc" id="L61">  }</span>
+
+  /** Builds the request URL for one page. Package-private so tests can assert on it. */
+  String urlForPage(String subjectArea, String quarter, String level, int pageNumber) {
+<span class="fc" id="L65">    StringBuilder params = new StringBuilder();</span>
+<span class="fc" id="L66">    params.append(String.format(&quot;?quarter=%s&amp;subjectCode=%s&quot;, quarter, subjectArea));</span>
+    // The API has no &quot;A&quot; level code: asking for all levels means omitting objLevelCode entirely.
+<span class="fc bfc" id="L68" title="All 2 branches covered.">    if (!LEVEL_ALL.equals(level)) {</span>
+<span class="fc" id="L69">      params.append(String.format(&quot;&amp;objLevelCode=%s&quot;, level));</span>
+    }
+<span class="fc" id="L71">    params.append(</span>
+<span class="fc" id="L72">        String.format(</span>
+<span class="fc" id="L73">            &quot;&amp;pageNumber=%d&amp;pageSize=%d&amp;includeClassSections=false&quot;, pageNumber, PAGE_SIZE));</span>
+<span class="fc" id="L74">    return CURRICULUM_ENDPOINT.replace(&quot;{apiHost}&quot;, apiHost) + params;</span>
+  }
+
+  private HttpEntity&lt;String&gt; requestEntity() {
+<span class="fc" id="L78">    HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L79">    headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));</span>
+<span class="fc" id="L80">    headers.setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="fc" id="L81">    headers.set(&quot;ucsb-api-version&quot;, &quot;1.0&quot;);</span>
+<span class="fc" id="L82">    headers.set(&quot;ucsb-api-key&quot;, this.apiKey);</span>
+<span class="fc" id="L83">    return new HttpEntity&lt;&gt;(&quot;body&quot;, headers);</span>
+  }
+
+  /** Fetches one page of raw JSON. */
+  public String getJSON(String subjectArea, String quarter, String level, int pageNumber) {
+<span class="fc" id="L88">    String url = urlForPage(subjectArea, quarter, level, pageNumber);</span>
+<span class="fc" id="L89">    log.info(&quot;url={}&quot;, url);</span>
+<span class="fc" id="L90">    ResponseEntity&lt;String&gt; re =</span>
+<span class="fc" id="L91">        restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);</span>
+<span class="fc" id="L92">    return re.getBody();</span>
+  }
+
+  /**
+   * Every course offered in the given subject area, quarter and level, following pagination until a
+   * short page is returned.
+   *
+   * @param level &quot;U&quot;, &quot;G&quot;, or &quot;A&quot; for all levels
+   */
+  public List&lt;UcsbCourse&gt; getCourses(String subjectArea, String quarter, String level)
+      throws Exception {
+<span class="fc" id="L103">    List&lt;UcsbCourse&gt; result = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L105" title="All 2 branches covered.">    for (int pageNumber = 1; pageNumber &lt;= MAX_PAGES; pageNumber++) {</span>
+<span class="fc" id="L106">      String json = getJSON(subjectArea, quarter, level, pageNumber);</span>
+<span class="fc" id="L107">      UcsbCoursePage page = objectMapper.readValue(json, UcsbCoursePage.class);</span>
+<span class="fc" id="L108">      List&lt;UcsbCourse&gt; classes = page.getClasses();</span>
+
+<span class="fc bfc" id="L110" title="All 4 branches covered.">      if (classes == null || classes.isEmpty()) {</span>
+<span class="fc" id="L111">        break;</span>
+      }
+<span class="fc" id="L113">      result.addAll(classes);</span>
+
+      // A page shorter than the page size is the last one.
+<span class="fc bfc" id="L116" title="All 2 branches covered.">      if (classes.size() &lt; PAGE_SIZE) {</span>
+<span class="fc" id="L117">        break;</span>
+      }
+    }
+
+<span class="fc" id="L121">    return result;</span>
+  }
+
+  /**
+   * Collapses any run of whitespace in the API's space-padded course ids to a single space, and
+   * trims, so the value used as a primary key is stable and reads cleanly. The API pads the subject
+   * code out to eight characters, so course 156 arrives with three spaces before the number and
+   * leaves here as &quot;CMPSC 156&quot;.
+   */
+  public static String normalizeCourseId(String courseId) {
+<span class="fc bfc" id="L131" title="All 2 branches covered.">    if (courseId == null) {</span>
+<span class="fc" id="L132">      return null;</span>
+    }
+<span class="fc" id="L134">    return courseId.trim().replaceAll(&quot;\\s+&quot;, &quot; &quot;);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
