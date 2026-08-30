@@ -163,23 +163,56 @@ public class UCSBCurriculumServiceTests {
   }
 
   /**
-   * The padding is what makes lexical order numerically correct, so it must survive: the API
-   * right-justifies the course number, and a space sorts before any digit.
+   * The formatted width is what makes lexical order numerically correct: digits right-justified, so
+   * a space sorts before any digit.
    */
   @Test
-  public void normalizeCourseId_preserves_leading_and_internal_padding() {
-    assertEquals("CMPSC   156", UCSBCurriculumService.normalizeCourseId("CMPSC   156  "));
-    assertEquals("CMPSC     9", UCSBCurriculumService.normalizeCourseId("CMPSC     9  "));
+  public void normalizeCourseId_pads_to_a_fixed_width() {
+    assertEquals("CMPSC     1", UCSBCurriculumService.normalizeCourseId("CMPSC   1  "));
+    assertEquals("CMPSC     1A", UCSBCurriculumService.normalizeCourseId("CMPSC     1A "));
+    assertEquals("CMPSC    16", UCSBCurriculumService.normalizeCourseId("CMPSC    16  "));
     assertEquals("CMPSC   130A", UCSBCurriculumService.normalizeCourseId("CMPSC   130A "));
+    assertEquals("CMPSC   156", UCSBCurriculumService.normalizeCourseId("CMPSC   156  "));
   }
 
+  /** Two suffix letters fit too, e.g. ECE 10AL. */
   @Test
-  public void normalizeCourseId_strips_only_trailing_whitespace() {
-    assertEquals("  CMPSC 156", UCSBCurriculumService.normalizeCourseId("  CMPSC 156   "));
-    assertEquals("CMPSC 156", UCSBCurriculumService.normalizeCourseId("CMPSC 156"));
+  public void normalizeCourseId_handles_a_two_letter_suffix() {
+    assertEquals("ECE      10AL", UCSBCurriculumService.normalizeCourseId("ECE      10AL"));
   }
 
-  /** The whole point of keeping the padding: sorting these strings gives numeric order. */
+  /** The alignment does not depend on the API padding its ids the way it currently does. */
+  @Test
+  public void normalizeCourseId_pads_an_unpadded_id() {
+    assertEquals("CMPSC     1", UCSBCurriculumService.normalizeCourseId("CMPSC 1"));
+    assertEquals("CMPSC   156", UCSBCurriculumService.normalizeCourseId("CMPSC 156"));
+    assertEquals("ECE      10AL", UCSBCurriculumService.normalizeCourseId("ECE 10AL"));
+  }
+
+  /**
+   * An 8-character subject fills the field exactly, so the number follows immediately. The numeric
+   * column is still columns 9-11, so ids stay aligned across subjects.
+   */
+  @Test
+  public void a_full_width_subject_code_is_not_truncated() {
+    assertEquals("ENGRPHYS  1", UCSBCurriculumService.normalizeCourseId("ENGRPHYS 1"));
+    assertEquals("ENGRPHYS130A", UCSBCurriculumService.normalizeCourseId("ENGRPHYS 130A"));
+  }
+
+  /** Anything that is not "subject number" is passed through rather than mangled. */
+  @Test
+  public void normalizeCourseId_passes_through_what_it_cannot_parse() {
+    // A section id, not a course id.
+    assertEquals("MATH      3B -1", UCSBCurriculumService.normalizeCourseId("MATH      3B -1 "));
+    // No number at all.
+    assertEquals("CMPSC", UCSBCurriculumService.normalizeCourseId("CMPSC  "));
+    // More digits than a course number has.
+    assertEquals("CMPSC 1234", UCSBCurriculumService.normalizeCourseId("CMPSC 1234 "));
+    // Too many suffix letters.
+    assertEquals("CMPSC 1ABC", UCSBCurriculumService.normalizeCourseId("CMPSC 1ABC "));
+  }
+
+  /** The whole point of the padding: sorting these strings gives numeric order. */
   @Test
   public void padded_course_ids_sort_numerically() {
     List<String> ids =

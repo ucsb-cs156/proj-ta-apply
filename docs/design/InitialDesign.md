@@ -44,6 +44,18 @@ There will be a way for the admin to click a checkbox (or unclick it) to indicat
 
 # Third Iteration
 
+For the third iteration, we want to add the idea of a Recruitment.
+
+Admins will have the ability to create a recruitment.
+
+There will be a database table for recruitments, which will store the following fields:
+
+* Quarter (in YYYYQ format, but displayed in QYY format)
+* Type (either TA or ULA)
+* Opening Date (the day applications will open)
+* 
+
+
 There will be a way for the admin to specify an upcoming quarter, and pull a live table of the full information about courses offered in an upcoming quarter that have either the TA or the ULA flag checked.
 
 This information will be cached and refreshed every 24 * 60 * 60 minutes (this parameter should be configurable.)

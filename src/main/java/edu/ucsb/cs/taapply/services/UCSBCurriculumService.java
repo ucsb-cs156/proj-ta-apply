@@ -7,6 +7,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +51,9 @@ public class UCSBCurriculumService {
 
   /** Guards against an unexpected server response paginating forever. */
   static final int MAX_PAGES = 50;
+
+  /** Digits, then up to two suffix letters: 1, 1A, 16, 130A, 10AL. */
+  private static final Pattern COURSE_NUMBER = Pattern.compile("(\\d{1,3})([A-Za-z]{0,2})");
 
   public static final String CURRICULUM_ENDPOINT =
       "{apiHost}/academics/curriculums/v1/classes/search";
@@ -122,19 +127,42 @@ public class UCSBCurriculumService {
   }
 
   /**
-   * Canonicalizes a course id from the API, stripping trailing whitespace only.
+   * Formats a course id into a fixed-width, sortable form: the subject code left-justified in 8
+   * characters, the course number's digits right-justified in 3, then up to 2 suffix letters, with
+   * trailing spaces removed. So {@code "CMPSC 1"} and {@code "CMPSC 130A "} both become:
    *
-   * <p>The leading and internal padding is deliberately preserved. The API returns a fixed-width
-   * field -- subject left-justified in eight characters, then the course number <em>right</em>
-   * -justified -- so ids arrive as {@code "CMPSC 9 "}, {@code "CMPSC 24 "}, {@code "CMPSC 130A "}.
-   * Because the number is right-justified and a space sorts before any digit, ordinary lexical
-   * ordering of these strings is numerically correct: 9 before 24 before 100. Collapsing the runs
-   * of spaces would destroy that and sort 100 and 130A ahead of 9 and 24.
+   * <pre>
+   * CMPSC     1
+   * CMPSC     1A
+   * CMPSC    16
+   * CMPSC   130A
+   * </pre>
+   *
+   * <p>Right-justifying the digits is what makes ordinary lexical ordering numerically correct, a
+   * space sorting before any digit. It is also why the padding is rendered rather than collapsed:
+   * the alignment on screen is exactly the sort order.
+   *
+   * <p>The UCSB API already returns this shape, but formatting it ourselves means the ordering does
+   * not depend on that, and ids stored from any other source line up too. Anything that does not
+   * parse as "subject number" is passed through with only trailing space removed, rather than being
+   * mangled.
    */
   public static String normalizeCourseId(String courseId) {
     if (courseId == null) {
       return null;
     }
-    return courseId.stripTrailing();
+
+    String[] parts = courseId.trim().split("\\s+");
+    if (parts.length != 2) {
+      return courseId.stripTrailing();
+    }
+
+    Matcher matcher = COURSE_NUMBER.matcher(parts[1]);
+    if (!matcher.matches()) {
+      return courseId.stripTrailing();
+    }
+
+    return String.format("%-8s%3s%-2s", parts[0], matcher.group(1), matcher.group(2))
+        .stripTrailing();
   }
 }

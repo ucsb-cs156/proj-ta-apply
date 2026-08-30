@@ -140,4 +140,21 @@ describe("CourseTable tests", () => {
     expect(span).toHaveStyle({ whiteSpace: "pre", fontFamily: "monospace" });
     expect(span.textContent).toBe("CMPSC   130A");
   });
+
+  test("course numbers are padded so the column reads in sorted order", () => {
+    renderTable([
+      { courseId: "CMPSC     1A", title: "a", needsTa: false, needsUla: false },
+      { courseId: "CMPSC    16", title: "b", needsTa: false, needsUla: false },
+      { courseId: "CMPSC   130A", title: "c", needsTa: false, needsUla: false },
+    ]);
+
+    const rendered = [0, 1, 2].map(
+      (i) =>
+        screen.getByTestId(`CourseTable-cell-row-${i}-col-courseId`)
+          .textContent,
+    );
+
+    // Same width up to the digits, so the numbers line up in the column.
+    expect(rendered).toEqual(["CMPSC     1A", "CMPSC    16", "CMPSC   130A"]);
+  });
 });
