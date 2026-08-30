@@ -1,0 +1,43 @@
+name: 43-deploy-main-to-taapply-prod.yml
+
+# Dispatches the Dokku sync workflow that deploys main to production.
+#
+# NOT YET CONFIGURED. Set these repository variables before using this workflow;
+# without them the run fails fast rather than dispatching to another app's sync
+# workflow and deploying the wrong thing:
+#
+#   DOKKU_SYNC_REPO      e.g. ucsb-cs156-s25/dokku-sync
+#   DOKKU_SYNC_WORKFLOW  the sync workflow file for THIS app, e.g. 00-sync-taapply.yml
+
+on:
+  workflow_dispatch
+
+env:
+  GITHUB_TOKEN: ${{ secrets.PAT }}
+
+jobs:
+  deploy:
+    name: Launch TA Apply Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Check deploy target is configured"
+        env:
+          SYNC_REPO: ${{ vars.DOKKU_SYNC_REPO }}
+          SYNC_WORKFLOW: ${{ vars.DOKKU_SYNC_WORKFLOW }}
+        run: |
+          if [ -z "$SYNC_REPO" ] || [ -z "$SYNC_WORKFLOW" ]; then
+            echo "::error::DOKKU_SYNC_REPO and DOKKU_SYNC_WORKFLOW repository variables are not set."
+            echo "See the comment at the top of this workflow file."
+            exit 1
+          fi
+      - name: "Launch TA Apply deploy"
+        env:
+          SYNC_REPO: ${{ vars.DOKKU_SYNC_REPO }}
+          SYNC_WORKFLOW: ${{ vars.DOKKU_SYNC_WORKFLOW }}
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/$SYNC_REPO/actions/workflows/$SYNC_WORKFLOW/dispatches" \
+            -f ref='main'

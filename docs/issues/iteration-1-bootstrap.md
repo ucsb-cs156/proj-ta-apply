@@ -524,10 +524,14 @@ These do not block the code but must be resolved before the app is deployable:
 
 1. **Google OAuth credentials** — a new OAuth client ID/secret for this app, with the appropriate
    authorized redirect URIs for localhost, QA, and production.
-2. **Dokku app names and hostnames** — needed for the `43-`/`44-` deploy workflows and for
-   `45-deploy-pr-to-dokku.yml`.
-3. **Dokku Postgres service name** — `startup.sh` currently hardcodes `DOKKU_POSTGRES_AQUA_URL`
-   (citelines' service). Confirm the name for this app.
+2. **Dokku app names and hostnames** — the `43-`/`44-` deploy workflows were renamed off
+   frontiers/scaffold and now read the `DOKKU_SYNC_REPO`, `DOKKU_SYNC_WORKFLOW` and
+   `DOKKU_SYNC_QA_WORKFLOW` repository variables, failing fast when they are unset rather than
+   dispatching to another app's sync workflow. Set those variables to enable deploys.
+3. **Dokku Postgres service name** — `startup.sh` no longer hardcodes citelines'
+   `DOKKU_POSTGRES_AQUA_URL`. It uses `DATABASE_URL` (which Dokku sets on link); if this app's
+   service-specific variable must be preferred instead, set `POSTGRES_URL_VAR` to its name
+   (e.g. `DOKKU_POSTGRES_TAAPPLY_URL`). It now exits with a clear message if neither is set.
 4. **Dokku Mongo service** — `dokku mongo:create` / `mongo:link` to populate `MONGO_URL`
    (`docs/mongodb.md` covers the procedure).
 5. **Chromatic project token** — required by workflows `53-` and `55-`.
