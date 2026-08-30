@@ -154,8 +154,9 @@ public class PopulateCoursesJobTests {
 
     // The good quarter still saved its course.
     verify(courseRepository).save(any());
-    assertTrue(jobStarted.getLog().contains("Error fetching 20241"));
-    assertTrue(jobStarted.getLog().contains("1 quarter(s) failed"));
+    String log = jobStarted.getLog();
+    assertTrue(log.contains("Error fetching 20241"), log);
+    assertTrue(log.contains("Finished: 1 added, 0 updated, 1 quarter(s) failed"), log);
   }
 
   @Test
@@ -181,7 +182,9 @@ public class PopulateCoursesJobTests {
     String log = jobStarted.getLog();
     assertTrue(log.contains("Populating CMPSC courses at level U"));
     assertTrue(log.contains("Fetching CMPSC 20241 level U"));
-    assertTrue(log.contains("1 added, 1 updated"));
+    assertTrue(log.contains("  20241: 2 course(s) returned"), log);
+    // Anchored on "Finished: " so a negated counter cannot slip through as a substring.
+    assertTrue(log.contains("Finished: 1 added, 1 updated, 0 quarter(s) failed"), log);
   }
 
   @Test

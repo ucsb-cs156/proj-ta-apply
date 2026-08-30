@@ -90,11 +90,13 @@ public class UCSBCurriculumServiceTests {
   }
 
   @Test
-  public void getJSON_sends_the_api_key_and_version_headers() {
+  public void getJSON_sends_the_api_key_version_and_content_negotiation_headers() {
     mockRestServiceServer
         .expect(requestTo(service.urlForPage("CMPSC", "20241", "U", 1)))
         .andExpect(header("ucsb-api-key", "fake-key"))
         .andExpect(header("ucsb-api-version", "1.0"))
+        .andExpect(header("Accept", "application/json"))
+        .andExpect(header("Content-Type", "application/json"))
         .andRespond(withSuccess(ONE_COURSE, MediaType.APPLICATION_JSON));
 
     String json = service.getJSON("CMPSC", "20241", "U", 1);
