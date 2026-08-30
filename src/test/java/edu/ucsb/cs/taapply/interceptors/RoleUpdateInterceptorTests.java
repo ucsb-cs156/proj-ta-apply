@@ -147,4 +147,75 @@ public class RoleUpdateInterceptorTests {
                 .with(oauth2Login().authorities(new SimpleGrantedAuthority("ROLE_USER"))))
         .andExpect(authenticated().withRoles("USER"));
   }
+
+  @Test
+  public void grad_student_in_db_gets_grad_student_role() throws Exception {
+    when(adminRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
+    when(instructorRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
+    when(gradStudentRepository.existsByEmail("user@ucsb.edu")).thenReturn(true);
+
+    mockMvc
+        .perform(
+            get("/dummycontroller/interceptorTest")
+                .with(
+                    oidcLogin()
+                        .userInfoToken(t -> t.email("user@ucsb.edu"))
+                        .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+        .andExpect(authenticated().withRoles("USER", "GRAD_STUDENT"));
+  }
+
+  @Test
+  public void grad_student_role_removed_when_user_loses_grad_student_status() throws Exception {
+    when(adminRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
+    when(instructorRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
+    when(gradStudentRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
+
+    mockMvc
+        .perform(
+            get("/dummycontroller/interceptorTest")
+                .with(
+                    oidcLogin()
+                        .userInfoToken(t -> t.email("user@ucsb.edu"))
+                        .authorities(
+                            new SimpleGrantedAuthority("ROLE_USER"),
+                            new SimpleGrantedAuthority("ROLE_GRAD_STUDENT"))))
+        .andExpect(authenticated().withRoles("USER"));
+  }
+
+  /** The roles are independent, so a user may hold all three at once. */
+  @Test
+  public void user_can_hold_admin_instructor_and_grad_student_simultaneously() throws Exception {
+    when(adminRepository.existsByEmail("user@ucsb.edu")).thenReturn(true);
+    when(instructorRepository.existsByEmail("user@ucsb.edu")).thenReturn(true);
+    when(gradStudentRepository.existsByEmail("user@ucsb.edu")).thenReturn(true);
+
+    mockMvc
+        .perform(
+            get("/dummycontroller/interceptorTest")
+                .with(
+                    oidcLogin()
+                        .userInfoToken(t -> t.email("user@ucsb.edu"))
+                        .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+        .andExpect(authenticated().withRoles("USER", "ADMIN", "INSTRUCTOR", "GRAD_STUDENT"));
+  }
+
+  /**
+   * An email listed in the app.admin.emails property is an admin even when the admins table has no
+   * row for it, so the bootstrap admin works against a fresh database.
+   */
+  @Test
+  public void email_in_admin_emails_property_gets_admin_role() throws Exception {
+    when(adminRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(false);
+    when(instructorRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(false);
+    when(gradStudentRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(false);
+
+    mockMvc
+        .perform(
+            get("/dummycontroller/interceptorTest")
+                .with(
+                    oidcLogin()
+                        .userInfoToken(t -> t.email("phtcon@ucsb.edu"))
+                        .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+        .andExpect(authenticated().withRoles("USER", "ADMIN"));
+  }
 }

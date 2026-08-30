@@ -1,6 +1,6 @@
 describe("index.html title", () => {
-  test("document title should be TaApply", () => {
-    document.title = "TaApply";
-    expect(document.title).toBe("TaApply");
+  test("document title should be TA Apply", () => {
+    document.title = "TA Apply";
+    expect(document.title).toBe("TA Apply");
   });
 });

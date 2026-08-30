@@ -30,7 +30,7 @@ describe("AboutTaApply tests", () => {
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: "About TaApply",
+        name: "About TA Apply",
       }),
     ).toBeInTheDocument();
 

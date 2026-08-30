@@ -9,7 +9,7 @@ describe("Footer tests", () => {
         <Footer />
       </MemoryRouter>,
     );
-    const aboutLink = screen.getByRole("link", { name: "About TaApply" });
+    const aboutLink = screen.getByRole("link", { name: "About TA Apply" });
     expect(aboutLink).toBeInTheDocument();
     expect(aboutLink).toHaveAttribute("href", "/about");
   });

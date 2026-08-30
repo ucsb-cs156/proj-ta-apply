@@ -5,6 +5,8 @@ import AdminsIndexPage from "main/pages/Admin/AdminsIndexPage";
 import AdminsCreatePage from "main/pages/Admin/AdminsCreatePage";
 import InstructorsIndexPage from "main/pages/Admin/InstructorsIndexPage";
 import InstructorsCreatePage from "main/pages/Admin/InstructorsCreatePage";
+import GradStudentsIndexPage from "main/pages/Admin/GradStudentsIndexPage";
+import GradStudentsCreatePage from "main/pages/Admin/GradStudentsCreatePage";
 import ProtectedPage from "main/pages/Auth/ProtectedPage";
 import NotFoundPage from "main/pages/Auth/NotFoundPage";
 import AboutTaApply from "main/pages/Help/AboutTaApply";
@@ -18,8 +20,6 @@ import AdminUsersPage from "main/pages/Admin/AdminUsersPage";
 import HomePageLoggedIn from "main/pages/Home/HomePageLoggedIn";
 import HomePageLoggedOut from "main/pages/Home/HomePageLoggedOut";
 import AdminJobsPage from "main/pages/Admin/AdminJobsPage";
-import InstructorProjectShowPage from "main/pages/Projects/InstructorProjectShowPage";
-import BibTexEntryShowPage from "main/pages/Projects/BibTexEntryShowPage";
 
 export default function App() {
   const currentUser = useCurrentUser();
@@ -80,6 +80,26 @@ export default function App() {
           }
         />
         <Route
+          path="/admin/gradstudents"
+          element={
+            <ProtectedPage
+              component={<GradStudentsIndexPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/gradstudents/create"
+          element={
+            <ProtectedPage
+              component={<GradStudentsCreatePage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
           path="/admin/users"
           element={
             <ProtectedPage
@@ -105,37 +125,6 @@ export default function App() {
             <ProtectedPage
               component={<AdminJobsPage />}
               enforceRole={"ROLE_ADMIN"}
-              currentUser={currentUser}
-            />
-          }
-        />
-
-        <Route
-          path="/project/:id"
-          element={
-            <ProtectedPage
-              component={<InstructorProjectShowPage />}
-              enforceRole={"ROLE_INSTRUCTOR"}
-              currentUser={currentUser}
-            />
-          }
-        />
-        <Route
-          path="/project/:id/settings"
-          element={
-            <ProtectedPage
-              component={<InstructorProjectShowPage />}
-              enforceRole={"ROLE_INSTRUCTOR"}
-              currentUser={currentUser}
-            />
-          }
-        />
-        <Route
-          path="/project/:id/bibtex/:entryId"
-          element={
-            <ProtectedPage
-              component={<BibTexEntryShowPage />}
-              enforceRole={"ROLE_INSTRUCTOR"}
               currentUser={currentUser}
             />
           }

@@ -96,37 +96,3 @@ body {
   flex-direction: column;
 }
 
-/* Pasting a BibTeX entry needs a textarea as wide as the window reasonably
-   allows (BibTexEntryModal.jsx), rather than the default Bootstrap modal
-   width used elsewhere. */
-.bibtex-entry-modal {
-  max-width: 95vw;
-  margin: 24px auto;
-}
-
-/* Relevance levels (issue #54): the one place these colors are defined, so the
-   BibTexEntryTable's Relevance column and the Relevance <select> dropdown's options — and
-   anywhere else relevance is shown in the future — all stay visually in sync. Applied via
-   main/utils/relevance.js's relevanceClassName(). .relevance-badge is the shared "chip" layout
-   for table cells; the color-only classes are also applied on their own to <option> elements,
-   which can't carry padding/border-radius. */
-.relevance-badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 4px;
-}
-.relevance-high {
-  background-color: #f8d7da;
-}
-.relevance-medium {
-  background-color: #fff3cd;
-}
-.relevance-low {
-  background-color: #d1e7dd;
-}
-.relevance-none {
-  background-color: #cfe2ff;
-}
-.relevance-unreviewed {
-  background-color: #e2e3e5;
-}

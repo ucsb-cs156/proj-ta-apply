@@ -98,12 +98,12 @@ describe("AppNavbar tests", () => {
     expect(screen.getByText("H2Console")).toBeInTheDocument();
   });
 
-  test("renders TaApply brand link", () => {
+  test("renders TA Apply brand link", () => {
     renderNavbar(
       currentUserFixtures.notLoggedIn,
       systemInfoFixtures.showingNeither,
     );
-    expect(screen.getByText("TaApply")).toBeInTheDocument();
+    expect(screen.getByText("TA Apply")).toBeInTheDocument();
   });
 
   test("renders Admin menu for admins", async () => {
@@ -123,6 +123,7 @@ describe("AppNavbar tests", () => {
       "Users",
       "Admins",
       "Instructors",
+      "Grad Students",
       "Jobs",
       "Developer Info",
     ];

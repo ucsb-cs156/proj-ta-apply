@@ -44,10 +44,10 @@ describe("LoginScreen", () => {
     });
   });
 
-  test("renders the TaApply branding, prompt, and login button", () => {
+  test("renders the TA Apply branding, prompt, and login button", () => {
     renderLoginScreen(systemInfoFixtures.showingNeither);
 
-    expect(screen.getByText("Welcome to TaApply")).toBeInTheDocument();
+    expect(screen.getByText("Welcome to TA Apply")).toBeInTheDocument();
     expect(screen.getByText("Sign in to continue.")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Log In with Google" }),

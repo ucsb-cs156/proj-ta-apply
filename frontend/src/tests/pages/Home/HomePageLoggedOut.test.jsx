@@ -26,7 +26,7 @@ describe("HomePageLoggedOut tests", () => {
         </MemoryRouter>
       </QueryClientProvider>,
     );
-    await screen.findByText(/Welcome to TaApply/);
+    await screen.findByText(/Welcome to TA Apply/);
     await screen.findByText(/Sign in to continue./);
     await screen.findByText(/Log In with Google/);
   });

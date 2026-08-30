@@ -55,7 +55,7 @@ describe("BasicLayout tests", () => {
         </MemoryRouter>
       </QueryClientProvider>,
     );
-    expect(screen.getByText("TaApply")).toBeInTheDocument();
+    expect(screen.getByText("TA Apply")).toBeInTheDocument();
   });
 
   test("renders Footer inside layout", () => {
@@ -71,7 +71,7 @@ describe("BasicLayout tests", () => {
       </QueryClientProvider>,
     );
     expect(
-      screen.getByRole("link", { name: "About TaApply" }),
+      screen.getByRole("link", { name: "About TA Apply" }),
     ).toBeInTheDocument();
   });
 });

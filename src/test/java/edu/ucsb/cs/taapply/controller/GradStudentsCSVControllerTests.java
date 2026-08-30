@@ -193,4 +193,23 @@ public class GradStudentsCSVControllerTests extends ControllerTestCase {
     verify(gradStudentRepository, times(1)).save(captor.capture());
     assertEquals("a@ucsb.edu", captor.getValue().getEmail());
   }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void rows_with_fewer_columns_than_the_email_column_are_ignored() throws Exception {
+    when(gradStudentRepository.existsByEmail(any())).thenReturn(false);
+
+    // "email" is the second column, and the "Bob" row stops before reaching it.
+    MvcResult response =
+        mockMvc
+            .perform(multipart(URL).file(csv("name,email\nAlice,a@ucsb.edu\nBob\n")).with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    verify(gradStudentRepository, times(1)).save(any());
+    assertEquals(
+        mapper.writeValueAsString(
+            new GradStudentsCSVController.UploadResult(1, 0, 0, java.util.List.of())),
+        response.getResponse().getContentAsString());
+  }
 }

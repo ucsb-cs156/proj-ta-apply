@@ -11,6 +11,7 @@ const usersFixtures = {
       familyName: "Conrad",
       admin: true,
       instructor: false,
+      gradStudent: true,
     },
     {
       id: 2,
@@ -23,6 +24,7 @@ const usersFixtures = {
       familyName: "Conrad",
       admin: false,
       instructor: false,
+      gradStudent: false,
     },
     {
       id: 3,
@@ -35,6 +37,7 @@ const usersFixtures = {
       familyName: "Zzyxx",
       admin: false,
       instructor: true,
+      gradStudent: false,
     },
   ],
 };

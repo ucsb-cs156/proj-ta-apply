@@ -24,7 +24,7 @@ export default function Footer() {
         }}
       >
         <span>
-          <Link to="/about">About TaApply</Link>
+          <Link to="/about">About TA Apply</Link>
         </span>
       </div>
     </footer>

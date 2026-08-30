@@ -52,7 +52,7 @@ export default function LoginScreen({ onLogin }: { onLogin?: () => void }) {
             borderBottom: "4px solid #1E293B",
           }}
         >
-          Welcome to TaApply
+          Welcome to TA Apply
         </div>
         <div
           style={{

@@ -35,7 +35,7 @@ export default function AppNavbar({
       >
         <Container>
           <Navbar.Brand as={Link} to="/">
-            TaApply
+            TA Apply
           </Navbar.Brand>
 
           <Navbar.Toggle />
@@ -66,6 +66,9 @@ export default function AppNavbar({
                   </NavDropdown.Item>
                   <NavDropdown.Item as={Link} to="/admin/instructors">
                     Instructors
+                  </NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/admin/gradstudents">
+                    Grad Students
                   </NavDropdown.Item>
                   <NavDropdown.Item as={Link} to="/admin/jobs">
                     Jobs
