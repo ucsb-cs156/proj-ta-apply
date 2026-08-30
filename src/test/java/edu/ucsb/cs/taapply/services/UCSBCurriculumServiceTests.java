@@ -162,11 +162,46 @@ public class UCSBCurriculumServiceTests {
     mockRestServiceServer.verify();
   }
 
+  /**
+   * The padding is what makes lexical order numerically correct, so it must survive: the API
+   * right-justifies the course number, and a space sorts before any digit.
+   */
   @Test
-  public void normalizeCourseId_collapses_padding() {
-    assertEquals("CMPSC 156", UCSBCurriculumService.normalizeCourseId("CMPSC   156"));
-    assertEquals("CMPSC 156", UCSBCurriculumService.normalizeCourseId("  CMPSC 156  "));
-    assertEquals("CMPSC 130A", UCSBCurriculumService.normalizeCourseId("CMPSC 130A"));
+  public void normalizeCourseId_preserves_leading_and_internal_padding() {
+    assertEquals("CMPSC   156", UCSBCurriculumService.normalizeCourseId("CMPSC   156  "));
+    assertEquals("CMPSC     9", UCSBCurriculumService.normalizeCourseId("CMPSC     9  "));
+    assertEquals("CMPSC   130A", UCSBCurriculumService.normalizeCourseId("CMPSC   130A "));
+  }
+
+  @Test
+  public void normalizeCourseId_strips_only_trailing_whitespace() {
+    assertEquals("  CMPSC 156", UCSBCurriculumService.normalizeCourseId("  CMPSC 156   "));
+    assertEquals("CMPSC 156", UCSBCurriculumService.normalizeCourseId("CMPSC 156"));
+  }
+
+  /** The whole point of keeping the padding: sorting these strings gives numeric order. */
+  @Test
+  public void padded_course_ids_sort_numerically() {
+    List<String> ids =
+        new java.util.ArrayList<>(
+            List.of(
+                UCSBCurriculumService.normalizeCourseId("CMPSC   156  "),
+                UCSBCurriculumService.normalizeCourseId("CMPSC     9  "),
+                UCSBCurriculumService.normalizeCourseId("CMPSC   130A "),
+                UCSBCurriculumService.normalizeCourseId("CMPSC    24  "),
+                UCSBCurriculumService.normalizeCourseId("CMPSC     1A "),
+                UCSBCurriculumService.normalizeCourseId("CMPSC   100  ")));
+    java.util.Collections.sort(ids);
+
+    assertEquals(
+        List.of(
+            "CMPSC     1A",
+            "CMPSC     9",
+            "CMPSC    24",
+            "CMPSC   100",
+            "CMPSC   130A",
+            "CMPSC   156"),
+        ids);
   }
 
   @Test

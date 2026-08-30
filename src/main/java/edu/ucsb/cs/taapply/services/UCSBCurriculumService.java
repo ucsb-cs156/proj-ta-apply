@@ -122,15 +122,19 @@ public class UCSBCurriculumService {
   }
 
   /**
-   * Collapses any run of whitespace in the API's space-padded course ids to a single space, and
-   * trims, so the value used as a primary key is stable and reads cleanly. The API pads the subject
-   * code out to eight characters, so course 156 arrives with three spaces before the number and
-   * leaves here as "CMPSC 156".
+   * Canonicalizes a course id from the API, stripping trailing whitespace only.
+   *
+   * <p>The leading and internal padding is deliberately preserved. The API returns a fixed-width
+   * field -- subject left-justified in eight characters, then the course number <em>right</em>
+   * -justified -- so ids arrive as {@code "CMPSC 9 "}, {@code "CMPSC 24 "}, {@code "CMPSC 130A "}.
+   * Because the number is right-justified and a space sorts before any digit, ordinary lexical
+   * ordering of these strings is numerically correct: 9 before 24 before 100. Collapsing the runs
+   * of spaces would destroy that and sort 100 and 130A ahead of 9 and 24.
    */
   public static String normalizeCourseId(String courseId) {
     if (courseId == null) {
       return null;
     }
-    return courseId.trim().replaceAll("\\s+", " ");
+    return courseId.stripTrailing();
   }
 }

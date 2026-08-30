@@ -67,14 +67,14 @@ public class PopulateCoursesJobTests {
   public void inserts_new_courses_with_both_flags_false() throws Exception {
     when(ucsbCurriculumService.getCourses("CMPSC", "20241", "U"))
         .thenReturn(List.of(ucsb("CMPSC   156", "ADV APP PROGRAM")));
-    when(courseRepository.findByCourseId("CMPSC 156")).thenReturn(Optional.empty());
+    when(courseRepository.findByCourseId("CMPSC   156")).thenReturn(Optional.empty());
 
     job("20241", "20241", "U").accept(ctx);
 
     ArgumentCaptor<Course> captor = ArgumentCaptor.forClass(Course.class);
     verify(courseRepository).save(captor.capture());
     Course saved = captor.getValue();
-    assertEquals("CMPSC 156", saved.getCourseId());
+    assertEquals("CMPSC   156", saved.getCourseId());
     assertEquals("ADV APP PROGRAM", saved.getTitle());
     assertEquals(false, saved.isNeedsTa());
     assertEquals(false, saved.isNeedsUla());
@@ -88,7 +88,7 @@ public class PopulateCoursesJobTests {
   public void re_running_preserves_the_ta_and_ula_flags_on_an_existing_course() throws Exception {
     Course existing =
         Course.builder()
-            .courseId("CMPSC 156")
+            .courseId("CMPSC   156")
             .title("Old Title")
             .needsTa(true)
             .needsUla(true)
@@ -96,7 +96,7 @@ public class PopulateCoursesJobTests {
 
     when(ucsbCurriculumService.getCourses("CMPSC", "20241", "U"))
         .thenReturn(List.of(ucsb("CMPSC   156", "ADV APP PROGRAM")));
-    when(courseRepository.findByCourseId("CMPSC 156")).thenReturn(Optional.of(existing));
+    when(courseRepository.findByCourseId("CMPSC   156")).thenReturn(Optional.of(existing));
 
     job("20241", "20241", "U").accept(ctx);
 
@@ -148,7 +148,7 @@ public class PopulateCoursesJobTests {
         .thenThrow(new RuntimeException("upstream 500"));
     when(ucsbCurriculumService.getCourses("CMPSC", "20242", "U"))
         .thenReturn(List.of(ucsb("CMPSC   156", "ADV APP PROGRAM")));
-    when(courseRepository.findByCourseId("CMPSC 156")).thenReturn(Optional.empty());
+    when(courseRepository.findByCourseId("CMPSC   156")).thenReturn(Optional.empty());
 
     job("20241", "20242", "U").accept(ctx);
 
@@ -173,9 +173,9 @@ public class PopulateCoursesJobTests {
   public void logs_a_summary_of_what_it_did() throws Exception {
     when(ucsbCurriculumService.getCourses("CMPSC", "20241", "U"))
         .thenReturn(List.of(ucsb("CMPSC   156", "ADV APP PROGRAM"), ucsb("CMPSC   130A", "Data")));
-    when(courseRepository.findByCourseId("CMPSC 156")).thenReturn(Optional.empty());
-    when(courseRepository.findByCourseId("CMPSC 130A"))
-        .thenReturn(Optional.of(Course.builder().courseId("CMPSC 130A").title("Old").build()));
+    when(courseRepository.findByCourseId("CMPSC   156")).thenReturn(Optional.empty());
+    when(courseRepository.findByCourseId("CMPSC   130A"))
+        .thenReturn(Optional.of(Course.builder().courseId("CMPSC   130A").title("Old").build()));
 
     job("20241", "20241", "U").accept(ctx);
 

@@ -55,7 +55,7 @@ public class CoursesWebIT extends WebTestCase {
   public void admin_sees_existing_courses_in_the_table() throws Exception {
     courseRepository.save(
         Course.builder()
-            .courseId("CMPSC 156")
+            .courseId("CMPSC   156")
             .title("ADV APP PROGRAM")
             .needsTa(true)
             .needsUla(false)
@@ -65,7 +65,7 @@ public class CoursesWebIT extends WebTestCase {
     goToCoursesPage();
 
     assertThat(page.getByTestId("CoursesIndexPage-cell-row-0-col-courseId"))
-        .containsText("CMPSC 156");
+        .containsText("CMPSC   156");
     assertThat(page.getByTestId("CoursesIndexPage-cell-row-0-col-needsTa-checkbox")).isChecked();
     assertThat(page.getByTestId("CoursesIndexPage-cell-row-0-col-needsUla-checkbox"))
         .not()
@@ -74,7 +74,8 @@ public class CoursesWebIT extends WebTestCase {
 
   @Test
   public void ticking_the_ula_box_persists_across_a_reload() throws Exception {
-    courseRepository.save(Course.builder().courseId("CMPSC 156").title("ADV APP PROGRAM").build());
+    courseRepository.save(
+        Course.builder().courseId("CMPSC   156").title("ADV APP PROGRAM").build());
 
     setupAdminUser();
     goToCoursesPage();
@@ -106,16 +107,16 @@ public class CoursesWebIT extends WebTestCase {
 
     // Course ids are normalized from the API's space-padded form, and sorted.
     assertThat(page.getByTestId("CoursesIndexPage-cell-row-0-col-courseId"))
-        .containsText("CMPSC 130A");
+        .containsText("CMPSC   130A");
     assertThat(page.getByTestId("CoursesIndexPage-cell-row-1-col-courseId"))
-        .containsText("CMPSC 156");
+        .containsText("CMPSC   156");
   }
 
   @Test
   public void populate_leaves_existing_flags_alone() throws Exception {
     courseRepository.save(
         Course.builder()
-            .courseId("CMPSC 156")
+            .courseId("CMPSC   156")
             .title("Stale Title")
             .needsTa(true)
             .needsUla(true)
@@ -133,7 +134,7 @@ public class CoursesWebIT extends WebTestCase {
       page.reload();
     }
 
-    // CMPSC 156 sorts second; its title is refreshed but both flags survive.
+    // CMPSC   156 sorts second; its title is refreshed but both flags survive.
     assertThat(page.getByTestId("CoursesIndexPage-cell-row-1-col-title"))
         .containsText("ADV APP PROGRAM");
     assertThat(page.getByTestId("CoursesIndexPage-cell-row-1-col-needsTa-checkbox")).isChecked();

@@ -34,9 +34,10 @@ describe("CourseTable tests", () => {
       expect(screen.getByText(header)).toBeInTheDocument();
     });
 
+    // normalizeWhitespace: false because the padding is exactly what we are asserting.
     expect(
       screen.getByTestId("CourseTable-cell-row-0-col-courseId"),
-    ).toHaveTextContent("CMPSC 130A");
+    ).toHaveTextContent("CMPSC   130A", { normalizeWhitespace: false });
     expect(
       screen.getByTestId("CourseTable-cell-row-1-col-title"),
     ).toHaveTextContent("Advanced Applications Programming");
@@ -70,7 +71,7 @@ describe("CourseTable tests", () => {
 
     await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
     expect(axiosMock.history.put[0].params).toEqual({
-      courseId: "CMPSC 130A",
+      courseId: "CMPSC   130A",
       needsTa: true,
       needsUla: true,
     });
@@ -85,7 +86,7 @@ describe("CourseTable tests", () => {
 
     await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
     expect(axiosMock.history.put[0].params).toEqual({
-      courseId: "CMPSC 156",
+      courseId: "CMPSC   156",
       needsTa: true,
       needsUla: false,
     });
@@ -106,5 +107,37 @@ describe("CourseTable tests", () => {
     expect(
       screen.queryByTestId("CourseTable-cell-row-0-col-courseId"),
     ).toBeNull();
+  });
+
+  test("columns are ordered TA, ULA, Course Number, Title", () => {
+    renderTable();
+
+    const headers = Array.from(
+      document.querySelectorAll('[data-testid="CourseTable"] thead th'),
+    ).map((th) => th.textContent.trim());
+
+    expect(headers).toEqual(["TA", "ULA", "Course Number", "Title"]);
+  });
+
+  test("the course number column shrinks to its content and Title takes the slack", () => {
+    renderTable();
+
+    const courseIdCell = screen.getByTestId(
+      "CourseTable-cell-row-0-col-courseId",
+    );
+    expect(courseIdCell).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
+
+    const titleCell = screen.getByTestId("CourseTable-cell-row-0-col-title");
+    expect(titleCell).toHaveStyle({ width: "100%" });
+  });
+
+  test("the course number keeps its padding visible", () => {
+    renderTable();
+
+    const span = screen
+      .getByTestId("CourseTable-cell-row-0-col-courseId")
+      .querySelector("span");
+    expect(span).toHaveStyle({ whiteSpace: "pre", fontFamily: "monospace" });
+    expect(span.textContent).toBe("CMPSC   130A");
   });
 });

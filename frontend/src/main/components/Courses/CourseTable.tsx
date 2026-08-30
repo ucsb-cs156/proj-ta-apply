@@ -48,6 +48,7 @@ export default function CourseTable({
     header,
     id: field,
     accessorKey: field,
+    meta: { style: { width: "1%", whiteSpace: "nowrap" as const } },
     cell: ({ cell }: { cell: Cell<Course, unknown> }) => {
       const course = cell.row.original;
       return (
@@ -62,17 +63,34 @@ export default function CourseTable({
     },
   });
 
+  // Widths: everything shrinks to its content except Title, which is given 100% so it absorbs
+  // the slack from Bootstrap's full-width table. Without that, the narrow columns get stretched.
+  const shrinkToContent = {
+    style: { width: "1%", whiteSpace: "nowrap" as const },
+  };
+
   const columns = [
+    flagColumn("TA", "needsTa", "TA"),
+    flagColumn("ULA", "needsUla", "ULA"),
     {
       header: "Course Number",
       accessorKey: "courseId",
+      meta: shrinkToContent,
+      // Course ids keep the API's fixed-width padding so they sort numerically. HTML collapses
+      // runs of spaces by default, so render them preformatted and monospaced to keep the
+      // numbers aligned. The field is at most 13 characters: an 8-character subject code, then a
+      // course number of up to 3 digits and 2 letters.
+      cell: ({ cell }: { cell: Cell<Course, unknown> }) => (
+        <span style={{ whiteSpace: "pre", fontFamily: "monospace" }}>
+          {cell.row.original.courseId}
+        </span>
+      ),
     },
     {
       header: "Title",
       accessorKey: "title",
+      meta: { style: { width: "100%" } },
     },
-    flagColumn("TA", "needsTa", "TA"),
-    flagColumn("ULA", "needsUla", "ULA"),
   ];
 
   return (

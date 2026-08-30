@@ -80,8 +80,9 @@ export default function CoursesIndexPage(): React.JSX.Element {
         <h1>Courses</h1>
         <p>
           Courses in <strong>{subjectArea}</strong> that have been offered in
-          the quarters you populate. Tick the boxes to mark which courses should
-          get TAs and ULAs assigned.
+          the quarters you populate. Tick the boxes to indicate whether each
+          course should be listed under TA applications and/or ULA applications
+          the next time it is offered.
         </p>
 
         <Form

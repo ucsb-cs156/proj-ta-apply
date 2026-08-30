@@ -61,14 +61,14 @@ public class CoursesControllerTests extends ControllerTestCase {
   public void admin_can_get_all_courses() throws Exception {
     List<Course> expected =
         List.of(
-            course("CMPSC 130A", "Data Structures", false, true),
-            course("CMPSC 156", "ADV APP PROGRAM", true, false));
-    when(courseRepository.findAllByOrderByCourseIdAsc()).thenReturn(expected);
+            course("CMPSC   130A", "Data Structures", false, true),
+            course("CMPSC   156", "ADV APP PROGRAM", true, false));
+    when(courseRepository.findAll()).thenReturn(expected);
 
     MvcResult response =
         mockMvc.perform(get("/api/courses/all")).andExpect(status().isOk()).andReturn();
 
-    verify(courseRepository, times(1)).findAllByOrderByCourseIdAsc();
+    verify(courseRepository, times(1)).findAll();
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
   }
 
@@ -78,7 +78,7 @@ public class CoursesControllerTests extends ControllerTestCase {
   public void logged_out_users_cannot_update_flags() throws Exception {
     mockMvc
         .perform(
-            put("/api/courses/flags?courseId=CMPSC 156&needsTa=true&needsUla=false").with(csrf()))
+            put("/api/courses/flags?courseId=CMPSC   156&needsTa=true&needsUla=false").with(csrf()))
         .andExpect(status().is(403));
   }
 
@@ -87,7 +87,7 @@ public class CoursesControllerTests extends ControllerTestCase {
   public void logged_in_regular_users_cannot_update_flags() throws Exception {
     mockMvc
         .perform(
-            put("/api/courses/flags?courseId=CMPSC 156&needsTa=true&needsUla=false").with(csrf()))
+            put("/api/courses/flags?courseId=CMPSC   156&needsTa=true&needsUla=false").with(csrf()))
         .andExpect(status().is(403));
     verify(courseRepository, never()).save(any());
   }
@@ -95,13 +95,13 @@ public class CoursesControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void admin_can_set_both_flags() throws Exception {
-    Course existing = course("CMPSC 156", "ADV APP PROGRAM", false, false);
-    when(courseRepository.findByCourseId("CMPSC 156")).thenReturn(Optional.of(existing));
+    Course existing = course("CMPSC   156", "ADV APP PROGRAM", false, false);
+    when(courseRepository.findByCourseId("CMPSC   156")).thenReturn(Optional.of(existing));
 
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/courses/flags?courseId=CMPSC 156&needsTa=true&needsUla=true")
+                put("/api/courses/flags?courseId=CMPSC   156&needsTa=true&needsUla=true")
                     .with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
@@ -111,19 +111,19 @@ public class CoursesControllerTests extends ControllerTestCase {
     assertEquals(true, captor.getValue().isNeedsTa());
     assertEquals(true, captor.getValue().isNeedsUla());
     assertEquals(
-        mapper.writeValueAsString(course("CMPSC 156", "ADV APP PROGRAM", true, true)),
+        mapper.writeValueAsString(course("CMPSC   156", "ADV APP PROGRAM", true, true)),
         response.getResponse().getContentAsString());
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void admin_can_clear_a_flag() throws Exception {
-    Course existing = course("CMPSC 156", "ADV APP PROGRAM", true, true);
-    when(courseRepository.findByCourseId("CMPSC 156")).thenReturn(Optional.of(existing));
+    Course existing = course("CMPSC   156", "ADV APP PROGRAM", true, true);
+    when(courseRepository.findByCourseId("CMPSC   156")).thenReturn(Optional.of(existing));
 
     mockMvc
         .perform(
-            put("/api/courses/flags?courseId=CMPSC 156&needsTa=false&needsUla=true").with(csrf()))
+            put("/api/courses/flags?courseId=CMPSC   156&needsTa=false&needsUla=true").with(csrf()))
         .andExpect(status().isOk());
 
     ArgumentCaptor<Course> captor = ArgumentCaptor.forClass(Course.class);
@@ -135,12 +135,12 @@ public class CoursesControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void updating_flags_on_an_unknown_course_is_a_404() throws Exception {
-    when(courseRepository.findByCourseId("CMPSC 999")).thenReturn(Optional.empty());
+    when(courseRepository.findByCourseId("CMPSC   999")).thenReturn(Optional.empty());
 
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/courses/flags?courseId=CMPSC 999&needsTa=true&needsUla=false")
+                put("/api/courses/flags?courseId=CMPSC   999&needsTa=true&needsUla=false")
                     .with(csrf()))
             .andExpect(status().isNotFound())
             .andReturn();
@@ -148,6 +148,39 @@ public class CoursesControllerTests extends ControllerTestCase {
     verify(courseRepository, never()).save(any());
     Map<String, Object> json = responseToJson(response);
     assertEquals("EntityNotFoundException", json.get("type"));
-    assertEquals("Course with id CMPSC 999 not found", json.get("message"));
+    assertEquals("Course with id CMPSC   999 not found", json.get("message"));
+  }
+
+  /**
+   * Course ids keep the API's fixed-width padding, so lexical order is numeric order. The
+   * controller sorts in Java rather than with an ORDER BY, because Postgres' default collation can
+   * treat spaces as negligible and would put 100 and 130A ahead of 9 and 24.
+   */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void courses_come_back_in_numeric_course_number_order() throws Exception {
+    when(courseRepository.findAll())
+        .thenReturn(
+            List.of(
+                course("CMPSC   156", "Adv App Programming", false, false),
+                course("CMPSC     9", "Intro", false, false),
+                course("CMPSC   130A", "Data Structures", false, false),
+                course("CMPSC    24", "Problem Solving", false, false),
+                course("CMPSC     1A", "Seminar", false, false),
+                course("CMPSC   100", "Ethics", false, false)));
+
+    MvcResult response =
+        mockMvc.perform(get("/api/courses/all")).andExpect(status().isOk()).andReturn();
+
+    List<Course> expected =
+        List.of(
+            course("CMPSC     1A", "Seminar", false, false),
+            course("CMPSC     9", "Intro", false, false),
+            course("CMPSC    24", "Problem Solving", false, false),
+            course("CMPSC   100", "Ethics", false, false),
+            course("CMPSC   130A", "Data Structures", false, false),
+            course("CMPSC   156", "Adv App Programming", false, false));
+
+    assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
   }
 }

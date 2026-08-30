@@ -6,7 +6,9 @@ import edu.ucsb.cs.taapply.repository.CourseRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,7 +31,15 @@ public class CoursesController extends ApiController {
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/all")
   public List<Course> allCourses() {
-    return courseRepository.findAllByOrderByCourseIdAsc();
+    // Sorted here rather than with an ORDER BY. Course ids keep the API's fixed-width padding so
+    // that plain lexical order is numerically correct (see
+    // UCSBCurriculumService.normalizeCourseId), but that relies on a space sorting before a
+    // digit. Postgres' default collation can treat spaces as negligible, which would put 100 and
+    // 130A ahead of 9 and 24; String.compareTo is code-unit order, so it behaves the same on H2
+    // and Postgres regardless of the database's collation.
+    return StreamSupport.stream(courseRepository.findAll().spliterator(), false)
+        .sorted(Comparator.comparing(Course::getCourseId))
+        .toList();
   }
 
   @Operation(

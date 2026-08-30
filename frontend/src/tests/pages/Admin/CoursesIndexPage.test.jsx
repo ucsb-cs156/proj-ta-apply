@@ -59,7 +59,7 @@ describe("CoursesIndexPage tests", () => {
     expect(await screen.findByText("CMPSC")).toBeInTheDocument();
     expect(
       await screen.findByTestId("CoursesIndexPage-cell-row-0-col-courseId"),
-    ).toHaveTextContent("CMPSC 130A");
+    ).toHaveTextContent("CMPSC   130A", { normalizeWhitespace: false });
   });
 
   test("renders the two quarter dropdowns and the level dropdown", async () => {
