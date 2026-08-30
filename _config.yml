@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"iteration1-bootstrap","number":2,"title":"Iteration 1: Bootstrap app with Google OAuth, three independent roles, and bulk grad-student CSV upload","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/2"}]
+pull_requests: []
