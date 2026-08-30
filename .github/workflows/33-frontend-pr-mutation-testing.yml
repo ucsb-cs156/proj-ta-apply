@@ -1,0 +1,17 @@
+name: "33-frontend-pr-mutation-testing: Stryker JS Mutation Testing (JavaScript/Jest)"
+
+# This workflow pulls incremental mutation testing results
+# if they exist for the given PR, and then 
+# uses those incremental results to run mutation testing faster.
+# Reference: https://stryker-mutator.io/docs/stryker-js/incremental/
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: [frontend/**, .github/workflows/33-frontend-pr-mutation-testing.yml]
+
+jobs:
+  call-frontend-pr-mutation-testing:
+    uses: ucsb-cs156/workflows/.github/workflows/33-frontend-pr-mutation-testing.yml@main
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
