@@ -3,8 +3,14 @@ import type { ApiCurrentUser, CurrentUser } from "main/utils/currentUser";
 // ROLE_ADMIN, ROLE_INSTRUCTOR and ROLE_GRAD_STUDENT are independent: there is no role hierarchy,
 // so an admin does NOT implicitly hold the other two. Every signed-in user has ROLE_USER.
 export const apiCurrentUserFixtures = {
+  // A UCSB address with no other role: the backend grants ROLE_UNDERGRAD.
   userOnly: {
     user: { email: "cgaucho@ucsb.edu", givenName: "Gaucho" },
+    roles: [{ authority: "ROLE_USER" }, { authority: "ROLE_UNDERGRAD" }],
+  },
+  // A non-UCSB address gets no undergrad role.
+  nonUcsbUser: {
+    user: { email: "someone@gmail.com", givenName: "Outsider" },
     roles: [{ authority: "ROLE_USER" }],
   },
   adminUser: {
@@ -35,6 +41,13 @@ export const currentUserFixtures = {
     loggedIn: true as const,
     root: {
       ...apiCurrentUserFixtures.userOnly,
+      rolesList: ["ROLE_USER", "ROLE_UNDERGRAD"],
+    },
+  },
+  nonUcsbUser: {
+    loggedIn: true as const,
+    root: {
+      ...apiCurrentUserFixtures.nonUcsbUser,
       rolesList: ["ROLE_USER"],
     },
   },

@@ -13,6 +13,7 @@ import NotFoundPage from "main/pages/Auth/NotFoundPage";
 import AboutTaApply from "main/pages/Help/AboutTaApply";
 import SignInPage from "main/pages/Auth/SignInPage";
 import SignInSuccessPage from "main/pages/Auth/SignInSuccessPage";
+import UnauthorizedPage from "main/pages/Auth/UnauthorizedPage";
 
 import { useCurrentUser } from "main/utils/currentUser";
 import AdminDeveloperPage from "main/pages/Admin/AdminDeveloperPage";
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/about" element={<AboutTaApply />} />
         <Route path="/login" element={<SignInPage />} />
         <Route path="/login/success" element={<SignInSuccessPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route
           path="/admin/admins"
           element={

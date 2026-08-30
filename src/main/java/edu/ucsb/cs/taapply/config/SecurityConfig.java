@@ -47,7 +47,10 @@ public class SecurityConfig {
             oauth2 ->
                 oauth2
                     .userInfoEndpoint(userInfo -> userInfo.oidcUserService(googleSignInService))
-                    .defaultSuccessUrl("/login/success"))
+                    .defaultSuccessUrl("/login/success")
+                    // GoogleSignInServiceImpl rejects users holding none of the access roles;
+                    // they land here rather than on a half-working logged-in page.
+                    .failureUrl("/unauthorized"))
         .csrf(
             csrf ->
                 csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())

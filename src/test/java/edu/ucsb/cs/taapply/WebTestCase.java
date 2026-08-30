@@ -143,6 +143,11 @@ public abstract class WebTestCase {
     login(email);
   }
 
+  /** Log in with no User row and no role granted, to exercise the access gate. */
+  public void loginAs(String email) {
+    login(email);
+  }
+
   private void login(String email) {
     WiremockServiceImpl.setupOauthMocks(wireMockServer, email);
 
