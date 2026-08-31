@@ -7,6 +7,7 @@ edu.ucsb.cs.taapply.errors
 edu.ucsb.cs.taapply.interceptors
 edu.ucsb.cs.taapply.jobs
 edu.ucsb.cs.taapply.model
+edu.ucsb.cs.taapply.models
 edu.ucsb.cs.taapply.repository
 edu.ucsb.cs.taapply.services
 edu.ucsb.cs.taapply.services.wiremock
