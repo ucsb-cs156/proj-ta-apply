@@ -160,7 +160,7 @@ public class UCSBCurriculumService {
       throws Exception {
 <span class="fc" id="L161">    List&lt;UcsbCourseOffering&gt; result = new ArrayList&lt;&gt;();</span>
 
-<span class="pc bpc" id="L163" title="1 of 2 branches missed.">    for (int pageNumber = 1; pageNumber &lt;= MAX_PAGES; pageNumber++) {</span>
+<span class="fc bfc" id="L163" title="All 2 branches covered.">    for (int pageNumber = 1; pageNumber &lt;= MAX_PAGES; pageNumber++) {</span>
 <span class="fc" id="L164">      String url = urlForPage(subjectArea, quarter, LEVEL_ALL, pageNumber, true);</span>
 <span class="fc" id="L165">      log.info(&quot;url={}&quot;, url);</span>
 <span class="fc" id="L166">      ResponseEntity&lt;String&gt; re =</span>
@@ -168,8 +168,8 @@ public class UCSBCurriculumService {
 <span class="fc" id="L168">      UcsbOfferingPage page = objectMapper.readValue(re.getBody(), UcsbOfferingPage.class);</span>
 <span class="fc" id="L169">      List&lt;UcsbCourseOffering&gt; classes = page.getClasses();</span>
 
-<span class="pc bpc" id="L171" title="1 of 4 branches missed.">      if (classes == null || classes.isEmpty()) {</span>
-<span class="nc" id="L172">        break;</span>
+<span class="fc bfc" id="L171" title="All 4 branches covered.">      if (classes == null || classes.isEmpty()) {</span>
+<span class="fc" id="L172">        break;</span>
       }
 <span class="fc" id="L174">      result.addAll(classes);</span>
 <span class="fc bfc" id="L175" title="All 2 branches covered.">      if (classes.size() &lt; PAGE_SIZE) {</span>

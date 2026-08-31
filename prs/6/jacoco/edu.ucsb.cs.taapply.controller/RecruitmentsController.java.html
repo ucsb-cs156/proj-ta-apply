@@ -56,32 +56,32 @@ import org.springframework.web.bind.annotation.RestController;
           LocalDate primaryConsiderationDate) {
 
     // Validate before writing; ApiController maps IllegalArgumentException to 400.
-<span class="nc" id="L59">    Quarter.yyyyqToInt(quarter);</span>
+<span class="fc" id="L59">    Quarter.yyyyqToInt(quarter);</span>
 
-<span class="nc bnc" id="L61" title="All 2 branches missed.">    if (recruitmentRepository.existsByQuarterAndType(quarter, type)) {</span>
-<span class="nc" id="L62">      throw new IllegalArgumentException(</span>
-<span class="nc" id="L63">          String.format(&quot;A %s recruitment already exists for quarter %s&quot;, type, quarter));</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">    if (recruitmentRepository.existsByQuarterAndType(quarter, type)) {</span>
+<span class="fc" id="L62">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L63">          String.format(&quot;A %s recruitment already exists for quarter %s&quot;, type, quarter));</span>
     }
 
-<span class="nc" id="L66">    Recruitment recruitment =</span>
-<span class="nc" id="L67">        recruitmentRepository.save(</span>
-<span class="nc" id="L68">            Recruitment.builder()</span>
-<span class="nc" id="L69">                .quarter(quarter)</span>
-<span class="nc" id="L70">                .type(type)</span>
-<span class="nc" id="L71">                .applicationStatus(ApplicationStatus.CLOSED)</span>
-<span class="nc" id="L72">                .tentativeOpeningDate(tentativeOpeningDate)</span>
-<span class="nc" id="L73">                .primaryConsiderationDate(primaryConsiderationDate)</span>
-<span class="nc" id="L74">                .build());</span>
+<span class="fc" id="L66">    Recruitment recruitment =</span>
+<span class="fc" id="L67">        recruitmentRepository.save(</span>
+<span class="fc" id="L68">            Recruitment.builder()</span>
+<span class="fc" id="L69">                .quarter(quarter)</span>
+<span class="fc" id="L70">                .type(type)</span>
+<span class="fc" id="L71">                .applicationStatus(ApplicationStatus.CLOSED)</span>
+<span class="fc" id="L72">                .tentativeOpeningDate(tentativeOpeningDate)</span>
+<span class="fc" id="L73">                .primaryConsiderationDate(primaryConsiderationDate)</span>
+<span class="fc" id="L74">                .build());</span>
 
-<span class="nc" id="L76">    jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));</span>
-<span class="nc" id="L77">    return recruitment;</span>
+<span class="fc" id="L76">    jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));</span>
+<span class="fc" id="L77">    return recruitment;</span>
   }
 
   @Operation(summary = &quot;List all recruitments, most recent quarter first&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @GetMapping(&quot;/all&quot;)
   public List&lt;Recruitment&gt; allRecruitments() {
-<span class="nc" id="L84">    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();</span>
+<span class="fc" id="L84">    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();</span>
   }
 
   @Operation(
@@ -95,23 +95,23 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;status&quot;) @RequestParam ApplicationStatus status) {
 
-<span class="nc" id="L98">    Recruitment recruitment =</span>
+<span class="fc" id="L98">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="nc" id="L100">            .findById(id)</span>
-<span class="nc" id="L101">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc" id="L100">            .findById(id)</span>
+<span class="fc" id="L101">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
 
-<span class="nc" id="L103">    LocalDate today = LocalDate.now();</span>
-<span class="nc bnc" id="L104" title="All 2 branches missed.">    if (status == ApplicationStatus.OPEN) {</span>
-<span class="nc bnc" id="L105" title="All 2 branches missed.">      if (recruitment.getActualOpeningDate() == null) {</span>
-<span class="nc" id="L106">        recruitment.setActualOpeningDate(today);</span>
+<span class="fc" id="L103">    LocalDate today = LocalDate.now();</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">    if (status == ApplicationStatus.OPEN) {</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">      if (recruitment.getActualOpeningDate() == null) {</span>
+<span class="fc" id="L106">        recruitment.setActualOpeningDate(today);</span>
       }
     } else {
-<span class="nc" id="L109">      recruitment.setActualClosingDate(today);</span>
+<span class="fc" id="L109">      recruitment.setActualClosingDate(today);</span>
     }
-<span class="nc" id="L111">    recruitment.setApplicationStatus(status);</span>
+<span class="fc" id="L111">    recruitment.setApplicationStatus(status);</span>
 
-<span class="nc" id="L113">    recruitmentRepository.save(recruitment);</span>
-<span class="nc" id="L114">    return recruitment;</span>
+<span class="fc" id="L113">    recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L114">    return recruitment;</span>
   }
 
   @Operation(
@@ -120,13 +120,13 @@ import org.springframework.web.bind.annotation.RestController;
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @DeleteMapping(&quot;/delete&quot;)
   public Object deleteRecruitment(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
-<span class="nc" id="L123">    Recruitment recruitment =</span>
+<span class="fc" id="L123">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="nc" id="L125">            .findById(id)</span>
-<span class="nc" id="L126">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc" id="L125">            .findById(id)</span>
+<span class="fc" id="L126">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
 
-<span class="nc" id="L128">    recruitmentRepository.delete(recruitment);</span>
-<span class="nc" id="L129">    return genericMessage(&quot;Recruitment with id %s deleted&quot;.formatted(id));</span>
+<span class="fc" id="L128">    recruitmentRepository.delete(recruitment);</span>
+<span class="fc" id="L129">    return genericMessage(&quot;Recruitment with id %s deleted&quot;.formatted(id));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
