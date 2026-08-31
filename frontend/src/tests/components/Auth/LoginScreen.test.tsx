@@ -54,6 +54,17 @@ describe("LoginScreen", () => {
     ).toBeInTheDocument();
   });
 
+  test("the banner breaks the line between 'Welcome to' and 'TA Apply'", () => {
+    renderLoginScreen(systemInfoFixtures.showingNeither);
+
+    // getByText normalizes whitespace, so it still finds the banner as one phrase; the raw
+    // textContent is what carries the break.
+    const banner = screen.getByText("Welcome to TA Apply");
+    expect(banner.textContent).toBe("Welcome to\nTA Apply");
+    // Without pre-line the newline would render as a space rather than a break.
+    expect(banner).toHaveStyle({ whiteSpace: "pre-line" });
+  });
+
   test("clicking the button navigates to the systemInfo oauthLogin url", () => {
     renderLoginScreen({
       ...systemInfoFixtures.showingNeither,

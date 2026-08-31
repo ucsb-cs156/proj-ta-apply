@@ -52,6 +52,16 @@ public class HomePageWebIT extends WebTestCase {
     assertThat(page.getByTestId("HomePageLoggedIn-admin")).isVisible();
     // Roles are independent: being an admin does not make you a grad student.
     assertThat(page.getByTestId("HomePageLoggedIn-gradstudent")).not().isVisible();
+    // Nor an undergrad who would apply for a ULA position.
+    assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).not().isVisible();
+  }
+
+  @Test
+  public void logged_in_instructor_does_not_see_the_ula_message() throws Exception {
+    setupInstructorUser();
+
+    assertThat(page.getByTestId("HomePageLoggedIn-instructor")).isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).not().isVisible();
   }
 
   @Test

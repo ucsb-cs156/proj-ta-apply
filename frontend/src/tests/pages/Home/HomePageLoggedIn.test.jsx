@@ -35,6 +35,21 @@ describe("HomePageLoggedIn tests", () => {
     ).toHaveTextContent("Welcome, Gaucho.");
   });
 
+  test("the ULA message is shown for ROLE_UNDERGRAD", async () => {
+    renderHome(apiCurrentUserFixtures.userOnly);
+    expect(
+      await screen.findByTestId("HomePageLoggedIn-undergrad"),
+    ).toBeInTheDocument();
+  });
+
+  /** The backend withholds ROLE_UNDERGRAD from a non-UCSB address, so the message is withheld. */
+  test("a signed-in user without ROLE_UNDERGRAD sees no ULA message", async () => {
+    renderHome(apiCurrentUserFixtures.nonUcsbUser);
+
+    await screen.findByTestId("HomePageLoggedIn-greeting");
+    expect(screen.queryByTestId("HomePageLoggedIn-undergrad")).toBeNull();
+  });
+
   test("a plain user sees only the ULA message", async () => {
     renderHome(apiCurrentUserFixtures.userOnly);
     await screen.findByTestId("HomePageLoggedIn-undergrad");
@@ -49,12 +64,15 @@ describe("HomePageLoggedIn tests", () => {
     // Roles are independent: admin does not imply grad student.
     expect(screen.queryByTestId("HomePageLoggedIn-gradstudent")).toBeNull();
     expect(screen.queryByTestId("HomePageLoggedIn-instructor")).toBeNull();
+    // An admin is not an undergrad applying for a ULA position.
+    expect(screen.queryByTestId("HomePageLoggedIn-undergrad")).toBeNull();
   });
 
-  test("an instructor sees the instructor message", async () => {
+  test("an instructor sees the instructor message and not the ULA message", async () => {
     renderHome(apiCurrentUserFixtures.instructorUser);
     await screen.findByTestId("HomePageLoggedIn-instructor");
     expect(screen.queryByTestId("HomePageLoggedIn-admin")).toBeNull();
+    expect(screen.queryByTestId("HomePageLoggedIn-undergrad")).toBeNull();
   });
 
   test("a grad student sees the TA message and not the ULA message", async () => {
@@ -67,5 +85,6 @@ describe("HomePageLoggedIn tests", () => {
     renderHome(apiCurrentUserFixtures.instructorAndGradStudentUser);
     await screen.findByTestId("HomePageLoggedIn-instructor");
     await screen.findByTestId("HomePageLoggedIn-gradstudent");
+    expect(screen.queryByTestId("HomePageLoggedIn-undergrad")).toBeNull();
   });
 });

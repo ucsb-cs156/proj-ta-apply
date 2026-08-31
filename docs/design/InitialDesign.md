@@ -44,11 +44,50 @@ There will be a way for the admin to click a checkbox (or unclick it) to indicat
 
 # Third Iteration
 
-There will be a way for the admin to specify an upcoming quarter, and pull a live table of the full information about courses offered in an upcoming quarter that have either the TA or the ULA flag checked.
+For the third iteration, we want to add the idea of a Recruitment.
 
-This information will be cached and refreshed every 24 * 60 * 60 minutes (this parameter should be configurable.)
+Admins will have the ability to create a recruitment.
 
-This information will be presented in a table.
+There will be a database table for recruitments, which will store the following fields:
+
+* Quarter (in YYYYQ format, but displayed in QYY format)
+* Type (either TA or ULA)
+* Application Status: Open or Closed (starts closed, and set manually)
+* Tentative Opening Date (required; used to inform users)
+* Actual Opening Date (recorded automatically when applications are first opened)
+* Primary Consideration Date (required; used to inform users)
+* Actual Closing Date (recorded automatically when applications are closed)
+
+Note that we may build features for automatically opening and closing recruitments in the future, but for the mininmum viable product, we are keeping it simple, and making opening and closing the applications manual.
+
+Designing a protocol for opening and closing automatically that also allows manual override is complicated.
+
+Once a recruitment is created, a job will be launched that fills a table of "RecruitmentCourses" with only the courses that are (a) in the Courses table and that recruit for TA or ULAs and (b) are offered during the upcoming quarter.
+
+There should be a button the Admin can click to populate this table, as well as a button to remove any rows from the table if TA or ULAs should not be included in the recruitment for that quarter.  
+
+Each field in the RecruitmentCourses table will have:
+
+* id
+* recruitmentId
+* courseId (e.g. `CMPSC     1A`, `CMPSC   130A`)
+* instructor
+* day(s) (first one, for primary only)
+* time(s) (first one, for primary only)
+* room
+* enrollment
+* max enroll
+* status (i.e. open, closed, cancelled, etc.)
+* summer session (only shown for summer session courses, but column is always present)
+
+
+The Admin should have an Admin/Recruitment menu, and the recruitments should then appear in a table with the default sort order being most recent first, and least recent last.  There should be a button in each row of that table called "Courses" that takes the Admin to a page:
+
+`/admin/recruitments/:recruitmentId/courses`
+
+that shows a table of the Recruitment Courses.  
+
+This table should be sorted by course id in the same way as Admin/Courses is sorted.
 
 # Fourth iteration
 

@@ -1,11 +1,14 @@
 package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.jobs.PopulateCoursesJobFactory;
 import edu.ucsb.cs.taapply.jobs.TestJob;
+import edu.ucsb.cs.taapply.models.Quarter;
 import edu.ucsb.cs156.jobs.entities.Job;
 import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +31,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class JobsController extends ApiController {
 
+  static final List<String> VALID_LEVELS = List.of("U", "G", "A");
+
   @Autowired private JobService jobService;
+
+  @Autowired private PopulateCoursesJobFactory populateCoursesJobFactory;
 
   @Operation(summary = "Launch the test job")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -37,5 +44,32 @@ public class JobsController extends ApiController {
       @Parameter(name = "fail") @RequestParam(defaultValue = "false") boolean fail,
       @Parameter(name = "sleepMs") @RequestParam(defaultValue = "0") int sleepMs) {
     return jobService.runAsJob(TestJob.builder().fail(fail).sleepMs(sleepMs).build());
+  }
+
+  @Operation(
+      summary = "Populate the course table from the UCSB API over a range of quarters",
+      description =
+          "Walks every quarter from startQuarter to endQuarter inclusive, adding any courses in the"
+              + " configured subject area that are not already present. Existing courses keep their"
+              + " TA/ULA flags, and nothing is ever deleted.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/launch/populateCourses")
+  public Job launchPopulateCourses(
+      @Parameter(name = "startQuarter", description = "YYYYQ, e.g. 20241") @RequestParam
+          String startQuarter,
+      @Parameter(name = "endQuarter", description = "YYYYQ, e.g. 20244") @RequestParam
+          String endQuarter,
+      @Parameter(name = "level", description = "U (undergrad), G (grad) or A (all)") @RequestParam
+          String level) {
+
+    // Validate before launching so a bad range is a 400 rather than a job that fails immediately.
+    // ApiController maps IllegalArgumentException to 400.
+    Quarter.quarterList(startQuarter, endQuarter);
+    if (!VALID_LEVELS.contains(level)) {
+      throw new IllegalArgumentException(
+          String.format("Level must be one of %s, was: %s", VALID_LEVELS, level));
+    }
+
+    return jobService.runAsJob(populateCoursesJobFactory.create(startQuarter, endQuarter, level));
   }
 }

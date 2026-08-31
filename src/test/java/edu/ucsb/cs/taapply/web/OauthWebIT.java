@@ -59,4 +59,18 @@ public class OauthWebIT extends WebTestCase {
     assertThat(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Admin")))
         .isVisible();
   }
+
+  /**
+   * Someone who can complete a Google login but holds none of the app's access roles is turned away
+   * rather than landing on a logged-in page with nothing on it. No session is established, so there
+   * is nothing to log out of.
+   */
+  @Test
+  public void a_user_with_no_access_role_is_sent_to_the_unauthorized_page() throws Exception {
+    loginAs("outsider@gmail.com");
+
+    assertThat(page.getByTestId("UnauthorizedPage-message"))
+        .containsText("You are not authorized to access this application");
+    assertThat(page.getByText("Log Out")).not().isVisible();
+  }
 }

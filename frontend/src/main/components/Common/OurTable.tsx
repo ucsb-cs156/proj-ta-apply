@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import {
   createColumnHelper,
   flexRender,
@@ -14,6 +14,12 @@ import {
   convertOldStyleColumnsToNewStyle,
   type LegacyColumn,
 } from "main/components/Common/OurTableUtils";
+
+/** Optional per-column presentation, passed through a column's `meta` key. */
+type ColumnStyleMeta = { style?: CSSProperties };
+
+const styleOf = (meta: unknown): CSSProperties | undefined =>
+  (meta as ColumnStyleMeta | undefined)?.style;
 
 type OurTableProps<T extends object> = {
   data: T[];
@@ -58,6 +64,7 @@ export default function OurTable<T extends object>({
                 data-testid={`${testid}-header-${header.column.id}`}
                 key={`${testid}-header-${header.column.id}`}
                 colSpan={header.colSpan}
+                style={styleOf(header.column.columnDef.meta)}
               >
                 {header.isPlaceholder ? null : (
                   <div
@@ -96,6 +103,7 @@ export default function OurTable<T extends object>({
                     data-testid={testId}
                     // Stryker disable next-line StringLiteral : React key property not exposed in dom
                     key={testId}
+                    style={styleOf(cell.column.columnDef.meta)}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

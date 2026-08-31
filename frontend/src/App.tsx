@@ -7,11 +7,13 @@ import InstructorsIndexPage from "main/pages/Admin/InstructorsIndexPage";
 import InstructorsCreatePage from "main/pages/Admin/InstructorsCreatePage";
 import GradStudentsIndexPage from "main/pages/Admin/GradStudentsIndexPage";
 import GradStudentsCreatePage from "main/pages/Admin/GradStudentsCreatePage";
+import CoursesIndexPage from "main/pages/Admin/CoursesIndexPage";
 import ProtectedPage from "main/pages/Auth/ProtectedPage";
 import NotFoundPage from "main/pages/Auth/NotFoundPage";
 import AboutTaApply from "main/pages/Help/AboutTaApply";
 import SignInPage from "main/pages/Auth/SignInPage";
 import SignInSuccessPage from "main/pages/Auth/SignInSuccessPage";
+import UnauthorizedPage from "main/pages/Auth/UnauthorizedPage";
 
 import { useCurrentUser } from "main/utils/currentUser";
 import AdminDeveloperPage from "main/pages/Admin/AdminDeveloperPage";
@@ -39,6 +41,7 @@ export default function App() {
         <Route path="/about" element={<AboutTaApply />} />
         <Route path="/login" element={<SignInPage />} />
         <Route path="/login/success" element={<SignInSuccessPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route
           path="/admin/admins"
           element={
@@ -94,6 +97,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<GradStudentsCreatePage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/courses"
+          element={
+            <ProtectedPage
+              component={<CoursesIndexPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

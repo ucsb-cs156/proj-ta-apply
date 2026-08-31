@@ -1,22 +1,17 @@
 package edu.ucsb.cs.taapply.services;
 
 import edu.ucsb.cs.taapply.entity.User;
-import edu.ucsb.cs.taapply.repository.AdminRepository;
-import edu.ucsb.cs.taapply.repository.GradStudentRepository;
-import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
@@ -25,12 +20,7 @@ import org.springframework.stereotype.Service;
 public class GoogleSignInServiceImpl extends OidcUserService implements GoogleSignInService {
 
   @Autowired private UserRepository userRepository;
-  @Autowired private AdminRepository adminRepository;
-  @Autowired private InstructorRepository instructorRepository;
-  @Autowired private GradStudentRepository gradStudentRepository;
-
-  @Value("#{'${app.admin.emails}'.split(',')}")
-  private List<String> adminEmails;
+  @Autowired private RoleAssignmentService roleAssignmentService;
 
   @Override
   public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
@@ -48,20 +38,16 @@ public class GoogleSignInServiceImpl extends OidcUserService implements GoogleSi
 
     String email = oidcUser.getEmail();
 
-    // The three roles are independent, so these are separate ifs rather than an else-if chain.
-    // ROLE_USER is granted unconditionally: there is no RoleHierarchy to back-fill it, so without
-    // this an admin would fail hasRole('ROLE_USER') on /api/currentUser.
-    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+    // Shared with RoleUpdateInterceptor so login and per-request role refresh cannot disagree.
+    authorities.addAll(roleAssignmentService.authoritiesFor(email));
 
-    if ((adminEmails != null && adminEmails.contains(email))
-        || adminRepository.existsByEmail(email)) {
-      authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-    }
-    if (instructorRepository.existsByEmail(email)) {
-      authorities.add(new SimpleGrantedAuthority("ROLE_INSTRUCTOR"));
-    }
-    if (gradStudentRepository.existsByEmail(email)) {
-      authorities.add(new SimpleGrantedAuthority("ROLE_GRAD_STUDENT"));
+    // Turn away anyone with none of the access roles, before creating a User row for them.
+    // Throwing here fails the OAuth flow, so no session is established at all; SecurityConfig
+    // sends them to /unauthorized.
+    if (!RoleAssignmentService.grantsAccess(authorities)) {
+      throw new OAuth2AuthenticationException(
+          new OAuth2Error("unauthorized_user"),
+          "Not authorized to access this application: " + email);
     }
 
     String fullName = oidcUser.getFullName();

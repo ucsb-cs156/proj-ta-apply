@@ -33,7 +33,8 @@ export default function GradStudentsCreatePage({
   const mutation = useBackendMutation(
     objectToAxiosParams,
     { onSuccess },
-    ["/api/admin/gradstudents/all"], // mutation makes this key stale so that pages relying on it reload
+    // Must match the key the index page reads ("/get"); invalidating "/all" hit nothing.
+    ["/api/admin/gradstudents/get"],
   );
 
   const onSubmit = async (data: RoleEmailFormFields) => {

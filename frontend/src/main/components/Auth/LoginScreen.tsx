@@ -50,9 +50,13 @@ export default function LoginScreen({ onLogin }: { onLogin?: () => void }) {
             borderLeft: "1.5px solid #1E293B",
             borderRight: "4px solid #1E293B",
             borderBottom: "4px solid #1E293B",
+            // pre-line keeps the newline below as a line break while still collapsing it to a
+            // single space for accessible text, so the banner reads as one phrase to screen
+            // readers and to getByText("Welcome to TA Apply").
+            whiteSpace: "pre-line",
           }}
         >
-          Welcome to TA Apply
+          {"Welcome to\nTA Apply"}
         </div>
         <div
           style={{

@@ -166,7 +166,7 @@ describe("GradStudentsCreatePage tests", () => {
     expect(useBackendMutationSpy).toHaveBeenCalledWith(
       expect.any(Function),
       { onSuccess: expect.any(Function) },
-      [`/api/admin/gradstudents/all`],
+      [`/api/admin/gradstudents/get`],
     );
   });
 });

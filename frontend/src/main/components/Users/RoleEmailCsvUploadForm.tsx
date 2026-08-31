@@ -1,36 +1,44 @@
 import { useForm } from "react-hook-form";
 import { Button, Form } from "react-bootstrap";
 
-export type GradStudentCSVUploadFormFields = {
+export type RoleEmailCsvUploadFormFields = {
   upload: FileList;
 };
 
-type GradStudentCSVUploadFormProps = {
-  submitAction: (data: GradStudentCSVUploadFormFields) => void;
+type RoleEmailCsvUploadFormProps = {
+  submitAction: (data: RoleEmailCsvUploadFormFields) => void;
+  label: string;
+  testIdPrefix: string;
 };
 
-export default function GradStudentCSVUploadForm({
+/**
+ * Upload form for bulk-adding email addresses to one of the role tables. Shared by the grad
+ * students and instructors pages so both behave identically; only the label and test id prefix
+ * differ.
+ */
+export default function RoleEmailCsvUploadForm({
   submitAction,
-}: GradStudentCSVUploadFormProps): React.JSX.Element {
+  label,
+  testIdPrefix,
+}: RoleEmailCsvUploadFormProps): React.JSX.Element {
   // Stryker disable all
   const {
     register,
     formState: { errors },
     handleSubmit,
-  } = useForm<GradStudentCSVUploadFormFields>();
+  } = useForm<RoleEmailCsvUploadFormFields>();
   // Stryker restore all
 
-  const testIdPrefix = "GradStudentCSVUploadForm";
+  // Unique per instance, so two of these forms could coexist on one page.
+  const inputId = `${testIdPrefix}-upload-input`;
 
   return (
     <Form onSubmit={handleSubmit(submitAction)}>
       <Form.Group className="mb-2">
-        <Form.Label htmlFor="upload">
-          Upload Grad Student Emails (CSV)
-        </Form.Label>
+        <Form.Label htmlFor={inputId}>{label}</Form.Label>
         <Form.Control
           data-testid={testIdPrefix + "-upload"}
-          id="upload"
+          id={inputId}
           type="file"
           accept=".csv"
           isInvalid={Boolean(errors.upload)}

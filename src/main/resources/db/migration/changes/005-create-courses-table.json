@@ -1,0 +1,47 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "005-create-courses-table",
+        "author": "pc",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "courses" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "courses",
+              "columns": [
+                {
+                  "column": {
+                    "name": "course_id",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "primaryKey": true, "nullable": false }
+                  }
+                },
+                { "column": { "name": "title", "type": "VARCHAR(255)" } },
+                {
+                  "column": {
+                    "name": "needs_ta",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "needs_ula",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

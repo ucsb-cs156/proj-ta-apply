@@ -13,6 +13,7 @@ import edu.ucsb.cs.taapply.entity.GradStudent;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
+import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.GradStudentRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
@@ -35,13 +36,14 @@ public abstract class WebTestCase {
   @Autowired AdminRepository adminRepository;
   @Autowired InstructorRepository instructorRepository;
   @Autowired GradStudentRepository gradStudentRepository;
+  @Autowired protected CourseRepository courseRepository;
 
   @LocalServerPort private int port;
 
   @Value("${app.playwright.headless:true}")
   private boolean runHeadless;
 
-  private static WireMockServer wireMockServer;
+  protected static WireMockServer wireMockServer;
 
   protected Browser browser;
   protected Page page;
@@ -52,6 +54,17 @@ public abstract class WebTestCase {
         new WireMockServer(
             options().port(8090).globalTemplating(true).extensions(new JwtExtensionFactory()));
     WiremockServiceImpl.setupOauthMocks(wireMockServer, "cgaucho@ucsb.edu");
+    // Spring 2021, so UcsbQuarterService derives an end quarter of Fall 2021 (Spring looks two
+    // ahead). With app.startQtrYYYYQ=20211 that gives the dropdowns a fixed 20211..20214 range,
+    // and exercises the real derivation rather than the offline fallback.
+    wireMockServer.stubFor(
+        com.github.tomakehurst.wiremock.client.WireMock.get(
+                com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo(
+                    "/academics/quartercalendar/v1/quarters/current"))
+            .willReturn(
+                com.github.tomakehurst.wiremock.client.WireMock.aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("{\"quarter\":\"20212\"}")));
     wireMockServer.start();
   }
 
@@ -127,6 +140,11 @@ public abstract class WebTestCase {
       adminRepository.save(Admin.builder().email(email).build());
     }
 
+    login(email);
+  }
+
+  /** Log in with no User row and no role granted, to exercise the access gate. */
+  public void loginAs(String email) {
     login(email);
   }
 

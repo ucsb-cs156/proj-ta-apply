@@ -55,7 +55,7 @@ describe("AdminJobsPage tests", () => {
       </QueryClientProvider>,
     );
 
-    await screen.findByText("Update All Users");
+    await screen.findByText("Test Job");
   });
 
   test("renders job table with data", async () => {
@@ -88,9 +88,9 @@ describe("AdminJobsPage tests", () => {
     expect(queryClient.getQueryData(["/api/jobs/all"])).toEqual(jobsFixture);
   });
 
-  test("clicking Update All Users button calls the correct API", async () => {
+  test("clicking the Test Job button calls the correct API", async () => {
     axiosMock.onGet("/api/jobs/all").reply(200, []);
-    axiosMock.onPost("/api/jobs/launch/updateAll").reply(200, {
+    axiosMock.onPost("/api/jobs/launch/testjob").reply(200, {
       id: 1,
       status: "running",
     });
@@ -114,24 +114,22 @@ describe("AdminJobsPage tests", () => {
     const currentUserUpdateCount = queryClientSpecific.getQueryState([
       "current user",
     ]).dataUpdateCount;
-    const updateAllUpdateCount = queryClientSpecific.getQueryState([
+    const testJobUpdateCount = queryClientSpecific.getQueryState([
       "/api/jobs/all",
     ]).dataUpdateCount;
     // Find and click the button inside the accordion
-    const updateAllUsersButton = await screen.findByTestId(
-      "updateAllJob-job-submit",
-    );
-    expect(updateAllUsersButton).toHaveTextContent("Start");
-    fireEvent.click(updateAllUsersButton);
+    const testJobButton = await screen.findByTestId("testJob-job-submit");
+    expect(testJobButton).toHaveTextContent("Start");
+    fireEvent.click(testJobButton);
 
     await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
-    expect(axiosMock.history.post[0].url).toBe("/api/jobs/launch/updateAll");
+    expect(axiosMock.history.post[0].url).toBe("/api/jobs/launch/testjob");
     expect(
       queryClientSpecific.getQueryState(["current user"]).dataUpdateCount,
     ).toBe(currentUserUpdateCount);
     expect(
       queryClientSpecific.getQueryState(["/api/jobs/all"]).dataUpdateCount,
-    ).toBe(updateAllUpdateCount + 1);
+    ).toBe(testJobUpdateCount + 1);
   });
 
   test("clicking Purge Job Log button calls the correct API", async () => {
@@ -159,7 +157,7 @@ describe("AdminJobsPage tests", () => {
     const currentUserUpdateCount = queryClientSpecific.getQueryState([
       "current user",
     ]).dataUpdateCount;
-    const updateAllUpdateCount = queryClientSpecific.getQueryState([
+    const testJobUpdateCount = queryClientSpecific.getQueryState([
       "/api/jobs/all",
     ]).dataUpdateCount;
     const purgeJobLogButton = await screen.findByTestId("purgeJobLog");
@@ -172,6 +170,6 @@ describe("AdminJobsPage tests", () => {
     ).toBe(currentUserUpdateCount);
     expect(
       queryClientSpecific.getQueryState(["/api/jobs/all"]).dataUpdateCount,
-    ).toBe(updateAllUpdateCount + 1);
+    ).toBe(testJobUpdateCount + 1);
   });
 });

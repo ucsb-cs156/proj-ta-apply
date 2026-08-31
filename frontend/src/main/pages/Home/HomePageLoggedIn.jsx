@@ -9,6 +9,8 @@ export default function HomePageLoggedIn() {
   const isAdmin = hasRole(currentUser, "ROLE_ADMIN");
   const isInstructor = hasRole(currentUser, "ROLE_INSTRUCTOR");
   const isGradStudent = hasRole(currentUser, "ROLE_GRAD_STUDENT");
+  // Granted by the backend to a UCSB address holding none of the other roles.
+  const isUndergrad = hasRole(currentUser, "ROLE_UNDERGRAD");
 
   return (
     <BasicLayout>
@@ -35,10 +37,24 @@ export default function HomePageLoggedIn() {
             positions once applications open.
           </p>
         )}
-        {!isGradStudent && (
-          <p data-testid="HomePageLoggedIn-undergrad">
-            You will be able to apply for ULA positions once applications open.
-          </p>
+        {isUndergrad && (
+          <div data-testid="HomePageLoggedIn-undergrad">
+            <p>
+              You will be able to apply for ULA positions once applications
+              open.
+            </p>
+            <p>If you:</p>
+            <ul>
+              <li>
+                are an instructor that needs to review TA/ULA applications
+              </li>
+              <li>are a grad student that wants to apply for TA positions</li>
+            </ul>
+            <p>
+              Please request instructor or grad student access. (TODO: Insert
+              instructions here.)
+            </p>
+          </div>
         )}
       </div>
     </BasicLayout>

@@ -124,6 +124,7 @@ describe("AppNavbar tests", () => {
       "Admins",
       "Instructors",
       "Grad Students",
+      "Courses",
       "Jobs",
       "Developer Info",
     ];

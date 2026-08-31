@@ -18,4 +18,7 @@ public class SystemInfo {
   private String commitMessage;
   private String commitId;
   private String githubUrl; // URL to the commit in the source repository
+  private String subjectArea; // the single subject area this app manages, e.g. CMPSC
+  private String startQtrYYYYQ; // inclusive bounds for the admin Courses page quarter dropdowns
+  private String endQtrYYYYQ;
 }

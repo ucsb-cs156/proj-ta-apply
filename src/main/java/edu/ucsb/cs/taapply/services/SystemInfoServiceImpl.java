@@ -25,6 +25,16 @@ public class SystemInfoServiceImpl extends SystemInfoService {
   @Value("${app.sourceRepo:https://github.com/ucsb-cs156/proj-ta-apply}")
   private String sourceRepo;
 
+  @Value("${app.subjectArea:CMPSC}")
+  private String subjectArea;
+
+  @Value("${app.startQtrYYYYQ:20211}")
+  private String startQtrYYYYQ;
+
+  // The end of the range is derived from the quarter UCSB says it currently is, so it keeps
+  // itself current as quarters roll over; only the start needs configuring.
+  @Autowired private UcsbQuarterService ucsbQuarterService;
+
   @Autowired(required = false)
   private GitProperties gitProperties;
 
@@ -44,6 +54,9 @@ public class SystemInfoServiceImpl extends SystemInfoService {
             .commitMessage(commitMessage)
             .commitId(commitId)
             .githubUrl(this.sourceRepo + "/commit/" + commitId)
+            .subjectArea(this.subjectArea)
+            .startQtrYYYYQ(this.startQtrYYYYQ)
+            .endQtrYYYYQ(ucsbQuarterService.getEndQtrYYYYQ())
             .build();
     log.info("getSystemInfo returns {}", si);
     return si;

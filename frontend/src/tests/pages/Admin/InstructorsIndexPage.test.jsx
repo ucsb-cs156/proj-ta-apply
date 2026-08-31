@@ -1,4 +1,5 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import InstructorsIndexPage from "main/pages/Admin/InstructorsIndexPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
@@ -184,6 +185,82 @@ describe("InstructorsIndexPage tests", () => {
       [`/api/admin/instructors/get`],
       { method: "GET", url: `/api/admin/instructors/get` },
       [],
+    );
+  });
+  test("uploading a CSV posts it and toasts the summary", async () => {
+    setupAdminUser();
+    axiosMock
+      .onGet("/api/admin/instructors/get")
+      .reply(200, roleEmailFixtures.threeItems);
+    axiosMock.onPost("/api/admin/instructors/upload/csv").reply(200, {
+      inserted: 2,
+      alreadyPresent: 1,
+      invalid: 0,
+      invalidEmails: [],
+    });
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <InstructorsIndexPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const file = new File(["email\na@ucsb.edu\n"], "grads.csv", {
+      type: "text/csv",
+    });
+    await userEvent.upload(
+      screen.getByTestId("InstructorCSVUploadForm-upload"),
+      file,
+    );
+    await userEvent.click(screen.getByTestId("InstructorCSVUploadForm-submit"));
+
+    await waitFor(() => {
+      expect(
+        axiosMock.history.post.filter(
+          (r) => r.url === "/api/admin/instructors/upload/csv",
+        ),
+      ).toHaveLength(1);
+    });
+    await waitFor(() => expect(mockToast).toHaveBeenCalled());
+    expect(mockToast).toHaveBeenCalledWith(
+      "Upload complete: 2 added, 1 already present, 0 invalid",
+    );
+  });
+
+  test("invalid emails from the upload are listed in the toast", async () => {
+    setupAdminUser();
+    axiosMock
+      .onGet("/api/admin/instructors/get")
+      .reply(200, roleEmailFixtures.threeItems);
+    axiosMock.onPost("/api/admin/instructors/upload/csv").reply(200, {
+      inserted: 1,
+      alreadyPresent: 0,
+      invalid: 2,
+      invalidEmails: ["nope", "also-nope"],
+    });
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <InstructorsIndexPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const file = new File(["email\nnope\n"], "grads.csv", {
+      type: "text/csv",
+    });
+    await userEvent.upload(
+      screen.getByTestId("InstructorCSVUploadForm-upload"),
+      file,
+    );
+    await userEvent.click(screen.getByTestId("InstructorCSVUploadForm-submit"));
+
+    await waitFor(() => expect(mockToast).toHaveBeenCalled());
+    expect(mockToast).toHaveBeenCalledWith(
+      "Upload complete: 1 added, 0 already present, 2 invalid (nope, also-nope)",
     );
   });
 });

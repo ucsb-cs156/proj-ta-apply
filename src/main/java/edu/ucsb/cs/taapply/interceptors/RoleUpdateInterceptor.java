@@ -1,19 +1,14 @@
 package edu.ucsb.cs.taapply.interceptors;
 
-import edu.ucsb.cs.taapply.repository.AdminRepository;
-import edu.ucsb.cs.taapply.repository.GradStudentRepository;
-import edu.ucsb.cs.taapply.repository.InstructorRepository;
+import edu.ucsb.cs.taapply.services.RoleAssignmentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -22,31 +17,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Reloads a user's security context on each request so that role changes (admin, instructor or grad
- * student added or removed in the database) take effect without requiring re-login.
+ * Recomputes a user's roles on each request, so a role added or removed in the database takes
+ * effect without requiring re-login.
  *
- * <p>The three roles are independent: a user may hold any combination of them. There is
- * deliberately no {@code RoleHierarchy} bean, so every authenticated user is granted {@code
- * ROLE_USER} unconditionally rather than inheriting it from a higher role.
+ * <p>The roles themselves are decided by {@link RoleAssignmentService}, shared with the sign-in
+ * path so the two cannot drift. Here we only strip the roles that service owns and replace them,
+ * leaving any other authorities (OIDC scopes, for instance) untouched.
  */
 @Component
 public class RoleUpdateInterceptor implements HandlerInterceptor {
 
-  private final AdminRepository adminRepository;
-  private final InstructorRepository instructorRepository;
-  private final GradStudentRepository gradStudentRepository;
-
-  @Value("#{'${app.admin.emails}'.split(',')}")
-  private final List<String> adminEmails = new ArrayList<>();
-
-  public RoleUpdateInterceptor(
-      AdminRepository adminRepository,
-      InstructorRepository instructorRepository,
-      GradStudentRepository gradStudentRepository) {
-    this.adminRepository = adminRepository;
-    this.instructorRepository = instructorRepository;
-    this.gradStudentRepository = gradStudentRepository;
-  }
+  @Autowired private RoleAssignmentService roleAssignmentService;
 
   @Override
   public boolean preHandle(
@@ -61,26 +42,10 @@ public class RoleUpdateInterceptor implements HandlerInterceptor {
       Collection<? extends GrantedAuthority> current = authentication.getAuthorities();
 
       current.stream()
-          .filter(
-              a ->
-                  !a.getAuthority().equals("ROLE_ADMIN")
-                      && !a.getAuthority().equals("ROLE_INSTRUCTOR")
-                      && !a.getAuthority().equals("ROLE_GRAD_STUDENT"))
+          .filter(a -> !RoleAssignmentService.MANAGED_ROLES.contains(a.getAuthority()))
           .forEach(newAuthorities::add);
 
-      // Every authenticated user is a USER; without this, and with no RoleHierarchy to fall back
-      // on, an admin would have no ROLE_USER and would be denied by hasRole('ROLE_USER').
-      newAuthorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-
-      if (adminEmails.contains(email) || adminRepository.existsByEmail(email)) {
-        newAuthorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-      }
-      if (instructorRepository.existsByEmail(email)) {
-        newAuthorities.add(new SimpleGrantedAuthority("ROLE_INSTRUCTOR"));
-      }
-      if (gradStudentRepository.existsByEmail(email)) {
-        newAuthorities.add(new SimpleGrantedAuthority("ROLE_GRAD_STUDENT"));
-      }
+      newAuthorities.addAll(roleAssignmentService.authoritiesFor(email));
 
       Authentication newAuth =
           new OAuth2AuthenticationToken(

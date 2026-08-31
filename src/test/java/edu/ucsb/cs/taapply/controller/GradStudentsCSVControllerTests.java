@@ -15,6 +15,7 @@ import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.GradStudent;
 import edu.ucsb.cs.taapply.repository.GradStudentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.RoleEmailCsvService;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -26,7 +27,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(controllers = edu.ucsb.cs.taapply.controller.GradStudentsCSVController.class)
-@Import(edu.ucsb.cs.taapply.testconfig.TestConfig.class)
+@Import({edu.ucsb.cs.taapply.testconfig.TestConfig.class, RoleEmailCsvService.class})
 public class GradStudentsCSVControllerTests extends ControllerTestCase {
 
   @MockitoBean GradStudentRepository gradStudentRepository;
@@ -80,7 +81,7 @@ public class GradStudentsCSVControllerTests extends ControllerTestCase {
 
     assertEquals(
         mapper.writeValueAsString(
-            new GradStudentsCSVController.UploadResult(2, 0, 0, java.util.List.of())),
+            new RoleEmailCsvService.UploadResult(2, 0, 0, java.util.List.of())),
         response.getResponse().getContentAsString());
   }
 
@@ -99,7 +100,7 @@ public class GradStudentsCSVControllerTests extends ControllerTestCase {
     verify(gradStudentRepository, times(1)).save(any());
     assertEquals(
         mapper.writeValueAsString(
-            new GradStudentsCSVController.UploadResult(1, 1, 0, java.util.List.of())),
+            new RoleEmailCsvService.UploadResult(1, 1, 0, java.util.List.of())),
         response.getResponse().getContentAsString());
   }
 
@@ -121,7 +122,7 @@ public class GradStudentsCSVControllerTests extends ControllerTestCase {
     verify(gradStudentRepository, times(2)).save(any());
     assertEquals(
         mapper.writeValueAsString(
-            new GradStudentsCSVController.UploadResult(2, 0, 1, java.util.List.of("not-an-email"))),
+            new RoleEmailCsvService.UploadResult(2, 0, 1, java.util.List.of("not-an-email"))),
         response.getResponse().getContentAsString());
   }
 
@@ -139,7 +140,7 @@ public class GradStudentsCSVControllerTests extends ControllerTestCase {
     verify(gradStudentRepository, times(1)).save(any());
     assertEquals(
         mapper.writeValueAsString(
-            new GradStudentsCSVController.UploadResult(1, 0, 0, java.util.List.of())),
+            new RoleEmailCsvService.UploadResult(1, 0, 0, java.util.List.of())),
         response.getResponse().getContentAsString());
   }
 
@@ -209,7 +210,7 @@ public class GradStudentsCSVControllerTests extends ControllerTestCase {
     verify(gradStudentRepository, times(1)).save(any());
     assertEquals(
         mapper.writeValueAsString(
-            new GradStudentsCSVController.UploadResult(1, 0, 0, java.util.List.of())),
+            new RoleEmailCsvService.UploadResult(1, 0, 0, java.util.List.of())),
         response.getResponse().getContentAsString());
   }
 }

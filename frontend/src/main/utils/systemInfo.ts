@@ -9,6 +9,9 @@ export interface SystemInfo {
   commitId?: string;
   commitMessage?: string;
   githubUrl?: string;
+  subjectArea?: string;
+  startQtrYYYYQ?: string;
+  endQtrYYYYQ?: string;
 }
 
 export function useSystemInfo() {

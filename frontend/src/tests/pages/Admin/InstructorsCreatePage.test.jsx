@@ -166,7 +166,7 @@ describe("InstructorsCreatePage tests", () => {
     expect(useBackendMutationSpy).toHaveBeenCalledWith(
       expect.any(Function),
       { onSuccess: expect.any(Function) },
-      [`/api/admin/instructors/all`],
+      [`/api/admin/instructors/get`],
     );
   });
 });
