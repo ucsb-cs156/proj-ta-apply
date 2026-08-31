@@ -148,8 +148,8 @@ for each course in courses where (type == TA ? needsTa : needsUla):
 | GET | `/api/admin/recruitments/all` | admin; most recent quarter first |
 | PUT | `/api/admin/recruitments/status` | admin; OPEN/CLOSED, applying the date rules |
 | DELETE | `/api/admin/recruitments/delete` | admin; with a confirmation modal, like course delete |
-| GET | `/api/recruitmentcourses/all?recruitmentId=` | admin; sorted by `courseId` |
-| DELETE | `/api/recruitmentcourses/delete` | admin; marks `removed`, does not hard-delete |
+| GET | `/api/recruitmentcourses/all?recruitmentId=&includeRemoved=` | admin; sorted by `courseId` then section. Removed rows hidden unless `includeRemoved=true` |
+| PUT | `/api/recruitmentcourses/removed` | admin; sets or clears `removed`. A toggle rather than a delete, so a removal made by mistake is reversible |
 | POST | `/api/jobs/launch/populateRecruitmentCourses?recruitmentId=` | admin; returns the `Job` |
 
 **Sort `recruitment_courses` in Java, not with an `ORDER BY`** — for the same reason iteration 2
@@ -236,5 +236,6 @@ The bar from iterations 1 and 2 holds, and two of these gates are easy to forget
    but iteration 4 will care.
 2. **Date fields**: dates only, or date-times? Dates are simpler and probably right for a deadline,
    but "actual opening" is really a timestamp.
+
 
 
