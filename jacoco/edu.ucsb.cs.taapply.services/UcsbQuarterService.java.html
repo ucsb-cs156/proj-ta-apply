@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UcsbQuarterService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">UcsbQuarterService.java</span></div><h1>UcsbQuarterService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.ucsb.cs.taapply.models.Quarter;
+import edu.ucsb.cs.taapply.models.UcsbApiQuarter;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+/**
+ * Derives the last quarter the admin Courses dropdowns should offer, from the quarter UCSB says it
+ * currently is. Only {@code app.startQtrYYYYQ} needs configuring; the end of the range keeps itself
+ * up to date as quarters roll over.
+ *
+ * &lt;p&gt;The rule is ported from proj-courses' {@code UCSBAPIQuarterService}: look ahead one quarter,
+ * except in Spring, when look ahead two so that both Summer and Fall are offered.
+ */
+@Service
+<span class="fc" id="L31">@Slf4j</span>
+public class UcsbQuarterService {
+
+  @Autowired private ObjectMapper objectMapper;
+
+  @Value(&quot;${app.ucsb.api.consumer_key}&quot;)
+  private String apiKey;
+
+  @Value(&quot;${app.ucsb.api.host}&quot;)
+  private String apiHost;
+
+  /** Used only when the UCSB API cannot be reached, so the dropdowns still render something. */
+  @Value(&quot;${app.endQtrYYYYQ:20254}&quot;)
+  private String endQtrFallback;
+
+<span class="fc" id="L46">  private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);</span>
+<span class="fc" id="L47">  private static final Duration READ_TIMEOUT = Duration.ofSeconds(60);</span>
+
+  public static final String CURRENT_QUARTER_ENDPOINT =
+      &quot;{apiHost}/academics/quartercalendar/v1/quarters/current&quot;;
+
+  /** The Q digit for Spring, the one quarter we look two ahead from. */
+  static final int SPRING = 2;
+
+  static final int CACHE_DURATION_HOURS = 24;
+
+  private final RestTemplate restTemplate;
+
+<span class="fc" id="L59">  private String cachedCurrentQuarter = null;</span>
+<span class="fc" id="L60">  private Instant cacheTime = null;</span>
+
+<span class="fc" id="L62">  public UcsbQuarterService(RestTemplateBuilder restTemplateBuilder) {</span>
+<span class="fc" id="L63">    this.restTemplate =</span>
+<span class="fc" id="L64">        restTemplateBuilder.connectTimeout(CONNECT_TIMEOUT).readTimeout(READ_TIMEOUT).build();</span>
+<span class="fc" id="L65">  }</span>
+
+  /** Forget the cached quarter entirely, so the next call hits the API. */
+  void clearCurrentQuarterCache() {
+<span class="fc" id="L69">    cachedCurrentQuarter = null;</span>
+<span class="fc" id="L70">    cacheTime = null;</span>
+<span class="fc" id="L71">  }</span>
+
+  /** Keep the cached value but treat it as stale, so the next call refreshes it. */
+  void expireCurrentQuarterCache() {
+<span class="fc" id="L75">    cacheTime = Instant.EPOCH;</span>
+<span class="fc" id="L76">  }</span>
+
+  String urlForCurrentQuarter() {
+<span class="fc" id="L79">    return CURRENT_QUARTER_ENDPOINT.replace(&quot;{apiHost}&quot;, apiHost);</span>
+  }
+
+  /**
+   * The quarter UCSB says it currently is, in YYYYQ form. Cached for {@value #CACHE_DURATION_HOURS}
+   * hours: this is asked for on every /api/systemInfo call, and the answer changes a handful of
+   * times a year.
+   */
+  public String getCurrentQuarterYYYYQ() throws Exception {
+<span class="fc bfc" id="L88" title="All 2 branches covered.">    if (cachedCurrentQuarter != null</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        &amp;&amp; Instant.now().isBefore(cacheTime.plus(CACHE_DURATION_HOURS, ChronoUnit.HOURS))) {</span>
+<span class="fc" id="L90">      return cachedCurrentQuarter;</span>
+    }
+
+<span class="fc" id="L93">    HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L94">    headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));</span>
+<span class="fc" id="L95">    headers.setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="fc" id="L96">    headers.set(&quot;ucsb-api-version&quot;, &quot;1.0&quot;);</span>
+<span class="fc" id="L97">    headers.set(&quot;ucsb-api-key&quot;, this.apiKey);</span>
+
+<span class="fc" id="L99">    HttpEntity&lt;String&gt; entity = new HttpEntity&lt;&gt;(&quot;body&quot;, headers);</span>
+<span class="fc" id="L100">    String url = urlForCurrentQuarter();</span>
+<span class="fc" id="L101">    log.info(&quot;url={}&quot;, url);</span>
+
+<span class="fc" id="L103">    ResponseEntity&lt;String&gt; re = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);</span>
+<span class="fc" id="L104">    UcsbApiQuarter quarter = objectMapper.readValue(re.getBody(), UcsbApiQuarter.class);</span>
+
+<span class="fc bfc" id="L106" title="All 4 branches covered.">    if (quarter == null || quarter.getQuarter() == null) {</span>
+<span class="fc" id="L107">      throw new IllegalStateException(&quot;UCSB API returned no current quarter&quot;);</span>
+    }
+
+<span class="fc" id="L110">    cachedCurrentQuarter = quarter.getQuarter();</span>
+<span class="fc" id="L111">    cacheTime = Instant.now();</span>
+<span class="fc" id="L112">    return cachedCurrentQuarter;</span>
+  }
+
+  /**
+   * The last quarter to offer, given the current one: one quarter ahead, or two in Spring so that
+   * both Summer and Fall are reachable.
+   *
+   * @throws IllegalArgumentException if currentQuarterYYYYQ is not a valid YYYYQ value
+   */
+  public static String endQuarterFor(String currentQuarterYYYYQ) {
+<span class="fc" id="L122">    Quarter endQuarter = new Quarter(Quarter.yyyyqToInt(currentQuarterYYYYQ));</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">    int quartersToAdd = (endQuarter.getValue() % 10 == SPRING) ? 2 : 1;</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">    for (int i = 0; i &lt; quartersToAdd; i++) {</span>
+<span class="fc" id="L125">      endQuarter.increment();</span>
+    }
+<span class="fc" id="L127">    return endQuarter.getYYYYQ();</span>
+  }
+
+  /**
+   * The end of the range for the quarter dropdowns. Falls back to {@code app.endQtrYYYYQ} if the
+   * UCSB API is unreachable or returns something unusable, so a bad upstream degrades the range
+   * rather than breaking the page.
+   */
+  public String getEndQtrYYYYQ() {
+    try {
+<span class="fc" id="L137">      return endQuarterFor(getCurrentQuarterYYYYQ());</span>
+<span class="fc" id="L138">    } catch (Exception e) {</span>
+<span class="fc" id="L139">      log.error(&quot;Could not derive end quarter from the UCSB API; using {}&quot;, endQtrFallback, e);</span>
+<span class="fc" id="L140">      return endQtrFallback;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

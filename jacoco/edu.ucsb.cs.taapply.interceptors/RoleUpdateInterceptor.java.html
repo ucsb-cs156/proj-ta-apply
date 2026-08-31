@@ -1,19 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RoleUpdateInterceptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.interceptors</a> &gt; <span class="el_source">RoleUpdateInterceptor.java</span></div><h1>RoleUpdateInterceptor.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.interceptors;
 
-import edu.ucsb.cs.taapply.repository.AdminRepository;
-import edu.ucsb.cs.taapply.repository.GradStudentRepository;
-import edu.ucsb.cs.taapply.repository.InstructorRepository;
+import edu.ucsb.cs.taapply.services.RoleAssignmentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -22,73 +17,43 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Reloads a user's security context on each request so that role changes (admin, instructor or grad
- * student added or removed in the database) take effect without requiring re-login.
+ * Recomputes a user's roles on each request, so a role added or removed in the database takes
+ * effect without requiring re-login.
  *
- * &lt;p&gt;The three roles are independent: a user may hold any combination of them. There is
- * deliberately no {@code RoleHierarchy} bean, so every authenticated user is granted {@code
- * ROLE_USER} unconditionally rather than inheriting it from a higher role.
+ * &lt;p&gt;The roles themselves are decided by {@link RoleAssignmentService}, shared with the sign-in
+ * path so the two cannot drift. Here we only strip the roles that service owns and replace them,
+ * leaving any other authorities (OIDC scopes, for instance) untouched.
  */
 @Component
-public class RoleUpdateInterceptor implements HandlerInterceptor {
+<span class="fc" id="L28">public class RoleUpdateInterceptor implements HandlerInterceptor {</span>
 
-  private final AdminRepository adminRepository;
-  private final InstructorRepository instructorRepository;
-  private final GradStudentRepository gradStudentRepository;
-
-<span class="fc" id="L39">  @Value(&quot;#{'${app.admin.emails}'.split(',')}&quot;)</span>
-  private final List&lt;String&gt; adminEmails = new ArrayList&lt;&gt;();
-
-  public RoleUpdateInterceptor(
-      AdminRepository adminRepository,
-      InstructorRepository instructorRepository,
-<span class="fc" id="L45">      GradStudentRepository gradStudentRepository) {</span>
-<span class="fc" id="L46">    this.adminRepository = adminRepository;</span>
-<span class="fc" id="L47">    this.instructorRepository = instructorRepository;</span>
-<span class="fc" id="L48">    this.gradStudentRepository = gradStudentRepository;</span>
-<span class="fc" id="L49">  }</span>
+  @Autowired private RoleAssignmentService roleAssignmentService;
 
   @Override
   public boolean preHandle(
       HttpServletRequest request, HttpServletResponse response, Object handler) {
-<span class="fc" id="L54">    SecurityContext securityContext = SecurityContextHolder.getContext();</span>
-<span class="fc" id="L55">    Authentication authentication = securityContext.getAuthentication();</span>
+<span class="fc" id="L35">    SecurityContext securityContext = SecurityContextHolder.getContext();</span>
+<span class="fc" id="L36">    Authentication authentication = securityContext.getAuthentication();</span>
 
-<span class="fc bfc" id="L57" title="All 2 branches covered.">    if (authentication instanceof OAuth2AuthenticationToken oauthToken</span>
-<span class="fc bfc" id="L58" title="All 2 branches covered.">        &amp;&amp; oauthToken.getPrincipal() instanceof OidcUser oidcUser) {</span>
-<span class="fc" id="L59">      String email = oidcUser.getEmail();</span>
-<span class="fc" id="L60">      Set&lt;GrantedAuthority&gt; newAuthorities = new HashSet&lt;&gt;();</span>
-<span class="fc" id="L61">      Collection&lt;? extends GrantedAuthority&gt; current = authentication.getAuthorities();</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">    if (authentication instanceof OAuth2AuthenticationToken oauthToken</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        &amp;&amp; oauthToken.getPrincipal() instanceof OidcUser oidcUser) {</span>
+<span class="fc" id="L40">      String email = oidcUser.getEmail();</span>
+<span class="fc" id="L41">      Set&lt;GrantedAuthority&gt; newAuthorities = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L42">      Collection&lt;? extends GrantedAuthority&gt; current = authentication.getAuthorities();</span>
 
-<span class="fc" id="L63">      current.stream()</span>
-<span class="fc" id="L64">          .filter(</span>
-              a -&gt;
-<span class="fc bfc" id="L66" title="All 2 branches covered.">                  !a.getAuthority().equals(&quot;ROLE_ADMIN&quot;)</span>
-<span class="fc bfc" id="L67" title="All 2 branches covered.">                      &amp;&amp; !a.getAuthority().equals(&quot;ROLE_INSTRUCTOR&quot;)</span>
-<span class="fc bfc" id="L68" title="All 2 branches covered.">                      &amp;&amp; !a.getAuthority().equals(&quot;ROLE_GRAD_STUDENT&quot;))</span>
-<span class="fc" id="L69">          .forEach(newAuthorities::add);</span>
+<span class="fc" id="L44">      current.stream()</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">          .filter(a -&gt; !RoleAssignmentService.MANAGED_ROLES.contains(a.getAuthority()))</span>
+<span class="fc" id="L46">          .forEach(newAuthorities::add);</span>
 
-      // Every authenticated user is a USER; without this, and with no RoleHierarchy to fall back
-      // on, an admin would have no ROLE_USER and would be denied by hasRole('ROLE_USER').
-<span class="fc" id="L73">      newAuthorities.add(new SimpleGrantedAuthority(&quot;ROLE_USER&quot;));</span>
+<span class="fc" id="L48">      newAuthorities.addAll(roleAssignmentService.authoritiesFor(email));</span>
 
-<span class="fc bfc" id="L75" title="All 4 branches covered.">      if (adminEmails.contains(email) || adminRepository.existsByEmail(email)) {</span>
-<span class="fc" id="L76">        newAuthorities.add(new SimpleGrantedAuthority(&quot;ROLE_ADMIN&quot;));</span>
-      }
-<span class="fc bfc" id="L78" title="All 2 branches covered.">      if (instructorRepository.existsByEmail(email)) {</span>
-<span class="fc" id="L79">        newAuthorities.add(new SimpleGrantedAuthority(&quot;ROLE_INSTRUCTOR&quot;));</span>
-      }
-<span class="fc bfc" id="L81" title="All 2 branches covered.">      if (gradStudentRepository.existsByEmail(email)) {</span>
-<span class="fc" id="L82">        newAuthorities.add(new SimpleGrantedAuthority(&quot;ROLE_GRAD_STUDENT&quot;));</span>
-      }
-
-<span class="fc" id="L85">      Authentication newAuth =</span>
+<span class="fc" id="L50">      Authentication newAuth =</span>
           new OAuth2AuthenticationToken(
-<span class="fc" id="L87">              oidcUser, newAuthorities, oauthToken.getAuthorizedClientRegistrationId());</span>
-<span class="fc" id="L88">      SecurityContextHolder.getContext().setAuthentication(newAuth);</span>
+<span class="fc" id="L52">              oidcUser, newAuthorities, oauthToken.getAuthorizedClientRegistrationId());</span>
+<span class="fc" id="L53">      SecurityContextHolder.getContext().setAuthentication(newAuth);</span>
     }
 
-<span class="fc" id="L91">    return true;</span>
+<span class="fc" id="L56">    return true;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
