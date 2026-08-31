@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UcsbSection.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.models</a> &gt; <span class="el_source">UcsbSection.java</span></div><h1>UcsbSection.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.models;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * One section of a course offering. Narrowed to what a recruitment needs; the API returns a good
+ * deal more (grading options, restrictions, concurrent courses) that is deliberately ignored.
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class UcsbSection {
+  private String enrollCode;
+  private String section;
+  private String session;
+  private String classClosed;
+  private String courseCancelled;
+  private Integer enrolledTotal;
+  private Integer maxEnroll;
+  private List&lt;UcsbTimeLocation&gt; timeLocations;
+  private List&lt;UcsbInstructor&gt; instructors;
+
+  /**
+   * A primary section is a lecture; its number ends in &quot;00&quot;. Secondaries (discussions, labs) are
+   * not recruited for separately, so only primaries become recruitment course rows.
+   */
+  @JsonIgnore
+  public boolean isPrimary() {
+<span class="fc bfc" id="L37" title="All 4 branches covered.">    return section != null &amp;&amp; section.matches(&quot;\\d+00&quot;);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

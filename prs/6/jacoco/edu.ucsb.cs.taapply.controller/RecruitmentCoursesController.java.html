@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentCoursesController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">RecruitmentCoursesController.java</span></div><h1>RecruitmentCoursesController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Comparator;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/** The course list for one recruitment. */
+@Tag(name = &quot;RecruitmentCourses&quot;)
+@RequestMapping(&quot;/api/recruitmentcourses&quot;)
+@RestController
+<span class="fc" id="L24">@Slf4j</span>
+<span class="fc" id="L25">public class RecruitmentCoursesController extends ApiController {</span>
+
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+
+  /**
+   * Course id first, then section, so a course's several lectures sit together in order.
+   *
+   * &lt;p&gt;Sorted here rather than with an ORDER BY: the padded course id only orders correctly under
+   * code-unit comparison, and Postgres' default collation can treat spaces as negligible, which
+   * would pass on H2 and reorder wrongly in production.
+   */
+<span class="fc" id="L36">  private static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_THEN_SECTION =</span>
+<span class="fc" id="L37">      Comparator.comparing(RecruitmentCourse::getCourseId)</span>
+<span class="fc" id="L38">          .thenComparing(</span>
+<span class="fc" id="L39">              RecruitmentCourse::getSection, Comparator.nullsFirst(Comparator.naturalOrder()));</span>
+
+  @Operation(
+      summary = &quot;List the courses for a recruitment&quot;,
+      description =
+          &quot;Removed courses are hidden by default. Pass includeRemoved=true to see them as well,&quot;
+              + &quot; which is useful for checking what an earlier Populate left out.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/all&quot;)
+  public List&lt;RecruitmentCourse&gt; allForRecruitment(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
+      @Parameter(name = &quot;includeRemoved&quot;) @RequestParam(defaultValue = &quot;false&quot;)
+          boolean includeRemoved) {
+
+<span class="nc" id="L53">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="nc bnc" id="L54" title="All 4 branches missed.">        .filter(course -&gt; includeRemoved || !course.isRemoved())</span>
+<span class="nc" id="L55">        .sorted(BY_COURSE_THEN_SECTION)</span>
+<span class="nc" id="L56">        .toList();</span>
+  }
+
+  @Operation(
+      summary = &quot;Remove a course from a recruitment&quot;,
+      description =
+          &quot;Flags the row rather than deleting it, so a later Populate does not add it straight back.&quot;
+              + &quot; Removing an already-removed course is a no-op.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @DeleteMapping(&quot;/delete&quot;)
+  public Object removeCourse(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
+<span class="nc" id="L67">    RecruitmentCourse course =</span>
+        recruitmentCourseRepository
+<span class="nc" id="L69">            .findById(id)</span>
+<span class="nc" id="L70">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
+
+<span class="nc" id="L72">    course.setRemoved(true);</span>
+<span class="nc" id="L73">    recruitmentCourseRepository.save(course);</span>
+<span class="nc" id="L74">    return genericMessage(&quot;RecruitmentCourse with id %s removed&quot;.formatted(id));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
