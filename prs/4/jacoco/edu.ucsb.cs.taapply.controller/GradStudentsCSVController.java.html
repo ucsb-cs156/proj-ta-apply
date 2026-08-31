@@ -1,56 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GradStudentsCSVController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">GradStudentsCSVController.java</span></div><h1>GradStudentsCSVController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
 
-import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import edu.ucsb.cs.taapply.entity.GradStudent;
 import edu.ucsb.cs.taapply.repository.GradStudentRepository;
-import edu.ucsb.cs.taapply.utilities.CanonicalFormConverter;
+import edu.ucsb.cs.taapply.services.RoleEmailCsvService;
+import edu.ucsb.cs.taapply.services.RoleEmailCsvService.UploadResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Bulk upload of grad student email addresses from a CSV file.
- *
- * &lt;p&gt;The file must have a header row containing a column named {@code email} (case-insensitive);
- * any additional columns are ignored. Rows are processed independently: an email that is already
- * present is a no-op rather than an error, and a malformed row is skipped and reported rather than
- * aborting the rows that already succeeded. Re-uploading the same file is therefore safe.
+ * Bulk upload of grad student email addresses from a CSV file. The parsing and upsert behavior
+ * lives in {@link RoleEmailCsvService}, shared with the instructors upload.
  */
 @Tag(name = &quot;GradStudents&quot;)
 @RequestMapping(&quot;/api/admin/gradstudents&quot;)
 @RestController(&quot;GradStudentsCSVController&quot;)
-<span class="fc" id="L40">@Slf4j</span>
-<span class="fc" id="L41">public class GradStudentsCSVController extends ApiController {</span>
+<span class="fc" id="L28">@Slf4j</span>
+<span class="fc" id="L29">public class GradStudentsCSVController extends ApiController {</span>
 
   @Autowired private GradStudentRepository gradStudentRepository;
-
-  public static final String EMAIL_HEADER = &quot;email&quot;;
-
-  // Deliberately permissive: this is a sanity check against obviously-bad rows, not an attempt to
-  // fully validate an address per RFC 5322.
-<span class="fc" id="L49">  private static final Pattern EMAIL_PATTERN = Pattern.compile(&quot;^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$&quot;);</span>
-
-  /** Summary of what an upload did, so the admin can see which rows did not take effect. */
-<span class="fc" id="L52">  public static record UploadResult(</span>
-      int inserted, int alreadyPresent, int invalid, List&lt;String&gt; invalidEmails) {}
+  @Autowired private RoleEmailCsvService roleEmailCsvService;
 
   @Operation(summary = &quot;Upload a CSV of grad student emails&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
@@ -61,63 +40,10 @@ import org.springframework.web.server.ResponseStatusException;
       @Parameter(name = &quot;file&quot;) @RequestParam(&quot;file&quot;) MultipartFile file)
       throws IOException, CsvException {
 
-<span class="fc" id="L64">    int inserted = 0;</span>
-<span class="fc" id="L65">    int alreadyPresent = 0;</span>
-<span class="fc" id="L66">    List&lt;String&gt; invalidEmails = new ArrayList&lt;&gt;();</span>
-
-<span class="fc" id="L68">    try (InputStream inputStream = new BufferedInputStream(file.getInputStream());</span>
-<span class="fc" id="L69">        InputStreamReader reader = new InputStreamReader(inputStream);</span>
-<span class="fc" id="L70">        CSVReader csvReader = new CSVReader(reader)) {</span>
-
-<span class="fc" id="L72">      String[] headers = csvReader.readNext();</span>
-<span class="fc bfc" id="L73" title="All 2 branches covered.">      if (headers == null) {</span>
-<span class="fc" id="L74">        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;CSV file is empty&quot;);</span>
-      }
-
-<span class="fc" id="L77">      int emailColumn = emailColumnIndex(headers);</span>
-
-      String[] row;
-<span class="fc bfc" id="L80" title="All 2 branches covered.">      while ((row = csvReader.readNext()) != null) {</span>
-<span class="fc bfc" id="L81" title="All 2 branches covered.">        if (row.length &lt;= emailColumn) {</span>
-<span class="fc" id="L82">          continue;</span>
-        }
-<span class="fc" id="L84">        String raw = row[emailColumn].trim();</span>
-<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (raw.isEmpty()) {</span>
-<span class="fc" id="L86">          continue;</span>
-        }
-<span class="fc" id="L88">        String email = CanonicalFormConverter.convertToValidEmail(raw).strip();</span>
-<span class="fc bfc" id="L89" title="All 2 branches covered.">        if (!EMAIL_PATTERN.matcher(email).matches()) {</span>
-<span class="fc" id="L90">          invalidEmails.add(raw);</span>
-<span class="fc" id="L91">          continue;</span>
-        }
-<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (gradStudentRepository.existsByEmail(email)) {</span>
-<span class="fc" id="L94">          alreadyPresent++;</span>
-<span class="fc" id="L95">          continue;</span>
-        }
-<span class="fc" id="L97">        gradStudentRepository.save(GradStudent.builder().email(email).build());</span>
-<span class="fc" id="L98">        inserted++;</span>
-<span class="fc" id="L99">      }</span>
-    }
-
-<span class="fc" id="L102">    log.info(</span>
-        &quot;Grad student CSV upload: inserted={} alreadyPresent={} invalid={}&quot;,
-<span class="fc" id="L104">        inserted,</span>
-<span class="fc" id="L105">        alreadyPresent,</span>
-<span class="fc" id="L106">        invalidEmails.size());</span>
-
-<span class="fc" id="L108">    return new UploadResult(inserted, alreadyPresent, invalidEmails.size(), invalidEmails);</span>
-  }
-
-  /** Locates the {@code email} column, tolerating case and surrounding whitespace. */
-  static int emailColumnIndex(String[] headers) {
-<span class="fc bfc" id="L113" title="All 2 branches covered.">    for (int i = 0; i &lt; headers.length; i++) {</span>
-<span class="fc bfc" id="L114" title="All 2 branches covered.">      if (EMAIL_HEADER.equalsIgnoreCase(headers[i].trim())) {</span>
-<span class="fc" id="L115">        return i;</span>
-      }
-    }
-<span class="fc" id="L118">    throw new ResponseStatusException(</span>
-        HttpStatus.BAD_REQUEST,
-<span class="fc" id="L120">        String.format(&quot;CSV file must have a column named '%s'&quot;, EMAIL_HEADER));</span>
+<span class="fc" id="L43">    return roleEmailCsvService.upload(</span>
+        file,
+<span class="fc" id="L45">        gradStudentRepository::existsByEmail,</span>
+<span class="fc" id="L46">        email -&gt; gradStudentRepository.save(GradStudent.builder().email(email).build()));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
