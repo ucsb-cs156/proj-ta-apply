@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"iteration2-courses","number":4,"title":"Iteration 2: Populate a course table from the UCSB API with TA/ULA checkboxes","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/4"}]
+pull_requests: []
