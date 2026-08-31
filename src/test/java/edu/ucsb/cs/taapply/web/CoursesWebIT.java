@@ -148,4 +148,37 @@ public class CoursesWebIT extends WebTestCase {
 
     assertThat(page.getByText("You do not have access to this page.")).isVisible();
   }
+
+  @Test
+  public void admin_can_delete_a_course_after_confirming() throws Exception {
+    courseRepository.save(
+        Course.builder().courseId("CMPSC   156").title("ADV APP PROGRAM").build());
+
+    setupAdminUser();
+    goToCoursesPage();
+
+    assertThat(page.getByTestId("CoursesIndexPage-cell-row-0-col-courseId"))
+        .containsText("CMPSC   156");
+
+    page.getByTestId("CoursesIndexPage-cell-row-0-col-delete-button").click();
+    assertThat(page.getByTestId("CourseDeleteModal")).isVisible();
+    page.getByTestId("CourseDeleteModal-confirm").click();
+
+    assertThat(page.getByTestId("CoursesIndexPage-cell-row-0-col-courseId")).not().isVisible();
+  }
+
+  @Test
+  public void cancelling_the_delete_modal_keeps_the_course() throws Exception {
+    courseRepository.save(
+        Course.builder().courseId("CMPSC   156").title("ADV APP PROGRAM").build());
+
+    setupAdminUser();
+    goToCoursesPage();
+
+    page.getByTestId("CoursesIndexPage-cell-row-0-col-delete-button").click();
+    page.getByTestId("CourseDeleteModal-cancel").click();
+
+    assertThat(page.getByTestId("CoursesIndexPage-cell-row-0-col-courseId"))
+        .containsText("CMPSC   156");
+  }
 }

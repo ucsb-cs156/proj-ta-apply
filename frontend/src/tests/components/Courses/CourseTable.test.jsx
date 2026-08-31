@@ -25,6 +25,9 @@ describe("CourseTable tests", () => {
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock.onPut("/api/courses/flags").reply(200, {});
+    axiosMock
+      .onDelete("/api/courses/delete")
+      .reply(200, { message: "deleted" });
   });
 
   test("renders the expected headers and rows", () => {
@@ -109,14 +112,14 @@ describe("CourseTable tests", () => {
     ).toBeNull();
   });
 
-  test("columns are ordered TA, ULA, Course Number, Title", () => {
+  test("columns are ordered TA, ULA, Course Number, Title, Delete", () => {
     renderTable();
 
     const headers = Array.from(
       document.querySelectorAll('[data-testid="CourseTable"] thead th'),
     ).map((th) => th.textContent.trim());
 
-    expect(headers).toEqual(["TA", "ULA", "Course Number", "Title"]);
+    expect(headers).toEqual(["TA", "ULA", "Course Number", "Title", "Delete"]);
   });
 
   test("the course number column shrinks to its content and Title takes the slack", () => {
@@ -156,5 +159,61 @@ describe("CourseTable tests", () => {
 
     // Same width up to the digits, so the numbers line up in the column.
     expect(rendered).toEqual(["CMPSC     1A", "CMPSC    16", "CMPSC   130A"]);
+  });
+
+  // ---- delete ----
+
+  test("clicking Delete opens a confirmation modal naming the course, and deletes nothing yet", async () => {
+    renderTable();
+
+    await userEvent.click(
+      screen.getByTestId("CourseTable-cell-row-0-col-delete-button"),
+    );
+
+    expect(await screen.findByTestId("CourseDeleteModal")).toBeInTheDocument();
+    expect(screen.getByTestId("CourseDeleteModal-body")).toHaveTextContent(
+      "CMPSC   130A",
+      { normalizeWhitespace: false },
+    );
+    // Nothing is destroyed until the admin confirms.
+    expect(axiosMock.history.delete.length).toBe(0);
+  });
+
+  test("confirming the modal deletes that course", async () => {
+    renderTable();
+
+    await userEvent.click(
+      screen.getByTestId("CourseTable-cell-row-1-col-delete-button"),
+    );
+    await userEvent.click(
+      await screen.findByTestId("CourseDeleteModal-confirm"),
+    );
+
+    await waitFor(() => expect(axiosMock.history.delete.length).toBe(1));
+    expect(axiosMock.history.delete[0].url).toBe("/api/courses/delete");
+    expect(axiosMock.history.delete[0].params).toEqual({
+      courseId: "CMPSC   156",
+    });
+  });
+
+  test("cancelling the modal deletes nothing and closes it", async () => {
+    renderTable();
+
+    await userEvent.click(
+      screen.getByTestId("CourseTable-cell-row-0-col-delete-button"),
+    );
+    await userEvent.click(
+      await screen.findByTestId("CourseDeleteModal-cancel"),
+    );
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("CourseDeleteModal-confirm")).toBeNull(),
+    );
+    expect(axiosMock.history.delete.length).toBe(0);
+  });
+
+  test("the modal is closed until a Delete button is clicked", () => {
+    renderTable();
+    expect(screen.queryByTestId("CourseDeleteModal-confirm")).toBeNull();
   });
 });

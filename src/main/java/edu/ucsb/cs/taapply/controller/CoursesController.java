@@ -12,6 +12,7 @@ import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,5 +64,25 @@ public class CoursesController extends ApiController {
     course.setNeedsUla(needsUla);
     courseRepository.save(course);
     return course;
+  }
+
+  @Operation(
+      summary = "Delete a course",
+      description =
+          "Removes a course from the table along with its TA/ULA flags. A later Populate over a"
+              + " quarter in which the course was offered will add it back with both flags false.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @DeleteMapping("/delete")
+  public Object deleteCourse(
+      @Parameter(name = "courseId", description = "e.g. CMPSC   156") @RequestParam
+          String courseId) {
+
+    Course course =
+        courseRepository
+            .findByCourseId(courseId)
+            .orElseThrow(() -> new EntityNotFoundException(Course.class, courseId));
+
+    courseRepository.delete(course);
+    return genericMessage("Course with id %s deleted".formatted(courseId));
   }
 }

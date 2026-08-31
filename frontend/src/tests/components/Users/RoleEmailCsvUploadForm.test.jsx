@@ -1,14 +1,18 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import GradStudentCSVUploadForm from "main/components/Users/GradStudentCSVUploadForm";
+import RoleEmailCsvUploadForm from "main/components/Users/RoleEmailCsvUploadForm";
 import { vi } from "vitest";
 
-describe("GradStudentCSVUploadForm tests", () => {
+describe("RoleEmailCsvUploadForm tests", () => {
   const renderForm = (submitAction = vi.fn()) => {
     render(
       <MemoryRouter>
-        <GradStudentCSVUploadForm submitAction={submitAction} />
+        <RoleEmailCsvUploadForm
+          submitAction={submitAction}
+          label="Upload Grad Student Emails (CSV)"
+          testIdPrefix="GradStudentCSVUploadForm"
+        />
       </MemoryRouter>,
     );
     return submitAction;
@@ -62,5 +66,43 @@ describe("GradStudentCSVUploadForm tests", () => {
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
     const submitted = submitAction.mock.calls[0][0];
     expect(submitted.upload[0]).toBe(file);
+  });
+
+  test("renders with a caller-supplied label and test id prefix", () => {
+    render(
+      <MemoryRouter>
+        <RoleEmailCsvUploadForm
+          submitAction={vi.fn()}
+          label="Upload Instructor Emails (CSV)"
+          testIdPrefix="InstructorCSVUploadForm"
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByTestId("InstructorCSVUploadForm-upload"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("InstructorCSVUploadForm-submit"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Upload Instructor Emails (CSV)"),
+    ).toBeInTheDocument();
+  });
+
+  test("the label is wired to the input, with an id unique to the instance", () => {
+    render(
+      <MemoryRouter>
+        <RoleEmailCsvUploadForm
+          submitAction={vi.fn()}
+          label="Upload Instructor Emails (CSV)"
+          testIdPrefix="InstructorCSVUploadForm"
+        />
+      </MemoryRouter>,
+    );
+
+    const input = screen.getByLabelText("Upload Instructor Emails (CSV)");
+    expect(input).toBe(screen.getByTestId("InstructorCSVUploadForm-upload"));
+    expect(input.id).toBe("InstructorCSVUploadForm-upload-input");
   });
 });

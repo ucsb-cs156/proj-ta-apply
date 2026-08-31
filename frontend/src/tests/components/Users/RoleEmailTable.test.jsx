@@ -243,4 +243,21 @@ describe("RoleEmailTable", () => {
       queryKey: ["/api/admin/instructor/all"],
     });
   });
+
+  test("the Delete column shrinks to its button and Email takes the slack", () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RoleEmailTable data={roleEmailFixtures.threeItems} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      screen.getByTestId("RoleEmailTable-cell-row-0-col-email"),
+    ).toHaveStyle({ width: "100%" });
+    expect(
+      screen.getByTestId("RoleEmailTable-cell-row-0-col-isInAdminEmails"),
+    ).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
+  });
 });

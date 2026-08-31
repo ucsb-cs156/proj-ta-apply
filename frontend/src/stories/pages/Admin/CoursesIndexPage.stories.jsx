@@ -13,6 +13,9 @@ const baseHandlers = [
     HttpResponse.json(systemInfoFixtures.showingNeither),
   ),
   http.put("/api/courses/flags", () => HttpResponse.json({})),
+  http.delete("/api/courses/delete", () =>
+    HttpResponse.json({ message: "Course deleted" }),
+  ),
   http.post("/api/jobs/launch/populateCourses", () =>
     HttpResponse.json({ id: 1, status: "running" }),
   ),

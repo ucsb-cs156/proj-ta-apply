@@ -7,6 +7,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -182,5 +183,60 @@ public class CoursesControllerTests extends ControllerTestCase {
             course("CMPSC   156", "Adv App Programming", false, false));
 
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+  }
+
+  // ---- DELETE /api/courses/delete ----
+
+  private static final String DELETE_URL = "/api/courses/delete?courseId=CMPSC   156";
+
+  @Test
+  public void logged_out_users_cannot_delete() throws Exception {
+    mockMvc.perform(delete(DELETE_URL).with(csrf())).andExpect(status().is(403));
+    verify(courseRepository, never()).delete(any());
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void logged_in_regular_users_cannot_delete() throws Exception {
+    mockMvc.perform(delete(DELETE_URL).with(csrf())).andExpect(status().is(403));
+    verify(courseRepository, never()).delete(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_delete() throws Exception {
+    mockMvc.perform(delete(DELETE_URL).with(csrf())).andExpect(status().is(403));
+    verify(courseRepository, never()).delete(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_delete_a_course() throws Exception {
+    Course existing = course("CMPSC   156", "ADV APP PROGRAM", true, true);
+    when(courseRepository.findByCourseId("CMPSC   156")).thenReturn(Optional.of(existing));
+
+    MvcResult response =
+        mockMvc.perform(delete(DELETE_URL).with(csrf())).andExpect(status().isOk()).andReturn();
+
+    verify(courseRepository, times(1)).delete(existing);
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("Course with id CMPSC   156 deleted", json.get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void deleting_an_unknown_course_is_a_404() throws Exception {
+    when(courseRepository.findByCourseId("CMPSC   999")).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(delete("/api/courses/delete?courseId=CMPSC   999").with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    verify(courseRepository, never()).delete(any());
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("EntityNotFoundException", json.get("type"));
+    assertEquals("Course with id CMPSC   999 not found", json.get("message"));
   }
 }

@@ -58,10 +58,14 @@ export default function RoleEmailTable({
     {
       header: "Email",
       accessorKey: "email", // accessor is the "key" in the data
+      // Takes the slack from Bootstrap's full-width table, so Delete shrinks to its button
+      // instead of the two columns splitting the width evenly.
+      meta: { style: { width: "100%" } },
     },
     {
       header: "Delete",
       accessorKey: "isInAdminEmails",
+      meta: { style: { width: "1%", whiteSpace: "nowrap" as const } },
       cell: ({ cell }: { cell: Cell<RoleEmail, unknown> }) => {
         if (!cell.row.original.isInAdminEmails) {
           return (

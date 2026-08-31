@@ -1,8 +1,8 @@
 package edu.ucsb.cs.taapply.controller;
 
 import com.opencsv.exceptions.CsvException;
-import edu.ucsb.cs.taapply.entity.GradStudent;
-import edu.ucsb.cs.taapply.repository.GradStudentRepository;
+import edu.ucsb.cs.taapply.entity.Instructor;
+import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.services.RoleEmailCsvService;
 import edu.ucsb.cs.taapply.services.RoleEmailCsvService.UploadResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,30 +19,30 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Bulk upload of grad student email addresses from a CSV file. The parsing and upsert behavior
- * lives in {@link RoleEmailCsvService}, shared with the instructors upload.
+ * Bulk upload of instructor email addresses from a CSV file. The parsing and upsert behavior lives
+ * in {@link RoleEmailCsvService}, shared with the grad students upload.
  */
-@Tag(name = "GradStudents")
-@RequestMapping("/api/admin/gradstudents")
-@RestController("GradStudentsCSVController")
+@Tag(name = "Instructors")
+@RequestMapping("/api/admin/instructors")
+@RestController("InstructorsCSVController")
 @Slf4j
-public class GradStudentsCSVController extends ApiController {
+public class InstructorsCSVController extends ApiController {
 
-  @Autowired private GradStudentRepository gradStudentRepository;
+  @Autowired private InstructorRepository instructorRepository;
   @Autowired private RoleEmailCsvService roleEmailCsvService;
 
-  @Operation(summary = "Upload a CSV of grad student emails")
+  @Operation(summary = "Upload a CSV of instructor emails")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PostMapping(
       value = "/upload/csv",
       consumes = {"multipart/form-data"})
-  public UploadResult uploadGradStudentsCSV(
+  public UploadResult uploadInstructorsCSV(
       @Parameter(name = "file") @RequestParam("file") MultipartFile file)
       throws IOException, CsvException {
 
     return roleEmailCsvService.upload(
         file,
-        gradStudentRepository::existsByEmail,
-        email -> gradStudentRepository.save(GradStudent.builder().email(email).build()));
+        instructorRepository::existsByEmail,
+        email -> instructorRepository.save(Instructor.builder().email(email).build()));
   }
 }

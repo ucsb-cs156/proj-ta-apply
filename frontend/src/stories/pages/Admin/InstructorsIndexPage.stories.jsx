@@ -27,6 +27,14 @@ export default {
         http.delete("/api/admin/instructors/delete", () =>
           HttpResponse.json({ message: "Deleted" }),
         ),
+        http.post("/api/admin/instructors/upload/csv", () =>
+          HttpResponse.json({
+            inserted: 2,
+            alreadyPresent: 1,
+            invalid: 0,
+            invalidEmails: [],
+          }),
+        ),
       ],
     },
   },

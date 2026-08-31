@@ -1,6 +1,8 @@
 import OurTable from "main/components/Common/OurTable";
+import { useState } from "react";
 import { useBackendMutation } from "main/utils/useBackend";
-import { Form } from "react-bootstrap";
+import CourseDeleteModal from "main/components/Courses/CourseDeleteModal";
+import { Button, Form } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 
@@ -35,6 +37,19 @@ export default function CourseTable({
   const mutation = useBackendMutation<Course, Course>(objectToAxiosParams, {}, [
     "/api/courses/all",
   ]);
+
+  // Which course the confirmation modal is open for; null means closed.
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+
+  const deleteMutation = useBackendMutation<string, unknown>(
+    (courseId) => ({
+      url: "/api/courses/delete",
+      method: "DELETE",
+      params: { courseId },
+    }),
+    { onSuccess: () => setPendingDelete(null) },
+    ["/api/courses/all"],
+  );
 
   const toggle = (course: Course, field: "needsTa" | "needsUla") => {
     mutation.mutate({ ...course, [field]: !course[field] });
@@ -91,13 +106,35 @@ export default function CourseTable({
       accessorKey: "title",
       meta: { style: { width: "100%" } },
     },
+    {
+      header: "Delete",
+      id: "delete",
+      accessorKey: "courseId",
+      meta: shrinkToContent,
+      cell: ({ cell }: { cell: Cell<Course, unknown> }) => (
+        <Button
+          variant="danger"
+          onClick={() => setPendingDelete(cell.row.original.courseId)}
+          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-delete-button`}
+        >
+          Delete
+        </Button>
+      ),
+    },
   ];
 
   return (
-    <OurTable
-      data={Array.isArray(courses) ? courses : []}
-      columns={columns}
-      testid={testIdPrefix}
-    />
+    <>
+      <OurTable
+        data={Array.isArray(courses) ? courses : []}
+        columns={columns}
+        testid={testIdPrefix}
+      />
+      <CourseDeleteModal
+        courseId={pendingDelete}
+        onConfirm={() => deleteMutation.mutate(pendingDelete as string)}
+        onCancel={() => setPendingDelete(null)}
+      />
+    </>
   );
 }
