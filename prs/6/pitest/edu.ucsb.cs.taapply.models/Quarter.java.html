@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>Quarter.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.models;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.ArrayList;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.List;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * A UCSB quarter in YYYYQ format, where Q is 1=Winter, 2=Spring, 3=Summer, 4=Fall. For example</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * 20244 is Fall 2024 and 20251 is Winter 2025.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;This is a deliberately narrow version of proj-courses&#39; {@code models/Quarter}: it keeps only</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * what iteration 2 needs (parsing, incrementing and building an inclusive range). QYY parsing and</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * {@code decrement()} are omitted rather than ported unused.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>public class Quarter {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private int yyyyq;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  public Quarter(int yyyyq) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_19'/>
+19
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_19'>1</a>
+<span>
+1. &#60;init&#62; : removed call to edu/ucsb/cs/taapply/models/Quarter::setValue &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    setValue(yyyyq);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @param yyyyq quarter in YYYYQ format, e.g. &#34;20244&#34;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @throws IllegalArgumentException if not five digits ending in 1-4</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  public Quarter(String yyyyq) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_27'/>
+27
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_27'>1</a>
+<span>
+1. &#60;init&#62; : removed call to edu/ucsb/cs/taapply/models/Quarter::setValue &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    setValue(yyyyqToInt(yyyyq));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_29'/>
+29
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_29'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public int getValue() {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_31'/>
+31
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_31'>1</a>
+<span>
+1. getValue : replaced int return with 0 for edu/ucsb/cs/taapply/models/Quarter::getValue &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return this.yyyyq;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public String getYYYYQ() {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_35'/>
+35
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_35'>1</a>
+<span>
+1. getYYYYQ : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/models/Quarter::getYYYYQ &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return String.format(&#34;%d&#34;, this.yyyyq);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Override</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public String toString() {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_40'/>
+40
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_40'>1</a>
+<span>
+1. toString : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/models/Quarter::toString &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return getYYYYQ();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_41'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_42'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_43'/>
+43
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_43'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private void setValue(int yyyyq) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_44'/>
+44
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_44'>1</a>
+<span>
+1. setValue : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (invalidQtr(yyyyq)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_45'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalArgumentException(&#34;Quarter requires an integer ending in 1, 2, 3 or 4&#34;);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_46'/>
+46
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_46'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_47'/>
+47
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_47'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    this.yyyyq = yyyyq;</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_48'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_49'/>
+49
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_49'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_50'/>
+50
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_50'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private static boolean invalidQtr(int value) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_51'/>
+51
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_51'>1</a>
+<span>
+1. invalidQtr : Replaced integer modulus with multiplication &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    int q = value % 10;</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_52'/>
+52
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_52'>5</a>
+<span>
+1. invalidQtr : negated conditional &rarr; KILLED<br/>
+2. invalidQtr : changed conditional boundary &rarr; KILLED<br/>
+3. invalidQtr : replaced boolean return with true for edu/ucsb/cs/taapply/models/Quarter::invalidQtr &rarr; KILLED<br/>
+4. invalidQtr : negated conditional &rarr; KILLED<br/>
+5. invalidQtr : changed conditional boundary &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return (q &#60; 1) || (q &#62; 4);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_53'/>
+53
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_53'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_54'/>
+54
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_54'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_55'/>
+55
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_55'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_56'/>
+56
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_56'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Advance to the next quarter, rolling e.g. 20244 to 20251.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_57'/>
+57
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_57'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_58'/>
+58
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_58'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @return the new value in YYYYQ format</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_59'/>
+59
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_59'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_60'/>
+60
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_60'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public int increment() {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_61'/>
+61
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_61'>1</a>
+<span>
+1. increment : Replaced integer modulus with multiplication &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    int q = this.yyyyq % 10;</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_62'/>
+62
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_62'>1</a>
+<span>
+1. increment : Replaced integer division with multiplication &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    int yyyy = this.yyyyq / 10;</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_63'/>
+63
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_63'>6</a>
+<span>
+1. increment : negated conditional &rarr; KILLED<br/>
+2. increment : removed call to edu/ucsb/cs/taapply/models/Quarter::setValue &rarr; KILLED<br/>
+3. increment : Replaced integer addition with subtraction &rarr; KILLED<br/>
+4. increment : Replaced integer multiplication with division &rarr; KILLED<br/>
+5. increment : Replaced integer addition with subtraction &rarr; KILLED<br/>
+6. increment : Replaced integer addition with subtraction &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    setValue((q == 4) ? (((yyyy + 1) * 10) + 1) : (this.yyyyq + 1));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_64'/>
+64
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_64'>1</a>
+<span>
+1. increment : replaced int return with 0 for edu/ucsb/cs/taapply/models/Quarter::increment &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return this.yyyyq;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_65'/>
+65
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_65'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_66'/>
+66
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_66'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_67'/>
+67
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_67'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_68'/>
+68
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_68'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Parse a YYYYQ string into an int.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_69'/>
+69
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_69'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_70'/>
+70
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_70'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @throws IllegalArgumentException if not five digits ending in 1-4</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_71'/>
+71
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_71'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_72'/>
+72
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_72'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static int yyyyqToInt(String yyyyq) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_73'/>
+73
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_73'>2</a>
+<span>
+1. yyyyqToInt : negated conditional &rarr; KILLED<br/>
+2. yyyyqToInt : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (yyyyq == null || yyyyq.length() != 5) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_74'/>
+74
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_74'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalArgumentException(&#34;Quarter should be in YYYYQ format, e.g. 20244&#34;);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_75'/>
+75
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_75'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_76'/>
+76
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_76'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    int value;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_77'/>
+77
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_77'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    try {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_78'/>
+78
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_78'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      value = Integer.parseInt(yyyyq);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_79'/>
+79
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_79'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    } catch (NumberFormatException e) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_80'/>
+80
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_80'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalArgumentException(&#34;Quarter should be in YYYYQ format, e.g. 20244&#34;);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_81'/>
+81
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_81'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_82'/>
+82
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_82'>1</a>
+<span>
+1. yyyyqToInt : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (invalidQtr(value)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_83'/>
+83
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_83'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalArgumentException(&#34;Quarter should end in 1, 2, 3 or 4&#34;);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_84'/>
+84
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_84'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_85'/>
+85
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_85'>1</a>
+<span>
+1. yyyyqToInt : replaced int return with 0 for edu/ucsb/cs/taapply/models/Quarter::yyyyqToInt &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return value;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_86'/>
+86
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_86'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_87'/>
+87
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_87'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_88'/>
+88
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_88'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_89'/>
+89
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_89'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Every quarter from start to end, inclusive, in ascending order.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_90'/>
+90
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_90'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_91'/>
+91
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_91'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * @throws IllegalArgumentException if either is malformed, or if start is after end. Unlike</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_92'/>
+92
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_92'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *     proj-courses&#39; version, this does not silently reverse direction when start &#38;gt; end: the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_93'/>
+93
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_93'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   *     admin Courses form treats that as a validation error rather than a backwards range.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_94'/>
+94
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_94'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_95'/>
+95
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_95'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static List&#60;Quarter&#62; quarterList(String start, String end) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_96'/>
+96
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_96'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    int startInt = yyyyqToInt(start);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_97'/>
+97
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_97'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    int endInt = yyyyqToInt(end);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_98'/>
+98
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_98'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_99'/>
+99
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_99'>2</a>
+<span>
+1. quarterList : negated conditional &rarr; KILLED<br/>
+2. quarterList : changed conditional boundary &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (startInt &#62; endInt) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_100'/>
+100
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_100'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalArgumentException(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_101'/>
+101
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_101'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>          String.format(&#34;Start quarter %s must not be after end quarter %s&#34;, start, end));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_102'/>
+102
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_102'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_103'/>
+103
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_103'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_104'/>
+104
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_104'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    List&#60;Quarter&#62; result = new ArrayList&#60;&#62;();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_105'/>
+105
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_105'>2</a>
+<span>
+1. quarterList : negated conditional &rarr; KILLED<br/>
+2. quarterList : changed conditional boundary &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    for (Quarter iter = new Quarter(startInt); iter.getValue() &#60;= endInt; iter.increment()) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_106'/>
+106
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_106'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      result.add(new Quarter(iter.getValue()));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_107'/>
+107
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_107'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_108'/>
+108
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_108'>1</a>
+<span>
+1. quarterList : replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/models/Quarter::quarterList &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return result;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_109'/>
+109
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_109'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3a22c944_110'/>
+110
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_110'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_19'>19</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_19'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:constructor_from_int_rejects_quarter_digit_below_one()]</span></span> removed call to edu/ucsb/cs/taapply/models/Quarter::setValue &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_27'>27</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_27'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_rolls_over_from_fall_to_the_next_winter()]</span></span> removed call to edu/ucsb/cs/taapply/models/Quarter::setValue &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_31'>31</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_31'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>getValue<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:constructor_from_int_keeps_value()]</span></span> replaced int return with 0 for edu/ucsb/cs/taapply/models/Quarter::getValue &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_35'>35</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_35'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>getYYYYQ<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:constructor_from_int_keeps_value()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/models/Quarter::getYYYYQ &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_40'>40</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_40'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>toString<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:toString_is_the_yyyyq_form()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/models/Quarter::toString &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_44'>44</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_44'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>setValue<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:constructor_from_int_rejects_quarter_digit_below_one()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_51'>51</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_51'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>invalidQtr<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_rejects_a_backwards_range()]</span></span> Replaced integer modulus with multiplication &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_52'>52</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_52'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>invalidQtr<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:yyyyqToInt_rejects_bad_quarter_digit()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>invalidQtr<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_rejects_a_backwards_range()]</span></span> changed conditional boundary &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>3.<span><b>3</b><br/><b>Location : </b>invalidQtr<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_rejects_a_backwards_range()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/models/Quarter::invalidQtr &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>4.<span><b>4</b><br/><b>Location : </b>invalidQtr<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:constructor_from_int_rejects_quarter_digit_below_one()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>5.<span><b>5</b><br/><b>Location : </b>invalidQtr<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_rejects_a_backwards_range()]</span></span> changed conditional boundary &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_61'>61</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_61'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>increment<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_rolls_over_from_fall_to_the_next_winter()]</span></span> Replaced integer modulus with multiplication &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_62'>62</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_62'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>increment<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_rolls_over_from_fall_to_the_next_winter()]</span></span> Replaced integer division with multiplication &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_63'>63</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_63'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>increment<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_rolls_over_from_fall_to_the_next_winter()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>increment<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_rolls_over_from_fall_to_the_next_winter()]</span></span> removed call to edu/ucsb/cs/taapply/models/Quarter::setValue &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>3.<span><b>3</b><br/><b>Location : </b>increment<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_advances_within_a_year()]</span></span> Replaced integer addition with subtraction &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>4.<span><b>4</b><br/><b>Location : </b>increment<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_rolls_over_from_fall_to_the_next_winter()]</span></span> Replaced integer multiplication with division &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>5.<span><b>5</b><br/><b>Location : </b>increment<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_rolls_over_from_fall_to_the_next_winter()]</span></span> Replaced integer addition with subtraction &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>6.<span><b>6</b><br/><b>Location : </b>increment<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_rolls_over_from_fall_to_the_next_winter()]</span></span> Replaced integer addition with subtraction &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_64'>64</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_64'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>increment<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_rolls_over_from_fall_to_the_next_winter()]</span></span> replaced int return with 0 for edu/ucsb/cs/taapply/models/Quarter::increment &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_73'>73</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_73'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>yyyyqToInt<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:yyyyqToInt_rejects_null()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>yyyyqToInt<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:yyyyqToInt_rejects_wrong_length()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_82'>82</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_82'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>yyyyqToInt<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:yyyyqToInt_rejects_bad_quarter_digit()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_85'>85</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_85'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>yyyyqToInt<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_rejects_a_backwards_range()]</span></span> replaced int return with 0 for edu/ucsb/cs/taapply/models/Quarter::yyyyqToInt &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_99'>99</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_99'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>quarterList<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_rejects_a_backwards_range()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>quarterList<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_of_a_single_quarter_has_one_element()]</span></span> changed conditional boundary &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_105'>105</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_105'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>quarterList<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_of_a_single_quarter_has_one_element()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>quarterList<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_of_a_single_quarter_has_one_element()]</span></span> changed conditional boundary &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3a22c944_108'>108</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3a22c944_108'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>quarterList<br/><b>Killed by : </b>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_of_a_single_quarter_has_one_element()]</span></span> replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/models/Quarter::quarterList &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_rolls_over_from_fall_to_the_next_winter()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:increment_advances_within_a_year()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests]/[method:winter_looks_one_quarter_ahead_to_spring()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests]/[method:fall_looks_one_quarter_ahead_and_rolls_into_the_next_year()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests]/[method:summer_looks_one_quarter_ahead_to_fall()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests]/[method:spring_looks_two_quarters_ahead_to_fall()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_of_a_single_quarter_has_one_element()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_is_inclusive_of_both_ends()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_crosses_a_year_boundary()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests]/[method:getEndQtrYYYYQ_derives_from_the_current_quarter()] (1 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:rate_limits_between_quarters()] (1 ms)</li><li>edu.ucsb.cs.taapply.controller.JobsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.JobsControllerTests]/[method:an_invalid_level_is_a_400_and_launches_nothing()] (8 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:skips_courses_with_a_blank_course_id()] (1 ms)</li><li>edu.ucsb.cs.taapply.controller.JobsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.JobsControllerTests]/[method:admin_can_launch_populate_courses()] (7 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:walks_every_quarter_in_the_range()] (6 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:inserts_new_courses_with_both_flags_false()] (1 ms)</li><li>edu.ucsb.cs.taapply.controller.JobsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.JobsControllerTests]/[method:all_three_valid_levels_are_accepted()] (11 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:re_running_preserves_the_ta_and_ula_flags_on_an_existing_course()] (1 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:logs_a_summary_of_what_it_did()] (1 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:never_deletes_anything()] (2 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:a_failing_quarter_is_logged_and_the_run_continues()] (5 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:cancellation_propagates()] (42 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:yyyyqToInt_rejects_bad_quarter_digit()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_propagates_malformed_input()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:constructor_from_int_rejects_quarter_digit_above_four()] (1 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:quarterList_rejects_a_backwards_range()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:constructor_from_int_keeps_value()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:constructor_from_string_parses_yyyyq()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:toString_is_the_yyyyq_form()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests]/[method:endQuarterFor_rejects_a_malformed_quarter()] (1 ms)</li><li>edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.jobs.PopulateCoursesJobTests]/[method:a_backwards_range_is_rejected_before_any_api_call()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.JobsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.JobsControllerTests]/[method:a_backwards_quarter_range_is_a_400_and_launches_nothing()] (4 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:constructor_from_int_rejects_quarter_digit_below_one()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:yyyyqToInt_rejects_null()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:yyyyqToInt_rejects_non_numeric()] (0 ms)</li><li>edu.ucsb.cs.taapply.models.QuarterTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.models.QuarterTests]/[method:yyyyqToInt_rejects_wrong_length()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.UcsbQuarterServiceTests]/[method:getEndQtrYYYYQ_falls_back_when_the_api_returns_an_unusable_quarter()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.JobsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.JobsControllerTests]/[method:a_malformed_quarter_is_a_400_and_launches_nothing()] (5 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.17.0
+
+</body>
+</html>
