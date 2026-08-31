@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for components/Users/GradStudentCSVUploadForm.tsx</title>
+    <title>Code coverage report for components/Courses/CourseDeleteModal.tsx</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,20 +19,20 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">components/Users</a> GradStudentCSVUploadForm.tsx</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">components/Courses</a> CourseDeleteModal.tsx</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>0/0</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
@@ -119,7 +119,10 @@
 <a name='L54'></a><a href='#L54'>54</a>
 <a name='L55'></a><a href='#L55'>55</a>
 <a name='L56'></a><a href='#L56'>56</a>
-<a name='L57'></a><a href='#L57'>57</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -138,12 +141,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -175,60 +173,71 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useForm } from "react-hook-form";
-import { Button, Form } from "react-bootstrap";
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import Modal from "react-bootstrap/Modal";
+import { Button } from "react-bootstrap";
 &nbsp;
-export type GradStudentCSVUploadFormFields = {
-  upload: FileList;
+type CourseDeleteModalProps = {
+  /** The course being deleted, or null when the modal is closed. */
+  courseId: string | null;
+  onConfirm: () =&gt; void;
+  onCancel: () =&gt; void;
 };
 &nbsp;
-type GradStudentCSVUploadFormProps = {
-  submitAction: (data: GradStudentCSVUploadFormFields) =&gt; void;
-};
-&nbsp;
-export default function GradStudentCSVUploadForm({
-  submitAction,
-}: GradStudentCSVUploadFormProps): React.JSX.Element {
-  // Stryker disable all
-  const {
-    register,
-    formState: { errors },
-    handleSubmit,
-  } = useForm&lt;GradStudentCSVUploadFormFields&gt;();
-  // Stryker restore all
-&nbsp;
-  const testIdPrefix = "GradStudentCSVUploadForm";
-&nbsp;
+/**
+ * Confirmation before removing a course. Modeled on the delete modals in proj-scaffold, with the
+ * course named in the body so an admin can see which row they are about to remove.
+ */
+export default function CourseDeleteModal({
+  courseId,
+  onConfirm,
+  onCancel,
+}: CourseDeleteModalProps): React.JSX.Element {
   return (
-    &lt;Form onSubmit={handleSubmit(submitAction)}&gt;
-      &lt;Form.Group className="mb-2"&gt;
-        &lt;Form.Label htmlFor="upload"&gt;
-          Upload Grad Student Emails (CSV)
-        &lt;/Form.Label&gt;
-        &lt;Form.Control
-          data-testid={testIdPrefix + "-upload"}
-          id="upload"
-          type="file"
-          accept=".csv"
-          isInvalid={Boolean(errors.upload)}
-          {...register("upload", { required: true })}
-        /&gt;
-        &lt;Form.Control.Feedback type="invalid"&gt;
-          {errors.upload &amp;&amp; "A CSV file is required. "}
-        &lt;/Form.Control.Feedback&gt;
-        &lt;Form.Text muted&gt;
-          The file needs a header row with a column named &lt;code&gt;email&lt;/code&gt;.
-          Addresses already on the list are skipped, so re-uploading is safe.
-        &lt;/Form.Text&gt;
-      &lt;/Form.Group&gt;
-      &lt;Button
-        type="submit"
-        data-testid={testIdPrefix + "-submit"}
-        className="mt-3"
-      &gt;
-        Upload
-      &lt;/Button&gt;
-    &lt;/Form&gt;
+    &lt;Modal
+      show={courseId !== null}
+      onHide={onCancel}
+      centered={true}
+      data-testid="CourseDeleteModal"
+    &gt;
+      &lt;Modal.Header closeButton&gt;Delete Course&lt;/Modal.Header&gt;
+      &lt;Modal.Body&gt;
+        &lt;p data-testid="CourseDeleteModal-body"&gt;
+          Are you sure you want to delete{" "}
+          &lt;span style={{ whiteSpace: "pre", fontFamily: "monospace" }}&gt;
+            {courseId}
+          &lt;/span&gt;
+          ?
+        &lt;/p&gt;
+        &lt;p className="text-muted mb-0"&gt;
+          Its TA and ULA settings will be lost. Populating a quarter in which it
+          was offered will add it back with both boxes unticked.
+        &lt;/p&gt;
+      &lt;/Modal.Body&gt;
+      &lt;Modal.Footer&gt;
+        &lt;Button
+          variant="secondary"
+          onClick={onCancel}
+          data-testid="CourseDeleteModal-cancel"
+        &gt;
+          Cancel
+        &lt;/Button&gt;
+        &lt;Button
+          variant="danger"
+          onClick={onConfirm}
+          data-testid="CourseDeleteModal-confirm"
+        &gt;
+          Delete
+        &lt;/Button&gt;
+      &lt;/Modal.Footer&gt;
+    &lt;/Modal&gt;
   );
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -238,7 +247,7 @@ export default function GradStudentCSVUploadForm({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-30T14:41:19.058Z
+                at 2026-08-31T02:04:11.702Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
