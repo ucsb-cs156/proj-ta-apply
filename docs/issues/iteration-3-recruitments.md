@@ -23,6 +23,7 @@ Builds directly on iteration 2 (#3, merged in #4), which supplies the `courses` 
 | Which courses | **Match the recruitment type.** A TA recruitment pulls courses with `needsTa`; a ULA recruitment pulls those with `needsUla`. |
 | Populate trigger | **Both.** Creating a recruitment launches the job; a Populate button re-runs it later. Re-running upserts and does not resurrect manually removed rows. |
 | Uniqueness | **One recruitment per (quarter, type)**, enforced by a unique constraint, with a clear error on a duplicate. |
+| Granularity | **One row per primary section, not per course.** A course with two lectures gets two rows. |
 | Date semantics | **First open, last close.** `actualOpeningDate` is set only the first time it opens and never overwritten; `actualClosingDate` is overwritten on each close. |
 
 ### Why "does not resurrect removed rows" matters
@@ -64,6 +65,8 @@ override is a protocol worth designing separately, and the MVP does not need it.
 | `id` | generated |
 | `recruitmentId` | FK to `recruitments` |
 | `courseId` | the padded form, e.g. `CMPSC     1A` — same value as `courses.course_id` |
+| `enrollCode` | the primary section's enrollment code; unique within a quarter, and what makes two lectures distinct rows |
+| `section` | the primary section number, e.g. `0100` / `0200`, so lectures can be told apart |
 | `instructor` | primary section's first instructor |
 | `days` | primary section's first time-location |
 | `time` | primary section's first time-location, begin–end |
@@ -76,8 +79,15 @@ override is a protocol worth designing separately, and the MVP does not need it.
 
 Liquibase changeset `007-create-recruitment-courses-table.json`.
 
-The design says days/times are "first one, for primary only" — take the **first** `timeLocation` of
-the **primary** section and ignore the rest, rather than trying to render a full schedule.
+**A course with several primary sections gets one row per primary.** Two lectures of the same course
+are planned separately: their enrollments drive how many positions each gets, and they often have
+different instructors who rank candidates independently. Secondary sections (discussions, labs) are
+never included. The unique constraint is therefore on (`recruitmentId`, `enrollCode`), not
+(`recruitmentId`, `courseId`), and the table sorts by course id then section so a course's lectures
+sit together.
+
+Within a primary section, days/times are "first one, for primary only" — take the **first**
+`timeLocation` and ignore the rest, rather than trying to render a full schedule.
 
 ---
 
@@ -222,11 +232,9 @@ The bar from iterations 1 and 2 holds, and two of these gates are easy to forget
 
 ## Open questions
 
-1. **How should a course offered in multiple sections be represented?** The design takes the primary
-   section's first time-location, which assumes one primary per course per quarter. Cross-listed or
-   multi-lecture courses (two primaries) will need a rule: one row per primary, or one row per course
-   with the first primary. Worth deciding before implementation.
-2. **Should the type be shown to applicants later, or is it purely internal?** Affects nothing here,
+1. **Should the type be shown to applicants later, or is it purely internal?** Affects nothing here,
    but iteration 4 will care.
-3. **Date fields**: dates only, or date-times? Dates are simpler and probably right for a deadline,
+2. **Date fields**: dates only, or date-times? Dates are simpler and probably right for a deadline,
    but "actual opening" is really a timestamp.
+
+

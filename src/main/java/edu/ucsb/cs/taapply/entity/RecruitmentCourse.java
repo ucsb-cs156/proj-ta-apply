@@ -4,8 +4,13 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * One course in one recruitment, with the offering details for that quarter as reported by the UCSB
- * API.
+ * One <em>primary section</em> of one course in one recruitment, with the offering details for that
+ * quarter as reported by the UCSB API.
+ *
+ * <p>A course with two lectures gets two rows, not one. They are planned separately: enrollment and
+ * max enrollment drive how many positions each gets, and two primaries often have different
+ * instructors who rank candidates independently. Secondary sections (discussions, labs) are not
+ * included.
  *
  * <p>{@code removed} exists so that an admin's decision to drop a course survives a later Populate.
  * A hard delete would not: the next run cannot tell a course that was deliberately removed from one
@@ -19,8 +24,9 @@ import lombok.*;
 @Table(
     uniqueConstraints =
         @UniqueConstraint(
-            name = "uk_recruitment_courses_recruitment_course",
-            columnNames = {"recruitment_id", "course_id"}))
+            // Keyed on the enroll code, not the course: one row per primary section.
+            name = "uk_recruitment_courses_recruitment_enroll_code",
+            columnNames = {"recruitment_id", "enroll_code"}))
 public class RecruitmentCourse {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,9 +35,22 @@ public class RecruitmentCourse {
   @Column(name = "recruitment_id")
   private Long recruitmentId;
 
-  /** Padded form, e.g. "CMPSC 1A", matching courses.course_id so the two sort alike. */
+  /**
+   * The same fixed-width padded form stored in courses.course_id, so the two sort alike. (Not shown
+   * literally here: the formatter collapses runs of spaces in comments.)
+   */
   @Column(name = "course_id")
   private String courseId;
+
+  /**
+   * The section's enrollment code, unique within a quarter. This is what makes two lectures of the
+   * same course distinct rows.
+   */
+  @Column(name = "enroll_code")
+  private String enrollCode;
+
+  /** The primary section's number, e.g. "0100" or "0200"; shown so lectures can be told apart. */
+  private String section;
 
   private String title;
 

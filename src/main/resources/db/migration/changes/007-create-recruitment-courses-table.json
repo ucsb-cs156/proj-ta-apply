@@ -5,8 +5,16 @@
         "id": "007-create-recruitment-courses-table",
         "author": "pc",
         "preConditions": [
-          { "onFail": "MARK_RAN" },
-          { "not": { "tableExists": { "tableName": "recruitment_courses" } } }
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "tableExists": {
+                "tableName": "recruitment_courses"
+              }
+            }
+          }
         ],
         "changes": [
           {
@@ -18,38 +26,107 @@
                     "name": "id",
                     "type": "BIGINT",
                     "autoIncrement": true,
-                    "constraints": { "nullable": false, "primaryKey": true }
+                    "constraints": {
+                      "nullable": false,
+                      "primaryKey": true
+                    }
                   }
                 },
                 {
                   "column": {
                     "name": "recruitment_id",
                     "type": "BIGINT",
-                    "constraints": { "nullable": false }
+                    "constraints": {
+                      "nullable": false
+                    }
                   }
                 },
                 {
                   "column": {
                     "name": "course_id",
                     "type": "VARCHAR(255)",
-                    "constraints": { "nullable": false }
+                    "constraints": {
+                      "nullable": false
+                    }
                   }
                 },
-                { "column": { "name": "title", "type": "VARCHAR(255)" } },
-                { "column": { "name": "instructor", "type": "VARCHAR(255)" } },
-                { "column": { "name": "days", "type": "VARCHAR(32)" } },
-                { "column": { "name": "time", "type": "VARCHAR(64)" } },
-                { "column": { "name": "room", "type": "VARCHAR(128)" } },
-                { "column": { "name": "enrollment", "type": "INT" } },
-                { "column": { "name": "max_enroll", "type": "INT" } },
-                { "column": { "name": "status", "type": "VARCHAR(32)" } },
-                { "column": { "name": "summer_session", "type": "VARCHAR(32)" } },
+                {
+                  "column": {
+                    "name": "enroll_code",
+                    "type": "VARCHAR(16)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "section",
+                    "type": "VARCHAR(16)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "title",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "instructor",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "days",
+                    "type": "VARCHAR(32)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "time",
+                    "type": "VARCHAR(64)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "room",
+                    "type": "VARCHAR(128)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "enrollment",
+                    "type": "INT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "max_enroll",
+                    "type": "INT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "status",
+                    "type": "VARCHAR(32)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "summer_session",
+                    "type": "VARCHAR(32)"
+                  }
+                },
                 {
                   "column": {
                     "name": "removed",
                     "type": "BOOLEAN",
                     "defaultValueBoolean": false,
-                    "constraints": { "nullable": false }
+                    "constraints": {
+                      "nullable": false
+                    }
                   }
                 }
               ]
@@ -58,8 +135,8 @@
           {
             "addUniqueConstraint": {
               "tableName": "recruitment_courses",
-              "columnNames": "recruitment_id, course_id",
-              "constraintName": "uk_recruitment_courses_recruitment_course"
+              "columnNames": "recruitment_id, enroll_code",
+              "constraintName": "uk_recruitment_courses_recruitment_enroll_code"
             }
           },
           {

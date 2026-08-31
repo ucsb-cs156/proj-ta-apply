@@ -8,7 +8,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RecruitmentCourseRepository extends CrudRepository<RecruitmentCourse, Long> {
-  Optional<RecruitmentCourse> findByRecruitmentIdAndCourseId(Long recruitmentId, String courseId);
+  /** Keyed on the enroll code, since one course may have several primary sections. */
+  Optional<RecruitmentCourse> findByRecruitmentIdAndEnrollCode(
+      Long recruitmentId, String enrollCode);
 
   /**
    * Every row for a recruitment, removed ones included. Callers filter and sort in Java: the padded

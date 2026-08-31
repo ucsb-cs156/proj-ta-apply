@@ -127,6 +127,8 @@ public class RecruitmentRepositoryTests {
         RecruitmentCourse.builder()
             .recruitmentId(r.getId())
             .courseId("CMPSC   156")
+            .enrollCode("07492")
+            .section("0100")
             .title("ADV APP PROGRAM")
             .instructor("CONRAD P")
             .days("T R")
@@ -140,9 +142,11 @@ public class RecruitmentRepositoryTests {
 
     RecruitmentCourse found =
         recruitmentCourseRepository
-            .findByRecruitmentIdAndCourseId(r.getId(), "CMPSC   156")
+            .findByRecruitmentIdAndEnrollCode(r.getId(), "07492")
             .orElseThrow();
 
+    assertEquals("CMPSC   156", found.getCourseId());
+    assertEquals("0100", found.getSection());
     assertEquals("ADV APP PROGRAM", found.getTitle());
     assertEquals("CONRAD P", found.getInstructor());
     assertEquals("T R", found.getDays());
@@ -157,13 +161,58 @@ public class RecruitmentRepositoryTests {
     assertEquals("CMPSC   156", found.getCourseId());
   }
 
+  /**
+   * Two lectures of one course are two rows: they are planned separately, often have different
+   * instructors, and their enrollments drive position counts independently.
+   */
   @Test
-  public void the_same_course_cannot_be_added_to_one_recruitment_twice() {
+  public void a_course_may_appear_once_per_primary_section() {
+    Recruitment r = recruitmentRepository.save(recruitment("20261", RecruitmentType.TA));
+
+    recruitmentCourseRepository.save(
+        RecruitmentCourse.builder()
+            .recruitmentId(r.getId())
+            .courseId("CMPSC   156")
+            .enrollCode("07492")
+            .section("0100")
+            .instructor("CONRAD P")
+            .enrollment(120)
+            .maxEnroll(150)
+            .build());
+    recruitmentCourseRepository.save(
+        RecruitmentCourse.builder()
+            .recruitmentId(r.getId())
+            .courseId("CMPSC   156")
+            .enrollCode("07500")
+            .section("0200")
+            .instructor("SOMEONE ELSE")
+            .enrollment(60)
+            .maxEnroll(80)
+            .build());
+    entityManager.flush();
+
+    List<RecruitmentCourse> rows = recruitmentCourseRepository.findByRecruitmentId(r.getId());
+    assertEquals(2, rows.size());
+    assertEquals(
+        List.of("CONRAD P", "SOMEONE ELSE"),
+        rows.stream().map(RecruitmentCourse::getInstructor).sorted().toList());
+  }
+
+  @Test
+  public void the_same_primary_section_cannot_be_added_to_one_recruitment_twice() {
     Recruitment r = recruitmentRepository.save(recruitment("20261", RecruitmentType.TA));
     RecruitmentCourse first =
-        RecruitmentCourse.builder().recruitmentId(r.getId()).courseId("CMPSC   156").build();
+        RecruitmentCourse.builder()
+            .recruitmentId(r.getId())
+            .courseId("CMPSC   156")
+            .enrollCode("07492")
+            .build();
     RecruitmentCourse duplicate =
-        RecruitmentCourse.builder().recruitmentId(r.getId()).courseId("CMPSC   156").build();
+        RecruitmentCourse.builder()
+            .recruitmentId(r.getId())
+            .courseId("CMPSC   156")
+            .enrollCode("07492")
+            .build();
 
     recruitmentCourseRepository.save(first);
 
@@ -181,9 +230,17 @@ public class RecruitmentRepositoryTests {
     Recruitment ula = recruitmentRepository.save(recruitment("20261", RecruitmentType.ULA));
 
     recruitmentCourseRepository.save(
-        RecruitmentCourse.builder().recruitmentId(ta.getId()).courseId("CMPSC   156").build());
+        RecruitmentCourse.builder()
+            .recruitmentId(ta.getId())
+            .courseId("CMPSC   156")
+            .enrollCode("07492")
+            .build());
     recruitmentCourseRepository.save(
-        RecruitmentCourse.builder().recruitmentId(ula.getId()).courseId("CMPSC     1A").build());
+        RecruitmentCourse.builder()
+            .recruitmentId(ula.getId())
+            .courseId("CMPSC     1A")
+            .enrollCode("07500")
+            .build());
 
     List<RecruitmentCourse> taCourses = recruitmentCourseRepository.findByRecruitmentId(ta.getId());
     assertEquals(1, taCourses.size());
