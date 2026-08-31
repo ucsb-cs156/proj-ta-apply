@@ -11,8 +11,8 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,20 +57,24 @@ public class RecruitmentCoursesController extends ApiController {
   }
 
   @Operation(
-      summary = "Remove a course from a recruitment",
+      summary = "Remove a course from a recruitment, or put it back",
       description =
-          "Flags the row rather than deleting it, so a later Populate does not add it straight back."
-              + " Removing an already-removed course is a no-op.")
+          "Flags the row rather than deleting it, for two reasons: a later Populate must not add a"
+              + " removed course straight back, and a removal made by mistake has to be reversible."
+              + " Idempotent in both directions.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @DeleteMapping("/delete")
-  public Object removeCourse(@Parameter(name = "id") @RequestParam Long id) {
+  @PutMapping("/removed")
+  public RecruitmentCourse setRemoved(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "removed") @RequestParam boolean removed) {
+
     RecruitmentCourse course =
         recruitmentCourseRepository
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(RecruitmentCourse.class, id));
 
-    course.setRemoved(true);
+    course.setRemoved(removed);
     recruitmentCourseRepository.save(course);
-    return genericMessage("RecruitmentCourse with id %s removed".formatted(id));
+    return course;
   }
 }
