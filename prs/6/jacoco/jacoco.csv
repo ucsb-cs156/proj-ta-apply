@@ -26,7 +26,7 @@ taapply,edu.ucsb.cs.taapply.controller,InstructorsCSVController,0,29,0,0,0,5,0,4
 taapply,edu.ucsb.cs.taapply.controller,AdminsController,0,124,0,2,0,24,0,10,0,9
 taapply,edu.ucsb.cs.taapply.controller,UserInfoController,0,6,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,CoursesController,0,76,0,0,0,17,0,7,0,7
-taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,55,14,4,0,10,6,6,2,4,2
+taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,0,60,0,4,0,16,0,8,0,6
 taapply,edu.ucsb.cs.taapply.controller,AdminsController.AdminDTO,0,18,0,0,0,3,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,InstructorsController,0,65,0,2,0,14,0,6,0,5
 taapply,edu.ucsb.cs.taapply.controller,GradStudentsCSVController,0,29,0,0,0,5,0,4,0,4
