@@ -372,4 +372,49 @@ public class UCSBCurriculumServiceTests {
 
     assertEquals(0, service.getOfferings("CMPSC", "20241").size());
   }
+
+  @Test
+  public void getOfferings_stops_on_an_empty_page() throws Exception {
+    StringBuilder full = new StringBuilder("{\"classes\":[");
+    for (int i = 0; i < 100; i++) {
+      if (i > 0) {
+        full.append(",");
+      }
+      full.append("{\"courseId\":\"CMPSC   ").append(i).append("\",\"classSections\":[]}");
+    }
+    full.append("]}");
+
+    mockRestServiceServer
+        .expect(requestTo(service.urlForPage("CMPSC", "20241", "A", 1, true)))
+        .andRespond(withSuccess(full.toString(), MediaType.APPLICATION_JSON));
+    mockRestServiceServer
+        .expect(requestTo(service.urlForPage("CMPSC", "20241", "A", 2, true)))
+        .andRespond(withSuccess("{\"classes\":[]}", MediaType.APPLICATION_JSON));
+
+    assertEquals(100, service.getOfferings("CMPSC", "20241").size());
+    mockRestServiceServer.verify();
+  }
+
+  /** As with the catalog call, a server that never returns a short page must not loop forever. */
+  @Test
+  public void getOfferings_stops_at_MAX_PAGES() throws Exception {
+    StringBuilder full = new StringBuilder("{\"classes\":[");
+    for (int i = 0; i < 100; i++) {
+      if (i > 0) {
+        full.append(",");
+      }
+      full.append("{\"courseId\":\"CMPSC   ").append(i).append("\",\"classSections\":[]}");
+    }
+    full.append("]}");
+
+    for (int pageNumber = 1; pageNumber <= UCSBCurriculumService.MAX_PAGES; pageNumber++) {
+      mockRestServiceServer
+          .expect(requestTo(service.urlForPage("CMPSC", "20241", "A", pageNumber, true)))
+          .andRespond(withSuccess(full.toString(), MediaType.APPLICATION_JSON));
+    }
+
+    assertEquals(
+        UCSBCurriculumService.MAX_PAGES * 100, service.getOfferings("CMPSC", "20241").size());
+    mockRestServiceServer.verify();
+  }
 }
