@@ -9,6 +9,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs.taapply.models.UcsbCourse;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
+import edu.ucsb.cs.taapply.models.UcsbSection;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -259,5 +261,115 @@ public class UCSBCurriculumServiceTests {
 
     assertEquals(UCSBCurriculumService.MAX_PAGES * 100, courses.size());
     mockRestServiceServer.verify();
+  }
+
+  // ---- the offerings call (sections included) ----
+
+  private static final String ONE_OFFERING =
+      """
+      {"classes":[{
+        "courseId":"CMPSC   156","title":"ADV APP PROGRAM",
+        "classSections":[
+          {"enrollCode":"07492","section":"0100","enrolledTotal":120,"maxEnroll":150,
+           "classClosed":null,"courseCancelled":null,"session":null,
+           "timeLocations":[{"days":"T R","beginTime":"14:00","endTime":"15:15",
+                             "building":"PHELP","room":"3526"}],
+           "instructors":[{"instructor":"CONRAD P","functionCode":"Teaching and in charge"}]},
+          {"enrollCode":"07500","section":"0101","enrolledTotal":30,"maxEnroll":40,
+           "timeLocations":[],"instructors":[]}
+        ]}]}
+      """;
+
+  /** The catalog call must keep asking for no sections; only the offering call includes them. */
+  @Test
+  public void the_two_calls_differ_only_in_includeClassSections() {
+    assertTrue(service.urlForPage("CMPSC", "20241", "U", 1).contains("includeClassSections=false"));
+    assertTrue(
+        service.urlForPage("CMPSC", "20241", "A", 1, true).contains("includeClassSections=true"));
+  }
+
+  @Test
+  public void getOfferings_asks_for_sections_at_all_levels() throws Exception {
+    String expected = service.urlForPage("CMPSC", "20241", "A", 1, true);
+    mockRestServiceServer
+        .expect(requestTo(expected))
+        .andRespond(withSuccess(ONE_OFFERING, MediaType.APPLICATION_JSON));
+
+    service.getOfferings("CMPSC", "20241");
+
+    // No objLevelCode: which courses matter is decided by the courses table, not a level.
+    assertTrue(!expected.contains("objLevelCode"), expected);
+    mockRestServiceServer.verify();
+  }
+
+  @Test
+  public void getOfferings_parses_sections_instructors_and_meeting_times() throws Exception {
+    mockRestServiceServer
+        .expect(requestTo(service.urlForPage("CMPSC", "20241", "A", 1, true)))
+        .andRespond(withSuccess(ONE_OFFERING, MediaType.APPLICATION_JSON));
+
+    List<UcsbCourseOffering> offerings = service.getOfferings("CMPSC", "20241");
+
+    assertEquals(1, offerings.size());
+    UcsbCourseOffering offering = offerings.get(0);
+    assertEquals("CMPSC   156", offering.getCourseId());
+    assertEquals(2, offering.getClassSections().size());
+
+    UcsbSection primary = offering.getClassSections().get(0);
+    assertEquals("07492", primary.getEnrollCode());
+    assertEquals(120, primary.getEnrolledTotal());
+    assertEquals(150, primary.getMaxEnroll());
+    assertEquals("CONRAD P", primary.getInstructors().get(0).getInstructor());
+    assertEquals("T R", primary.getTimeLocations().get(0).getDays());
+    assertEquals("PHELP", primary.getTimeLocations().get(0).getBuilding());
+  }
+
+  /** Only lectures become recruitment rows; discussions and labs do not. */
+  @Test
+  public void a_section_is_primary_only_when_its_number_ends_in_00() throws Exception {
+    mockRestServiceServer
+        .expect(requestTo(service.urlForPage("CMPSC", "20241", "A", 1, true)))
+        .andRespond(withSuccess(ONE_OFFERING, MediaType.APPLICATION_JSON));
+
+    List<UcsbSection> sections = service.getOfferings("CMPSC", "20241").get(0).getClassSections();
+
+    assertTrue(sections.get(0).isPrimary(), "0100 is a lecture");
+    assertTrue(!sections.get(1).isPrimary(), "0101 is a discussion");
+  }
+
+  @Test
+  public void isPrimary_is_false_when_the_section_number_is_missing() {
+    assertTrue(!UcsbSection.builder().build().isPrimary());
+  }
+
+  @Test
+  public void getOfferings_follows_pagination_and_stops_on_a_short_page() throws Exception {
+    StringBuilder full = new StringBuilder("{\"classes\":[");
+    for (int i = 0; i < 100; i++) {
+      if (i > 0) {
+        full.append(",");
+      }
+      full.append("{\"courseId\":\"CMPSC   ").append(i).append("\",\"classSections\":[]}");
+    }
+    full.append("]}");
+
+    mockRestServiceServer
+        .expect(requestTo(service.urlForPage("CMPSC", "20241", "A", 1, true)))
+        .andRespond(withSuccess(full.toString(), MediaType.APPLICATION_JSON));
+    mockRestServiceServer
+        .expect(requestTo(service.urlForPage("CMPSC", "20241", "A", 2, true)))
+        .andRespond(withSuccess(ONE_OFFERING, MediaType.APPLICATION_JSON));
+
+    assertEquals(101, service.getOfferings("CMPSC", "20241").size());
+    mockRestServiceServer.verify();
+  }
+
+  @Test
+  public void getOfferings_handles_a_response_with_no_classes() throws Exception {
+    mockRestServiceServer
+        .expect(requestTo(service.urlForPage("CMPSC", "20241", "A", 1, true)))
+        .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+    assertEquals(0, service.getOfferings("CMPSC", "20241").size());
   }
 }
