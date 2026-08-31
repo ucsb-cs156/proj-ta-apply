@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for components/Courses/CourseDeleteModal.tsx</title>
+    <title>Code coverage report for components/Recruitments/RecruitmentDeleteModal.tsx</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,7 +19,7 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">components/Courses</a> CourseDeleteModal.tsx</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">components/Recruitments</a> RecruitmentDeleteModal.tsx</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
@@ -118,11 +118,7 @@
 <a name='L53'></a><a href='#L53'>53</a>
 <a name='L54'></a><a href='#L54'>54</a>
 <a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a>
-<a name='L57'></a><a href='#L57'>57</a>
-<a name='L58'></a><a href='#L58'>58</a>
-<a name='L59'></a><a href='#L59'>59</a>
-<a name='L60'></a><a href='#L60'>60</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L56'></a><a href='#L56'>56</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -140,11 +136,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">38x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -183,56 +175,52 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import Modal from "react-bootstrap/Modal";
 import { Button } from "react-bootstrap";
+import { yyyyqToQyy } from "main/utils/quarterUtilities";
+import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 &nbsp;
-type CourseDeleteModalProps = {
-  /** The course being deleted, or null when the modal is closed. */
-  courseId: string | null;
+type RecruitmentDeleteModalProps = {
+  /** The recruitment being deleted, or null when the modal is closed. */
+  recruitment: Recruitment | null;
   onConfirm: () =&gt; void;
   onCancel: () =&gt; void;
 };
 &nbsp;
-/**
- * Confirmation before removing a course. Modeled on the delete modals in proj-scaffold, with the
- * course named in the body so an admin can see which row they are about to remove.
- */
-export default function CourseDeleteModal({
-  courseId,
+/** Confirmation before deleting a recruitment, which takes its course list with it. */
+export default function RecruitmentDeleteModal({
+  recruitment,
   onConfirm,
   onCancel,
-}: CourseDeleteModalProps): React.JSX.Element {
+}: RecruitmentDeleteModalProps): React.JSX.Element {
   return (
     &lt;Modal
-      show={courseId !== null}
+      show={recruitment !== null}
       onHide={onCancel}
       centered={true}
-      data-testid="CourseDeleteModal"
+      data-testid="RecruitmentDeleteModal"
     &gt;
-      &lt;Modal.Header closeButton&gt;Delete Course&lt;/Modal.Header&gt;
+      &lt;Modal.Header closeButton&gt;Delete Recruitment&lt;/Modal.Header&gt;
       &lt;Modal.Body&gt;
-        &lt;p data-testid="CourseDeleteModal-body"&gt;
-          Are you sure you want to delete{" "}
-          &lt;span style={{ whiteSpace: "pre", fontFamily: "monospace" }}&gt;
-            {courseId}
-          &lt;/span&gt;
-          ?
+        &lt;p data-testid="RecruitmentDeleteModal-body"&gt;
+          Are you sure you want to delete the {recruitment?.type} recruitment
+          for {recruitment ? yyyyqToQyy(recruitment.quarter) : ""}?
         &lt;/p&gt;
         &lt;p className="text-muted mb-0"&gt;
-          Its TA and ULA settings will be lost. Populating a quarter in which it
-          was offered will add it back with both boxes unticked.
+          Its course list goes with it, including any courses you removed by
+          hand.
         &lt;/p&gt;
       &lt;/Modal.Body&gt;
       &lt;Modal.Footer&gt;
         &lt;Button
           variant="secondary"
           onClick={onCancel}
-          data-testid="CourseDeleteModal-cancel"
+          data-testid="RecruitmentDeleteModal-cancel"
         &gt;
           Cancel
         &lt;/Button&gt;
         &lt;Button
           variant="danger"
           onClick={onConfirm}
-          data-testid="CourseDeleteModal-confirm"
+          data-testid="RecruitmentDeleteModal-confirm"
         &gt;
           Delete
         &lt;/Button&gt;
