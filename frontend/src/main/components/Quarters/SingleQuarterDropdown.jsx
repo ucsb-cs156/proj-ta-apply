@@ -29,13 +29,15 @@ function SingleQuarterDropdown({
 
   const localSearchQuarter = localStorage.getItem(controlId);
 
-  if (!localSearchQuarter) {
+  // quarterRange returns [] if the configured start quarter is after the end quarter, and this
+  // used to throw on quarters[lastInd] and take the whole page down with it.
+  if (!localSearchQuarter && quarters.length > 0) {
     localStorage.setItem(controlId, quarters[lastInd].yyyyq);
   }
 
   const [quarterState, setQuarterState] = useState(
     // Stryker disable next-line all : TODO: write a good test for this or refactor
-    quarter || localSearchQuarter || quarters[lastInd].yyyyq,
+    quarter || localSearchQuarter || quarters[lastInd]?.yyyyq || "",
   );
 
   const handleQuarterOnChange = (event) => {

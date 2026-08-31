@@ -243,4 +243,19 @@ describe("SingleQuarterSelector tests", () => {
       expect(setQuarterStateSpy).toBeCalledWith("sqd1", "20224"),
     );
   });
+
+  test("does not crash when the quarter range is empty", () => {
+    // quarterRange returns [] when the configured start quarter is after the end quarter.
+    render(
+      <SingleQuarterDropdown
+        quarters={[]}
+        quarter={quarter}
+        setQuarter={setQuarter}
+        controlId="sqd-empty"
+        label="Select Quarter"
+      />,
+    );
+
+    expect(screen.getByLabelText("Select Quarter")).toBeInTheDocument();
+  });
 });

@@ -16,6 +16,8 @@ import edu.ucsb.cs.taapply.repository.AdminRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.GradStudentRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.wiremock.WiremockServiceImpl;
 import org.junit.jupiter.api.AfterAll;
@@ -37,6 +39,8 @@ public abstract class WebTestCase {
   @Autowired InstructorRepository instructorRepository;
   @Autowired GradStudentRepository gradStudentRepository;
   @Autowired protected CourseRepository courseRepository;
+  @Autowired protected RecruitmentRepository recruitmentRepository;
+  @Autowired protected RecruitmentCourseRepository recruitmentCourseRepository;
 
   @LocalServerPort private int port;
 
