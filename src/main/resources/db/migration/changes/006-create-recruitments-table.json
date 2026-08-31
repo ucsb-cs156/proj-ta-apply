@@ -1,0 +1,64 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "006-create-recruitments-table",
+        "author": "pc",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "recruitments" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "recruitments",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "nullable": false, "primaryKey": true }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "quarter",
+                    "type": "VARCHAR(5)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "type",
+                    "type": "VARCHAR(8)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "application_status",
+                    "type": "VARCHAR(8)",
+                    "defaultValue": "CLOSED",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                { "column": { "name": "tentative_opening_date", "type": "DATE" } },
+                { "column": { "name": "primary_consideration_date", "type": "DATE" } },
+                { "column": { "name": "actual_opening_date", "type": "DATE" } },
+                { "column": { "name": "actual_closing_date", "type": "DATE" } }
+              ]
+            }
+          },
+          {
+            "addUniqueConstraint": {
+              "tableName": "recruitments",
+              "columnNames": "quarter, type",
+              "constraintName": "uk_recruitments_quarter_type"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
