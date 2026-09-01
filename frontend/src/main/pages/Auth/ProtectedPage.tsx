@@ -7,7 +7,8 @@ import LoadingPage from "main/pages/Auth/LoadingPage";
 type ProtectedPageProps = {
   component?: ReactNode;
   currentUser: ReturnType<typeof useCurrentUser> & { initialData?: boolean };
-  enforceRole: string;
+  /** One role, or several any of which is enough. */
+  enforceRole: string | string[];
 };
 
 export default function ProtectedPage({
@@ -18,7 +19,10 @@ export default function ProtectedPage({
   if (currentUser.initialData) {
     return <LoadingPage />;
   }
-  if (hasRole(currentUser, enforceRole)) {
+  const acceptedRoles = Array.isArray(enforceRole)
+    ? enforceRole
+    : [enforceRole];
+  if (acceptedRoles.some((role) => hasRole(currentUser, role))) {
     return <>{component}</>;
   } else if (!currentUser.loggedIn) {
     return <PromptSignInPage />;
