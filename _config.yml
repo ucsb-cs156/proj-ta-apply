@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: []
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"iteration4-applications","number":8,"title":"Iteration 4: applicants create, edit and comment on applications","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/8"}]
