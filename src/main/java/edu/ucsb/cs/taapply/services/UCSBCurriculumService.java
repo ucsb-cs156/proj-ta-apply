@@ -2,7 +2,9 @@ package edu.ucsb.cs.taapply.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs.taapply.models.UcsbCourse;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
 import edu.ucsb.cs.taapply.models.UcsbCoursePage;
+import edu.ucsb.cs.taapply.models.UcsbOfferingPage;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,8 +67,24 @@ public class UCSBCurriculumService {
         restTemplateBuilder.connectTimeout(CONNECT_TIMEOUT).readTimeout(READ_TIMEOUT).build();
   }
 
-  /** Builds the request URL for one page. Package-private so tests can assert on it. */
+  /**
+   * Builds the request URL for one page of the catalog call (no sections). Package-private so tests
+   * can assert on it.
+   */
   String urlForPage(String subjectArea, String quarter, String level, int pageNumber) {
+    return urlForPage(subjectArea, quarter, level, pageNumber, false);
+  }
+
+  /**
+   * @param includeClassSections true for the offering call, which needs instructors, meeting times
+   *     and enrollment; false for the catalog call, which wants only numbers and titles
+   */
+  String urlForPage(
+      String subjectArea,
+      String quarter,
+      String level,
+      int pageNumber,
+      boolean includeClassSections) {
     StringBuilder params = new StringBuilder();
     params.append(String.format("?quarter=%s&subjectCode=%s", quarter, subjectArea));
     // The API has no "A" level code: asking for all levels means omitting objLevelCode entirely.
@@ -75,7 +93,8 @@ public class UCSBCurriculumService {
     }
     params.append(
         String.format(
-            "&pageNumber=%d&pageSize=%d&includeClassSections=false", pageNumber, PAGE_SIZE));
+            "&pageNumber=%d&pageSize=%d&includeClassSections=%s",
+            pageNumber, PAGE_SIZE, includeClassSections));
     return CURRICULUM_ENDPOINT.replace("{apiHost}", apiHost) + params;
   }
 
@@ -118,6 +137,41 @@ public class UCSBCurriculumService {
       result.addAll(classes);
 
       // A page shorter than the page size is the last one.
+      if (classes.size() < PAGE_SIZE) {
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Every course offering in the given subject area and quarter, <em>with</em> its sections, so a
+   * recruitment can record instructors, meeting times and enrollment.
+   *
+   * <p>Separate from {@link #getCourses} on purpose: that call asks for {@code
+   * includeClassSections=false} because iteration 2 only wants numbers and titles, and making it
+   * fetch sections would bloat every catalog Populate.
+   *
+   * <p>Level is fixed at "all": which courses matter is decided by the courses table, not by a
+   * level, since a graduate course can want a ULA and vice versa.
+   */
+  public List<UcsbCourseOffering> getOfferings(String subjectArea, String quarter)
+      throws Exception {
+    List<UcsbCourseOffering> result = new ArrayList<>();
+
+    for (int pageNumber = 1; pageNumber <= MAX_PAGES; pageNumber++) {
+      String url = urlForPage(subjectArea, quarter, LEVEL_ALL, pageNumber, true);
+      log.info("url={}", url);
+      ResponseEntity<String> re =
+          restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);
+      UcsbOfferingPage page = objectMapper.readValue(re.getBody(), UcsbOfferingPage.class);
+      List<UcsbCourseOffering> classes = page.getClasses();
+
+      if (classes == null || classes.isEmpty()) {
+        break;
+      }
+      result.addAll(classes);
       if (classes.size() < PAGE_SIZE) {
         break;
       }

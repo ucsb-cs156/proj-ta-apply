@@ -8,6 +8,8 @@ import InstructorsCreatePage from "main/pages/Admin/InstructorsCreatePage";
 import GradStudentsIndexPage from "main/pages/Admin/GradStudentsIndexPage";
 import GradStudentsCreatePage from "main/pages/Admin/GradStudentsCreatePage";
 import CoursesIndexPage from "main/pages/Admin/CoursesIndexPage";
+import RecruitmentsIndexPage from "main/pages/Admin/RecruitmentsIndexPage";
+import RecruitmentCoursesPage from "main/pages/Admin/RecruitmentCoursesPage";
 import ProtectedPage from "main/pages/Auth/ProtectedPage";
 import NotFoundPage from "main/pages/Auth/NotFoundPage";
 import AboutTaApply from "main/pages/Help/AboutTaApply";
@@ -107,6 +109,26 @@ export default function App() {
           element={
             <ProtectedPage
               component={<CoursesIndexPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/recruitments"
+          element={
+            <ProtectedPage
+              component={<RecruitmentsIndexPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/recruitments/:recruitmentId/courses"
+          element={
+            <ProtectedPage
+              component={<RecruitmentCoursesPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

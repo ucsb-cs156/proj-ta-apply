@@ -1,8 +1,12 @@
 package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.jobs.PopulateCoursesJobFactory;
+import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
 import edu.ucsb.cs.taapply.jobs.TestJob;
 import edu.ucsb.cs.taapply.models.Quarter;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs156.jobs.entities.Job;
 import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,6 +40,10 @@ public class JobsController extends ApiController {
   @Autowired private JobService jobService;
 
   @Autowired private PopulateCoursesJobFactory populateCoursesJobFactory;
+
+  @Autowired private PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
+
+  @Autowired private RecruitmentRepository recruitmentRepository;
 
   @Operation(summary = "Launch the test job")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -71,5 +79,23 @@ public class JobsController extends ApiController {
     }
 
     return jobService.runAsJob(populateCoursesJobFactory.create(startQuarter, endQuarter, level));
+  }
+
+  @Operation(
+      summary = "Re-fill a recruitment's course list from the UCSB API",
+      description =
+          "Picks up courses newly flagged in Admin/Courses and refreshes offering details. Courses"
+              + " the admin removed stay removed.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/launch/populateRecruitmentCourses")
+  public Job launchPopulateRecruitmentCourses(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+
+    return jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));
   }
 }

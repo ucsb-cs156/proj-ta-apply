@@ -10,8 +10,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.jobs.PopulateCoursesJob;
 import edu.ucsb.cs.taapply.jobs.PopulateCoursesJobFactory;
+import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJob;
+import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs156.jobs.entities.Job;
 import edu.ucsb.cs156.jobs.services.JobService;
 import java.util.List;
@@ -28,6 +33,8 @@ public class JobsControllerTests extends ControllerTestCase {
 
   @MockitoBean JobService jobService;
   @MockitoBean PopulateCoursesJobFactory populateCoursesJobFactory;
+  @MockitoBean PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
+  @MockitoBean RecruitmentRepository recruitmentRepository;
 
   @Test
   public void logged_out_users_cannot_launch_test_job() throws Exception {
@@ -174,5 +181,51 @@ public class JobsControllerTests extends ControllerTestCase {
                   .with(csrf()))
           .andExpect(status().isOk());
     }
+  }
+
+  // ---- POST /api/jobs/launch/populateRecruitmentCourses ----
+
+  private static final String POPULATE_RC_URL =
+      "/api/jobs/launch/populateRecruitmentCourses?recruitmentId=7";
+
+  @Test
+  public void logged_out_users_cannot_launch_populate_recruitment_courses() throws Exception {
+    mockMvc.perform(post(POPULATE_RC_URL).with(csrf())).andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void regular_users_cannot_launch_populate_recruitment_courses() throws Exception {
+    mockMvc.perform(post(POPULATE_RC_URL).with(csrf())).andExpect(status().is(403));
+    verify(jobService, never()).runAsJob(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_relaunch_populate_for_a_recruitment() throws Exception {
+    Recruitment recruitment =
+        Recruitment.builder().id(7L).quarter("20261").type(RecruitmentType.TA).build();
+    PopulateRecruitmentCoursesJob populateJob = PopulateRecruitmentCoursesJob.builder().build();
+    Job job = Job.builder().id(9L).status("running").build();
+
+    when(recruitmentRepository.findById(7L)).thenReturn(java.util.Optional.of(recruitment));
+    when(populateRecruitmentCoursesJobFactory.create(recruitment)).thenReturn(populateJob);
+    when(jobService.runAsJob(any())).thenReturn(job);
+
+    MvcResult response =
+        mockMvc.perform(post(POPULATE_RC_URL).with(csrf())).andExpect(status().isOk()).andReturn();
+
+    verify(populateRecruitmentCoursesJobFactory).create(recruitment);
+    verify(jobService).runAsJob(populateJob);
+    assertEquals(mapper.writeValueAsString(job), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void relaunching_for_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(java.util.Optional.empty());
+
+    mockMvc.perform(post(POPULATE_RC_URL).with(csrf())).andExpect(status().isNotFound());
+    verify(jobService, never()).runAsJob(any());
   }
 }

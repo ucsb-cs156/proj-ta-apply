@@ -67,7 +67,9 @@ const wrappedParams = async <TData>(params: AxiosRequestConfig) => {
 export function useBackendMutation<TInput, TData = unknown>(
   objectToAxiosParams: (object: TInput) => AxiosRequestConfig,
   useMutationParams: Partial<UseMutationOptions<TData, unknown, TInput>>,
-  queryKey: string[] | null = null,
+  // unknown[] rather than string[], to match useBackend: a key may carry non-string parts, such
+  // as a page number or a boolean toggle, and both sides must be able to express the same key.
+  queryKey: unknown[] | null = null,
 ) {
   const queryClient = useQueryClient();
 
