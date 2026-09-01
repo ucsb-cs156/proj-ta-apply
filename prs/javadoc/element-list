@@ -3,6 +3,7 @@ edu.ucsb.cs.taapply.collections
 edu.ucsb.cs.taapply.config
 edu.ucsb.cs.taapply.controller
 edu.ucsb.cs.taapply.entity
+edu.ucsb.cs.taapply.enums
 edu.ucsb.cs.taapply.errors
 edu.ucsb.cs.taapply.interceptors
 edu.ucsb.cs.taapply.jobs
