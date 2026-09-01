@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">RecruitmentsController.java</span></div><h1>RecruitmentsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
+import edu.ucsb.cs.taapply.models.Quarter;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs156.jobs.services.JobService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/** Admin management of recruitments. */
+@Tag(name = &quot;Recruitments&quot;)
+@RequestMapping(&quot;/api/admin/recruitments&quot;)
+@RestController
+<span class="fc" id="L32">@Slf4j</span>
+<span class="fc" id="L33">public class RecruitmentsController extends ApiController {</span>
+
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired JobService jobService;
+  @Autowired PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
+
+  @Operation(
+      summary = &quot;Create a recruitment&quot;,
+      description =
+          &quot;Creating one immediately launches the job that fills its course list, so the list is&quot;
+              + &quot; there without a second step. At most one recruitment exists per quarter and type.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/post&quot;)
+  public Recruitment postRecruitment(
+      @Parameter(name = &quot;quarter&quot;, description = &quot;YYYYQ, e.g. 20261&quot;) @RequestParam String quarter,
+      @Parameter(name = &quot;type&quot;) @RequestParam RecruitmentType type,
+      @Parameter(name = &quot;tentativeOpeningDate&quot;)
+          @RequestParam
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate tentativeOpeningDate,
+      @Parameter(name = &quot;primaryConsiderationDate&quot;)
+          @RequestParam
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate primaryConsiderationDate) {
+
+    // Validate before writing; ApiController maps IllegalArgumentException to 400.
+<span class="fc" id="L59">    Quarter.yyyyqToInt(quarter);</span>
+
+<span class="fc bfc" id="L61" title="All 2 branches covered.">    if (recruitmentRepository.existsByQuarterAndType(quarter, type)) {</span>
+<span class="fc" id="L62">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L63">          String.format(&quot;A %s recruitment already exists for quarter %s&quot;, type, quarter));</span>
+    }
+
+<span class="fc" id="L66">    Recruitment recruitment =</span>
+<span class="fc" id="L67">        recruitmentRepository.save(</span>
+<span class="fc" id="L68">            Recruitment.builder()</span>
+<span class="fc" id="L69">                .quarter(quarter)</span>
+<span class="fc" id="L70">                .type(type)</span>
+<span class="fc" id="L71">                .applicationStatus(ApplicationStatus.CLOSED)</span>
+<span class="fc" id="L72">                .tentativeOpeningDate(tentativeOpeningDate)</span>
+<span class="fc" id="L73">                .primaryConsiderationDate(primaryConsiderationDate)</span>
+<span class="fc" id="L74">                .build());</span>
+
+<span class="fc" id="L76">    jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));</span>
+<span class="fc" id="L77">    return recruitment;</span>
+  }
+
+  @Operation(summary = &quot;List all recruitments, most recent quarter first&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/all&quot;)
+  public List&lt;Recruitment&gt; allRecruitments() {
+<span class="fc" id="L84">    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();</span>
+  }
+
+  @Operation(
+      summary = &quot;Open or close applications for a recruitment&quot;,
+      description =
+          &quot;The first open stamps actualOpeningDate and never overwrites it, so it keeps the date&quot;
+              + &quot; applicants were actually able to start. Each close stamps actualClosingDate.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;/status&quot;)
+  public Recruitment updateStatus(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;status&quot;) @RequestParam ApplicationStatus status) {
+
+<span class="fc" id="L98">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L100">            .findById(id)</span>
+<span class="fc" id="L101">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+
+<span class="fc" id="L103">    LocalDate today = LocalDate.now();</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">    if (status == ApplicationStatus.OPEN) {</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">      if (recruitment.getActualOpeningDate() == null) {</span>
+<span class="fc" id="L106">        recruitment.setActualOpeningDate(today);</span>
+      }
+    } else {
+<span class="fc" id="L109">      recruitment.setActualClosingDate(today);</span>
+    }
+<span class="fc" id="L111">    recruitment.setApplicationStatus(status);</span>
+
+<span class="fc" id="L113">    recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L114">    return recruitment;</span>
+  }
+
+  @Operation(
+      summary = &quot;Delete a recruitment&quot;,
+      description = &quot;Its recruitment courses go with it, via the cascading foreign key.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @DeleteMapping(&quot;/delete&quot;)
+  public Object deleteRecruitment(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
+<span class="fc" id="L123">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L125">            .findById(id)</span>
+<span class="fc" id="L126">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+
+<span class="fc" id="L128">    recruitmentRepository.delete(recruitment);</span>
+<span class="fc" id="L129">    return genericMessage(&quot;Recruitment with id %s deleted&quot;.formatted(id));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
