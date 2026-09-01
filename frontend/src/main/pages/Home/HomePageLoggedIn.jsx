@@ -2,6 +2,8 @@ import React from "react";
 
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useCurrentUser, hasRole } from "main/utils/currentUser";
+import ApplicantDashboard from "main/components/Applications/ApplicantDashboard";
+import { useBackend } from "main/utils/useBackend";
 
 export default function HomePageLoggedIn() {
   const currentUser = useCurrentUser();
@@ -11,6 +13,57 @@ export default function HomePageLoggedIn() {
   const isGradStudent = hasRole(currentUser, "ROLE_GRAD_STUDENT");
   // Granted by the backend to a UCSB address holding none of the other roles.
   const isUndergrad = hasRole(currentUser, "ROLE_UNDERGRAD");
+
+  // Grad students apply for TA positions, undergrads for ULA ones. The backend filters every
+  // one of these responses to that same type, so nothing here can widen it.
+  const isApplicant = isGradStudent || isUndergrad;
+  const applicantType = isGradStudent ? "TA" : "ULA";
+
+  // Every one of these is filtered server side to the type this user may apply to, and skipped
+  // entirely for anyone who is not an applicant.
+  // Stryker disable next-line all : the guard only avoids pointless requests
+  const options = { enabled: isApplicant };
+
+  const { data: open } = useBackend(
+    ["/api/recruitments/open"],
+    { method: "GET", url: "/api/recruitments/open" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    false,
+    options,
+  );
+  const { data: upcoming } = useBackend(
+    ["/api/recruitments/upcoming"],
+    { method: "GET", url: "/api/recruitments/upcoming" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    false,
+    options,
+  );
+  const { data: recentlyClosed } = useBackend(
+    ["/api/recruitments/recentlyClosed"],
+    { method: "GET", url: "/api/recruitments/recentlyClosed" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    false,
+    options,
+  );
+  const { data: applicable } = useBackend(
+    ["/api/recruitments/applicable"],
+    { method: "GET", url: "/api/recruitments/applicable" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    false,
+    options,
+  );
+  const { data: applications } = useBackend(
+    ["/api/applications/mine"],
+    { method: "GET", url: "/api/applications/mine" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    false,
+    options,
+  );
 
   return (
     <BasicLayout>
@@ -31,18 +84,8 @@ export default function HomePageLoggedIn() {
             You are an instructor.
           </p>
         )}
-        {isGradStudent && (
-          <p data-testid="HomePageLoggedIn-gradstudent">
-            You are a grad student, so you will be able to apply for TA
-            positions once applications open.
-          </p>
-        )}
         {isUndergrad && (
           <div data-testid="HomePageLoggedIn-undergrad">
-            <p>
-              You will be able to apply for ULA positions once applications
-              open.
-            </p>
             <p>If you:</p>
             <ul>
               <li>
@@ -55,6 +98,18 @@ export default function HomePageLoggedIn() {
               instructions here.)
             </p>
           </div>
+        )}
+
+        {isApplicant && (
+          <ApplicantDashboard
+            type={applicantType}
+            open={open}
+            upcoming={upcoming}
+            recentlyClosed={recentlyClosed}
+            applications={applications}
+            applicable={applicable}
+            testIdPrefix="HomePageLoggedIn-dashboard"
+          />
         )}
       </div>
     </BasicLayout>

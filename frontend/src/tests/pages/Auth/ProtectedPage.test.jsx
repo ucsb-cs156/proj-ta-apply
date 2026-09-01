@@ -65,6 +65,38 @@ describe("ProtectedPage tests", () => {
     await screen.findByText("Renders successfully.");
   });
 
+  /** An applicant page accepts either applicant role, so a list of roles is enough. */
+  test("Renders the page when the user holds any one of several roles", async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <ProtectedPage
+            currentUser={currentUserFixtures.gradStudentUser}
+            enforceRole={["ROLE_GRAD_STUDENT", "ROLE_UNDERGRAD"]}
+            component={<div>Renders successfully.</div>}
+          />
+        </BrowserRouter>
+      </QueryClientProvider>,
+    );
+
+    await screen.findByText("Renders successfully.");
+  });
+
+  test("Renders AccessDenied when the user holds none of several roles", async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <ProtectedPage
+            currentUser={currentUserFixtures.instructorUser}
+            enforceRole={["ROLE_GRAD_STUDENT", "ROLE_UNDERGRAD"]}
+          />
+        </BrowserRouter>
+      </QueryClientProvider>,
+    );
+
+    await screen.findByText("You do not have access to this page.");
+  });
+
   test("Renders PromptSignInPage on no user", async () => {
     render(
       <QueryClientProvider client={queryClient}>

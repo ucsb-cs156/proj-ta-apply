@@ -24,6 +24,11 @@ import AdminUsersPage from "main/pages/Admin/AdminUsersPage";
 import HomePageLoggedIn from "main/pages/Home/HomePageLoggedIn";
 import HomePageLoggedOut from "main/pages/Home/HomePageLoggedOut";
 import AdminJobsPage from "main/pages/Admin/AdminJobsPage";
+import ApplyPage from "main/pages/Applications/ApplyPage";
+import ApplicationPage from "main/pages/Applications/ApplicationPage";
+
+/** Grad students apply for TA positions, undergrads for ULA ones. */
+const APPLICANT_ROLES = ["ROLE_GRAD_STUDENT", "ROLE_UNDERGRAD"];
 
 export default function App() {
   const currentUser = useCurrentUser();
@@ -44,6 +49,26 @@ export default function App() {
         <Route path="/login" element={<SignInPage />} />
         <Route path="/login/success" element={<SignInSuccessPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        <Route
+          path="/apply/:recruitmentId"
+          element={
+            <ProtectedPage
+              component={<ApplyPage />}
+              enforceRole={APPLICANT_ROLES}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/applications/:id"
+          element={
+            <ProtectedPage
+              component={<ApplicationPage />}
+              enforceRole={APPLICANT_ROLES}
+              currentUser={currentUser}
+            />
+          }
+        />
         <Route
           path="/admin/admins"
           element={

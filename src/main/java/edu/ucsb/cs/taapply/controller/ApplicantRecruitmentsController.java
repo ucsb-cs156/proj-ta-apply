@@ -3,10 +3,12 @@ package edu.ucsb.cs.taapply.controller;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
 import edu.ucsb.cs.taapply.services.GrantedAuthoritiesService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -32,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ApplicantRecruitmentsController extends ApiController {
 
   @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired ApplicationAccessService applicationAccessService;
   @Autowired GrantedAuthoritiesService grantedAuthoritiesService;
 
@@ -83,6 +87,41 @@ public class ApplicantRecruitmentsController extends ApiController {
         .filter(r -> r.getApplicationStatus() == ApplicationStatus.CLOSED)
         .filter(r -> r.getActualClosingDate() != null)
         .limit(1)
+        .toList();
+  }
+
+  @Operation(
+      summary = "Every recruitment the current user could apply to, past or present",
+      description =
+          "So a listing of their own applications can name the quarter and dates behind each one.")
+  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+  @GetMapping("/applicable")
+  public List<Recruitment> applicableRecruitments() {
+    return ofMyType();
+  }
+
+  @Operation(
+      summary = "The course numbers an applicant may choose from",
+      description =
+          "Distinct and sorted, since a course with two lectures appears twice in the recruitment."
+              + " Empty for a recruitment the current user may not apply to.")
+  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+  @GetMapping("/courses")
+  public List<String> courseChoices(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+
+    // Answering only for a recruitment of their own type keeps this from becoming a way to read
+    // the other side's course list.
+    boolean mine = ofMyType().stream().anyMatch(r -> r.getId().equals(recruitmentId));
+    if (!mine) {
+      return List.of();
+    }
+
+    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
+        .filter(c -> !c.isRemoved())
+        .map(c -> c.getCourseId())
+        .distinct()
+        .sorted()
         .toList();
   }
 }
