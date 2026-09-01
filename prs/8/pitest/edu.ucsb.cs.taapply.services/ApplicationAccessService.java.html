@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>ApplicationAccessService.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.services;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.Recruitment;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.enums.ApplicationStatus;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.enums.RecruitmentType;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.time.LocalDate;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Collection;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Optional;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.security.core.GrantedAuthority;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.stereotype.Service;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * The rules about who may apply to what, and when an application may still be changed.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;Kept in one place because the same questions are asked by several endpoints and by the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * frontend, and because getting them wrong is the worst failure this iteration could ship: a grad</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * student applying to a ULA recruitment, or an applicant editing after the deadline.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>@Service</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>public class ApplicationAccessService {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * The kind of recruitment this user may apply to, from their role. Grad students apply for TA</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * positions and undergrads for ULA positions; anyone else applies for nothing.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public Optional&#60;RecruitmentType&#62; applicableType(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      Collection&#60;? extends GrantedAuthority&#62; authorities) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    boolean gradStudent = hasRole(authorities, RoleAssignmentService.ROLE_GRAD_STUDENT);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_29'/>
+29
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_29'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    boolean undergrad = hasRole(authorities, RoleAssignmentService.ROLE_UNDERGRAD);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    // A user holding both is not expected: ROLE_UNDERGRAD is only granted in the absence of the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    // other roles. If it ever happened, the grad student reading wins, since it is the explicit</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    // one and TA applications ask for strictly more.</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_34'/>
+34
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_34'>1</a>
+<span>
+1. applicableType : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (gradStudent) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_35'/>
+35
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_35'>1</a>
+<span>
+1. applicableType : replaced return value with Optional.empty for edu/ucsb/cs/taapply/services/ApplicationAccessService::applicableType &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return Optional.of(RecruitmentType.TA);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_37'/>
+37
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_37'>1</a>
+<span>
+1. applicableType : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return undergrad ? Optional.of(RecruitmentType.ULA) : Optional.empty();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private static boolean hasRole(Collection&#60;? extends GrantedAuthority&#62; authorities, String role) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_41'/>
+41
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_41'>5</a>
+<span>
+1. lambda$hasRole$0 : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::lambda$hasRole$0 &rarr; KILLED<br/>
+2. hasRole : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::hasRole &rarr; KILLED<br/>
+3. hasRole : negated conditional &rarr; KILLED<br/>
+4. lambda$hasRole$0 : replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationAccessService::lambda$hasRole$0 &rarr; KILLED<br/>
+5. hasRole : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return authorities != null &#38;&#38; authorities.stream().anyMatch(a -&#62; role.equals(a.getAuthority()));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_42'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_43'/>
+43
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_43'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_44'/>
+44
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_44'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Applications may only be created against an open recruitment. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_45'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public boolean acceptingApplications(Recruitment recruitment) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_46'/>
+46
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_46'>2</a>
+<span>
+1. acceptingApplications : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::acceptingApplications &rarr; KILLED<br/>
+2. acceptingApplications : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return recruitment.getApplicationStatus() == ApplicationStatus.OPEN;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_47'/>
+47
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_47'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_48'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_49'/>
+49
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_49'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_50'/>
+50
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_50'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Whether the whole application may still be edited: the recruitment is open and the primary</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_51'/>
+51
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_51'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * consideration date has not passed. On the date itself editing is still allowed; it closes the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_52'/>
+52
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_52'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * day after.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_53'/>
+53
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_53'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_54'/>
+54
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_54'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public boolean editable(Recruitment recruitment, LocalDate today) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_55'/>
+55
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_55'>1</a>
+<span>
+1. editable : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (!acceptingApplications(recruitment)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_56'/>
+56
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_56'>1</a>
+<span>
+1. editable : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::editable &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return false;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_57'/>
+57
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_57'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_58'/>
+58
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_58'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    LocalDate deadline = recruitment.getPrimaryConsiderationDate();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_59'/>
+59
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_59'>3</a>
+<span>
+1. editable : negated conditional &rarr; KILLED<br/>
+2. editable : negated conditional &rarr; KILLED<br/>
+3. editable : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::editable &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return deadline == null || !today.isAfter(deadline);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_60'/>
+60
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_60'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_61'/>
+61
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_61'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_62'/>
+62
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_62'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_63'/>
+63
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_63'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Whether post-application comments may still be changed. They outlive the deadline, which is the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_64'/>
+64
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_64'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * point of keeping them separate, but not the recruitment closing.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_65'/>
+65
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_65'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_66'/>
+66
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_66'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public boolean commentable(Recruitment recruitment) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_67'/>
+67
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_67'>2</a>
+<span>
+1. commentable : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::commentable &rarr; KILLED<br/>
+2. commentable : replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationAccessService::commentable &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return acceptingApplications(recruitment);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_68'/>
+68
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_68'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@70d5f272_69'/>
+69
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_69'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@70d5f272_34'>34</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_34'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>applicableType<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_undergrad_applies_for_ula_positions()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@70d5f272_35'>35</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_35'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>applicableType<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_grad_student_applies_for_ta_positions()]</span></span> replaced return value with Optional.empty for edu/ucsb/cs/taapply/services/ApplicationAccessService::applicableType &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@70d5f272_37'>37</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_37'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>applicableType<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_undergrad_applies_for_ula_positions()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@70d5f272_41'>41</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_41'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$hasRole$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_undergrad_applies_for_ula_positions()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::lambda$hasRole$0 &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>hasRole<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_undergrad_applies_for_ula_positions()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::hasRole &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>3.<span><b>3</b><br/><b>Location : </b>hasRole<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_undergrad_applies_for_ula_positions()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>4.<span><b>4</b><br/><b>Location : </b>lambda$hasRole$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_undergrad_applies_for_ula_positions()]</span></span> replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationAccessService::lambda$hasRole$0 &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>5.<span><b>5</b><br/><b>Location : </b>hasRole<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_undergrad_applies_for_ula_positions()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@70d5f272_46'>46</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_46'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>acceptingApplications<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_closed_recruitment_is_never_editable_even_before_the_deadline()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::acceptingApplications &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>acceptingApplications<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_closed_recruitment_is_never_editable_even_before_the_deadline()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@70d5f272_55'>55</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_55'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>editable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_closed_recruitment_is_never_editable_even_before_the_deadline()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@70d5f272_56'>56</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_56'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>editable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_closed_recruitment_is_never_editable_even_before_the_deadline()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::editable &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@70d5f272_59'>59</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_59'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>editable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_application_is_not_editable_after_the_deadline()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>editable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_recruitment_without_a_deadline_stays_editable_while_open()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>3.<span><b>3</b><br/><b>Location : </b>editable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_application_is_not_editable_after_the_deadline()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::editable &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@70d5f272_67'>67</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@70d5f272_67'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>commentable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:comments_survive_the_deadline_but_not_the_closing()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::commentable &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>commentable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:comments_survive_the_deadline_but_not_the_closing()]</span></span> replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationAccessService::commentable &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_closed_recruitment_is_never_editable_even_before_the_deadline()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_recruitment_without_a_deadline_stays_editable_while_open()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:only_an_open_recruitment_accepts_applications()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_application_is_not_editable_after_the_deadline()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_application_is_editable_on_the_deadline_itself()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_application_is_editable_before_the_deadline()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:comments_survive_the_deadline_but_not_the_closing()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:nothing_open_is_an_empty_list()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:a_grad_student_sees_only_open_ta_recruitments()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:an_undergrad_sees_only_open_ula_recruitments()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:applying_to_a_closed_recruitment_is_refused()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_second_application_to_the_same_recruitment_is_refused()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:comments_are_refused_once_the_recruitment_is_closed()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_is_refused_once_the_deadline_has_passed()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_can_clear_the_availability_answers()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:an_undergrad_can_apply_to_an_open_ula_recruitment()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_grad_student_can_apply_to_an_open_ta_recruitment()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:an_applicant_can_edit_their_own_application_before_the_deadline()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:comments_can_still_be_updated_after_the_deadline()] (27 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_undergrad_applies_for_ula_positions()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_grad_student_applies_for_ta_positions()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:holding_both_roles_resolves_to_ta()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:anyone_else_applies_for_nothing()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:an_open_recruitment_is_not_upcoming()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:applicable_is_every_recruitment_of_their_type()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:a_never_opened_recruitment_is_not_recently_closed()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:recently_closed_reports_only_the_most_recent()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:an_open_recruitment_is_not_recently_closed()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:course_choices_are_empty_for_a_recruitment_of_the_other_type()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:course_choices_are_empty_for_a_recruitment_that_does_not_exist()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:applicable_excludes_the_other_type()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:an_undergrad_cannot_apply_to_a_ta_recruitment()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:a_reopened_recruitment_is_not_recently_closed()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:a_non_applicant_sees_no_recruitments()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_grad_student_cannot_apply_to_a_ula_recruitment()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:course_choices_are_distinct_sorted_and_exclude_removed()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:upcoming_is_the_closed_recruitment_that_has_never_opened()] (14 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.17.0
+
+</body>
+</html>
