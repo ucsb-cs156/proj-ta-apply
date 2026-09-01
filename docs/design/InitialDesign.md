@@ -91,9 +91,24 @@ This table should be sorted by course id in the same way as Admin/Courses is sor
 
 # Fourth iteration
 
-There will be a way for TAs and/or ULAs to enter an application.
+There will be a way for TAs and/or ULAs to enter an application when applications are open.
 
-Users that are Grad Students will be able to apply for TA positions.  Users that are undergrads will be able to apply for ULA positions.
+Users that are Grad Students will be able to apply for TA positions when there is an open recruitment. Users that are undergrads will be able to apply for ULA positions when there is an open recruitment.
+
+The home page for should indicate all of the following:
+* If there are no currently open recruitments (of the appropriate type), it should indicate "Applications for TA (or ULA) positions are not currently being accepted".
+* If there are any open recruitments of the appropriate type, there should be a link to create an application.
+* If there are any past recruitments of the appropriate type that have closed, when the most recent recruitment opened and closed.
+* For each recruitments that has been created but hasn't opened yet, when the tentative opening date is.
+
+There should also be a table of all applications that the student has ever created, along with the status: e.g. pending, hired, not-hired.
+
+If the application is for an open recruitment, and the deadline has not yet passed, grad students and undergrads should be allowed to edit their application.
+
+Once the deadline has passed, they shoudl be able to update only a "post application comments" field that is
+edited separately from the rest of the application.
+
+When creating an application, by default, all relevant fields from the most recent application should be copied over.
 
 The information that the app should gather about each applicant includes the following.
 
