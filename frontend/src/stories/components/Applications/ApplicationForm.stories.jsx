@@ -25,6 +25,15 @@ UlaApplication.args = {
   submitAction: (payload) => console.log("submit", payload),
 };
 
+/** With nothing to copy from, the names come from the signed-in Google account. */
+export const NamesFromTheGoogleAccount = Template.bind({});
+NamesFromTheGoogleAccount.args = {
+  type: "ULA",
+  courses,
+  defaultNames: { firstName: "Chris", lastName: "Gaucho" },
+  submitAction: (payload) => console.log("submit", payload),
+};
+
 /** What a repeat applicant sees: their previous answers, ready to adjust. */
 export const PrefilledFromAPreviousApplication = Template.bind({});
 PrefilledFromAPreviousApplication.args = {

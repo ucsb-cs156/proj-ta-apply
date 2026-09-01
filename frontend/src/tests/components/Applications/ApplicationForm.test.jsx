@@ -11,6 +11,7 @@ const courses = ["CMPSC     8", "CMPSC   130A", "CMPSC   156"];
 function renderForm({
   type = "TA",
   initialContents = undefined,
+  defaultNames = undefined,
   submitAction = vi.fn(),
   buttonLabel = undefined,
   courseList = courses,
@@ -22,6 +23,7 @@ function renderForm({
           type={type}
           courses={courseList}
           initialContents={initialContents}
+          defaultNames={defaultNames}
           submitAction={submitAction}
           buttonLabel={buttonLabel}
         />
@@ -311,6 +313,57 @@ describe("ApplicationForm tests", () => {
     expect(
       screen.getByTestId("ApplicationForm-previousServiceAsUla"),
     ).toHaveValue(2);
+  });
+
+  // ---- names from the Google account ----
+
+  /** Better than an empty box when there is no previous application to copy from. */
+  test("falls back to the signed-in account's names", () => {
+    renderForm({ defaultNames: { firstName: "Chris", lastName: "Gaucho" } });
+
+    expect(screen.getByTestId("ApplicationForm-firstName")).toHaveValue(
+      "Chris",
+    );
+    expect(screen.getByTestId("ApplicationForm-lastName")).toHaveValue(
+      "Gaucho",
+    );
+    // Google has no middle name to offer.
+    expect(screen.getByTestId("ApplicationForm-middleName")).toHaveValue("");
+  });
+
+  /** A previous application is the better answer, so it wins. */
+  test("a previous application's names beat the account's", () => {
+    renderForm({
+      initialContents: applicationsFixtures.oneTaApplication,
+      defaultNames: { firstName: "Chris", lastName: "Gaucho" },
+    });
+
+    expect(screen.getByTestId("ApplicationForm-firstName")).toHaveValue("Ada");
+    expect(screen.getByTestId("ApplicationForm-lastName")).toHaveValue(
+      "Lovelace",
+    );
+  });
+
+  test("the fallback fills only the name that is actually blank", () => {
+    renderForm({
+      initialContents: { firstName: "", lastName: "Lovelace" },
+      defaultNames: { firstName: "Chris", lastName: "Gaucho" },
+    });
+
+    expect(screen.getByTestId("ApplicationForm-firstName")).toHaveValue(
+      "Chris",
+    );
+    expect(screen.getByTestId("ApplicationForm-lastName")).toHaveValue(
+      "Lovelace",
+    );
+  });
+
+  /** A Google account may carry neither name, which is no worse than before. */
+  test("an account with no names leaves the fields empty", () => {
+    renderForm({ defaultNames: { firstName: null, lastName: undefined } });
+
+    expect(screen.getByTestId("ApplicationForm-firstName")).toHaveValue("");
+    expect(screen.getByTestId("ApplicationForm-lastName")).toHaveValue("");
   });
 
   test("with no previous application every field starts empty", () => {

@@ -94,6 +94,12 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-residencyStatus")).isVisible();
     assertThat(page.getByTestId("ApplyPage-videoLink")).not().isVisible();
 
+    // With no earlier application to copy from, the names come from the Google account. The
+    // OIDC token is the source of truth for profile fields, so these are its claims ("Test
+    // User"), not whatever the test seeded into the User row.
+    assertThat(page.getByTestId("ApplyPage-firstName")).hasValue("Test");
+    assertThat(page.getByTestId("ApplyPage-lastName")).hasValue("User");
+
     fillAndSubmit();
 
     // Back on the home page, listed as pending, with the link now saying they have applied.

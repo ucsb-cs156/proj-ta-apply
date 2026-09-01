@@ -12,6 +12,11 @@ type ApplicationFormProps = {
   /** Course numbers offered by this recruitment, already padded for alignment. */
   courses: string[];
   initialContents?: Partial<Application>;
+  /**
+   * Names from the signed-in Google account, used only where the application itself has none.
+   * Google gives no middle name, so that field has no fallback.
+   */
+  defaultNames?: { firstName?: string | null; lastName?: string | null };
   submitAction: (payload: ApplicationPayload) => void;
   buttonLabel?: string;
   testIdPrefix?: string;
@@ -19,6 +24,15 @@ type ApplicationFormProps = {
 
 const asString = (value: unknown): string =>
   value === null || value === undefined ? "" : String(value);
+
+/** The first value that is actually an answer; null and "" both mean unanswered. */
+const firstAnswered = (...values: unknown[]): string => {
+  for (const value of values) {
+    const answer = asString(value);
+    if (answer !== "") return answer;
+  }
+  return "";
+};
 
 const RESIDENCY_OPTIONS = [
   { value: "US_CITIZEN", label: "US Citizen" },
@@ -46,6 +60,7 @@ export default function ApplicationForm({
   type,
   courses,
   initialContents,
+  defaultNames,
   submitAction,
   buttonLabel = "Submit",
   testIdPrefix = "ApplicationForm",
@@ -54,9 +69,14 @@ export default function ApplicationForm({
   const courseList = Array.isArray(courses) ? courses : [];
 
   const defaults: Partial<ApplicationFormFields> = {
-    firstName: asString(initialContents?.firstName),
+    // Falls back to the Google account only where the application has nothing, so a name the
+    // applicant edited earlier is never overwritten.
+    firstName: firstAnswered(
+      initialContents?.firstName,
+      defaultNames?.firstName,
+    ),
     middleName: asString(initialContents?.middleName),
-    lastName: asString(initialContents?.lastName),
+    lastName: firstAnswered(initialContents?.lastName, defaultNames?.lastName),
     major: asString(initialContents?.major),
     gpaMajor: asString(initialContents?.gpaMajor),
     gpaOverall: asString(initialContents?.gpaOverall),

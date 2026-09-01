@@ -10,8 +10,16 @@ const [, openUla] = recruitmentsFixtures.threeRecruitments;
 const courses = ["CMPSC     8", "CMPSC    16", "CMPSC   130A", "CMPSC   156"];
 
 const common = [
+  // Both names, so the empty form shows the Google-account fallback.
   http.get("/api/currentUser", () =>
-    HttpResponse.json(apiCurrentUserFixtures.userOnly),
+    HttpResponse.json({
+      ...apiCurrentUserFixtures.userOnly,
+      user: {
+        ...apiCurrentUserFixtures.userOnly.user,
+        givenName: "Chris",
+        familyName: "Gaucho",
+      },
+    }),
   ),
   http.get("/api/systemInfo", () =>
     HttpResponse.json(systemInfoFixtures.showingNeither),

@@ -10,12 +10,14 @@ import PostApplicationCommentsForm, {
 import type { Application } from "main/components/Applications/ApplicationTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useCurrentUser } from "main/utils/currentUser";
 import { phaseOf } from "main/utils/applicationAccess";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 
 /** One of the applicant's own applications: /applications/:id */
 export default function ApplicationPage(): React.JSX.Element {
   const { id } = useParams();
+  const currentUser = useCurrentUser();
 
   const { data: application } = useBackend<Application | null>(
     ["/api/applications", id],
@@ -98,6 +100,10 @@ export default function ApplicationPage(): React.JSX.Element {
                 type={recruitment?.type ?? "TA"}
                 courses={courses ?? []}
                 initialContents={application}
+                defaultNames={{
+                  firstName: currentUser.root?.user?.givenName,
+                  lastName: currentUser.root?.user?.familyName,
+                }}
                 submitAction={(payload) => updateMutation.mutate(payload)}
                 buttonLabel="Update Application"
                 testIdPrefix="ApplicationPage"

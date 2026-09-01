@@ -6,12 +6,14 @@ import type { ApplicationPayload } from "main/utils/applicationFields";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useCurrentUser } from "main/utils/currentUser";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 
 /** Creating an application against one open recruitment: /apply/:recruitmentId */
 export default function ApplyPage(): React.JSX.Element {
   const { recruitmentId } = useParams();
   const navigate = useNavigate();
+  const currentUser = useCurrentUser();
 
   const { data: applicable } = useBackend<Recruitment[]>(
     ["/api/recruitments/applicable"],
@@ -73,6 +75,10 @@ export default function ApplyPage(): React.JSX.Element {
             type={recruitment.type}
             courses={courses ?? []}
             initialContents={(prefill ?? [])[0]}
+            defaultNames={{
+              firstName: currentUser.root?.user?.givenName,
+              lastName: currentUser.root?.user?.familyName,
+            }}
             submitAction={(payload) => mutation.mutate(payload)}
             buttonLabel="Submit Application"
             testIdPrefix="ApplyPage"

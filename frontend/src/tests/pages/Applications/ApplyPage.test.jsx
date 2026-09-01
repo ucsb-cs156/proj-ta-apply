@@ -103,13 +103,25 @@ describe("ApplyPage tests", () => {
     );
   });
 
-  test("a first-time applicant gets an empty form", async () => {
+  /** Nothing to copy from, so the names come from the signed-in Google account. */
+  test("a first-time applicant gets their name from their Google account", async () => {
+    axiosMock.onGet("/api/currentUser").reply(200, {
+      ...apiCurrentUserFixtures.userOnly,
+      user: {
+        ...apiCurrentUserFixtures.userOnly.user,
+        givenName: "Chris",
+        familyName: "Gaucho",
+      },
+    });
+
     renderPage();
 
     await waitFor(() =>
-      expect(screen.getByTestId("ApplyPage-firstName")).toBeInTheDocument(),
+      expect(screen.getByTestId("ApplyPage-firstName")).toHaveValue("Chris"),
     );
-    expect(screen.getByTestId("ApplyPage-firstName")).toHaveValue("");
+    expect(screen.getByTestId("ApplyPage-lastName")).toHaveValue("Gaucho");
+    // Nothing else is guessed at.
+    expect(screen.getByTestId("ApplyPage-major")).toHaveValue("");
   });
 
   /** The backend refuses the wrong type anyway; this keeps the page from pretending otherwise. */
@@ -133,7 +145,10 @@ describe("ApplyPage tests", () => {
       expect(screen.getByTestId("ApplyPage-firstName")).toBeInTheDocument(),
     );
 
+    // The name fields start filled in from the Google account, so replace rather than append.
+    await userEvent.clear(screen.getByTestId("ApplyPage-firstName"));
     await userEvent.type(screen.getByTestId("ApplyPage-firstName"), "Chris");
+    await userEvent.clear(screen.getByTestId("ApplyPage-lastName"));
     await userEvent.type(screen.getByTestId("ApplyPage-lastName"), "Gaucho");
     await userEvent.type(
       screen.getByTestId("ApplyPage-major"),
@@ -174,7 +189,9 @@ describe("ApplyPage tests", () => {
     await waitFor(() =>
       expect(screen.getByTestId("ApplyPage-firstName")).toBeInTheDocument(),
     );
+    await userEvent.clear(screen.getByTestId("ApplyPage-firstName"));
     await userEvent.type(screen.getByTestId("ApplyPage-firstName"), "Chris");
+    await userEvent.clear(screen.getByTestId("ApplyPage-lastName"));
     await userEvent.type(screen.getByTestId("ApplyPage-lastName"), "Gaucho");
     await userEvent.type(screen.getByTestId("ApplyPage-major"), "CS");
     await userEvent.selectOptions(
