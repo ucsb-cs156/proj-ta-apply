@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RoleAssignmentService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">RoleAssignmentService.java</span></div><h1>RoleAssignmentService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.repository.AdminRepository;
+import edu.ucsb.cs.taapply.repository.GradStudentRepository;
+import edu.ucsb.cs.taapply.repository.InstructorRepository;
+import edu.ucsb.cs.taapply.utilities.CanonicalFormConverter;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Service;
+
+/**
+ * The single place that decides which roles an email address holds.
+ *
+ * &lt;p&gt;This is deliberately shared by {@link GoogleSignInServiceImpl} (at login) and {@code
+ * RoleUpdateInterceptor} (on every request). Those two must always agree, and they previously held
+ * separate copies of the logic, which is a drift risk that grows with each new role.
+ *
+ * &lt;p&gt;ADMIN, INSTRUCTOR and GRAD_STUDENT are independent: a user may hold any combination. UNDERGRAD
+ * is the exception, being defined by the absence of the other three.
+ */
+@Service
+<span class="fc" id="L28">public class RoleAssignmentService {</span>
+
+  @Autowired private AdminRepository adminRepository;
+  @Autowired private InstructorRepository instructorRepository;
+  @Autowired private GradStudentRepository gradStudentRepository;
+
+  @Value(&quot;#{'${app.admin.emails}'.split(',')}&quot;)
+  private List&lt;String&gt; adminEmails;
+
+  public static final String ROLE_USER = &quot;ROLE_USER&quot;;
+  public static final String ROLE_ADMIN = &quot;ROLE_ADMIN&quot;;
+  public static final String ROLE_INSTRUCTOR = &quot;ROLE_INSTRUCTOR&quot;;
+  public static final String ROLE_GRAD_STUDENT = &quot;ROLE_GRAD_STUDENT&quot;;
+  public static final String ROLE_UNDERGRAD = &quot;ROLE_UNDERGRAD&quot;;
+
+  public static final String UCSB_EMAIL_SUFFIX = &quot;@ucsb.edu&quot;;
+
+  /**
+   * The roles this service owns. The interceptor strips these before recomputing, so that a role
+   * removed from the database is dropped from a live session too.
+   */
+<span class="fc" id="L49">  public static final Set&lt;String&gt; MANAGED_ROLES =</span>
+<span class="fc" id="L50">      Set.of(ROLE_USER, ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_GRAD_STUDENT, ROLE_UNDERGRAD);</span>
+
+  /**
+   * Holding at least one of these is what entitles someone to use the app at all. ROLE_USER is not
+   * among them: it is granted to anyone who can complete a Google login, which is not a decision
+   * this app makes.
+   */
+<span class="fc" id="L57">  public static final Set&lt;String&gt; ACCESS_ROLES =</span>
+<span class="fc" id="L58">      Set.of(ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_GRAD_STUDENT, ROLE_UNDERGRAD);</span>
+
+  /**
+   * Whether these authorities entitle the holder to use the app. A signed-in Google user with a
+   * non-UCSB address who is in none of the role tables has only ROLE_USER, and is turned away.
+   */
+  public static boolean grantsAccess(Collection&lt;? extends GrantedAuthority&gt; authorities) {
+<span class="fc" id="L65">    return authorities.stream().anyMatch(a -&gt; ACCESS_ROLES.contains(a.getAuthority()));</span>
+  }
+
+  /**
+   * Whether an address belongs to UCSB. The address is canonicalized first, so {@code
+   * @umail.ucsb.edu} counts (CanonicalFormConverter maps it to {@code @ucsb.edu}) and case does not
+   * matter.
+   */
+  public static boolean isUcsbEmail(String email) {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    if (email == null) {</span>
+<span class="fc" id="L75">      return false;</span>
+    }
+<span class="fc" id="L77">    return CanonicalFormConverter.convertToValidEmail(email).endsWith(UCSB_EMAIL_SUFFIX);</span>
+  }
+
+  /**
+   * Every authority the given email should hold. ROLE_USER is always granted: there is no role
+   * hierarchy, so without it an admin would fail {@code hasRole('ROLE_USER')}.
+   */
+  public Set&lt;GrantedAuthority&gt; authoritiesFor(String email) {
+    // adminEmails is never null: app.admin.emails has a default in application.properties, and
+    // Spring fails to start if it is missing entirely.
+<span class="fc bfc" id="L87" title="All 4 branches covered.">    boolean isAdmin = adminEmails.contains(email) || adminRepository.existsByEmail(email);</span>
+<span class="fc" id="L88">    boolean isInstructor = instructorRepository.existsByEmail(email);</span>
+<span class="fc" id="L89">    boolean isGradStudent = gradStudentRepository.existsByEmail(email);</span>
+
+<span class="fc" id="L91">    Set&lt;GrantedAuthority&gt; authorities = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L92">    authorities.add(new SimpleGrantedAuthority(ROLE_USER));</span>
+
+<span class="fc bfc" id="L94" title="All 2 branches covered.">    if (isAdmin) {</span>
+<span class="fc" id="L95">      authorities.add(new SimpleGrantedAuthority(ROLE_ADMIN));</span>
+    }
+<span class="fc bfc" id="L97" title="All 2 branches covered.">    if (isInstructor) {</span>
+<span class="fc" id="L98">      authorities.add(new SimpleGrantedAuthority(ROLE_INSTRUCTOR));</span>
+    }
+<span class="fc bfc" id="L100" title="All 2 branches covered.">    if (isGradStudent) {</span>
+<span class="fc" id="L101">      authorities.add(new SimpleGrantedAuthority(ROLE_GRAD_STUDENT));</span>
+    }
+    // An undergrad is a UCSB member with none of the other roles: someone who would apply for a
+    // ULA position rather than a TA position.
+<span class="fc bfc" id="L105" title="All 8 branches covered.">    if (!isAdmin &amp;&amp; !isInstructor &amp;&amp; !isGradStudent &amp;&amp; isUcsbEmail(email)) {</span>
+<span class="fc" id="L106">      authorities.add(new SimpleGrantedAuthority(ROLE_UNDERGRAD));</span>
+    }
+
+<span class="fc" id="L109">    return authorities;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

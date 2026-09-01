@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PopulateRecruitmentCoursesJob.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.jobs</a> &gt; <span class="el_source">PopulateRecruitmentCoursesJob.java</span></div><h1>PopulateRecruitmentCoursesJob.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.jobs;
+
+import edu.ucsb.cs.taapply.entity.Course;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
+import edu.ucsb.cs.taapply.models.UcsbInstructor;
+import edu.ucsb.cs.taapply.models.UcsbSection;
+import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
+import edu.ucsb.cs.taapply.repository.CourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
+import edu.ucsb.cs156.jobs.services.JobContext;
+import edu.ucsb.cs156.jobs.services.JobContextConsumer;
+import edu.ucsb.cs156.jobs.services.JobRateLimit;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Fills a recruitment's course list: every primary section, of every course flagged for this
+ * recruitment's type, that is actually offered in its quarter.
+ *
+ * &lt;p&gt;Three things this must get right:
+ *
+ * &lt;ul&gt;
+ *   &lt;li&gt;A course with two lectures produces two rows, keyed on enroll code. They are planned
+ *       separately and often have different instructors.
+ *   &lt;li&gt;A row the admin removed stays removed. Re-running must not undo that decision.
+ *   &lt;li&gt;Which courses are eligible follows the recruitment type: TA reads {@code needsTa}, ULA
+ *       reads {@code needsUla}.
+ * &lt;/ul&gt;
+ */
+@Builder
+@Getter
+@AllArgsConstructor
+<span class="fc" id="L44">@Slf4j</span>
+public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
+
+  private Recruitment recruitment;
+  private String subjectArea;
+  private UCSBCurriculumService ucsbCurriculumService;
+  private CourseRepository courseRepository;
+  private RecruitmentCourseRepository recruitmentCourseRepository;
+  private JobRateLimit jobRateLimit;
+
+  @Override
+  public void accept(JobContext ctx) throws Exception {
+<span class="fc" id="L56">    String quarter = recruitment.getQuarter();</span>
+<span class="fc" id="L57">    RecruitmentType type = recruitment.getType();</span>
+
+<span class="fc" id="L59">    Set&lt;String&gt; wanted = eligibleCourseIds();</span>
+<span class="fc" id="L60">    ctx.log(</span>
+<span class="fc" id="L61">        String.format(</span>
+            &quot;Populating %s recruitment for %s: %d course(s) flagged for %s&quot;,
+<span class="fc" id="L63">            type, quarter, wanted.size(), type));</span>
+
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    if (wanted.isEmpty()) {</span>
+<span class="fc" id="L66">      ctx.log(&quot;No courses are flagged for this type; nothing to do.&quot;);</span>
+<span class="fc" id="L67">      return;</span>
+    }
+
+<span class="fc" id="L70">    ctx.checkCancellation();</span>
+<span class="fc" id="L71">    jobRateLimit.sleep();</span>
+
+    List&lt;UcsbCourseOffering&gt; offerings;
+    try {
+<span class="fc" id="L75">      offerings = ucsbCurriculumService.getOfferings(subjectArea, quarter);</span>
+<span class="fc" id="L76">    } catch (Exception e) {</span>
+<span class="fc" id="L77">      ctx.log(String.format(&quot;Error fetching offerings for %s: %s&quot;, quarter, e.getMessage()));</span>
+<span class="fc" id="L78">      log.error(&quot;Error fetching offerings for {}&quot;, quarter, e);</span>
+<span class="fc" id="L79">      throw e;</span>
+<span class="fc" id="L80">    }</span>
+
+<span class="fc" id="L82">    int added = 0;</span>
+<span class="fc" id="L83">    int updated = 0;</span>
+<span class="fc" id="L84">    int skippedRemoved = 0;</span>
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">    for (UcsbCourseOffering offering : offerings) {</span>
+<span class="fc" id="L87">      ctx.checkCancellation();</span>
+
+<span class="fc" id="L89">      String courseId = UCSBCurriculumService.normalizeCourseId(offering.getCourseId());</span>
+<span class="fc bfc" id="L90" title="All 4 branches covered.">      if (courseId == null || !wanted.contains(courseId)) {</span>
+<span class="fc" id="L91">        continue;</span>
+      }
+<span class="fc bfc" id="L93" title="All 2 branches covered.">      if (offering.getClassSections() == null) {</span>
+<span class="fc" id="L94">        continue;</span>
+      }
+
+<span class="fc bfc" id="L97" title="All 2 branches covered.">      for (UcsbSection section : offering.getClassSections()) {</span>
+        // Only lectures: discussions and labs are not recruited for separately.
+<span class="fc bfc" id="L99" title="All 4 branches covered.">        if (!section.isPrimary() || section.getEnrollCode() == null) {</span>
+<span class="fc" id="L100">          continue;</span>
+        }
+
+<span class="fc" id="L103">        Optional&lt;RecruitmentCourse&gt; existing =</span>
+<span class="fc" id="L104">            recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(</span>
+<span class="fc" id="L105">                recruitment.getId(), section.getEnrollCode());</span>
+
+<span class="fc bfc" id="L107" title="All 4 branches covered.">        if (existing.isPresent() &amp;&amp; existing.get().isRemoved()) {</span>
+          // The admin took this one out on purpose; leave it out.
+<span class="fc" id="L109">          skippedRemoved++;</span>
+<span class="fc" id="L110">          continue;</span>
+        }
+
+<span class="fc" id="L113">        RecruitmentCourse row = existing.orElseGet(() -&gt; RecruitmentCourse.builder().build());</span>
+<span class="fc" id="L114">        row.setRecruitmentId(recruitment.getId());</span>
+<span class="fc" id="L115">        row.setCourseId(courseId);</span>
+<span class="fc" id="L116">        row.setEnrollCode(section.getEnrollCode());</span>
+<span class="fc" id="L117">        row.setSection(section.getSection());</span>
+<span class="fc" id="L118">        row.setTitle(offering.getTitle());</span>
+<span class="fc" id="L119">        row.setInstructor(firstInstructor(section));</span>
+<span class="fc" id="L120">        row.setDays(firstDays(section));</span>
+<span class="fc" id="L121">        row.setTime(firstTime(section));</span>
+<span class="fc" id="L122">        row.setRoom(firstRoom(section));</span>
+<span class="fc" id="L123">        row.setEnrollment(section.getEnrolledTotal());</span>
+<span class="fc" id="L124">        row.setMaxEnroll(section.getMaxEnroll());</span>
+<span class="fc" id="L125">        row.setStatus(statusOf(section));</span>
+<span class="fc" id="L126">        row.setSummerSession(section.getSession());</span>
+<span class="fc" id="L127">        recruitmentCourseRepository.save(row);</span>
+
+<span class="fc bfc" id="L129" title="All 2 branches covered.">        if (existing.isPresent()) {</span>
+<span class="fc" id="L130">          updated++;</span>
+        } else {
+<span class="fc" id="L132">          added++;</span>
+        }
+<span class="fc" id="L134">        ctx.log(String.format(&quot;  %s section %s&quot;, courseId, section.getSection()));</span>
+<span class="fc" id="L135">      }</span>
+<span class="fc" id="L136">    }</span>
+
+<span class="fc" id="L138">    ctx.log(</span>
+<span class="fc" id="L139">        String.format(</span>
+<span class="fc" id="L140">            &quot;Finished: %d added, %d updated, %d left removed&quot;, added, updated, skippedRemoved));</span>
+<span class="fc" id="L141">  }</span>
+
+  /** Course ids flagged for this recruitment's type. */
+  private Set&lt;String&gt; eligibleCourseIds() {
+<span class="fc" id="L145">    return StreamSupport.stream(courseRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L146">        .filter(this::wantsThisType)</span>
+<span class="fc" id="L147">        .map(Course::getCourseId)</span>
+<span class="fc" id="L148">        .collect(Collectors.toSet());</span>
+  }
+
+  private boolean wantsThisType(Course course) {
+<span class="fc bfc" id="L152" title="All 2 branches covered.">    return recruitment.getType() == RecruitmentType.TA ? course.isNeedsTa() : course.isNeedsUla();</span>
+  }
+
+  /** The first time-location of a primary section; the design ignores any others. */
+  private static UcsbTimeLocation firstTimeLocation(UcsbSection section) {
+<span class="fc" id="L157">    List&lt;UcsbTimeLocation&gt; locations = section.getTimeLocations();</span>
+<span class="fc bfc" id="L158" title="All 4 branches covered.">    return (locations == null || locations.isEmpty()) ? null : locations.get(0);</span>
+  }
+
+  static String firstInstructor(UcsbSection section) {
+<span class="fc" id="L162">    List&lt;UcsbInstructor&gt; instructors = section.getInstructors();</span>
+<span class="fc bfc" id="L163" title="All 4 branches covered.">    if (instructors == null || instructors.isEmpty()) {</span>
+<span class="fc" id="L164">      return null;</span>
+    }
+<span class="fc" id="L166">    return instructors.get(0).getInstructor();</span>
+  }
+
+  static String firstDays(UcsbSection section) {
+<span class="fc" id="L170">    UcsbTimeLocation location = firstTimeLocation(section);</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">    return location == null ? null : location.getDays();</span>
+  }
+
+  /** Rendered as &quot;begin - end&quot;; null if the section has no meeting time (an online course, say). */
+  static String firstTime(UcsbSection section) {
+<span class="fc" id="L176">    UcsbTimeLocation location = firstTimeLocation(section);</span>
+<span class="fc bfc" id="L177" title="All 4 branches covered.">    if (location == null || location.getBeginTime() == null) {</span>
+<span class="fc" id="L178">      return null;</span>
+    }
+<span class="fc" id="L180">    return location.getBeginTime() + &quot; - &quot; + location.getEndTime();</span>
+  }
+
+  /** Building and room together, since neither is much use alone. */
+  static String firstRoom(UcsbSection section) {
+<span class="fc" id="L185">    UcsbTimeLocation location = firstTimeLocation(section);</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">    if (location == null) {</span>
+<span class="fc" id="L187">      return null;</span>
+    }
+<span class="fc bfc" id="L189" title="All 2 branches covered.">    if (location.getBuilding() == null) {</span>
+<span class="fc" id="L190">      return location.getRoom();</span>
+    }
+<span class="fc" id="L192">    return (location.getBuilding() + &quot; &quot; + orEmpty(location.getRoom())).trim();</span>
+  }
+
+  private static String orEmpty(String value) {
+<span class="fc bfc" id="L196" title="All 2 branches covered.">    return value == null ? &quot;&quot; : value;</span>
+  }
+
+  /** Cancellation wins over closure: a cancelled class is not merely full. */
+  static String statusOf(UcsbSection section) {
+<span class="fc bfc" id="L201" title="All 2 branches covered.">    if (isYes(section.getCourseCancelled())) {</span>
+<span class="fc" id="L202">      return &quot;cancelled&quot;;</span>
+    }
+<span class="fc bfc" id="L204" title="All 2 branches covered.">    return isYes(section.getClassClosed()) ? &quot;closed&quot; : &quot;open&quot;;</span>
+  }
+
+  private static boolean isYes(String flag) {
+<span class="fc bfc" id="L208" title="All 4 branches covered.">    return flag != null &amp;&amp; !flag.isBlank();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

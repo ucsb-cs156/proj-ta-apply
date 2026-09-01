@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationAccessService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">ApplicationAccessService.java</span></div><h1>ApplicationAccessService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import java.time.LocalDate;
+import java.util.Collection;
+import java.util.Optional;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.stereotype.Service;
+
+/**
+ * The rules about who may apply to what, and when an application may still be changed.
+ *
+ * &lt;p&gt;Kept in one place because the same questions are asked by several endpoints and by the
+ * frontend, and because getting them wrong is the worst failure this iteration could ship: a grad
+ * student applying to a ULA recruitment, or an applicant editing after the deadline.
+ */
+@Service
+<span class="fc" id="L20">public class ApplicationAccessService {</span>
+
+  /**
+   * The kind of recruitment this user may apply to, from their role. Grad students apply for TA
+   * positions and undergrads for ULA positions; anyone else applies for nothing.
+   */
+  public Optional&lt;RecruitmentType&gt; applicableType(
+      Collection&lt;? extends GrantedAuthority&gt; authorities) {
+<span class="fc" id="L28">    boolean gradStudent = hasRole(authorities, RoleAssignmentService.ROLE_GRAD_STUDENT);</span>
+<span class="fc" id="L29">    boolean undergrad = hasRole(authorities, RoleAssignmentService.ROLE_UNDERGRAD);</span>
+
+    // A user holding both is not expected: ROLE_UNDERGRAD is only granted in the absence of the
+    // other roles. If it ever happened, the grad student reading wins, since it is the explicit
+    // one and TA applications ask for strictly more.
+<span class="fc bfc" id="L34" title="All 2 branches covered.">    if (gradStudent) {</span>
+<span class="fc" id="L35">      return Optional.of(RecruitmentType.TA);</span>
+    }
+<span class="fc bfc" id="L37" title="All 2 branches covered.">    return undergrad ? Optional.of(RecruitmentType.ULA) : Optional.empty();</span>
+  }
+
+  private static boolean hasRole(Collection&lt;? extends GrantedAuthority&gt; authorities, String role) {
+<span class="fc bfc" id="L41" title="All 4 branches covered.">    return authorities != null &amp;&amp; authorities.stream().anyMatch(a -&gt; role.equals(a.getAuthority()));</span>
+  }
+
+  /** Applications may only be created against an open recruitment. */
+  public boolean acceptingApplications(Recruitment recruitment) {
+<span class="fc bfc" id="L46" title="All 2 branches covered.">    return recruitment.getApplicationStatus() == ApplicationStatus.OPEN;</span>
+  }
+
+  /**
+   * Whether the whole application may still be edited: the recruitment is open and the primary
+   * consideration date has not passed. On the date itself editing is still allowed; it closes the
+   * day after.
+   */
+  public boolean editable(Recruitment recruitment, LocalDate today) {
+<span class="fc bfc" id="L55" title="All 2 branches covered.">    if (!acceptingApplications(recruitment)) {</span>
+<span class="fc" id="L56">      return false;</span>
+    }
+<span class="fc" id="L58">    LocalDate deadline = recruitment.getPrimaryConsiderationDate();</span>
+<span class="fc bfc" id="L59" title="All 4 branches covered.">    return deadline == null || !today.isAfter(deadline);</span>
+  }
+
+  /**
+   * Whether post-application comments may still be changed. They outlive the deadline, which is the
+   * point of keeping them separate, but not the recruitment closing.
+   */
+  public boolean commentable(Recruitment recruitment) {
+<span class="fc" id="L67">    return acceptingApplications(recruitment);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
