@@ -41,7 +41,9 @@ public class HomePageWebIT extends WebTestCase {
     // profile fields and overwrites the stored values on each sign-in.
     assertThat(page.getByTestId("HomePageLoggedIn-greeting")).containsText("Welcome, Test.");
     assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).isVisible();
-    assertThat(page.getByTestId("HomePageLoggedIn-gradstudent")).not().isVisible();
+    // An undergrad applies for ULA positions, so that is what the dashboard talks about.
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-none-open"))
+        .containsText("Applications for ULA positions are not currently being accepted.");
     assertThat(page.getByTestId("HomePageLoggedIn-admin")).not().isVisible();
   }
 
@@ -50,8 +52,8 @@ public class HomePageWebIT extends WebTestCase {
     setupAdminUser();
 
     assertThat(page.getByTestId("HomePageLoggedIn-admin")).isVisible();
-    // Roles are independent: being an admin does not make you a grad student.
-    assertThat(page.getByTestId("HomePageLoggedIn-gradstudent")).not().isVisible();
+    // Roles are independent: being an admin does not make you an applicant.
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard")).not().isVisible();
     // Nor an undergrad who would apply for a ULA position.
     assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).not().isVisible();
   }
@@ -64,12 +66,14 @@ public class HomePageWebIT extends WebTestCase {
     assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).not().isVisible();
   }
 
+  /** A grad student gets the applicant dashboard, for TA positions, not the ULA message. */
   @Test
-  public void logged_in_grad_student_sees_the_ta_message_and_not_the_ula_message()
+  public void logged_in_grad_student_sees_the_ta_dashboard_and_not_the_ula_message()
       throws Exception {
     setupGradStudentUser();
 
-    assertThat(page.getByTestId("HomePageLoggedIn-gradstudent")).isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-none-open"))
+        .containsText("Applications for TA positions are not currently being accepted.");
     assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).not().isVisible();
   }
 }
