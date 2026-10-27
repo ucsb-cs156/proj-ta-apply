@@ -5,6 +5,7 @@ const applicationsFixtures = {
     email: "grad@ucsb.edu",
     status: "PENDING",
     postApplicationComments: null,
+    testApplication: false,
     firstName: "Ada",
     middleName: "M",
     lastName: "Lovelace",
@@ -40,6 +41,7 @@ const applicationsFixtures = {
     email: "ula@ucsb.edu",
     status: "PENDING",
     postApplicationComments: "I have since finished CS 130A.",
+    testApplication: false,
     firstName: "Chris",
     middleName: null,
     lastName: "Gaucho",
@@ -70,9 +72,27 @@ const applicationsFixtures = {
   },
 };
 
+/** What an admin's preview of the TA form leaves behind: the same shape, flagged as a test. */
+applicationsFixtures.oneTestApplication = {
+  ...applicationsFixtures.oneTaApplication,
+  id: 3,
+  recruitmentId: 3,
+  email: "admin@ucsb.edu",
+  testApplication: true,
+  firstName: "Test",
+  middleName: null,
+  lastName: "Admin",
+  comments: "Just checking the form.",
+};
+
 applicationsFixtures.twoApplications = [
   applicationsFixtures.oneUlaApplication,
   applicationsFixtures.oneTaApplication,
+];
+
+applicationsFixtures.threeApplicationsIncludingATest = [
+  ...applicationsFixtures.twoApplications,
+  applicationsFixtures.oneTestApplication,
 ];
 
 export default applicationsFixtures;

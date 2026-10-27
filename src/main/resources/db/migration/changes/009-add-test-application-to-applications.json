@@ -1,0 +1,42 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "009-add-test-application-to-applications",
+        "author": "pc",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "applications",
+                "columnName": "test_application"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [
+                {
+                  "column": {
+                    "name": "test_application",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -54,6 +54,7 @@ describe("RecruitmentTable tests", () => {
       "Actually Closed",
       "Applications",
       "Courses",
+      "Test",
       "Delete",
     ]);
   });
@@ -120,6 +121,18 @@ describe("RecruitmentTable tests", () => {
     expect(
       screen.getByTestId("RecruitmentTable-cell-row-0-col-courses-button"),
     ).toHaveAttribute("href", "/admin/recruitments/3/courses");
+  });
+
+  test("the Test Application button links to that recruitment's preview page", () => {
+    renderTable();
+    const button = screen.getByTestId(
+      "RecruitmentTable-cell-row-1-col-test-button",
+    );
+    expect(button).toHaveTextContent("Test Application");
+    expect(button).toHaveAttribute(
+      "href",
+      "/admin/recruitments/2/test-application",
+    );
   });
 
   /** Delete is confirmed by the page, so the table only reports the request. */

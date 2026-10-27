@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -52,6 +53,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   private static final String GRAD_EMAIL = "grad@example.org";
 
   private static final String ULA_EMAIL = "ula@example.org";
+
+  private static final String ADMIN_EMAIL = "admin@example.org";
 
   private static Recruitment recruitment(
       long id, RecruitmentType type, ApplicationStatus status, LocalDate deadline) {
@@ -222,6 +225,13 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(put("/api/applications/comments?id=1&postApplicationComments=hi").with(csrf()))
         .andExpect(status().is(403));
+    mockMvc
+        .perform(
+            post("/api/applications/test?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}")
+                .with(csrf()))
+        .andExpect(status().is(403));
   }
 
   @WithMockUser(roles = {"USER"})
@@ -247,9 +257,19 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(put("/api/applications/comments?id=1&postApplicationComments=hi").with(csrf()))
         .andExpect(status().is(403));
+    mockMvc
+        .perform(
+            post("/api/applications/test?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}")
+                .with(csrf()))
+        .andExpect(status().is(403));
   }
 
-  /** An admin can look at their own (empty) list, but is not an applicant and cannot write. */
+  /**
+   * An admin can look at their own (empty) list, but is not an applicant and cannot write real
+   * applications; test applications go through /test, covered below.
+   */
   @WithMockUser(
       username = "admin",
       roles = {"ADMIN"})
@@ -719,6 +739,129 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     assertEquals(
         "That application belongs to someone else", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  // ---- POST /test (admin preview) ----
+
+  /** Test applications are an admin tool; applicants have the real thing. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT", "UNDERGRAD"})
+  @Test
+  public void applicants_cannot_enter_test_applications() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/applications/test?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().is(403));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /**
+   * Neither the type rule nor the open/closed rule applies: the point is to test before opening.
+   */
+  @WithMockUser(
+      username = "admin",
+      roles = {"ADMIN"})
+  @Test
+  public void an_admin_can_enter_a_test_application_for_a_closed_recruitment() throws Exception {
+    when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
+    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 3L))
+        .thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/test?recruitmentId=3")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body())
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    Application expected = expectedFrom(null, 3L, ADMIN_EMAIL, null);
+    expected.setTestApplication(true);
+    assertEquals(expected, saved());
+    assertTrue(saved().isTestApplication());
+    assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+  }
+
+  /** Submitting the test form twice replaces the earlier answers rather than being refused. */
+  @WithMockUser(
+      username = "admin",
+      roles = {"ADMIN"})
+  @Test
+  public void a_second_test_application_overwrites_the_first() throws Exception {
+    Application earlier = application(7L, 2L, ADMIN_EMAIL);
+    earlier.setTestApplication(true);
+    earlier.setPostApplicationComments("kept");
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 2L))
+        .thenReturn(Optional.of(earlier));
+
+    mockMvc
+        .perform(
+            post("/api/applications/test?recruitmentId=2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    // Same row (same id), still a test application, with the new answers.
+    Application expected = expectedFrom(7L, 2L, ADMIN_EMAIL, "kept");
+    expected.setTestApplication(true);
+    assertEquals(expected, saved());
+  }
+
+  /** An admin who is also an applicant must not have a real application turned into a test one. */
+  @WithMockUser(
+      username = "admin",
+      roles = {"ADMIN"})
+  @Test
+  public void a_real_application_is_never_converted_into_a_test_application() throws Exception {
+    Application real = application(8L, 1L, ADMIN_EMAIL);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 1L))
+        .thenReturn(Optional.of(real));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/test?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body())
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "You already have a real application for this recruitment",
+        responseToJson(response).get("message"));
+    assertFalse(real.isTestApplication());
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(
+      username = "admin",
+      roles = {"ADMIN"})
+  @Test
+  public void a_test_application_for_a_missing_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/test?recruitmentId=99")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body())
+                    .with(csrf()))
+            .andExpect(status().is(404))
+            .andReturn();
+
+    assertEquals("Recruitment with id 99 not found", responseToJson(response).get("message"));
     verify(applicationRepository, never()).save(any());
   }
 }

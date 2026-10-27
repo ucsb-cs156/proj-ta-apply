@@ -170,4 +170,34 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-postApplicationComments"))
         .hasValue("Finished CS 290A since.");
   }
+
+  /** An admin previews the form from the recruitments table; the result is flagged as a test. */
+  @Test
+  public void an_admin_can_enter_a_test_application_from_the_recruitments_table() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    // Closed: the preview has to work before applications open.
+    recruitment.setApplicationStatus(ApplicationStatus.CLOSED);
+    recruitmentRepository.save(recruitment);
+
+    setupAdminUser();
+    goTo("/admin/recruitments");
+
+    page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-test-button").click();
+
+    // The warning sits above the form, and the form is the TA one.
+    assertThat(page.getByTestId("TestOnlyBanner")).containsText("This is a test only");
+    assertThat(page.getByTestId("TestApplicationPage-residencyStatus")).isVisible();
+    assertThat(page.getByTestId("TestApplicationPage-saved")).not().isVisible();
+
+    page.getByTestId("TestApplicationPage-firstName").fill("Ada");
+    page.getByTestId("TestApplicationPage-lastName").fill("Admin");
+    page.getByTestId("TestApplicationPage-major").fill("Computer Science");
+    page.getByTestId("TestApplicationPage-firstChoiceCourse").selectOption("CMPSC   156");
+    page.getByTestId("TestApplicationPage-submit").click();
+
+    // Saved and shown back on the same page, still under the banner.
+    assertThat(page.getByTestId("TestApplicationPage-saved")).isVisible();
+    assertThat(page.getByTestId("TestApplicationPage-summary-Name")).containsText("Ada Admin");
+    assertThat(page.getByTestId("TestOnlyBanner")).isVisible();
+  }
 }
