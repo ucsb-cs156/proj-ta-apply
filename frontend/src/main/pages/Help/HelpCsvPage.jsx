@@ -41,7 +41,7 @@ export default function HelpCsvPage() {
           <Accordion.Item eventKey="1">
             <Accordion.Header>Instructor Emails</Accordion.Header>
             <Accordion.Body>
-              <p>
+              <p data-testid="instructorCsvDescription">
                 On the <i>Instructors</i> admin page, admins can upload a CSV of
                 instructor email addresses. Each address uploaded is permitted
                 to log in as an instructor and review applications for their own

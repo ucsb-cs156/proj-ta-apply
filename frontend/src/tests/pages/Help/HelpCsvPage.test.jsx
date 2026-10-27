@@ -58,6 +58,13 @@ describe("HelpCsvPage tests", () => {
     expect(screen.getByTestId("instructorCsvExample").textContent).toBe(
       csvFixtures.instructorEmails,
     );
+    expect(screen.getByTestId("instructorCsvDescription").textContent).toBe(
+      "On the Instructors admin page, admins can upload a CSV of " +
+        "instructor email addresses. Each address uploaded is permitted " +
+        "to log in as an instructor and review applications for their own " +
+        "courses. Here is an example file (note that the name column is " +
+        "ignored; only the email column is used):",
+    );
 
     expect(
       screen.getByText(/does not currently offer any CSV downloads/),
