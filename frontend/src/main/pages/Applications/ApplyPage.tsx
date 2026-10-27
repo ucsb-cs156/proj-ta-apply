@@ -74,6 +74,7 @@ export default function ApplyPage(): React.JSX.Element {
           <ApplicationForm
             type={recruitment.type}
             courses={courses ?? []}
+            recruitmentId={recruitmentId}
             initialContents={(prefill ?? [])[0]}
             defaultNames={{
               firstName: currentUser.root?.user?.givenName,

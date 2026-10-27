@@ -1,12 +1,18 @@
 package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.errors.ForbiddenException;
+import edu.ucsb.cs.taapply.models.CourseSections;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
 import edu.ucsb.cs.taapply.services.GrantedAuthoritiesService;
+import edu.ucsb.cs.taapply.services.RoleAssignmentService;
+import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,6 +44,7 @@ public class ApplicantRecruitmentsController extends ApiController {
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired ApplicationAccessService applicationAccessService;
   @Autowired GrantedAuthoritiesService grantedAuthoritiesService;
+  @Autowired UCSBCurriculumService ucsbCurriculumService;
 
   private Optional<RecruitmentType> myType() {
     return applicationAccessService.applicableType(
@@ -123,5 +130,54 @@ public class ApplicantRecruitmentsController extends ApiController {
         .distinct()
         .sorted()
         .toList();
+  }
+
+  @Operation(
+      summary = "When a course's lectures and sections meet",
+      description =
+          "Looked up live from the UCSB API via the enroll code of the course's lecture in the"
+              + " recruitment, so an applicant choosing the course can see whether they are free."
+              + " 404 for a recruitment that does not exist; 403 for one the current user may not"
+              + " apply to, unless they are an admin previewing the form. A course the recruitment"
+              + " does not list comes back with no meetings rather than an error.")
+  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+  @GetMapping("/sections")
+  public CourseSections courseSections(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
+      @Parameter(name = "courseId", description = "Padded course id, e.g. \"CMPSC   156\"")
+          @RequestParam
+          String courseId)
+      throws Exception {
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+
+    // An admin trying the form (TestApplicationPage) has no applicable type but needs the card;
+    // everyone else only gets answers about recruitments of their own type.
+    boolean admin =
+        grantedAuthoritiesService.getGrantedAuthorities().stream()
+            .anyMatch(a -> RoleAssignmentService.ROLE_ADMIN.equals(a.getAuthority()));
+    if (!admin && myType().orElse(null) != recruitment.getType()) {
+      throw new ForbiddenException("That recruitment is not one you can apply to");
+    }
+
+    // Any one lecture's enroll code finds the whole offering, every section included, so the
+    // lowest is as good as any and keeps the request the same from one call to the next.
+    Optional<String> enrollCode =
+        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
+            .filter(c -> !c.isRemoved() && courseId.equals(c.getCourseId()))
+            .map(RecruitmentCourse::getEnrollCode)
+            .sorted()
+            .findFirst();
+    if (enrollCode.isEmpty()) {
+      return CourseSections.none(courseId, recruitment.getQuarter());
+    }
+
+    return CourseSections.from(
+        courseId,
+        recruitment.getQuarter(),
+        ucsbCurriculumService.getOffering(recruitment.getQuarter(), enrollCode.get()));
   }
 }

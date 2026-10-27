@@ -8,6 +8,7 @@ import { vi } from "vitest";
 
 import ApplyPage from "main/pages/Applications/ApplyPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
@@ -54,6 +55,9 @@ describe("ApplyPage tests", () => {
       .reply(200, systemInfoFixtures.showingNeither);
     axiosMock.onGet("/api/recruitments/applicable").reply(200, [openUla]);
     axiosMock.onGet("/api/recruitments/courses").reply(200, courses);
+    axiosMock
+      .onGet("/api/recruitments/sections")
+      .reply(200, courseSectionsFixtures.cmpsc156);
     axiosMock.onGet("/api/applications/prefill").reply(200, []);
   });
 
@@ -85,6 +89,26 @@ describe("ApplyPage tests", () => {
         (r) => r.url === "/api/recruitments/courses",
       )[0].params,
     ).toEqual({ recruitmentId: "2" });
+  });
+
+  test("choosing a course looks up its times in the recruitment being applied to", async () => {
+    renderPage();
+
+    await userEvent.selectOptions(
+      await screen.findByTestId("ApplyPage-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+
+    expect(
+      await screen.findByTestId("ApplyPage-firstChoiceSections-row-0-type"),
+    ).toHaveTextContent("Lecture");
+    const request = axiosMock.history.get.find(
+      (r) => r.url === "/api/recruitments/sections",
+    );
+    expect(request.params).toEqual({
+      recruitmentId: "2",
+      courseId: "CMPSC   156",
+    });
   });
 
   /** The point of pre-filling: a repeat applicant should not retype everything. */

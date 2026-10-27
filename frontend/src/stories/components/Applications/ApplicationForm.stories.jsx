@@ -1,12 +1,24 @@
 import React from "react";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
+import { HttpResponse, http } from "msw";
 
 const courses = ["CMPSC     8", "CMPSC    16", "CMPSC   130A", "CMPSC   156"];
 
 export default {
   title: "components/Applications/ApplicationForm",
   component: ApplicationForm,
+  parameters: {
+    // Choosing a course looks up its meeting times; every story answers with the same ones.
+    msw: {
+      handlers: [
+        http.get("/api/recruitments/sections", () =>
+          HttpResponse.json(courseSectionsFixtures.cmpsc156),
+        ),
+      ],
+    },
+  },
 };
 
 const Template = (args) => <ApplicationForm {...args} />;
@@ -39,6 +51,7 @@ export const PrefilledFromAPreviousApplication = Template.bind({});
 PrefilledFromAPreviousApplication.args = {
   type: "TA",
   courses,
+  recruitmentId: 1,
   initialContents: applicationsFixtures.oneTaApplication,
   buttonLabel: "Update Application",
   submitAction: (payload) => console.log("submit", payload),

@@ -136,6 +136,10 @@ export default function ApplicationSummary({
       value: yesNo(application.availableForDiscussionFirstChoice),
     },
     {
+      label: "First Choice Availability Comments",
+      value: show(application.availabilityCommentsFirstChoice),
+    },
+    {
       label: "Second Choice Course",
       value: show(application.secondChoiceCourse),
       mono: true,
@@ -147,6 +151,10 @@ export default function ApplicationSummary({
     {
       label: "Available for a Second Choice Discussion",
       value: yesNo(application.availableForDiscussionSecondChoice),
+    },
+    {
+      label: "Second Choice Availability Comments",
+      value: show(application.availabilityCommentsSecondChoice),
     },
     {
       label: "Other Courses of Interest",

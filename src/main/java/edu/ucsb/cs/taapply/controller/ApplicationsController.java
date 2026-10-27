@@ -70,6 +70,8 @@ public class ApplicationsController extends ApiController {
       boolean availableForLecturesSecondChoice,
       boolean availableForDiscussionFirstChoice,
       boolean availableForDiscussionSecondChoice,
+      String availabilityCommentsFirstChoice,
+      String availabilityCommentsSecondChoice,
       /** Course id to interest, for courses other than the two choices; may be null or empty. */
       Map<String, CourseInterest> courseInterests,
       edu.ucsb.cs.taapply.enums.ResidencyStatus residencyStatus,
@@ -301,6 +303,8 @@ public class ApplicationsController extends ApiController {
     application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());
     application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());
     application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());
+    application.setAvailabilityCommentsFirstChoice(fields.availabilityCommentsFirstChoice());
+    application.setAvailabilityCommentsSecondChoice(fields.availabilityCommentsSecondChoice());
     application.setCourseInterests(courseInterestsFrom(fields));
     application.setResidencyStatus(fields.residencyStatus());
     application.setLanguageExam(fields.languageExam());

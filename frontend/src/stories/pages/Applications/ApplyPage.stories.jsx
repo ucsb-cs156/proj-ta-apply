@@ -2,6 +2,7 @@ import React from "react";
 import { HttpResponse, http } from "msw";
 import ApplyPage from "main/pages/Applications/ApplyPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
@@ -26,6 +27,9 @@ const common = [
   ),
   http.get("/api/recruitments/applicable", () => HttpResponse.json([openUla])),
   http.get("/api/recruitments/courses", () => HttpResponse.json(courses)),
+  http.get("/api/recruitments/sections", () =>
+    HttpResponse.json(courseSectionsFixtures.cmpsc156),
+  ),
   http.post("/api/applications/post", () =>
     HttpResponse.json(applicationsFixtures.oneUlaApplication),
   ),
