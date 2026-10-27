@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">ApplicationsController.java</span></div><h1>ApplicationsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.errors.ForbiddenException;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.GrantedAuthoritiesService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * An applicant's own applications.
+ *
+ * &lt;p&gt;Every read and write here confirms the row belongs to the current user. An applicant reading
+ * or editing someone else's application would be the worst bug this iteration could ship, so
+ * ownership is checked explicitly rather than relying on a query happening to filter by email.
+ */
+@Tag(name = &quot;Applications&quot;)
+@RequestMapping(&quot;/api/applications&quot;)
+@RestController
+<span class="fc" id="L40">@Slf4j</span>
+<span class="fc" id="L41">public class ApplicationsController extends ApiController {</span>
+
+  @Autowired ApplicationRepository applicationRepository;
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired ApplicationAccessService applicationAccessService;
+  @Autowired GrantedAuthoritiesService grantedAuthoritiesService;
+
+  /**
+   * The fields an applicant may set. Deliberately not the entity: status and email are not theirs.
+   */
+<span class="fc" id="L51">  public static record ApplicationFields(</span>
+      String firstName,
+      String middleName,
+      String lastName,
+      String major,
+      Double gpaMajor,
+      Double gpaOverall,
+      String yearInProgram,
+      String graduationDate,
+      String courseworkUcsb,
+      String knowledge,
+      String prevExperience,
+      String desiredCourses,
+      String comments,
+      String firstChoiceCourse,
+      String secondChoiceCourse,
+      boolean availableForLecturesFirstChoice,
+      boolean availableForLecturesSecondChoice,
+      boolean availableForDiscussionFirstChoice,
+      boolean availableForDiscussionSecondChoice,
+      edu.ucsb.cs.taapply.enums.ResidencyStatus residencyStatus,
+      edu.ucsb.cs.taapply.enums.LanguageExamStatus languageExam,
+      LocalDate languageExamDatePassed,
+      edu.ucsb.cs.taapply.enums.ClassLevel classLevel,
+      String courseworkOther,
+      String coursework290,
+      String videoLink,
+      Integer previousServiceAsUla) {}
+
+  private String currentEmail() {
+<span class="fc" id="L81">    return getCurrentUser().getUser().getEmail();</span>
+  }
+
+  /** Loads an application, refusing anyone else's rather than merely not finding it. */
+  private Application mine(Long id) {
+<span class="fc" id="L86">    Application application =</span>
+        applicationRepository
+<span class="fc" id="L88">            .findById(id)</span>
+<span class="fc" id="L89">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+
+<span class="fc bfc" id="L91" title="All 2 branches covered.">    if (!currentEmail().equals(application.getEmail())) {</span>
+      // Deliberately not a 404: the row exists, it simply is not theirs.
+<span class="fc" id="L93">      throw new ForbiddenException(&quot;That application belongs to someone else&quot;);</span>
+    }
+<span class="fc" id="L95">    return application;</span>
+  }
+
+  private Recruitment recruitmentFor(Application application) {
+<span class="fc" id="L99">    return recruitmentRepository</span>
+<span class="fc" id="L100">        .findById(application.getRecruitmentId())</span>
+<span class="fc" id="L101">        .orElseThrow(</span>
+<span class="fc" id="L102">            () -&gt; new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));</span>
+  }
+
+  @Operation(summary = &quot;The current user's own applications, newest first&quot;)
+  @PreAuthorize(&quot;hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/mine&quot;)
+  public List&lt;Application&gt; myApplications() {
+<span class="fc" id="L109">    return applicationRepository.findByEmailOrderByIdDesc(currentEmail());</span>
+  }
+
+  @Operation(
+      summary = &quot;One of the current user's applications&quot;,
+      description = &quot;403 for an application belonging to anyone else.&quot;)
+  @PreAuthorize(&quot;hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;&quot;)
+  public Application getApplication(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
+<span class="fc" id="L118">    return mine(id);</span>
+  }
+
+  @Operation(
+      summary = &quot;The applicant's most recent application, for pre-filling a new one&quot;,
+      description = &quot;Empty if they have never applied.&quot;)
+  @PreAuthorize(&quot;hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/prefill&quot;)
+  public List&lt;Application&gt; prefill() {
+<span class="fc" id="L127">    return applicationRepository.findByEmailOrderByIdDesc(currentEmail()).stream()</span>
+<span class="fc" id="L128">        .limit(1)</span>
+<span class="fc" id="L129">        .toList();</span>
+  }
+
+  @Operation(
+      summary = &quot;Apply to a recruitment&quot;,
+      description =
+          &quot;Refused if the recruitment is not open, is not the type this user may apply to, or they&quot;
+              + &quot; already have an application for it.&quot;)
+  @PreAuthorize(&quot;hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD')&quot;)
+  @PostMapping(&quot;/post&quot;)
+  public Application postApplication(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
+      @RequestBody ApplicationFields fields) {
+
+<span class="fc" id="L143">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L145">            .findById(recruitmentId)</span>
+<span class="fc" id="L146">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+
+<span class="fc" id="L148">    Optional&lt;RecruitmentType&gt; myType =</span>
+<span class="fc" id="L149">        applicationAccessService.applicableType(grantedAuthoritiesService.getGrantedAuthorities());</span>
+
+    // Enforced here, not merely by hiding a link: a grad student must not reach a ULA recruitment.
+    // A user with no applicable type at all yields null, which matches no recruitment type.
+<span class="fc bfc" id="L153" title="All 2 branches covered.">    if (myType.orElse(null) != recruitment.getType()) {</span>
+<span class="fc" id="L154">      throw new ForbiddenException(&quot;You are not eligible to apply to this recruitment&quot;);</span>
+    }
+<span class="fc bfc" id="L156" title="All 2 branches covered.">    if (!applicationAccessService.acceptingApplications(recruitment)) {</span>
+<span class="fc" id="L157">      throw new IllegalArgumentException(</span>
+          &quot;Applications are not currently open for this recruitment&quot;);
+    }
+<span class="fc bfc" id="L160" title="All 2 branches covered.">    if (applicationRepository.existsByEmailAndRecruitmentId(currentEmail(), recruitmentId)) {</span>
+<span class="fc" id="L161">      throw new IllegalArgumentException(&quot;You already have an application for this recruitment&quot;);</span>
+    }
+
+    Application application =
+<span class="fc" id="L165">        Application.builder()</span>
+<span class="fc" id="L166">            .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L167">            .email(currentEmail())</span>
+<span class="fc" id="L168">            .status(ApplicationReviewStatus.PENDING)</span>
+<span class="fc" id="L169">            .build();</span>
+<span class="fc" id="L170">    apply(fields, application);</span>
+<span class="fc" id="L171">    applicationRepository.save(application);</span>
+<span class="fc" id="L172">    return application;</span>
+  }
+
+  @Operation(
+      summary = &quot;Edit an application&quot;,
+      description =
+          &quot;Allowed while the recruitment is open and the primary consideration date has not passed.&quot;
+              + &quot; After that only post-application comments may change.&quot;)
+  @PreAuthorize(&quot;hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD')&quot;)
+  @PutMapping(&quot;&quot;)
+  public Application updateApplication(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id, @RequestBody ApplicationFields fields) {
+
+<span class="fc" id="L185">    Application application = mine(id);</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">    if (!applicationAccessService.editable(recruitmentFor(application), LocalDate.now())) {</span>
+<span class="fc" id="L187">      throw new ForbiddenException(</span>
+          &quot;This application can no longer be edited; you may still update your post application&quot;
+              + &quot; comments&quot;);
+    }
+
+<span class="fc" id="L192">    apply(fields, application);</span>
+<span class="fc" id="L193">    applicationRepository.save(application);</span>
+<span class="fc" id="L194">    return application;</span>
+  }
+
+  @Operation(
+      summary = &quot;Update post-application comments&quot;,
+      description =
+          &quot;Separate from the rest of the application because it outlives the primary consideration&quot;
+              + &quot; date. Refused once the recruitment closes.&quot;)
+  @PreAuthorize(&quot;hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD')&quot;)
+  @PutMapping(&quot;/comments&quot;)
+  public Application updateComments(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;postApplicationComments&quot;) @RequestParam String postApplicationComments) {
+
+<span class="fc" id="L208">    Application application = mine(id);</span>
+<span class="fc bfc" id="L209" title="All 2 branches covered.">    if (!applicationAccessService.commentable(recruitmentFor(application))) {</span>
+<span class="fc" id="L210">      throw new ForbiddenException(&quot;This recruitment is closed&quot;);</span>
+    }
+
+<span class="fc" id="L213">    application.setPostApplicationComments(postApplicationComments);</span>
+<span class="fc" id="L214">    applicationRepository.save(application);</span>
+<span class="fc" id="L215">    return application;</span>
+  }
+
+  /** Copies the applicant-supplied fields; never status, email or recruitment. */
+  private static void apply(ApplicationFields fields, Application application) {
+<span class="fc" id="L220">    application.setFirstName(fields.firstName());</span>
+<span class="fc" id="L221">    application.setMiddleName(fields.middleName());</span>
+<span class="fc" id="L222">    application.setLastName(fields.lastName());</span>
+<span class="fc" id="L223">    application.setMajor(fields.major());</span>
+<span class="fc" id="L224">    application.setGpaMajor(fields.gpaMajor());</span>
+<span class="fc" id="L225">    application.setGpaOverall(fields.gpaOverall());</span>
+<span class="fc" id="L226">    application.setYearInProgram(fields.yearInProgram());</span>
+<span class="fc" id="L227">    application.setGraduationDate(fields.graduationDate());</span>
+<span class="fc" id="L228">    application.setCourseworkUcsb(fields.courseworkUcsb());</span>
+<span class="fc" id="L229">    application.setKnowledge(fields.knowledge());</span>
+<span class="fc" id="L230">    application.setPrevExperience(fields.prevExperience());</span>
+<span class="fc" id="L231">    application.setDesiredCourses(fields.desiredCourses());</span>
+<span class="fc" id="L232">    application.setComments(fields.comments());</span>
+<span class="fc" id="L233">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
+<span class="fc" id="L234">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
+<span class="fc" id="L235">    application.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
+<span class="fc" id="L236">    application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
+<span class="fc" id="L237">    application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
+<span class="fc" id="L238">    application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
+<span class="fc" id="L239">    application.setResidencyStatus(fields.residencyStatus());</span>
+<span class="fc" id="L240">    application.setLanguageExam(fields.languageExam());</span>
+<span class="fc" id="L241">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
+<span class="fc" id="L242">    application.setClassLevel(fields.classLevel());</span>
+<span class="fc" id="L243">    application.setCourseworkOther(fields.courseworkOther());</span>
+<span class="fc" id="L244">    application.setCoursework290(fields.coursework290());</span>
+<span class="fc" id="L245">    application.setVideoLink(fields.videoLink());</span>
+<span class="fc" id="L246">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
+<span class="fc" id="L247">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
