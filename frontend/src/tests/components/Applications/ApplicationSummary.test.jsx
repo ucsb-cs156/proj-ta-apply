@@ -120,6 +120,65 @@ describe("ApplicationSummary tests", () => {
     expect(first.textContent).toBe("CMPSC   156");
   });
 
+  /** One course per line, padded so the ids line up, in course order whatever order the map is in. */
+  test("lists the other courses of interest, spelled out and in course order", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneTaApplication,
+          courseInterests: {
+            "CMPSC    16": "WOULD_CONSIDER",
+            "CMPSC     8": "ENTHUSIASTIC",
+          },
+        }}
+        type="TA"
+      />,
+    );
+
+    const other = screen.getByTestId(
+      "ApplicationSummary-Other Courses of Interest",
+    );
+    expect(other.textContent).toBe(
+      "CMPSC     8  Enthusiastic\nCMPSC    16  Would Consider",
+    );
+    expect(other).toHaveStyle({ whiteSpace: "pre", fontFamily: "monospace" });
+  });
+
+  test("with no other courses marked, that row is blank", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneUlaApplication,
+          courseInterests: {},
+        }}
+        type="ULA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("ApplicationSummary-Other Courses of Interest")
+        .textContent,
+    ).toBe("");
+  });
+
+  /** An application stored before the table existed may come back with no map at all. */
+  test("a missing course interest map reads as blank", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneUlaApplication,
+          courseInterests: null,
+        }}
+        type="ULA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("ApplicationSummary-Other Courses of Interest")
+        .textContent,
+    ).toBe("");
+  });
+
   /** An unanswered question should read as unanswered, not as "null". */
   test("missing answers render blank", () => {
     render(

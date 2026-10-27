@@ -21,6 +21,7 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
@@ -29,6 +30,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -94,7 +96,6 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           "CS 156, CS 130A",
           "Java, Spring, React",
           "TA for CS 24",
-          "CMPSC   156",
           "Happy to help with either",
           "CMPSC   156",
           "CMPSC   130A",
@@ -102,6 +103,11 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           true,
           true,
           true,
+          Map.of(
+              "CMPSC     8",
+              CourseInterest.ENTHUSIASTIC,
+              "CMPSC    16",
+              CourseInterest.WOULD_CONSIDER),
           ResidencyStatus.F1_STUDENT_VISA,
           LanguageExamStatus.PASSED,
           LocalDate.of(2025, 9, 1),
@@ -125,7 +131,6 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           FULL_FIELDS.courseworkUcsb(),
           FULL_FIELDS.knowledge(),
           FULL_FIELDS.prevExperience(),
-          FULL_FIELDS.desiredCourses(),
           FULL_FIELDS.comments(),
           FULL_FIELDS.firstChoiceCourse(),
           FULL_FIELDS.secondChoiceCourse(),
@@ -133,6 +138,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           false,
           false,
           false,
+          FULL_FIELDS.courseInterests(),
           FULL_FIELDS.residencyStatus(),
           FULL_FIELDS.languageExam(),
           FULL_FIELDS.languageExamDatePassed(),
@@ -141,6 +147,38 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           FULL_FIELDS.coursework290(),
           FULL_FIELDS.videoLink(),
           FULL_FIELDS.previousServiceAsUla());
+
+  /** The full application with a different set of course interest answers. */
+  private static ApplicationFields withInterests(Map<String, CourseInterest> interests) {
+    return new ApplicationFields(
+        FULL_FIELDS.firstName(),
+        FULL_FIELDS.middleName(),
+        FULL_FIELDS.lastName(),
+        FULL_FIELDS.major(),
+        FULL_FIELDS.gpaMajor(),
+        FULL_FIELDS.gpaOverall(),
+        FULL_FIELDS.yearInProgram(),
+        FULL_FIELDS.graduationDate(),
+        FULL_FIELDS.courseworkUcsb(),
+        FULL_FIELDS.knowledge(),
+        FULL_FIELDS.prevExperience(),
+        FULL_FIELDS.comments(),
+        FULL_FIELDS.firstChoiceCourse(),
+        FULL_FIELDS.secondChoiceCourse(),
+        FULL_FIELDS.availableForLecturesFirstChoice(),
+        FULL_FIELDS.availableForLecturesSecondChoice(),
+        FULL_FIELDS.availableForDiscussionFirstChoice(),
+        FULL_FIELDS.availableForDiscussionSecondChoice(),
+        interests,
+        FULL_FIELDS.residencyStatus(),
+        FULL_FIELDS.languageExam(),
+        FULL_FIELDS.languageExamDatePassed(),
+        FULL_FIELDS.classLevel(),
+        FULL_FIELDS.courseworkOther(),
+        FULL_FIELDS.coursework290(),
+        FULL_FIELDS.videoLink(),
+        FULL_FIELDS.previousServiceAsUla());
+  }
 
   /** The same values, as the entity they should produce. */
   private static Application expectedFrom(
@@ -162,7 +200,6 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .courseworkUcsb("CS 156, CS 130A")
         .knowledge("Java, Spring, React")
         .prevExperience("TA for CS 24")
-        .desiredCourses("CMPSC   156")
         .comments("Happy to help with either")
         .firstChoiceCourse("CMPSC   156")
         .secondChoiceCourse("CMPSC   130A")
@@ -170,6 +207,13 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .availableForLecturesSecondChoice(true)
         .availableForDiscussionFirstChoice(true)
         .availableForDiscussionSecondChoice(true)
+        .courseInterests(
+            new HashMap<>(
+                Map.of(
+                    "CMPSC     8",
+                    CourseInterest.ENTHUSIASTIC,
+                    "CMPSC    16",
+                    CourseInterest.WOULD_CONSIDER)))
         .residencyStatus(ResidencyStatus.F1_STUDENT_VISA)
         .languageExam(LanguageExamStatus.PASSED)
         .languageExamDatePassed(LocalDate.of(2025, 9, 1))
@@ -603,6 +647,83 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertFalse(after.isAvailableForLecturesSecondChoice());
     assertFalse(after.isAvailableForDiscussionFirstChoice());
     assertFalse(after.isAvailableForDiscussionSecondChoice());
+  }
+
+  // ---- course interests ----
+
+  /**
+   * The stored map holds only answers that say something. NOT_INTERESTED is the default, and the
+   * first and second choice are recorded in their own fields, so all three are dropped whatever the
+   * client sent.
+   */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void course_interests_keep_only_the_answers_that_say_something() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    Map<String, CourseInterest> sent = new HashMap<>();
+    sent.put("CMPSC     8", CourseInterest.ENTHUSIASTIC);
+    sent.put("CMPSC    24", CourseInterest.NOT_INTERESTED);
+    sent.put("CMPSC   156", CourseInterest.ENTHUSIASTIC); // the first choice
+    sent.put("CMPSC   130A", CourseInterest.WOULD_CONSIDER); // the second choice
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withInterests(sent)))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of("CMPSC     8", CourseInterest.ENTHUSIASTIC), saved().getCourseInterests());
+  }
+
+  /** An older client, or a test via Swagger, may leave the map out altogether. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void a_missing_course_interest_map_is_stored_as_empty() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withInterests(null)))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of(), saved().getCourseInterests());
+  }
+
+  /** Editing replaces the earlier answers rather than merging with them. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void editing_replaces_the_course_interests() throws Exception {
+    Application existing = application(5L, 1L, GRAD_EMAIL);
+    existing.getCourseInterests().put("CMPSC    16", CourseInterest.ENTHUSIASTIC);
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    mockMvc
+        .perform(
+            put("/api/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    mapper.writeValueAsString(
+                        withInterests(Map.of("CMPSC     8", CourseInterest.WOULD_CONSIDER))))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(
+        Map.of("CMPSC     8", CourseInterest.WOULD_CONSIDER), saved().getCourseInterests());
   }
 
   @WithMockUser(

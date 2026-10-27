@@ -2,10 +2,13 @@ package edu.ucsb.cs.taapply.entity;
 
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.*;
 
 /**
@@ -77,9 +80,6 @@ public class Application {
   private String prevExperience;
 
   @Column(length = 4000)
-  private String desiredCourses;
-
-  @Column(length = 4000)
   private String comments;
 
   /**
@@ -93,6 +93,26 @@ public class Application {
   @Builder.Default private boolean availableForLecturesSecondChoice = false;
   @Builder.Default private boolean availableForDiscussionFirstChoice = false;
   @Builder.Default private boolean availableForDiscussionSecondChoice = false;
+
+  /**
+   * How interested the applicant is in each of the recruitment's other courses, keyed by the padded
+   * course id. Replaces the earlier free-text "desired courses" answer.
+   *
+   * <p>Sparse on purpose: a course that is absent is NOT_INTERESTED, the default, and the first and
+   * second choice are never in here since they have their own fields. Rows live in a separate
+   * table, so a later review page can ask "who is enthusiastic about CMPSC 156" with a query rather
+   * than by parsing text. Fetched eagerly because an application is always shown whole and the map
+   * is at most a few dozen entries.
+   */
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(
+      name = "application_course_interests",
+      joinColumns = @JoinColumn(name = "application_id"))
+  @MapKeyColumn(name = "course_id")
+  @Column(name = "interest")
+  @Enumerated(EnumType.STRING)
+  @Builder.Default
+  private Map<String, CourseInterest> courseInterests = new HashMap<>();
 
   // ---- TA only ----
 

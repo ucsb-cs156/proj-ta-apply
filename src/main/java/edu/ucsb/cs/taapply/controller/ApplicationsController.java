@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.controller;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
@@ -14,7 +15,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +63,6 @@ public class ApplicationsController extends ApiController {
       String courseworkUcsb,
       String knowledge,
       String prevExperience,
-      String desiredCourses,
       String comments,
       String firstChoiceCourse,
       String secondChoiceCourse,
@@ -68,6 +70,8 @@ public class ApplicationsController extends ApiController {
       boolean availableForLecturesSecondChoice,
       boolean availableForDiscussionFirstChoice,
       boolean availableForDiscussionSecondChoice,
+      /** Course id to interest, for courses other than the two choices; may be null or empty. */
+      Map<String, CourseInterest> courseInterests,
       edu.ucsb.cs.taapply.enums.ResidencyStatus residencyStatus,
       edu.ucsb.cs.taapply.enums.LanguageExamStatus languageExam,
       LocalDate languageExamDatePassed,
@@ -260,6 +264,23 @@ public class ApplicationsController extends ApiController {
     return application;
   }
 
+  /**
+   * The course interests worth storing. The form sends only the answers that differ from the
+   * default, but this does not rely on that: NOT_INTERESTED is dropped because it is the default,
+   * and the first and second choice are dropped because they are recorded in their own fields and
+   * the form does not even ask about them. A missing map means no answers.
+   */
+  static Map<String, CourseInterest> courseInterestsFrom(ApplicationFields fields) {
+    Map<String, CourseInterest> interests = new HashMap<>();
+    if (fields.courseInterests() != null) {
+      interests.putAll(fields.courseInterests());
+    }
+    interests.values().removeIf(interest -> interest == CourseInterest.NOT_INTERESTED);
+    interests.remove(fields.firstChoiceCourse());
+    interests.remove(fields.secondChoiceCourse());
+    return interests;
+  }
+
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
   private static void apply(ApplicationFields fields, Application application) {
     application.setFirstName(fields.firstName());
@@ -273,7 +294,6 @@ public class ApplicationsController extends ApiController {
     application.setCourseworkUcsb(fields.courseworkUcsb());
     application.setKnowledge(fields.knowledge());
     application.setPrevExperience(fields.prevExperience());
-    application.setDesiredCourses(fields.desiredCourses());
     application.setComments(fields.comments());
     application.setFirstChoiceCourse(fields.firstChoiceCourse());
     application.setSecondChoiceCourse(fields.secondChoiceCourse());
@@ -281,6 +301,7 @@ public class ApplicationsController extends ApiController {
     application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());
     application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());
     application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());
+    application.setCourseInterests(courseInterestsFrom(fields));
     application.setResidencyStatus(fields.residencyStatus());
     application.setLanguageExam(fields.languageExam());
     application.setLanguageExamDatePassed(fields.languageExamDatePassed());

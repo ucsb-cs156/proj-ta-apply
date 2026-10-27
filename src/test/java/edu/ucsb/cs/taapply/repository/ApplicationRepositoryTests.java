@@ -9,11 +9,14 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,13 +75,19 @@ public class ApplicationRepositoryTests {
             .courseworkUcsb("CMPSC 156")
             .knowledge("Java, React")
             .prevExperience("TA for CS16")
-            .desiredCourses("CMPSC 156")
             .comments("Keen")
             .postApplicationComments("Still available")
             .firstChoiceCourse("CMPSC   156")
             .secondChoiceCourse("CMPSC   130A")
             .availableForLecturesFirstChoice(true)
             .availableForDiscussionSecondChoice(true)
+            .courseInterests(
+                new HashMap<>(
+                    Map.of(
+                        "CMPSC     8",
+                        CourseInterest.ENTHUSIASTIC,
+                        "CMPSC    16",
+                        CourseInterest.WOULD_CONSIDER)))
             .residencyStatus(ResidencyStatus.F1_STUDENT_VISA)
             .languageExam(LanguageExamStatus.PASSED)
             .languageExamDatePassed(LocalDate.of(2025, 9, 1))
@@ -88,6 +97,9 @@ public class ApplicationRepositoryTests {
             .videoLink("https://example.org/v")
             .previousServiceAsUla(2)
             .build());
+
+    entityManager.flush();
+    entityManager.clear();
 
     Application found =
         applicationRepository.findByEmailAndRecruitmentId("grad@ucsb.edu", r.getId()).orElseThrow();
@@ -103,6 +115,14 @@ public class ApplicationRepositoryTests {
     assertTrue(found.isAvailableForLecturesFirstChoice());
     assertFalse(found.isAvailableForLecturesSecondChoice());
     assertTrue(found.isAvailableForDiscussionSecondChoice());
+    // The element collection comes back from its own table, keys padded as stored.
+    assertEquals(
+        Map.of(
+            "CMPSC     8",
+            CourseInterest.ENTHUSIASTIC,
+            "CMPSC    16",
+            CourseInterest.WOULD_CONSIDER),
+        found.getCourseInterests());
     assertEquals(ResidencyStatus.F1_STUDENT_VISA, found.getResidencyStatus());
     assertEquals(LanguageExamStatus.PASSED, found.getLanguageExam());
     assertEquals(LocalDate.of(2025, 9, 1), found.getLanguageExamDatePassed());
@@ -190,5 +210,54 @@ public class ApplicationRepositoryTests {
 
     assertFalse(applicationRepository.findById(real.getId()).orElseThrow().isTestApplication());
     assertTrue(applicationRepository.findById(test.getId()).orElseThrow().isTestApplication());
+  }
+
+  private long interestRows() {
+    return ((Number)
+            entityManager
+                .getEntityManager()
+                .createNativeQuery("select count(*) from application_course_interests")
+                .getSingleResult())
+        .longValue();
+  }
+
+  /**
+   * The table added by changeset 010: an update replaces the earlier rows rather than piling up,
+   * and deleting the application takes its rows with it via the cascading foreign key.
+   */
+  @Test
+  public void course_interests_are_replaced_on_update_and_deleted_with_the_application() {
+    Recruitment r = recruitment("20261", RecruitmentType.TA);
+    Application saved =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(r.getId())
+                .email("grad@ucsb.edu")
+                .courseInterests(
+                    new HashMap<>(
+                        Map.of(
+                            "CMPSC     8",
+                            CourseInterest.ENTHUSIASTIC,
+                            "CMPSC    16",
+                            CourseInterest.WOULD_CONSIDER)))
+                .build());
+    entityManager.flush();
+    entityManager.clear();
+    assertEquals(2, interestRows());
+
+    Application loaded = applicationRepository.findById(saved.getId()).orElseThrow();
+    loaded.setCourseInterests(new HashMap<>(Map.of("CMPSC    24", CourseInterest.ENTHUSIASTIC)));
+    applicationRepository.save(loaded);
+    entityManager.flush();
+    entityManager.clear();
+
+    assertEquals(
+        Map.of("CMPSC    24", CourseInterest.ENTHUSIASTIC),
+        applicationRepository.findById(saved.getId()).orElseThrow().getCourseInterests());
+    assertEquals(1, interestRows());
+
+    applicationRepository.deleteById(saved.getId());
+    entityManager.flush();
+    assertEquals(0, interestRows());
   }
 }

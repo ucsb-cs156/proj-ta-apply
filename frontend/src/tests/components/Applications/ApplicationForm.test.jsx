@@ -49,6 +49,7 @@ describe("ApplicationForm tests", () => {
       "Relevant Coursework at UCSB",
       "First Choice Course",
       "Second Choice Course",
+      "Other Courses You Would Like to Be Considered For",
       "Anything Else",
     ].forEach((label) => expect(screen.getByText(label)).toBeInTheDocument());
   });
@@ -202,6 +203,176 @@ describe("ApplicationForm tests", () => {
 
     const first = screen.getByTestId("ApplicationForm-firstChoiceCourse");
     expect([...first.options].map((o) => o.value)).toEqual([""]);
+  });
+
+  // ---- interest in the other courses ----
+
+  const radio = (course, interest) =>
+    screen.getByTestId(`ApplicationForm-courseInterest-${course}-${interest}`);
+
+  test("every course gets the three options, defaulting to not interested", () => {
+    renderForm();
+
+    expect(screen.getByText("Enthusiastic")).toBeInTheDocument();
+    expect(screen.getByText("Would Consider")).toBeInTheDocument();
+    expect(
+      screen.getByText("Not Applicable / Not Interested"),
+    ).toBeInTheDocument();
+
+    // "CMPSC     8" appears in test ids as "CMPSC-8", the padding collapsed to one dash.
+    for (const course of ["CMPSC-8", "CMPSC-130A", "CMPSC-156"]) {
+      expect(radio(course, "ENTHUSIASTIC")).not.toBeChecked();
+      expect(radio(course, "WOULD_CONSIDER")).not.toBeChecked();
+      expect(radio(course, "NOT_INTERESTED")).toBeChecked();
+    }
+    // Each course's radios form their own group, named after the row.
+    expect(radio("CMPSC-8", "ENTHUSIASTIC")).toHaveAttribute(
+      "name",
+      "ApplicationForm-courseInterest-CMPSC-8",
+    );
+    expect(radio("CMPSC-8", "ENTHUSIASTIC")).toHaveAttribute(
+      "aria-label",
+      "CMPSC     8: Enthusiastic",
+    );
+  });
+
+  test("the course column keeps its padding", () => {
+    renderForm();
+
+    const row = screen.getByTestId("ApplicationForm-courseInterest-CMPSC-8");
+    expect(row.firstChild).toHaveStyle({
+      fontFamily: "monospace",
+      whiteSpace: "pre",
+    });
+    expect(row.firstChild.textContent).toBe("CMPSC     8");
+  });
+
+  test("picking an option is remembered per course", async () => {
+    renderForm();
+
+    await userEvent.click(radio("CMPSC-8", "ENTHUSIASTIC"));
+    await userEvent.click(radio("CMPSC-130A", "WOULD_CONSIDER"));
+
+    expect(radio("CMPSC-8", "ENTHUSIASTIC")).toBeChecked();
+    expect(radio("CMPSC-8", "NOT_INTERESTED")).not.toBeChecked();
+    expect(radio("CMPSC-130A", "WOULD_CONSIDER")).toBeChecked();
+    expect(radio("CMPSC-156", "NOT_INTERESTED")).toBeChecked();
+  });
+
+  /** The two choices are already answered, so their rows say which they are instead of asking. */
+  test("the first and second choice rows show their rank in place of the options", async () => {
+    renderForm();
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-secondChoiceCourse"),
+      "CMPSC   130A",
+    );
+
+    expect(
+      screen.getByTestId("ApplicationForm-courseInterest-CMPSC-156-choice"),
+    ).toHaveTextContent("1st choice");
+    expect(
+      screen.queryByTestId(
+        "ApplicationForm-courseInterest-CMPSC-156-ENTHUSIASTIC",
+      ),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("ApplicationForm-courseInterest-CMPSC-130A-choice"),
+    ).toHaveTextContent("2nd choice");
+    expect(
+      screen.queryByTestId(
+        "ApplicationForm-courseInterest-CMPSC-130A-NOT_INTERESTED",
+      ),
+    ).toBeNull();
+    // The remaining course is still asked about.
+    expect(radio("CMPSC-8", "NOT_INTERESTED")).toBeChecked();
+    expect(
+      screen.queryByTestId("ApplicationForm-courseInterest-CMPSC-8-choice"),
+    ).toBeNull();
+
+    // Changing the first choice gives the old one its options back.
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC     8",
+    );
+    expect(
+      screen.getByTestId("ApplicationForm-courseInterest-CMPSC-8-choice"),
+    ).toHaveTextContent("1st choice");
+    expect(radio("CMPSC-156", "NOT_INTERESTED")).toBeChecked();
+  });
+
+  /** A course marked earlier and then made a choice is not reported twice. */
+  test("submits only the courses marked, leaving out the defaults and the two choices", async () => {
+    const submitAction = renderForm({ type: "ULA" });
+
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-firstName"),
+      "Ada",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-lastName"),
+      "Lovelace",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-major"),
+      "Computer Science",
+    );
+    await userEvent.click(radio("CMPSC-8", "ENTHUSIASTIC"));
+    await userEvent.click(radio("CMPSC-130A", "WOULD_CONSIDER"));
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-secondChoiceCourse"),
+      "CMPSC   130A",
+    );
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].courseInterests).toEqual({
+      "CMPSC     8": "ENTHUSIASTIC",
+    });
+  });
+
+  test("pre-fills the interest answers from a previous application", () => {
+    renderForm({
+      type: "TA",
+      courseList: ["CMPSC     8", "CMPSC    16", "CMPSC    24"],
+      initialContents: applicationsFixtures.oneTaApplication,
+    });
+
+    expect(radio("CMPSC-8", "ENTHUSIASTIC")).toBeChecked();
+    expect(radio("CMPSC-16", "WOULD_CONSIDER")).toBeChecked();
+    expect(radio("CMPSC-24", "NOT_INTERESTED")).toBeChecked();
+  });
+
+  /** An application stored before the table existed may come back with no map at all. */
+  test("a previous application with no interest map starts at the defaults", () => {
+    renderForm({
+      initialContents: {
+        ...applicationsFixtures.oneTaApplication,
+        courseInterests: null,
+      },
+    });
+
+    expect(radio("CMPSC-8", "NOT_INTERESTED")).toBeChecked();
+  });
+
+  test("with no courses on offer, the table says so", () => {
+    renderForm({ courseList: [] });
+
+    expect(
+      screen.getByTestId("ApplicationForm-courseInterests-none"),
+    ).toHaveTextContent("No courses are listed for this recruitment yet.");
+    expect(
+      screen.queryByTestId("ApplicationForm-courseInterest-CMPSC-8"),
+    ).toBeNull();
   });
 
   // ---- validation ----
