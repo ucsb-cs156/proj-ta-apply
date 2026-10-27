@@ -173,6 +173,51 @@ import org.springframework.web.bind.annotation.RestController;
   }
 
   @Operation(
+      summary = &quot;Enter a test application as an admin&quot;,
+      description =
+          &quot;Lets an admin preview the form for a recruitment by submitting it as if they were an&quot;
+              + &quot; applicant. The result is saved with testApplication=true. The type and open/closed&quot;
+              + &quot; checks that apply to real applicants are skipped, so a recruitment can be tested&quot;
+              + &quot; before it opens. An admin has at most one test application per recruitment:&quot;
+              + &quot; submitting again replaces the earlier answers.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/test&quot;)
+  public Application postTestApplication(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
+      @RequestBody ApplicationFields fields) {
+
+<span class="fc" id="L189">    recruitmentRepository</span>
+<span class="fc" id="L190">        .findById(recruitmentId)</span>
+<span class="fc" id="L191">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+
+    // The unique (email, recruitment) constraint allows one row per admin per recruitment, and an
+    // admin testing a form will naturally submit it more than once, so the second submission
+    // overwrites the first rather than being refused.
+<span class="fc" id="L196">    Optional&lt;Application&gt; existing =</span>
+<span class="fc" id="L197">        applicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);</span>
+
+    // An admin who is also a grad student may have a real application here; a test run must
+    // never silently turn that into a test application.
+<span class="fc bfc" id="L201" title="All 4 branches covered.">    if (existing.isPresent() &amp;&amp; !existing.get().isTestApplication()) {</span>
+<span class="fc" id="L202">      throw new IllegalArgumentException(</span>
+          &quot;You already have a real application for this recruitment&quot;);
+    }
+
+<span class="fc" id="L206">    Application application =</span>
+<span class="fc" id="L207">        existing.orElseGet(</span>
+            () -&gt;
+<span class="fc" id="L209">                Application.builder()</span>
+<span class="fc" id="L210">                    .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L211">                    .email(currentEmail())</span>
+<span class="fc" id="L212">                    .status(ApplicationReviewStatus.PENDING)</span>
+<span class="fc" id="L213">                    .testApplication(true)</span>
+<span class="fc" id="L214">                    .build());</span>
+<span class="fc" id="L215">    apply(fields, application);</span>
+<span class="fc" id="L216">    applicationRepository.save(application);</span>
+<span class="fc" id="L217">    return application;</span>
+  }
+
+  @Operation(
       summary = &quot;Edit an application&quot;,
       description =
           &quot;Allowed while the recruitment is open and the primary consideration date has not passed.&quot;
@@ -182,16 +227,16 @@ import org.springframework.web.bind.annotation.RestController;
   public Application updateApplication(
       @Parameter(name = &quot;id&quot;) @RequestParam Long id, @RequestBody ApplicationFields fields) {
 
-<span class="fc" id="L185">    Application application = mine(id);</span>
-<span class="fc bfc" id="L186" title="All 2 branches covered.">    if (!applicationAccessService.editable(recruitmentFor(application), LocalDate.now())) {</span>
-<span class="fc" id="L187">      throw new ForbiddenException(</span>
+<span class="fc" id="L230">    Application application = mine(id);</span>
+<span class="fc bfc" id="L231" title="All 2 branches covered.">    if (!applicationAccessService.editable(recruitmentFor(application), LocalDate.now())) {</span>
+<span class="fc" id="L232">      throw new ForbiddenException(</span>
           &quot;This application can no longer be edited; you may still update your post application&quot;
               + &quot; comments&quot;);
     }
 
-<span class="fc" id="L192">    apply(fields, application);</span>
-<span class="fc" id="L193">    applicationRepository.save(application);</span>
-<span class="fc" id="L194">    return application;</span>
+<span class="fc" id="L237">    apply(fields, application);</span>
+<span class="fc" id="L238">    applicationRepository.save(application);</span>
+<span class="fc" id="L239">    return application;</span>
   }
 
   @Operation(
@@ -205,45 +250,45 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;postApplicationComments&quot;) @RequestParam String postApplicationComments) {
 
-<span class="fc" id="L208">    Application application = mine(id);</span>
-<span class="fc bfc" id="L209" title="All 2 branches covered.">    if (!applicationAccessService.commentable(recruitmentFor(application))) {</span>
-<span class="fc" id="L210">      throw new ForbiddenException(&quot;This recruitment is closed&quot;);</span>
+<span class="fc" id="L253">    Application application = mine(id);</span>
+<span class="fc bfc" id="L254" title="All 2 branches covered.">    if (!applicationAccessService.commentable(recruitmentFor(application))) {</span>
+<span class="fc" id="L255">      throw new ForbiddenException(&quot;This recruitment is closed&quot;);</span>
     }
 
-<span class="fc" id="L213">    application.setPostApplicationComments(postApplicationComments);</span>
-<span class="fc" id="L214">    applicationRepository.save(application);</span>
-<span class="fc" id="L215">    return application;</span>
+<span class="fc" id="L258">    application.setPostApplicationComments(postApplicationComments);</span>
+<span class="fc" id="L259">    applicationRepository.save(application);</span>
+<span class="fc" id="L260">    return application;</span>
   }
 
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
   private static void apply(ApplicationFields fields, Application application) {
-<span class="fc" id="L220">    application.setFirstName(fields.firstName());</span>
-<span class="fc" id="L221">    application.setMiddleName(fields.middleName());</span>
-<span class="fc" id="L222">    application.setLastName(fields.lastName());</span>
-<span class="fc" id="L223">    application.setMajor(fields.major());</span>
-<span class="fc" id="L224">    application.setGpaMajor(fields.gpaMajor());</span>
-<span class="fc" id="L225">    application.setGpaOverall(fields.gpaOverall());</span>
-<span class="fc" id="L226">    application.setYearInProgram(fields.yearInProgram());</span>
-<span class="fc" id="L227">    application.setGraduationDate(fields.graduationDate());</span>
-<span class="fc" id="L228">    application.setCourseworkUcsb(fields.courseworkUcsb());</span>
-<span class="fc" id="L229">    application.setKnowledge(fields.knowledge());</span>
-<span class="fc" id="L230">    application.setPrevExperience(fields.prevExperience());</span>
-<span class="fc" id="L231">    application.setDesiredCourses(fields.desiredCourses());</span>
-<span class="fc" id="L232">    application.setComments(fields.comments());</span>
-<span class="fc" id="L233">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
-<span class="fc" id="L234">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
-<span class="fc" id="L235">    application.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
-<span class="fc" id="L236">    application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
-<span class="fc" id="L237">    application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
-<span class="fc" id="L238">    application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
-<span class="fc" id="L239">    application.setResidencyStatus(fields.residencyStatus());</span>
-<span class="fc" id="L240">    application.setLanguageExam(fields.languageExam());</span>
-<span class="fc" id="L241">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
-<span class="fc" id="L242">    application.setClassLevel(fields.classLevel());</span>
-<span class="fc" id="L243">    application.setCourseworkOther(fields.courseworkOther());</span>
-<span class="fc" id="L244">    application.setCoursework290(fields.coursework290());</span>
-<span class="fc" id="L245">    application.setVideoLink(fields.videoLink());</span>
-<span class="fc" id="L246">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
-<span class="fc" id="L247">  }</span>
+<span class="fc" id="L265">    application.setFirstName(fields.firstName());</span>
+<span class="fc" id="L266">    application.setMiddleName(fields.middleName());</span>
+<span class="fc" id="L267">    application.setLastName(fields.lastName());</span>
+<span class="fc" id="L268">    application.setMajor(fields.major());</span>
+<span class="fc" id="L269">    application.setGpaMajor(fields.gpaMajor());</span>
+<span class="fc" id="L270">    application.setGpaOverall(fields.gpaOverall());</span>
+<span class="fc" id="L271">    application.setYearInProgram(fields.yearInProgram());</span>
+<span class="fc" id="L272">    application.setGraduationDate(fields.graduationDate());</span>
+<span class="fc" id="L273">    application.setCourseworkUcsb(fields.courseworkUcsb());</span>
+<span class="fc" id="L274">    application.setKnowledge(fields.knowledge());</span>
+<span class="fc" id="L275">    application.setPrevExperience(fields.prevExperience());</span>
+<span class="fc" id="L276">    application.setDesiredCourses(fields.desiredCourses());</span>
+<span class="fc" id="L277">    application.setComments(fields.comments());</span>
+<span class="fc" id="L278">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
+<span class="fc" id="L279">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
+<span class="fc" id="L280">    application.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
+<span class="fc" id="L281">    application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
+<span class="fc" id="L282">    application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
+<span class="fc" id="L283">    application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
+<span class="fc" id="L284">    application.setResidencyStatus(fields.residencyStatus());</span>
+<span class="fc" id="L285">    application.setLanguageExam(fields.languageExam());</span>
+<span class="fc" id="L286">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
+<span class="fc" id="L287">    application.setClassLevel(fields.classLevel());</span>
+<span class="fc" id="L288">    application.setCourseworkOther(fields.courseworkOther());</span>
+<span class="fc" id="L289">    application.setCoursework290(fields.coursework290());</span>
+<span class="fc" id="L290">    application.setVideoLink(fields.videoLink());</span>
+<span class="fc" id="L291">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
+<span class="fc" id="L292">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
