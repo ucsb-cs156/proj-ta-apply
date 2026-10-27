@@ -64,8 +64,12 @@ public class ApplicationsWebIT extends WebTestCase {
     page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1" + path));
   }
 
-  /** An open recruitment of the given type whose deadline is the given date. */
+  /**
+   * An open recruitment of the given type whose deadline is the given date. Every test that chooses
+   * CMPSC 156 brings up its section times, so the API answer is stubbed here too.
+   */
   private Recruitment seedRecruitment(RecruitmentType type, LocalDate primaryConsiderationDate) {
+    stubSectionTimes();
     Recruitment recruitment =
         recruitmentRepository.save(
             Recruitment.builder()
@@ -113,7 +117,6 @@ public class ApplicationsWebIT extends WebTestCase {
   @Test
   public void a_grad_student_applies_and_the_application_is_listed() throws Exception {
     Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
-    stubSectionTimes();
 
     setupGradStudentUser();
     goTo("/");
