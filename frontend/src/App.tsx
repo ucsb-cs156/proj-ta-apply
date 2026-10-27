@@ -26,6 +26,7 @@ import HomePageLoggedOut from "main/pages/Home/HomePageLoggedOut";
 import AdminJobsPage from "main/pages/Admin/AdminJobsPage";
 import ApplyPage from "main/pages/Applications/ApplyPage";
 import ApplicationPage from "main/pages/Applications/ApplicationPage";
+import TestApplicationPage from "main/pages/Admin/TestApplicationPage";
 
 /** Grad students apply for TA positions, undergrads for ULA ones. */
 const APPLICANT_ROLES = ["ROLE_GRAD_STUDENT", "ROLE_UNDERGRAD"];
@@ -154,6 +155,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<RecruitmentCoursesPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/recruitments/:recruitmentId/test-application"
+          element={
+            <ProtectedPage
+              component={<TestApplicationPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

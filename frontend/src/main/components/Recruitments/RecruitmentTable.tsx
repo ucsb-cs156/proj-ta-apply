@@ -115,6 +115,21 @@ export default function RecruitmentTable({
       ),
     },
     {
+      header: "Test",
+      id: "test",
+      accessorKey: "id",
+      meta: shrinkToContent,
+      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => (
+        <Link
+          className="btn btn-secondary"
+          to={`/admin/recruitments/${cell.row.original.id}/test-application`}
+          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-test-button`}
+        >
+          Test Application
+        </Link>
+      ),
+    },
+    {
       header: "Delete",
       id: "delete",
       accessorKey: "id",

@@ -40,9 +40,14 @@ describe("ApplicationTable tests", () => {
   test("renders the headers", () => {
     renderTable();
 
-    ["Quarter", "Type", "Status", "First Choice", "Second Choice"].forEach(
-      (header) => expect(screen.getByText(header)).toBeInTheDocument(),
-    );
+    [
+      "Quarter",
+      "Type",
+      "Status",
+      "Test",
+      "First Choice",
+      "Second Choice",
+    ].forEach((header) => expect(screen.getByText(header)).toBeInTheDocument());
   });
 
   /** The quarter and type come from the recruitment, not the application. */
@@ -66,6 +71,28 @@ describe("ApplicationTable tests", () => {
     expect(
       screen.getByTestId("ApplicationTable-cell-row-0-col-status"),
     ).toHaveTextContent("PENDING");
+  });
+
+  /** An admin's test run is listed like any other application, but says so. */
+  test("the Test column says whether an application is a test", () => {
+    renderTable(applicationsFixtures.threeApplicationsIncludingATest);
+
+    expect(
+      screen.getByTestId("ApplicationTable-cell-row-0-col-testApplication"),
+    ).toHaveTextContent("false");
+    expect(
+      screen.getByTestId("ApplicationTable-cell-row-2-col-testApplication"),
+    ).toHaveTextContent("true");
+  });
+
+  test("an application without the test flag is shown as not a test", () => {
+    const { testApplication: _omitted, ...legacy } =
+      applicationsFixtures.oneUlaApplication;
+    renderTable([legacy]);
+
+    expect(
+      screen.getByTestId("ApplicationTable-cell-row-0-col-testApplication"),
+    ).toHaveTextContent("false");
   });
 
   test("course choices keep their padding", () => {

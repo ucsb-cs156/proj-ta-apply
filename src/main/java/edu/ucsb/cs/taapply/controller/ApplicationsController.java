@@ -173,6 +173,51 @@ public class ApplicationsController extends ApiController {
   }
 
   @Operation(
+      summary = "Enter a test application as an admin",
+      description =
+          "Lets an admin preview the form for a recruitment by submitting it as if they were an"
+              + " applicant. The result is saved with testApplication=true. The type and open/closed"
+              + " checks that apply to real applicants are skipped, so a recruitment can be tested"
+              + " before it opens. An admin has at most one test application per recruitment:"
+              + " submitting again replaces the earlier answers.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/test")
+  public Application postTestApplication(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
+      @RequestBody ApplicationFields fields) {
+
+    recruitmentRepository
+        .findById(recruitmentId)
+        .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+
+    // The unique (email, recruitment) constraint allows one row per admin per recruitment, and an
+    // admin testing a form will naturally submit it more than once, so the second submission
+    // overwrites the first rather than being refused.
+    Optional<Application> existing =
+        applicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);
+
+    // An admin who is also a grad student may have a real application here; a test run must
+    // never silently turn that into a test application.
+    if (existing.isPresent() && !existing.get().isTestApplication()) {
+      throw new IllegalArgumentException(
+          "You already have a real application for this recruitment");
+    }
+
+    Application application =
+        existing.orElseGet(
+            () ->
+                Application.builder()
+                    .recruitmentId(recruitmentId)
+                    .email(currentEmail())
+                    .status(ApplicationReviewStatus.PENDING)
+                    .testApplication(true)
+                    .build());
+    apply(fields, application);
+    applicationRepository.save(application);
+    return application;
+  }
+
+  @Operation(
       summary = "Edit an application",
       description =
           "Allowed while the recruitment is open and the primary consideration date has not passed."

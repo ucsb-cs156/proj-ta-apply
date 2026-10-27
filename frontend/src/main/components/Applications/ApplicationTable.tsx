@@ -11,6 +11,8 @@ export type Application = {
   email: string;
   status: "PENDING" | "HIRED" | "NOT_HIRED";
   postApplicationComments: string | null;
+  /** True when an admin entered it to preview the form; see TestApplicationPage. */
+  testApplication: boolean;
   firstName: string | null;
   middleName: string | null;
   lastName: string | null;
@@ -87,6 +89,14 @@ export default function ApplicationTable({
       meta: shrinkToContent,
     },
     { header: "Status", accessorKey: "status", meta: shrinkToContent },
+    {
+      header: "Test",
+      accessorKey: "testApplication",
+      meta: shrinkToContent,
+      // Shown as the words true/false: a boolean renders as nothing at all.
+      cell: ({ cell }: { cell: Cell<Application, unknown> }) =>
+        String(Boolean(cell.row.original.testApplication)),
+    },
     {
       header: "First Choice",
       accessorKey: "firstChoiceCourse",

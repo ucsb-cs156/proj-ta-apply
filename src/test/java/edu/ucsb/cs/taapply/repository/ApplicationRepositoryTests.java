@@ -169,4 +169,26 @@ public class ApplicationRepositoryTests {
     assertTrue(applicationRepository.existsByEmailAndRecruitmentId("other@ucsb.edu", r.getId()));
     assertFalse(applicationRepository.existsByEmailAndRecruitmentId("nobody@ucsb.edu", r.getId()));
   }
+
+  /** The column added by changeset 009 exists and the entity reads and writes it. */
+  @Test
+  public void test_application_defaults_to_false_and_round_trips() {
+    Recruitment r = recruitment("20261", RecruitmentType.TA);
+
+    Application real =
+        applicationRepository.save(
+            Application.builder().recruitmentId(r.getId()).email("grad@ucsb.edu").build());
+    Application test =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(r.getId())
+                .email("admin@ucsb.edu")
+                .testApplication(true)
+                .build());
+    entityManager.flush();
+    entityManager.clear();
+
+    assertFalse(applicationRepository.findById(real.getId()).orElseThrow().isTestApplication());
+    assertTrue(applicationRepository.findById(test.getId()).orElseThrow().isTestApplication());
+  }
 }

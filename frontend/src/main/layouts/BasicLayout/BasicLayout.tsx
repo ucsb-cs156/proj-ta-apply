@@ -6,9 +6,11 @@ import { useSystemInfo } from "main/utils/systemInfo";
 
 interface BasicLayoutProps {
   children: ReactNode;
+  /** Shown full width directly below the navbar, e.g. the "test only" warning. */
+  banner?: ReactNode;
 }
 
-export default function BasicLayout({ children }: BasicLayoutProps) {
+export default function BasicLayout({ children, banner }: BasicLayoutProps) {
   const doLogout = useLogout().mutate;
   const currentUser = useCurrentUser();
   const { data: systemInfo } = useSystemInfo();
@@ -20,6 +22,7 @@ export default function BasicLayout({ children }: BasicLayoutProps) {
         currentUser={currentUser}
         systemInfo={systemInfo}
       />
+      {banner}
       <main className="main-content" data-testid="BasicLayout-main-content">
         {children}
       </main>

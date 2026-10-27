@@ -19,3 +19,10 @@ TwoApplications.args = {
   applications: applicationsFixtures.twoApplications,
   recruitments: recruitmentsFixtures.threeRecruitments,
 };
+
+/** An admin's test run sits alongside real applications, flagged in the Test column. */
+export const IncludingATestApplication = Template.bind({});
+IncludingATestApplication.args = {
+  applications: applicationsFixtures.threeApplicationsIncludingATest,
+  recruitments: recruitmentsFixtures.threeRecruitments,
+};

@@ -49,6 +49,13 @@ public class Application {
   @Column(length = 4000)
   private String postApplicationComments;
 
+  /**
+   * True for an application an admin entered to preview the form, "as if" they were an applicant.
+   * Test applications are stored alongside real ones so the whole path is exercised, but anything
+   * that reviews or counts applications should leave them out.
+   */
+  @Builder.Default private boolean testApplication = false;
+
   // ---- common fields ----
 
   private String firstName;
