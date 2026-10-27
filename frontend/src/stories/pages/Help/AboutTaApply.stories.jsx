@@ -29,6 +29,9 @@ export const Default = Template.bind({});
 Default.play = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(
-    await canvas.findByRole("heading", { level: 1, name: "About TA Apply" }),
+    await canvas.findByRole("heading", {
+      level: 1,
+      name: "About proj-ta-apply",
+    }),
   ).toBeInTheDocument();
 };

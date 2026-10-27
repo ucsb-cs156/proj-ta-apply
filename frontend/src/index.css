@@ -96,3 +96,17 @@ body {
   flex-direction: column;
 }
 
+
+/* The Help dropdown in the Navbar uses this class so the menu is only as
+   wide as its longest item. */
+.narrow-dropdown .dropdown-menu {
+  width: min-content;
+}
+
+/* Example CSV files shown on the Help > CSV Upload/Download Formats page. */
+.csvExample {
+  white-space: pre-wrap; /* Allows the text to wrap */
+  word-break: break-all; /* Breaks long words */
+  font-family: monospace; /* Ensures consistent spacing */
+  font-size: 0.8em; /* Smaller font size for better readability */
+}

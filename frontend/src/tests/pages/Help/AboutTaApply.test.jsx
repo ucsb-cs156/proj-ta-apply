@@ -30,13 +30,32 @@ describe("AboutTaApply tests", () => {
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: "About TA Apply",
+        name: "About proj-ta-apply",
       }),
     ).toBeInTheDocument();
 
-    expect(screen.getByRole("link", { name: "proj-scaffold" })).toHaveAttribute(
-      "href",
-      "https://github.com/ucsb-cs156/proj-scaffold",
-    );
+    expect(screen.getByText("Proj-ta-apply allows:")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Grad Students to apply for TA positions/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Undergrad students to apply for ULA positions/),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Key Features" }),
+    ).toBeInTheDocument();
+
+    expect(screen.getByText("For students")).toBeInTheDocument();
+    expect(screen.getByText("For admins")).toBeInTheDocument();
+    expect(screen.getByText("For faculty")).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/keeps track of past applications/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/UCSB Registrar API/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/only the applications that are relevant/),
+    ).toBeInTheDocument();
   });
 });

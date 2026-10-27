@@ -137,6 +137,31 @@ describe("AppNavbar tests", () => {
     });
   });
 
+  test("renders Help menu with links to the help pages", async () => {
+    renderNavbar(
+      currentUserFixtures.notLoggedIn,
+      systemInfoFixtures.showingNeither,
+    );
+    const helpToggle = screen.getByText("Help");
+    expect(helpToggle).toBeInTheDocument();
+
+    // The Help menu items aren't rendered into the DOM until the
+    // dropdown toggle is clicked open, so click it first.
+    fireEvent.click(helpToggle);
+
+    await waitFor(() => {
+      expect(screen.getByText("About TA Apply")).toBeInTheDocument();
+    });
+    expect(screen.getByText("About TA Apply")).toHaveAttribute(
+      "href",
+      "/help/about",
+    );
+    expect(screen.getByText("CSV Upload/Download Formats")).toHaveAttribute(
+      "href",
+      "/help/csv",
+    );
+  });
+
   test("does not render Admin menu for non-admin users", () => {
     renderNavbar(
       currentUserFixtures.userOnly,
