@@ -4,7 +4,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update 
-RUN apt-get install -y openjdk-21-jdk  
+RUN apt-get install -y openjdk-25-jdk  
 RUN apt-get install -y  curl  
 RUN apt-get install -y  bash  
 RUN apt-get install -y maven  
@@ -13,7 +13,7 @@ RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
 # Set JAVA_HOME environment variable
-ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Verify installation
@@ -25,7 +25,7 @@ WORKDIR /app
 RUN java -version
 RUN curl --version
 
-ENV NODE_VERSION=22.23.1
+ENV NODE_VERSION=24.21.0
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 ENV NVM_DIR=/root/.nvm
 RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}

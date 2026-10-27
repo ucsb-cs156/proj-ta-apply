@@ -24,7 +24,8 @@ public class TestJobTests {
       sleepMock.verify(() -> Sleep.sleepQuietly(42));
     }
 
-    String expected = """
+    String expected =
+        """
         Hello World! from test job!
         Goodbye from test job!""";
     assertEquals(expected, jobStarted.getLog());
