@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"is_bot":true,"login":"app/copilot-swe-agent"},"headRefName":"copilot/add-help-page","number":14,"title":"Add help pages: About proj-ta-apply and CSV Upload/Download Formats","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/14"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-15-test-application","number":18,"title":"Add Preview Application: admins can enter a test application for a recruitment","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/18"},{"author":{"is_bot":true,"login":"app/copilot-swe-agent"},"headRefName":"copilot/add-help-page","number":14,"title":"Add help pages: About proj-ta-apply and CSV Upload/Download Formats","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/14"}]
