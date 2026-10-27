@@ -99,6 +99,7 @@ export default function ApplicationPage(): React.JSX.Element {
               <ApplicationForm
                 type={recruitment?.type ?? "TA"}
                 courses={courses ?? []}
+                recruitmentId={application.recruitmentId}
                 initialContents={application}
                 defaultNames={{
                   firstName: currentUser.root?.user?.givenName,

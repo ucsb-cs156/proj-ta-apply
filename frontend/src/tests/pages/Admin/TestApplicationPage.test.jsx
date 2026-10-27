@@ -8,6 +8,7 @@ import { vi } from "vitest";
 
 import TestApplicationPage from "main/pages/Admin/TestApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
@@ -65,6 +66,9 @@ describe("TestApplicationPage tests", () => {
     axiosMock
       .onGet("/api/recruitmentcourses/all")
       .reply(200, recruitmentCoursesFixtures.fourCourses);
+    axiosMock
+      .onGet("/api/recruitments/sections")
+      .reply(200, courseSectionsFixtures.cmpsc156);
     axiosMock.onGet("/api/applications/mine").reply(200, []);
   });
 

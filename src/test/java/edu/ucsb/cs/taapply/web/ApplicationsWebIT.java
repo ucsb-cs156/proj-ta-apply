@@ -31,6 +31,35 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Import(IntegrationConfig.class)
 public class ApplicationsWebIT extends WebTestCase {
 
+  /** What the UCSB API says about CMPSC 156 in the seeded quarter: one lecture, two sections. */
+  private static final String CMPSC_156_SECTIONS =
+      """
+      {"quarter":"20214","courseId":"CMPSC   156","title":"ADV APP PROGRAM",
+       "classSections":[
+         {"enrollCode":"07492","section":"0100",
+          "timeLocations":[{"days":"T R","beginTime":"14:00","endTime":"15:15","building":"PHELP","room":"3526"}],
+          "instructors":[{"instructor":"CONRAD P","functionCode":"Teaching and in charge"}]},
+         {"enrollCode":"07500","section":"0101",
+          "timeLocations":[{"days":"W","beginTime":"09:00","endTime":"09:50","building":"PHELP","room":"1401"}],
+          "instructors":[{"instructor":"GAUCHO C","functionCode":"Teaching but not in charge"}]},
+         {"enrollCode":"07501","section":"0102",
+          "timeLocations":[{"days":"F","beginTime":"09:00","endTime":"09:50","building":"PHELP","room":"1401"}],
+          "instructors":[{"instructor":"GAUCHO C","functionCode":"Teaching but not in charge"}]}
+       ]}
+      """;
+
+  /** The curriculum API lives on the same WireMock as OAuth in the integration profile. */
+  private static void stubSectionTimes() {
+    wireMockServer.stubFor(
+        com.github.tomakehurst.wiremock.client.WireMock.get(
+                com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo(
+                    "/academics/curriculums/v1/classes/20214/07492"))
+            .willReturn(
+                com.github.tomakehurst.wiremock.client.WireMock.aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(CMPSC_156_SECTIONS)));
+  }
+
   private void goTo(String path) {
     page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1" + path));
   }
@@ -76,6 +105,7 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplyPage-major").fill("Computer Science");
     page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
     page.getByTestId("ApplyPage-availableForLecturesFirstChoice").check();
+    page.getByTestId("ApplyPage-availabilityCommentsFirstChoice").fill("Free after 2pm.");
     page.getByTestId("ApplyPage-courseInterest-CMPSC-130A-ENTHUSIASTIC").check();
     page.getByTestId("ApplyPage-submit").click();
   }
@@ -83,6 +113,7 @@ public class ApplicationsWebIT extends WebTestCase {
   @Test
   public void a_grad_student_applies_and_the_application_is_listed() throws Exception {
     Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    stubSectionTimes();
 
     setupGradStudentUser();
     goTo("/");
@@ -105,6 +136,23 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-130A-NOT_INTERESTED")).isChecked();
     assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-156-NOT_INTERESTED")).isChecked();
 
+    // Choosing a course brings up when it meets, looked up live, between the dropdown and the
+    // availability questions; it can be folded away.
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections")).not().isVisible();
+    page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-title"))
+        .containsText("ADV APP PROGRAM");
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type"))
+        .containsText("Lecture");
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-time"))
+        .containsText("14:00 - 15:15");
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-2-section"))
+        .containsText("0102");
+    page.getByTestId("ApplyPage-firstChoiceSections-toggle").click();
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type")).not().isVisible();
+    page.getByTestId("ApplyPage-firstChoiceSections-toggle").click();
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type")).isVisible();
+
     fillAndSubmit();
 
     // Back on the home page, listed as pending, with the link now saying they have applied.
@@ -124,6 +172,11 @@ public class ApplicationsWebIT extends WebTestCase {
         .containsText("1st choice");
     assertThat(page.getByTestId("ApplicationPage-courseInterest-CMPSC-130A-ENTHUSIASTIC"))
         .isChecked();
+    assertThat(page.getByTestId("ApplicationPage-availabilityCommentsFirstChoice"))
+        .hasValue("Free after 2pm.");
+    // The stored choice's times come up again while editing.
+    assertThat(page.getByTestId("ApplicationPage-firstChoiceSections-row-0-type"))
+        .containsText("Lecture");
 
     page.getByTestId("ApplicationPage-lastName").fill("Gaucho-Smith");
     page.getByTestId("ApplicationPage-submit").click();
@@ -174,6 +227,8 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-summary-Major")).containsText("Computer Science");
     assertThat(page.getByTestId("ApplicationPage-summary-Other Courses of Interest"))
         .containsText("CMPSC   130A  Enthusiastic");
+    assertThat(page.getByTestId("ApplicationPage-summary-First Choice Availability Comments"))
+        .containsText("Free after 2pm.");
 
     page.getByTestId("ApplicationPage-postApplicationComments").fill("Finished CS 290A since.");
     page.getByTestId("ApplicationPage-submit").click();

@@ -81,6 +81,8 @@ public class ApplicationRepositoryTests {
             .secondChoiceCourse("CMPSC   130A")
             .availableForLecturesFirstChoice(true)
             .availableForDiscussionSecondChoice(true)
+            .availabilityCommentsFirstChoice("Free T R afternoons")
+            .availabilityCommentsSecondChoice("Any section but Friday")
             .courseInterests(
                 new HashMap<>(
                     Map.of(
@@ -115,6 +117,9 @@ public class ApplicationRepositoryTests {
     assertTrue(found.isAvailableForLecturesFirstChoice());
     assertFalse(found.isAvailableForLecturesSecondChoice());
     assertTrue(found.isAvailableForDiscussionSecondChoice());
+    // The columns added by changeset 011.
+    assertEquals("Free T R afternoons", found.getAvailabilityCommentsFirstChoice());
+    assertEquals("Any section but Friday", found.getAvailabilityCommentsSecondChoice());
     // The element collection comes back from its own table, keys padded as stored.
     assertEquals(
         Map.of(

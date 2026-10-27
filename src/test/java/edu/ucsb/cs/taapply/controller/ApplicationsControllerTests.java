@@ -103,6 +103,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           true,
           true,
           true,
+          "Free T R afternoons",
+          "Any section but Friday",
           Map.of(
               "CMPSC     8",
               CourseInterest.ENTHUSIASTIC,
@@ -138,6 +140,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           false,
           false,
           false,
+          FULL_FIELDS.availabilityCommentsFirstChoice(),
+          FULL_FIELDS.availabilityCommentsSecondChoice(),
           FULL_FIELDS.courseInterests(),
           FULL_FIELDS.residencyStatus(),
           FULL_FIELDS.languageExam(),
@@ -169,6 +173,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.availableForLecturesSecondChoice(),
         FULL_FIELDS.availableForDiscussionFirstChoice(),
         FULL_FIELDS.availableForDiscussionSecondChoice(),
+        FULL_FIELDS.availabilityCommentsFirstChoice(),
+        FULL_FIELDS.availabilityCommentsSecondChoice(),
         interests,
         FULL_FIELDS.residencyStatus(),
         FULL_FIELDS.languageExam(),
@@ -207,6 +213,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .availableForLecturesSecondChoice(true)
         .availableForDiscussionFirstChoice(true)
         .availableForDiscussionSecondChoice(true)
+        .availabilityCommentsFirstChoice("Free T R afternoons")
+        .availabilityCommentsSecondChoice("Any section but Friday")
         .courseInterests(
             new HashMap<>(
                 Map.of(

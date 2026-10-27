@@ -13,18 +13,26 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.models.CourseSections;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
+import edu.ucsb.cs.taapply.models.UcsbInstructor;
+import edu.ucsb.cs.taapply.models.UcsbSection;
+import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 @WebMvcTest(controllers = ApplicantRecruitmentsController.class)
 @Import({edu.ucsb.cs.taapply.testconfig.TestConfig.class, ApplicationAccessService.class})
@@ -33,6 +41,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean UserRepository userRepository;
+  @MockitoBean UCSBCurriculumService ucsbCurriculumService;
 
   private static Recruitment recruitment(
       long id,
@@ -311,5 +320,160 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @Test
   public void a_plain_user_cannot_read_course_choices() throws Exception {
     mockMvc.perform(get("/api/recruitments/courses?recruitmentId=1")).andExpect(status().is(403));
+  }
+
+  // ---- section times ----
+
+  private static UcsbCourseOffering offering() {
+    return UcsbCourseOffering.builder()
+        .courseId("CMPSC   156")
+        .title("ADV APP PROGRAM")
+        .classSections(
+            List.of(
+                UcsbSection.builder()
+                    .enrollCode("07492")
+                    .section("0100")
+                    .timeLocations(
+                        List.of(
+                            UcsbTimeLocation.builder()
+                                .days("T R")
+                                .beginTime("14:00")
+                                .endTime("15:15")
+                                .building("PHELP")
+                                .room("3526")
+                                .build()))
+                    .instructors(List.of(UcsbInstructor.builder().instructor("CONRAD P").build()))
+                    .build(),
+                UcsbSection.builder()
+                    .enrollCode("07500")
+                    .section("0101")
+                    .timeLocations(
+                        List.of(
+                            UcsbTimeLocation.builder()
+                                .days("W")
+                                .beginTime("09:00")
+                                .endTime("09:50")
+                                .building("PHELP")
+                                .room("1401")
+                                .build()))
+                    .instructors(List.of(UcsbInstructor.builder().instructor("GAUCHO C").build()))
+                    .build()))
+        .build();
+  }
+
+  /** The padded course id goes as a parameter; MockMvc would not decode it from the URL. */
+  private static MockHttpServletRequestBuilder sectionsRequest(long recruitmentId) {
+    return get("/api/recruitments/sections")
+        .param("recruitmentId", String.valueOf(recruitmentId))
+        .param("courseId", "CMPSC   156");
+  }
+
+  private String sectionsJson(long recruitmentId) throws Exception {
+    return mockMvc
+        .perform(sectionsRequest(recruitmentId))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  /**
+   * The lowest enroll code of the course's lectures is looked up; a removed row and other courses
+   * play no part. The answer is the offering's sections, lectures flagged, in section order.
+   */
+  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @Test
+  public void section_times_come_from_the_ucsb_api_via_the_lowest_lecture_enroll_code()
+      throws Exception {
+    seedAll();
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    RecruitmentCourse removed = course(1L, "CMPSC   156", true);
+    removed.setEnrollCode("00001");
+    RecruitmentCourse second = course(2L, "CMPSC   156", false);
+    second.setEnrollCode("07600");
+    RecruitmentCourse first = course(3L, "CMPSC   156", false);
+    first.setEnrollCode("07492");
+    RecruitmentCourse other = course(4L, "CMPSC     8", false);
+    other.setEnrollCode("00002");
+    when(recruitmentCourseRepository.findByRecruitmentId(1L))
+        .thenReturn(List.of(removed, second, first, other));
+    when(ucsbCurriculumService.getOffering("20262", "07492")).thenReturn(offering());
+
+    CourseSections expected =
+        new CourseSections(
+            "CMPSC   156",
+            "20262",
+            "ADV APP PROGRAM",
+            List.of(
+                new CourseSections.Meeting(
+                    "0100", true, "07492", "T R", "14:00", "15:15", "PHELP 3526", "CONRAD P"),
+                new CourseSections.Meeting(
+                    "0101", false, "07500", "W", "09:00", "09:50", "PHELP 1401", "GAUCHO C")));
+
+    assertEquals(mapper.writeValueAsString(expected), sectionsJson(1L));
+    verify(ucsbCurriculumService).getOffering("20262", "07492");
+  }
+
+  /** An admin previewing the form has no applicable type, but still needs the card. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_can_read_section_times_for_any_recruitment() throws Exception {
+    seedAll();
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    RecruitmentCourse row = course(3L, "CMPSC   156", false);
+    row.setEnrollCode("07492");
+    when(recruitmentCourseRepository.findByRecruitmentId(1L)).thenReturn(List.of(row));
+    when(ucsbCurriculumService.getOffering("20262", "07492")).thenReturn(offering());
+
+    String json = sectionsJson(1L);
+    assertEquals(
+        mapper.writeValueAsString(CourseSections.from("CMPSC   156", "20262", offering())), json);
+  }
+
+  /** A course the recruitment does not list is answered with no meetings, and no API call. */
+  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @Test
+  public void a_course_not_in_the_recruitment_has_no_section_times() throws Exception {
+    seedAll();
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    RecruitmentCourse removed = course(1L, "CMPSC   156", true);
+    removed.setEnrollCode("07492");
+    when(recruitmentCourseRepository.findByRecruitmentId(1L)).thenReturn(List.of(removed));
+
+    assertEquals(
+        mapper.writeValueAsString(CourseSections.none("CMPSC   156", "20262")), sectionsJson(1L));
+    verify(ucsbCurriculumService, never()).getOffering(any(), any());
+  }
+
+  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @Test
+  public void section_times_for_a_missing_recruitment_are_a_404() throws Exception {
+    seedAll();
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    mockMvc.perform(sectionsRequest(99L)).andExpect(status().is(404));
+    verify(ucsbCurriculumService, never()).getOffering(any(), any());
+  }
+
+  /** Not their type, so not their business: unlike the course list, this says so. */
+  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @Test
+  public void section_times_for_a_recruitment_of_the_other_type_are_refused() throws Exception {
+    seedAll();
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+
+    mockMvc.perform(sectionsRequest(2L)).andExpect(status().is(403));
+    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+  }
+
+  @Test
+  public void logged_out_users_cannot_read_section_times() throws Exception {
+    mockMvc.perform(sectionsRequest(1L)).andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void a_plain_user_cannot_read_section_times() throws Exception {
+    mockMvc.perform(sectionsRequest(1L)).andExpect(status().is(403));
   }
 }

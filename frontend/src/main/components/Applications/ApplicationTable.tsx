@@ -31,6 +31,8 @@ export type Application = {
   availableForLecturesSecondChoice: boolean;
   availableForDiscussionFirstChoice: boolean;
   availableForDiscussionSecondChoice: boolean;
+  availabilityCommentsFirstChoice: string | null;
+  availabilityCommentsSecondChoice: string | null;
   /** Course id to ENTHUSIASTIC or WOULD_CONSIDER; a course not listed is not of interest. */
   courseInterests: Record<string, string>;
   residencyStatus: string | null;

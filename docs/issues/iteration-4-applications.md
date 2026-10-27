@@ -75,6 +75,11 @@ from course id to `ENTHUSIASTIC` or `WOULD_CONSIDER`, stored in its own table
 with three radio buttons (Enthusiastic / Would Consider / Not Applicable or Not Interested); the
 default is never stored, and the first and second choice rows show their rank instead of options.
 
+Issue #20 added `availabilityCommentsFirstChoice` and `availabilityCommentsSecondChoice` (free
+text, changeset `011`), and `GET /api/recruitments/sections?recruitmentId=&courseId=`, which looks
+up a chosen course's lecture and section meeting times live from the UCSB API (by the enroll code
+of its lecture in the recruitment) so the form can show them above the availability questions.
+
 TA only: `residencyStatus` (US Citizen / US Resident / F1 / J1 / other), `languageExam` (passed /
 failed / exempt), `languageExamDatePassed`, `classLevel` (PhD / MS), `courseworkOther`,
 `coursework290`.

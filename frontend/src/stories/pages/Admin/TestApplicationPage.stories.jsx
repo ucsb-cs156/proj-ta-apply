@@ -2,6 +2,7 @@ import React from "react";
 import { HttpResponse, http } from "msw";
 import TestApplicationPage from "main/pages/Admin/TestApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
@@ -23,6 +24,9 @@ const common = [
   ),
   http.get("/api/admin/recruitments/all", () =>
     HttpResponse.json(recruitmentsFixtures.threeRecruitments),
+  ),
+  http.get("/api/recruitments/sections", () =>
+    HttpResponse.json(courseSectionsFixtures.cmpsc156),
   ),
   http.get("/api/recruitmentcourses/all", () =>
     HttpResponse.json(recruitmentCoursesFixtures.fourCourses),
