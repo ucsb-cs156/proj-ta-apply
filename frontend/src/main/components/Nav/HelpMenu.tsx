@@ -14,6 +14,9 @@ export default function HelpMenu(): React.JSX.Element {
         <NavDropdown.Item as={Link} to="/help/about">
           About TA Apply
         </NavDropdown.Item>
+        <NavDropdown.Item as={Link} to="/help/csv">
+          CSV Upload/Download Formats
+        </NavDropdown.Item>
       </NavDropdown>
     </>
   );

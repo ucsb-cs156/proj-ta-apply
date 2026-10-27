@@ -11,6 +11,6 @@ describe("Footer tests", () => {
     );
     const aboutLink = screen.getByRole("link", { name: "About TA Apply" });
     expect(aboutLink).toBeInTheDocument();
-    expect(aboutLink).toHaveAttribute("href", "/about");
+    expect(aboutLink).toHaveAttribute("href", "/help/about");
   });
 });

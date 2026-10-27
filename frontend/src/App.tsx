@@ -13,6 +13,7 @@ import RecruitmentCoursesPage from "main/pages/Admin/RecruitmentCoursesPage";
 import ProtectedPage from "main/pages/Auth/ProtectedPage";
 import NotFoundPage from "main/pages/Auth/NotFoundPage";
 import AboutTaApply from "main/pages/Help/AboutTaApply";
+import HelpCsvPage from "main/pages/Help/HelpCsvPage";
 import SignInPage from "main/pages/Auth/SignInPage";
 import SignInSuccessPage from "main/pages/Auth/SignInSuccessPage";
 import UnauthorizedPage from "main/pages/Auth/UnauthorizedPage";
@@ -45,7 +46,8 @@ export default function App() {
       <ToastContainer />
       <Routes>
         <Route path="/" element={homePage} />
-        <Route path="/about" element={<AboutTaApply />} />
+        <Route path="/help/about" element={<AboutTaApply />} />
+        <Route path="/help/csv" element={<HelpCsvPage />} />
         <Route path="/login" element={<SignInPage />} />
         <Route path="/login/success" element={<SignInSuccessPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
