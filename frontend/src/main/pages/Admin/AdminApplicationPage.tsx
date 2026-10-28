@@ -107,6 +107,7 @@ export default function AdminApplicationPage(): React.JSX.Element {
             <Form
               className="mt-4"
               onSubmit={(event) => {
+                // Stryker disable next-line all : without this a real browser would reload the page
                 event.preventDefault();
                 saveMutation.mutate(commentsText);
               }}

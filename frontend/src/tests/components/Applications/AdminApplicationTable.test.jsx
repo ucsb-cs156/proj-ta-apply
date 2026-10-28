@@ -132,8 +132,19 @@ describe("AdminApplicationTable tests", () => {
           secondChoiceCourse: null,
           submittedAt: null,
         },
+        // An answer that was never sent at all reads the same as a null one.
+        { ...ta, id: 2, middleName: undefined, major: undefined },
       ],
     });
+
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-1-col-name")
+        .textContent,
+    ).toBe(`${ta.firstName} ${ta.lastName}`);
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-1-col-major")
+        .textContent,
+    ).toBe("");
 
     expect(
       screen.getByTestId("AdminApplicationTable-cell-row-0-col-name")

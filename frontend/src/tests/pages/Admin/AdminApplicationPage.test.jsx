@@ -128,7 +128,9 @@ describe("AdminApplicationPage tests", () => {
     ).toBeNull();
   });
 
+  /** Also the case of a recruitment the page cannot find: the heading has no suffix, TA form. */
   test("a test application says so", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
     axiosMock
       .onGet("/api/admin/applications", { params: { id: "9" } })
       .reply(200, {
@@ -141,6 +143,12 @@ describe("AdminApplicationPage tests", () => {
     expect(
       await screen.findByTestId("AdminApplicationPage-about"),
     ).toHaveTextContent("Test application from admin@ucsb.edu");
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Application 9" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("AdminApplicationPage-summary-Class Level"),
+    ).toBeInTheDocument();
     // No agreed version, so no notice is fetched; and no post-application comments to show.
     await screen.findByTestId("AdminApplicationPage-summary-Name");
     expect(
@@ -205,10 +213,29 @@ describe("AdminApplicationPage tests", () => {
     });
   });
 
-  test("before the application arrives only the heading is shown", () => {
+  test("before the application arrives only the heading is shown, even once the recruitments are in", async () => {
     axiosMock.onGet("/api/admin/applications").reply(200, null);
     renderPage(77);
 
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Application 77" }),
+    ).toBeInTheDocument();
+    // The recruitments arrive while the application is still null; nothing may blow up.
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/recruitments/all",
+        ),
+      ).toHaveLength(1),
+    );
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/applications",
+        ),
+      ).toHaveLength(1),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(
       screen.getByRole("heading", { level: 1, name: "Application 77" }),
     ).toBeInTheDocument();
