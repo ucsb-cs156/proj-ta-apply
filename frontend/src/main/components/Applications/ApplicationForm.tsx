@@ -3,6 +3,8 @@ import { Button, Col, Form, Row, Table } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
+import RequiredField from "main/components/Common/RequiredField";
+import RequiredFieldExplanation from "main/components/Common/RequiredFieldExplanation";
 import type { NoticeVersion } from "main/utils/notices";
 import {
   COURSE_INTEREST_OPTIONS,
@@ -283,10 +285,15 @@ export default function ApplicationForm({
 
   return (
     <Form onSubmit={handleSubmit(submit, flagMissingAnswers)}>
+      <p className="mb-0 mt-3">
+        <RequiredFieldExplanation />
+      </p>
       <h2 className="h5 mt-3">About you</h2>
       <Row>
         <Form.Group as={Col} md={4} className="mb-3">
-          <Form.Label htmlFor={id("firstName")}>First Name</Form.Label>
+          <Form.Label htmlFor={id("firstName")}>
+            First Name <RequiredField />
+          </Form.Label>
           <Form.Control
             id={id("firstName")}
             data-testid={id("firstName")}
@@ -306,7 +313,9 @@ export default function ApplicationForm({
           />
         </Form.Group>
         <Form.Group as={Col} md={5} className="mb-3">
-          <Form.Label htmlFor={id("lastName")}>Last Name</Form.Label>
+          <Form.Label htmlFor={id("lastName")}>
+            Last Name <RequiredField />
+          </Form.Label>
           <Form.Control
             id={id("lastName")}
             data-testid={id("lastName")}
@@ -322,7 +331,9 @@ export default function ApplicationForm({
       <h2 className="h5 mt-3">Academics</h2>
       <Row>
         <Form.Group as={Col} md={4} className="mb-3">
-          <Form.Label htmlFor={id("major")}>Major</Form.Label>
+          <Form.Label htmlFor={id("major")}>
+            Major <RequiredField />
+          </Form.Label>
           <Form.Select
             id={id("major")}
             data-testid={id("major")}
@@ -344,7 +355,7 @@ export default function ApplicationForm({
           {asksForOtherMajor && (
             <>
               <Form.Label htmlFor={id("otherMajor")} className="mt-2">
-                Other major
+                Other major <RequiredField />
               </Form.Label>
               <Form.Control
                 id={id("otherMajor")}
@@ -619,7 +630,7 @@ export default function ApplicationForm({
       <Row>
         <Form.Group as={Col} md={6} className="mb-3">
           <Form.Label htmlFor={id("firstChoiceCourse")}>
-            First Choice Course
+            First Choice Course <RequiredField />
           </Form.Label>
           <Form.Select
             id={id("firstChoiceCourse")}
