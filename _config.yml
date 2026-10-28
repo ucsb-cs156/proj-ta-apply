@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-legacy-form-inline","number":46,"title":"Render the legacy TA application form in the page instead of an iframe blocked by X-Frame-Options","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/46"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-45-grad-student-role","number":48,"title":"Remove the Grad Student role: any signed-in user may apply to any recruitment","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/48"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-legacy-form-inline","number":46,"title":"Render the legacy TA application form in the page instead of an iframe blocked by X-Frame-Options","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/46"}]
