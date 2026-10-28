@@ -1,4 +1,5 @@
 import { Card, Form } from "react-bootstrap";
+import RequiredField from "main/components/Common/RequiredField";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -52,7 +53,11 @@ export default function NoticeAgreement({
           type="checkbox"
           id={`${testIdPrefix}-agree`}
           data-testid={`${testIdPrefix}-agree`}
-          label={AGREEMENT_LABEL}
+          label={
+            <>
+              {AGREEMENT_LABEL} <RequiredField />
+            </>
+          }
           checked={agreed}
           disabled={readOnly}
           isInvalid={invalid}

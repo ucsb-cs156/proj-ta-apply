@@ -46,11 +46,12 @@ describe("NoticeAgreement tests", () => {
     expect(box).not.toBeChecked();
     expect(box).toBeEnabled();
     expect(box).not.toHaveClass("is-invalid");
-    expect(
-      screen.getByLabelText(
-        "I have read and understood the text above, and I agree to the terms and conditions it specifies",
-      ),
-    ).toBe(box);
+    const label = screen.getByText(
+      /^I have read and understood the text above, and I agree to the terms and conditions it specifies/,
+    );
+    expect(label).toHaveAttribute("for", "N-agree");
+    // Marked as required, like every other required field in the app.
+    expect(label.querySelector(".required-field")).toHaveTextContent("*");
   });
 
   test("GitHub-flavoured Markdown such as strikethrough renders, via remark-gfm", () => {

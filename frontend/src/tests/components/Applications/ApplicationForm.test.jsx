@@ -56,6 +56,17 @@ async function fillRequired(prefix = "ApplicationForm") {
   );
 }
 
+/**
+ * The label element whose text is `text`, ignoring the required-field mark. Required labels read
+ * "First Name *", and getByText wants the whole text, so the mark is stripped before comparing.
+ */
+const labelNamed = (text) =>
+  screen.getByText(
+    (_, element) =>
+      ["LABEL", "P"].includes(element.tagName) &&
+      element.textContent.replace(/\s*\*\s*$/, "").trim() === text,
+  );
+
 describe("ApplicationForm tests", () => {
   test("renders the fields common to both kinds of application", () => {
     renderForm();
@@ -75,10 +86,36 @@ describe("ApplicationForm tests", () => {
       "Second Choice Course",
       "Other Courses You Would Like to Be Considered For",
       "Anything Else",
-    ].forEach((label) => expect(screen.getByText(label)).toBeInTheDocument());
+    ].forEach((label) => expect(labelNamed(label)).toBeInTheDocument());
   });
 
-  /** Every label points at its control, so clicking a label focuses the right box. */
+  /** Required fields carry the app-wide mark, and the form says what the mark means. */
+  test("marks exactly the required fields and explains the mark", () => {
+    renderForm({ type: "TA", notice: noticesFixtures.taV2 });
+
+    expect(screen.getByTestId("RequiredFieldExplanation")).toHaveTextContent(
+      "Fields marked * are required.",
+    );
+    // Every mark inside a label, by the label it marks; the explanation's own example mark has
+    // no label and is left out.
+    const marked = screen
+      .getAllByTestId("RequiredField")
+      .map((mark) => mark.closest("label"))
+      .filter((label) => label !== null)
+      .map((label) => label.textContent.replace(/\s*\*\s*$/, "").trim());
+    expect(marked).toEqual([
+      "First Name",
+      "Last Name",
+      "Major",
+      "First Choice Course",
+      "I have read and understood the text above, and I agree to the terms and conditions it specifies",
+    ]);
+    // And nothing optional is marked.
+    ["Middle Name", "GPA in Major", "Second Choice Course"].forEach((label) =>
+      expect(labelNamed(label).querySelector(".required-field")).toBeNull(),
+    );
+  });
+
   test("each label is wired to its control by id", async () => {
     renderForm({ type: "TA" });
     // Residency F1 so the exam questions are on the page too.
@@ -111,7 +148,7 @@ describe("ApplicationForm tests", () => {
     wired.forEach(([label, name]) => {
       const control = screen.getByTestId(`ApplicationForm-${name}`);
       expect(control).toHaveAttribute("id", `ApplicationForm-${name}`);
-      expect(screen.getByText(label)).toHaveAttribute(
+      expect(labelNamed(label)).toHaveAttribute(
         "for",
         `ApplicationForm-${name}`,
       );
@@ -141,7 +178,7 @@ describe("ApplicationForm tests", () => {
         "id",
         `ApplicationForm-${name}`,
       );
-      expect(screen.getByText(label)).toHaveAttribute(
+      expect(labelNamed(label)).toHaveAttribute(
         "for",
         `ApplicationForm-${name}`,
       );
@@ -175,7 +212,7 @@ describe("ApplicationForm tests", () => {
       "id",
       "ApplicationForm-classLevel",
     );
-    expect(screen.getByText("Class Level")).toHaveAttribute(
+    expect(labelNamed("Class Level")).toHaveAttribute(
       "for",
       "ApplicationForm-classLevel",
     );
@@ -232,7 +269,7 @@ describe("ApplicationForm tests", () => {
     expect(
       await screen.findByTestId("ApplicationForm-languageExam"),
     ).toHaveAttribute("id", "ApplicationForm-languageExam");
-    expect(screen.getByText("Language Exam")).toHaveAttribute(
+    expect(labelNamed("Language Exam")).toHaveAttribute(
       "for",
       "ApplicationForm-languageExam",
     );
@@ -593,7 +630,7 @@ describe("ApplicationForm tests", () => {
     const other = await screen.findByTestId("ApplicationForm-otherMajor");
     expect(other).toHaveValue("");
     expect(other).toHaveAttribute("id", "ApplicationForm-otherMajor");
-    expect(screen.getByText("Other major")).toHaveAttribute(
+    expect(labelNamed("Other major")).toHaveAttribute(
       "for",
       "ApplicationForm-otherMajor",
     );
