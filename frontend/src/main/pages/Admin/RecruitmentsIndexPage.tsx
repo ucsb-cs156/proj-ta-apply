@@ -40,7 +40,7 @@ export default function RecruitmentsIndexPage(): React.JSX.Element {
     {
       onSuccess: () =>
         toast(
-          "Recruitment created. Its course list is being filled; watch the Admin > Jobs page.",
+          "Recruitment created. Its course list is being filled; watch the Developer > Jobs page.",
         ),
     },
     ["/api/admin/recruitments/all"],

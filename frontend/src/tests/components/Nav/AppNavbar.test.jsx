@@ -128,8 +128,6 @@ describe("AppNavbar tests", () => {
       "Recruitments",
       "TA App Settings",
       "ULA App Settings",
-      "Jobs",
-      "Developer Info",
       "Legacy TA Application",
     ];
 
@@ -165,12 +163,50 @@ describe("AppNavbar tests", () => {
     );
   });
 
+  /** Jobs and Developer Info moved out of Admin into their own menu, still admin-only. */
+  test("renders a Developer menu for admins with Jobs and Developer Info", async () => {
+    renderNavbar(
+      currentUserFixtures.adminUser,
+      systemInfoFixtures.showingNeither,
+    );
+    expect(
+      screen.getByTestId("appnavbar-developer-dropdown"),
+    ).toHaveTextContent("Developer");
+
+    // Like the Admin menu, the items render only once the toggle is clicked.
+    fireEvent.click(screen.getByText("Developer"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Jobs")).toHaveAttribute("href", "/admin/jobs");
+    });
+    expect(screen.getByText("Developer Info")).toHaveAttribute(
+      "href",
+      "/admin/developer",
+    );
+    // And they are no longer in the Admin menu.
+    fireEvent.click(screen.getByText("Admin"));
+    await waitFor(() => expect(screen.getByText("Users")).toBeInTheDocument());
+    const adminMenu = screen.getByText("Users").closest(".dropdown-menu");
+    expect(adminMenu).not.toHaveTextContent("Jobs");
+    expect(adminMenu).not.toHaveTextContent("Developer Info");
+  });
+
+  test("does not render the Developer menu for non-admin users", () => {
+    renderNavbar(
+      currentUserFixtures.instructorUser,
+      systemInfoFixtures.showingNeither,
+    );
+    expect(screen.queryByTestId("appnavbar-developer-dropdown")).toBeNull();
+    expect(screen.queryByText("Developer")).toBeNull();
+  });
+
   test("does not render Admin menu for non-admin users", () => {
     renderNavbar(
       currentUserFixtures.userOnly,
       systemInfoFixtures.showingNeither,
     );
     expect(screen.queryByText("Admin")).not.toBeInTheDocument();
+    expect(screen.queryByText("Developer")).not.toBeInTheDocument();
     expect(screen.queryByText("Developer Info")).not.toBeInTheDocument();
   });
 });
