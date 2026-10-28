@@ -134,6 +134,14 @@ public class ApplicationsWebIT extends WebTestCase {
     return recruitment;
   }
 
+  /** Adds one UCSB course through the coursework modal. */
+  private void addCourse(String prefix, String courseNumber) {
+    page.getByTestId(prefix + "-coursework-add-button").click();
+    page.getByTestId(prefix + "-coursework-modal-courseNumber").fill(courseNumber);
+    page.getByTestId(prefix + "-coursework-modal-save").click();
+    assertThat(page.getByTestId(prefix + "-coursework-modal")).not().isVisible();
+  }
+
   private void fillAndSubmit() {
     page.getByTestId("ApplyPage-firstName").fill("Chris");
     page.getByTestId("ApplyPage-lastName").fill("Gaucho");
@@ -143,6 +151,16 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplyPage-availableForLecturesFirstChoice").check();
     page.getByTestId("ApplyPage-availabilityCommentsFirstChoice").fill("Free after 2pm.");
     page.getByTestId("ApplyPage-courseInterest-CMPSC-130A-ENTHUSIASTIC").check();
+
+    // A TA application needs three prior courses; the third is taken elsewhere.
+    addCourse("ApplyPage", "CMPSC 130A");
+    addCourse("ApplyPage", "CMPSC 130B");
+    page.getByTestId("ApplyPage-coursework-add-button").click();
+    page.getByTestId("ApplyPage-coursework-modal-ucsbCourse").uncheck();
+    page.getByTestId("ApplyPage-coursework-modal-otherSchool").fill("De Anza College");
+    page.getByTestId("ApplyPage-coursework-modal-courseNumber").fill("CIS 22A");
+    page.getByTestId("ApplyPage-coursework-modal-save").click();
+    assertThat(page.getByTestId("ApplyPage-coursework-count")).containsText("3 of at least 3");
 
     // The notice is shown, rendered from Markdown, and the submit is refused until agreed.
     assertThat(page.getByTestId("ApplyPage-notice-content").locator("h1")).containsText("TA Terms");
@@ -211,6 +229,9 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-firstName")).hasValue("Chris");
     assertThat(page.getByTestId("ApplicationPage-major")).hasValue("Computer Science");
     assertThat(page.getByTestId("ApplicationPage-topic-Java-4")).isChecked();
+    // The courses came back with the application, in order, with the school shown.
+    assertThat(page.getByTestId("ApplicationPage-coursework-table-cell-row-2-col-school"))
+        .containsText("De Anza College");
     // The version agreed to is shown back, already ticked.
     assertThat(page.getByTestId("ApplicationPage-notice-agree")).isChecked();
     assertThat(page.getByTestId("ApplicationPage-notice-version")).containsText("Version 1");
@@ -311,6 +332,9 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("TestApplicationPage-major").selectOption("__OTHER__");
     page.getByTestId("TestApplicationPage-otherMajor").fill("Computer Science");
     page.getByTestId("TestApplicationPage-firstChoiceCourse").selectOption("CMPSC   156");
+    addCourse("TestApplicationPage", "CMPSC 8");
+    addCourse("TestApplicationPage", "CMPSC 16");
+    addCourse("TestApplicationPage", "CMPSC 24");
     page.getByTestId("TestApplicationPage-submit").click();
 
     // Saved and shown back on the same page, still under the banner.

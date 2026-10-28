@@ -7,7 +7,9 @@ import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.*;
 
@@ -78,9 +80,6 @@ public class Application {
   private String graduationDate;
 
   @Column(length = 4000)
-  private String courseworkUcsb;
-
-  @Column(length = 4000)
   private String prevExperience;
 
   @Column(length = 4000)
@@ -141,6 +140,18 @@ public class Application {
   @Builder.Default
   private Map<String, Integer> topicProficiencies = new HashMap<>();
 
+  /**
+   * The courses the applicant lists as relevant background, one row each, in the order given.
+   * Replaced wholesale on every edit (orphan removal deletes the old rows), so the rows always
+   * mirror the table the applicant last saved. A TA application needs at least three, a ULA
+   * application at least one; the controller enforces that.
+   */
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+  @JoinColumn(name = "application_id", nullable = false)
+  @OrderColumn(name = "position")
+  @Builder.Default
+  private List<PriorCoursework> priorCoursework = new ArrayList<>();
+
   // ---- TA only ----
 
   @Enumerated(EnumType.STRING)
@@ -154,12 +165,6 @@ public class Application {
 
   @Enumerated(EnumType.STRING)
   private ClassLevel classLevel;
-
-  @Column(length = 4000)
-  private String courseworkOther;
-
-  @Column(length = 4000)
-  private String coursework290;
 
   // ---- ULA only ----
 

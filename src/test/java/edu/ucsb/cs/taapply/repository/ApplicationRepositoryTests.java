@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
@@ -16,6 +17,7 @@ import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +33,7 @@ import org.springframework.test.context.ActiveProfiles;
 /**
  * Exercises the entity against the real Liquibase-built schema, so a column the entity names and
  * one the changeset creates cannot drift apart. With thirty-odd columns, including awkward ones
- * like coursework290, that is worth proving rather than assuming.
+ * like the prior coursework rows, that is worth proving rather than assuming.
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -83,7 +85,21 @@ public class ApplicationRepositoryTests {
             .gpaOverall(3.7)
             .yearInProgram("2")
             .graduationDate("20272")
-            .courseworkUcsb("CMPSC 156")
+            .priorCoursework(
+                new ArrayList<>(
+                    List.of(
+                        PriorCoursework.builder()
+                            .ucsbCourse(true)
+                            .courseNumber("CMPSC 156")
+                            .courseTitle("Advanced App Programming")
+                            .term("W26")
+                            .grade("A")
+                            .build(),
+                        PriorCoursework.builder()
+                            .ucsbCourse(false)
+                            .otherSchool("UCLA")
+                            .courseNumber("CS 31")
+                            .build())))
             .topicProficiencies(new HashMap<>(Map.of("Java", 5, "React", 3)))
             .prevExperience("TA for CS16")
             .comments("Keen")
@@ -105,8 +121,6 @@ public class ApplicationRepositoryTests {
             .languageExam(LanguageExamStatus.PASSED)
             .languageExamDatePassed(LocalDate.of(2025, 9, 1))
             .classLevel(ClassLevel.PHD)
-            .courseworkOther("Algorithms elsewhere")
-            .coursework290("CMPSC 290A")
             .videoLink("https://example.org/v")
             .previousServiceAsUla(2)
             .noticeVersionId(notice.getId())
@@ -146,7 +160,13 @@ public class ApplicationRepositoryTests {
     assertEquals(LanguageExamStatus.PASSED, found.getLanguageExam());
     assertEquals(LocalDate.of(2025, 9, 1), found.getLanguageExamDatePassed());
     assertEquals(ClassLevel.PHD, found.getClassLevel());
-    assertEquals("CMPSC 290A", found.getCoursework290());
+    // Prior courses come back from their own table, in the order they were given, with ids.
+    assertEquals(2, found.getPriorCoursework().size());
+    assertEquals("CMPSC 156", found.getPriorCoursework().get(0).getCourseNumber());
+    assertEquals("A", found.getPriorCoursework().get(0).getGrade());
+    assertEquals("UCLA", found.getPriorCoursework().get(1).getOtherSchool());
+    assertFalse(found.getPriorCoursework().get(1).isUcsbCourse());
+    assertTrue(found.getPriorCoursework().get(1).getId() > 0);
     assertEquals("https://example.org/v", found.getVideoLink());
     assertEquals(2, found.getPreviousServiceAsUla());
     // The agreed notice version is a plain id column with a foreign key (changeset 012).
@@ -315,5 +335,50 @@ public class ApplicationRepositoryTests {
                     .createNativeQuery("select count(*) from application_topic_proficiencies")
                     .getSingleResult())
             .longValue());
+  }
+
+  @Test
+  public void prior_coursework_is_replaced_on_update_and_deleted_with_the_application() {
+    Recruitment r = recruitment("20261", RecruitmentType.TA);
+    Application saved =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(r.getId())
+                .email("grad@ucsb.edu")
+                .priorCoursework(
+                    new ArrayList<>(
+                        List.of(
+                            PriorCoursework.builder().courseNumber("OLD 1").build(),
+                            PriorCoursework.builder().courseNumber("OLD 2").build())))
+                .build());
+    entityManager.flush();
+    entityManager.clear();
+
+    Application loaded = applicationRepository.findById(saved.getId()).orElseThrow();
+    loaded.getPriorCoursework().clear();
+    loaded.getPriorCoursework().add(PriorCoursework.builder().courseNumber("NEW 1").build());
+    applicationRepository.save(loaded);
+    entityManager.flush();
+    entityManager.clear();
+
+    assertEquals(
+        List.of("NEW 1"),
+        applicationRepository.findById(saved.getId()).orElseThrow().getPriorCoursework().stream()
+            .map(PriorCoursework::getCourseNumber)
+            .toList());
+    assertEquals(1L, countRows("prior_coursework"));
+
+    applicationRepository.deleteById(saved.getId());
+    entityManager.flush();
+    assertEquals(0L, countRows("prior_coursework"));
+  }
+
+  private long countRows(String table) {
+    return ((Number)
+            entityManager
+                .getEntityManager()
+                .createNativeQuery("select count(*) from " + table)
+                .getSingleResult())
+        .longValue();
   }
 }
