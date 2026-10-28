@@ -175,7 +175,7 @@ ran, and when an upcoming one is expected to open.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#%3Cinit%3E()" class="member-name-link">ApplicationAccessService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAccessService</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.Double,java.lang.Double,java.lang.String,java.lang.String,java.lang.String,java.util.Map,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,boolean,boolean,java.lang.String,java.lang.String,java.util.Map,edu.ucsb.cs.taapply.enums.ResidencyStatus,edu.ucsb.cs.taapply.enums.LanguageExamStatus,java.time.LocalDate,edu.ucsb.cs.taapply.enums.ClassLevel,java.lang.String,java.lang.String,java.lang.String,java.lang.Integer,java.lang.Long)" class="member-name-link">ApplicationFields(String, String, String, String, Double, Double, String, String, String, Map, String, String, String, String, boolean, boolean, boolean, boolean, String, String, Map, ResidencyStatus, LanguageExamStatus, LocalDate, ClassLevel, String, String, String, Integer, Long)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.Double,java.lang.Double,java.lang.String,java.lang.String,java.util.List,java.util.Map,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,boolean,boolean,java.lang.String,java.lang.String,java.util.Map,edu.ucsb.cs.taapply.enums.ResidencyStatus,edu.ucsb.cs.taapply.enums.LanguageExamStatus,java.time.LocalDate,edu.ucsb.cs.taapply.enums.ClassLevel,java.lang.String,java.lang.Integer,java.lang.Long)" class="member-name-link">ApplicationFields(String, String, String, String, Double, Double, String, String, List, Map, String, String, String, String, boolean, boolean, boolean, boolean, String, String, Map, ResidencyStatus, LanguageExamStatus, LocalDate, ClassLevel, String, Integer, Long)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>ApplicationFields</code> record class.</div>
 </dd>
@@ -200,6 +200,10 @@ ran, and when an upcoming one is expected to open.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>
 <div class="block">The fields an applicant may set.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">One row of the prior coursework table.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationStatus.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a> - Enum Class in <a href="edu/ucsb/cs/taapply/enums/package-summary.html">edu.ucsb.cs.taapply.enums</a></dt>
 <dd>
@@ -319,6 +323,10 @@ least one quarter the admin has populated from the UCSB API.</div>
 <dd>
 <div class="block">Returns the value of the <code>courseInterests</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#courseNumber()" class="member-name-link">courseNumber()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>courseNumber</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/CourseRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">CourseRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/CoursesController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">CoursesController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
@@ -342,17 +350,9 @@ who has just chosen that course.</div>
 <dd>
 <div class="block">One meeting of one section.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#coursework290()" class="member-name-link">coursework290()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#courseTitle()" class="member-name-link">courseTitle()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
 <dd>
-<div class="block">Returns the value of the <code>coursework290</code> record component.</div>
-</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#courseworkOther()" class="member-name-link">courseworkOther()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
-<dd>
-<div class="block">Returns the value of the <code>courseworkOther</code> record component.</div>
-</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#courseworkUcsb()" class="member-name-link">courseworkUcsb()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
-<dd>
-<div class="block">Returns the value of the <code>courseworkUcsb</code> record component.</div>
+<div class="block">Returns the value of the <code>courseTitle</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJobFactory.html#create(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">create(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateRecruitmentCoursesJobFactory</a></dt>
 <dd>&nbsp;</dd>
@@ -489,6 +489,10 @@ both Summer and Fall are reachable.</div>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -699,6 +703,10 @@ recruitment can record instructors, meeting times and enrollment.</div>
 <dd>
 <div class="block">Returns the value of the <code>gpaOverall</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#grade()" class="member-name-link">grade()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>grade</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html#gradStudent()" class="member-name-link">gradStudent()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>gradStudent</code> record component.</div>
@@ -761,6 +769,10 @@ recruitment can record instructors, meeting times and enrollment.</div>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -966,6 +978,10 @@ stamp createdById/createdByEmail on Job records.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MIN_PROFICIENCY" class="member-name-link">MIN_PROFICIENCY</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MIN_TA_COURSES" class="member-name-link">MIN_TA_COURSES</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MIN_ULA_COURSES" class="member-name-link">MIN_ULA_COURSES</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/MongoConfig.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.config">MongoConfig</a> - Class in <a href="edu/ucsb/cs/taapply/config/package-summary.html">edu.ucsb.cs.taapply.config</a></dt>
 <dd>
 <div class="block">Production MongoDB configuration.</div>
@@ -1075,6 +1091,10 @@ API and server configuration.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html#OTHER" class="member-name-link">OTHER</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ResidencyStatus</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#otherSchool()" class="member-name-link">otherSchool()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>otherSchool</code> record component.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:P">P</h2>
 <dl class="index">
@@ -1139,6 +1159,20 @@ does.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#previousServiceAsUla()" class="member-name-link">previousServiceAsUla()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>previousServiceAsUla</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#priorCoursework()" class="member-name-link">priorCoursework()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>priorCoursework</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">One course an applicant has taken, listed on their application as relevant background.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html#%3Cinit%3E()" class="member-name-link">PriorCoursework()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#%3Cinit%3E(boolean,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">PriorCourseworkFields(boolean, String, String, String, String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>PriorCourseworkFields</code> record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/FrontendProxyController.html#proxy(jakarta.servlet.http.HttpServletRequest)" class="member-name-link">proxy(HttpServletRequest)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/FrontendProxyController.html" title="class in edu.ucsb.cs.taapply.controller">FrontendProxyController</a></dt>
 <dd>&nbsp;</dd>
@@ -1343,6 +1377,10 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/TaTopicRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">TaTopicRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#term()" class="member-name-link">term()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>term</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/TestJob.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.jobs">TestJob</a> - Class in <a href="edu/ucsb/cs/taapply/jobs/package-summary.html">edu.ucsb.cs.taapply.jobs</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/TestJob.html#%3Cinit%3E()" class="member-name-link">TestJob()</a> - Constructor for class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/TestJob.html" title="class in edu.ucsb.cs.taapply.jobs">TestJob</a></dt>
@@ -1376,6 +1414,10 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -1424,6 +1466,10 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/models/UcsbApiQuarter.html#%3Cinit%3E()" class="member-name-link">UcsbApiQuarter()</a> - Constructor for class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/UcsbApiQuarter.html" title="class in edu.ucsb.cs.taapply.models">UcsbApiQuarter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#ucsbCourse()" class="member-name-link">ucsbCourse()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>ucsbCourse</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/models/UcsbCourse.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.models">UcsbCourse</a> - Class in <a href="edu/ucsb/cs/taapply/models/package-summary.html">edu.ucsb.cs.taapply.models</a></dt>
 <dd>
 <div class="block">The only two fields we take from the UCSB curriculum API's class search: the course number and
