@@ -82,14 +82,22 @@ export default function AppNavbar({
                   <NavDropdown.Item as={Link} to="/admin/settings/ula">
                     ULA App Settings
                   </NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/admin/legacy-ta-application">
+                    Legacy TA Application
+                  </NavDropdown.Item>
+                </NavDropdown>
+              )}
+              {hasRole(currentUser, "ROLE_ADMIN") && (
+                <NavDropdown
+                  title="Developer"
+                  id="appnavbar-developer-dropdown"
+                  data-testid="appnavbar-developer-dropdown"
+                >
                   <NavDropdown.Item as={Link} to="/admin/jobs">
                     Jobs
                   </NavDropdown.Item>
                   <NavDropdown.Item as={Link} to="/admin/developer">
                     Developer Info
-                  </NavDropdown.Item>
-                  <NavDropdown.Item as={Link} to="/admin/legacy-ta-application">
-                    Legacy TA Application
                   </NavDropdown.Item>
                 </NavDropdown>
               )}

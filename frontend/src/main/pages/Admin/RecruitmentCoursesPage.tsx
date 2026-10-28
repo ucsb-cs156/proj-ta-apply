@@ -36,7 +36,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
     {
       onSuccess: () =>
         toast(
-          "Populate job started. Watch its progress on the Admin > Jobs page.",
+          "Populate job started. Watch its progress on the Developer > Jobs page.",
         ),
     },
     ["/api/recruitmentcourses/all", includeRemoved],
