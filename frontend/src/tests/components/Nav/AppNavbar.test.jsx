@@ -130,6 +130,7 @@ describe("AppNavbar tests", () => {
       "ULA App Settings",
       "Jobs",
       "Developer Info",
+      "Legacy TA Application",
     ];
 
     await waitFor(() => {
