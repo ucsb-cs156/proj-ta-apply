@@ -10,7 +10,8 @@ const config = {
     name: "@storybook/react-vite",
     options: {},
   },
-  staticDirs: ["../public"],
+  // docs/legacy is served at /legacy, as the backend does in the real app.
+  staticDirs: ["../public", { from: "../../docs/legacy", to: "/legacy" }],
 };
 
 export default config;

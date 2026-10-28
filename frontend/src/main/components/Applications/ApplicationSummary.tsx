@@ -1,10 +1,14 @@
 import type { Application } from "main/components/Applications/ApplicationTable";
+import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import { courseInterestLabel } from "main/utils/applicationFields";
+import type { NoticeVersion } from "main/utils/notices";
 
 type ApplicationSummaryProps = {
   application: Application;
   /** TA and ULA ask different questions, so only the relevant ones are shown back. */
   type: "TA" | "ULA";
+  /** The notice version the applicant agreed to, if the caller has it; shown back ticked. */
+  notice?: NoticeVersion | null;
   testIdPrefix?: string;
 };
 
@@ -43,10 +47,20 @@ const otherCourses = (interests: Record<string, string> | null): string => {
     .join("\n");
 };
 
+/** One line per rated topic, in topic order; an empty map reads as blank. */
+const topicRatings = (proficiencies: Record<string, number> | null): string => {
+  const rated = proficiencies ?? {};
+  return Object.keys(rated)
+    .sort((a, b) => a.localeCompare(b))
+    .map((topic) => `${topic}: ${rated[topic]} / 5`)
+    .join("\n");
+};
+
 /** What the applicant submitted, shown back once the application can no longer be edited. */
 export default function ApplicationSummary({
   application,
   type,
+  notice = null,
   testIdPrefix = "ApplicationSummary",
 }: ApplicationSummaryProps): React.JSX.Element {
   const isTa = type === "TA";
@@ -115,8 +129,9 @@ export default function ApplicationSummary({
 
   rows.push(
     {
-      label: "Languages, Tools and Technologies",
-      value: show(application.knowledge),
+      label: "Topic Proficiency (1 lowest to 5 highest)",
+      value: topicRatings(application.topicProficiencies),
+      mono: true,
     },
     {
       label: "Previous Teaching Experience",
@@ -165,23 +180,32 @@ export default function ApplicationSummary({
   );
 
   return (
-    <dl className="row" data-testid={testIdPrefix}>
-      {rows.map((row) => (
-        <div className="row mb-1" key={row.label}>
-          <dt className="col-sm-4">{row.label}</dt>
-          <dd
-            className="col-sm-8"
-            data-testid={`${testIdPrefix}-${row.label}`}
-            style={
-              row.mono
-                ? { whiteSpace: "pre", fontFamily: "monospace" }
-                : undefined
-            }
-          >
-            {row.value}
-          </dd>
-        </div>
-      ))}
-    </dl>
+    <>
+      <dl className="row" data-testid={testIdPrefix}>
+        {rows.map((row) => (
+          <div className="row mb-1" key={row.label}>
+            <dt className="col-sm-4">{row.label}</dt>
+            <dd
+              className="col-sm-8"
+              data-testid={`${testIdPrefix}-${row.label}`}
+              style={
+                row.mono
+                  ? { whiteSpace: "pre", fontFamily: "monospace" }
+                  : undefined
+              }
+            >
+              {row.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <NoticeAgreement
+        notice={notice}
+        agreed={application.noticeVersionId === notice?.id}
+        onChange={() => {}}
+        readOnly
+        testIdPrefix={`${testIdPrefix}-notice`}
+      />
+    </>
   );
 }

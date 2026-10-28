@@ -4,6 +4,8 @@ import ApplyPage from "main/pages/Applications/ApplyPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import appSettingsFixtures from "fixtures/appSettingsFixtures";
+import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -29,6 +31,12 @@ const common = [
   http.get("/api/recruitments/courses", () => HttpResponse.json(courses)),
   http.get("/api/recruitments/sections", () =>
     HttpResponse.json(courseSectionsFixtures.cmpsc156),
+  ),
+  http.get("/api/notices/current", () =>
+    HttpResponse.json([noticesFixtures.ulaV1]),
+  ),
+  http.get("/api/recruitments/options", () =>
+    HttpResponse.json(appSettingsFixtures.ulaOptions),
   ),
   http.post("/api/applications/post", () =>
     HttpResponse.json(applicationsFixtures.oneUlaApplication),

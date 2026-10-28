@@ -1,5 +1,6 @@
 package edu.ucsb.cs.taapply.controller;
 
+import com.opencsv.exceptions.CsvException;
 import edu.ucsb.cs.taapply.entity.TaMajor;
 import edu.ucsb.cs.taapply.entity.TaTopic;
 import edu.ucsb.cs.taapply.entity.UlaMajor;
@@ -9,10 +10,13 @@ import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
+import edu.ucsb.cs.taapply.services.NameListCsvService;
+import edu.ucsb.cs.taapply.services.NameListCsvService.UploadResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,6 +26,9 @@ import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +38,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * The four admin-maintained name lists behind the TA and ULA application forms: the majors and the
@@ -54,7 +62,7 @@ public class AppSettingsController extends ApiController {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     void save(String name) {
-      ((CrudRepository) repository).save(row.apply(name));
+      ((CrudRepository) repository).save(row().apply(name));
     }
   }
 
@@ -67,6 +75,7 @@ public class AppSettingsController extends ApiController {
   @Autowired TaTopicRepository taTopicRepository;
   @Autowired UlaMajorRepository ulaMajorRepository;
   @Autowired UlaTopicRepository ulaTopicRepository;
+  @Autowired NameListCsvService nameListCsvService;
 
   private final Map<String, NameList> lists = new LinkedHashMap<>();
 
@@ -163,6 +172,48 @@ public class AppSettingsController extends ApiController {
       target.save(cleanedNew);
     }
     return new NameItem(cleanedNew);
+  }
+
+  @Operation(
+      summary = "Download a list as CSV",
+      description =
+          "One column, name, with a header row; the same shape the upload accepts, so a list can be"
+              + " moved from one deployment to another.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @GetMapping(value = "/{list}/csv", produces = "text/csv")
+  public ResponseEntity<String> downloadCsv(@PathVariable String list) {
+    List<String> names = namesIn(listNamed(list)).stream().map(NameItem::name).toList();
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"%s.csv\"".formatted(list))
+        .contentType(new MediaType("text", "csv"))
+        .body(nameListCsvService.write(names));
+  }
+
+  @Operation(
+      summary = "Upload names to a list from a CSV",
+      description =
+          "The file needs a header row with a column named name; other columns are ignored and"
+              + " blank rows are skipped. Names already in the list are counted, not duplicated, so"
+              + " re-uploading is safe. 400 if the file is empty or has no name column.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping(
+      value = "/{list}/upload/csv",
+      consumes = {"multipart/form-data"})
+  public UploadResult uploadCsv(
+      @PathVariable String list, @Parameter(name = "file") @RequestParam("file") MultipartFile file)
+      throws IOException, CsvException {
+    NameList target = listNamed(list);
+    int inserted = 0;
+    int alreadyPresent = 0;
+    for (String name : nameListCsvService.read(file)) {
+      if (target.repository().existsById(name)) {
+        alreadyPresent++;
+      } else {
+        target.save(name);
+        inserted++;
+      }
+    }
+    return new UploadResult(inserted, alreadyPresent);
   }
 
   @Operation(summary = "Remove a name from a list")

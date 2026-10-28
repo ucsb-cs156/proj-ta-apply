@@ -1,7 +1,16 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button, Card, Form, InputGroup, Table } from "react-bootstrap";
+import { Link } from "react-router";
 import { toast } from "react-toastify";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { csvUploadAxiosParams } from "main/utils/csvUpload";
+import {
+  CSV_HELP_PATH,
+  csvDownloadUrl,
+  csvUploadUrl,
+  uploadSummary,
+  type NameListUploadResult,
+} from "main/utils/appSettingsCsv";
 
 /** One row of any of the admin-maintained name lists. */
 export type NameItem = { name: string };
@@ -25,6 +34,9 @@ type Edit = { name: string; newName: string };
  * A card holding one name list with full CRUD: the names in a table, an add form at the bottom,
  * and inline rename / delete on each row. Each list is a single-column table whose column is the
  * key, so a rename is a PUT with the old and new names rather than an id.
+ *
+ * <p>Below that, CSV download and upload in one shared shape, so an admin can set a list up on a
+ * QA site and move it whole to production.
  */
 export default function NameListCard({
   title,
@@ -42,6 +54,9 @@ export default function NameListCard({
   );
 
   const [newName, setNewName] = useState("");
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  // So the file box can be emptied after an upload; a file input cannot be controlled.
+  const fileInput = useRef<HTMLInputElement>(null);
   // The one row being renamed, if any; its current text lives here until Save.
   const [editing, setEditing] = useState<Edit | null>(null);
 
@@ -70,6 +85,19 @@ export default function NameListCard({
       onSuccess: (saved) => {
         toast(`Renamed to ${saved.name}`);
         setEditing(null);
+      },
+    },
+    [getEndpoint],
+  );
+
+  const uploadMutation = useBackendMutation<File, NameListUploadResult>(
+    (file) => csvUploadAxiosParams(csvUploadUrl(listKey), file),
+    {
+      onSuccess: (result) => {
+        toast(uploadSummary(result));
+        setCsvFile(null);
+        // Stryker disable next-line all : the input is always mounted when an upload succeeds
+        if (fileInput.current) fileInput.current.value = "";
       },
     },
     [getEndpoint],
@@ -214,6 +242,57 @@ export default function NameListCard({
               disabled={newName.trim() === ""}
             >
               Add
+            </Button>
+          </InputGroup>
+        </Form>
+
+        <hr />
+        <h3 className="h6">CSV download / upload</h3>
+        <p className="text-muted small mb-2">
+          One column, <code>name</code>, with a header row; the download and the
+          upload use the same shape.{" "}
+          <Link to={CSV_HELP_PATH} data-testid={id("csv-help-link")}>
+            CSV format details
+          </Link>
+        </p>
+        <a
+          className="btn btn-outline-secondary btn-sm mb-3"
+          href={csvDownloadUrl(listKey)}
+          download={`${listKey}.csv`}
+          data-testid={id("csv-download-link")}
+        >
+          Download CSV
+        </a>
+        <Form
+          onSubmit={(e) => {
+            // Stryker disable next-line all : without this jsdom has no page to navigate to, so
+            // there is nothing a test could observe
+            e.preventDefault();
+            // The Upload button is disabled until a file is chosen, which also blocks Enter.
+            uploadMutation.mutate(csvFile as File);
+          }}
+        >
+          <InputGroup size="sm">
+            <Form.Control
+              ref={fileInput}
+              type="file"
+              accept=".csv"
+              aria-label={`Upload ${itemLabel}s from a CSV file`}
+              data-testid={id("csv-upload-input")}
+              onChange={(e) =>
+                setCsvFile(
+                  // Stryker disable next-line all : a file input's files list is never null
+                  (e.target as HTMLInputElement).files?.[0] ?? null,
+                )
+              }
+            />
+            <Button
+              type="submit"
+              variant="outline-primary"
+              data-testid={id("csv-upload-button")}
+              disabled={csvFile === null}
+            >
+              Upload CSV
             </Button>
           </InputGroup>
         </Form>

@@ -18,6 +18,21 @@ export const DEFAULT_COURSE_INTEREST: CourseInterestValue = "NOT_INTERESTED";
 export const courseInterestLabel = (value: string): string =>
   COURSE_INTEREST_OPTIONS.find((option) => option.value === value)?.label ?? "";
 
+/** The lowest and highest self-rating an applicant can give for a topic. */
+export const MIN_PROFICIENCY = 1;
+export const MAX_PROFICIENCY = 5;
+
+/** 1 through 5, in order, for the radio buttons beside each topic. */
+export const PROFICIENCY_LEVELS: number[] = [1, 2, 3, 4, 5];
+
+/** The option value that means "my major is not on the list"; never stored. */
+export const OTHER_MAJOR = "__OTHER__";
+
+/** The admin-maintained lists the form for one recruitment offers, from /api/recruitments/options. */
+export type ApplicationOptions = { majors: string[]; topics: string[] };
+
+export const EMPTY_OPTIONS: ApplicationOptions = { majors: [], topics: [] };
+
 /** Everything the applicant may set. Deliberately not the whole entity: status is not theirs. */
 export type ApplicationFormFields = {
   firstName: string;
@@ -29,7 +44,8 @@ export type ApplicationFormFields = {
   yearInProgram: string;
   graduationDate: string;
   courseworkUcsb: string;
-  knowledge: string;
+  /** Topic name to self-rated proficiency 1..5, only for topics the applicant rated. */
+  topicProficiencies: Record<string, number>;
   prevExperience: string;
   comments: string;
   firstChoiceCourse: string;
@@ -50,6 +66,8 @@ export type ApplicationFormFields = {
   coursework290: string;
   videoLink: string;
   previousServiceAsUla: string;
+  /** The notice version the applicant ticked the box for; null when no notice is shown. */
+  noticeVersionId: number | null;
 };
 
 /** The shape the API takes, once the numeric answers are numbers again. */

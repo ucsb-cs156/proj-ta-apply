@@ -11,8 +11,11 @@ import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 
 const axiosMock = new AxiosMockAdapter(axios);
+import noticesFixtures from "fixtures/noticesFixtures";
 
 const courses = ["CMPSC     8", "CMPSC   130A", "CMPSC   156"];
+const majors = ["Computer Engineering", "Computer Science", "Statistics"];
+const topics = ["Compilers", "Java", "Python"];
 
 function renderForm({
   type = "TA",
@@ -22,6 +25,9 @@ function renderForm({
   buttonLabel = undefined,
   courseList = courses,
   recruitmentId = undefined,
+  majorList = majors,
+  topicList = topics,
+  notice = undefined,
 } = {}) {
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -30,6 +36,9 @@ function renderForm({
           type={type}
           courses={courseList}
           recruitmentId={recruitmentId}
+          majors={majorList}
+          topics={topicList}
+          notice={notice}
           initialContents={initialContents}
           defaultNames={defaultNames}
           submitAction={submitAction}
@@ -40,6 +49,31 @@ function renderForm({
   );
   return submitAction;
 }
+
+/** Names, a listed major and a first choice: everything else required, so one thing can be tested. */
+async function fillRequired(prefix = "ApplicationForm") {
+  await userEvent.type(screen.getByTestId(`${prefix}-firstName`), "Ada");
+  await userEvent.type(screen.getByTestId(`${prefix}-lastName`), "Lovelace");
+  await userEvent.selectOptions(
+    screen.getByTestId(`${prefix}-major`),
+    "Statistics",
+  );
+  await userEvent.selectOptions(
+    screen.getByTestId(`${prefix}-firstChoiceCourse`),
+    "CMPSC   156",
+  );
+}
+
+/**
+ * The label element whose text is `text`, ignoring the required-field mark. Required labels read
+ * "First Name *", and getByText wants the whole text, so the mark is stripped before comparing.
+ */
+const labelNamed = (text) =>
+  screen.getByText(
+    (_, element) =>
+      ["LABEL", "P"].includes(element.tagName) &&
+      element.textContent.replace(/\s*\*\s*$/, "").trim() === text,
+  );
 
 describe("ApplicationForm tests", () => {
   beforeEach(() => {
@@ -63,11 +97,109 @@ describe("ApplicationForm tests", () => {
       "Year in Program",
       "Expected Graduation",
       "Relevant Coursework at UCSB",
+      "Topic Proficiency",
       "First Choice Course",
       "Second Choice Course",
       "Other Courses You Would Like to Be Considered For",
       "Anything Else",
-    ].forEach((label) => expect(screen.getByText(label)).toBeInTheDocument());
+    ].forEach((label) => expect(labelNamed(label)).toBeInTheDocument());
+  });
+
+  /** Required fields carry the app-wide mark, and the form says what the mark means. */
+  test("marks exactly the required fields and explains the mark", () => {
+    renderForm({ type: "TA", notice: noticesFixtures.taV2 });
+
+    expect(screen.getByTestId("RequiredFieldExplanation")).toHaveTextContent(
+      "Fields marked * are required.",
+    );
+    // Every mark inside a label, by the label it marks; the explanation's own example mark has
+    // no label and is left out.
+    const marked = screen
+      .getAllByTestId("RequiredField")
+      .map((mark) => mark.closest("label"))
+      .filter((label) => label !== null)
+      .map((label) => label.textContent.replace(/\s*\*\s*$/, "").trim());
+    expect(marked).toEqual([
+      "First Name",
+      "Last Name",
+      "Major",
+      "First Choice Course",
+      "I have read and understood the text above, and I agree to the terms and conditions it specifies",
+    ]);
+    // And nothing optional is marked.
+    ["Middle Name", "GPA in Major", "Second Choice Course"].forEach((label) =>
+      expect(labelNamed(label).querySelector(".required-field")).toBeNull(),
+    );
+  });
+
+  test("each label is wired to its control by id", async () => {
+    renderForm({ type: "TA" });
+    // Residency F1 so the exam questions are on the page too.
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-residencyStatus"),
+      "F1_STUDENT_VISA",
+    );
+
+    const wired = [
+      ["First Name", "firstName"],
+      ["Middle Name", "middleName"],
+      ["Last Name", "lastName"],
+      ["Major", "major"],
+      ["GPA in Major", "gpaMajor"],
+      ["Overall GPA", "gpaOverall"],
+      ["Year in Program", "yearInProgram"],
+      ["Expected Graduation", "graduationDate"],
+      ["Class Level", "classLevel"],
+      ["Residency Status", "residencyStatus"],
+      ["Language Exam", "languageExam"],
+      ["Date Passed", "languageExamDatePassed"],
+      ["Relevant Coursework at UCSB", "courseworkUcsb"],
+      ["Relevant Coursework Elsewhere", "courseworkOther"],
+      ["290-Level Coursework", "coursework290"],
+      ["Previous Teaching Experience", "prevExperience"],
+      ["First Choice Course", "firstChoiceCourse"],
+      ["Second Choice Course", "secondChoiceCourse"],
+      ["Anything Else", "comments"],
+    ];
+    wired.forEach(([label, name]) => {
+      const control = screen.getByTestId(`ApplicationForm-${name}`);
+      expect(control).toHaveAttribute("id", `ApplicationForm-${name}`);
+      expect(labelNamed(label)).toHaveAttribute(
+        "for",
+        `ApplicationForm-${name}`,
+      );
+    });
+    // Checkboxes: Form.Check renders its label from the id.
+    [
+      "availableForLecturesFirstChoice",
+      "availableForDiscussionFirstChoice",
+      "availableForLecturesSecondChoice",
+      "availableForDiscussionSecondChoice",
+    ].forEach((name) =>
+      expect(screen.getByTestId(`ApplicationForm-${name}`)).toHaveAttribute(
+        "id",
+        `ApplicationForm-${name}`,
+      ),
+    );
+  });
+
+  test("a ULA application wires its own labels too", () => {
+    renderForm({ type: "ULA" });
+
+    [
+      ["Quarters Previously Served as a ULA", "previousServiceAsUla"],
+      ["Video Link", "videoLink"],
+    ].forEach(([label, name]) => {
+      expect(screen.getByTestId(`ApplicationForm-${name}`)).toHaveAttribute(
+        "id",
+        `ApplicationForm-${name}`,
+      );
+      expect(labelNamed(label)).toHaveAttribute(
+        "for",
+        `ApplicationForm-${name}`,
+      );
+    });
+    expect(screen.getByTestId("ApplicationForm-ula-only")).toBeInTheDocument();
   });
 
   test("the submit button can be relabelled", () => {
@@ -91,6 +223,15 @@ describe("ApplicationForm tests", () => {
   test("a TA application asks the TA-only questions and not the ULA ones", () => {
     renderForm({ type: "TA" });
 
+    expect(screen.getByTestId("ApplicationForm-ta-only")).toBeInTheDocument();
+    expect(screen.getByTestId("ApplicationForm-classLevel")).toHaveAttribute(
+      "id",
+      "ApplicationForm-classLevel",
+    );
+    expect(labelNamed("Class Level")).toHaveAttribute(
+      "for",
+      "ApplicationForm-classLevel",
+    );
     expect(
       screen.getByTestId("ApplicationForm-classLevel"),
     ).toBeInTheDocument();
@@ -143,7 +284,11 @@ describe("ApplicationForm tests", () => {
     );
     expect(
       await screen.findByTestId("ApplicationForm-languageExam"),
-    ).toBeInTheDocument();
+    ).toHaveAttribute("id", "ApplicationForm-languageExam");
+    expect(labelNamed("Language Exam")).toHaveAttribute(
+      "for",
+      "ApplicationForm-languageExam",
+    );
     expect(
       screen.getByTestId("ApplicationForm-languageExamDatePassed"),
     ).toBeInTheDocument();
@@ -346,7 +491,7 @@ describe("ApplicationForm tests", () => {
       screen.getByTestId("ApplicationForm-lastName"),
       "Lovelace",
     );
-    await userEvent.type(
+    await userEvent.selectOptions(
       screen.getByTestId("ApplicationForm-major"),
       "Computer Science",
     );
@@ -494,7 +639,7 @@ describe("ApplicationForm tests", () => {
       screen.getByTestId("ApplicationForm-lastName"),
       "Lovelace",
     );
-    await userEvent.type(
+    await userEvent.selectOptions(
       screen.getByTestId("ApplicationForm-major"),
       "Computer Science",
     );
@@ -564,10 +709,23 @@ describe("ApplicationForm tests", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("A last name is required.")).toBeInTheDocument();
     expect(screen.getByText("A major is required.")).toBeInTheDocument();
+    // The major lives outside react-hook-form, so its flag is set by the form's own check.
+    expect(screen.getByTestId("ApplicationForm-major")).toHaveClass(
+      "is-invalid",
+    );
     expect(
       screen.getByText("A first choice course is required."),
     ).toBeInTheDocument();
     expect(submitAction).not.toHaveBeenCalled();
+
+    // Choosing a major clears the flag.
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Statistics",
+    );
+    expect(screen.getByTestId("ApplicationForm-major")).not.toHaveClass(
+      "is-invalid",
+    );
   });
 
   // ---- submitting ----
@@ -583,7 +741,7 @@ describe("ApplicationForm tests", () => {
       screen.getByTestId("ApplicationForm-lastName"),
       "Lovelace",
     );
-    await userEvent.type(
+    await userEvent.selectOptions(
       screen.getByTestId("ApplicationForm-major"),
       "Computer Science",
     );
@@ -615,6 +773,482 @@ describe("ApplicationForm tests", () => {
     expect(payload.secondChoiceCourse).toBe("");
     expect(payload.availableForLecturesFirstChoice).toBe(true);
     expect(payload.availableForDiscussionFirstChoice).toBe(false);
+    // Nothing rated, so nothing sent: not even undefined entries for the listed topics.
+    expect(payload.topicProficiencies).toStrictEqual({});
+  });
+
+  // ---- the major ----
+
+  test("the major dropdown offers the list, then Other", () => {
+    renderForm();
+
+    const select = screen.getByTestId("ApplicationForm-major");
+    expect([...select.options].map((o) => o.textContent)).toEqual([
+      "Choose a major",
+      "Computer Engineering",
+      "Computer Science",
+      "Statistics",
+      "Other",
+    ]);
+    expect(select).toHaveValue("");
+    // Nothing is complained about before the applicant has tried to submit.
+    expect(select).not.toHaveClass("is-invalid");
+    // No free-text box until Other is chosen.
+    expect(screen.queryByTestId("ApplicationForm-otherMajor")).toBeNull();
+  });
+
+  test("choosing Other asks for the major as text and stores the text", async () => {
+    const submitAction = renderForm({ type: "ULA" });
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Other",
+    );
+    const other = await screen.findByTestId("ApplicationForm-otherMajor");
+    expect(other).toHaveValue("");
+    expect(other).toHaveAttribute("id", "ApplicationForm-otherMajor");
+    expect(labelNamed("Other major")).toHaveAttribute(
+      "for",
+      "ApplicationForm-otherMajor",
+    );
+    await userEvent.type(other, "  History of Art ");
+
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-firstName"),
+      "Ada",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-lastName"),
+      "Lovelace",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    // The text, trimmed; never the word Other or the sentinel.
+    expect(submitAction.mock.calls[0][0].major).toBe("History of Art");
+  });
+
+  test("Other with nothing typed is still a missing major", async () => {
+    const submitAction = renderForm();
+
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-firstName"),
+      "Ada",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-lastName"),
+      "Lovelace",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Other",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-otherMajor"),
+      "  ",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationForm-otherMajor")).toHaveClass(
+        "is-invalid",
+      ),
+    );
+    expect(screen.getByText("Please enter your major.")).toBeInTheDocument();
+    // The dropdown itself is not flagged: Other was a valid choice, the text is what is missing.
+    expect(screen.getByTestId("ApplicationForm-major")).not.toHaveClass(
+      "is-invalid",
+    );
+    expect(submitAction).not.toHaveBeenCalled();
+
+    // Typing clears the complaint.
+    await userEvent.type(screen.getByTestId("ApplicationForm-otherMajor"), "X");
+    expect(screen.getByTestId("ApplicationForm-otherMajor")).not.toHaveClass(
+      "is-invalid",
+    );
+  });
+
+  /** The major's own check runs even when react-hook-form stops the submit for other fields. */
+  test("a chosen major is not flagged just because another field is missing", async () => {
+    const submitAction = renderForm();
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Statistics",
+    );
+    // No names, so the submit is refused for those.
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    expect(
+      await screen.findByText("A first name is required."),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("ApplicationForm-major")).not.toHaveClass(
+      "is-invalid",
+    );
+    expect(submitAction).not.toHaveBeenCalled();
+  });
+
+  test("an Other major of only spaces is flagged along with the other missing fields", async () => {
+    renderForm();
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Other",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-otherMajor"),
+      "   ",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationForm-otherMajor")).toHaveClass(
+        "is-invalid",
+      ),
+    );
+  });
+
+  test("switching from Other back to a listed major drops the text", async () => {
+    renderForm();
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Other",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-otherMajor"),
+      "Something",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Statistics",
+    );
+
+    expect(screen.getByTestId("ApplicationForm-major")).toHaveValue(
+      "Statistics",
+    );
+    expect(screen.queryByTestId("ApplicationForm-otherMajor")).toBeNull();
+
+    // And choosing Other again starts from a blank box, not the old listed value.
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Other",
+    );
+    expect(screen.getByTestId("ApplicationForm-otherMajor")).toHaveValue("");
+  });
+
+  /** A stored major that is on the list is simply selected. */
+  test("a previous listed major is pre-selected", () => {
+    renderForm({ initialContents: applicationsFixtures.oneTaApplication });
+
+    expect(screen.getByTestId("ApplicationForm-major")).toHaveValue(
+      "Computer Science",
+    );
+    expect(screen.queryByTestId("ApplicationForm-otherMajor")).toBeNull();
+  });
+
+  /** A stored major that is not on the list (chosen as Other, or since removed) is kept as text. */
+  test("a previous major that is not on the list shows as Other with the text", () => {
+    renderForm({
+      initialContents: {
+        ...applicationsFixtures.oneTaApplication,
+        major: "Linguistics",
+      },
+    });
+
+    expect(screen.getByTestId("ApplicationForm-major")).toHaveValue(
+      "__OTHER__",
+    );
+    expect(screen.getByTestId("ApplicationForm-otherMajor")).toHaveValue(
+      "Linguistics",
+    );
+  });
+
+  test("with no majors listed only Other is offered", () => {
+    renderForm({ majorList: [] });
+
+    expect(
+      [...screen.getByTestId("ApplicationForm-major").options].map(
+        (o) => o.textContent,
+      ),
+    ).toEqual(["Choose a major", "Other"]);
+  });
+
+  test("tolerates non-array majors and topics props", () => {
+    renderForm({ majorList: null, topicList: null });
+
+    expect(screen.getByTestId("ApplicationForm-major")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("ApplicationForm-topicProficiencies-none"),
+    ).toBeInTheDocument();
+  });
+
+  // ---- topic proficiencies ----
+
+  test("every topic gets radio buttons 1 to 5, none chosen, under the instruction", () => {
+    renderForm();
+
+    expect(
+      screen.getByText(
+        "Choose a level of proficiency, with 1 being the lowest, and 5 being the highest.",
+      ),
+    ).toBeInTheDocument();
+    const group = screen.getByTestId("ApplicationForm-topicProficiencies");
+    // The column headings are the levels themselves.
+    expect(
+      [...group.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual(["Topic", "1", "2", "3", "4", "5"]);
+    topics.forEach((topic) => {
+      const row = screen.getByTestId(
+        `ApplicationForm-topic-${topic.replace(/\s+/g, "-")}`,
+      );
+      expect(row).toHaveTextContent(topic);
+      [1, 2, 3, 4, 5].forEach((level) => {
+        const radio = screen.getByTestId(
+          `ApplicationForm-topic-${topic}-${level}`,
+        );
+        expect(radio).toHaveAttribute("type", "radio");
+        expect(radio).toHaveAttribute(
+          "id",
+          `ApplicationForm-topic-${topic}-${level}`,
+        );
+        expect(radio).toHaveAttribute("aria-label", `${topic}: ${level}`);
+        expect(radio).not.toBeChecked();
+      });
+    });
+    expect(
+      screen.queryByTestId("ApplicationForm-topicProficiencies-none"),
+    ).toBeNull();
+  });
+
+  test("a topic with a space in its name still gets a usable row id", () => {
+    renderForm({ topicList: ["Web Development"] });
+
+    expect(
+      screen.getByTestId("ApplicationForm-topic-Web-Development-3"),
+    ).toBeInTheDocument();
+  });
+
+  test("picking a level is remembered per topic and sent for rated topics only", async () => {
+    const submitAction = renderForm({ type: "ULA" });
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-topic-Java-5"));
+    await userEvent.click(screen.getByTestId("ApplicationForm-topic-Python-2"));
+    // Changing an answer replaces it.
+    await userEvent.click(screen.getByTestId("ApplicationForm-topic-Python-1"));
+
+    expect(screen.getByTestId("ApplicationForm-topic-Java-5")).toBeChecked();
+    expect(screen.getByTestId("ApplicationForm-topic-Python-1")).toBeChecked();
+    expect(
+      screen.getByTestId("ApplicationForm-topic-Python-2"),
+    ).not.toBeChecked();
+    expect(
+      screen.getByTestId("ApplicationForm-topic-Compilers-3"),
+    ).not.toBeChecked();
+
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-firstName"),
+      "Ada",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-lastName"),
+      "Lovelace",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Statistics",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    // Strict: an unrated topic must be absent, not present as undefined.
+    expect(submitAction.mock.calls[0][0].topicProficiencies).toStrictEqual({
+      Java: 5,
+      Python: 1,
+    });
+  });
+
+  test("pre-fills the ratings from a previous application", () => {
+    renderForm({ initialContents: applicationsFixtures.oneTaApplication });
+
+    // Java: 5 and React: 3 are stored; React is not on this list, so it is not shown.
+    expect(screen.getByTestId("ApplicationForm-topic-Java-5")).toBeChecked();
+    expect(screen.queryByTestId("ApplicationForm-topic-React-3")).toBeNull();
+  });
+
+  /** A rating for a topic no longer on the list must not ride along invisibly. */
+  test("a stored rating for a topic that is no longer listed is not sent", async () => {
+    const submitAction = renderForm({
+      initialContents: applicationsFixtures.oneTaApplication,
+    });
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].topicProficiencies).toStrictEqual({
+      Java: 5,
+    });
+  });
+
+  test("a previous application with no ratings starts unrated", () => {
+    renderForm({
+      initialContents: {
+        ...applicationsFixtures.oneTaApplication,
+        topicProficiencies: null,
+      },
+    });
+
+    [1, 2, 3, 4, 5].forEach((level) =>
+      expect(
+        screen.getByTestId(`ApplicationForm-topic-Java-${level}`),
+      ).not.toBeChecked(),
+    );
+  });
+
+  test("with no topics listed, the table says so", () => {
+    renderForm({ topicList: [] });
+
+    expect(
+      screen.getByTestId("ApplicationForm-topicProficiencies-none"),
+    ).toHaveTextContent("No topics are listed yet.");
+  });
+
+  // ---- notices, terms and conditions ----
+
+  test("without a notice there is no agreement section and nothing is required", async () => {
+    const submitAction = renderForm();
+    expect(screen.queryByTestId("ApplicationForm-notice")).toBeNull();
+
+    await fillRequired();
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].noticeVersionId).toBeNull();
+  });
+
+  test("with a notice the box must be ticked before submitting", async () => {
+    const submitAction = renderForm({ notice: noticesFixtures.taV2 });
+
+    const card = screen.getByTestId("ApplicationForm-notice");
+    expect(card.querySelector("h1")).toHaveTextContent("TA Terms");
+    const box = screen.getByTestId("ApplicationForm-notice-agree");
+    expect(box).not.toBeChecked();
+    expect(box).not.toHaveClass("is-invalid");
+
+    await fillRequired();
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(box).toHaveClass("is-invalid"));
+    expect(submitAction).not.toHaveBeenCalled();
+
+    // Ticking clears the complaint and the submission carries the version agreed to.
+    await userEvent.click(box);
+    expect(box).toBeChecked();
+    expect(box).not.toHaveClass("is-invalid");
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].noticeVersionId).toBe(2);
+  });
+
+  /** When react-hook-form refuses the submit for other fields, the box is still flagged. */
+  test("an unticked box is flagged alongside other missing fields", async () => {
+    renderForm({ notice: noticesFixtures.taV2 });
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationForm-notice-agree")).toHaveClass(
+        "is-invalid",
+      ),
+    );
+    expect(screen.getByTestId("ApplicationForm-major")).toHaveClass(
+      "is-invalid",
+    );
+  });
+
+  /** A ticked box is not flagged when only other fields are missing. */
+  test("a ticked box is not flagged when other fields are missing", async () => {
+    renderForm({ notice: noticesFixtures.taV2 });
+    const box = screen.getByTestId("ApplicationForm-notice-agree");
+    await userEvent.click(box);
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationForm-major")).toHaveClass(
+        "is-invalid",
+      ),
+    );
+    expect(box).toBeChecked();
+    expect(box).not.toHaveClass("is-invalid");
+  });
+
+  test("unticking the box after ticking it blocks the submit again", async () => {
+    const submitAction = renderForm({ notice: noticesFixtures.taV2 });
+    await fillRequired();
+    const box = screen.getByTestId("ApplicationForm-notice-agree");
+    await userEvent.click(box);
+    await userEvent.click(box);
+    expect(box).not.toBeChecked();
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(box).toHaveClass("is-invalid"));
+    expect(submitAction).not.toHaveBeenCalled();
+  });
+
+  /** Editing an application that agreed to this very version starts ticked. */
+  test("an application that already agreed to the shown version starts ticked and submits", async () => {
+    const submitAction = renderForm({
+      initialContents: applicationsFixtures.oneTaApplication, // noticeVersionId: 1
+      notice: noticesFixtures.taV1,
+    });
+    const box = screen.getByTestId("ApplicationForm-notice-agree");
+    expect(box).toBeChecked();
+    expect(box).not.toHaveClass("is-invalid");
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].noticeVersionId).toBe(1);
+  });
+
+  /** A different version is a different text, so agreement to it is not assumed. */
+  test("an application that agreed to another version starts unticked", () => {
+    renderForm({
+      initialContents: applicationsFixtures.oneTaApplication, // noticeVersionId: 1
+      notice: noticesFixtures.taV2,
+    });
+    expect(
+      screen.getByTestId("ApplicationForm-notice-agree"),
+    ).not.toBeChecked();
+  });
+
+  /** An application from before any notice: nothing recorded, so unticked. */
+  test("an application with no recorded version starts unticked", () => {
+    renderForm({
+      initialContents: {
+        ...applicationsFixtures.oneTaApplication,
+        noticeVersionId: null,
+      },
+      notice: noticesFixtures.taV1,
+    });
+    expect(
+      screen.getByTestId("ApplicationForm-notice-agree"),
+    ).not.toBeChecked();
   });
 
   // ---- pre-filling ----

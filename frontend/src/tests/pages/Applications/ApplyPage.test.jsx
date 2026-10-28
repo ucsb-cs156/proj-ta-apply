@@ -10,6 +10,8 @@ import ApplyPage from "main/pages/Applications/ApplyPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import appSettingsFixtures from "fixtures/appSettingsFixtures";
+import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -58,7 +60,80 @@ describe("ApplyPage tests", () => {
     axiosMock
       .onGet("/api/recruitments/sections")
       .reply(200, courseSectionsFixtures.cmpsc156);
+    axiosMock
+      .onGet("/api/recruitments/options")
+      .reply(200, appSettingsFixtures.ulaOptions);
     axiosMock.onGet("/api/applications/prefill").reply(200, []);
+    // No notice written yet for most tests, so the form asks for no agreement.
+    axiosMock.onGet("/api/notices/current").reply(200, []);
+  });
+
+  /** The notice shown is the current one for the recruitment's type, and must be agreed to. */
+  test("shows the current notice for the recruitment's type and sends the agreed version", async () => {
+    axiosMock.onGet("/api/notices/current").reply(200, [noticesFixtures.ulaV1]);
+    axiosMock
+      .onPost("/api/applications/post")
+      .reply(200, applicationsFixtures.oneUlaApplication);
+
+    renderPage();
+
+    const box = await screen.findByTestId("ApplyPage-notice-agree");
+    expect(
+      screen.getByTestId("ApplyPage-notice-content").querySelector("h1"),
+    ).toHaveTextContent("ULA Terms");
+    expect(
+      axiosMock.history.get.filter((r) => r.url === "/api/notices/current")[0]
+        .params,
+    ).toEqual({ type: "ULA" });
+
+    await userEvent.clear(screen.getByTestId("ApplyPage-firstName"));
+    await userEvent.type(screen.getByTestId("ApplyPage-firstName"), "Chris");
+    await userEvent.clear(screen.getByTestId("ApplyPage-lastName"));
+    await userEvent.type(screen.getByTestId("ApplyPage-lastName"), "Gaucho");
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-major").options.length).toBe(4),
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplyPage-major"),
+      "Computer Science",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplyPage-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+
+    // Unticked: refused in the browser, nothing sent.
+    await userEvent.click(screen.getByTestId("ApplyPage-submit"));
+    await waitFor(() => expect(box).toHaveClass("is-invalid"));
+    expect(axiosMock.history.post.length).toBe(0);
+
+    await userEvent.click(box);
+    await userEvent.click(screen.getByTestId("ApplyPage-submit"));
+    await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
+    expect(JSON.parse(axiosMock.history.post[0].data).noticeVersionId).toBe(3);
+  });
+
+  /** The majors and topics come from the lists for this recruitment's type. */
+  test("the major dropdown and topic rows are fed from the recruitment's options", async () => {
+    renderPage();
+
+    const select = await screen.findByTestId("ApplyPage-major");
+    await waitFor(() =>
+      expect([...select.options].map((o) => o.textContent)).toEqual([
+        "Choose a major",
+        "Computer Science",
+        "Mathematics",
+        "Other",
+      ]),
+    );
+    expect(
+      screen.getByTestId("ApplyPage-topic-JavaScript-1"),
+    ).toBeInTheDocument();
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/recruitments/options",
+      )[0].params,
+    ).toEqual({ recruitmentId: "2" });
   });
 
   test("names the recruitment being applied to", async () => {
@@ -174,10 +249,14 @@ describe("ApplyPage tests", () => {
     await userEvent.type(screen.getByTestId("ApplyPage-firstName"), "Chris");
     await userEvent.clear(screen.getByTestId("ApplyPage-lastName"));
     await userEvent.type(screen.getByTestId("ApplyPage-lastName"), "Gaucho");
-    await userEvent.type(
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-major").options.length).toBe(4),
+    );
+    await userEvent.selectOptions(
       screen.getByTestId("ApplyPage-major"),
       "Computer Science",
     );
+    await userEvent.click(screen.getByTestId("ApplyPage-topic-React-4"));
     await userEvent.selectOptions(
       screen.getByTestId("ApplyPage-firstChoiceCourse"),
       "CMPSC   156",
@@ -190,6 +269,8 @@ describe("ApplyPage tests", () => {
 
     const sent = JSON.parse(axiosMock.history.post[0].data);
     expect(sent.firstName).toBe("Chris");
+    expect(sent.major).toBe("Computer Science");
+    expect(sent.topicProficiencies).toEqual({ React: 4 });
     expect(sent.firstChoiceCourse).toBe("CMPSC   156");
     // The applicant does not get to choose these.
     expect(sent.status).toBeUndefined();
@@ -217,7 +298,12 @@ describe("ApplyPage tests", () => {
     await userEvent.type(screen.getByTestId("ApplyPage-firstName"), "Chris");
     await userEvent.clear(screen.getByTestId("ApplyPage-lastName"));
     await userEvent.type(screen.getByTestId("ApplyPage-lastName"), "Gaucho");
-    await userEvent.type(screen.getByTestId("ApplyPage-major"), "CS");
+    // A major that is not on the list goes in as Other plus text.
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplyPage-major"),
+      "Other",
+    );
+    await userEvent.type(screen.getByTestId("ApplyPage-otherMajor"), "CS");
     await userEvent.selectOptions(
       screen.getByTestId("ApplyPage-firstChoiceCourse"),
       "CMPSC   156",

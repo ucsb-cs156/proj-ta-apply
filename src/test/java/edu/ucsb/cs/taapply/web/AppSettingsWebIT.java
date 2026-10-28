@@ -4,8 +4,10 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.FilePayload;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -79,6 +81,66 @@ public class AppSettingsWebIT extends WebTestCase {
     goTo("/admin/settings/ula");
     assertThat(page.getByRole(AriaRole.HEADING).first()).containsText("ULA App Settings");
     assertThat(page.getByTestId("UlaAppSettingsPage-topics-empty")).isVisible();
+  }
+
+  /** The CSV upload fills a list, and re-uploading the same file adds nothing. */
+  @Test
+  public void admin_can_fill_a_list_from_a_csv_and_reupload_safely() throws Exception {
+    setupAdminUser();
+    goTo("/admin/settings/ta");
+
+    assertThat(page.getByTestId("TaAppSettingsPage-topics-csv-download-link"))
+        .hasAttribute("href", "/api/admin/settings/ta-topics/csv");
+    assertThat(page.getByTestId("TaAppSettingsPage-topics-csv-help-link"))
+        .hasAttribute("href", "/help/csv#settings-lists");
+
+    FilePayload csv =
+        new FilePayload(
+            "topics.csv",
+            "text/csv",
+            "\"name\"\n\"Java\"\n\"Python\"\n".getBytes(StandardCharsets.UTF_8));
+
+    page.getByTestId("TaAppSettingsPage-topics-csv-upload-input").setInputFiles(csv);
+    page.getByTestId("TaAppSettingsPage-topics-csv-upload-button").click();
+    assertThat(page.getByText("Upload complete: 2 added, 0 already present")).isVisible();
+    assertThat(page.getByTestId("TaAppSettingsPage-topics-table-cell-row-0-col-name"))
+        .containsText("Java");
+    assertThat(page.getByTestId("TaAppSettingsPage-topics-table-cell-row-1-col-name"))
+        .containsText("Python");
+
+    page.getByTestId("TaAppSettingsPage-topics-csv-upload-input").setInputFiles(csv);
+    page.getByTestId("TaAppSettingsPage-topics-csv-upload-button").click();
+    assertThat(page.getByText("Upload complete: 0 added, 2 already present")).isVisible();
+    assertThat(page.getByTestId("TaAppSettingsPage-topics-table-cell-row-2-col-name"))
+        .not()
+        .isVisible();
+
+    // The majors list is untouched.
+    assertThat(page.getByTestId("TaAppSettingsPage-majors-empty")).isVisible();
+  }
+
+  /** Saving the notice appends a version; the editor is CodeMirror, so it is driven by keyboard. */
+  @Test
+  public void admin_can_save_a_new_version_of_the_notices() throws Exception {
+    setupAdminUser();
+    goTo("/admin/settings/ula");
+
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-current"))
+        .containsText("No version saved yet");
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-save-button")).isDisabled();
+
+    page.getByTestId("UlaAppSettingsPage-notices-editor").locator(".CodeMirror").click();
+    page.keyboard().type("# ULA Terms");
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-preview").locator("h1"))
+        .containsText("ULA Terms");
+    page.getByTestId("UlaAppSettingsPage-notices-save-button").click();
+
+    assertThat(page.getByText("Saved version 1 of the ULA notices")).isVisible();
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-current"))
+        .containsText("Current: Version 1");
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-history-row-0")).containsText("1");
+    // Unchanged text cannot be saved again as a new version.
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-save-button")).isDisabled();
   }
 
   @Test

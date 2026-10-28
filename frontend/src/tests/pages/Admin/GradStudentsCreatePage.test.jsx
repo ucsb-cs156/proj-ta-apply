@@ -57,7 +57,7 @@ describe("GradStudentsCreatePage tests", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Email")).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Email/)).toBeInTheDocument();
     });
   });
 
@@ -78,10 +78,10 @@ describe("GradStudentsCreatePage tests", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Email")).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Email/)).toBeInTheDocument();
     });
 
-    const emailInput = screen.getByLabelText("Email");
+    const emailInput = screen.getByLabelText(/^Email/);
     expect(emailInput).toBeInTheDocument();
 
     const createButton = screen.getByText("Create");
@@ -125,10 +125,10 @@ describe("GradStudentsCreatePage tests", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Email")).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Email/)).toBeInTheDocument();
     });
 
-    const emailInput = screen.getByLabelText("Email");
+    const emailInput = screen.getByLabelText(/^Email/);
     expect(emailInput).toBeInTheDocument();
 
     const createButton = screen.getByText("Create");

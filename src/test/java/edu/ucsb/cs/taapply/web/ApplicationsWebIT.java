@@ -4,15 +4,23 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 
 import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
+import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.entity.TaMajor;
+import edu.ucsb.cs.taapply.entity.TaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
+import edu.ucsb.cs.taapply.repository.TaMajorRepository;
+import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
@@ -58,6 +66,29 @@ public class ApplicationsWebIT extends WebTestCase {
                 com.github.tomakehurst.wiremock.client.WireMock.aResponse()
                     .withHeader("Content-Type", "application/json")
                     .withBody(CMPSC_156_SECTIONS)));
+  }
+
+  @Autowired TaMajorRepository taMajorRepository;
+  @Autowired TaTopicRepository taTopicRepository;
+  @Autowired NoticeVersionRepository noticeVersionRepository;
+
+  /** The notice every TA applicant must agree to. */
+  private NoticeVersion seedTaNotice() {
+    return noticeVersionRepository.save(
+        NoticeVersion.builder()
+            .type(RecruitmentType.TA)
+            .content("# TA Terms\n\nBe available for the **whole** quarter.")
+            .createdAt(LocalDateTime.of(2026, 1, 2, 3, 4))
+            .build());
+  }
+
+  /** The admin-maintained lists the TA form offers. */
+  private void seedTaLists() {
+    seedTaNotice();
+    taMajorRepository.save(TaMajor.builder().name("Computer Science").build());
+    taMajorRepository.save(TaMajor.builder().name("Statistics").build());
+    taTopicRepository.save(TaTopic.builder().name("Java").build());
+    taTopicRepository.save(TaTopic.builder().name("Python").build());
   }
 
   private void goTo(String path) {
@@ -106,17 +137,26 @@ public class ApplicationsWebIT extends WebTestCase {
   private void fillAndSubmit() {
     page.getByTestId("ApplyPage-firstName").fill("Chris");
     page.getByTestId("ApplyPage-lastName").fill("Gaucho");
-    page.getByTestId("ApplyPage-major").fill("Computer Science");
+    page.getByTestId("ApplyPage-major").selectOption("Computer Science");
+    page.getByTestId("ApplyPage-topic-Java-4").check();
     page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
     page.getByTestId("ApplyPage-availableForLecturesFirstChoice").check();
     page.getByTestId("ApplyPage-availabilityCommentsFirstChoice").fill("Free after 2pm.");
     page.getByTestId("ApplyPage-courseInterest-CMPSC-130A-ENTHUSIASTIC").check();
+
+    // The notice is shown, rendered from Markdown, and the submit is refused until agreed.
+    assertThat(page.getByTestId("ApplyPage-notice-content").locator("h1")).containsText("TA Terms");
+    page.getByTestId("ApplyPage-submit").click();
+    assertThat(page.getByTestId("ApplyPage-notice-agree"))
+        .hasClass(java.util.regex.Pattern.compile("is-invalid"));
+    page.getByTestId("ApplyPage-notice-agree").check();
     page.getByTestId("ApplyPage-submit").click();
   }
 
   @Test
   public void a_grad_student_applies_and_the_application_is_listed() throws Exception {
     Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
 
     setupGradStudentUser();
     goTo("/");
@@ -169,6 +209,11 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-action-link").click();
     assertThat(page.getByTestId("ApplicationPage-status")).containsText("PENDING");
     assertThat(page.getByTestId("ApplicationPage-firstName")).hasValue("Chris");
+    assertThat(page.getByTestId("ApplicationPage-major")).hasValue("Computer Science");
+    assertThat(page.getByTestId("ApplicationPage-topic-Java-4")).isChecked();
+    // The version agreed to is shown back, already ticked.
+    assertThat(page.getByTestId("ApplicationPage-notice-agree")).isChecked();
+    assertThat(page.getByTestId("ApplicationPage-notice-version")).containsText("Version 1");
     assertThat(page.getByTestId("ApplicationPage-firstChoiceCourse")).hasValue("CMPSC   156");
     // The first choice row says so instead of offering options; the other answer came back.
     assertThat(page.getByTestId("ApplicationPage-courseInterest-CMPSC-156-choice"))
@@ -208,6 +253,7 @@ public class ApplicationsWebIT extends WebTestCase {
   @Test
   public void past_the_deadline_only_the_comments_can_be_changed() throws Exception {
     Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
 
     setupGradStudentUser();
     goTo("/apply/" + recruitment.getId());
@@ -261,7 +307,9 @@ public class ApplicationsWebIT extends WebTestCase {
 
     page.getByTestId("TestApplicationPage-firstName").fill("Ada");
     page.getByTestId("TestApplicationPage-lastName").fill("Admin");
-    page.getByTestId("TestApplicationPage-major").fill("Computer Science");
+    // Not on the list: Other, then the text.
+    page.getByTestId("TestApplicationPage-major").selectOption("__OTHER__");
+    page.getByTestId("TestApplicationPage-otherMajor").fill("Computer Science");
     page.getByTestId("TestApplicationPage-firstChoiceCourse").selectOption("CMPSC   156");
     page.getByTestId("TestApplicationPage-submit").click();
 

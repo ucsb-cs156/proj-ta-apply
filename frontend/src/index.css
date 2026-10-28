@@ -32,6 +32,19 @@ body {
   background-color: #f7ede1;
 }
 
+/* The mark beside a required field's label (see components/Common/RequiredField.tsx) and the
+   sentence explaining it. Change these two rules to restyle required fields app-wide. */
+.required-field {
+  color: #dc3545;
+  font-weight: bold;
+  margin-left: 0.15em;
+}
+
+.required-field-explanation {
+  color: #5d5f68;
+  font-size: 0.875em;
+}
+
 #root {
   width: 100%;
   min-height: 100svh;
@@ -95,7 +108,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-
 
 /* The Help dropdown in the Navbar uses this class so the menu is only as
    wide as its longest item. */

@@ -59,6 +59,13 @@ public class Application {
    */
   @Builder.Default private boolean testApplication = false;
 
+  /**
+   * The version of the "Notices, Terms and Conditions" text the applicant agreed to when they
+   * submitted (or last edited) this application. Null only for applications made before any notice
+   * had been written for their form type.
+   */
+  private Long noticeVersionId;
+
   // ---- common fields ----
 
   private String firstName;
@@ -72,9 +79,6 @@ public class Application {
 
   @Column(length = 4000)
   private String courseworkUcsb;
-
-  @Column(length = 4000)
-  private String knowledge;
 
   @Column(length = 4000)
   private String prevExperience;
@@ -120,6 +124,22 @@ public class Application {
   @Enumerated(EnumType.STRING)
   @Builder.Default
   private Map<String, CourseInterest> courseInterests = new HashMap<>();
+
+  /**
+   * Self-rated proficiency, 1 (lowest) to 5 (highest), in each of the topics the applicant said
+   * something about, keyed by topic name from the admin-maintained TA or ULA topics list. Replaces
+   * the earlier free-text "languages, tools and technologies" answer, so a review page can ask "who
+   * rates themselves 4 or better in Python" with a query. Sparse like the course interests: an
+   * unrated topic is simply absent.
+   */
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(
+      name = "application_topic_proficiencies",
+      joinColumns = @JoinColumn(name = "application_id"))
+  @MapKeyColumn(name = "topic")
+  @Column(name = "proficiency")
+  @Builder.Default
+  private Map<String, Integer> topicProficiencies = new HashMap<>();
 
   // ---- TA only ----
 

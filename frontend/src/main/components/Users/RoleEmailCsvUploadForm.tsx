@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { Button, Form } from "react-bootstrap";
+import RequiredField from "main/components/Common/RequiredField";
 
 export type RoleEmailCsvUploadFormFields = {
   upload: FileList;
@@ -35,7 +36,9 @@ export default function RoleEmailCsvUploadForm({
   return (
     <Form onSubmit={handleSubmit(submitAction)}>
       <Form.Group className="mb-2">
-        <Form.Label htmlFor={inputId}>{label}</Form.Label>
+        <Form.Label htmlFor={inputId}>
+          {label} <RequiredField />
+        </Form.Label>
         <Form.Control
           data-testid={testIdPrefix + "-upload"}
           id={inputId}

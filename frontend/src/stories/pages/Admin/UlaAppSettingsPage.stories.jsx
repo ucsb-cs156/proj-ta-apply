@@ -2,6 +2,7 @@ import React from "react";
 import { HttpResponse, http } from "msw";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
+import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -11,6 +12,10 @@ const common = [
   ),
   http.get("/api/systemInfo", () =>
     HttpResponse.json(systemInfoFixtures.showingNeither),
+  ),
+  http.get("/api/admin/notices/all", () => HttpResponse.json([])),
+  http.post("/api/admin/notices", () =>
+    HttpResponse.json({ ...noticesFixtures.taV2, id: 9 }),
   ),
   http.post("/api/admin/settings/ula-majors/post", () =>
     HttpResponse.json({ name: "Mathematics" }),
@@ -29,6 +34,12 @@ const common = [
   ),
   http.delete("/api/admin/settings/ula-topics/delete", () =>
     HttpResponse.json({ message: "removed from ula-topics" }),
+  ),
+  http.post("/api/admin/settings/ula-majors/upload/csv", () =>
+    HttpResponse.json({ inserted: 2, alreadyPresent: 0 }),
+  ),
+  http.post("/api/admin/settings/ula-topics/upload/csv", () =>
+    HttpResponse.json({ inserted: 1, alreadyPresent: 1 }),
   ),
 ];
 

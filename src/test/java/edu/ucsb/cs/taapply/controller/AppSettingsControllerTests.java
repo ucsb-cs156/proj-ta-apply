@@ -9,8 +9,11 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
@@ -23,18 +26,22 @@ import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
+import edu.ucsb.cs.taapply.services.NameListCsvService;
+import edu.ucsb.cs.taapply.services.NameListCsvService.UploadResult;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(controllers = AppSettingsController.class)
-@Import(edu.ucsb.cs.taapply.testconfig.TestConfig.class)
+@Import({edu.ucsb.cs.taapply.testconfig.TestConfig.class, NameListCsvService.class})
 public class AppSettingsControllerTests extends ControllerTestCase {
 
   @MockitoBean TaMajorRepository taMajorRepository;
@@ -58,6 +65,13 @@ public class AppSettingsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(delete("/api/admin/settings/ta-majors/delete?name=CS").with(csrf()))
         .andExpect(status().is(403));
+    mockMvc.perform(get("/api/admin/settings/ta-majors/csv")).andExpect(status().is(403));
+    mockMvc
+        .perform(
+            multipart("/api/admin/settings/ta-majors/upload/csv")
+                .file(csv("name\nCS\n"))
+                .with(csrf()))
+        .andExpect(status().is(403));
   }
 
   @WithMockUser(roles = {"USER", "INSTRUCTOR", "GRAD_STUDENT", "UNDERGRAD"})
@@ -72,6 +86,13 @@ public class AppSettingsControllerTests extends ControllerTestCase {
         .andExpect(status().is(403));
     mockMvc
         .perform(delete("/api/admin/settings/ta-majors/delete?name=CS").with(csrf()))
+        .andExpect(status().is(403));
+    mockMvc.perform(get("/api/admin/settings/ta-majors/csv")).andExpect(status().is(403));
+    mockMvc
+        .perform(
+            multipart("/api/admin/settings/ta-majors/upload/csv")
+                .file(csv("name\nCS\n"))
+                .with(csrf()))
         .andExpect(status().is(403));
     verify(taMajorRepository, never()).save(any());
     verify(taMajorRepository, never()).deleteById(any());
@@ -338,5 +359,162 @@ public class AppSettingsControllerTests extends ControllerTestCase {
             AppSettingsController.TA_TOPICS,
             AppSettingsController.ULA_MAJORS,
             AppSettingsController.ULA_TOPICS));
+  }
+
+  // ---- CSV download ----
+
+  private static MockMultipartFile csv(String content) {
+    return new MockMultipartFile(
+        "file", "names.csv", "text/csv", content.getBytes(StandardCharsets.UTF_8));
+  }
+
+  /** One quoted name per line under a name header, sorted like the list, as an attachment. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_can_download_a_list_as_csv() throws Exception {
+    when(taMajorRepository.findAll())
+        .thenReturn(
+            List.of(
+                TaMajor.builder().name("Statistics").build(),
+                TaMajor.builder().name("Computer Science").build(),
+                TaMajor.builder().name("Art, History and \"Theory\"").build()));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/settings/ta-majors/csv"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith("text/csv"))
+            .andExpect(
+                header().string("Content-Disposition", "attachment; filename=\"ta-majors.csv\""))
+            .andReturn();
+
+    // Quoting keeps a comma or a quote inside a name from breaking the file.
+    assertEquals(
+        "\"name\"\n\"Art, History and \"\"Theory\"\"\"\n\"Computer Science\"\n\"Statistics\"\n",
+        response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_empty_list_downloads_as_just_the_header() throws Exception {
+    when(ulaTopicRepository.findAll()).thenReturn(List.of());
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/settings/ula-topics/csv"))
+            .andExpect(status().isOk())
+            .andExpect(
+                header().string("Content-Disposition", "attachment; filename=\"ula-topics.csv\""))
+            .andReturn();
+
+    assertEquals("\"name\"\n", response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void downloading_an_unknown_list_is_a_400() throws Exception {
+    mockMvc.perform(get("/api/admin/settings/ta-minors/csv")).andExpect(status().is(400));
+  }
+
+  // ---- CSV upload ----
+
+  /** The downloaded shape round-trips: quoted names, other columns ignored, blanks skipped. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_can_upload_names_from_a_csv() throws Exception {
+    when(taTopicRepository.existsById(any())).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                multipart("/api/admin/settings/ta-topics/upload/csv")
+                    .file(csv("id,NAME\n1,\"Java\"\n2,  Python  \n3,\n\n4,Java\n"))
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    // Java once (the repeat within the file is folded), Python trimmed, the blank row skipped.
+    verify(taTopicRepository, times(1)).save(TaTopic.builder().name("Java").build());
+    verify(taTopicRepository, times(1)).save(TaTopic.builder().name("Python").build());
+    verify(taTopicRepository, times(2)).save(any());
+    // Spelled out rather than serialised from a record, so the field names and values are pinned.
+    assertEquals(
+        "{\"inserted\":2,\"alreadyPresent\":0}", response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void names_already_in_the_list_are_counted_not_inserted_again() throws Exception {
+    when(ulaMajorRepository.existsById("Math")).thenReturn(true);
+    when(ulaMajorRepository.existsById("Physics")).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                multipart("/api/admin/settings/ula-majors/upload/csv")
+                    .file(csv("name\nMath\nPhysics\n"))
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    verify(ulaMajorRepository, times(1)).save(UlaMajor.builder().name("Physics").build());
+    verify(ulaMajorRepository, times(1)).save(any());
+    assertEquals(
+        "{\"inserted\":1,\"alreadyPresent\":1}", response.getResponse().getContentAsString());
+  }
+
+  /** A row with too few columns to reach the name column is skipped rather than failing. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void short_rows_are_skipped() throws Exception {
+    when(ulaTopicRepository.existsById(any())).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                multipart("/api/admin/settings/ula-topics/upload/csv")
+                    .file(csv("id,name\n1\n2,Web\n"))
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    verify(ulaTopicRepository, times(1)).save(UlaTopic.builder().name("Web").build());
+    assertEquals(
+        mapper.writeValueAsString(new UploadResult(1, 0)),
+        response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_csv_without_a_name_column_is_refused() throws Exception {
+    mockMvc
+        .perform(
+            multipart("/api/admin/settings/ta-majors/upload/csv")
+                .file(csv("major\nCS\n"))
+                .with(csrf()))
+        .andExpect(status().is(400))
+        .andExpect(status().reason("CSV file must have a column named 'name'"));
+    verify(taMajorRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_empty_csv_is_refused() throws Exception {
+    mockMvc
+        .perform(multipart("/api/admin/settings/ta-majors/upload/csv").file(csv("")).with(csrf()))
+        .andExpect(status().is(400))
+        .andExpect(status().reason("CSV file is empty"));
+    verify(taMajorRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void uploading_to_an_unknown_list_is_a_400() throws Exception {
+    mockMvc
+        .perform(
+            multipart("/api/admin/settings/ta-minors/upload/csv")
+                .file(csv("name\nCS\n"))
+                .with(csrf()))
+        .andExpect(status().is(400));
   }
 }

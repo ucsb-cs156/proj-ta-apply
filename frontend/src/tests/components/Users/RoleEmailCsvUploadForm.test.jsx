@@ -86,7 +86,7 @@ describe("RoleEmailCsvUploadForm tests", () => {
       screen.getByTestId("InstructorCSVUploadForm-submit"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Upload Instructor Emails (CSV)"),
+      screen.getByText(/^Upload Instructor Emails \(CSV\)/),
     ).toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe("RoleEmailCsvUploadForm tests", () => {
       </MemoryRouter>,
     );
 
-    const input = screen.getByLabelText("Upload Instructor Emails (CSV)");
+    const input = screen.getByLabelText(/^Upload Instructor Emails \(CSV\)/);
     expect(input).toBe(screen.getByTestId("InstructorCSVUploadForm-upload"));
     expect(input.id).toBe("InstructorCSVUploadForm-upload-input");
   });

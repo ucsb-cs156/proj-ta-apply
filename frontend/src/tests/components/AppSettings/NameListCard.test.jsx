@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 import { vi } from "vitest";
@@ -23,18 +24,21 @@ const getEndpoint = "/api/admin/settings/ta-majors/all";
 const postEndpoint = "/api/admin/settings/ta-majors/post";
 const putEndpoint = "/api/admin/settings/ta-majors";
 const deleteEndpoint = "/api/admin/settings/ta-majors/delete";
+const uploadEndpoint = "/api/admin/settings/ta-majors/upload/csv";
 
 function renderCard() {
   const queryClient = new QueryClient();
   const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
   render(
     <QueryClientProvider client={queryClient}>
-      <NameListCard
-        title="Majors List for TAs"
-        itemLabel="major"
-        listKey="ta-majors"
-        testIdPrefix="Card"
-      />
+      <MemoryRouter>
+        <NameListCard
+          title="Majors List for TAs"
+          itemLabel="major"
+          listKey="ta-majors"
+          testIdPrefix="Card"
+        />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
   return invalidateQueriesSpy;
@@ -88,11 +92,13 @@ describe("NameListCard tests", () => {
   test("uses NameListCard as the default test id prefix", async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <NameListCard
-          title="Majors List for TAs"
-          itemLabel="major"
-          listKey="ta-majors"
-        />
+        <MemoryRouter>
+          <NameListCard
+            title="Majors List for TAs"
+            itemLabel="major"
+            listKey="ta-majors"
+          />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
     expect(
@@ -315,5 +321,101 @@ describe("NameListCard tests", () => {
       ),
     );
     await expectListRefreshed(invalidateQueriesSpy);
+  });
+
+  // ---- CSV download / upload ----
+
+  test("offers a CSV download of this list and a link to the format documentation", async () => {
+    renderCard();
+    await screen.findByTestId("Card-table-cell-row-0-col-name");
+
+    const download = screen.getByTestId("Card-csv-download-link");
+    expect(download).toHaveTextContent("Download CSV");
+    expect(download).toHaveAttribute(
+      "href",
+      "/api/admin/settings/ta-majors/csv",
+    );
+    expect(download).toHaveAttribute("download", "ta-majors.csv");
+
+    const help = screen.getByTestId("Card-csv-help-link");
+    expect(help).toHaveTextContent("CSV format details");
+    expect(help).toHaveAttribute("href", "/help/csv#settings-lists");
+    expect(screen.getByText("CSV download / upload")).toBeInTheDocument();
+    // The link reads as part of the sentence, with a space before it.
+    expect(help.parentElement.textContent).toContain(
+      "the same shape. CSV format details",
+    );
+  });
+
+  test("the Upload CSV button is disabled until a file is chosen", async () => {
+    renderCard();
+    await screen.findByTestId("Card-table-cell-row-0-col-name");
+
+    const input = screen.getByTestId("Card-csv-upload-input");
+    expect(input).toHaveAttribute("type", "file");
+    expect(input).toHaveAttribute("accept", ".csv");
+    expect(input).toHaveAttribute(
+      "aria-label",
+      "Upload majors from a CSV file",
+    );
+    expect(screen.getByTestId("Card-csv-upload-button")).toBeDisabled();
+
+    await userEvent.upload(
+      input,
+      new File(["name\nMath\n"], "majors.csv", { type: "text/csv" }),
+    );
+    expect(screen.getByTestId("Card-csv-upload-button")).toBeEnabled();
+  });
+
+  test("uploading posts the file as multipart, reports the result and refreshes the list", async () => {
+    axiosMock
+      .onPost(uploadEndpoint)
+      .reply(200, { inserted: 2, alreadyPresent: 1 });
+    const invalidateQueriesSpy = renderCard();
+    await screen.findByTestId("Card-table-cell-row-0-col-name");
+
+    const file = new File(["name\nMath\nPhysics\n"], "majors.csv", {
+      type: "text/csv",
+    });
+    await userEvent.upload(screen.getByTestId("Card-csv-upload-input"), file);
+    await userEvent.click(screen.getByTestId("Card-csv-upload-button"));
+
+    await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
+    const request = axiosMock.history.post[0];
+    expect(request.url).toBe(uploadEndpoint);
+    expect(request.headers["Content-Type"]).toBe("multipart/form-data");
+    expect(request.data).toBeInstanceOf(FormData);
+    expect(request.data.get("file")).toBe(file);
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Upload complete: 2 added, 1 already present",
+      ),
+    );
+    await expectListRefreshed(invalidateQueriesSpy);
+    // The file box is cleared for the next upload.
+    expect(screen.getByTestId("Card-csv-upload-button")).toBeDisabled();
+    expect(screen.getByTestId("Card-csv-upload-input").value).toBe("");
+  });
+
+  test("a refused upload keeps the chosen file", async () => {
+    axiosMock
+      .onPost(uploadEndpoint)
+      .reply(400, { message: "CSV file must have a column named 'name'" });
+    renderCard();
+    await screen.findByTestId("Card-table-cell-row-0-col-name");
+
+    await userEvent.upload(
+      screen.getByTestId("Card-csv-upload-input"),
+      new File(["major\nMath\n"], "majors.csv", { type: "text/csv" }),
+    );
+    await userEvent.click(screen.getByTestId("Card-csv-upload-button"));
+
+    await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
+    await waitFor(() => expect(mockToast).toHaveBeenCalled());
+    expect(mockToast).not.toHaveBeenCalledWith(
+      expect.stringContaining("Upload complete"),
+    );
+    expect(screen.getByTestId("Card-csv-upload-button")).toBeEnabled();
   });
 });

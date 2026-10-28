@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
@@ -14,6 +15,7 @@ import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,9 +58,18 @@ public class ApplicationRepositoryTests {
             .build());
   }
 
+  @Autowired private NoticeVersionRepository noticeVersionRepository;
+
   @Test
   public void every_column_round_trips() {
     Recruitment r = recruitment("20261", RecruitmentType.TA);
+    NoticeVersion notice =
+        noticeVersionRepository.save(
+            NoticeVersion.builder()
+                .type(RecruitmentType.TA)
+                .content("Terms")
+                .createdAt(LocalDateTime.of(2026, 1, 1, 0, 0))
+                .build());
 
     applicationRepository.save(
         Application.builder()
@@ -73,7 +84,7 @@ public class ApplicationRepositoryTests {
             .yearInProgram("2")
             .graduationDate("20272")
             .courseworkUcsb("CMPSC 156")
-            .knowledge("Java, React")
+            .topicProficiencies(new HashMap<>(Map.of("Java", 5, "React", 3)))
             .prevExperience("TA for CS16")
             .comments("Keen")
             .postApplicationComments("Still available")
@@ -98,6 +109,7 @@ public class ApplicationRepositoryTests {
             .coursework290("CMPSC 290A")
             .videoLink("https://example.org/v")
             .previousServiceAsUla(2)
+            .noticeVersionId(notice.getId())
             .build());
 
     entityManager.flush();
@@ -128,6 +140,8 @@ public class ApplicationRepositoryTests {
             "CMPSC    16",
             CourseInterest.WOULD_CONSIDER),
         found.getCourseInterests());
+    // Topic ratings live in their own table too (changeset 011), keyed by topic name.
+    assertEquals(Map.of("Java", 5, "React", 3), found.getTopicProficiencies());
     assertEquals(ResidencyStatus.F1_STUDENT_VISA, found.getResidencyStatus());
     assertEquals(LanguageExamStatus.PASSED, found.getLanguageExam());
     assertEquals(LocalDate.of(2025, 9, 1), found.getLanguageExamDatePassed());
@@ -135,6 +149,8 @@ public class ApplicationRepositoryTests {
     assertEquals("CMPSC 290A", found.getCoursework290());
     assertEquals("https://example.org/v", found.getVideoLink());
     assertEquals(2, found.getPreviousServiceAsUla());
+    // The agreed notice version is a plain id column with a foreign key (changeset 012).
+    assertEquals(notice.getId(), found.getNoticeVersionId());
   }
 
   @Test
@@ -264,5 +280,40 @@ public class ApplicationRepositoryTests {
     applicationRepository.deleteById(saved.getId());
     entityManager.flush();
     assertEquals(0, interestRows());
+  }
+
+  @Test
+  public void topic_ratings_are_replaced_on_update_and_deleted_with_the_application() {
+    Recruitment r = recruitment("20261", RecruitmentType.TA);
+    Application saved =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(r.getId())
+                .email("grad@ucsb.edu")
+                .topicProficiencies(new HashMap<>(Map.of("Java", 5, "React", 3)))
+                .build());
+    entityManager.flush();
+    entityManager.clear();
+
+    Application loaded = applicationRepository.findById(saved.getId()).orElseThrow();
+    loaded.setTopicProficiencies(new HashMap<>(Map.of("Python", 2)));
+    applicationRepository.save(loaded);
+    entityManager.flush();
+    entityManager.clear();
+
+    assertEquals(
+        Map.of("Python", 2),
+        applicationRepository.findById(saved.getId()).orElseThrow().getTopicProficiencies());
+
+    applicationRepository.deleteById(saved.getId());
+    entityManager.flush();
+    assertEquals(
+        0L,
+        ((Number)
+                entityManager
+                    .getEntityManager()
+                    .createNativeQuery("select count(*) from application_topic_proficiencies")
+                    .getSingleResult())
+            .longValue());
   }
 }

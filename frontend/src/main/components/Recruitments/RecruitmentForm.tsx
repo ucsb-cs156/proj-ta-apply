@@ -1,6 +1,8 @@
 import { Button, Form } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import SingleQuarterDropdown from "main/components/Quarters/SingleQuarterDropdown";
+import RequiredField from "main/components/Common/RequiredField";
+import RequiredFieldExplanation from "main/components/Common/RequiredFieldExplanation";
 import { useState } from "react";
 
 export type RecruitmentFormFields = {
@@ -36,6 +38,9 @@ export default function RecruitmentForm({
 
   return (
     <Form onSubmit={handleSubmit((data) => submitAction({ ...data, quarter }))}>
+      <p className="mb-2">
+        <RequiredFieldExplanation />
+      </p>
       <div className="d-flex gap-3 align-items-start flex-wrap">
         <SingleQuarterDropdown
           quarters={quarters}
@@ -59,7 +64,7 @@ export default function RecruitmentForm({
 
         <Form.Group>
           <Form.Label htmlFor={`${testIdPrefix}-tentativeOpeningDate`}>
-            Tentative Opening Date
+            Tentative Opening Date <RequiredField />
           </Form.Label>
           <Form.Control
             id={`${testIdPrefix}-tentativeOpeningDate`}
@@ -76,7 +81,7 @@ export default function RecruitmentForm({
 
         <Form.Group>
           <Form.Label htmlFor={`${testIdPrefix}-primaryConsiderationDate`}>
-            Primary Consideration Date
+            Primary Consideration Date <RequiredField />
           </Form.Label>
           <Form.Control
             id={`${testIdPrefix}-primaryConsiderationDate`}

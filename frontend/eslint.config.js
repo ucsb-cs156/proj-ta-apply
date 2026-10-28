@@ -12,6 +12,8 @@ export default defineConfig([
     "build",
     "storybook-static",
     "coverage",
+    // A Stryker run that is interrupted leaves its sandbox behind; never lint it.
+    ".stryker-tmp",
     "public/mockServiceWorker.js",
   ]),
   {
