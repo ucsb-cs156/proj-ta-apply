@@ -31,7 +31,8 @@ export default function LegacyTaApplicationPage(): React.JSX.Element {
     "",
   );
   const [hideNotes, setHideNotes] = useState(false);
-  const { css, body } = extractLegacyForm(html);
+  // Stryker disable next-line all : the query starts with "" as its data, so this never applies
+  const { css, body } = extractLegacyForm(html ?? "");
 
   // The markup is not React's, so React's onChange (which it synthesizes per input) never fires
   // for it; a click reaches the container, and a checkbox is already toggled by the time it does.
