@@ -126,6 +126,8 @@ describe("AppNavbar tests", () => {
       "Grad Students",
       "Courses",
       "Recruitments",
+      "TA App Settings",
+      "ULA App Settings",
       "Jobs",
       "Developer Info",
     ];
