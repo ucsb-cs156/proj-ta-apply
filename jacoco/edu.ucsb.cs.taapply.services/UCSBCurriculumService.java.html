@@ -60,23 +60,19 @@ public class UCSBCurriculumService {
   public static final String CURRICULUM_ENDPOINT =
       &quot;{apiHost}/academics/curriculums/v1/classes/search&quot;;
 
-  /** One class by quarter and enroll code, with every section of the course it belongs to. */
-  public static final String CLASS_ENDPOINT =
-      &quot;{apiHost}/academics/curriculums/v1/classes/{quarter}/{enrollCode}?includeClassSections=true&quot;;
-
   private final RestTemplate restTemplate;
 
-<span class="fc" id="L69">  public UCSBCurriculumService(RestTemplateBuilder restTemplateBuilder) {</span>
-<span class="fc" id="L70">    this.restTemplate =</span>
-<span class="fc" id="L71">        restTemplateBuilder.connectTimeout(CONNECT_TIMEOUT).readTimeout(READ_TIMEOUT).build();</span>
-<span class="fc" id="L72">  }</span>
+<span class="fc" id="L65">  public UCSBCurriculumService(RestTemplateBuilder restTemplateBuilder) {</span>
+<span class="fc" id="L66">    this.restTemplate =</span>
+<span class="fc" id="L67">        restTemplateBuilder.connectTimeout(CONNECT_TIMEOUT).readTimeout(READ_TIMEOUT).build();</span>
+<span class="fc" id="L68">  }</span>
 
   /**
    * Builds the request URL for one page of the catalog call (no sections). Package-private so tests
    * can assert on it.
    */
   String urlForPage(String subjectArea, String quarter, String level, int pageNumber) {
-<span class="fc" id="L79">    return urlForPage(subjectArea, quarter, level, pageNumber, false);</span>
+<span class="fc" id="L75">    return urlForPage(subjectArea, quarter, level, pageNumber, false);</span>
   }
 
   /**
@@ -89,43 +85,35 @@ public class UCSBCurriculumService {
       String level,
       int pageNumber,
       boolean includeClassSections) {
-<span class="fc" id="L92">    StringBuilder params = new StringBuilder();</span>
-<span class="fc" id="L93">    params.append(String.format(&quot;?quarter=%s&amp;subjectCode=%s&quot;, quarter, subjectArea));</span>
+<span class="fc" id="L88">    StringBuilder params = new StringBuilder();</span>
+<span class="fc" id="L89">    params.append(String.format(&quot;?quarter=%s&amp;subjectCode=%s&quot;, quarter, subjectArea));</span>
     // The API has no &quot;A&quot; level code: asking for all levels means omitting objLevelCode entirely.
-<span class="fc bfc" id="L95" title="All 2 branches covered.">    if (!LEVEL_ALL.equals(level)) {</span>
-<span class="fc" id="L96">      params.append(String.format(&quot;&amp;objLevelCode=%s&quot;, level));</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">    if (!LEVEL_ALL.equals(level)) {</span>
+<span class="fc" id="L92">      params.append(String.format(&quot;&amp;objLevelCode=%s&quot;, level));</span>
     }
-<span class="fc" id="L98">    params.append(</span>
-<span class="fc" id="L99">        String.format(</span>
+<span class="fc" id="L94">    params.append(</span>
+<span class="fc" id="L95">        String.format(</span>
             &quot;&amp;pageNumber=%d&amp;pageSize=%d&amp;includeClassSections=%s&quot;,
-<span class="fc" id="L101">            pageNumber, PAGE_SIZE, includeClassSections));</span>
-<span class="fc" id="L102">    return CURRICULUM_ENDPOINT.replace(&quot;{apiHost}&quot;, apiHost) + params;</span>
-  }
-
-  /** Package-private so tests can assert on it. */
-  String urlForEnrollCode(String quarter, String enrollCode) {
-<span class="fc" id="L107">    return CLASS_ENDPOINT</span>
-<span class="fc" id="L108">        .replace(&quot;{apiHost}&quot;, apiHost)</span>
-<span class="fc" id="L109">        .replace(&quot;{quarter}&quot;, quarter)</span>
-<span class="fc" id="L110">        .replace(&quot;{enrollCode}&quot;, enrollCode);</span>
+<span class="fc" id="L97">            pageNumber, PAGE_SIZE, includeClassSections));</span>
+<span class="fc" id="L98">    return CURRICULUM_ENDPOINT.replace(&quot;{apiHost}&quot;, apiHost) + params;</span>
   }
 
   private HttpEntity&lt;String&gt; requestEntity() {
-<span class="fc" id="L114">    HttpHeaders headers = new HttpHeaders();</span>
-<span class="fc" id="L115">    headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));</span>
-<span class="fc" id="L116">    headers.setContentType(MediaType.APPLICATION_JSON);</span>
-<span class="fc" id="L117">    headers.set(&quot;ucsb-api-version&quot;, &quot;1.0&quot;);</span>
-<span class="fc" id="L118">    headers.set(&quot;ucsb-api-key&quot;, this.apiKey);</span>
-<span class="fc" id="L119">    return new HttpEntity&lt;&gt;(&quot;body&quot;, headers);</span>
+<span class="fc" id="L102">    HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L103">    headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));</span>
+<span class="fc" id="L104">    headers.setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="fc" id="L105">    headers.set(&quot;ucsb-api-version&quot;, &quot;1.0&quot;);</span>
+<span class="fc" id="L106">    headers.set(&quot;ucsb-api-key&quot;, this.apiKey);</span>
+<span class="fc" id="L107">    return new HttpEntity&lt;&gt;(&quot;body&quot;, headers);</span>
   }
 
   /** Fetches one page of raw JSON. */
   public String getJSON(String subjectArea, String quarter, String level, int pageNumber) {
-<span class="fc" id="L124">    String url = urlForPage(subjectArea, quarter, level, pageNumber);</span>
-<span class="fc" id="L125">    log.info(&quot;url={}&quot;, url);</span>
-<span class="fc" id="L126">    ResponseEntity&lt;String&gt; re =</span>
-<span class="fc" id="L127">        restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);</span>
-<span class="fc" id="L128">    return re.getBody();</span>
+<span class="fc" id="L112">    String url = urlForPage(subjectArea, quarter, level, pageNumber);</span>
+<span class="fc" id="L113">    log.info(&quot;url={}&quot;, url);</span>
+<span class="fc" id="L114">    ResponseEntity&lt;String&gt; re =</span>
+<span class="fc" id="L115">        restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);</span>
+<span class="fc" id="L116">    return re.getBody();</span>
   }
 
   /**
@@ -136,25 +124,25 @@ public class UCSBCurriculumService {
    */
   public List&lt;UcsbCourse&gt; getCourses(String subjectArea, String quarter, String level)
       throws Exception {
-<span class="fc" id="L139">    List&lt;UcsbCourse&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L127">    List&lt;UcsbCourse&gt; result = new ArrayList&lt;&gt;();</span>
 
-<span class="fc bfc" id="L141" title="All 2 branches covered.">    for (int pageNumber = 1; pageNumber &lt;= MAX_PAGES; pageNumber++) {</span>
-<span class="fc" id="L142">      String json = getJSON(subjectArea, quarter, level, pageNumber);</span>
-<span class="fc" id="L143">      UcsbCoursePage page = objectMapper.readValue(json, UcsbCoursePage.class);</span>
-<span class="fc" id="L144">      List&lt;UcsbCourse&gt; classes = page.getClasses();</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">    for (int pageNumber = 1; pageNumber &lt;= MAX_PAGES; pageNumber++) {</span>
+<span class="fc" id="L130">      String json = getJSON(subjectArea, quarter, level, pageNumber);</span>
+<span class="fc" id="L131">      UcsbCoursePage page = objectMapper.readValue(json, UcsbCoursePage.class);</span>
+<span class="fc" id="L132">      List&lt;UcsbCourse&gt; classes = page.getClasses();</span>
 
-<span class="fc bfc" id="L146" title="All 4 branches covered.">      if (classes == null || classes.isEmpty()) {</span>
-<span class="fc" id="L147">        break;</span>
+<span class="fc bfc" id="L134" title="All 4 branches covered.">      if (classes == null || classes.isEmpty()) {</span>
+<span class="fc" id="L135">        break;</span>
       }
-<span class="fc" id="L149">      result.addAll(classes);</span>
+<span class="fc" id="L137">      result.addAll(classes);</span>
 
       // A page shorter than the page size is the last one.
-<span class="fc bfc" id="L152" title="All 2 branches covered.">      if (classes.size() &lt; PAGE_SIZE) {</span>
-<span class="fc" id="L153">        break;</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">      if (classes.size() &lt; PAGE_SIZE) {</span>
+<span class="fc" id="L141">        break;</span>
       }
     }
 
-<span class="fc" id="L157">    return result;</span>
+<span class="fc" id="L145">    return result;</span>
   }
 
   /**
@@ -170,40 +158,26 @@ public class UCSBCurriculumService {
    */
   public List&lt;UcsbCourseOffering&gt; getOfferings(String subjectArea, String quarter)
       throws Exception {
-<span class="fc" id="L173">    List&lt;UcsbCourseOffering&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L161">    List&lt;UcsbCourseOffering&gt; result = new ArrayList&lt;&gt;();</span>
 
-<span class="fc bfc" id="L175" title="All 2 branches covered.">    for (int pageNumber = 1; pageNumber &lt;= MAX_PAGES; pageNumber++) {</span>
-<span class="fc" id="L176">      String url = urlForPage(subjectArea, quarter, LEVEL_ALL, pageNumber, true);</span>
-<span class="fc" id="L177">      log.info(&quot;url={}&quot;, url);</span>
-<span class="fc" id="L178">      ResponseEntity&lt;String&gt; re =</span>
-<span class="fc" id="L179">          restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);</span>
-<span class="fc" id="L180">      UcsbOfferingPage page = objectMapper.readValue(re.getBody(), UcsbOfferingPage.class);</span>
-<span class="fc" id="L181">      List&lt;UcsbCourseOffering&gt; classes = page.getClasses();</span>
+<span class="fc bfc" id="L163" title="All 2 branches covered.">    for (int pageNumber = 1; pageNumber &lt;= MAX_PAGES; pageNumber++) {</span>
+<span class="fc" id="L164">      String url = urlForPage(subjectArea, quarter, LEVEL_ALL, pageNumber, true);</span>
+<span class="fc" id="L165">      log.info(&quot;url={}&quot;, url);</span>
+<span class="fc" id="L166">      ResponseEntity&lt;String&gt; re =</span>
+<span class="fc" id="L167">          restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);</span>
+<span class="fc" id="L168">      UcsbOfferingPage page = objectMapper.readValue(re.getBody(), UcsbOfferingPage.class);</span>
+<span class="fc" id="L169">      List&lt;UcsbCourseOffering&gt; classes = page.getClasses();</span>
 
-<span class="fc bfc" id="L183" title="All 4 branches covered.">      if (classes == null || classes.isEmpty()) {</span>
-<span class="fc" id="L184">        break;</span>
+<span class="fc bfc" id="L171" title="All 4 branches covered.">      if (classes == null || classes.isEmpty()) {</span>
+<span class="fc" id="L172">        break;</span>
       }
-<span class="fc" id="L186">      result.addAll(classes);</span>
-<span class="fc bfc" id="L187" title="All 2 branches covered.">      if (classes.size() &lt; PAGE_SIZE) {</span>
-<span class="fc" id="L188">        break;</span>
+<span class="fc" id="L174">      result.addAll(classes);</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">      if (classes.size() &lt; PAGE_SIZE) {</span>
+<span class="fc" id="L176">        break;</span>
       }
     }
 
-<span class="fc" id="L192">    return result;</span>
-  }
-
-  /**
-   * The course offering one of whose sections has the given enroll code, with all of its sections.
-   * Asking by enroll code rather than searching by course id means the answer is exactly the
-   * offering a recruitment course row came from, and costs one request rather than a paginated
-   * sweep of the subject area.
-   */
-  public UcsbCourseOffering getOffering(String quarter, String enrollCode) throws Exception {
-<span class="fc" id="L202">    String url = urlForEnrollCode(quarter, enrollCode);</span>
-<span class="fc" id="L203">    log.info(&quot;url={}&quot;, url);</span>
-<span class="fc" id="L204">    ResponseEntity&lt;String&gt; re =</span>
-<span class="fc" id="L205">        restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);</span>
-<span class="fc" id="L206">    return objectMapper.readValue(re.getBody(), UcsbCourseOffering.class);</span>
+<span class="fc" id="L180">    return result;</span>
   }
 
   /**
@@ -228,22 +202,22 @@ public class UCSBCurriculumService {
    * mangled.
    */
   public static String normalizeCourseId(String courseId) {
-<span class="fc bfc" id="L231" title="All 2 branches covered.">    if (courseId == null) {</span>
-<span class="fc" id="L232">      return null;</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">    if (courseId == null) {</span>
+<span class="fc" id="L206">      return null;</span>
     }
 
-<span class="fc" id="L235">    String[] parts = courseId.trim().split(&quot;\\s+&quot;);</span>
-<span class="fc bfc" id="L236" title="All 2 branches covered.">    if (parts.length != 2) {</span>
-<span class="fc" id="L237">      return courseId.stripTrailing();</span>
+<span class="fc" id="L209">    String[] parts = courseId.trim().split(&quot;\\s+&quot;);</span>
+<span class="fc bfc" id="L210" title="All 2 branches covered.">    if (parts.length != 2) {</span>
+<span class="fc" id="L211">      return courseId.stripTrailing();</span>
     }
 
-<span class="fc" id="L240">    Matcher matcher = COURSE_NUMBER.matcher(parts[1]);</span>
-<span class="fc bfc" id="L241" title="All 2 branches covered.">    if (!matcher.matches()) {</span>
-<span class="fc" id="L242">      return courseId.stripTrailing();</span>
+<span class="fc" id="L214">    Matcher matcher = COURSE_NUMBER.matcher(parts[1]);</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">    if (!matcher.matches()) {</span>
+<span class="fc" id="L216">      return courseId.stripTrailing();</span>
     }
 
-<span class="fc" id="L245">    return String.format(&quot;%-8s%3s%-2s&quot;, parts[0], matcher.group(1), matcher.group(2))</span>
-<span class="fc" id="L246">        .stripTrailing();</span>
+<span class="fc" id="L219">    return String.format(&quot;%-8s%3s%-2s&quot;, parts[0], matcher.group(1), matcher.group(2))</span>
+<span class="fc" id="L220">        .stripTrailing();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
