@@ -4,6 +4,7 @@ import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { phaseOf } from "main/utils/applicationAccess";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import type { Cell } from "@tanstack/react-table";
+import type { PriorCourse } from "main/utils/priorCoursework";
 
 export type Application = {
   id: number;
@@ -21,7 +22,8 @@ export type Application = {
   gpaOverall: number | null;
   yearInProgram: string | null;
   graduationDate: string | null;
-  courseworkUcsb: string | null;
+  /** The courses listed as relevant background, with their ids. */
+  priorCoursework: PriorCourse[];
   /** Topic name to self-rated proficiency 1..5; only rated topics appear. */
   topicProficiencies: Record<string, number> | null;
   prevExperience: string | null;
@@ -40,8 +42,6 @@ export type Application = {
   languageExam: string | null;
   languageExamDatePassed: string | null;
   classLevel: string | null;
-  courseworkOther: string | null;
-  coursework290: string | null;
   videoLink: string | null;
   previousServiceAsUla: number | null;
   /** The notice version the applicant agreed to; null for applications older than any notice. */

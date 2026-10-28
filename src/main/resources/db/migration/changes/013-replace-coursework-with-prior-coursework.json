@@ -1,0 +1,147 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "013-create-prior-coursework-table",
+        "author": "pc",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "tableExists": {
+                "tableName": "prior_coursework"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "prior_coursework",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": {
+                      "nullable": false,
+                      "primaryKey": true
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "application_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "position",
+                    "type": "INT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "ucsb_course",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": true,
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "other_school",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "course_number",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "course_title",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "term",
+                    "type": "VARCHAR(64)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "grade",
+                    "type": "VARCHAR(16)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addForeignKeyConstraint": {
+              "baseTableName": "prior_coursework",
+              "baseColumnNames": "application_id",
+              "referencedTableName": "applications",
+              "referencedColumnNames": "id",
+              "constraintName": "fk_prior_coursework_application",
+              "onDelete": "CASCADE"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "013-drop-coursework-columns-from-applications",
+        "author": "pc",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "columnExists": {
+              "tableName": "applications",
+              "columnName": "coursework_ucsb"
+            }
+          }
+        ],
+        "changes": [
+          {
+            "dropColumn": {
+              "tableName": "applications",
+              "columnName": "coursework_ucsb"
+            }
+          },
+          {
+            "dropColumn": {
+              "tableName": "applications",
+              "columnName": "coursework_other"
+            }
+          },
+          {
+            "dropColumn": {
+              "tableName": "applications",
+              "columnName": "coursework290"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

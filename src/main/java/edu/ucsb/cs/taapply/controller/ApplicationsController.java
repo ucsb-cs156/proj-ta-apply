@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -17,6 +18,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +66,8 @@ public class ApplicationsController extends ApiController {
       Double gpaOverall,
       String yearInProgram,
       String graduationDate,
-      String courseworkUcsb,
+      /** The courses listed as relevant background, in order; at least 3 (TA) or 1 (ULA). */
+      List<PriorCourseworkFields> priorCoursework,
       /** Topic name to self-rated proficiency 1..5; may be null or empty. */
       Map<String, Integer> topicProficiencies,
       String prevExperience,
@@ -83,12 +86,22 @@ public class ApplicationsController extends ApiController {
       edu.ucsb.cs.taapply.enums.LanguageExamStatus languageExam,
       LocalDate languageExamDatePassed,
       edu.ucsb.cs.taapply.enums.ClassLevel classLevel,
-      String courseworkOther,
-      String coursework290,
       String videoLink,
       Integer previousServiceAsUla,
       /** The notice version the applicant ticked the agreement box for; see requireAgreement. */
       Long noticeVersionId) {}
+
+  /** One row of the prior coursework table. Ids are not accepted: rows are rebuilt on each save. */
+  public static record PriorCourseworkFields(
+      boolean ucsbCourse,
+      String otherSchool,
+      String courseNumber,
+      String courseTitle,
+      String term,
+      String grade) {}
+
+  public static final int MIN_TA_COURSES = 3;
+  public static final int MIN_ULA_COURSES = 1;
 
   private String currentEmail() {
     return getCurrentUser().getUser().getEmail();
@@ -175,6 +188,7 @@ public class ApplicationsController extends ApiController {
     }
 
     requireAgreement(recruitment.getType(), fields);
+    requireCoursework(recruitment.getType(), fields);
 
     Application application =
         Application.builder()
@@ -206,6 +220,7 @@ public class ApplicationsController extends ApiController {
             .findById(recruitmentId)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
     requireAgreement(recruitment.getType(), fields);
+    requireCoursework(recruitment.getType(), fields);
 
     // The unique (email, recruitment) constraint allows one row per admin per recruitment, and an
     // admin testing a form will naturally submit it more than once, so the second submission
@@ -252,6 +267,7 @@ public class ApplicationsController extends ApiController {
               + " comments");
     }
     requireAgreement(recruitment.getType(), fields);
+    requireCoursework(recruitment.getType(), fields);
 
     apply(fields, application);
     applicationRepository.save(application);
@@ -350,6 +366,57 @@ public class ApplicationsController extends ApiController {
     }
   }
 
+  /** How many prior courses an application of this type must list. */
+  static int minimumCourses(RecruitmentType type) {
+    return type == RecruitmentType.TA ? MIN_TA_COURSES : MIN_ULA_COURSES;
+  }
+
+  /**
+   * The prior coursework rule: enough rows for the form type, each with a course number, and a
+   * school for any course not taken at UCSB. A UCSB course carries no other school, whatever the
+   * client sent, so the two never disagree.
+   */
+  static void requireCoursework(RecruitmentType type, ApplicationFields fields) {
+    List<PriorCourseworkFields> rows =
+        fields.priorCoursework() == null ? List.of() : fields.priorCoursework();
+    int minimum = minimumCourses(type);
+    if (rows.size() < minimum) {
+      throw new IllegalArgumentException(
+          "A %s application must list at least %d prior course%s"
+              .formatted(type, minimum, minimum == 1 ? "" : "s"));
+    }
+    for (PriorCourseworkFields row : rows) {
+      if (row.courseNumber() == null || row.courseNumber().isBlank()) {
+        throw new IllegalArgumentException("Every prior course needs a course number");
+      }
+      if (!row.ucsbCourse() && (row.otherSchool() == null || row.otherSchool().isBlank())) {
+        throw new IllegalArgumentException(
+            "Prior course %s needs the school it was taken at".formatted(row.courseNumber()));
+      }
+    }
+  }
+
+  /** Fresh rows from the request, trimmed; replaces whatever the application had. */
+  static List<PriorCoursework> priorCourseworkFrom(ApplicationFields fields) {
+    List<PriorCoursework> rows = new ArrayList<>();
+    for (PriorCourseworkFields row : fields.priorCoursework()) {
+      rows.add(
+          PriorCoursework.builder()
+              .ucsbCourse(row.ucsbCourse())
+              .otherSchool(row.ucsbCourse() ? null : row.otherSchool().strip())
+              .courseNumber(row.courseNumber().strip())
+              .courseTitle(blankToNull(row.courseTitle()))
+              .term(blankToNull(row.term()))
+              .grade(blankToNull(row.grade()))
+              .build());
+    }
+    return rows;
+  }
+
+  private static String blankToNull(String value) {
+    return value == null || value.isBlank() ? null : value.strip();
+  }
+
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
   private static void apply(ApplicationFields fields, Application application) {
     application.setFirstName(fields.firstName());
@@ -360,7 +427,8 @@ public class ApplicationsController extends ApiController {
     application.setGpaOverall(fields.gpaOverall());
     application.setYearInProgram(fields.yearInProgram());
     application.setGraduationDate(fields.graduationDate());
-    application.setCourseworkUcsb(fields.courseworkUcsb());
+    application.getPriorCoursework().clear();
+    application.getPriorCoursework().addAll(priorCourseworkFrom(fields));
     application.setTopicProficiencies(topicProficienciesFrom(fields));
     application.setPrevExperience(fields.prevExperience());
     application.setComments(fields.comments());
@@ -377,8 +445,6 @@ public class ApplicationsController extends ApiController {
     application.setLanguageExam(fields.languageExam());
     application.setLanguageExamDatePassed(fields.languageExamDatePassed());
     application.setClassLevel(fields.classLevel());
-    application.setCourseworkOther(fields.courseworkOther());
-    application.setCoursework290(fields.coursework290());
     application.setVideoLink(fields.videoLink());
     application.setPreviousServiceAsUla(fields.previousServiceAsUla());
     application.setNoticeVersionId(fields.noticeVersionId());

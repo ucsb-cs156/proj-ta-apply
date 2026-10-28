@@ -1,3 +1,5 @@
+import type { PriorCourse } from "main/utils/priorCoursework";
+
 export type CourseInterestValue =
   "ENTHUSIASTIC" | "WOULD_CONSIDER" | "NOT_INTERESTED";
 
@@ -43,7 +45,8 @@ export type ApplicationFormFields = {
   gpaOverall: string;
   yearInProgram: string;
   graduationDate: string;
-  courseworkUcsb: string;
+  /** The courses listed as relevant background, in order; see utils/priorCoursework. */
+  priorCoursework: PriorCourse[];
   /** Topic name to self-rated proficiency 1..5, only for topics the applicant rated. */
   topicProficiencies: Record<string, number>;
   prevExperience: string;
@@ -62,8 +65,6 @@ export type ApplicationFormFields = {
   languageExam: string;
   languageExamDatePassed: string;
   classLevel: string;
-  courseworkOther: string;
-  coursework290: string;
   videoLink: string;
   previousServiceAsUla: string;
   /** The notice version the applicant ticked the box for; null when no notice is shown. */

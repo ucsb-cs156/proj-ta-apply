@@ -12,6 +12,7 @@ import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 
 const axiosMock = new AxiosMockAdapter(axios);
 import noticesFixtures from "fixtures/noticesFixtures";
+import priorCourseworkFixtures from "fixtures/priorCourseworkFixtures";
 
 const courses = ["CMPSC     8", "CMPSC   130A", "CMPSC   156"];
 const majors = ["Computer Engineering", "Computer Science", "Statistics"];
@@ -96,7 +97,6 @@ describe("ApplicationForm tests", () => {
       "Overall GPA",
       "Year in Program",
       "Expected Graduation",
-      "Relevant Coursework at UCSB",
       "Topic Proficiency",
       "First Choice Course",
       "Second Choice Course",
@@ -153,9 +153,6 @@ describe("ApplicationForm tests", () => {
       ["Residency Status", "residencyStatus"],
       ["Language Exam", "languageExam"],
       ["Date Passed", "languageExamDatePassed"],
-      ["Relevant Coursework at UCSB", "courseworkUcsb"],
-      ["Relevant Coursework Elsewhere", "courseworkOther"],
-      ["290-Level Coursework", "coursework290"],
       ["Previous Teaching Experience", "prevExperience"],
       ["First Choice Course", "firstChoiceCourse"],
       ["Second Choice Course", "secondChoiceCourse"],
@@ -238,12 +235,6 @@ describe("ApplicationForm tests", () => {
     expect(
       screen.getByTestId("ApplicationForm-residencyStatus"),
     ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("ApplicationForm-courseworkOther"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("ApplicationForm-coursework290"),
-    ).toBeInTheDocument();
 
     expect(screen.queryByTestId("ApplicationForm-videoLink")).toBeNull();
     expect(
@@ -261,8 +252,6 @@ describe("ApplicationForm tests", () => {
 
     expect(screen.queryByTestId("ApplicationForm-classLevel")).toBeNull();
     expect(screen.queryByTestId("ApplicationForm-residencyStatus")).toBeNull();
-    expect(screen.queryByTestId("ApplicationForm-courseworkOther")).toBeNull();
-    expect(screen.queryByTestId("ApplicationForm-coursework290")).toBeNull();
     expect(screen.queryByTestId("ApplicationForm-languageExam")).toBeNull();
   });
 
@@ -330,6 +319,7 @@ describe("ApplicationForm tests", () => {
     const submitAction = renderForm({
       courseList: ["CMPSC     8"],
       initialContents: {
+        priorCoursework: priorCourseworkFixtures.threeCourses,
         firstName: "Ada",
         lastName: "Lovelace",
         major: "Computer Science",
@@ -629,7 +619,12 @@ describe("ApplicationForm tests", () => {
 
   /** A course marked earlier and then made a choice is not reported twice. */
   test("submits only the courses marked, leaving out the defaults and the two choices", async () => {
-    const submitAction = renderForm({ type: "ULA" });
+    const submitAction = renderForm({
+      type: "ULA",
+      initialContents: {
+        priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+      },
+    });
 
     await userEvent.type(
       screen.getByTestId("ApplicationForm-firstName"),
@@ -731,7 +726,12 @@ describe("ApplicationForm tests", () => {
   // ---- submitting ----
 
   test("submits the answers, with the numeric ones as numbers", async () => {
-    const submitAction = renderForm({ type: "ULA" });
+    const submitAction = renderForm({
+      type: "ULA",
+      initialContents: {
+        priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+      },
+    });
 
     await userEvent.type(
       screen.getByTestId("ApplicationForm-firstName"),
@@ -798,7 +798,12 @@ describe("ApplicationForm tests", () => {
   });
 
   test("choosing Other asks for the major as text and stores the text", async () => {
-    const submitAction = renderForm({ type: "ULA" });
+    const submitAction = renderForm({
+      type: "ULA",
+      initialContents: {
+        priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+      },
+    });
 
     await userEvent.selectOptions(
       screen.getByTestId("ApplicationForm-major"),
@@ -1038,7 +1043,12 @@ describe("ApplicationForm tests", () => {
   });
 
   test("picking a level is remembered per topic and sent for rated topics only", async () => {
-    const submitAction = renderForm({ type: "ULA" });
+    const submitAction = renderForm({
+      type: "ULA",
+      initialContents: {
+        priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+      },
+    });
 
     await userEvent.click(screen.getByTestId("ApplicationForm-topic-Java-5"));
     await userEvent.click(screen.getByTestId("ApplicationForm-topic-Python-2"));
@@ -1125,10 +1135,183 @@ describe("ApplicationForm tests", () => {
     ).toHaveTextContent("No topics are listed yet.");
   });
 
+  // ---- prior coursework ----
+
+  /** Three courses, so a TA form's submit can get past the coursework rule. */
+  const threeCourses = {
+    priorCoursework: priorCourseworkFixtures.threeCourses,
+  };
+
+  test("the free-text coursework questions are gone; the coursework table is there", () => {
+    renderForm({ type: "TA" });
+
+    expect(screen.queryByText(/Relevant Coursework/)).toBeNull();
+    expect(screen.queryByText("290-Level Coursework")).toBeNull();
+    expect(
+      screen.getByTestId("ApplicationForm-coursework"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("ApplicationForm-coursework-instructions"),
+    ).toHaveTextContent("TA applicants must list at least 3 courses");
+    expect(
+      screen.getByTestId("ApplicationForm-coursework-empty"),
+    ).toBeInTheDocument();
+  });
+
+  test("a ULA form shows the ULA instruction and needs one course", () => {
+    renderForm({ type: "ULA" });
+    expect(
+      screen.getByTestId("ApplicationForm-coursework-instructions"),
+    ).toHaveTextContent("at least one course");
+    expect(
+      screen.getByTestId("ApplicationForm-coursework-count"),
+    ).toHaveTextContent("0 of at least 1 listed");
+  });
+
+  test("a TA application with fewer than three courses is not submitted", async () => {
+    const submitAction = renderForm({
+      type: "TA",
+      initialContents: {
+        priorCoursework: priorCourseworkFixtures.threeCourses.slice(0, 2),
+      },
+    });
+    await fillRequired();
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    expect(
+      await screen.findByTestId("ApplicationForm-coursework-too-few"),
+    ).toHaveTextContent("Please list at least 3 courses.");
+    expect(submitAction).not.toHaveBeenCalled();
+  });
+
+  /** The flag is raised alongside the others when react-hook-form refuses the submit. */
+  test("too few courses is flagged alongside other missing fields", async () => {
+    renderForm({ type: "TA" });
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    expect(
+      await screen.findByTestId("ApplicationForm-coursework-too-few"),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("ApplicationForm-major")).toHaveClass(
+      "is-invalid",
+    );
+  });
+
+  test("enough courses are not flagged when only other fields are missing", async () => {
+    renderForm({ type: "TA", initialContents: threeCourses });
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationForm-major")).toHaveClass(
+        "is-invalid",
+      ),
+    );
+    expect(
+      screen.queryByTestId("ApplicationForm-coursework-too-few"),
+    ).toBeNull();
+  });
+
+  test("adding the missing course through the modal clears the flag and the courses are submitted", async () => {
+    const submitAction = renderForm({
+      type: "TA",
+      initialContents: {
+        priorCoursework: priorCourseworkFixtures.threeCourses.slice(0, 2),
+      },
+    });
+    await fillRequired();
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+    await screen.findByTestId("ApplicationForm-coursework-too-few");
+
+    await userEvent.click(
+      screen.getByTestId("ApplicationForm-coursework-add-button"),
+    );
+    await userEvent.click(
+      screen.getByTestId("ApplicationForm-coursework-modal-ucsbCourse"),
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-coursework-modal-otherSchool"),
+      "UCLA",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-coursework-modal-courseNumber"),
+      "CS 31",
+    );
+    await userEvent.click(
+      screen.getByTestId("ApplicationForm-coursework-modal-save"),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("ApplicationForm-coursework-too-few"),
+      ).toBeNull(),
+    );
+    expect(
+      screen.getByTestId("ApplicationForm-coursework-count"),
+    ).toHaveTextContent("3 of at least 3 listed");
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].priorCoursework).toEqual([
+      priorCourseworkFixtures.ucsbCourse,
+      priorCourseworkFixtures.inProgress,
+      {
+        ucsbCourse: false,
+        otherSchool: "UCLA",
+        courseNumber: "CS 31",
+        courseTitle: null,
+        term: null,
+        grade: null,
+      },
+    ]);
+  });
+
+  test("deleting a course from the table is reflected in what is submitted", async () => {
+    const submitAction = renderForm({
+      type: "ULA",
+      initialContents: threeCourses,
+    });
+    await fillRequired();
+
+    await userEvent.click(
+      screen.getByTestId(
+        "ApplicationForm-coursework-table-cell-row-0-col-delete-button",
+      ),
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].priorCoursework).toEqual([
+      priorCourseworkFixtures.inProgress,
+      priorCourseworkFixtures.elsewhere,
+    ]);
+  });
+
+  test("pre-fills the course table from a previous application", () => {
+    renderForm({ initialContents: applicationsFixtures.oneTaApplication });
+    expect(
+      screen.getByTestId(
+        "ApplicationForm-coursework-table-cell-row-2-col-school",
+      ),
+    ).toHaveTextContent("Another University");
+  });
+
+  test("a previous application with no course list starts empty", () => {
+    renderForm({
+      initialContents: {
+        ...applicationsFixtures.oneTaApplication,
+        priorCoursework: undefined,
+      },
+    });
+    expect(
+      screen.getByTestId("ApplicationForm-coursework-empty"),
+    ).toBeInTheDocument();
+  });
+
   // ---- notices, terms and conditions ----
 
   test("without a notice there is no agreement section and nothing is required", async () => {
-    const submitAction = renderForm();
+    const submitAction = renderForm({ initialContents: threeCourses });
     expect(screen.queryByTestId("ApplicationForm-notice")).toBeNull();
 
     await fillRequired();
@@ -1139,7 +1322,10 @@ describe("ApplicationForm tests", () => {
   });
 
   test("with a notice the box must be ticked before submitting", async () => {
-    const submitAction = renderForm({ notice: noticesFixtures.taV2 });
+    const submitAction = renderForm({
+      notice: noticesFixtures.taV2,
+      initialContents: threeCourses,
+    });
 
     const card = screen.getByTestId("ApplicationForm-notice");
     expect(card.querySelector("h1")).toHaveTextContent("TA Terms");
@@ -1197,7 +1383,10 @@ describe("ApplicationForm tests", () => {
   });
 
   test("unticking the box after ticking it blocks the submit again", async () => {
-    const submitAction = renderForm({ notice: noticesFixtures.taV2 });
+    const submitAction = renderForm({
+      notice: noticesFixtures.taV2,
+      initialContents: threeCourses,
+    });
     await fillRequired();
     const box = screen.getByTestId("ApplicationForm-notice-agree");
     await userEvent.click(box);

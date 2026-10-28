@@ -124,10 +124,6 @@ describe("ApplicationSummary tests", () => {
     expect(
       screen.getByTestId("ApplicationSummary-Language Exam"),
     ).toHaveTextContent("Passed");
-    expect(
-      screen.getByTestId("ApplicationSummary-290-Level Coursework"),
-    ).toHaveTextContent("CS 290A");
-
     expect(screen.queryByTestId("ApplicationSummary-Video Link")).toBeNull();
   });
 
@@ -152,9 +148,62 @@ describe("ApplicationSummary tests", () => {
     expect(
       screen.queryByTestId("ApplicationSummary-Residency Status"),
     ).toBeNull();
+  });
+
+  test("lists the prior coursework in a read-only table", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneTaApplication}
+        type="TA"
+      />,
+    );
+
     expect(
-      screen.queryByTestId("ApplicationSummary-290-Level Coursework"),
+      screen.getByTestId("ApplicationSummary-coursework-cell-row-2-col-school"),
+    ).toHaveTextContent("Another University");
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-coursework-cell-row-0-col-courseNumber",
+      ),
+    ).toHaveTextContent("CMPSC 263");
+    expect(
+      screen.queryByTestId(
+        "ApplicationSummary-coursework-cell-row-0-col-edit-button",
+      ),
     ).toBeNull();
+    expect(
+      screen.queryByTestId("ApplicationSummary-coursework-none"),
+    ).toBeNull();
+  });
+
+  test("an application with no courses says so", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneTaApplication,
+          priorCoursework: [],
+        }}
+        type="TA"
+      />,
+    );
+    expect(
+      screen.getByTestId("ApplicationSummary-coursework-none"),
+    ).toHaveTextContent("No courses listed.");
+  });
+
+  test("an application whose course list is missing is treated as empty", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneTaApplication,
+          priorCoursework: undefined,
+        }}
+        type="TA"
+      />,
+    );
+    expect(
+      screen.getByTestId("ApplicationSummary-coursework-none"),
+    ).toBeInTheDocument();
   });
 
   test("the availability answers read as yes and no", () => {
