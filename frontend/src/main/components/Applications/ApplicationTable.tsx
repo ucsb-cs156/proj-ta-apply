@@ -22,7 +22,8 @@ export type Application = {
   yearInProgram: string | null;
   graduationDate: string | null;
   courseworkUcsb: string | null;
-  knowledge: string | null;
+  /** Topic name to self-rated proficiency 1..5; only rated topics appear. */
+  topicProficiencies: Record<string, number> | null;
   prevExperience: string | null;
   comments: string | null;
   firstChoiceCourse: string | null;
@@ -43,6 +44,8 @@ export type Application = {
   coursework290: string | null;
   videoLink: string | null;
   previousServiceAsUla: number | null;
+  /** The notice version the applicant agreed to; null for applications older than any notice. */
+  noticeVersionId: number | null;
 };
 
 type ApplicationTableProps = {

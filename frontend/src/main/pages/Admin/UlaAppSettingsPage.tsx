@@ -1,5 +1,6 @@
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import NameListCard from "main/components/AppSettings/NameListCard";
+import NoticeEditorCard from "main/components/Notices/NoticeEditorCard";
 
 /** The admin-maintained lists behind the ULA application form: /admin/settings/ula */
 export default function UlaAppSettingsPage(): React.JSX.Element {
@@ -22,6 +23,10 @@ export default function UlaAppSettingsPage(): React.JSX.Element {
           itemLabel="topic"
           listKey="ula-topics"
           testIdPrefix="UlaAppSettingsPage-topics"
+        />
+        <NoticeEditorCard
+          type="ULA"
+          testIdPrefix="UlaAppSettingsPage-notices"
         />
       </div>
     </BasicLayout>

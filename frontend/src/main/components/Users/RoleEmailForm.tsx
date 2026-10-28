@@ -1,6 +1,8 @@
 import { Button, Form } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
+import RequiredField from "main/components/Common/RequiredField";
+import RequiredFieldExplanation from "main/components/Common/RequiredFieldExplanation";
 
 export type RoleEmailFormFields = {
   email: string;
@@ -32,8 +34,13 @@ export default function RoleEmailForm({
 
   return (
     <Form onSubmit={handleSubmit(submitAction)}>
+      <p className="mb-2">
+        <RequiredFieldExplanation />
+      </p>
       <Form.Group className="mb-3">
-        <Form.Label htmlFor="email">Email</Form.Label>
+        <Form.Label htmlFor="email">
+          Email <RequiredField />
+        </Form.Label>
         <Form.Control
           // Stryker disable next-line all
           data-testid={testIdPrefix + "-email"}

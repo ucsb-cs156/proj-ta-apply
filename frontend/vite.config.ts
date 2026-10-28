@@ -14,6 +14,8 @@ export default defineConfig({
       "/oauth2": "http://localhost:8080",
       // Only the OAuth2 callback, not /login/success (an SPA route Vite must serve itself).
       "/login/oauth2": "http://localhost:8080",
+      // docs/legacy, packaged by the backend as a static resource (see pom.xml).
+      "/legacy": "http://localhost:8080",
     },
   },
   build: {

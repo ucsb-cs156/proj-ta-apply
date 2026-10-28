@@ -30,6 +30,7 @@ import ApplicationPage from "main/pages/Applications/ApplicationPage";
 import TestApplicationPage from "main/pages/Admin/TestApplicationPage";
 import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
+import LegacyTaApplicationPage from "main/pages/Admin/LegacyTaApplicationPage";
 
 /** Grad students apply for TA positions, undergrads for ULA ones. */
 const APPLICANT_ROLES = ["ROLE_GRAD_STUDENT", "ROLE_UNDERGRAD"];
@@ -189,6 +190,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<UlaAppSettingsPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/legacy-ta-application"
+          element={
+            <ProtectedPage
+              component={<LegacyTaApplicationPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

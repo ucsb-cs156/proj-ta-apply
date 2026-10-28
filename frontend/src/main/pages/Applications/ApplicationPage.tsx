@@ -2,7 +2,11 @@ import { useParams } from "react-router";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
-import type { ApplicationPayload } from "main/utils/applicationFields";
+import {
+  EMPTY_OPTIONS,
+  type ApplicationOptions,
+  type ApplicationPayload,
+} from "main/utils/applicationFields";
 import ApplicationSummary from "main/components/Applications/ApplicationSummary";
 import PostApplicationCommentsForm, {
   type PostApplicationCommentsFields,
@@ -13,6 +17,7 @@ import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { useCurrentUser } from "main/utils/currentUser";
 import { phaseOf } from "main/utils/applicationAccess";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
+import type { NoticeVersion } from "main/utils/notices";
 
 /** One of the applicant's own applications: /applications/:id */
 export default function ApplicationPage(): React.JSX.Element {
@@ -50,6 +55,53 @@ export default function ApplicationPage(): React.JSX.Element {
     // Stryker disable next-line all : the guard only avoids a pointless request
     { enabled: Boolean(application) },
   );
+
+  const { data: options } = useBackend<ApplicationOptions>(
+    ["/api/recruitments/options", application?.recruitmentId],
+    {
+      method: "GET",
+      url: "/api/recruitments/options",
+      params: { recruitmentId: application?.recruitmentId },
+    },
+    // Stryker disable next-line all : don't test default value of empty lists
+    EMPTY_OPTIONS,
+    false,
+    // Stryker disable next-line all : the guard only avoids a pointless request
+    { enabled: Boolean(application) },
+  );
+
+  // The notice version this application records agreeing to, shown back exactly. An application
+  // older than any notice has none; then, while it is still editable, the current one is asked.
+  const agreedId = application?.noticeVersionId ?? null;
+  const { data: agreedNotice } = useBackend<NoticeVersion | null>(
+    ["/api/notices", agreedId],
+    { method: "GET", url: "/api/notices", params: { id: agreedId } },
+    // Stryker disable next-line all : don't test default value of null
+    null,
+    false,
+    // Stryker disable next-line all : the guard only avoids a pointless request
+    { enabled: agreedId !== null },
+  );
+  const { data: currentNotices } = useBackend<NoticeVersion[]>(
+    ["/api/notices/current", recruitment?.type],
+    {
+      method: "GET",
+      url: "/api/notices/current",
+      params: { type: recruitment?.type },
+    },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    false,
+    // Stryker disable next-line all : the guard only avoids a pointless request
+    {
+      enabled:
+        Boolean(application) && agreedId === null && Boolean(recruitment),
+    },
+  );
+  const notice =
+    agreedId !== null
+      ? (agreedNotice ?? null)
+      : ((currentNotices ?? [])[0] ?? null);
 
   const updateMutation = useBackendMutation<ApplicationPayload, Application>(
     (payload) => ({
@@ -100,6 +152,9 @@ export default function ApplicationPage(): React.JSX.Element {
                 type={recruitment?.type ?? "TA"}
                 courses={courses ?? []}
                 recruitmentId={application.recruitmentId}
+                majors={options?.majors ?? []}
+                topics={options?.topics ?? []}
+                notice={notice}
                 initialContents={application}
                 defaultNames={{
                   firstName: currentUser.root?.user?.givenName,
@@ -125,6 +180,7 @@ export default function ApplicationPage(): React.JSX.Element {
                 <ApplicationSummary
                   application={application}
                   type={recruitment?.type ?? "TA"}
+                  notice={agreedNotice}
                   testIdPrefix="ApplicationPage-summary"
                 />
               </>
@@ -145,6 +201,7 @@ export default function ApplicationPage(): React.JSX.Element {
                 <ApplicationSummary
                   application={application}
                   type={recruitment?.type ?? "TA"}
+                  notice={agreedNotice}
                   testIdPrefix="ApplicationPage-summary"
                 />
               </>

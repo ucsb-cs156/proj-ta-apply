@@ -10,6 +10,8 @@ import ApplicationPage from "main/pages/Applications/ApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import appSettingsFixtures from "fixtures/appSettingsFixtures";
+import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -60,6 +62,85 @@ describe("ApplicationPage tests", () => {
     axiosMock
       .onGet("/api/recruitments/sections")
       .reply(200, courseSectionsFixtures.cmpsc156);
+    axiosMock
+      .onGet("/api/recruitments/options")
+      .reply(200, appSettingsFixtures.ulaOptions);
+    // Chris's application agreed to the ULA notice, version 3.
+    axiosMock.onGet("/api/notices").reply(200, noticesFixtures.ulaV1);
+    axiosMock.onGet("/api/notices/current").reply(200, [noticesFixtures.ulaV1]);
+  });
+
+  /** The version agreed to is what is shown, fetched by id, not whatever is current. */
+  test("an editable application shows the notice version it agreed to, already ticked", async () => {
+    renderPage();
+
+    const box = await screen.findByTestId("ApplicationPage-notice-agree");
+    expect(box).toBeChecked();
+    expect(
+      screen.getByTestId("ApplicationPage-notice-version"),
+    ).toHaveTextContent("Version 3");
+    expect(
+      axiosMock.history.get.filter((r) => r.url === "/api/notices")[0].params,
+    ).toEqual({ id: 3 });
+    // No need to ask for the current one when the agreed one is known.
+    expect(
+      axiosMock.history.get.filter((r) => r.url === "/api/notices/current"),
+    ).toHaveLength(0);
+  });
+
+  /** An application from before any notice existed is asked to agree to the current one. */
+  test("an application with no agreed version is shown the current notice, unticked", async () => {
+    axiosMock
+      .onGet("/api/applications")
+      .reply(200, { ...application, noticeVersionId: null });
+
+    renderPage();
+
+    const box = await screen.findByTestId("ApplicationPage-notice-agree");
+    expect(box).not.toBeChecked();
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/notices/current")[0]
+          .params,
+      ).toEqual({ type: "ULA" }),
+    );
+    expect(
+      axiosMock.history.get.filter((r) => r.url === "/api/notices"),
+    ).toHaveLength(0);
+  });
+
+  test("a closed application's summary shows the agreed notice read-only", async () => {
+    vi.setSystemTime(new Date(2026, 5, 1, 12, 0, 0));
+    axiosMock
+      .onGet("/api/recruitments/applicable")
+      .reply(200, [{ ...openUla, applicationStatus: "CLOSED" }, closedTa]);
+
+    renderPage();
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    const box = await screen.findByTestId(
+      "ApplicationPage-summary-notice-agree",
+    );
+    expect(box).toBeChecked();
+    expect(box).toBeDisabled();
+  });
+
+  test("the editable form is fed the options for the application's recruitment", async () => {
+    renderPage();
+
+    const select = await screen.findByTestId("ApplicationPage-major");
+    await waitFor(() =>
+      expect([...select.options].map((o) => o.textContent)).toContain(
+        "Mathematics",
+      ),
+    );
+    // Chris's stored rating for React is pre-selected.
+    expect(screen.getByTestId("ApplicationPage-topic-React-2")).toBeChecked();
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/recruitments/options",
+      )[0].params,
+    ).toEqual({ recruitmentId: 2 });
   });
 
   afterEach(() => {

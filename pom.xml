@@ -196,6 +196,17 @@
           <exclude>**/*.yaml</exclude>
         </excludes>
       </resource>
+      <!-- The legacy PHP app's form, kept in docs/ so it is readable on GitHub, and served by
+           Spring Boot at /legacy/** (classpath:/public/ is a default static location) so the
+           Admin > Legacy TA Application page can show it without a second copy of the file. -->
+      <resource>
+        <directory>docs/legacy</directory>
+        <targetPath>public/legacy</targetPath>
+        <filtering>false</filtering>
+        <includes>
+          <include>*.html</include>
+        </includes>
+      </resource>
     </resources>
     <plugins>
       <!-- Since JDK 23, javac no longer runs annotation processors found on the

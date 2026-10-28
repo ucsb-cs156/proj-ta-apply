@@ -37,6 +37,23 @@ describe("TaAppSettingsPage tests", () => {
     axiosMock
       .onGet("/api/admin/settings/ta-topics/all")
       .reply(200, appSettingsFixtures.twoTopics);
+    axiosMock.onGet("/api/admin/notices/all").reply(200, []);
+  });
+
+  test("has a Notices, Terms and Conditions card for the TA form", async () => {
+    renderPage();
+
+    expect(screen.getByTestId("TaAppSettingsPage-notices")).toHaveClass("card");
+    expect(
+      screen.getByRole("heading", { name: "Notices, Terms and Conditions" }),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/notices/all",
+        )[0].params,
+      ).toEqual({ type: "TA" }),
+    );
   });
 
   test("is headed TA App Settings and holds a card per list", async () => {

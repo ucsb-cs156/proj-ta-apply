@@ -2,6 +2,11 @@ import { describe, test, expect } from "vitest";
 import {
   COURSE_INTEREST_OPTIONS,
   DEFAULT_COURSE_INTEREST,
+  EMPTY_OPTIONS,
+  MAX_PROFICIENCY,
+  MIN_PROFICIENCY,
+  OTHER_MAJOR,
+  PROFICIENCY_LEVELS,
   courseInterestLabel,
   toPayload,
   type ApplicationFormFields,
@@ -19,7 +24,7 @@ const fields = (
   yearInProgram: "2nd",
   graduationDate: "S27",
   courseworkUcsb: "CS 156",
-  knowledge: "Java",
+  topicProficiencies: { Java: 5 },
   prevExperience: "TA for CS 24",
   comments: "",
   firstChoiceCourse: "CMPSC   156",
@@ -39,6 +44,7 @@ const fields = (
   coursework290: "",
   videoLink: "",
   previousServiceAsUla: "2",
+  noticeVersionId: 1,
   ...overrides,
 });
 
@@ -146,6 +152,27 @@ describe("toPayload", () => {
     );
     // An unrecognised code is better shown as nothing than as the raw code.
     expect(courseInterestLabel("SOMETHING_ELSE")).toBe("");
+  });
+
+  // ---- topic proficiencies ----
+
+  test("the proficiency scale runs 1 to 5", () => {
+    expect(MIN_PROFICIENCY).toBe(1);
+    expect(MAX_PROFICIENCY).toBe(5);
+    expect(PROFICIENCY_LEVELS).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  test("topic ratings are carried through as given", () => {
+    expect(
+      toPayload(fields({ topicProficiencies: { Java: 5, Python: 2 } }))
+        .topicProficiencies,
+    ).toEqual({ Java: 5, Python: 2 });
+  });
+
+  /** The sentinel can never collide with a real major typed by an applicant. */
+  test("the Other sentinel is not a plausible major name", () => {
+    expect(OTHER_MAJOR).toBe("__OTHER__");
+    expect(EMPTY_OPTIONS).toEqual({ majors: [], topics: [] });
   });
 
   test("everything else is carried through untouched", () => {

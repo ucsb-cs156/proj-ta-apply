@@ -15,7 +15,7 @@ const applicationsFixtures = {
     yearInProgram: "2nd",
     graduationDate: "S27",
     courseworkUcsb: "CS 263, CS 290A",
-    knowledge: "Java, Spring, React",
+    topicProficiencies: { Java: 5, React: 3 },
     prevExperience: "TA for CS 24 twice",
     comments: "Happy to help with either lecture.",
     firstChoiceCourse: "CMPSC   156",
@@ -38,6 +38,7 @@ const applicationsFixtures = {
     coursework290: "CS 290A",
     videoLink: null,
     previousServiceAsUla: null,
+    noticeVersionId: 1,
   },
 
   oneUlaApplication: {
@@ -56,7 +57,7 @@ const applicationsFixtures = {
     yearInProgram: "3rd",
     graduationDate: "S27",
     courseworkUcsb: "CS 16, CS 24, CS 32, CS 156",
-    knowledge: "JavaScript, React",
+    topicProficiencies: { JavaScript: 4, React: 2 },
     prevExperience: "ULA for CS 16",
     comments: "",
     firstChoiceCourse: "CMPSC   156",
@@ -76,6 +77,7 @@ const applicationsFixtures = {
     coursework290: null,
     videoLink: "https://example.org/chris",
     previousServiceAsUla: 2,
+    noticeVersionId: 3,
   },
 };
 

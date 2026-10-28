@@ -1,5 +1,7 @@
 import React from "react";
 import { HttpResponse, http } from "msw";
+import appSettingsFixtures from "fixtures/appSettingsFixtures";
+import noticesFixtures from "fixtures/noticesFixtures";
 import ApplicationPage from "main/pages/Applications/ApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
@@ -25,6 +27,13 @@ const common = [
   http.get("/api/recruitments/courses", () => HttpResponse.json(courses)),
   http.get("/api/recruitments/sections", () =>
     HttpResponse.json(courseSectionsFixtures.cmpsc156),
+  ),
+  http.get("/api/notices", () => HttpResponse.json(noticesFixtures.ulaV1)),
+  http.get("/api/notices/current", () =>
+    HttpResponse.json([noticesFixtures.ulaV1]),
+  ),
+  http.get("/api/recruitments/options", () =>
+    HttpResponse.json(appSettingsFixtures.ulaOptions),
   ),
   http.put("/api/applications", () =>
     HttpResponse.json(applicationsFixtures.oneUlaApplication),
