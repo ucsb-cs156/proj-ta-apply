@@ -464,7 +464,12 @@ describe("ApplicationForm tests", () => {
   // ---- availability comments ----
 
   test("asks for availability comments under each choice and submits them", async () => {
-    const submitAction = renderForm({ type: "ULA" });
+    const submitAction = renderForm({
+      type: "ULA",
+      initialContents: {
+        priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+      },
+    });
 
     expect(
       screen.getByText("1st Choice Availability Comments"),

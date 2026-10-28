@@ -1451,6 +1451,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.availableForLecturesSecondChoice(),
         f.availableForDiscussionFirstChoice(),
         f.availableForDiscussionSecondChoice(),
+        f.availabilityCommentsFirstChoice(),
+        f.availabilityCommentsSecondChoice(),
         f.courseInterests(),
         f.residencyStatus(),
         f.languageExam(),
