@@ -1,19 +1,27 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 
 import LegacyTaApplicationPage from "main/pages/Admin/LegacyTaApplicationPage";
-import {
-  LEGACY_BANNER_TEXT,
-  LEGACY_FORM_URL,
-  fitFrameToContent,
-} from "main/utils/legacyForm";
+import { LEGACY_BANNER_TEXT, LEGACY_FORM_URL } from "main/utils/legacyForm";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
 const axiosMock = new AxiosMockAdapter(axios);
+
+/** A cut-down copy of docs/legacy/legacy-ta-application-form.html with the parts the page handles. */
+const legacyHtml =
+  "<!doctype html><html lang='en'><head><title>Legacy TA Application Form</title>" +
+  "<style>:root{--ink:#1d1d22}body{background:#6b6b70}" +
+  ".hidefn .fn,.hidefn .note{display:none}</style></head>" +
+  "<body><div class='wrap'><section class='about'>" +
+  "<div class='toggle'><input type='checkbox' id='shownotes' checked>" +
+  "<label for='shownotes'>Show field names and reconstruction notes</label></div>" +
+  "</section><div id='content'><h1>CS TA/Reader Application Form</h1>" +
+  "<span class='fn'>first_name</span></div></div>" +
+  "<script>document.getElementById('shownotes')</script></body></html>";
 
 function renderPage() {
   return render(
@@ -34,6 +42,7 @@ describe("LegacyTaApplicationPage tests", () => {
     axiosMock
       .onGet("/api/systemInfo")
       .reply(200, systemInfoFixtures.showingNeither);
+    axiosMock.onGet(LEGACY_FORM_URL).reply(200, legacyHtml);
   });
 
   test("the banner is at the top and says exactly what the issue asks", () => {
@@ -63,55 +72,88 @@ describe("LegacyTaApplicationPage tests", () => {
     );
   });
 
-  /** The frame loads the one copy of the file, served from docs/legacy by the backend. */
-  test("the legacy form is shown in a sandboxed frame loaded from /legacy", () => {
+  /** No iframe: X-Frame-Options: DENY on the deployed app blocked it (#44). */
+  test("fetches the one copy of the file from /legacy and renders its body in the page", async () => {
     renderPage();
 
-    const frame = screen.getByTestId("LegacyTaApplicationPage-frame");
-    expect(frame.tagName).toBe("IFRAME");
-    expect(frame).toHaveAttribute("title", "Legacy TA application form");
-    expect(frame).toHaveAttribute(
-      "src",
-      "/legacy/legacy-ta-application-form.html",
+    expect(
+      screen.getByTestId("LegacyTaApplicationPage-loading"),
+    ).toHaveTextContent("Loading the legacy form…");
+
+    const form = await screen.findByTestId("LegacyTaApplicationPage-form");
+    expect(
+      axiosMock.history.get.filter((r) => r.url === LEGACY_FORM_URL),
+    ).toHaveLength(1);
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/legacy/legacy-ta-application-form.html",
+      ),
+    ).toHaveLength(1);
+
+    expect(form).toHaveClass("legacy-form");
+    expect(form).not.toHaveClass("hidefn");
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "CS TA/Reader Application Form",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("first_name")).toHaveClass("fn");
+    // The document's own script is dropped, not run.
+    expect(form.querySelector("script")).toBeNull();
+    expect(document.title).not.toBe("changed");
+    expect(document.querySelector("iframe")).toBeNull();
+    expect(
+      screen.queryByTestId("LegacyTaApplicationPage-loading"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("the legacy stylesheet is rendered scoped to the form's container", async () => {
+    renderPage();
+
+    const style = await screen.findByTestId("LegacyTaApplicationPage-style");
+    expect(style.tagName).toBe("STYLE");
+    expect(style.textContent).toBe(
+      ".legacy-form{\n&{--ink:#1d1d22}&{background:#6b6b70}" +
+        "&.hidefn .fn,&.hidefn .note{display:none}\n}",
     );
-    expect(frame).toHaveAttribute("src", LEGACY_FORM_URL);
-    expect(frame).toHaveAttribute("sandbox", "allow-same-origin allow-scripts");
-    // jsdom does not resolve vh units, so read the declared values directly.
-    expect(frame.style.width).toBe("100%");
-    expect(frame.style.minHeight).toBe("80vh");
-    expect(frame.style.borderStyle).toBe("none");
+    expect(style.textContent).not.toContain(":root");
+    expect(style.textContent).not.toContain("body");
   });
 
-  test("the frame grows to fit its document once it loads", () => {
+  test("the notes checkbox in the legacy form hides and shows the notes", async () => {
     renderPage();
-    const frame = screen.getByTestId("LegacyTaApplicationPage-frame");
 
-    Object.defineProperty(frame, "contentDocument", {
-      configurable: true,
-      value: { documentElement: { scrollHeight: 2400 } },
-    });
-    fireEvent.load(frame);
+    const form = await screen.findByTestId("LegacyTaApplicationPage-form");
+    const toggle = screen.getByLabelText(
+      "Show field names and reconstruction notes",
+    );
+    expect(toggle).toBeChecked();
 
-    expect(frame.style.height).toBe("2416px");
+    fireEvent.click(toggle);
+    await waitFor(() => expect(form).toHaveClass("legacy-form", "hidefn"));
+
+    fireEvent.click(toggle);
+    await waitFor(() => expect(form).not.toHaveClass("hidefn"));
+    expect(form).toHaveClass("legacy-form");
   });
 
-  test("the frame keeps its minimum height when the document is not measurable", () => {
-    const frame = document.createElement("iframe");
-    frame.style.height = "100px";
+  test("a change elsewhere in the legacy form does not touch the notes", async () => {
+    axiosMock
+      .onGet(LEGACY_FORM_URL)
+      .reply(
+        200,
+        legacyHtml.replace(
+          "<span class='fn'>",
+          "<input type='checkbox' id='other' checked><span class='fn'>",
+        ),
+      );
+    renderPage();
 
-    // jsdom gives a frame no contentDocument until it is attached; neither case should throw.
-    Object.defineProperty(frame, "contentDocument", {
-      configurable: true,
-      value: null,
-    });
-    fitFrameToContent(frame);
-    expect(frame.style.height).toBe("100px");
+    const form = await screen.findByTestId("LegacyTaApplicationPage-form");
+    fireEvent.click(form.querySelector("#other"));
 
-    Object.defineProperty(frame, "contentDocument", {
-      configurable: true,
-      value: { documentElement: { scrollHeight: 0 } },
-    });
-    fitFrameToContent(frame);
-    expect(frame.style.height).toBe("100px");
+    expect(form.querySelector("#other")).not.toBeChecked();
+    expect(form).not.toHaveClass("hidefn");
   });
 });
