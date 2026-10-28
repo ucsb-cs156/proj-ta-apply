@@ -1155,6 +1155,10 @@ describe("ApplicationForm tests", () => {
           `ApplicationForm-interest-${interest.replace(/\s+/g, "-")}-${level}`,
         );
         expect(radio).toHaveAttribute("type", "radio");
+        expect(radio).toHaveAttribute(
+          "id",
+          `ApplicationForm-interest-${interest.replace(/\s+/g, "-")}-${level}`,
+        );
         expect(radio).toHaveAttribute("aria-label", `${interest}: ${level}`);
         expect(radio).not.toBeChecked();
       });
