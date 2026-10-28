@@ -1,0 +1,48 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "016-add-submitted-at-to-applications",
+        "author": "pc",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "applications", "columnName": "submitted_at" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [{ "column": { "name": "submitted_at", "type": "TIMESTAMP" } }]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "016-add-admin-comments-to-applications",
+        "author": "pc",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "applications", "columnName": "admin_comments" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [{ "column": { "name": "admin_comments", "type": "VARCHAR(4000)" } }]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

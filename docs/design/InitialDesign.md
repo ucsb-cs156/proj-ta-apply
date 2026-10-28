@@ -278,3 +278,24 @@ by a new admin-maintained list.
   `application_interests` table (changeset 015), sparse like the topic ratings, and come back on the
   summary and when an application is reopened for editing. A TA application has no interests;
   anything sent for one is dropped.
+
+# Eleventh Iteration
+
+Admins can look over the applications to a recruitment, as a whole and one at a time.
+
+* **Admin > Recruitments** gains an **Applications** button per row (column "Review"), leading to
+  `/admin/recruitments/:id/applications`. At the top of that page the recruitment's own row is
+  repeated, fields only, with no buttons; then a count ("20 Applications Received", with any test
+  applications an admin entered counted apart); then a table of the applications with just a few
+  columns: **id** (a link), **Submitted** (date and time), **Name**, **Major**, then **Level**
+  (MS or PhD) for a TA recruitment or **Expected Graduation** for a ULA one, **First Choice** and
+  **Second Choice**. Test applications are marked beside their id.
+* The id links to `/admin/applications/:id`, the application in read-only form (the same summary
+  the applicant sees once a recruitment closes, with the notice version they agreed to), plus an
+  **Admin Comments** box at the bottom with **Save** and **Cancel**. Both lead back to the list;
+  only Save writes the comments.
+* Two columns are added to `applications` (changeset 016): `submitted_at`, stamped when the row is
+  first saved and never changed by an edit, and `admin_comments` (free text, up to 4000 characters).
+* A new admin-only controller, `/api/admin/applications`, serves the list for a recruitment
+  (`/all?recruitmentId=`), one application by id, and the comments update (`PUT /adminComments`).
+  Nothing in it changes what the applicant wrote.

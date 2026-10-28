@@ -2,6 +2,8 @@ package edu.ucsb.cs.taapply.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -338,6 +340,56 @@ public class ApplicationRepositoryTests {
                     .createNativeQuery("select count(*) from application_topic_proficiencies")
                     .getSingleResult())
             .longValue());
+  }
+
+  /** The admin review page lists a recruitment's applications in the order they arrived. */
+  @Test
+  public void applications_to_a_recruitment_are_found_oldest_first_with_their_submission_time() {
+    Recruitment r = recruitment("20261", RecruitmentType.TA);
+    Recruitment other = recruitment("20262", RecruitmentType.ULA);
+    Application second =
+        applicationRepository.save(
+            Application.builder().recruitmentId(r.getId()).email("b@ucsb.edu").build());
+    Application first =
+        applicationRepository.save(
+            Application.builder().recruitmentId(r.getId()).email("a@ucsb.edu").build());
+    applicationRepository.save(
+        Application.builder().recruitmentId(other.getId()).email("c@ucsb.edu").build());
+    entityManager.flush();
+    entityManager.clear();
+
+    List<Application> found = applicationRepository.findByRecruitmentIdOrderByIdAsc(r.getId());
+    assertEquals(
+        List.of(second.getId(), first.getId()), found.stream().map(Application::getId).toList());
+    // Stamped on insert (changeset 016), so the page can show when each one came in.
+    assertNotNull(found.get(0).getSubmittedAt());
+    assertNull(found.get(0).getAdminComments());
+    assertEquals(List.of(), applicationRepository.findByRecruitmentIdOrderByIdAsc(999L));
+  }
+
+  /** The admin's notes are stored with the application and survive a reload. */
+  @Test
+  public void admin_comments_are_stored_and_the_submission_time_is_not_changed_by_an_edit() {
+    Recruitment r = recruitment("20261", RecruitmentType.TA);
+    Application saved =
+        applicationRepository.save(
+            Application.builder().recruitmentId(r.getId()).email("a@ucsb.edu").build());
+    entityManager.flush();
+    entityManager.clear();
+    LocalDateTime submitted =
+        applicationRepository.findById(saved.getId()).orElseThrow().getSubmittedAt();
+
+    Application loaded = applicationRepository.findById(saved.getId()).orElseThrow();
+    loaded.setAdminComments("Strong candidate");
+    loaded.setSubmittedAt(LocalDateTime.of(2000, 1, 1, 0, 0));
+    applicationRepository.save(loaded);
+    entityManager.flush();
+    entityManager.clear();
+
+    Application again = applicationRepository.findById(saved.getId()).orElseThrow();
+    assertEquals("Strong candidate", again.getAdminComments());
+    // updatable = false: the stamp set on insert wins over the value an edit tried to write.
+    assertEquals(submitted, again.getSubmittedAt());
   }
 
   @Test

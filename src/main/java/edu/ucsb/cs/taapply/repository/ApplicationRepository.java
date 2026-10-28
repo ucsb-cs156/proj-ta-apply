@@ -14,5 +14,8 @@ public interface ApplicationRepository extends CrudRepository<Application, Long>
 
   Optional<Application> findByEmailAndRecruitmentId(String email, Long recruitmentId);
 
+  /** Every application to one recruitment, in the order they were created. */
+  List<Application> findByRecruitmentIdOrderByIdAsc(Long recruitmentId);
+
   boolean existsByEmailAndRecruitmentId(String email, Long recruitmentId);
 }

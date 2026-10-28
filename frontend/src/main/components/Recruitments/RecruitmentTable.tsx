@@ -18,13 +18,17 @@ export type Recruitment = {
 
 type RecruitmentTableProps = {
   recruitments: Recruitment[];
-  onDeleteRequested: (recruitment: Recruitment) => void;
+  /** Not needed when readOnly: the Delete column is not shown then. */
+  onDeleteRequested?: (recruitment: Recruitment) => void;
+  /** Just the fields, without the buttons: for repeating one recruitment at the top of a page. */
+  readOnly?: boolean;
   testIdPrefix?: string;
 };
 
 export default function RecruitmentTable({
   recruitments,
-  onDeleteRequested,
+  onDeleteRequested = () => {},
+  readOnly = false,
   testIdPrefix = "RecruitmentTable",
 }: RecruitmentTableProps): React.JSX.Element {
   const statusMutation = useBackendMutation<Recruitment, unknown>(
@@ -45,7 +49,7 @@ export default function RecruitmentTable({
     style: { width: "1%", whiteSpace: "nowrap" as const },
   };
 
-  const columns = [
+  const fieldColumns = [
     {
       header: "Quarter",
       accessorKey: "quarter",
@@ -80,6 +84,9 @@ export default function RecruitmentTable({
       accessorKey: "actualClosingDate",
       meta: { style: { width: "100%" } },
     },
+  ];
+
+  const buttonColumns = [
     {
       header: "Applications",
       id: "status",
@@ -130,6 +137,21 @@ export default function RecruitmentTable({
       ),
     },
     {
+      header: "Review",
+      id: "review",
+      accessorKey: "id",
+      meta: shrinkToContent,
+      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => (
+        <Link
+          className="btn btn-info"
+          to={`/admin/recruitments/${cell.row.original.id}/applications`}
+          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-review-button`}
+        >
+          Applications
+        </Link>
+      ),
+    },
+    {
       header: "Delete",
       id: "delete",
       accessorKey: "id",
@@ -145,6 +167,8 @@ export default function RecruitmentTable({
       ),
     },
   ];
+
+  const columns = readOnly ? fieldColumns : [...fieldColumns, ...buttonColumns];
 
   return (
     <OurTable

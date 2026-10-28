@@ -7,11 +7,13 @@ import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 /**
  * One person's application to one recruitment.
@@ -53,6 +55,18 @@ public class Application {
   /** The one field still editable after the primary consideration date has passed. */
   @Column(length = 4000)
   private String postApplicationComments;
+
+  /**
+   * When the row was first saved: the moment the applicant (or an admin testing the form) first
+   * submitted. Stamped by Hibernate on insert and never changed by an edit.
+   */
+  @CreationTimestamp
+  @Column(name = "submitted_at", updatable = false)
+  private LocalDateTime submittedAt;
+
+  /** An admin's free-text notes on this application (Admin > Recruitments > Applications). */
+  @Column(length = 4000)
+  private String adminComments;
 
   /**
    * True for an application an admin entered to preview the form, "as if" they were an applicant.
