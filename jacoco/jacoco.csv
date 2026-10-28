@@ -26,8 +26,9 @@ taapply,edu.ucsb.cs.taapply.enums,LanguageExamStatus,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ApplicationReviewStatus,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ApplicationStatus,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,RecruitmentType,0,15,0,0,0,3,0,1,0,1
+taapply,edu.ucsb.cs.taapply.enums,CourseInterest,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ResidencyStatus,0,33,0,0,0,6,0,1,0,1
-taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,377,0,16,0,95,0,26,0,18
+taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,412,0,20,0,102,0,30,0,20
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,0,60,0,4,0,16,0,8,0,6
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController,0,134,0,12,0,27,0,23,0,17
 taapply,edu.ucsb.cs.taapply.controller,GradStudentsCSVController,0,29,0,0,0,5,0,4,0,4
