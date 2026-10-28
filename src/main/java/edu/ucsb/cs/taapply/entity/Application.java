@@ -59,6 +59,13 @@ public class Application {
    */
   @Builder.Default private boolean testApplication = false;
 
+  /**
+   * The version of the "Notices, Terms and Conditions" text the applicant agreed to when they
+   * submitted (or last edited) this application. Null only for applications made before any notice
+   * had been written for their form type.
+   */
+  private Long noticeVersionId;
+
   // ---- common fields ----
 
   private String firstName;

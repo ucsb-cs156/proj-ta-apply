@@ -1,0 +1,112 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "012-create-notice-versions-table",
+        "author": "pc",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "tableExists": {
+                "tableName": "notice_versions"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "notice_versions",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": {
+                      "nullable": false,
+                      "primaryKey": true
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "type",
+                    "type": "VARCHAR(8)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "content",
+                    "type": "VARCHAR(100000)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "created_at",
+                    "type": "TIMESTAMP",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "012-add-notice-version-to-applications",
+        "author": "pc",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "applications",
+                "columnName": "notice_version_id"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [
+                {
+                  "column": {
+                    "name": "notice_version_id",
+                    "type": "BIGINT"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addForeignKeyConstraint": {
+              "baseTableName": "applications",
+              "baseColumnNames": "notice_version_id",
+              "referencedTableName": "notice_versions",
+              "referencedColumnNames": "id",
+              "constraintName": "fk_applications_notice_version"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

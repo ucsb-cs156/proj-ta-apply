@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 
 import ApplicationForm from "main/components/Applications/ApplicationForm";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import noticesFixtures from "fixtures/noticesFixtures";
 
 const courses = ["CMPSC     8", "CMPSC   130A", "CMPSC   156"];
 const majors = ["Computer Engineering", "Computer Science", "Statistics"];
@@ -19,6 +20,7 @@ function renderForm({
   courseList = courses,
   majorList = majors,
   topicList = topics,
+  notice = undefined,
 } = {}) {
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -28,6 +30,7 @@ function renderForm({
           courses={courseList}
           majors={majorList}
           topics={topicList}
+          notice={notice}
           initialContents={initialContents}
           defaultNames={defaultNames}
           submitAction={submitAction}
@@ -37,6 +40,20 @@ function renderForm({
     </QueryClientProvider>,
   );
   return submitAction;
+}
+
+/** Names, a listed major and a first choice: everything else required, so one thing can be tested. */
+async function fillRequired(prefix = "ApplicationForm") {
+  await userEvent.type(screen.getByTestId(`${prefix}-firstName`), "Ada");
+  await userEvent.type(screen.getByTestId(`${prefix}-lastName`), "Lovelace");
+  await userEvent.selectOptions(
+    screen.getByTestId(`${prefix}-major`),
+    "Statistics",
+  );
+  await userEvent.selectOptions(
+    screen.getByTestId(`${prefix}-firstChoiceCourse`),
+    "CMPSC   156",
+  );
 }
 
 describe("ApplicationForm tests", () => {
@@ -892,6 +909,132 @@ describe("ApplicationForm tests", () => {
     expect(
       screen.getByTestId("ApplicationForm-topicProficiencies-none"),
     ).toHaveTextContent("No topics are listed yet.");
+  });
+
+  // ---- notices, terms and conditions ----
+
+  test("without a notice there is no agreement section and nothing is required", async () => {
+    const submitAction = renderForm();
+    expect(screen.queryByTestId("ApplicationForm-notice")).toBeNull();
+
+    await fillRequired();
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].noticeVersionId).toBeNull();
+  });
+
+  test("with a notice the box must be ticked before submitting", async () => {
+    const submitAction = renderForm({ notice: noticesFixtures.taV2 });
+
+    const card = screen.getByTestId("ApplicationForm-notice");
+    expect(card.querySelector("h1")).toHaveTextContent("TA Terms");
+    const box = screen.getByTestId("ApplicationForm-notice-agree");
+    expect(box).not.toBeChecked();
+    expect(box).not.toHaveClass("is-invalid");
+
+    await fillRequired();
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(box).toHaveClass("is-invalid"));
+    expect(submitAction).not.toHaveBeenCalled();
+
+    // Ticking clears the complaint and the submission carries the version agreed to.
+    await userEvent.click(box);
+    expect(box).toBeChecked();
+    expect(box).not.toHaveClass("is-invalid");
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].noticeVersionId).toBe(2);
+  });
+
+  /** When react-hook-form refuses the submit for other fields, the box is still flagged. */
+  test("an unticked box is flagged alongside other missing fields", async () => {
+    renderForm({ notice: noticesFixtures.taV2 });
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationForm-notice-agree")).toHaveClass(
+        "is-invalid",
+      ),
+    );
+    expect(screen.getByTestId("ApplicationForm-major")).toHaveClass(
+      "is-invalid",
+    );
+  });
+
+  /** A ticked box is not flagged when only other fields are missing. */
+  test("a ticked box is not flagged when other fields are missing", async () => {
+    renderForm({ notice: noticesFixtures.taV2 });
+    const box = screen.getByTestId("ApplicationForm-notice-agree");
+    await userEvent.click(box);
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationForm-major")).toHaveClass(
+        "is-invalid",
+      ),
+    );
+    expect(box).toBeChecked();
+    expect(box).not.toHaveClass("is-invalid");
+  });
+
+  test("unticking the box after ticking it blocks the submit again", async () => {
+    const submitAction = renderForm({ notice: noticesFixtures.taV2 });
+    await fillRequired();
+    const box = screen.getByTestId("ApplicationForm-notice-agree");
+    await userEvent.click(box);
+    await userEvent.click(box);
+    expect(box).not.toBeChecked();
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(box).toHaveClass("is-invalid"));
+    expect(submitAction).not.toHaveBeenCalled();
+  });
+
+  /** Editing an application that agreed to this very version starts ticked. */
+  test("an application that already agreed to the shown version starts ticked and submits", async () => {
+    const submitAction = renderForm({
+      initialContents: applicationsFixtures.oneTaApplication, // noticeVersionId: 1
+      notice: noticesFixtures.taV1,
+    });
+    const box = screen.getByTestId("ApplicationForm-notice-agree");
+    expect(box).toBeChecked();
+    expect(box).not.toHaveClass("is-invalid");
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].noticeVersionId).toBe(1);
+  });
+
+  /** A different version is a different text, so agreement to it is not assumed. */
+  test("an application that agreed to another version starts unticked", () => {
+    renderForm({
+      initialContents: applicationsFixtures.oneTaApplication, // noticeVersionId: 1
+      notice: noticesFixtures.taV2,
+    });
+    expect(
+      screen.getByTestId("ApplicationForm-notice-agree"),
+    ).not.toBeChecked();
+  });
+
+  /** An application from before any notice: nothing recorded, so unticked. */
+  test("an application with no recorded version starts unticked", () => {
+    renderForm({
+      initialContents: {
+        ...applicationsFixtures.oneTaApplication,
+        noticeVersionId: null,
+      },
+      notice: noticesFixtures.taV1,
+    });
+    expect(
+      screen.getByTestId("ApplicationForm-notice-agree"),
+    ).not.toBeChecked();
   });
 
   // ---- pre-filling ----

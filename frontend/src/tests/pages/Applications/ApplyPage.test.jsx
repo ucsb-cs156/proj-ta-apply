@@ -10,6 +10,7 @@ import ApplyPage from "main/pages/Applications/ApplyPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
+import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -59,6 +60,53 @@ describe("ApplyPage tests", () => {
       .onGet("/api/recruitments/options")
       .reply(200, appSettingsFixtures.ulaOptions);
     axiosMock.onGet("/api/applications/prefill").reply(200, []);
+    // No notice written yet for most tests, so the form asks for no agreement.
+    axiosMock.onGet("/api/notices/current").reply(200, []);
+  });
+
+  /** The notice shown is the current one for the recruitment's type, and must be agreed to. */
+  test("shows the current notice for the recruitment's type and sends the agreed version", async () => {
+    axiosMock.onGet("/api/notices/current").reply(200, [noticesFixtures.ulaV1]);
+    axiosMock
+      .onPost("/api/applications/post")
+      .reply(200, applicationsFixtures.oneUlaApplication);
+
+    renderPage();
+
+    const box = await screen.findByTestId("ApplyPage-notice-agree");
+    expect(
+      screen.getByTestId("ApplyPage-notice-content").querySelector("h1"),
+    ).toHaveTextContent("ULA Terms");
+    expect(
+      axiosMock.history.get.filter((r) => r.url === "/api/notices/current")[0]
+        .params,
+    ).toEqual({ type: "ULA" });
+
+    await userEvent.clear(screen.getByTestId("ApplyPage-firstName"));
+    await userEvent.type(screen.getByTestId("ApplyPage-firstName"), "Chris");
+    await userEvent.clear(screen.getByTestId("ApplyPage-lastName"));
+    await userEvent.type(screen.getByTestId("ApplyPage-lastName"), "Gaucho");
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-major").options.length).toBe(4),
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplyPage-major"),
+      "Computer Science",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplyPage-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+
+    // Unticked: refused in the browser, nothing sent.
+    await userEvent.click(screen.getByTestId("ApplyPage-submit"));
+    await waitFor(() => expect(box).toHaveClass("is-invalid"));
+    expect(axiosMock.history.post.length).toBe(0);
+
+    await userEvent.click(box);
+    await userEvent.click(screen.getByTestId("ApplyPage-submit"));
+    await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
+    expect(JSON.parse(axiosMock.history.post[0].data).noticeVersionId).toBe(3);
   });
 
   /** The majors and topics come from the lists for this recruitment's type. */

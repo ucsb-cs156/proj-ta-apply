@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Button, Col, Form, Row, Table } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import type { Application } from "main/components/Applications/ApplicationTable";
+import NoticeAgreement from "main/components/Notices/NoticeAgreement";
+import type { NoticeVersion } from "main/utils/notices";
 import {
   COURSE_INTEREST_OPTIONS,
   DEFAULT_COURSE_INTEREST,
@@ -20,7 +22,7 @@ import {
  */
 type RegisteredFields = Omit<
   ApplicationFormFields,
-  "major" | "courseInterests" | "topicProficiencies"
+  "major" | "courseInterests" | "topicProficiencies" | "noticeVersionId"
 >;
 
 type ApplicationFormProps = {
@@ -31,6 +33,11 @@ type ApplicationFormProps = {
   majors: string[];
   /** The admin-maintained topics list for this kind of application. */
   topics: string[];
+  /**
+   * The "Notices, Terms and Conditions" version to show and require agreement to: the current one
+   * for a new application, the one agreed to for an existing one. Null when none exists yet.
+   */
+  notice?: NoticeVersion | null;
   initialContents?: Partial<Application>;
   /**
    * Names from the signed-in Google account, used only where the application itself has none.
@@ -84,6 +91,7 @@ export default function ApplicationForm({
   courses,
   majors,
   topics,
+  notice = null,
   initialContents,
   defaultNames,
   submitAction,
@@ -182,6 +190,14 @@ export default function ApplicationForm({
     }
   };
 
+  // The notice version the applicant has ticked the box for. Starts as whatever the application
+  // already records, so editing an application shows the box ticked for the version agreed to.
+  const [agreedTo, setAgreedTo] = useState<number | null>(
+    initialContents?.noticeVersionId ?? null,
+  );
+  const [agreementMissing, setAgreementMissing] = useState(false);
+  const agreed = notice !== null && agreedTo === notice.id;
+
   // Only the topics the applicant has rated; an unrated topic has no entry. Keyed by topic name,
   // so a rating survives the list being reordered.
   const [proficiencies, setProficiencies] = useState<Record<string, number>>(
@@ -214,6 +230,7 @@ export default function ApplicationForm({
   ): ApplicationFormFields => ({
     ...data,
     major: chosenMajor,
+    noticeVersionId: notice ? notice.id : null,
     courseInterests: Object.fromEntries(
       courseList.map((courseId) => [courseId, interestIn(courseId)]),
     ),
@@ -224,17 +241,23 @@ export default function ApplicationForm({
     ),
   });
 
-  /** The major is outside react-hook-form, so its required check is done here. */
+  /** The major and the agreement are outside react-hook-form, so their required checks run here. */
   const submit = (data: RegisteredFields) => {
     const chosenMajor = major.trim();
-    if (chosenMajor === "") {
-      setMajorMissing(true);
+    const missingMajor = chosenMajor === "";
+    const missingAgreement = notice !== null && !agreed;
+    setMajorMissing(missingMajor);
+    setAgreementMissing(missingAgreement);
+    if (missingMajor || missingAgreement) {
       return;
     }
     submitAction(toPayload(answers(data, chosenMajor)));
   };
-  const flagMissingMajor = () => {
+  const flagMissingAnswers = () => {
     if (major.trim() === "") setMajorMissing(true);
+    // Stryker disable next-line all : without a notice the flag is never shown, so the null check
+    // cannot be told apart from true
+    if (notice !== null && !agreed) setAgreementMissing(true);
   };
 
   const id = (name: string) => `${testIdPrefix}-${name}`;
@@ -259,7 +282,7 @@ export default function ApplicationForm({
   };
 
   return (
-    <Form onSubmit={handleSubmit(submit, flagMissingMajor)}>
+    <Form onSubmit={handleSubmit(submit, flagMissingAnswers)}>
       <h2 className="h5 mt-3">About you</h2>
       <Row>
         <Form.Group as={Col} md={4} className="mb-3">
@@ -741,6 +764,17 @@ export default function ApplicationForm({
           {...register("comments")}
         />
       </Form.Group>
+
+      <NoticeAgreement
+        notice={notice}
+        agreed={agreed}
+        invalid={agreementMissing}
+        onChange={(checked) => {
+          setAgreementMissing(false);
+          setAgreedTo(checked && notice ? notice.id : null);
+        }}
+        testIdPrefix={id("notice")}
+      />
 
       <Button type="submit" data-testid={id("submit")}>
         {buttonLabel}

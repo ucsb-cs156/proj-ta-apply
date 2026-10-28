@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -8,6 +9,7 @@ import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
 import edu.ucsb.cs.taapply.services.GrantedAuthoritiesService;
@@ -46,6 +48,7 @@ public class ApplicationsController extends ApiController {
 
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired NoticeVersionRepository noticeVersionRepository;
   @Autowired ApplicationAccessService applicationAccessService;
   @Autowired GrantedAuthoritiesService grantedAuthoritiesService;
 
@@ -81,7 +84,9 @@ public class ApplicationsController extends ApiController {
       String courseworkOther,
       String coursework290,
       String videoLink,
-      Integer previousServiceAsUla) {}
+      Integer previousServiceAsUla,
+      /** The notice version the applicant ticked the agreement box for; see requireAgreement. */
+      Long noticeVersionId) {}
 
   private String currentEmail() {
     return getCurrentUser().getUser().getEmail();
@@ -167,6 +172,8 @@ public class ApplicationsController extends ApiController {
       throw new IllegalArgumentException("You already have an application for this recruitment");
     }
 
+    requireAgreement(recruitment.getType(), fields);
+
     Application application =
         Application.builder()
             .recruitmentId(recruitmentId)
@@ -192,9 +199,11 @@ public class ApplicationsController extends ApiController {
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
       @RequestBody ApplicationFields fields) {
 
-    recruitmentRepository
-        .findById(recruitmentId)
-        .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    requireAgreement(recruitment.getType(), fields);
 
     // The unique (email, recruitment) constraint allows one row per admin per recruitment, and an
     // admin testing a form will naturally submit it more than once, so the second submission
@@ -234,11 +243,13 @@ public class ApplicationsController extends ApiController {
       @Parameter(name = "id") @RequestParam Long id, @RequestBody ApplicationFields fields) {
 
     Application application = mine(id);
-    if (!applicationAccessService.editable(recruitmentFor(application), LocalDate.now())) {
+    Recruitment recruitment = recruitmentFor(application);
+    if (!applicationAccessService.editable(recruitment, LocalDate.now())) {
       throw new ForbiddenException(
           "This application can no longer be edited; you may still update your post application"
               + " comments");
     }
+    requireAgreement(recruitment.getType(), fields);
 
     apply(fields, application);
     applicationRepository.save(application);
@@ -311,6 +322,32 @@ public class ApplicationsController extends ApiController {
     return proficiencies;
   }
 
+  /**
+   * The agreement rule. Once a notice exists for the form type, every submission must carry the id
+   * of a version of that type's notice: the one the applicant saw and ticked the box for. It need
+   * not be the latest, since an admin may save a new version while a form is open; what matters is
+   * that the applicant agreed to a real version, and that is what gets recorded. With no notice
+   * written yet the form shows none, so nothing is required.
+   */
+  void requireAgreement(RecruitmentType type, ApplicationFields fields) {
+    Long versionId = fields.noticeVersionId();
+    if (versionId == null) {
+      if (noticeVersionRepository.findFirstByTypeOrderByIdDesc(type).isPresent()) {
+        throw new IllegalArgumentException(
+            "You must agree to the Notices, Terms and Conditions to submit this application");
+      }
+      return;
+    }
+    NoticeVersion version =
+        noticeVersionRepository
+            .findById(versionId)
+            .orElseThrow(() -> new EntityNotFoundException(NoticeVersion.class, versionId));
+    if (version.getType() != type) {
+      throw new IllegalArgumentException(
+          "Notice version %d is not a %s notice".formatted(versionId, type));
+    }
+  }
+
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
   private static void apply(ApplicationFields fields, Application application) {
     application.setFirstName(fields.firstName());
@@ -340,5 +377,6 @@ public class ApplicationsController extends ApiController {
     application.setCoursework290(fields.coursework290());
     application.setVideoLink(fields.videoLink());
     application.setPreviousServiceAsUla(fields.previousServiceAsUla());
+    application.setNoticeVersionId(fields.noticeVersionId());
   }
 }

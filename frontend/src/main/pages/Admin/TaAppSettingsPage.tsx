@@ -1,5 +1,6 @@
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import NameListCard from "main/components/AppSettings/NameListCard";
+import NoticeEditorCard from "main/components/Notices/NoticeEditorCard";
 
 /** The admin-maintained lists behind the TA application form: /admin/settings/ta */
 export default function TaAppSettingsPage(): React.JSX.Element {
@@ -23,6 +24,7 @@ export default function TaAppSettingsPage(): React.JSX.Element {
           listKey="ta-topics"
           testIdPrefix="TaAppSettingsPage-topics"
         />
+        <NoticeEditorCard type="TA" testIdPrefix="TaAppSettingsPage-notices" />
       </div>
     </BasicLayout>
   );

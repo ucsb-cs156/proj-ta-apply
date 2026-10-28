@@ -11,6 +11,7 @@ import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
+import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -70,6 +71,20 @@ describe("TestApplicationPage tests", () => {
     axiosMock
       .onGet("/api/recruitments/options")
       .reply(200, appSettingsFixtures.taOptions);
+    axiosMock.onGet("/api/notices/current").reply(200, []);
+  });
+
+  test("shows the current notice for the recruitment's type, as applicants see it", async () => {
+    axiosMock.onGet("/api/notices/current").reply(200, [noticesFixtures.taV2]);
+    renderPage();
+
+    expect(
+      await screen.findByTestId("TestApplicationPage-notice-agree"),
+    ).not.toBeChecked();
+    expect(
+      axiosMock.history.get.filter((r) => r.url === "/api/notices/current")[0]
+        .params,
+    ).toEqual({ type: "TA" });
   });
 
   test("the form is fed the majors and topics for the recruitment", async () => {

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 
 import ApplicationSummary from "main/components/Applications/ApplicationSummary";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import noticesFixtures from "fixtures/noticesFixtures";
 
 describe("ApplicationSummary tests", () => {
   test("shows the common answers", () => {
@@ -24,6 +25,49 @@ describe("ApplicationSummary tests", () => {
     expect(
       screen.getByTestId("ApplicationSummary-Expected Graduation"),
     ).toHaveTextContent("S27");
+  });
+
+  test("shows the notice version agreed to, ticked and read-only", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneTaApplication} // noticeVersionId: 1
+        type="TA"
+        notice={noticesFixtures.taV1}
+      />,
+    );
+
+    expect(
+      screen
+        .getByTestId("ApplicationSummary-notice-content")
+        .querySelector("h1"),
+    ).toHaveTextContent("TA Terms");
+    const box = screen.getByTestId("ApplicationSummary-notice-agree");
+    expect(box).toBeChecked();
+    expect(box).toBeDisabled();
+  });
+
+  /** If the versions disagree (should not happen), the box is honest about it. */
+  test("a notice the application did not agree to is shown unticked", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneTaApplication} // noticeVersionId: 1
+        type="TA"
+        notice={noticesFixtures.taV2}
+      />,
+    );
+    expect(
+      screen.getByTestId("ApplicationSummary-notice-agree"),
+    ).not.toBeChecked();
+  });
+
+  test("without a notice no agreement section is shown", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneTaApplication}
+        type="TA"
+      />,
+    );
+    expect(screen.queryByTestId("ApplicationSummary-notice")).toBeNull();
   });
 
   test("lists the topic ratings one per line, in topic order", () => {

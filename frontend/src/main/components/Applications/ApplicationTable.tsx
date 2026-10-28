@@ -42,6 +42,8 @@ export type Application = {
   coursework290: string | null;
   videoLink: string | null;
   previousServiceAsUla: number | null;
+  /** The notice version the applicant agreed to; null for applications older than any notice. */
+  noticeVersionId: number | null;
 };
 
 type ApplicationTableProps = {
