@@ -2,7 +2,11 @@ import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
-import type { ApplicationPayload } from "main/utils/applicationFields";
+import {
+  EMPTY_OPTIONS,
+  type ApplicationOptions,
+  type ApplicationPayload,
+} from "main/utils/applicationFields";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
@@ -31,6 +35,18 @@ export default function ApplyPage(): React.JSX.Element {
     },
     // Stryker disable next-line all : don't test default value of empty list
     [],
+  );
+
+  // The majors and topics lists for this recruitment's kind of application.
+  const { data: options } = useBackend<ApplicationOptions>(
+    ["/api/recruitments/options", recruitmentId],
+    {
+      method: "GET",
+      url: "/api/recruitments/options",
+      params: { recruitmentId },
+    },
+    // Stryker disable next-line all : don't test default value of empty lists
+    EMPTY_OPTIONS,
   );
 
   // The applicant's most recent application, so they need not retype everything. Empty the
@@ -74,6 +90,8 @@ export default function ApplyPage(): React.JSX.Element {
           <ApplicationForm
             type={recruitment.type}
             courses={courses ?? []}
+            majors={options?.majors ?? []}
+            topics={options?.topics ?? []}
             initialContents={(prefill ?? [])[0]}
             defaultNames={{
               firstName: currentUser.root?.user?.givenName,

@@ -1,10 +1,19 @@
 package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.TaMajor;
+import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.entity.UlaMajor;
+import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.repository.TaMajorRepository;
+import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
+import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
 import edu.ucsb.cs.taapply.services.GrantedAuthoritiesService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +21,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,6 +49,13 @@ public class ApplicantRecruitmentsController extends ApiController {
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired ApplicationAccessService applicationAccessService;
   @Autowired GrantedAuthoritiesService grantedAuthoritiesService;
+  @Autowired TaMajorRepository taMajorRepository;
+  @Autowired TaTopicRepository taTopicRepository;
+  @Autowired UlaMajorRepository ulaMajorRepository;
+  @Autowired UlaTopicRepository ulaTopicRepository;
+
+  /** The admin-maintained lists the application form for one recruitment offers. */
+  public static record ApplicationOptions(List<String> majors, List<String> topics) {}
 
   private Optional<RecruitmentType> myType() {
     return applicationAccessService.applicableType(
@@ -123,5 +141,42 @@ public class ApplicantRecruitmentsController extends ApiController {
         .distinct()
         .sorted()
         .toList();
+  }
+
+  private static List<String> sorted(Stream<String> names) {
+    return names.sorted(String.CASE_INSENSITIVE_ORDER).toList();
+  }
+
+  @Operation(
+      summary = "The majors and topics lists the application form for a recruitment offers",
+      description =
+          "The TA lists for a TA recruitment, the ULA lists for a ULA one, each sorted. Not"
+              + " filtered by the caller's type: the lists are not sensitive, and the admin preview"
+              + " of the form needs them for any recruitment. 404 for an unknown recruitment.")
+  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+  @GetMapping("/options")
+  public ApplicationOptions applicationOptions(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+
+    if (recruitment.getType() == RecruitmentType.TA) {
+      return new ApplicationOptions(
+          sorted(
+              StreamSupport.stream(taMajorRepository.findAll().spliterator(), false)
+                  .map(TaMajor::getName)),
+          sorted(
+              StreamSupport.stream(taTopicRepository.findAll().spliterator(), false)
+                  .map(TaTopic::getName)));
+    }
+    return new ApplicationOptions(
+        sorted(
+            StreamSupport.stream(ulaMajorRepository.findAll().spliterator(), false)
+                .map(UlaMajor::getName)),
+        sorted(
+            StreamSupport.stream(ulaTopicRepository.findAll().spliterator(), false)
+                .map(UlaTopic::getName)));
   }
 }

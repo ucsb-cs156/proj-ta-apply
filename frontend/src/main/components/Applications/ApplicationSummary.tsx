@@ -43,6 +43,15 @@ const otherCourses = (interests: Record<string, string> | null): string => {
     .join("\n");
 };
 
+/** One line per rated topic, in topic order; an empty map reads as blank. */
+const topicRatings = (proficiencies: Record<string, number> | null): string => {
+  const rated = proficiencies ?? {};
+  return Object.keys(rated)
+    .sort((a, b) => a.localeCompare(b))
+    .map((topic) => `${topic}: ${rated[topic]} / 5`)
+    .join("\n");
+};
+
 /** What the applicant submitted, shown back once the application can no longer be edited. */
 export default function ApplicationSummary({
   application,
@@ -115,8 +124,9 @@ export default function ApplicationSummary({
 
   rows.push(
     {
-      label: "Languages, Tools and Technologies",
-      value: show(application.knowledge),
+      label: "Topic Proficiency (1 lowest to 5 highest)",
+      value: topicRatings(application.topicProficiencies),
+      mono: true,
     },
     {
       label: "Previous Teaching Experience",

@@ -2,7 +2,11 @@ import { useParams } from "react-router";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
-import type { ApplicationPayload } from "main/utils/applicationFields";
+import {
+  EMPTY_OPTIONS,
+  type ApplicationOptions,
+  type ApplicationPayload,
+} from "main/utils/applicationFields";
 import ApplicationSummary from "main/components/Applications/ApplicationSummary";
 import PostApplicationCommentsForm, {
   type PostApplicationCommentsFields,
@@ -46,6 +50,20 @@ export default function ApplicationPage(): React.JSX.Element {
     },
     // Stryker disable next-line all : don't test default value of empty list
     [],
+    false,
+    // Stryker disable next-line all : the guard only avoids a pointless request
+    { enabled: Boolean(application) },
+  );
+
+  const { data: options } = useBackend<ApplicationOptions>(
+    ["/api/recruitments/options", application?.recruitmentId],
+    {
+      method: "GET",
+      url: "/api/recruitments/options",
+      params: { recruitmentId: application?.recruitmentId },
+    },
+    // Stryker disable next-line all : don't test default value of empty lists
+    EMPTY_OPTIONS,
     false,
     // Stryker disable next-line all : the guard only avoids a pointless request
     { enabled: Boolean(application) },
@@ -99,6 +117,8 @@ export default function ApplicationPage(): React.JSX.Element {
               <ApplicationForm
                 type={recruitment?.type ?? "TA"}
                 courses={courses ?? []}
+                majors={options?.majors ?? []}
+                topics={options?.topics ?? []}
                 initialContents={application}
                 defaultNames={{
                   firstName: currentUser.root?.user?.givenName,

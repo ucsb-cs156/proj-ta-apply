@@ -4,6 +4,7 @@ import TestApplicationPage from "main/pages/Admin/TestApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
+import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -26,6 +27,9 @@ const common = [
   ),
   http.get("/api/recruitmentcourses/all", () =>
     HttpResponse.json(recruitmentCoursesFixtures.fourCourses),
+  ),
+  http.get("/api/recruitments/options", () =>
+    HttpResponse.json(appSettingsFixtures.taOptions),
   ),
   http.post("/api/applications/test", () =>
     HttpResponse.json(applicationsFixtures.oneTestApplication),

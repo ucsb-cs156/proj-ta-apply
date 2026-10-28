@@ -11,14 +11,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.entity.TaMajor;
+import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.entity.UlaMajor;
+import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.repository.TaMajorRepository;
+import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
+import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -33,6 +42,10 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean UserRepository userRepository;
+  @MockitoBean TaMajorRepository taMajorRepository;
+  @MockitoBean TaTopicRepository taTopicRepository;
+  @MockitoBean UlaMajorRepository ulaMajorRepository;
+  @MockitoBean UlaTopicRepository ulaTopicRepository;
 
   private static Recruitment recruitment(
       long id,
@@ -311,5 +324,80 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @Test
   public void a_plain_user_cannot_read_course_choices() throws Exception {
     mockMvc.perform(get("/api/recruitments/courses?recruitmentId=1")).andExpect(status().is(403));
+  }
+
+  // ---- options: the majors and topics lists ----
+
+  private void seedLists() {
+    when(taMajorRepository.findAll())
+        .thenReturn(
+            List.of(
+                TaMajor.builder().name("Statistics").build(),
+                TaMajor.builder().name("computer engineering").build(),
+                TaMajor.builder().name("Computer Science").build()));
+    when(taTopicRepository.findAll())
+        .thenReturn(
+            List.of(
+                TaTopic.builder().name("Python").build(), TaTopic.builder().name("Java").build()));
+    when(ulaMajorRepository.findAll()).thenReturn(List.of(UlaMajor.builder().name("Math").build()));
+    when(ulaTopicRepository.findAll())
+        .thenReturn(List.of(UlaTopic.builder().name("Web Development").build()));
+  }
+
+  /** A TA recruitment offers the TA lists, sorted case-insensitively. */
+  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @Test
+  public void options_for_a_ta_recruitment_are_the_ta_lists_sorted() throws Exception {
+    seedLists();
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    assertEquals(
+        mapper.writeValueAsString(
+            new ApplicantRecruitmentsController.ApplicationOptions(
+                List.of("computer engineering", "Computer Science", "Statistics"),
+                List.of("Java", "Python"))),
+        getJson("/api/recruitments/options?recruitmentId=1"));
+    verify(ulaMajorRepository, never()).findAll();
+    verify(ulaTopicRepository, never()).findAll();
+  }
+
+  /** A ULA recruitment offers the ULA lists, and an admin may ask for any recruitment's lists. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void options_for_a_ula_recruitment_are_the_ula_lists() throws Exception {
+    seedLists();
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+
+    assertEquals(
+        mapper.writeValueAsString(
+            new ApplicantRecruitmentsController.ApplicationOptions(
+                List.of("Math"), List.of("Web Development"))),
+        getJson("/api/recruitments/options?recruitmentId=2"));
+    verify(taMajorRepository, never()).findAll();
+    verify(taTopicRepository, never()).findAll();
+  }
+
+  @WithMockUser(roles = {"UNDERGRAD"})
+  @Test
+  public void options_for_an_unknown_recruitment_are_a_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/recruitments/options?recruitmentId=99"))
+            .andExpect(status().is(404))
+            .andReturn();
+    assertEquals("Recruitment with id 99 not found", responseToJson(response).get("message"));
+  }
+
+  @Test
+  public void logged_out_users_cannot_read_options() throws Exception {
+    mockMvc.perform(get("/api/recruitments/options?recruitmentId=1")).andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
+  @Test
+  public void a_user_who_is_not_an_applicant_or_admin_cannot_read_options() throws Exception {
+    mockMvc.perform(get("/api/recruitments/options?recruitmentId=1")).andExpect(status().is(403));
   }
 }

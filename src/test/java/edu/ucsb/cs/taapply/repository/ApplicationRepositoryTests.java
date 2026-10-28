@@ -73,7 +73,7 @@ public class ApplicationRepositoryTests {
             .yearInProgram("2")
             .graduationDate("20272")
             .courseworkUcsb("CMPSC 156")
-            .knowledge("Java, React")
+            .topicProficiencies(new HashMap<>(Map.of("Java", 5, "React", 3)))
             .prevExperience("TA for CS16")
             .comments("Keen")
             .postApplicationComments("Still available")
@@ -123,6 +123,8 @@ public class ApplicationRepositoryTests {
             "CMPSC    16",
             CourseInterest.WOULD_CONSIDER),
         found.getCourseInterests());
+    // Topic ratings live in their own table too (changeset 011), keyed by topic name.
+    assertEquals(Map.of("Java", 5, "React", 3), found.getTopicProficiencies());
     assertEquals(ResidencyStatus.F1_STUDENT_VISA, found.getResidencyStatus());
     assertEquals(LanguageExamStatus.PASSED, found.getLanguageExam());
     assertEquals(LocalDate.of(2025, 9, 1), found.getLanguageExamDatePassed());
@@ -259,5 +261,40 @@ public class ApplicationRepositoryTests {
     applicationRepository.deleteById(saved.getId());
     entityManager.flush();
     assertEquals(0, interestRows());
+  }
+
+  @Test
+  public void topic_ratings_are_replaced_on_update_and_deleted_with_the_application() {
+    Recruitment r = recruitment("20261", RecruitmentType.TA);
+    Application saved =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(r.getId())
+                .email("grad@ucsb.edu")
+                .topicProficiencies(new HashMap<>(Map.of("Java", 5, "React", 3)))
+                .build());
+    entityManager.flush();
+    entityManager.clear();
+
+    Application loaded = applicationRepository.findById(saved.getId()).orElseThrow();
+    loaded.setTopicProficiencies(new HashMap<>(Map.of("Python", 2)));
+    applicationRepository.save(loaded);
+    entityManager.flush();
+    entityManager.clear();
+
+    assertEquals(
+        Map.of("Python", 2),
+        applicationRepository.findById(saved.getId()).orElseThrow().getTopicProficiencies());
+
+    applicationRepository.deleteById(saved.getId());
+    entityManager.flush();
+    assertEquals(
+        0L,
+        ((Number)
+                entityManager
+                    .getEntityManager()
+                    .createNativeQuery("select count(*) from application_topic_proficiencies")
+                    .getSingleResult())
+            .longValue());
   }
 }

@@ -26,6 +26,42 @@ describe("ApplicationSummary tests", () => {
     ).toHaveTextContent("S27");
   });
 
+  test("lists the topic ratings one per line, in topic order", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneTaApplication,
+          topicProficiencies: { React: 3, Java: 5 },
+        }}
+        type="TA"
+      />,
+    );
+
+    const cell = screen.getByTestId(
+      "ApplicationSummary-Topic Proficiency (1 lowest to 5 highest)",
+    );
+    expect(cell.textContent).toBe("Java: 5 / 5\nReact: 3 / 5");
+    expect(cell).toHaveStyle({ whiteSpace: "pre" });
+  });
+
+  test("an application with no ratings shows a blank rating row", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneTaApplication,
+          topicProficiencies: null,
+        }}
+        type="TA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-Topic Proficiency (1 lowest to 5 highest)",
+      ).textContent,
+    ).toBe("");
+  });
+
   /** Codes are for the database; a person reading their own application should see words. */
   test("shows the TA-only answers, spelled out", () => {
     render(
