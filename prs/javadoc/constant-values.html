@@ -63,6 +63,20 @@ loadScripts(document, 'script');</script>
 <h2 title="edu.ucsb.*">edu.ucsb.*</h2>
 <ul class="block-list">
 <li>
+<div class="caption"><span>edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Constant Field</div>
+<div class="table-header col-last">Value</div>
+<div class="col-first even-row-color"><code id="edu.ucsb.cs.taapply.controller.ApplicationsController.MAX_PROFICIENCY">public&nbsp;static&nbsp;final&nbsp;int</code></div>
+<div class="col-second even-row-color"><code><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MAX_PROFICIENCY">MAX_PROFICIENCY</a></code></div>
+<div class="col-last even-row-color"><code>5</code></div>
+<div class="col-first odd-row-color"><code id="edu.ucsb.cs.taapply.controller.ApplicationsController.MIN_PROFICIENCY">public&nbsp;static&nbsp;final&nbsp;int</code></div>
+<div class="col-second odd-row-color"><code><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MIN_PROFICIENCY">MIN_PROFICIENCY</a></code></div>
+<div class="col-last odd-row-color"><code>1</code></div>
+</div>
+</li>
+<li>
 <div class="caption"><span>edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></span></div>
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -84,6 +98,17 @@ loadScripts(document, 'script');</script>
 </li>
 </ul>
 <ul class="block-list">
+<li>
+<div class="caption"><span>edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/NameListCsvService.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Constant Field</div>
+<div class="table-header col-last">Value</div>
+<div class="col-first even-row-color"><code id="edu.ucsb.cs.taapply.services.NameListCsvService.NAME_HEADER">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="edu/ucsb/cs/taapply/services/NameListCsvService.html#NAME_HEADER">NAME_HEADER</a></code></div>
+<div class="col-last even-row-color"><code>"name"</code></div>
+</div>
+</li>
 <li>
 <div class="caption"><span>edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleAssignmentService.html" title="class in edu.ucsb.cs.taapply.services">RoleAssignmentService</a></span></div>
 <div class="summary-table three-column-summary">
@@ -127,12 +152,15 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Constant Field</div>
 <div class="table-header col-last">Value</div>
-<div class="col-first even-row-color"><code id="edu.ucsb.cs.taapply.services.UCSBCurriculumService.CURRICULUM_ENDPOINT">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html#CURRICULUM_ENDPOINT">CURRICULUM_ENDPOINT</a></code></div>
-<div class="col-last even-row-color"><code>"{apiHost}/academics/curriculums/v1/classes/search"</code></div>
-<div class="col-first odd-row-color"><code id="edu.ucsb.cs.taapply.services.UCSBCurriculumService.LEVEL_ALL">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html#LEVEL_ALL">LEVEL_ALL</a></code></div>
-<div class="col-last odd-row-color"><code>"A"</code></div>
+<div class="col-first even-row-color"><code id="edu.ucsb.cs.taapply.services.UCSBCurriculumService.CLASS_ENDPOINT">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html#CLASS_ENDPOINT">CLASS_ENDPOINT</a></code></div>
+<div class="col-last even-row-color"><code>"{apiHost}/academics/curriculums/v1/classes/{quarter}/{enrollCode}?includeClassSections=true"</code></div>
+<div class="col-first odd-row-color"><code id="edu.ucsb.cs.taapply.services.UCSBCurriculumService.CURRICULUM_ENDPOINT">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html#CURRICULUM_ENDPOINT">CURRICULUM_ENDPOINT</a></code></div>
+<div class="col-last odd-row-color"><code>"{apiHost}/academics/curriculums/v1/classes/search"</code></div>
+<div class="col-first even-row-color"><code id="edu.ucsb.cs.taapply.services.UCSBCurriculumService.LEVEL_ALL">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html#LEVEL_ALL">LEVEL_ALL</a></code></div>
+<div class="col-last even-row-color"><code>"A"</code></div>
 </div>
 </li>
 <li>

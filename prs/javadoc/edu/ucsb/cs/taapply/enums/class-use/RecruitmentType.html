@@ -77,12 +77,22 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/NoticeVersion.html" title="class in edu.ucsb.cs.taapply.entity">NoticeVersion</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">NoticesController.</span><code><a href="../../controller/NoticesController.html#current(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">current</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/NoticeVersion.html" title="class in edu.ucsb.cs.taapply.entity">NoticeVersion</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">NoticesController.</span><code><a href="../../controller/NoticesController.html#history(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">history</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code><a href="../../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
 <div class="col-second even-row-color"><span class="type-name-label">RecruitmentsController.</span><code><a href="../../controller/RecruitmentsController.html#postRecruitment(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,java.time.LocalDate,java.time.LocalDate)" class="member-name-link">postRecruitment</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;tentativeOpeningDate,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;primaryConsiderationDate)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="../../entity/NoticeVersion.html" title="class in edu.ucsb.cs.taapply.entity">NoticeVersion</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">NoticesController.</span><code><a href="../../controller/NoticesController.html#save(edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.controller.NoticesController.NoticeContent)" class="member-name-link">save</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
+ <a href="../../controller/NoticesController.NoticeContent.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController.NoticeContent</a>&nbsp;body)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -131,10 +141,20 @@ the order they are declared.</div>
 <div class="col-second even-row-color"><span class="type-name-label">RecruitmentRepository.</span><code><a href="../../repository/RecruitmentRepository.html#existsByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">existsByQuarterAndType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentRepository.</span><code><a href="../../repository/RecruitmentRepository.html#findByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findByQuarterAndType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/NoticeVersion.html" title="class in edu.ucsb.cs.taapply.entity">NoticeVersion</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">NoticeVersionRepository.</span><code><a href="../../repository/NoticeVersionRepository.html#findAllByTypeOrderByIdDesc(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findAllByTypeOrderByIdDesc</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Every version of this type, newest first.</div>
+</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">RecruitmentRepository.</span><code><a href="../../repository/RecruitmentRepository.html#findByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findByQuarterAndType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../../entity/NoticeVersion.html" title="class in edu.ucsb.cs.taapply.entity">NoticeVersion</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">NoticeVersionRepository.</span><code><a href="../../repository/NoticeVersionRepository.html#findFirstByTypeOrderByIdDesc(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findFirstByTypeOrderByIdDesc</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">The version currently shown to applicants of this type: the most recently saved one.</div>
+</div>
 </div>
 </section>
 </li>

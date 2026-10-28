@@ -76,6 +76,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#all(java.lang.String)" tabindex="0">all(String)</a></li>
 <li><a href="#post(java.lang.String,java.lang.String)" tabindex="0">post(String, String)</a></li>
 <li><a href="#rename(java.lang.String,java.lang.String,java.lang.String)" tabindex="0">rename(String, String, String)</a></li>
+<li><a href="#downloadCsv(java.lang.String)" tabindex="0">downloadCsv(String)</a></li>
+<li><a href="#uploadCsv(java.lang.String,org.springframework.web.multipart.MultipartFile)" tabindex="0">uploadCsv(String, MultipartFile)</a></li>
 <li><a href="#delete(java.lang.String,java.lang.String)" tabindex="0">delete(String, String)</a></li>
 </ol>
 </li>
@@ -180,14 +182,21 @@ same CRUD code. Renaming is a delete plus an insert, since the name is the key.<
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#delete(java.lang.String,java.lang.String)" class="member-name-link">delete</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;list,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AppSettingsController.NameItem.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController.NameItem</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#post(java.lang.String,java.lang.String)" class="member-name-link">post</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;list,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#downloadCsv(java.lang.String)" class="member-name-link">downloadCsv</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;list)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AppSettingsController.NameItem.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController.NameItem</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rename(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">rename</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;list,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#post(java.lang.String,java.lang.String)" class="member-name-link">post</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;list,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AppSettingsController.NameItem.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController.NameItem</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rename(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">rename</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;list,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;newName)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../services/NameListCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService.UploadResult</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#uploadCsv(java.lang.String,org.springframework.web.multipart.MultipartFile)" class="member-name-link">uploadCsv</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;list,
+ org.springframework.web.multipart.MultipartFile&nbsp;file)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
@@ -333,6 +342,39 @@ same CRUD code. Renaming is a delete plus an insert, since the name is the key.<
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  @RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;newName)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="downloadCsv(java.lang.String)">
+<h3>downloadCsv</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@GetMapping(value="/{list}/csv",
+            produces="text/csv")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">org.springframework.http.ResponseEntity&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">downloadCsv</span><wbr><span class="parameters">(@PathVariable
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;list)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="uploadCsv(java.lang.String,org.springframework.web.multipart.MultipartFile)">
+<h3>uploadCsv</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PostMapping(value="/{list}/upload/csv",
+             consumes="multipart/form-data")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../services/NameListCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService.UploadResult</a></span>&nbsp;<span class="element-name">uploadCsv</span><wbr><span class="parameters">(@PathVariable
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;list,
+ @RequestParam("file")
+ org.springframework.web.multipart.MultipartFile&nbsp;file)</span>
+                                          throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a>,
+com.opencsv.exceptions.CsvException</span></div>
+<dl class="notes">
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code></dd>
+<dd><code>com.opencsv.exceptions.CsvException</code></dd>
+</dl>
 </div>
 </section>
 </li>

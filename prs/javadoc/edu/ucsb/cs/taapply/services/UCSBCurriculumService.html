@@ -61,6 +61,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#LEVEL_ALL" tabindex="0">LEVEL_ALL</a></li>
 <li><a href="#CURRICULUM_ENDPOINT" tabindex="0">CURRICULUM_ENDPOINT</a></li>
+<li><a href="#CLASS_ENDPOINT" tabindex="0">CLASS_ENDPOINT</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
@@ -73,6 +74,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#getJSON(java.lang.String,java.lang.String,java.lang.String,int)" tabindex="0">getJSON(String, String, String, int)</a></li>
 <li><a href="#getCourses(java.lang.String,java.lang.String,java.lang.String)" tabindex="0">getCourses(String, String, String)</a></li>
 <li><a href="#getOfferings(java.lang.String,java.lang.String)" tabindex="0">getOfferings(String, String)</a></li>
+<li><a href="#getOffering(java.lang.String,java.lang.String)" tabindex="0">getOffering(String, String)</a></li>
 <li><a href="#normalizeCourseId(java.lang.String)" tabindex="0">normalizeCourseId(String)</a></li>
 </ol>
 </li>
@@ -112,11 +114,16 @@ pagination rather than assuming a single page of 100 results.</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#CURRICULUM_ENDPOINT" class="member-name-link">CURRICULUM_ENDPOINT</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-second even-row-color"><code><a href="#CLASS_ENDPOINT" class="member-name-link">CLASS_ENDPOINT</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">One class by quarter and enroll code, with every section of the course it belongs to.</div>
+</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#LEVEL_ALL" class="member-name-link">LEVEL_ALL</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-second odd-row-color"><code><a href="#CURRICULUM_ENDPOINT" class="member-name-link">CURRICULUM_ENDPOINT</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#LEVEL_ALL" class="member-name-link">LEVEL_ALL</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Level meaning "all levels"; the API has no such code, so the parameter is omitted instead.</div>
 </div>
 </div>
@@ -162,16 +169,22 @@ short page is returned.</div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Fetches one page of raw JSON.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOfferings(java.lang.String,java.lang.String)" class="member-name-link">getOfferings</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;subjectArea,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOffering(java.lang.String,java.lang.String)" class="member-name-link">getOffering</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;enrollCode)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The course offering one of whose sections has the given enroll code, with all of its sections.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOfferings(java.lang.String,java.lang.String)" class="member-name-link">getOfferings</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;subjectArea,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Every course offering in the given subject area and quarter, <em>with</em> its sections, so a
 recruitment can record instructors, meeting times and enrollment.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#normalizeCourseId(java.lang.String)" class="member-name-link">normalizeCourseId</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#normalizeCourseId(java.lang.String)" class="member-name-link">normalizeCourseId</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Formats a course id into a fixed-width, sortable form: the subject code left-justified in 8
 characters, the course number's digits right-justified in 3, then up to 2 suffix letters, with
 trailing spaces removed.</div>
@@ -220,6 +233,23 @@ trailing spaces removed.</div>
 <dd>
 <ul class="tag-list">
 <li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.UCSBCurriculumService.CURRICULUM_ENDPOINT">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="CLASS_ENDPOINT">
+<h3>CLASS_ENDPOINT</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">CLASS_ENDPOINT</span></div>
+<div class="block">One class by quarter and enroll code, with every section of the course it belongs to.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.UCSBCurriculumService.CLASS_ENDPOINT">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
@@ -297,6 +327,24 @@ fetch sections would bloat every catalog Populate.
 
 <p>Level is fixed at "all": which courses matter is decided by the courses table, not by a
 level, since a graduate course can want a ULA and vice versa.</div>
+<dl class="notes">
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getOffering(java.lang.String,java.lang.String)">
+<h3>getOffering</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a></span>&nbsp;<span class="element-name">getOffering</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;enrollCode)</span>
+                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
+<div class="block">The course offering one of whose sections has the given enroll code, with all of its sections.
+Asking by enroll code rather than searching by course id means the answer is exactly the
+offering a recruitment course row came from, and costs one request rather than a paginated
+sweep of the subject area.</div>
 <dl class="notes">
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
