@@ -14,6 +14,7 @@ import type { Recruitment } from "main/components/Recruitments/RecruitmentTable"
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { useCurrentUser } from "main/utils/currentUser";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
+import type { NoticeVersion } from "main/utils/notices";
 
 /** Only the course number is needed here; the rest of a RecruitmentCourse is for the admin table. */
 type RecruitmentCourseLike = { courseId: string };
@@ -72,6 +73,21 @@ export default function TestApplicationPage(): React.JSX.Element {
     (r) => String(r.id) === String(recruitmentId),
   );
 
+  // The current notice, exactly as an applicant to this recruitment would be shown it.
+  const { data: notices } = useBackend<NoticeVersion[]>(
+    ["/api/notices/current", recruitment?.type],
+    {
+      method: "GET",
+      url: "/api/notices/current",
+      params: { type: recruitment?.type },
+    },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    false,
+    // Stryker disable next-line all : the guard only avoids a pointless request
+    { enabled: Boolean(recruitment) },
+  );
+
   // Applicants get a distinct, sorted list from /api/recruitments/courses; the admin endpoint
   // returns one row per lecture, so the same shaping happens here.
   const courses = [
@@ -120,6 +136,7 @@ export default function TestApplicationPage(): React.JSX.Element {
               courses={courses}
               majors={options?.majors ?? []}
               topics={options?.topics ?? []}
+              notice={(notices ?? [])[0] ?? null}
               defaultNames={{
                 firstName: currentUser.root?.user?.givenName,
                 lastName: currentUser.root?.user?.familyName,

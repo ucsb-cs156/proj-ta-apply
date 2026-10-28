@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
@@ -14,6 +15,7 @@ import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,9 +58,18 @@ public class ApplicationRepositoryTests {
             .build());
   }
 
+  @Autowired private NoticeVersionRepository noticeVersionRepository;
+
   @Test
   public void every_column_round_trips() {
     Recruitment r = recruitment("20261", RecruitmentType.TA);
+    NoticeVersion notice =
+        noticeVersionRepository.save(
+            NoticeVersion.builder()
+                .type(RecruitmentType.TA)
+                .content("Terms")
+                .createdAt(LocalDateTime.of(2026, 1, 1, 0, 0))
+                .build());
 
     applicationRepository.save(
         Application.builder()
@@ -96,6 +107,7 @@ public class ApplicationRepositoryTests {
             .coursework290("CMPSC 290A")
             .videoLink("https://example.org/v")
             .previousServiceAsUla(2)
+            .noticeVersionId(notice.getId())
             .build());
 
     entityManager.flush();
@@ -132,6 +144,8 @@ public class ApplicationRepositoryTests {
     assertEquals("CMPSC 290A", found.getCoursework290());
     assertEquals("https://example.org/v", found.getVideoLink());
     assertEquals(2, found.getPreviousServiceAsUla());
+    // The agreed notice version is a plain id column with a foreign key (changeset 012).
+    assertEquals(notice.getId(), found.getNoticeVersionId());
   }
 
   @Test

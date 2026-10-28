@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
@@ -26,15 +27,18 @@ import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -52,6 +56,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
+  @MockitoBean NoticeVersionRepository noticeVersionRepository;
   @MockitoBean UserRepository userRepository;
 
   /** MockCurrentUserServiceImpl derives the email from the mock user's name. */
@@ -60,6 +65,68 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   private static final String ULA_EMAIL = "ula@example.org";
 
   private static final String ADMIN_EMAIL = "admin@example.org";
+
+  /** The TA notice version FULL_FIELDS says the applicant agreed to. */
+  private static final Long NOTICE_ID = 40L;
+
+  private static final NoticeVersion TA_NOTICE =
+      NoticeVersion.builder()
+          .id(NOTICE_ID)
+          .type(RecruitmentType.TA)
+          .content("Be nice.")
+          .createdAt(LocalDateTime.of(2026, 1, 2, 3, 4))
+          .build();
+  private static final NoticeVersion ULA_NOTICE =
+      NoticeVersion.builder()
+          .id(41L)
+          .type(RecruitmentType.ULA)
+          .content("Be nicer.")
+          .createdAt(LocalDateTime.of(2026, 1, 2, 3, 5))
+          .build();
+
+  /** Every submitting test agrees to the TA notice; the ULA tests swap it for the ULA one. */
+  @BeforeEach
+  public void noticesExist() {
+    when(noticeVersionRepository.findById(NOTICE_ID)).thenReturn(Optional.of(TA_NOTICE));
+    when(noticeVersionRepository.findById(41L)).thenReturn(Optional.of(ULA_NOTICE));
+    when(noticeVersionRepository.findFirstByTypeOrderByIdDesc(RecruitmentType.TA))
+        .thenReturn(Optional.of(TA_NOTICE));
+    when(noticeVersionRepository.findFirstByTypeOrderByIdDesc(RecruitmentType.ULA))
+        .thenReturn(Optional.of(ULA_NOTICE));
+  }
+
+  /** The full application with a different notice agreement. */
+  private static ApplicationFields withNotice(Long noticeVersionId) {
+    return new ApplicationFields(
+        FULL_FIELDS.firstName(),
+        FULL_FIELDS.middleName(),
+        FULL_FIELDS.lastName(),
+        FULL_FIELDS.major(),
+        FULL_FIELDS.gpaMajor(),
+        FULL_FIELDS.gpaOverall(),
+        FULL_FIELDS.yearInProgram(),
+        FULL_FIELDS.graduationDate(),
+        FULL_FIELDS.courseworkUcsb(),
+        FULL_FIELDS.topicProficiencies(),
+        FULL_FIELDS.prevExperience(),
+        FULL_FIELDS.comments(),
+        FULL_FIELDS.firstChoiceCourse(),
+        FULL_FIELDS.secondChoiceCourse(),
+        FULL_FIELDS.availableForLecturesFirstChoice(),
+        FULL_FIELDS.availableForLecturesSecondChoice(),
+        FULL_FIELDS.availableForDiscussionFirstChoice(),
+        FULL_FIELDS.availableForDiscussionSecondChoice(),
+        FULL_FIELDS.courseInterests(),
+        FULL_FIELDS.residencyStatus(),
+        FULL_FIELDS.languageExam(),
+        FULL_FIELDS.languageExamDatePassed(),
+        FULL_FIELDS.classLevel(),
+        FULL_FIELDS.courseworkOther(),
+        FULL_FIELDS.coursework290(),
+        FULL_FIELDS.videoLink(),
+        FULL_FIELDS.previousServiceAsUla(),
+        noticeVersionId);
+  }
 
   private static Recruitment recruitment(
       long id, RecruitmentType type, ApplicationStatus status, LocalDate deadline) {
@@ -118,7 +185,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           "Compilers at another school",
           "CS 290A",
           "https://example.org/video",
-          2);
+          2,
+          NOTICE_ID);
 
   /** The same application with every availability answer turned off. */
   private static final ApplicationFields NO_AVAILABILITY =
@@ -149,7 +217,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           FULL_FIELDS.courseworkOther(),
           FULL_FIELDS.coursework290(),
           FULL_FIELDS.videoLink(),
-          FULL_FIELDS.previousServiceAsUla());
+          FULL_FIELDS.previousServiceAsUla(),
+          FULL_FIELDS.noticeVersionId());
 
   /** The full application with a different set of course interest answers. */
   private static ApplicationFields withInterests(Map<String, CourseInterest> interests) {
@@ -180,7 +249,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.courseworkOther(),
         FULL_FIELDS.coursework290(),
         FULL_FIELDS.videoLink(),
-        FULL_FIELDS.previousServiceAsUla());
+        FULL_FIELDS.previousServiceAsUla(),
+        FULL_FIELDS.noticeVersionId());
   }
 
   /** The full application with a different set of topic ratings. */
@@ -212,7 +282,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.courseworkOther(),
         FULL_FIELDS.coursework290(),
         FULL_FIELDS.videoLink(),
-        FULL_FIELDS.previousServiceAsUla());
+        FULL_FIELDS.previousServiceAsUla(),
+        FULL_FIELDS.noticeVersionId());
   }
 
   /** The same values, as the entity they should produce. */
@@ -257,6 +328,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .coursework290("CS 290A")
         .videoLink("https://example.org/video")
         .previousServiceAsUla(2)
+        .noticeVersionId(NOTICE_ID)
         .build();
   }
 
@@ -510,11 +582,13 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .perform(
             post("/api/applications/post?recruitmentId=2")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body())
+                .content(mapper.writeValueAsString(withNotice(41L)))
                 .with(csrf()))
         .andExpect(status().isOk());
 
-    assertEquals(expectedFrom(null, 2L, ULA_EMAIL, null), saved());
+    Application expected = expectedFrom(null, 2L, ULA_EMAIL, null);
+    expected.setNoticeVersionId(41L);
+    assertEquals(expected, saved());
   }
 
   /** The type check is server side, not merely a hidden link. */
@@ -962,13 +1036,14 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .perform(
             post("/api/applications/test?recruitmentId=2")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body())
+                .content(mapper.writeValueAsString(withNotice(41L)))
                 .with(csrf()))
         .andExpect(status().isOk());
 
     // Same row (same id), still a test application, with the new answers.
     Application expected = expectedFrom(7L, 2L, ADMIN_EMAIL, "kept");
     expected.setTestApplication(true);
+    expected.setNoticeVersionId(41L);
     assertEquals(expected, saved());
   }
 
@@ -1132,5 +1207,177 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .andExpect(status().isOk());
 
     assertEquals(Map.of("Java", 4), saved().getTopicProficiencies());
+  }
+
+  // ---- the agreement rule ----
+
+  /** Once a notice exists, an application that did not agree to one is refused. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void applying_without_agreeing_to_the_notice_is_refused() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(withNotice(null)))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "You must agree to the Notices, Terms and Conditions to submit this application",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** Before any notice has been written for the type, there is nothing to agree to. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void with_no_notice_written_yet_no_agreement_is_needed() throws Exception {
+    when(noticeVersionRepository.findFirstByTypeOrderByIdDesc(RecruitmentType.TA))
+        .thenReturn(Optional.empty());
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withNotice(null)))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(null, saved().getNoticeVersionId());
+  }
+
+  /** An older version is fine: the applicant agreed to what they were shown. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void agreeing_to_an_earlier_version_of_the_notice_is_accepted() throws Exception {
+    NoticeVersion older =
+        NoticeVersion.builder()
+            .id(39L)
+            .type(RecruitmentType.TA)
+            .content("Old text")
+            .createdAt(LocalDateTime.of(2025, 1, 1, 0, 0))
+            .build();
+    when(noticeVersionRepository.findById(39L)).thenReturn(Optional.of(older));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withNotice(39L)))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(39L, saved().getNoticeVersionId());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void agreeing_to_a_notice_version_that_does_not_exist_is_a_404() throws Exception {
+    when(noticeVersionRepository.findById(99L)).thenReturn(Optional.empty());
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(withNotice(99L)))
+                    .with(csrf()))
+            .andExpect(status().is(404))
+            .andReturn();
+
+    assertEquals("NoticeVersion with id 99 not found", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** A grad student cannot satisfy the TA rule with the ULA notice. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void agreeing_to_the_other_forms_notice_is_refused() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(withNotice(41L)))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals("Notice version 41 is not a TA notice", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** Editing re-checks the rule, and records the version agreed to on the edit. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void editing_also_requires_agreement() throws Exception {
+    Application existing = application(5L, 1L, GRAD_EMAIL);
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    mockMvc
+        .perform(
+            put("/api/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withNotice(null)))
+                .with(csrf()))
+        .andExpect(status().is(400));
+    verify(applicationRepository, never()).save(any());
+
+    mockMvc
+        .perform(
+            put("/api/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals(NOTICE_ID, saved().getNoticeVersionId());
+  }
+
+  /** The admin preview is held to the same rule, so the preview matches what applicants see. */
+  @WithMockUser(
+      username = "admin",
+      roles = {"ADMIN"})
+  @Test
+  public void a_test_application_also_requires_agreement() throws Exception {
+    when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
+    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 3L))
+        .thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(
+            post("/api/applications/test?recruitmentId=3")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withNotice(null)))
+                .with(csrf()))
+        .andExpect(status().is(400));
+    verify(applicationRepository, never()).save(any());
   }
 }

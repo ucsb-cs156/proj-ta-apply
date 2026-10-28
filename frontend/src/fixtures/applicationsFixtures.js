@@ -36,6 +36,7 @@ const applicationsFixtures = {
     coursework290: "CS 290A",
     videoLink: null,
     previousServiceAsUla: null,
+    noticeVersionId: 1,
   },
 
   oneUlaApplication: {
@@ -72,6 +73,7 @@ const applicationsFixtures = {
     coursework290: null,
     videoLink: "https://example.org/chris",
     previousServiceAsUla: 2,
+    noticeVersionId: 3,
   },
 };
 

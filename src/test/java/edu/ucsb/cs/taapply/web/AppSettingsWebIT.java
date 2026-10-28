@@ -119,6 +119,30 @@ public class AppSettingsWebIT extends WebTestCase {
     assertThat(page.getByTestId("TaAppSettingsPage-majors-empty")).isVisible();
   }
 
+  /** Saving the notice appends a version; the editor is CodeMirror, so it is driven by keyboard. */
+  @Test
+  public void admin_can_save_a_new_version_of_the_notices() throws Exception {
+    setupAdminUser();
+    goTo("/admin/settings/ula");
+
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-current"))
+        .containsText("No version saved yet");
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-save-button")).isDisabled();
+
+    page.getByTestId("UlaAppSettingsPage-notices-editor").locator(".CodeMirror").click();
+    page.keyboard().type("# ULA Terms");
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-preview").locator("h1"))
+        .containsText("ULA Terms");
+    page.getByTestId("UlaAppSettingsPage-notices-save-button").click();
+
+    assertThat(page.getByText("Saved version 1 of the ULA notices")).isVisible();
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-current"))
+        .containsText("Current: Version 1");
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-history-row-0")).containsText("1");
+    // Unchanged text cannot be saved again as a new version.
+    assertThat(page.getByTestId("UlaAppSettingsPage-notices-save-button")).isDisabled();
+  }
+
   @Test
   public void non_admins_are_denied_the_settings_pages() throws Exception {
     setupGradStudentUser();

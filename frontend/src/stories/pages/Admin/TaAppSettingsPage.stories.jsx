@@ -2,6 +2,7 @@ import React from "react";
 import { HttpResponse, http } from "msw";
 import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
+import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -11,6 +12,12 @@ const common = [
   ),
   http.get("/api/systemInfo", () =>
     HttpResponse.json(systemInfoFixtures.showingNeither),
+  ),
+  http.get("/api/admin/notices/all", () =>
+    HttpResponse.json(noticesFixtures.taHistory),
+  ),
+  http.post("/api/admin/notices", () =>
+    HttpResponse.json({ ...noticesFixtures.taV2, id: 9 }),
   ),
   http.post("/api/admin/settings/ta-majors/post", () =>
     HttpResponse.json({ name: "Mathematics" }),

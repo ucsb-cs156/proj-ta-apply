@@ -1,10 +1,14 @@
 import type { Application } from "main/components/Applications/ApplicationTable";
+import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import { courseInterestLabel } from "main/utils/applicationFields";
+import type { NoticeVersion } from "main/utils/notices";
 
 type ApplicationSummaryProps = {
   application: Application;
   /** TA and ULA ask different questions, so only the relevant ones are shown back. */
   type: "TA" | "ULA";
+  /** The notice version the applicant agreed to, if the caller has it; shown back ticked. */
+  notice?: NoticeVersion | null;
   testIdPrefix?: string;
 };
 
@@ -56,6 +60,7 @@ const topicRatings = (proficiencies: Record<string, number> | null): string => {
 export default function ApplicationSummary({
   application,
   type,
+  notice = null,
   testIdPrefix = "ApplicationSummary",
 }: ApplicationSummaryProps): React.JSX.Element {
   const isTa = type === "TA";
@@ -167,23 +172,32 @@ export default function ApplicationSummary({
   );
 
   return (
-    <dl className="row" data-testid={testIdPrefix}>
-      {rows.map((row) => (
-        <div className="row mb-1" key={row.label}>
-          <dt className="col-sm-4">{row.label}</dt>
-          <dd
-            className="col-sm-8"
-            data-testid={`${testIdPrefix}-${row.label}`}
-            style={
-              row.mono
-                ? { whiteSpace: "pre", fontFamily: "monospace" }
-                : undefined
-            }
-          >
-            {row.value}
-          </dd>
-        </div>
-      ))}
-    </dl>
+    <>
+      <dl className="row" data-testid={testIdPrefix}>
+        {rows.map((row) => (
+          <div className="row mb-1" key={row.label}>
+            <dt className="col-sm-4">{row.label}</dt>
+            <dd
+              className="col-sm-8"
+              data-testid={`${testIdPrefix}-${row.label}`}
+              style={
+                row.mono
+                  ? { whiteSpace: "pre", fontFamily: "monospace" }
+                  : undefined
+              }
+            >
+              {row.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <NoticeAgreement
+        notice={notice}
+        agreed={application.noticeVersionId === notice?.id}
+        onChange={() => {}}
+        readOnly
+        testIdPrefix={`${testIdPrefix}-notice`}
+      />
+    </>
   );
 }

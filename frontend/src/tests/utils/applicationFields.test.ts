@@ -42,6 +42,7 @@ const fields = (
   coursework290: "",
   videoLink: "",
   previousServiceAsUla: "2",
+  noticeVersionId: 1,
   ...overrides,
 });
 

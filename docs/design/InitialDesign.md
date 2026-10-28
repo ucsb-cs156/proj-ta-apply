@@ -202,3 +202,21 @@ The lists from the fifth iteration are wired into the application form, for TAs 
 
 The form reads both lists from one endpoint keyed by recruitment, so a TA recruitment always shows
 the TA lists and a ULA recruitment the ULA lists.
+
+# Seventh Iteration
+
+Each application form carries a block of "Notices, Terms and Conditions" that applicants must
+agree to.
+
+* **TA App Settings** and **ULA App Settings** each gain a **Notices, Terms and Conditions** card
+  with a Markdown editor (the same EasyMDE editor proj-citelines uses). Every save by an admin
+  stores the entire text as a **new version** in a `notice_versions` table, with its own id and a
+  date/time stamp; nothing is ever edited in place or deleted. The card shows the version history.
+* Each time a TA or ULA application is filled out, the form shows the **most recent version** of
+  that type's text, followed by a required checkbox: *"I have read and understood the text above,
+  and I agree to the terms and conditions it specifies."* The application stores the id of the
+  version that was shown (`applications.notice_version_id`), and when the application is shown
+  later, that version is displayed, not whatever is current by then.
+* Until an admin has written a first version for a form type, the form shows no notice and asks for
+  no agreement; the backend enforces the same rule, so a submission cannot skip the box once a
+  notice exists.

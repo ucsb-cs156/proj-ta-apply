@@ -4,16 +4,19 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 
 import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
+import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.TaMajor;
 import edu.ucsb.cs.taapply.entity.TaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -38,9 +41,21 @@ public class ApplicationsWebIT extends WebTestCase {
 
   @Autowired TaMajorRepository taMajorRepository;
   @Autowired TaTopicRepository taTopicRepository;
+  @Autowired NoticeVersionRepository noticeVersionRepository;
+
+  /** The notice every TA applicant must agree to. */
+  private NoticeVersion seedTaNotice() {
+    return noticeVersionRepository.save(
+        NoticeVersion.builder()
+            .type(RecruitmentType.TA)
+            .content("# TA Terms\n\nBe available for the **whole** quarter.")
+            .createdAt(LocalDateTime.of(2026, 1, 2, 3, 4))
+            .build());
+  }
 
   /** The admin-maintained lists the TA form offers. */
   private void seedTaLists() {
+    seedTaNotice();
     taMajorRepository.save(TaMajor.builder().name("Computer Science").build());
     taMajorRepository.save(TaMajor.builder().name("Statistics").build());
     taTopicRepository.save(TaTopic.builder().name("Java").build());
@@ -94,6 +109,13 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
     page.getByTestId("ApplyPage-availableForLecturesFirstChoice").check();
     page.getByTestId("ApplyPage-courseInterest-CMPSC-130A-ENTHUSIASTIC").check();
+
+    // The notice is shown, rendered from Markdown, and the submit is refused until agreed.
+    assertThat(page.getByTestId("ApplyPage-notice-content").locator("h1")).containsText("TA Terms");
+    page.getByTestId("ApplyPage-submit").click();
+    assertThat(page.getByTestId("ApplyPage-notice-agree"))
+        .hasClass(java.util.regex.Pattern.compile("is-invalid"));
+    page.getByTestId("ApplyPage-notice-agree").check();
     page.getByTestId("ApplyPage-submit").click();
   }
 
@@ -138,6 +160,9 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-firstName")).hasValue("Chris");
     assertThat(page.getByTestId("ApplicationPage-major")).hasValue("Computer Science");
     assertThat(page.getByTestId("ApplicationPage-topic-Java-4")).isChecked();
+    // The version agreed to is shown back, already ticked.
+    assertThat(page.getByTestId("ApplicationPage-notice-agree")).isChecked();
+    assertThat(page.getByTestId("ApplicationPage-notice-version")).containsText("Version 1");
     assertThat(page.getByTestId("ApplicationPage-firstChoiceCourse")).hasValue("CMPSC   156");
     // The first choice row says so instead of offering options; the other answer came back.
     assertThat(page.getByTestId("ApplicationPage-courseInterest-CMPSC-156-choice"))

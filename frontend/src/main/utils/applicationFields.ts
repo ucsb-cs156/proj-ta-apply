@@ -64,6 +64,8 @@ export type ApplicationFormFields = {
   coursework290: string;
   videoLink: string;
   previousServiceAsUla: string;
+  /** The notice version the applicant ticked the box for; null when no notice is shown. */
+  noticeVersionId: number | null;
 };
 
 /** The shape the API takes, once the numeric answers are numbers again. */
