@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-19-course-interest","number":21,"title":"Replace the free-text \"other courses\" question with per-course interest options","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/21"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-20-section-times","number":22,"title":"Show lecture and section times for a chosen course, and ask about availability","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/22"}]
