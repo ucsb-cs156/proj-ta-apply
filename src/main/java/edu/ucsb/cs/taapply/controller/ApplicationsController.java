@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -61,7 +62,8 @@ public class ApplicationsController extends ApiController {
       String yearInProgram,
       String graduationDate,
       String courseworkUcsb,
-      String knowledge,
+      /** Topic name to self-rated proficiency 1..5; may be null or empty. */
+      Map<String, Integer> topicProficiencies,
       String prevExperience,
       String comments,
       String firstChoiceCourse,
@@ -281,6 +283,34 @@ public class ApplicationsController extends ApiController {
     return interests;
   }
 
+  public static final int MIN_PROFICIENCY = 1;
+  public static final int MAX_PROFICIENCY = 5;
+
+  /**
+   * The topic ratings worth storing: every topic the applicant rated, each between 1 and 5. A
+   * missing map means no ratings. A rating outside the scale cannot come from the form's radio
+   * buttons, so it is refused rather than clamped.
+   */
+  static Map<String, Integer> topicProficienciesFrom(ApplicationFields fields) {
+    // Sorted by topic so the JSON an application is returned as is stable.
+    Map<String, Integer> proficiencies = new TreeMap<>();
+    Map<String, Integer> sent =
+        fields.topicProficiencies() == null ? Map.of() : fields.topicProficiencies();
+    for (Map.Entry<String, Integer> entry : sent.entrySet()) {
+      Integer level = entry.getValue();
+      if (level == null) {
+        continue;
+      }
+      if (level < MIN_PROFICIENCY || level > MAX_PROFICIENCY) {
+        throw new IllegalArgumentException(
+            "Proficiency in %s must be between %d and %d"
+                .formatted(entry.getKey(), MIN_PROFICIENCY, MAX_PROFICIENCY));
+      }
+      proficiencies.put(entry.getKey(), level);
+    }
+    return proficiencies;
+  }
+
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
   private static void apply(ApplicationFields fields, Application application) {
     application.setFirstName(fields.firstName());
@@ -292,7 +322,7 @@ public class ApplicationsController extends ApiController {
     application.setYearInProgram(fields.yearInProgram());
     application.setGraduationDate(fields.graduationDate());
     application.setCourseworkUcsb(fields.courseworkUcsb());
-    application.setKnowledge(fields.knowledge());
+    application.setTopicProficiencies(topicProficienciesFrom(fields));
     application.setPrevExperience(fields.prevExperience());
     application.setComments(fields.comments());
     application.setFirstChoiceCourse(fields.firstChoiceCourse());

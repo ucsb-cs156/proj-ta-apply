@@ -5,22 +5,32 @@ import type { Application } from "main/components/Applications/ApplicationTable"
 import {
   COURSE_INTEREST_OPTIONS,
   DEFAULT_COURSE_INTEREST,
+  OTHER_MAJOR,
+  PROFICIENCY_LEVELS,
   toPayload,
   type ApplicationFormFields,
   type ApplicationPayload,
 } from "main/utils/applicationFields";
 
 /**
- * The answers react-hook-form manages. The per-course interest answers are kept apart in plain
- * state: the course list arrives from the backend after the form has mounted, and react-hook-form
- * reads its defaults only once, so rows registered late would start unanswered.
+ * The answers react-hook-form manages. The major, the per-course interest answers and the topic
+ * ratings are kept apart in plain state: their option lists arrive from the backend after the form
+ * has mounted, and react-hook-form reads its defaults only once, so fields registered late would
+ * start unanswered.
  */
-type RegisteredFields = Omit<ApplicationFormFields, "courseInterests">;
+type RegisteredFields = Omit<
+  ApplicationFormFields,
+  "major" | "courseInterests" | "topicProficiencies"
+>;
 
 type ApplicationFormProps = {
   type: "TA" | "ULA";
   /** Course numbers offered by this recruitment, already padded for alignment. */
   courses: string[];
+  /** The admin-maintained majors list for this kind of application. */
+  majors: string[];
+  /** The admin-maintained topics list for this kind of application. */
+  topics: string[];
   initialContents?: Partial<Application>;
   /**
    * Names from the signed-in Google account, used only where the application itself has none.
@@ -66,12 +76,14 @@ const CLASS_LEVEL_OPTIONS = [
   { value: "MS", label: "MS" },
 ];
 
-/** "CMPSC   156" becomes "CMPSC-156": a course id as it can appear in an element id. */
-const slug = (courseId: string): string => courseId.replace(/\s+/g, "-");
+/** "CMPSC   156" becomes "CMPSC-156": a course id or topic as it can appear in an element id. */
+const slug = (name: string): string => name.replace(/\s+/g, "-");
 
 export default function ApplicationForm({
   type,
   courses,
+  majors,
+  topics,
   initialContents,
   defaultNames,
   submitAction,
@@ -80,6 +92,14 @@ export default function ApplicationForm({
 }: ApplicationFormProps): React.JSX.Element {
   const isTa = type === "TA";
   const courseList = Array.isArray(courses) ? courses : [];
+  // Stryker disable next-line all : don't test default value of empty list
+  const majorList = Array.isArray(majors) ? majors : [];
+  // Stryker disable next-line all : don't test default value of empty list
+  const topicList = Array.isArray(topics) ? topics : [];
+
+  // Kept as plain strings so the course dropdowns can keep an earlier choice selectable.
+  const initialFirstChoice = asString(initialContents?.firstChoiceCourse);
+  const initialSecondChoice = asString(initialContents?.secondChoiceCourse);
 
   const defaults: Partial<RegisteredFields> = {
     // Falls back to the Google account only where the application has nothing, so a name the
@@ -90,17 +110,15 @@ export default function ApplicationForm({
     ),
     middleName: asString(initialContents?.middleName),
     lastName: firstAnswered(initialContents?.lastName, defaultNames?.lastName),
-    major: asString(initialContents?.major),
     gpaMajor: asString(initialContents?.gpaMajor),
     gpaOverall: asString(initialContents?.gpaOverall),
     yearInProgram: asString(initialContents?.yearInProgram),
     graduationDate: asString(initialContents?.graduationDate),
     courseworkUcsb: asString(initialContents?.courseworkUcsb),
-    knowledge: asString(initialContents?.knowledge),
     prevExperience: asString(initialContents?.prevExperience),
     comments: asString(initialContents?.comments),
-    firstChoiceCourse: asString(initialContents?.firstChoiceCourse),
-    secondChoiceCourse: asString(initialContents?.secondChoiceCourse),
+    firstChoiceCourse: initialFirstChoice,
+    secondChoiceCourse: initialSecondChoice,
     availableForLecturesFirstChoice: Boolean(
       initialContents?.availableForLecturesFirstChoice,
     ),
@@ -140,6 +158,36 @@ export default function ApplicationForm({
   ]);
   const asksAboutLanguageExam = isTa && VISA_STATUSES.includes(residency);
 
+  // The major is stored as plain text. If it is on the list the dropdown shows it; if not (the
+  // applicant chose Other, or the list changed since) the dropdown shows Other with the text
+  // beside it. otherChosen remembers an explicit choice of Other while the text is still blank.
+  const [major, setMajor] = useState<string>(asString(initialContents?.major));
+  const [otherChosen, setOtherChosen] = useState(false);
+  const [majorMissing, setMajorMissing] = useState(false);
+  const majorListed = majorList.includes(major);
+  const majorSelection =
+    otherChosen || (major !== "" && !majorListed) ? OTHER_MAJOR : major;
+  const asksForOtherMajor = majorSelection === OTHER_MAJOR;
+
+  const chooseMajor = (value: string) => {
+    setMajorMissing(false);
+    if (value === OTHER_MAJOR) {
+      setOtherChosen(true);
+      // Whatever was selected gives way to a blank box. (Free text already typed cannot reach
+      // here: while it is showing, the dropdown already reads Other and does not change.)
+      setMajor("");
+    } else {
+      setOtherChosen(false);
+      setMajor(value);
+    }
+  };
+
+  // Only the topics the applicant has rated; an unrated topic has no entry. Keyed by topic name,
+  // so a rating survives the list being reordered.
+  const [proficiencies, setProficiencies] = useState<Record<string, number>>(
+    () => ({ ...(initialContents?.topicProficiencies ?? {}) }),
+  );
+
   // Only the courses the applicant has marked; anything else reads as the default. Keyed by
   // course id, so it does not matter which courses were on the list when the answer was given.
   const [interests, setInterests] = useState<Record<string, string>>(() => ({
@@ -155,13 +203,39 @@ export default function ApplicationForm({
     return null;
   };
 
-  /** One answer per listed course, so the payload says what was asked, not only what changed. */
-  const answers = (data: RegisteredFields): ApplicationFormFields => ({
+  /**
+   * One answer per listed course, so the payload says what was asked, not only what changed; and
+   * a rating for each listed topic the applicant rated, so a topic dropped from the list since an
+   * earlier application does not come along silently.
+   */
+  const answers = (
+    data: RegisteredFields,
+    chosenMajor: string,
+  ): ApplicationFormFields => ({
     ...data,
+    major: chosenMajor,
     courseInterests: Object.fromEntries(
       courseList.map((courseId) => [courseId, interestIn(courseId)]),
     ),
+    topicProficiencies: Object.fromEntries(
+      topicList
+        .filter((topic) => proficiencies[topic] !== undefined)
+        .map((topic) => [topic, proficiencies[topic]]),
+    ),
   });
+
+  /** The major is outside react-hook-form, so its required check is done here. */
+  const submit = (data: RegisteredFields) => {
+    const chosenMajor = major.trim();
+    if (chosenMajor === "") {
+      setMajorMissing(true);
+      return;
+    }
+    submitAction(toPayload(answers(data, chosenMajor)));
+  };
+  const flagMissingMajor = () => {
+    if (major.trim() === "") setMajorMissing(true);
+  };
 
   const id = (name: string) => `${testIdPrefix}-${name}`;
 
@@ -185,9 +259,7 @@ export default function ApplicationForm({
   };
 
   return (
-    <Form
-      onSubmit={handleSubmit((data) => submitAction(toPayload(answers(data))))}
-    >
+    <Form onSubmit={handleSubmit(submit, flagMissingMajor)}>
       <h2 className="h5 mt-3">About you</h2>
       <Row>
         <Form.Group as={Col} md={4} className="mb-3">
@@ -228,15 +300,45 @@ export default function ApplicationForm({
       <Row>
         <Form.Group as={Col} md={4} className="mb-3">
           <Form.Label htmlFor={id("major")}>Major</Form.Label>
-          <Form.Control
+          <Form.Select
             id={id("major")}
             data-testid={id("major")}
-            isInvalid={Boolean(errors.major)}
-            {...register("major", { required: true })}
-          />
+            isInvalid={majorMissing && !asksForOtherMajor}
+            value={majorSelection}
+            onChange={(e) => chooseMajor(e.target.value)}
+          >
+            <option value="">Choose a major</option>
+            {majorList.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+            <option value={OTHER_MAJOR}>Other</option>
+          </Form.Select>
           <Form.Control.Feedback type="invalid">
-            {errors.major && "A major is required."}
+            A major is required.
           </Form.Control.Feedback>
+          {asksForOtherMajor && (
+            <>
+              <Form.Label htmlFor={id("otherMajor")} className="mt-2">
+                Other major
+              </Form.Label>
+              <Form.Control
+                id={id("otherMajor")}
+                data-testid={id("otherMajor")}
+                placeholder="Enter your major"
+                isInvalid={majorMissing}
+                value={major}
+                onChange={(e) => {
+                  setMajorMissing(false);
+                  setMajor(e.target.value);
+                }}
+              />
+              <Form.Control.Feedback type="invalid">
+                Please enter your major.
+              </Form.Control.Feedback>
+            </>
+          )}
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
           <Form.Label htmlFor={id("gpaMajor")}>GPA in Major</Form.Label>
@@ -417,17 +519,64 @@ export default function ApplicationForm({
         </>
       )}
 
-      <Form.Group className="mb-3">
-        <Form.Label htmlFor={id("knowledge")}>
-          Languages, Tools and Technologies You Know
+      <Form.Group className="mb-3" data-testid={id("topicProficiencies")}>
+        <Form.Label as="p" className="mb-1">
+          Topic Proficiency
         </Form.Label>
-        <Form.Control
-          id={id("knowledge")}
-          data-testid={id("knowledge")}
-          as="textarea"
-          rows={2}
-          {...register("knowledge")}
-        />
+        <p className="text-muted small mb-2">
+          Choose a level of proficiency, with 1 being the lowest, and 5 being
+          the highest.
+        </p>
+        {topicList.length === 0 ? (
+          <p
+            className="text-muted small"
+            data-testid={id("topicProficiencies-none")}
+          >
+            No topics are listed yet.
+          </p>
+        ) : (
+          <Table size="sm" responsive className="align-middle">
+            <thead>
+              <tr>
+                <th>Topic</th>
+                {PROFICIENCY_LEVELS.map((level) => (
+                  <th key={level} className="text-center fw-normal">
+                    {level}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {topicList.map((topic) => {
+                const rowId = id(`topic-${slug(topic)}`);
+                return (
+                  <tr key={topic} data-testid={rowId}>
+                    <td>{topic}</td>
+                    {PROFICIENCY_LEVELS.map((level) => (
+                      <td key={level} className="text-center">
+                        <Form.Check
+                          type="radio"
+                          name={rowId}
+                          id={`${rowId}-${level}`}
+                          data-testid={`${rowId}-${level}`}
+                          aria-label={`${topic}: ${level}`}
+                          value={level}
+                          checked={proficiencies[topic] === level}
+                          onChange={() =>
+                            setProficiencies((previous) => ({
+                              ...previous,
+                              [topic]: level,
+                            }))
+                          }
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        )}
       </Form.Group>
 
       <Form.Group className="mb-3">
@@ -456,7 +605,7 @@ export default function ApplicationForm({
             isInvalid={Boolean(errors.firstChoiceCourse)}
             {...register("firstChoiceCourse", { required: true })}
           >
-            {courseOptions(false, defaults.firstChoiceCourse ?? "")}
+            {courseOptions(false, initialFirstChoice)}
           </Form.Select>
           <Form.Control.Feedback type="invalid">
             {errors.firstChoiceCourse && "A first choice course is required."}
@@ -488,7 +637,7 @@ export default function ApplicationForm({
             style={{ fontFamily: "monospace", whiteSpace: "pre" }}
             {...register("secondChoiceCourse")}
           >
-            {courseOptions(true, defaults.secondChoiceCourse ?? "")}
+            {courseOptions(true, initialSecondChoice)}
           </Form.Select>
           <Form.Check
             className="mt-2"

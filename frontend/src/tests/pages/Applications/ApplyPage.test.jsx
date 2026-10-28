@@ -9,6 +9,7 @@ import { vi } from "vitest";
 import ApplyPage from "main/pages/Applications/ApplyPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -54,7 +55,33 @@ describe("ApplyPage tests", () => {
       .reply(200, systemInfoFixtures.showingNeither);
     axiosMock.onGet("/api/recruitments/applicable").reply(200, [openUla]);
     axiosMock.onGet("/api/recruitments/courses").reply(200, courses);
+    axiosMock
+      .onGet("/api/recruitments/options")
+      .reply(200, appSettingsFixtures.ulaOptions);
     axiosMock.onGet("/api/applications/prefill").reply(200, []);
+  });
+
+  /** The majors and topics come from the lists for this recruitment's type. */
+  test("the major dropdown and topic rows are fed from the recruitment's options", async () => {
+    renderPage();
+
+    const select = await screen.findByTestId("ApplyPage-major");
+    await waitFor(() =>
+      expect([...select.options].map((o) => o.textContent)).toEqual([
+        "Choose a major",
+        "Computer Science",
+        "Mathematics",
+        "Other",
+      ]),
+    );
+    expect(
+      screen.getByTestId("ApplyPage-topic-JavaScript-1"),
+    ).toBeInTheDocument();
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/recruitments/options",
+      )[0].params,
+    ).toEqual({ recruitmentId: "2" });
   });
 
   test("names the recruitment being applied to", async () => {
@@ -150,10 +177,14 @@ describe("ApplyPage tests", () => {
     await userEvent.type(screen.getByTestId("ApplyPage-firstName"), "Chris");
     await userEvent.clear(screen.getByTestId("ApplyPage-lastName"));
     await userEvent.type(screen.getByTestId("ApplyPage-lastName"), "Gaucho");
-    await userEvent.type(
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-major").options.length).toBe(4),
+    );
+    await userEvent.selectOptions(
       screen.getByTestId("ApplyPage-major"),
       "Computer Science",
     );
+    await userEvent.click(screen.getByTestId("ApplyPage-topic-React-4"));
     await userEvent.selectOptions(
       screen.getByTestId("ApplyPage-firstChoiceCourse"),
       "CMPSC   156",
@@ -166,6 +197,8 @@ describe("ApplyPage tests", () => {
 
     const sent = JSON.parse(axiosMock.history.post[0].data);
     expect(sent.firstName).toBe("Chris");
+    expect(sent.major).toBe("Computer Science");
+    expect(sent.topicProficiencies).toEqual({ React: 4 });
     expect(sent.firstChoiceCourse).toBe("CMPSC   156");
     // The applicant does not get to choose these.
     expect(sent.status).toBeUndefined();
@@ -193,7 +226,12 @@ describe("ApplyPage tests", () => {
     await userEvent.type(screen.getByTestId("ApplyPage-firstName"), "Chris");
     await userEvent.clear(screen.getByTestId("ApplyPage-lastName"));
     await userEvent.type(screen.getByTestId("ApplyPage-lastName"), "Gaucho");
-    await userEvent.type(screen.getByTestId("ApplyPage-major"), "CS");
+    // A major that is not on the list goes in as Other plus text.
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplyPage-major"),
+      "Other",
+    );
+    await userEvent.type(screen.getByTestId("ApplyPage-otherMajor"), "CS");
     await userEvent.selectOptions(
       screen.getByTestId("ApplyPage-firstChoiceCourse"),
       "CMPSC   156",

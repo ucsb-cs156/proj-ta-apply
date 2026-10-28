@@ -4,7 +4,11 @@ import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import TestOnlyBanner from "main/components/Common/TestOnlyBanner";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
 import ApplicationSummary from "main/components/Applications/ApplicationSummary";
-import type { ApplicationPayload } from "main/utils/applicationFields";
+import {
+  EMPTY_OPTIONS,
+  type ApplicationOptions,
+  type ApplicationPayload,
+} from "main/utils/applicationFields";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
@@ -42,6 +46,18 @@ export default function TestApplicationPage(): React.JSX.Element {
     },
     // Stryker disable next-line all : don't test default value of empty list
     [],
+  );
+
+  // The majors and topics lists, exactly as an applicant to this recruitment would get them.
+  const { data: options } = useBackend<ApplicationOptions>(
+    ["/api/recruitments/options", recruitmentId],
+    {
+      method: "GET",
+      url: "/api/recruitments/options",
+      params: { recruitmentId },
+    },
+    // Stryker disable next-line all : don't test default value of empty lists
+    EMPTY_OPTIONS,
   );
 
   // The admin's own applications, to show back the test one saved for this recruitment.
@@ -102,6 +118,8 @@ export default function TestApplicationPage(): React.JSX.Element {
             <ApplicationForm
               type={recruitment.type}
               courses={courses}
+              majors={options?.majors ?? []}
+              topics={options?.topics ?? []}
               defaultNames={{
                 firstName: currentUser.root?.user?.givenName,
                 lastName: currentUser.root?.user?.familyName,

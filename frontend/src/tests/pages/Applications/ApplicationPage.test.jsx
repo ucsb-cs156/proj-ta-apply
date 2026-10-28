@@ -9,6 +9,7 @@ import { vi } from "vitest";
 import ApplicationPage from "main/pages/Applications/ApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -56,6 +57,27 @@ describe("ApplicationPage tests", () => {
     axiosMock
       .onGet("/api/recruitments/courses")
       .reply(200, ["CMPSC     8", "CMPSC   156"]);
+    axiosMock
+      .onGet("/api/recruitments/options")
+      .reply(200, appSettingsFixtures.ulaOptions);
+  });
+
+  test("the editable form is fed the options for the application's recruitment", async () => {
+    renderPage();
+
+    const select = await screen.findByTestId("ApplicationPage-major");
+    await waitFor(() =>
+      expect([...select.options].map((o) => o.textContent)).toContain(
+        "Mathematics",
+      ),
+    );
+    // Chris's stored rating for React is pre-selected.
+    expect(screen.getByTestId("ApplicationPage-topic-React-2")).toBeChecked();
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/recruitments/options",
+      )[0].params,
+    ).toEqual({ recruitmentId: 2 });
   });
 
   afterEach(() => {

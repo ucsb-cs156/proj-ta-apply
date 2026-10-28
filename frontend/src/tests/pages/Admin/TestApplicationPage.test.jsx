@@ -10,6 +10,7 @@ import TestApplicationPage from "main/pages/Admin/TestApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
+import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -66,6 +67,28 @@ describe("TestApplicationPage tests", () => {
       .onGet("/api/recruitmentcourses/all")
       .reply(200, recruitmentCoursesFixtures.fourCourses);
     axiosMock.onGet("/api/applications/mine").reply(200, []);
+    axiosMock
+      .onGet("/api/recruitments/options")
+      .reply(200, appSettingsFixtures.taOptions);
+  });
+
+  test("the form is fed the majors and topics for the recruitment", async () => {
+    renderPage();
+
+    const select = await screen.findByTestId("TestApplicationPage-major");
+    await waitFor(() =>
+      expect([...select.options].map((o) => o.textContent)).toContain(
+        "Statistics",
+      ),
+    );
+    expect(
+      screen.getByTestId("TestApplicationPage-topic-Compilers-1"),
+    ).toBeInTheDocument();
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/recruitments/options",
+      )[0].params,
+    ).toEqual({ recruitmentId: "3" });
   });
 
   test("shows the test-only banner below the navbar", async () => {
@@ -180,7 +203,12 @@ describe("TestApplicationPage tests", () => {
           .length,
       ).toBe(4),
     );
-    await userEvent.type(
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("TestApplicationPage-major").options.length,
+      ).toBe(5),
+    );
+    await userEvent.selectOptions(
       screen.getByTestId("TestApplicationPage-major"),
       "Computer Science",
     );

@@ -34,7 +34,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -94,7 +97,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           "2nd",
           "S27",
           "CS 156, CS 130A",
-          "Java, Spring, React",
+          Map.of("Java", 5, "React", 3),
           "TA for CS 24",
           "Happy to help with either",
           "CMPSC   156",
@@ -129,7 +132,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           FULL_FIELDS.yearInProgram(),
           FULL_FIELDS.graduationDate(),
           FULL_FIELDS.courseworkUcsb(),
-          FULL_FIELDS.knowledge(),
+          FULL_FIELDS.topicProficiencies(),
           FULL_FIELDS.prevExperience(),
           FULL_FIELDS.comments(),
           FULL_FIELDS.firstChoiceCourse(),
@@ -160,7 +163,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.yearInProgram(),
         FULL_FIELDS.graduationDate(),
         FULL_FIELDS.courseworkUcsb(),
-        FULL_FIELDS.knowledge(),
+        FULL_FIELDS.topicProficiencies(),
         FULL_FIELDS.prevExperience(),
         FULL_FIELDS.comments(),
         FULL_FIELDS.firstChoiceCourse(),
@@ -170,6 +173,38 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.availableForDiscussionFirstChoice(),
         FULL_FIELDS.availableForDiscussionSecondChoice(),
         interests,
+        FULL_FIELDS.residencyStatus(),
+        FULL_FIELDS.languageExam(),
+        FULL_FIELDS.languageExamDatePassed(),
+        FULL_FIELDS.classLevel(),
+        FULL_FIELDS.courseworkOther(),
+        FULL_FIELDS.coursework290(),
+        FULL_FIELDS.videoLink(),
+        FULL_FIELDS.previousServiceAsUla());
+  }
+
+  /** The full application with a different set of topic ratings. */
+  private static ApplicationFields withProficiencies(Map<String, Integer> proficiencies) {
+    return new ApplicationFields(
+        FULL_FIELDS.firstName(),
+        FULL_FIELDS.middleName(),
+        FULL_FIELDS.lastName(),
+        FULL_FIELDS.major(),
+        FULL_FIELDS.gpaMajor(),
+        FULL_FIELDS.gpaOverall(),
+        FULL_FIELDS.yearInProgram(),
+        FULL_FIELDS.graduationDate(),
+        FULL_FIELDS.courseworkUcsb(),
+        proficiencies,
+        FULL_FIELDS.prevExperience(),
+        FULL_FIELDS.comments(),
+        FULL_FIELDS.firstChoiceCourse(),
+        FULL_FIELDS.secondChoiceCourse(),
+        FULL_FIELDS.availableForLecturesFirstChoice(),
+        FULL_FIELDS.availableForLecturesSecondChoice(),
+        FULL_FIELDS.availableForDiscussionFirstChoice(),
+        FULL_FIELDS.availableForDiscussionSecondChoice(),
+        FULL_FIELDS.courseInterests(),
         FULL_FIELDS.residencyStatus(),
         FULL_FIELDS.languageExam(),
         FULL_FIELDS.languageExamDatePassed(),
@@ -198,7 +233,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .yearInProgram("2nd")
         .graduationDate("S27")
         .courseworkUcsb("CS 156, CS 130A")
-        .knowledge("Java, Spring, React")
+        .topicProficiencies(new TreeMap<>(Map.of("Java", 5, "React", 3)))
         .prevExperience("TA for CS 24")
         .comments("Happy to help with either")
         .firstChoiceCourse("CMPSC   156")
@@ -984,5 +1019,118 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     assertEquals("Recruitment with id 99 not found", responseToJson(response).get("message"));
     verify(applicationRepository, never()).save(any());
+  }
+
+  // ---- topic proficiencies ----
+
+  /** Only rated topics are stored, and a rating must be on the 1 to 5 scale. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void topic_ratings_are_stored_and_unrated_topics_are_skipped() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    Map<String, Integer> sent = new HashMap<>();
+    sent.put("Python", 1);
+    sent.put("Java", 5);
+    sent.put("Compilers", null); // shown but never answered
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withProficiencies(sent)))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of("Python", 1, "Java", 5), saved().getTopicProficiencies());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void a_missing_topic_rating_map_is_stored_as_empty() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withProficiencies(null)))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of(), saved().getTopicProficiencies());
+  }
+
+  /** The radio buttons offer 1 to 5; anything else did not come from the form. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @ParameterizedTest
+  @ValueSource(ints = {0, 6, -1})
+  public void a_topic_rating_off_the_scale_is_refused(int level) throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(withProficiencies(Map.of("Java", level))))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "Proficiency in Java must be between 1 and 5", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** The boundary values are both fine. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void topic_ratings_of_1_and_5_are_accepted() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withProficiencies(Map.of("Java", 1, "C", 5))))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of("Java", 1, "C", 5), saved().getTopicProficiencies());
+  }
+
+  /** Editing replaces the earlier ratings rather than merging with them. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void editing_replaces_the_topic_ratings() throws Exception {
+    Application existing = application(5L, 1L, GRAD_EMAIL);
+    existing.getTopicProficiencies().put("Haskell", 2);
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    mockMvc
+        .perform(
+            put("/api/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withProficiencies(Map.of("Java", 4))))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of("Java", 4), saved().getTopicProficiencies());
   }
 }
