@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-33-prior-coursework-v2","number":42,"title":"Replace the free-text coursework questions with a prior coursework table","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/42"}]
+pull_requests: []
