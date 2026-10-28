@@ -8,6 +8,7 @@ import { vi } from "vitest";
 
 import ApplicationPage from "main/pages/Applications/ApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
@@ -56,6 +57,9 @@ describe("ApplicationPage tests", () => {
     axiosMock
       .onGet("/api/recruitments/courses")
       .reply(200, ["CMPSC     8", "CMPSC   156"]);
+    axiosMock
+      .onGet("/api/recruitments/sections")
+      .reply(200, courseSectionsFixtures.cmpsc156);
   });
 
   afterEach(() => {
@@ -73,6 +77,24 @@ describe("ApplicationPage tests", () => {
     expect(
       await screen.findByTestId("ApplicationPage-status"),
     ).toHaveTextContent("Status: PENDING");
+  });
+
+  /** The stored first choice is looked up against the application's own recruitment. */
+  test("the first choice's lecture and section times are shown while editing", async () => {
+    renderPage();
+
+    expect(
+      await screen.findByTestId(
+        "ApplicationPage-firstChoiceSections-row-0-type",
+      ),
+    ).toHaveTextContent("Lecture");
+    const request = axiosMock.history.get.find(
+      (r) => r.url === "/api/recruitments/sections",
+    );
+    expect(request.params).toEqual({
+      recruitmentId: application.recruitmentId,
+      courseId: "CMPSC   156",
+    });
   });
 
   test("before the deadline the whole application is editable", async () => {

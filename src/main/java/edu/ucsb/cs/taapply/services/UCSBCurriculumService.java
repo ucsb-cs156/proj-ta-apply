@@ -60,6 +60,10 @@ public class UCSBCurriculumService {
   public static final String CURRICULUM_ENDPOINT =
       "{apiHost}/academics/curriculums/v1/classes/search";
 
+  /** One class by quarter and enroll code, with every section of the course it belongs to. */
+  public static final String CLASS_ENDPOINT =
+      "{apiHost}/academics/curriculums/v1/classes/{quarter}/{enrollCode}?includeClassSections=true";
+
   private final RestTemplate restTemplate;
 
   public UCSBCurriculumService(RestTemplateBuilder restTemplateBuilder) {
@@ -96,6 +100,14 @@ public class UCSBCurriculumService {
             "&pageNumber=%d&pageSize=%d&includeClassSections=%s",
             pageNumber, PAGE_SIZE, includeClassSections));
     return CURRICULUM_ENDPOINT.replace("{apiHost}", apiHost) + params;
+  }
+
+  /** Package-private so tests can assert on it. */
+  String urlForEnrollCode(String quarter, String enrollCode) {
+    return CLASS_ENDPOINT
+        .replace("{apiHost}", apiHost)
+        .replace("{quarter}", quarter)
+        .replace("{enrollCode}", enrollCode);
   }
 
   private HttpEntity<String> requestEntity() {
@@ -178,6 +190,20 @@ public class UCSBCurriculumService {
     }
 
     return result;
+  }
+
+  /**
+   * The course offering one of whose sections has the given enroll code, with all of its sections.
+   * Asking by enroll code rather than searching by course id means the answer is exactly the
+   * offering a recruitment course row came from, and costs one request rather than a paginated
+   * sweep of the subject area.
+   */
+  public UcsbCourseOffering getOffering(String quarter, String enrollCode) throws Exception {
+    String url = urlForEnrollCode(quarter, enrollCode);
+    log.info("url={}", url);
+    ResponseEntity<String> re =
+        restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);
+    return objectMapper.readValue(re.getBody(), UcsbCourseOffering.class);
   }
 
   /**

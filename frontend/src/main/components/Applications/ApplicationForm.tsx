@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button, Col, Form, Row, Table } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import type { Application } from "main/components/Applications/ApplicationTable";
+import CourseSectionsCard from "main/components/Applications/CourseSectionsCard";
 import {
   COURSE_INTEREST_OPTIONS,
   DEFAULT_COURSE_INTEREST,
@@ -21,6 +22,11 @@ type ApplicationFormProps = {
   type: "TA" | "ULA";
   /** Course numbers offered by this recruitment, already padded for alignment. */
   courses: string[];
+  /**
+   * The recruitment the courses belong to, so a chosen course's lecture and section times can be
+   * looked up. Without it no times are shown, which suits a story or a test with no backend.
+   */
+  recruitmentId?: number | string;
   initialContents?: Partial<Application>;
   /**
    * Names from the signed-in Google account, used only where the application itself has none.
@@ -72,6 +78,7 @@ const slug = (courseId: string): string => courseId.replace(/\s+/g, "-");
 export default function ApplicationForm({
   type,
   courses,
+  recruitmentId,
   initialContents,
   defaultNames,
   submitAction,
@@ -112,6 +119,12 @@ export default function ApplicationForm({
     ),
     availableForDiscussionSecondChoice: Boolean(
       initialContents?.availableForDiscussionSecondChoice,
+    ),
+    availabilityCommentsFirstChoice: asString(
+      initialContents?.availabilityCommentsFirstChoice,
+    ),
+    availabilityCommentsSecondChoice: asString(
+      initialContents?.availabilityCommentsSecondChoice,
     ),
     residencyStatus: asString(initialContents?.residencyStatus),
     languageExam: asString(initialContents?.languageExam),
@@ -461,6 +474,13 @@ export default function ApplicationForm({
           <Form.Control.Feedback type="invalid">
             {errors.firstChoiceCourse && "A first choice course is required."}
           </Form.Control.Feedback>
+          {recruitmentId !== undefined && firstChoice !== "" && (
+            <CourseSectionsCard
+              recruitmentId={recruitmentId}
+              courseId={firstChoice}
+              testIdPrefix={id("firstChoiceSections")}
+            />
+          )}
           <Form.Check
             className="mt-2"
             type="checkbox"
@@ -476,6 +496,19 @@ export default function ApplicationForm({
             label="Available for at least one discussion section"
             {...register("availableForDiscussionFirstChoice")}
           />
+          <Form.Label
+            className="mt-2 mb-1"
+            htmlFor={id("availabilityCommentsFirstChoice")}
+          >
+            1st Choice Availability Comments
+          </Form.Label>
+          <Form.Control
+            id={id("availabilityCommentsFirstChoice")}
+            data-testid={id("availabilityCommentsFirstChoice")}
+            as="textarea"
+            rows={2}
+            {...register("availabilityCommentsFirstChoice")}
+          />
         </Form.Group>
 
         <Form.Group as={Col} md={6} className="mb-3">
@@ -490,6 +523,13 @@ export default function ApplicationForm({
           >
             {courseOptions(true, defaults.secondChoiceCourse ?? "")}
           </Form.Select>
+          {recruitmentId !== undefined && secondChoice !== "" && (
+            <CourseSectionsCard
+              recruitmentId={recruitmentId}
+              courseId={secondChoice}
+              testIdPrefix={id("secondChoiceSections")}
+            />
+          )}
           <Form.Check
             className="mt-2"
             type="checkbox"
@@ -504,6 +544,19 @@ export default function ApplicationForm({
             data-testid={id("availableForDiscussionSecondChoice")}
             label="Available for at least one discussion section"
             {...register("availableForDiscussionSecondChoice")}
+          />
+          <Form.Label
+            className="mt-2 mb-1"
+            htmlFor={id("availabilityCommentsSecondChoice")}
+          >
+            2nd Choice Availability Comments
+          </Form.Label>
+          <Form.Control
+            id={id("availabilityCommentsSecondChoice")}
+            data-testid={id("availabilityCommentsSecondChoice")}
+            as="textarea"
+            rows={2}
+            {...register("availabilityCommentsSecondChoice")}
           />
         </Form.Group>
       </Row>

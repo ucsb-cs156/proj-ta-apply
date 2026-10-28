@@ -38,6 +38,8 @@ export type ApplicationFormFields = {
   availableForLecturesSecondChoice: boolean;
   availableForDiscussionFirstChoice: boolean;
   availableForDiscussionSecondChoice: boolean;
+  availabilityCommentsFirstChoice: string;
+  availabilityCommentsSecondChoice: string;
   /** Course id to interest, one entry per course the form showed, defaults included. */
   courseInterests: Record<string, string>;
   residencyStatus: string;
