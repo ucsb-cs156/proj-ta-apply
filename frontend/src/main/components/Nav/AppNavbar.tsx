@@ -67,9 +67,6 @@ export default function AppNavbar({
                   <NavDropdown.Item as={Link} to="/admin/instructors">
                     Instructors
                   </NavDropdown.Item>
-                  <NavDropdown.Item as={Link} to="/admin/gradstudents">
-                    Grad Students
-                  </NavDropdown.Item>
                   <NavDropdown.Item as={Link} to="/admin/courses">
                     Courses
                   </NavDropdown.Item>

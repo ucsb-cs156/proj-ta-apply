@@ -13,7 +13,6 @@ function renderDashboard(props = {}) {
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
         <ApplicantDashboard
-          type="ULA"
           open={[]}
           upcoming={[]}
           recentlyClosed={[]}
@@ -38,34 +37,26 @@ describe("ApplicantDashboard tests", () => {
 
   // ---- nothing open ----
 
-  test("says so when nothing is open, naming the right kind of position", () => {
-    renderDashboard({ type: "ULA" });
+  test("says so when nothing is open", () => {
+    renderDashboard();
 
     expect(
       screen.getByTestId("ApplicantDashboard-none-open"),
-    ).toHaveTextContent(
-      "Applications for ULA positions are not currently being accepted.",
-    );
-  });
-
-  test("a grad student is told about TA positions, not ULA ones", () => {
-    renderDashboard({ type: "TA" });
-
-    expect(
-      screen.getByTestId("ApplicantDashboard-none-open"),
-    ).toHaveTextContent(
-      "Applications for TA positions are not currently being accepted.",
-    );
+    ).toHaveTextContent("Applications are not currently being accepted.");
   });
 
   // ---- something open ----
 
-  test("an open recruitment offers a link to apply", () => {
-    renderDashboard({ open: [openUla] });
+  /** Each open recruitment names its own type, since a user may apply to either kind. */
+  test("an open recruitment offers a link to apply, naming its type", () => {
+    renderDashboard({ open: [openUla, { ...upcomingTa, id: 9 }] });
 
     expect(screen.queryByTestId("ApplicantDashboard-none-open")).toBeNull();
     expect(screen.getByTestId("ApplicantDashboard-open-2")).toHaveTextContent(
       "Applications for ULA positions in W26 are open.",
+    );
+    expect(screen.getByTestId("ApplicantDashboard-open-9")).toHaveTextContent(
+      "Applications for TA positions in S26 are open.",
     );
 
     const link = screen.getByTestId("ApplicantDashboard-apply-2");
@@ -108,7 +99,7 @@ describe("ApplicantDashboard tests", () => {
   // ---- upcoming and recently closed ----
 
   test("an upcoming recruitment reports its tentative opening date", () => {
-    renderDashboard({ type: "TA", upcoming: [upcomingTa] });
+    renderDashboard({ upcoming: [upcomingTa] });
 
     expect(
       screen.getByTestId("ApplicantDashboard-upcoming-3"),
@@ -118,10 +109,18 @@ describe("ApplicantDashboard tests", () => {
   });
 
   test("a recently closed recruitment reports when it opened and closed", () => {
-    renderDashboard({ type: "TA", recentlyClosed: [closedTa] });
+    renderDashboard({
+      recentlyClosed: [
+        closedTa,
+        { ...openUla, id: 8, actualClosingDate: "2026-03-01" },
+      ],
+    });
 
     expect(screen.getByTestId("ApplicantDashboard-closed-1")).toHaveTextContent(
       "The most recent round of TA applications, for W26, opened on 2026-01-06 and closed on 2026-02-01.",
+    );
+    expect(screen.getByTestId("ApplicantDashboard-closed-8")).toHaveTextContent(
+      "The most recent round of ULA applications, for W26,",
     );
   });
 
@@ -144,11 +143,11 @@ describe("ApplicantDashboard tests", () => {
   // ---- the applicant's own applications ----
 
   test("says so when there are no applications yet", () => {
-    renderDashboard({ type: "TA" });
+    renderDashboard();
 
     expect(
       screen.getByTestId("ApplicantDashboard-no-applications"),
-    ).toHaveTextContent("You have not applied for any TA positions yet.");
+    ).toHaveTextContent("You have not applied for any positions yet.");
     expect(screen.queryByTestId("ApplicantDashboard-applications")).toBeNull();
   });
 

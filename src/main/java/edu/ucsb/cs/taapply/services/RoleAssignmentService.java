@@ -1,7 +1,6 @@
 package edu.ucsb.cs.taapply.services;
 
 import edu.ucsb.cs.taapply.repository.AdminRepository;
-import edu.ucsb.cs.taapply.repository.GradStudentRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.utilities.CanonicalFormConverter;
 import java.util.Collection;
@@ -21,15 +20,15 @@ import org.springframework.stereotype.Service;
  * RoleUpdateInterceptor} (on every request). Those two must always agree, and they previously held
  * separate copies of the logic, which is a drift risk that grows with each new role.
  *
- * <p>ADMIN, INSTRUCTOR and GRAD_STUDENT are independent: a user may hold any combination. UNDERGRAD
- * is the exception, being defined by the absence of the other three.
+ * <p>There are three roles. ADMIN and INSTRUCTOR are independent: a user may hold either, both or
+ * neither. USER is held by everyone who is signed in. A user with nothing but USER is an applicant:
+ * a UCSB student who may apply to any open TA or ULA recruitment.
  */
 @Service
 public class RoleAssignmentService {
 
   @Autowired private AdminRepository adminRepository;
   @Autowired private InstructorRepository instructorRepository;
-  @Autowired private GradStudentRepository gradStudentRepository;
 
   @Value("#{'${app.admin.emails}'.split(',')}")
   private List<String> adminEmails;
@@ -37,8 +36,6 @@ public class RoleAssignmentService {
   public static final String ROLE_USER = "ROLE_USER";
   public static final String ROLE_ADMIN = "ROLE_ADMIN";
   public static final String ROLE_INSTRUCTOR = "ROLE_INSTRUCTOR";
-  public static final String ROLE_GRAD_STUDENT = "ROLE_GRAD_STUDENT";
-  public static final String ROLE_UNDERGRAD = "ROLE_UNDERGRAD";
 
   public static final String UCSB_EMAIL_SUFFIX = "@ucsb.edu";
 
@@ -46,23 +43,25 @@ public class RoleAssignmentService {
    * The roles this service owns. The interceptor strips these before recomputing, so that a role
    * removed from the database is dropped from a live session too.
    */
-  public static final Set<String> MANAGED_ROLES =
-      Set.of(ROLE_USER, ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_GRAD_STUDENT, ROLE_UNDERGRAD);
+  public static final Set<String> MANAGED_ROLES = Set.of(ROLE_USER, ROLE_ADMIN, ROLE_INSTRUCTOR);
 
   /**
-   * Holding at least one of these is what entitles someone to use the app at all. ROLE_USER is not
+   * Holding one of these entitles someone to use the app whatever their address. ROLE_USER is not
    * among them: it is granted to anyone who can complete a Google login, which is not a decision
    * this app makes.
    */
-  public static final Set<String> ACCESS_ROLES =
-      Set.of(ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_GRAD_STUDENT, ROLE_UNDERGRAD);
+  public static final Set<String> ACCESS_ROLES = Set.of(ROLE_ADMIN, ROLE_INSTRUCTOR);
 
   /**
-   * Whether these authorities entitle the holder to use the app. A signed-in Google user with a
-   * non-UCSB address who is in none of the role tables has only ROLE_USER, and is turned away.
+   * Whether this user may use the app: anyone with a UCSB address, who is then at least an
+   * applicant, and anyone in the admin or instructor tables whatever their address. A signed-in
+   * Google user with an outside address who is in neither table has only ROLE_USER, and is turned
+   * away.
    */
-  public static boolean grantsAccess(Collection<? extends GrantedAuthority> authorities) {
-    return authorities.stream().anyMatch(a -> ACCESS_ROLES.contains(a.getAuthority()));
+  public static boolean grantsAccess(
+      String email, Collection<? extends GrantedAuthority> authorities) {
+    return isUcsbEmail(email)
+        || authorities.stream().anyMatch(a -> ACCESS_ROLES.contains(a.getAuthority()));
   }
 
   /**
@@ -86,7 +85,6 @@ public class RoleAssignmentService {
     // Spring fails to start if it is missing entirely.
     boolean isAdmin = adminEmails.contains(email) || adminRepository.existsByEmail(email);
     boolean isInstructor = instructorRepository.existsByEmail(email);
-    boolean isGradStudent = gradStudentRepository.existsByEmail(email);
 
     Set<GrantedAuthority> authorities = new HashSet<>();
     authorities.add(new SimpleGrantedAuthority(ROLE_USER));
@@ -96,14 +94,6 @@ public class RoleAssignmentService {
     }
     if (isInstructor) {
       authorities.add(new SimpleGrantedAuthority(ROLE_INSTRUCTOR));
-    }
-    if (isGradStudent) {
-      authorities.add(new SimpleGrantedAuthority(ROLE_GRAD_STUDENT));
-    }
-    // An undergrad is a UCSB member with none of the other roles: someone who would apply for a
-    // ULA position rather than a TA position.
-    if (!isAdmin && !isInstructor && !isGradStudent && isUcsbEmail(email)) {
-      authorities.add(new SimpleGrantedAuthority(ROLE_UNDERGRAD));
     }
 
     return authorities;

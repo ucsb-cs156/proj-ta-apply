@@ -22,14 +22,16 @@ const empty = {
 
 /** The commonest state: nothing is open, and there is nothing to report. */
 export const NothingOpen = Template.bind({});
-NothingOpen.args = { type: "ULA", ...empty };
+NothingOpen.args = { ...empty };
 
 export const OpenForApplications = Template.bind({});
-OpenForApplications.args = { type: "ULA", ...empty, open: [openUla] };
+OpenForApplications.args = {
+  ...empty,
+  open: [openUla, { ...upcomingTa, id: 9 }],
+};
 
 export const AlreadyApplied = Template.bind({});
 AlreadyApplied.args = {
-  type: "ULA",
   ...empty,
   open: [openUla],
   applications: [applicationsFixtures.oneUlaApplication],
@@ -38,7 +40,6 @@ AlreadyApplied.args = {
 
 export const UpcomingAndRecentlyClosed = Template.bind({});
 UpcomingAndRecentlyClosed.args = {
-  type: "TA",
   ...empty,
   upcoming: [upcomingTa],
   recentlyClosed: [closedTa],

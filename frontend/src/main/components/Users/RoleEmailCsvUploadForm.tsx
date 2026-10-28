@@ -13,9 +13,9 @@ type RoleEmailCsvUploadFormProps = {
 };
 
 /**
- * Upload form for bulk-adding email addresses to one of the role tables. Shared by the grad
- * students and instructors pages so both behave identically; only the label and test id prefix
- * differ.
+ * Upload form for bulk-adding email addresses to a role table. Written to be shared between role
+ * pages (it once served grad students and instructors) so each behaves identically; only the
+ * label and test id prefix differ.
  */
 export default function RoleEmailCsvUploadForm({
   submitAction,

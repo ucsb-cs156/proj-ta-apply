@@ -1,14 +1,15 @@
 import type { ApiCurrentUser, CurrentUser } from "main/utils/currentUser";
 
-// ROLE_ADMIN, ROLE_INSTRUCTOR and ROLE_GRAD_STUDENT are independent: there is no role hierarchy,
-// so an admin does NOT implicitly hold the other two. Every signed-in user has ROLE_USER.
+// ROLE_ADMIN and ROLE_INSTRUCTOR are independent: there is no role hierarchy, so an admin does
+// NOT implicitly hold the other. Every signed-in user has ROLE_USER, and a user with nothing else
+// is an applicant.
 export const apiCurrentUserFixtures = {
-  // A UCSB address with no other role: the backend grants ROLE_UNDERGRAD.
+  // A UCSB address with no other role: an applicant.
   userOnly: {
     user: { email: "cgaucho@ucsb.edu", givenName: "Gaucho" },
-    roles: [{ authority: "ROLE_USER" }, { authority: "ROLE_UNDERGRAD" }],
+    roles: [{ authority: "ROLE_USER" }],
   },
-  // A non-UCSB address gets no undergrad role.
+  // An outside address in the admin or instructor table may sign in; one in neither cannot.
   nonUcsbUser: {
     user: { email: "someone@gmail.com", givenName: "Outsider" },
     roles: [{ authority: "ROLE_USER" }],
@@ -21,16 +22,12 @@ export const apiCurrentUserFixtures = {
     user: { email: "diba@ucsb.edu", givenName: "Diba" },
     roles: [{ authority: "ROLE_USER" }, { authority: "ROLE_INSTRUCTOR" }],
   },
-  gradStudentUser: {
-    user: { email: "grad@ucsb.edu", givenName: "Grad" },
-    roles: [{ authority: "ROLE_USER" }, { authority: "ROLE_GRAD_STUDENT" }],
-  },
-  instructorAndGradStudentUser: {
+  adminAndInstructorUser: {
     user: { email: "both@ucsb.edu", givenName: "Both" },
     roles: [
       { authority: "ROLE_USER" },
+      { authority: "ROLE_ADMIN" },
       { authority: "ROLE_INSTRUCTOR" },
-      { authority: "ROLE_GRAD_STUDENT" },
     ],
   },
 } satisfies Record<string, ApiCurrentUser>;
@@ -41,7 +38,7 @@ export const currentUserFixtures = {
     loggedIn: true as const,
     root: {
       ...apiCurrentUserFixtures.userOnly,
-      rolesList: ["ROLE_USER", "ROLE_UNDERGRAD"],
+      rolesList: ["ROLE_USER"],
     },
   },
   nonUcsbUser: {
@@ -65,18 +62,11 @@ export const currentUserFixtures = {
       rolesList: ["ROLE_USER", "ROLE_INSTRUCTOR"],
     },
   },
-  gradStudentUser: {
+  adminAndInstructorUser: {
     loggedIn: true as const,
     root: {
-      ...apiCurrentUserFixtures.gradStudentUser,
-      rolesList: ["ROLE_USER", "ROLE_GRAD_STUDENT"],
-    },
-  },
-  instructorAndGradStudentUser: {
-    loggedIn: true as const,
-    root: {
-      ...apiCurrentUserFixtures.instructorAndGradStudentUser,
-      rolesList: ["ROLE_USER", "ROLE_INSTRUCTOR", "ROLE_GRAD_STUDENT"],
+      ...apiCurrentUserFixtures.adminAndInstructorUser,
+      rolesList: ["ROLE_USER", "ROLE_ADMIN", "ROLE_INSTRUCTOR"],
     },
   },
 } satisfies Record<string, CurrentUser>;

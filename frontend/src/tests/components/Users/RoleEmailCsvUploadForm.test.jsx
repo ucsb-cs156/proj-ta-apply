@@ -10,8 +10,8 @@ describe("RoleEmailCsvUploadForm tests", () => {
       <MemoryRouter>
         <RoleEmailCsvUploadForm
           submitAction={submitAction}
-          label="Upload Grad Student Emails (CSV)"
-          testIdPrefix="GradStudentCSVUploadForm"
+          label="Upload Instructor Emails (CSV)"
+          testIdPrefix="InstructorCSVUploadForm"
         />
       </MemoryRouter>,
     );
@@ -21,27 +21,25 @@ describe("RoleEmailCsvUploadForm tests", () => {
   test("renders the file input, submit button, and instructions", () => {
     renderForm();
     expect(
-      screen.getByTestId("GradStudentCSVUploadForm-upload"),
+      screen.getByTestId("InstructorCSVUploadForm-upload"),
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId("GradStudentCSVUploadForm-submit"),
+      screen.getByTestId("InstructorCSVUploadForm-submit"),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Upload Grad Student Emails/)).toBeInTheDocument();
+    expect(screen.getByText(/Upload Instructor Emails/)).toBeInTheDocument();
     expect(screen.getByText(/column named/)).toBeInTheDocument();
   });
 
   test("the file input only accepts .csv", () => {
     renderForm();
     expect(
-      screen.getByTestId("GradStudentCSVUploadForm-upload"),
+      screen.getByTestId("InstructorCSVUploadForm-upload"),
     ).toHaveAttribute("accept", ".csv");
   });
 
   test("shows a validation error and does not submit when no file is chosen", async () => {
     const submitAction = renderForm();
-    await userEvent.click(
-      screen.getByTestId("GradStudentCSVUploadForm-submit"),
-    );
+    await userEvent.click(screen.getByTestId("InstructorCSVUploadForm-submit"));
 
     expect(
       await screen.findByText(/A CSV file is required./),
@@ -56,12 +54,10 @@ describe("RoleEmailCsvUploadForm tests", () => {
     });
 
     await userEvent.upload(
-      screen.getByTestId("GradStudentCSVUploadForm-upload"),
+      screen.getByTestId("InstructorCSVUploadForm-upload"),
       file,
     );
-    await userEvent.click(
-      screen.getByTestId("GradStudentCSVUploadForm-submit"),
-    );
+    await userEvent.click(screen.getByTestId("InstructorCSVUploadForm-submit"));
 
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
     const submitted = submitAction.mock.calls[0][0];

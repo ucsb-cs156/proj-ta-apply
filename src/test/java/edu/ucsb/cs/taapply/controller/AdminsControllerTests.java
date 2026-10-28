@@ -16,7 +16,6 @@ import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.Admin;
 import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
-import edu.ucsb.cs.taapply.repository.GradStudentRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import java.util.ArrayList;
@@ -44,7 +43,6 @@ public class AdminsControllerTests extends ControllerTestCase {
 
   @MockitoBean AdminRepository adminRepository;
   @MockitoBean InstructorRepository instructorRepository;
-  @MockitoBean GradStudentRepository gradStudentRepository;
   @MockitoBean UserRepository userRepository;
 
   // Authorization tests for post
@@ -203,18 +201,16 @@ public class AdminsControllerTests extends ControllerTestCase {
     // any combination of them.
     List<AdminsController.UserDTO> expectedUsers =
         List.of(
-            new AdminsController.UserDTO(user1, true, false, true),
-            new AdminsController.UserDTO(user2, false, true, false));
+            new AdminsController.UserDTO(user1, true, false),
+            new AdminsController.UserDTO(user2, false, true));
     AdminsController.UsersPageDTO expectedPage =
         new AdminsController.UsersPageDTO(expectedUsers, 0, 10, 2, 1);
 
     when(userRepository.findAll(eq(pageRequest))).thenReturn(usersPage);
     when(adminRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(true);
     when(instructorRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(false);
-    when(gradStudentRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(true);
     when(adminRepository.existsByEmail("craig.zzyzx@example.org")).thenReturn(false);
     when(instructorRepository.existsByEmail("craig.zzyzx@example.org")).thenReturn(true);
-    when(gradStudentRepository.existsByEmail("craig.zzyzx@example.org")).thenReturn(false);
 
     MvcResult response =
         mockMvc.perform(get("/api/admin/users")).andExpect(status().isOk()).andReturn();
@@ -222,10 +218,8 @@ public class AdminsControllerTests extends ControllerTestCase {
     verify(userRepository, times(1)).findAll(pageRequest);
     verify(adminRepository, times(1)).existsByEmail("phtcon@ucsb.edu");
     verify(instructorRepository, times(1)).existsByEmail("phtcon@ucsb.edu");
-    verify(gradStudentRepository, times(1)).existsByEmail("phtcon@ucsb.edu");
     verify(adminRepository, times(1)).existsByEmail("craig.zzyzx@example.org");
     verify(instructorRepository, times(1)).existsByEmail("craig.zzyzx@example.org");
-    verify(gradStudentRepository, times(1)).existsByEmail("craig.zzyzx@example.org");
     String expectedJson = mapper.writeValueAsString(expectedPage);
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);

@@ -51,9 +51,9 @@ public class CoursesControllerTests extends ControllerTestCase {
     mockMvc.perform(get("/api/courses/all")).andExpect(status().is(403));
   }
 
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
   @Test
-  public void grad_students_cannot_get_all() throws Exception {
+  public void instructors_cannot_get_all() throws Exception {
     mockMvc.perform(get("/api/courses/all")).andExpect(status().is(403));
   }
 

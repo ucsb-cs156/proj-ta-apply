@@ -241,3 +241,22 @@ application.
 * A TA applicant must list at least **three** courses; a ULA applicant is told to list every course
   that is relevant background for the courses they are applying to assist, which means at least
   **one**. Both minimums are enforced in the browser and by the backend.
+
+# Ninth Iteration
+
+The separate **Grad Student** role is removed. The roles are now only **Admin**, **Instructor**
+and **User**; a signed-in user holding neither of the first two is a student who may apply.
+
+* The `grad_students` table, its admin page (Admin > Grad Students), its CSV upload and the
+  `ROLE_GRAD_STUDENT` authority are all gone. The `ROLE_UNDERGRAD` authority that stood in for
+  "a UCSB address with no other role" goes with it: there is no longer anything to tell apart.
+  Who may sign in at all is unchanged: any UCSB address, plus any outside address that is in the
+  admins or instructors table.
+* The TA/ULA eligibility rule is gone with the role. Any signed-in user may apply to any open
+  recruitment, TA or ULA, and the endpoints that list recruitments, course choices, section times,
+  options and notices are open to every signed-in user rather than filtered by an applicant type.
+* On the home page, a user who is just `ROLE_USER` sees the applicant dashboard listing **every**
+  open recruitment, each line naming its type ("Applications for TA positions in F26 are open",
+  "Applications for ULA positions in F26 are open"), the upcoming ones likewise, and the most
+  recently closed round of each type. Admins and instructors see their own messages and no
+  dashboard, as before. The Users table no longer has a Grad Student column.

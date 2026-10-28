@@ -9,7 +9,6 @@ import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
-import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.models.CourseSections;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -18,14 +17,14 @@ import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
-import edu.ucsb.cs.taapply.services.GrantedAuthoritiesService;
-import edu.ucsb.cs.taapply.services.RoleAssignmentService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +39,8 @@ import org.springframework.web.bind.annotation.RestController;
  * What an applicant needs to know about recruitments: whether they can apply now, when a past one
  * ran, and when an upcoming one is expected to open.
  *
- * <p>Every response is filtered to the type the current user may apply to, so a grad student is
- * never shown a ULA recruitment and vice versa. That filtering happens here rather than in the
- * page, so it cannot be bypassed.
+ * <p>Any signed-in user may apply to any recruitment, TA or ULA, so nothing here is filtered by who
+ * is asking; each recruitment carries its type for the page to show.
  */
 @Tag(name = "ApplicantRecruitments")
 @RequestMapping("/api/recruitments")
@@ -53,7 +51,6 @@ public class ApplicantRecruitmentsController extends ApiController {
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired ApplicationAccessService applicationAccessService;
-  @Autowired GrantedAuthoritiesService grantedAuthoritiesService;
   @Autowired UCSBCurriculumService ucsbCurriculumService;
   @Autowired TaMajorRepository taMajorRepository;
   @Autowired TaTopicRepository taTopicRepository;
@@ -63,81 +60,70 @@ public class ApplicantRecruitmentsController extends ApiController {
   /** The admin-maintained lists the application form for one recruitment offers. */
   public static record ApplicationOptions(List<String> majors, List<String> topics) {}
 
-  private Optional<RecruitmentType> myType() {
-    return applicationAccessService.applicableType(
-        grantedAuthoritiesService.getGrantedAuthorities());
-  }
-
-  private List<Recruitment> ofMyType() {
-    return myType()
-        .map(
-            type ->
-                recruitmentRepository.findAllByOrderByQuarterDescTypeAsc().stream()
-                    .filter(r -> r.getType() == type)
-                    .toList())
-        .orElse(List.of());
+  /** Every recruitment, most recent quarter first, TA before ULA within a quarter. */
+  private List<Recruitment> all() {
+    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();
   }
 
   @Operation(
-      summary = "Open recruitments the current user may apply to",
-      description = "Empty for a user who is neither a grad student nor an undergrad.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+      summary = "Open recruitments, of either type",
+      description = "Each carries its type, so the page can say which positions it is for.")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/open")
   public List<Recruitment> openRecruitments() {
-    return ofMyType().stream().filter(applicationAccessService::acceptingApplications).toList();
+    return all().stream().filter(applicationAccessService::acceptingApplications).toList();
   }
 
   @Operation(
       summary = "Recruitments created but not yet opened",
       description = "So the home page can show when applications are expected to open.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/upcoming")
   public List<Recruitment> upcomingRecruitments() {
     // Never opened is the whole test: actualOpeningDate is stamped the first time a recruitment
     // opens and never cleared, so a null one has not opened yet and is necessarily still closed.
-    return ofMyType().stream().filter(r -> r.getActualOpeningDate() == null).toList();
+    return all().stream().filter(r -> r.getActualOpeningDate() == null).toList();
   }
 
   @Operation(
-      summary = "The most recently closed recruitment of the user's type",
-      description = "So the home page can say when the last round opened and closed.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+      summary = "The most recently closed recruitment of each type",
+      description = "So the home page can say when the last TA round and the last ULA round ran.")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/recentlyClosed")
   public List<Recruitment> recentlyClosed() {
     // Both conditions matter: a reopened recruitment keeps the closing date of its earlier round,
     // so having closed once is not enough; it has to be closed now.
-    // Already sorted most recent quarter first, so the first match is the one to show.
-    return ofMyType().stream()
+    // Already sorted most recent quarter first, so the first match of each type is the one to show.
+    Set<RecruitmentType> seen = new HashSet<>();
+    return all().stream()
         .filter(r -> r.getApplicationStatus() == ApplicationStatus.CLOSED)
         .filter(r -> r.getActualClosingDate() != null)
-        .limit(1)
+        .filter(r -> seen.add(r.getType()))
         .toList();
   }
 
   @Operation(
-      summary = "Every recruitment the current user could apply to, past or present",
+      summary = "Every recruitment, past or present",
       description =
-          "So a listing of their own applications can name the quarter and dates behind each one.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+          "So a listing of a user's own applications can name the quarter and dates behind each"
+              + " one.")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/applicable")
   public List<Recruitment> applicableRecruitments() {
-    return ofMyType();
+    return all();
   }
 
   @Operation(
       summary = "The course numbers an applicant may choose from",
       description =
           "Distinct and sorted, since a course with two lectures appears twice in the recruitment."
-              + " Empty for a recruitment the current user may not apply to.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+              + " Empty for a recruitment that does not exist.")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/courses")
   public List<String> courseChoices(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
 
-    // Answering only for a recruitment of their own type keeps this from becoming a way to read
-    // the other side's course list.
-    boolean mine = ofMyType().stream().anyMatch(r -> r.getId().equals(recruitmentId));
-    if (!mine) {
+    if (!recruitmentRepository.existsById(recruitmentId)) {
       return List.of();
     }
 
@@ -154,10 +140,9 @@ public class ApplicantRecruitmentsController extends ApiController {
       description =
           "Looked up live from the UCSB API via the enroll code of the course's lecture in the"
               + " recruitment, so an applicant choosing the course can see whether they are free."
-              + " 404 for a recruitment that does not exist; 403 for one the current user may not"
-              + " apply to, unless they are an admin previewing the form. A course the recruitment"
-              + " does not list comes back with no meetings rather than an error.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+              + " 404 for a recruitment that does not exist. A course the recruitment does not list"
+              + " comes back with no meetings rather than an error.")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/sections")
   public CourseSections courseSections(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
@@ -170,15 +155,6 @@ public class ApplicantRecruitmentsController extends ApiController {
         recruitmentRepository
             .findById(recruitmentId)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
-
-    // An admin trying the form (TestApplicationPage) has no applicable type but needs the card;
-    // everyone else only gets answers about recruitments of their own type.
-    boolean admin =
-        grantedAuthoritiesService.getGrantedAuthorities().stream()
-            .anyMatch(a -> RoleAssignmentService.ROLE_ADMIN.equals(a.getAuthority()));
-    if (!admin && myType().orElse(null) != recruitment.getType()) {
-      throw new ForbiddenException("That recruitment is not one you can apply to");
-    }
 
     // Any one lecture's enroll code finds the whole offering, every section included, so the
     // lowest is as good as any and keeps the request the same from one call to the next.
@@ -205,10 +181,9 @@ public class ApplicantRecruitmentsController extends ApiController {
   @Operation(
       summary = "The majors and topics lists the application form for a recruitment offers",
       description =
-          "The TA lists for a TA recruitment, the ULA lists for a ULA one, each sorted. Not"
-              + " filtered by the caller's type: the lists are not sensitive, and the admin preview"
-              + " of the form needs them for any recruitment. 404 for an unknown recruitment.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+          "The TA lists for a TA recruitment, the ULA lists for a ULA one, each sorted. 404 for an"
+              + " unknown recruitment.")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/options")
   public ApplicationOptions applicationOptions(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {

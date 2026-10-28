@@ -26,13 +26,12 @@ export default function HelpCsvPage() {
 
         <h2 className="my-4">Email List CSV Upload formats</h2>
         <p>
-          Admins can bulk-upload email addresses from a CSV file on the Grad
-          Students and Instructors admin pages. Both uploads use the same
-          format; click on each one below for details and an example.
+          Admins can bulk-upload email addresses from a CSV file on the
+          Instructors admin page. Click below for details and an example.
         </p>
         <p>
-          In both cases, the file must have a header row containing a column
-          named <code>email</code> (the header name is case-insensitive); any
+          The file must have a header row containing a column named{" "}
+          <code>email</code> (the header name is case-insensitive); any
           additional columns are ignored. Each row is processed independently:
           an address that is already on the list is skipped rather than reported
           as an error, and a malformed row is skipped and reported rather than
@@ -40,20 +39,6 @@ export default function HelpCsvPage() {
           is therefore safe.
         </p>
         <Accordion data-testid="emailUploadsAccordion">
-          <Accordion.Item eventKey="0">
-            <Accordion.Header>Grad Student Emails</Accordion.Header>
-            <Accordion.Body>
-              <p>
-                On the <i>Grad Students</i> admin page, admins can upload a CSV
-                of grad student email addresses. Each address uploaded is
-                permitted to log in as a grad student and apply for TA
-                positions. Here is an example file:
-              </p>
-              <pre className="csvExample" data-testid="gradStudentCsvExample">
-                {csvFixtures.gradStudentEmails}
-              </pre>
-            </Accordion.Body>
-          </Accordion.Item>
           <Accordion.Item eventKey="1">
             <Accordion.Header>Instructor Emails</Accordion.Header>
             <Accordion.Body>

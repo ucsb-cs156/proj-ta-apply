@@ -47,15 +47,13 @@ describe("HelpCsvPage tests", () => {
     ).toBeInTheDocument();
 
     expect(screen.getByTestId("emailUploadsAccordion")).toBeInTheDocument();
-    expect(screen.getByText("Grad Student Emails")).toBeInTheDocument();
     expect(screen.getByText("Instructor Emails")).toBeInTheDocument();
-
-    expect(screen.getByTestId("gradStudentCsvExample")).toHaveTextContent(
-      "cgaucho@ucsb.edu",
-    );
-    expect(screen.getByTestId("gradStudentCsvExample").textContent).toBe(
-      csvFixtures.gradStudentEmails,
-    );
+    // There is no grad student list any more (issue #45).
+    expect(screen.queryByText("Grad Student Emails")).toBeNull();
+    expect(screen.queryByTestId("gradStudentCsvExample")).toBeNull();
+    expect(
+      screen.getByText(/on the Instructors admin page/),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("instructorCsvExample").textContent).toBe(
       csvFixtures.instructorEmails,
     );

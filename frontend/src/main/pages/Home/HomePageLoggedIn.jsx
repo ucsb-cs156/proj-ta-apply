@@ -10,17 +10,13 @@ export default function HomePageLoggedIn() {
 
   const isAdmin = hasRole(currentUser, "ROLE_ADMIN");
   const isInstructor = hasRole(currentUser, "ROLE_INSTRUCTOR");
-  const isGradStudent = hasRole(currentUser, "ROLE_GRAD_STUDENT");
-  // Granted by the backend to a UCSB address holding none of the other roles.
-  const isUndergrad = hasRole(currentUser, "ROLE_UNDERGRAD");
 
-  // Grad students apply for TA positions, undergrads for ULA ones. The backend filters every
-  // one of these responses to that same type, so nothing here can widen it.
-  const isApplicant = isGradStudent || isUndergrad;
-  const applicantType = isGradStudent ? "TA" : "ULA";
+  // There is no applicant role: a signed-in user with neither of the other two roles is a
+  // student, who may apply to any open recruitment, TA or ULA. Admins and instructors have
+  // their own pages and are not shown the dashboard. Until the user has loaded, nobody is.
+  const isApplicant = currentUser.loggedIn && !isAdmin && !isInstructor;
 
-  // Every one of these is filtered server side to the type this user may apply to, and skipped
-  // entirely for anyone who is not an applicant.
+  // Skipped entirely for anyone who is not shown the dashboard.
   // Stryker disable next-line all : the guard only avoids pointless requests
   const options = { enabled: isApplicant };
 
@@ -75,8 +71,8 @@ export default function HomePageLoggedIn() {
 
         {isAdmin && (
           <p data-testid="HomePageLoggedIn-admin">
-            You are an admin. Use the Admin menu to manage instructors and grad
-            students.
+            You are an admin. Use the Admin menu to manage instructors, courses
+            and recruitments.
           </p>
         )}
         {isInstructor && (
@@ -84,25 +80,9 @@ export default function HomePageLoggedIn() {
             You are an instructor.
           </p>
         )}
-        {isUndergrad && (
-          <div data-testid="HomePageLoggedIn-undergrad">
-            <p>If you:</p>
-            <ul>
-              <li>
-                are an instructor that needs to review TA/ULA applications
-              </li>
-              <li>are a grad student that wants to apply for TA positions</li>
-            </ul>
-            <p>
-              Please request instructor or grad student access. (TODO: Insert
-              instructions here.)
-            </p>
-          </div>
-        )}
 
         {isApplicant && (
           <ApplicantDashboard
-            type={applicantType}
             open={open}
             upcoming={upcoming}
             recentlyClosed={recentlyClosed}

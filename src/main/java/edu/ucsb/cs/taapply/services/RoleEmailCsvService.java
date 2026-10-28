@@ -21,9 +21,9 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * Bulk upload of email addresses into one of the role tables, from a CSV file.
  *
- * <p>Shared by the grad students and instructors upload endpoints so the two behave identically
- * rather than merely similarly. The caller supplies only what differs: how to tell whether an
- * address is already present, and how to store a new one.
+ * <p>Written for the instructors upload endpoint, and once shared with the grad students one, so
+ * any later role table behaves identically rather than merely similarly. The caller supplies only
+ * what differs: how to tell whether an address is already present, and how to store a new one.
  *
  * <p>The file must have a header row containing a column named {@code email} (case-insensitive);
  * any additional columns are ignored. Rows are processed independently: an address already present

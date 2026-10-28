@@ -53,9 +53,9 @@ public class JobsControllerTests extends ControllerTestCase {
     mockMvc.perform(post("/api/jobs/launch/testjob").with(csrf())).andExpect(status().is(403));
   }
 
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
-  public void grad_students_cannot_launch_test_job() throws Exception {
+  public void plain_users_cannot_launch_test_job() throws Exception {
     mockMvc.perform(post("/api/jobs/launch/testjob").with(csrf())).andExpect(status().is(403));
   }
 

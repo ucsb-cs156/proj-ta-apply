@@ -13,7 +13,6 @@ import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
-import edu.ucsb.cs.taapply.services.GrantedAuthoritiesService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,7 +51,6 @@ public class ApplicationsController extends ApiController {
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired NoticeVersionRepository noticeVersionRepository;
   @Autowired ApplicationAccessService applicationAccessService;
-  @Autowired GrantedAuthoritiesService grantedAuthoritiesService;
 
   /**
    * The fields an applicant may set. Deliberately not the entity: status and email are not theirs.
@@ -129,7 +127,7 @@ public class ApplicationsController extends ApiController {
   }
 
   @Operation(summary = "The current user's own applications, newest first")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/mine")
   public List<Application> myApplications() {
     return applicationRepository.findByEmailOrderByIdDesc(currentEmail());
@@ -138,7 +136,7 @@ public class ApplicationsController extends ApiController {
   @Operation(
       summary = "One of the current user's applications",
       description = "403 for an application belonging to anyone else.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("")
   public Application getApplication(@Parameter(name = "id") @RequestParam Long id) {
     return mine(id);
@@ -147,7 +145,7 @@ public class ApplicationsController extends ApiController {
   @Operation(
       summary = "The applicant's most recent application, for pre-filling a new one",
       description = "Empty if they have never applied.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/prefill")
   public List<Application> prefill() {
     return applicationRepository.findByEmailOrderByIdDesc(currentEmail()).stream()
@@ -158,9 +156,9 @@ public class ApplicationsController extends ApiController {
   @Operation(
       summary = "Apply to a recruitment",
       description =
-          "Refused if the recruitment is not open, is not the type this user may apply to, or they"
-              + " already have an application for it.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD')")
+          "Any signed-in user may apply to any open recruitment, TA or ULA. Refused if the"
+              + " recruitment is not open or they already have an application for it.")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @PostMapping("/post")
   public Application postApplication(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
@@ -171,14 +169,6 @@ public class ApplicationsController extends ApiController {
             .findById(recruitmentId)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
 
-    Optional<RecruitmentType> myType =
-        applicationAccessService.applicableType(grantedAuthoritiesService.getGrantedAuthorities());
-
-    // Enforced here, not merely by hiding a link: a grad student must not reach a ULA recruitment.
-    // A user with no applicable type at all yields null, which matches no recruitment type.
-    if (myType.orElse(null) != recruitment.getType()) {
-      throw new ForbiddenException("You are not eligible to apply to this recruitment");
-    }
     if (!applicationAccessService.acceptingApplications(recruitment)) {
       throw new IllegalArgumentException(
           "Applications are not currently open for this recruitment");
@@ -254,7 +244,7 @@ public class ApplicationsController extends ApiController {
       description =
           "Allowed while the recruitment is open and the primary consideration date has not passed."
               + " After that only post-application comments may change.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD')")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("")
   public Application updateApplication(
       @Parameter(name = "id") @RequestParam Long id, @RequestBody ApplicationFields fields) {
@@ -279,7 +269,7 @@ public class ApplicationsController extends ApiController {
       description =
           "Separate from the rest of the application because it outlives the primary consideration"
               + " date. Refused once the recruitment closes.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD')")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("/comments")
   public Application updateComments(
       @Parameter(name = "id") @RequestParam Long id,

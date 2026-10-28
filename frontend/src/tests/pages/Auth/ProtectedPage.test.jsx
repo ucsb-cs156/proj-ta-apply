@@ -65,14 +65,14 @@ describe("ProtectedPage tests", () => {
     await screen.findByText("Renders successfully.");
   });
 
-  /** An applicant page accepts either applicant role, so a list of roles is enough. */
+  /** A page may accept any one of several roles, so a list of roles is enough. */
   test("Renders the page when the user holds any one of several roles", async () => {
     render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <ProtectedPage
-            currentUser={currentUserFixtures.gradStudentUser}
-            enforceRole={["ROLE_GRAD_STUDENT", "ROLE_UNDERGRAD"]}
+            currentUser={currentUserFixtures.instructorUser}
+            enforceRole={["ROLE_ADMIN", "ROLE_INSTRUCTOR"]}
             component={<div>Renders successfully.</div>}
           />
         </BrowserRouter>
@@ -87,8 +87,8 @@ describe("ProtectedPage tests", () => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <ProtectedPage
-            currentUser={currentUserFixtures.instructorUser}
-            enforceRole={["ROLE_GRAD_STUDENT", "ROLE_UNDERGRAD"]}
+            currentUser={currentUserFixtures.userOnly}
+            enforceRole={["ROLE_ADMIN", "ROLE_INSTRUCTOR"]}
           />
         </BrowserRouter>
       </QueryClientProvider>,

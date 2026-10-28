@@ -33,18 +33,18 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class HomePageWebIT extends WebTestCase {
 
   @Test
-  public void logged_in_regular_user_sees_greeting_and_ula_message() throws Exception {
+  public void logged_in_regular_user_sees_greeting_and_the_applicant_dashboard() throws Exception {
     setupRegularUser();
 
     // "Test" comes from the mock OAuth provider's given_name claim, not from the User row the
     // test seeds: GoogleSignInServiceImpl treats the OIDC token as the source of truth for
     // profile fields and overwrites the stored values on each sign-in.
     assertThat(page.getByTestId("HomePageLoggedIn-greeting")).containsText("Welcome, Test.");
-    assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).isVisible();
-    // An undergrad applies for ULA positions, so that is what the dashboard talks about.
+    // A user with no other role is an applicant, for TA and ULA positions alike.
     assertThat(page.getByTestId("HomePageLoggedIn-dashboard-none-open"))
-        .containsText("Applications for ULA positions are not currently being accepted.");
+        .containsText("Applications are not currently being accepted.");
     assertThat(page.getByTestId("HomePageLoggedIn-admin")).not().isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-instructor")).not().isVisible();
   }
 
   @Test
@@ -52,28 +52,15 @@ public class HomePageWebIT extends WebTestCase {
     setupAdminUser();
 
     assertThat(page.getByTestId("HomePageLoggedIn-admin")).isVisible();
-    // Roles are independent: being an admin does not make you an applicant.
+    // The dashboard is for users with no other role.
     assertThat(page.getByTestId("HomePageLoggedIn-dashboard")).not().isVisible();
-    // Nor an undergrad who would apply for a ULA position.
-    assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).not().isVisible();
   }
 
   @Test
-  public void logged_in_instructor_does_not_see_the_ula_message() throws Exception {
+  public void logged_in_instructor_sees_the_instructor_message_and_no_dashboard() throws Exception {
     setupInstructorUser();
 
     assertThat(page.getByTestId("HomePageLoggedIn-instructor")).isVisible();
-    assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).not().isVisible();
-  }
-
-  /** A grad student gets the applicant dashboard, for TA positions, not the ULA message. */
-  @Test
-  public void logged_in_grad_student_sees_the_ta_dashboard_and_not_the_ula_message()
-      throws Exception {
-    setupGradStudentUser();
-
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-none-open"))
-        .containsText("Applications for TA positions are not currently being accepted.");
-    assertThat(page.getByTestId("HomePageLoggedIn-undergrad")).not().isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard")).not().isVisible();
   }
 }

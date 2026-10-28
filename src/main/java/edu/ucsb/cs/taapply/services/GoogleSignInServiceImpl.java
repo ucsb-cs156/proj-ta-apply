@@ -41,10 +41,10 @@ public class GoogleSignInServiceImpl extends OidcUserService implements GoogleSi
     // Shared with RoleUpdateInterceptor so login and per-request role refresh cannot disagree.
     authorities.addAll(roleAssignmentService.authoritiesFor(email));
 
-    // Turn away anyone with none of the access roles, before creating a User row for them.
-    // Throwing here fails the OAuth flow, so no session is established at all; SecurityConfig
-    // sends them to /unauthorized.
-    if (!RoleAssignmentService.grantsAccess(authorities)) {
+    // Turn away an outside address that is neither an admin nor an instructor, before creating a
+    // User row for them. Throwing here fails the OAuth flow, so no session is established at all;
+    // SecurityConfig sends them to /unauthorized.
+    if (!RoleAssignmentService.grantsAccess(email, authorities)) {
       throw new OAuth2AuthenticationException(
           new OAuth2Error("unauthorized_user"),
           "Not authorized to access this application: " + email);

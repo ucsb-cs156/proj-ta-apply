@@ -12,8 +12,7 @@ export default function AboutTaApply() {
             Admins (typically the Student Affairs Manager and/or the ULA program
             directors) to open application periods for TA and ULA applications
           </li>
-          <li>Grad Students to apply for TA positions</li>
-          <li>Undergrad students to apply for ULA positions</li>
+          <li>Students to apply for TA and ULA positions</li>
           <li>
             Faculty to review and rank TA and/or ULA applicants for their own
             courses

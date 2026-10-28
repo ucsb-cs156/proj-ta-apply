@@ -6,8 +6,6 @@ import ApplicationTable, {
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 
 type ApplicantDashboardProps = {
-  /** "TA" for a grad student, "ULA" for an undergrad. */
-  type: "TA" | "ULA";
   open: Recruitment[];
   upcoming: Recruitment[];
   recentlyClosed: Recruitment[];
@@ -20,12 +18,12 @@ const asList = <T,>(value: T[] | undefined | null): T[] =>
   Array.isArray(value) ? value : [];
 
 /**
- * What an applicant sees on the home page. Each of the four states stands on its own: there may
- * be nothing open, something open, something closed to report on, something upcoming, or several
- * of those at once.
+ * What an applicant sees on the home page. Any signed-in user may apply to any recruitment, TA
+ * or ULA, so every recruitment is listed and each line names its type. Each of the states stands
+ * on its own: there may be nothing open, something open, something closed to report on,
+ * something upcoming, or several of those at once.
  */
 export default function ApplicantDashboard({
-  type,
   open,
   upcoming,
   recentlyClosed,
@@ -38,15 +36,13 @@ export default function ApplicantDashboard({
   const closedList = asList(recentlyClosed);
   const applicationList = asList(applications);
 
-  const positions = type === "TA" ? "TA" : "ULA";
   const applied = new Set(applicationList.map((a) => a.recruitmentId));
 
   return (
     <div data-testid={testIdPrefix}>
       {openList.length === 0 && (
         <p data-testid={`${testIdPrefix}-none-open`}>
-          Applications for {positions} positions are not currently being
-          accepted.
+          Applications are not currently being accepted.
         </p>
       )}
 
@@ -55,7 +51,7 @@ export default function ApplicantDashboard({
           key={recruitment.id}
           data-testid={`${testIdPrefix}-open-${recruitment.id}`}
         >
-          Applications for {positions} positions in{" "}
+          Applications for {recruitment.type} positions in{" "}
           {yyyyqToQyy(recruitment.quarter)} are open.{" "}
           {applied.has(recruitment.id) ? (
             <span data-testid={`${testIdPrefix}-applied-${recruitment.id}`}>
@@ -86,7 +82,7 @@ export default function ApplicantDashboard({
           key={recruitment.id}
           data-testid={`${testIdPrefix}-upcoming-${recruitment.id}`}
         >
-          Applications for {positions} positions in{" "}
+          Applications for {recruitment.type} positions in{" "}
           {yyyyqToQyy(recruitment.quarter)} are expected to open on{" "}
           {recruitment.tentativeOpeningDate}.
         </p>
@@ -97,7 +93,7 @@ export default function ApplicantDashboard({
           key={recruitment.id}
           data-testid={`${testIdPrefix}-closed-${recruitment.id}`}
         >
-          The most recent round of {positions} applications, for{" "}
+          The most recent round of {recruitment.type} applications, for{" "}
           {yyyyqToQyy(recruitment.quarter)}, opened on{" "}
           {recruitment.actualOpeningDate} and closed on{" "}
           {recruitment.actualClosingDate}.
@@ -107,7 +103,7 @@ export default function ApplicantDashboard({
       <h2 className="h4 mt-4">Your Applications</h2>
       {applicationList.length === 0 ? (
         <p data-testid={`${testIdPrefix}-no-applications`}>
-          You have not applied for any {positions} positions yet.
+          You have not applied for any positions yet.
         </p>
       ) : (
         <ApplicationTable
