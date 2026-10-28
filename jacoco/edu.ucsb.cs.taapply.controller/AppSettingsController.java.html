@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AppSettingsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">AppSettingsController.java</span></div><h1>AppSettingsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.TaMajor;
+import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.entity.UlaMajor;
+import edu.ucsb.cs.taapply.entity.UlaTopic;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.TaMajorRepository;
+import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
+import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.StreamSupport;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * The four admin-maintained name lists behind the TA and ULA application forms: the majors and the
+ * topics an applicant may pick from.
+ *
+ * &lt;p&gt;Each list is its own table with a single string column that is also the key, so the four are
+ * served by one controller keyed on the {@code list} path segment rather than four copies of the
+ * same CRUD code. Renaming is a delete plus an insert, since the name is the key.
+ */
+@Tag(name = &quot;AppSettings&quot;)
+@RequestMapping(&quot;/api/admin/settings&quot;)
+@RestController
+<span class="fc" id="L46">@Slf4j</span>
+<span class="fc" id="L47">public class AppSettingsController extends ApiController {</span>
+
+  /** A row of any of the lists, as the frontend sees it. */
+<span class="fc" id="L50">  public static record NameItem(String name) {}</span>
+
+  /** The repository behind one list, plus how to make one of its rows. */
+<span class="fc" id="L53">  record NameList(CrudRepository&lt;?, String&gt; repository, Function&lt;String, Object&gt; row) {</span>
+
+    @SuppressWarnings({&quot;unchecked&quot;, &quot;rawtypes&quot;})
+    void save(String name) {
+<span class="fc" id="L57">      ((CrudRepository) repository).save(row.apply(name));</span>
+<span class="fc" id="L58">    }</span>
+  }
+
+  public static final String TA_MAJORS = &quot;ta-majors&quot;;
+  public static final String TA_TOPICS = &quot;ta-topics&quot;;
+  public static final String ULA_MAJORS = &quot;ula-majors&quot;;
+  public static final String ULA_TOPICS = &quot;ula-topics&quot;;
+
+  @Autowired TaMajorRepository taMajorRepository;
+  @Autowired TaTopicRepository taTopicRepository;
+  @Autowired UlaMajorRepository ulaMajorRepository;
+  @Autowired UlaTopicRepository ulaTopicRepository;
+
+<span class="fc" id="L71">  private final Map&lt;String, NameList&gt; lists = new LinkedHashMap&lt;&gt;();</span>
+
+  @PostConstruct
+  void wireLists() {
+<span class="fc" id="L75">    lists.put(TA_MAJORS, new NameList(taMajorRepository, n -&gt; TaMajor.builder().name(n).build()));</span>
+<span class="fc" id="L76">    lists.put(TA_TOPICS, new NameList(taTopicRepository, n -&gt; TaTopic.builder().name(n).build()));</span>
+<span class="fc" id="L77">    lists.put(</span>
+<span class="fc" id="L78">        ULA_MAJORS, new NameList(ulaMajorRepository, n -&gt; UlaMajor.builder().name(n).build()));</span>
+<span class="fc" id="L79">    lists.put(</span>
+<span class="fc" id="L80">        ULA_TOPICS, new NameList(ulaTopicRepository, n -&gt; UlaTopic.builder().name(n).build()));</span>
+<span class="fc" id="L81">  }</span>
+
+  private NameList listNamed(String list) {
+<span class="fc" id="L84">    NameList found = lists.get(list);</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">    if (found == null) {</span>
+<span class="fc" id="L86">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L87">          &quot;No such settings list: %s (expected one of %s)&quot;.formatted(list, lists.keySet()));</span>
+    }
+<span class="fc" id="L89">    return found;</span>
+  }
+
+  /**
+   * Names are keys, so leading/trailing whitespace would create near-duplicates. The parameter is a
+   * required @RequestParam, so it is never null here.
+   */
+  private static String clean(String name) {
+<span class="fc" id="L97">    String cleaned = name.strip();</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">    if (cleaned.isEmpty()) {</span>
+<span class="fc" id="L99">      throw new IllegalArgumentException(&quot;A name is required&quot;);</span>
+    }
+<span class="fc" id="L101">    return cleaned;</span>
+  }
+
+  private List&lt;NameItem&gt; namesIn(NameList list) {
+<span class="fc" id="L105">    return StreamSupport.stream(list.repository().findAll().spliterator(), false)</span>
+<span class="fc" id="L106">        .map(row -&gt; new NameItem(nameOf(row)))</span>
+<span class="fc" id="L107">        .sorted(Comparator.comparing(NameItem::name, String.CASE_INSENSITIVE_ORDER))</span>
+<span class="fc" id="L108">        .toList();</span>
+  }
+
+  private static String nameOf(Object row) {
+<span class="fc bfc" id="L112" title="All 2 branches covered.">    if (row instanceof TaMajor m) return m.getName();</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">    if (row instanceof TaTopic t) return t.getName();</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">    if (row instanceof UlaMajor m) return m.getName();</span>
+<span class="fc" id="L115">    return ((UlaTopic) row).getName();</span>
+  }
+
+  @Operation(
+      summary = &quot;Every name in a list, sorted&quot;,
+      description = &quot;list is one of ta-majors, ta-topics, ula-majors, ula-topics.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/{list}/all&quot;)
+  public List&lt;NameItem&gt; all(@PathVariable String list) {
+<span class="fc" id="L124">    return namesIn(listNamed(list));</span>
+  }
+
+  @Operation(summary = &quot;Add a name to a list&quot;, description = &quot;400 if it is blank or already there.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/{list}/post&quot;)
+  public NameItem post(
+      @PathVariable String list, @Parameter(name = &quot;name&quot;) @RequestParam String name) {
+<span class="fc" id="L132">    NameList target = listNamed(list);</span>
+<span class="fc" id="L133">    String cleaned = clean(name);</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">    if (target.repository().existsById(cleaned)) {</span>
+<span class="fc" id="L135">      throw new IllegalArgumentException(&quot;%s is already in the list&quot;.formatted(cleaned));</span>
+    }
+<span class="fc" id="L137">    target.save(cleaned);</span>
+<span class="fc" id="L138">    return new NameItem(cleaned);</span>
+  }
+
+  @Operation(
+      summary = &quot;Rename an entry&quot;,
+      description =
+          &quot;The name is the key, so this removes the old row and inserts the new one. 404 if the&quot;
+              + &quot; old name is not in the list, 400 if the new one already is.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;/{list}&quot;)
+  public NameItem rename(
+      @PathVariable String list,
+      @Parameter(name = &quot;name&quot;) @RequestParam String name,
+      @Parameter(name = &quot;newName&quot;) @RequestParam String newName) {
+<span class="fc" id="L152">    NameList target = listNamed(list);</span>
+<span class="fc" id="L153">    String cleanedNew = clean(newName);</span>
+<span class="fc bfc" id="L154" title="All 2 branches covered.">    if (!target.repository().existsById(name)) {</span>
+<span class="fc" id="L155">      throw new EntityNotFoundException(NameItem.class, name);</span>
+    }
+    // Renaming to itself is a no-op rather than an error, so saving an unchanged edit is harmless.
+<span class="fc bfc" id="L158" title="All 2 branches covered.">    if (!cleanedNew.equals(name)) {</span>
+<span class="fc bfc" id="L159" title="All 2 branches covered.">      if (target.repository().existsById(cleanedNew)) {</span>
+<span class="fc" id="L160">        throw new IllegalArgumentException(&quot;%s is already in the list&quot;.formatted(cleanedNew));</span>
+      }
+<span class="fc" id="L162">      target.repository().deleteById(name);</span>
+<span class="fc" id="L163">      target.save(cleanedNew);</span>
+    }
+<span class="fc" id="L165">    return new NameItem(cleanedNew);</span>
+  }
+
+  @Operation(summary = &quot;Remove a name from a list&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @DeleteMapping(&quot;/{list}/delete&quot;)
+  public Object delete(
+      @PathVariable String list, @Parameter(name = &quot;name&quot;) @RequestParam String name) {
+<span class="fc" id="L173">    NameList target = listNamed(list);</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">    if (!target.repository().existsById(name)) {</span>
+<span class="fc" id="L175">      throw new EntityNotFoundException(NameItem.class, name);</span>
+    }
+<span class="fc" id="L177">    target.repository().deleteById(name);</span>
+<span class="fc" id="L178">    return genericMessage(&quot;%s removed from %s&quot;.formatted(name, list));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
