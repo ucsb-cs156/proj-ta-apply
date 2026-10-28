@@ -356,10 +356,8 @@ public class ApplicationsController extends ApiController {
 
   /** The interest levels worth storing; a TA form has no interests section, so none are kept. */
   static Map<String, Integer> interestsFrom(ApplicationFields fields, RecruitmentType type) {
-    if (type == RecruitmentType.TA) {
-      return new TreeMap<>();
-    }
-    return levelsFrom(fields.interests(), "Interest", MIN_INTEREST, MAX_INTEREST);
+    Map<String, Integer> sent = type == RecruitmentType.TA ? null : fields.interests();
+    return levelsFrom(sent, "Interest", MIN_INTEREST, MAX_INTEREST);
   }
 
   /**
