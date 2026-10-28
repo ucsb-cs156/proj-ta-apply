@@ -96,6 +96,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UsersPageDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UsersPageDTO</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#all(java.lang.String)" class="member-name-link">all(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.html#allAdmins()" class="member-name-link">allAdmins()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/CoursesController.html#allCourses()" class="member-name-link">allCourses()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/CoursesController.html" title="class in edu.ucsb.cs.taapply.controller">CoursesController</a></dt>
@@ -188,6 +190,17 @@ ran, and when an upcoming one is expected to open.</div>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationStatus.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a> - Enum Class in <a href="edu/ucsb/cs/taapply/enums/package-summary.html">edu.ucsb.cs.taapply.enums</a></dt>
 <dd>
 <div class="block">Whether applications are currently being accepted for a recruitment.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">The four admin-maintained name lists behind the TA and ULA application forms: the majors and the
+topics an applicant may pick from.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#%3Cinit%3E()" class="member-name-link">AppSettingsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController.NameItem</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">A row of any of the lists, as the frontend sees it.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html#areEquivalentEmails(java.lang.String,java.lang.String)" class="member-name-link">areEquivalentEmails(String, String)</a> - Static method in class edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html" title="class in edu.ucsb.cs.taapply.utilities">CanonicalFormConverter</a></dt>
 <dd>&nbsp;</dd>
@@ -310,6 +323,8 @@ least one quarter the admin has populated from the UCSB API.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/MongoDevConfig.html#dateTimeProvider()" class="member-name-link">dateTimeProvider()</a> - Method in class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/MongoDevConfig.html" title="class in edu.ucsb.cs.taapply.config">MongoDevConfig</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#delete(java.lang.String,java.lang.String)" class="member-name-link">delete(String, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.html#deleteAdmin(java.lang.String)" class="member-name-link">deleteAdmin(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/CoursesController.html#deleteCourse(java.lang.String)" class="member-name-link">deleteCourse(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/CoursesController.html" title="class in edu.ucsb.cs.taapply.controller">CoursesController</a></dt>
@@ -396,6 +411,10 @@ both Summer and Fall are reachable.</div>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController.NameItem</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -633,6 +652,10 @@ recruitment can record instructors, meeting times and enrollment.</div>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController.NameItem</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.UploadResult.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -808,6 +831,14 @@ to how H2 is used as an in-memory SQL database for these profiles.</div>
 </dl>
 <h2 class="title" id="I:N">N</h2>
 <dl class="index">
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html#name()" class="member-name-link">name()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController.NameItem</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>name</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html#%3Cinit%3E(java.lang.String)" class="member-name-link">NameItem(String)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController.NameItem</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>NameItem</code> record class.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/TaApplyApplication.html#noRedirectRestTemplate()" class="member-name-link">noRedirectRestTemplate()</a> - Method in class edu.ucsb.cs.taapply.<a href="edu/ucsb/cs/taapply/TaApplyApplication.html" title="class in edu.ucsb.cs.taapply">TaApplyApplication</a></dt>
 <dd>
 <div class="block">A second <code>RestTemplate</code>, used only by <code>CheckLinksService</code>'s DOI content negotiation
@@ -883,6 +914,8 @@ recruitment's type, that is actually offered in its quarter.</div>
 does.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJobFactory.html#%3Cinit%3E()" class="member-name-link">PopulateRecruitmentCoursesJobFactory()</a> - Constructor for class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateRecruitmentCoursesJobFactory</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#post(java.lang.String,java.lang.String)" class="member-name-link">post(String, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.html#postAdmin(java.lang.String)" class="member-name-link">postAdmin(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController</a></dt>
 <dd>&nbsp;</dd>
@@ -963,6 +996,8 @@ quarter as reported by the UCSB API.</div>
 <dd>
 <div class="block">Whether a recruitment is for TA positions (grad students) or ULA positions (undergrads).</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#rename(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">rename(String, String, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#residencyStatus()" class="member-name-link">residencyStatus()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>residencyStatus</code> record component.</div>
@@ -1071,9 +1106,29 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dl class="index">
 <dt><a href="edu/ucsb/cs/taapply/enums/RecruitmentType.html#TA" class="member-name-link">TA</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#TA_MAJORS" class="member-name-link">TA_MAJORS</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#TA_TOPICS" class="member-name-link">TA_TOPICS</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/TaApplyApplication.html" class="type-name-link" title="class in edu.ucsb.cs.taapply">TaApplyApplication</a> - Class in <a href="edu/ucsb/cs/taapply/package-summary.html">edu.ucsb.cs.taapply</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/TaApplyApplication.html#%3Cinit%3E()" class="member-name-link">TaApplyApplication()</a> - Constructor for class edu.ucsb.cs.taapply.<a href="edu/ucsb/cs/taapply/TaApplyApplication.html" title="class in edu.ucsb.cs.taapply">TaApplyApplication</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/TaMajor.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">TaMajor</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">A major a TA applicant may choose from (Admin &gt; TA App Settings).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/TaMajor.html#%3Cinit%3E()" class="member-name-link">TaMajor()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/TaMajor.html" title="class in edu.ucsb.cs.taapply.entity">TaMajor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/TaMajorRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">TaMajorRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/TaTopic.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">TaTopic</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">A topic a TA applicant may claim knowledge of (Admin &gt; TA App Settings).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/TaTopic.html#%3Cinit%3E()" class="member-name-link">TaTopic()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/TaTopic.html" title="class in edu.ucsb.cs.taapply.entity">TaTopic</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/TaTopicRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">TaTopicRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/TestJob.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.jobs">TestJob</a> - Class in <a href="edu/ucsb/cs/taapply/jobs/package-summary.html">edu.ucsb.cs.taapply.jobs</a></dt>
 <dd>&nbsp;</dd>
@@ -1092,6 +1147,10 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.NameItem.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController.NameItem</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -1178,6 +1237,26 @@ currently is.</div>
 <dt><a href="edu/ucsb/cs/taapply/models/UcsbTimeLocation.html#%3Cinit%3E()" class="member-name-link">UcsbTimeLocation()</a> - Constructor for class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/UcsbTimeLocation.html" title="class in edu.ucsb.cs.taapply.models">UcsbTimeLocation</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/RecruitmentType.html#ULA" class="member-name-link">ULA</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#ULA_MAJORS" class="member-name-link">ULA_MAJORS</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#ULA_TOPICS" class="member-name-link">ULA_TOPICS</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/UlaMajor.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">UlaMajor</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">A major a ULA applicant may choose from (Admin &gt; ULA App Settings).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/UlaMajor.html#%3Cinit%3E()" class="member-name-link">UlaMajor()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/UlaMajor.html" title="class in edu.ucsb.cs.taapply.entity">UlaMajor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/UlaMajorRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">UlaMajorRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/UlaTopic.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">UlaTopic</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">A topic a ULA applicant may claim knowledge of (Admin &gt; ULA App Settings).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/UlaTopic.html#%3Cinit%3E()" class="member-name-link">UlaTopic()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/UlaTopic.html" title="class in edu.ucsb.cs.taapply.entity">UlaTopic</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/UlaTopicRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">UlaTopicRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html#upcomingRecruitments()" class="member-name-link">upcomingRecruitments()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
