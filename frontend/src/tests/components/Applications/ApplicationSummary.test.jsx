@@ -107,6 +107,30 @@ describe("ApplicationSummary tests", () => {
     ).toHaveTextContent("No");
   });
 
+  test("shows the availability comments for each choice", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneTaApplication,
+          availabilityCommentsFirstChoice: "Free any afternoon but Wednesday.",
+          availabilityCommentsSecondChoice: null,
+        }}
+        type="TA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-First Choice Availability Comments",
+      ),
+    ).toHaveTextContent("Free any afternoon but Wednesday.");
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-Second Choice Availability Comments",
+      ).textContent,
+    ).toBe("");
+  });
+
   test("course choices keep their padding", () => {
     render(
       <ApplicationSummary

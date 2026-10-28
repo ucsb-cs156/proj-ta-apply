@@ -102,6 +102,7 @@ export default function TestApplicationPage(): React.JSX.Element {
             <ApplicationForm
               type={recruitment.type}
               courses={courses}
+              recruitmentId={recruitmentId}
               defaultNames={{
                 firstName: currentUser.root?.user?.givenName,
                 lastName: currentUser.root?.user?.familyName,

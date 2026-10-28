@@ -417,4 +417,46 @@ public class UCSBCurriculumServiceTests {
         UCSBCurriculumService.MAX_PAGES * 100, service.getOfferings("CMPSC", "20241").size());
     mockRestServiceServer.verify();
   }
+
+  // ---- one offering by enroll code ----
+
+  private static final String CLASS_BY_ENROLL_CODE =
+      """
+      {"quarter":"20241","courseId":"CMPSC   156","title":"ADV APP PROGRAM",
+       "classSections":[
+         {"enrollCode":"07492","section":"0100","enrolledTotal":120,"maxEnroll":150,
+          "timeLocations":[{"days":"T R","beginTime":"14:00","endTime":"15:15","building":"PHELP","room":"3526"}],
+          "instructors":[{"instructor":"CONRAD P","functionCode":"Teaching and in charge"}]},
+         {"enrollCode":"07500","section":"0101",
+          "timeLocations":[{"days":"W","beginTime":"09:00","endTime":"09:50","building":"PHELP","room":"1401"}],
+          "instructors":[{"instructor":"GAUCHO C","functionCode":"Teaching but not in charge"}]}
+       ]}
+      """;
+
+  @Test
+  public void urlForEnrollCode_names_the_quarter_and_code_and_asks_for_sections() {
+    assertEquals(
+        "https://api.example.org/academics/curriculums/v1/classes/20241/07492?includeClassSections=true",
+        service.urlForEnrollCode("20241", "07492"));
+  }
+
+  @Test
+  public void getOffering_sends_the_api_headers_and_parses_every_section() throws Exception {
+    mockRestServiceServer
+        .expect(requestTo(service.urlForEnrollCode("20241", "07492")))
+        .andExpect(header("ucsb-api-key", "fake-key"))
+        .andExpect(header("ucsb-api-version", "1.0"))
+        .andRespond(withSuccess(CLASS_BY_ENROLL_CODE, MediaType.APPLICATION_JSON));
+
+    UcsbCourseOffering offering = service.getOffering("20241", "07492");
+
+    assertEquals("CMPSC   156", offering.getCourseId());
+    assertEquals("ADV APP PROGRAM", offering.getTitle());
+    assertEquals(2, offering.getClassSections().size());
+    UcsbSection discussion = offering.getClassSections().get(1);
+    assertEquals("0101", discussion.getSection());
+    assertEquals("W", discussion.getTimeLocations().get(0).getDays());
+    assertEquals("GAUCHO C", discussion.getInstructors().get(0).getInstructor());
+    mockRestServiceServer.verify();
+  }
 }

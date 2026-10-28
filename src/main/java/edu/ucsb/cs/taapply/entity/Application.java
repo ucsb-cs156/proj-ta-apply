@@ -94,6 +94,13 @@ public class Application {
   @Builder.Default private boolean availableForDiscussionFirstChoice = false;
   @Builder.Default private boolean availableForDiscussionSecondChoice = false;
 
+  /** Free text about the applicant's availability for that course's lectures and sections. */
+  @Column(length = 4000)
+  private String availabilityCommentsFirstChoice;
+
+  @Column(length = 4000)
+  private String availabilityCommentsSecondChoice;
+
   /**
    * How interested the applicant is in each of the recruitment's other courses, keyed by the padded
    * course id. Replaces the earlier free-text "desired courses" answer.

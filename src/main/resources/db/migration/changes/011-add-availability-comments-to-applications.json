@@ -1,0 +1,44 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "011-add-availability-comments-to-applications",
+        "author": "pc",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "applications",
+                "columnName": "availability_comments_first_choice"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [
+                {
+                  "column": {
+                    "name": "availability_comments_first_choice",
+                    "type": "VARCHAR(4000)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "availability_comments_second_choice",
+                    "type": "VARCHAR(4000)"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

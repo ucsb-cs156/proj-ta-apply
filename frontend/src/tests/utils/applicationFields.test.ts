@@ -28,6 +28,8 @@ const fields = (
   availableForLecturesSecondChoice: false,
   availableForDiscussionFirstChoice: false,
   availableForDiscussionSecondChoice: false,
+  availabilityCommentsFirstChoice: "Free any afternoon",
+  availabilityCommentsSecondChoice: "",
   courseInterests: {},
   residencyStatus: "F1_STUDENT_VISA",
   languageExam: "PASSED",
@@ -155,6 +157,8 @@ describe("toPayload", () => {
     expect(payload.firstChoiceCourse).toBe("CMPSC   156");
     expect(payload.availableForLecturesFirstChoice).toBe(true);
     expect(payload.availableForLecturesSecondChoice).toBe(false);
+    expect(payload.availabilityCommentsFirstChoice).toBe("Free any afternoon");
+    expect(payload.availabilityCommentsSecondChoice).toBe("");
     expect(payload.residencyStatus).toBe("F1_STUDENT_VISA");
     expect(payload.classLevel).toBe("PHD");
   });

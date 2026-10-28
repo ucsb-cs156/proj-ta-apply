@@ -24,6 +24,8 @@ const applicationsFixtures = {
     availableForLecturesSecondChoice: false,
     availableForDiscussionFirstChoice: true,
     availableForDiscussionSecondChoice: false,
+    availabilityCommentsFirstChoice: "Free any afternoon but Wednesday.",
+    availabilityCommentsSecondChoice: null,
     courseInterests: {
       "CMPSC     8": "ENTHUSIASTIC",
       "CMPSC    16": "WOULD_CONSIDER",
@@ -63,6 +65,8 @@ const applicationsFixtures = {
     availableForLecturesSecondChoice: false,
     availableForDiscussionFirstChoice: false,
     availableForDiscussionSecondChoice: false,
+    availabilityCommentsFirstChoice: "",
+    availabilityCommentsSecondChoice: "",
     courseInterests: {},
     residencyStatus: null,
     languageExam: null,

@@ -3,8 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 
+import axios from "axios";
+import AxiosMockAdapter from "axios-mock-adapter";
+
 import ApplicationForm from "main/components/Applications/ApplicationForm";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
+
+const axiosMock = new AxiosMockAdapter(axios);
 
 const courses = ["CMPSC     8", "CMPSC   130A", "CMPSC   156"];
 
@@ -15,6 +21,7 @@ function renderForm({
   submitAction = vi.fn(),
   buttonLabel = undefined,
   courseList = courses,
+  recruitmentId = undefined,
 } = {}) {
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -22,6 +29,7 @@ function renderForm({
         <ApplicationForm
           type={type}
           courses={courseList}
+          recruitmentId={recruitmentId}
           initialContents={initialContents}
           defaultNames={defaultNames}
           submitAction={submitAction}
@@ -34,6 +42,14 @@ function renderForm({
 }
 
 describe("ApplicationForm tests", () => {
+  beforeEach(() => {
+    axiosMock.reset();
+    axiosMock.resetHistory();
+    axiosMock
+      .onGet("/api/recruitments/sections")
+      .reply(200, courseSectionsFixtures.cmpsc156);
+  });
+
   test("renders the fields common to both kinds of application", () => {
     renderForm();
 
@@ -203,6 +219,167 @@ describe("ApplicationForm tests", () => {
 
     const first = screen.getByTestId("ApplicationForm-firstChoiceCourse");
     expect([...first.options].map((o) => o.value)).toEqual([""]);
+  });
+
+  // ---- lecture and section times ----
+
+  /** The card sits between the dropdown and the availability checkboxes it informs. */
+  test("choosing a course shows its lecture and section times above the availability questions", async () => {
+    renderForm({ recruitmentId: 7 });
+
+    expect(
+      screen.queryByTestId("ApplicationForm-firstChoiceSections"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("ApplicationForm-secondChoiceSections"),
+    ).toBeNull();
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+
+    const card = await screen.findByTestId(
+      "ApplicationForm-firstChoiceSections",
+    );
+    expect(card).toHaveTextContent("Lecture and section times for CMPSC 156");
+    expect(
+      await screen.findByTestId(
+        "ApplicationForm-firstChoiceSections-row-0-type",
+      ),
+    ).toHaveTextContent("Lecture");
+    const request = axiosMock.history.get.find(
+      (r) => r.url === "/api/recruitments/sections",
+    );
+    expect(request.params).toEqual({
+      recruitmentId: 7,
+      courseId: "CMPSC   156",
+    });
+
+    // Dropdown, then card, then checkboxes, in that order on the page.
+    const select = screen.getByTestId("ApplicationForm-firstChoiceCourse");
+    const checkbox = screen.getByTestId(
+      "ApplicationForm-availableForLecturesFirstChoice",
+    );
+    expect(
+      select.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      card.compareDocumentPosition(checkbox) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    // Still only the first choice has a card.
+    expect(
+      screen.queryByTestId("ApplicationForm-secondChoiceSections"),
+    ).toBeNull();
+  });
+
+  test("the second choice gets its own card, and clearing the choice removes it", async () => {
+    renderForm({ recruitmentId: 7 });
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-secondChoiceCourse"),
+      "CMPSC   130A",
+    );
+    expect(
+      await screen.findByTestId("ApplicationForm-secondChoiceSections"),
+    ).toHaveTextContent("Lecture and section times for CMPSC 130A");
+    expect(
+      screen.queryByTestId("ApplicationForm-firstChoiceSections"),
+    ).toBeNull();
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-secondChoiceCourse"),
+      "",
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("ApplicationForm-secondChoiceSections"),
+      ).toBeNull(),
+    );
+  });
+
+  test("a previously chosen course shows its times straight away", async () => {
+    renderForm({
+      recruitmentId: 7,
+      initialContents: applicationsFixtures.oneTaApplication,
+    });
+
+    expect(
+      await screen.findByTestId("ApplicationForm-firstChoiceSections"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("ApplicationForm-secondChoiceSections"),
+    ).toBeInTheDocument();
+  });
+
+  /** A story or a test with no backend passes no recruitment, and gets no lookups. */
+  test("without a recruitment no times are looked up", async () => {
+    renderForm({ initialContents: applicationsFixtures.oneTaApplication });
+
+    expect(
+      screen.queryByTestId("ApplicationForm-firstChoiceSections"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("ApplicationForm-secondChoiceSections"),
+    ).toBeNull();
+    expect(axiosMock.history.get).toHaveLength(0);
+  });
+
+  // ---- availability comments ----
+
+  test("asks for availability comments under each choice and submits them", async () => {
+    const submitAction = renderForm({ type: "ULA" });
+
+    expect(
+      screen.getByText("1st Choice Availability Comments"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("2nd Choice Availability Comments"),
+    ).toBeInTheDocument();
+
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-firstName"),
+      "Ada",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-lastName"),
+      "Lovelace",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-major"),
+      "Computer Science",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-availabilityCommentsFirstChoice"),
+      "Free any afternoon",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-availabilityCommentsSecondChoice"),
+      "Mornings only",
+    );
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    const payload = submitAction.mock.calls[0][0];
+    expect(payload.availabilityCommentsFirstChoice).toBe("Free any afternoon");
+    expect(payload.availabilityCommentsSecondChoice).toBe("Mornings only");
+  });
+
+  test("pre-fills the availability comments, with null as blank", () => {
+    renderForm({ initialContents: applicationsFixtures.oneTaApplication });
+
+    expect(
+      screen.getByTestId("ApplicationForm-availabilityCommentsFirstChoice"),
+    ).toHaveValue("Free any afternoon but Wednesday.");
+    expect(
+      screen.getByTestId("ApplicationForm-availabilityCommentsSecondChoice"),
+    ).toHaveValue("");
   });
 
   // ---- interest in the other courses ----
