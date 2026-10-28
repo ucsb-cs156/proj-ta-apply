@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import { vi } from "vitest";
 import HelpCsvPage from "main/pages/Help/HelpCsvPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
@@ -66,8 +67,88 @@ describe("HelpCsvPage tests", () => {
         "ignored; only the email column is used):",
     );
 
+    expect(screen.getByTestId("downloadsSummary")).toHaveTextContent(
+      "The only CSV downloads currently offered are the App Settings lists described above.",
+    );
+  });
+
+  test("documents the App Settings lists CSV shape, with an anchor the admin pages link to", async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <HelpCsvPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const heading = await screen.findByRole("heading", {
+      level: 2,
+      name: "App Settings Lists CSV formats (Majors and Topics)",
+    });
+    expect(heading).toHaveAttribute("id", "settings-lists");
+    expect(screen.getByTestId("settingsListsDescription")).toHaveTextContent(
+      "can be downloaded as a CSV file and filled from one",
+    );
+    expect(screen.getByTestId("settingsListsAccordion")).toBeInTheDocument();
+    expect(screen.getByText("Download format")).toBeInTheDocument();
+    expect(screen.getByText("Upload format")).toBeInTheDocument();
+    expect(screen.getByTestId("settingsDownloadCsvExample").textContent).toBe(
+      csvFixtures.settingsNames,
+    );
+    expect(screen.getByTestId("settingsUploadCsvExample").textContent).toBe(
+      csvFixtures.settingsNamesLenient,
+    );
+    expect(screen.getByTestId("settingsUploadDescription")).toHaveTextContent(
+      "the header name is case-insensitive",
+    );
     expect(
-      screen.getByText(/does not currently offer any CSV downloads/),
-    ).toBeInTheDocument();
+      screen.getByTestId("settingsUploadDescription").textContent,
+    ).toContain("must contain a column named name (the header");
+  });
+
+  test("scrolls to the section named in the url hash", async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/help/csv#settings-lists"]}>
+          <HelpCsvPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await screen.findByRole("heading", { level: 1 });
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+    expect(scrollIntoView.mock.instances[0]).toHaveAttribute(
+      "id",
+      "settings-lists",
+    );
+  });
+
+  test("does not scroll when there is no hash or the hash matches nothing", async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+
+    const { unmount } = render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/help/csv"]}>
+          <HelpCsvPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await screen.findByRole("heading", { level: 1 });
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    unmount();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/help/csv#nowhere"]}>
+          <HelpCsvPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await screen.findByRole("heading", { level: 1 });
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });

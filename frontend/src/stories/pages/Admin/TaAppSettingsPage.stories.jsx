@@ -30,6 +30,12 @@ const common = [
   http.delete("/api/admin/settings/ta-topics/delete", () =>
     HttpResponse.json({ message: "removed from ta-topics" }),
   ),
+  http.post("/api/admin/settings/ta-majors/upload/csv", () =>
+    HttpResponse.json({ inserted: 2, alreadyPresent: 0 }),
+  ),
+  http.post("/api/admin/settings/ta-topics/upload/csv", () =>
+    HttpResponse.json({ inserted: 1, alreadyPresent: 1 }),
+  ),
 ];
 
 export default {

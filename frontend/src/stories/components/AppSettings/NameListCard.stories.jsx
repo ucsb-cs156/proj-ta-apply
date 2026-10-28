@@ -14,6 +14,9 @@ const handlers = (items) => [
   http.delete("/api/admin/settings/ta-majors/delete", () =>
     HttpResponse.json({ message: "removed from ta-majors" }),
   ),
+  http.post("/api/admin/settings/ta-majors/upload/csv", () =>
+    HttpResponse.json({ inserted: 2, alreadyPresent: 0 }),
+  ),
 ];
 
 export default {
