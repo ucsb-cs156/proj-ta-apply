@@ -135,7 +135,11 @@ describe("ApplicationPage tests", () => {
       ),
     );
     // Chris's stored rating for React is pre-selected.
-    expect(screen.getByTestId("ApplicationPage-topic-React-2")).toBeChecked();
+    expect(screen.getByTestId("ApplicationPage-topic-React-1")).toBeChecked();
+    // And the stored interest level, on the ULA form's Interests table.
+    expect(
+      screen.getByTestId("ApplicationPage-interest-Tutoring-5"),
+    ).toBeChecked();
     expect(
       axiosMock.history.get.filter(
         (r) => r.url === "/api/recruitments/options",

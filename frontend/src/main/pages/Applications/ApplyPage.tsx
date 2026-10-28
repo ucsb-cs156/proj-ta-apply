@@ -109,6 +109,7 @@ export default function ApplyPage(): React.JSX.Element {
             recruitmentId={recruitmentId}
             majors={options?.majors ?? []}
             topics={options?.topics ?? []}
+            interests={options?.interests ?? []}
             notice={(notices ?? [])[0] ?? null}
             initialContents={(prefill ?? [])[0]}
             defaultNames={{

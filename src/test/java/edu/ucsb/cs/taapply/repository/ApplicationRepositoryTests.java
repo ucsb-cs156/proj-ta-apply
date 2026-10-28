@@ -101,6 +101,7 @@ public class ApplicationRepositoryTests {
                             .courseNumber("CS 31")
                             .build())))
             .topicProficiencies(new HashMap<>(Map.of("Java", 5, "React", 3)))
+            .interests(new HashMap<>(Map.of("Tutoring", 4, "Grading", 1)))
             .prevExperience("TA for CS16")
             .comments("Keen")
             .postApplicationComments("Still available")
@@ -156,6 +157,8 @@ public class ApplicationRepositoryTests {
         found.getCourseInterests());
     // Topic ratings live in their own table too (changeset 011), keyed by topic name.
     assertEquals(Map.of("Java", 5, "React", 3), found.getTopicProficiencies());
+    // So do the ULA interest levels (changeset 015), keyed by interest name.
+    assertEquals(Map.of("Tutoring", 4, "Grading", 1), found.getInterests());
     assertEquals(ResidencyStatus.F1_STUDENT_VISA, found.getResidencyStatus());
     assertEquals(LanguageExamStatus.PASSED, found.getLanguageExam());
     assertEquals(LocalDate.of(2025, 9, 1), found.getLanguageExamDatePassed());
@@ -333,6 +336,41 @@ public class ApplicationRepositoryTests {
                 entityManager
                     .getEntityManager()
                     .createNativeQuery("select count(*) from application_topic_proficiencies")
+                    .getSingleResult())
+            .longValue());
+  }
+
+  @Test
+  public void interest_levels_are_replaced_on_update_and_deleted_with_the_application() {
+    Recruitment r = recruitment("20261", RecruitmentType.ULA);
+    Application saved =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(r.getId())
+                .email("ula@ucsb.edu")
+                .interests(new HashMap<>(Map.of("Tutoring", 4, "Grading", 1)))
+                .build());
+    entityManager.flush();
+    entityManager.clear();
+
+    Application loaded = applicationRepository.findById(saved.getId()).orElseThrow();
+    loaded.setInterests(new HashMap<>(Map.of("Office hours", 5)));
+    applicationRepository.save(loaded);
+    entityManager.flush();
+    entityManager.clear();
+
+    assertEquals(
+        Map.of("Office hours", 5),
+        applicationRepository.findById(saved.getId()).orElseThrow().getInterests());
+
+    applicationRepository.deleteById(saved.getId());
+    entityManager.flush();
+    assertEquals(
+        0L,
+        ((Number)
+                entityManager
+                    .getEntityManager()
+                    .createNativeQuery("select count(*) from application_interests")
                     .getSingleResult())
             .longValue());
   }

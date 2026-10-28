@@ -270,7 +270,9 @@ describe("ApplyPage tests", () => {
       screen.getByTestId("ApplyPage-major"),
       "Computer Science",
     );
-    await userEvent.click(screen.getByTestId("ApplyPage-topic-React-4"));
+    // A ULA form rates topics 1 to 3 and asks about interests 1 to 5.
+    await userEvent.click(screen.getByTestId("ApplyPage-topic-React-2"));
+    await userEvent.click(screen.getByTestId("ApplyPage-interest-Tutoring-5"));
     await userEvent.selectOptions(
       screen.getByTestId("ApplyPage-firstChoiceCourse"),
       "CMPSC   156",
@@ -285,7 +287,8 @@ describe("ApplyPage tests", () => {
     const sent = JSON.parse(axiosMock.history.post[0].data);
     expect(sent.firstName).toBe("Chris");
     expect(sent.major).toBe("Computer Science");
-    expect(sent.topicProficiencies).toEqual({ React: 4 });
+    expect(sent.topicProficiencies).toEqual({ React: 2 });
+    expect(sent.interests).toEqual({ Tutoring: 5 });
     expect(sent.priorCoursework).toEqual([
       {
         ucsbCourse: true,

@@ -141,6 +141,20 @@ public class Application {
   private Map<String, Integer> topicProficiencies = new HashMap<>();
 
   /**
+   * How interested a ULA applicant is, 1 (not interested) to 5 (very interested), in each of the
+   * areas the applicant answered for, keyed by name from the admin-maintained ULA interests list.
+   * Sparse like the topic ratings: an unanswered area is simply absent. A TA application has none.
+   */
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(
+      name = "application_interests",
+      joinColumns = @JoinColumn(name = "application_id"))
+  @MapKeyColumn(name = "interest")
+  @Column(name = "level")
+  @Builder.Default
+  private Map<String, Integer> interests = new HashMap<>();
+
+  /**
    * The courses the applicant lists as relevant background, one row each, in the order given.
    * Replaced wholesale on every edit (orphan removal deletes the old rows), so the rows always
    * mirror the table the applicant last saved. A TA application needs at least three, a ULA

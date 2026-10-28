@@ -260,3 +260,21 @@ and **User**; a signed-in user holding neither of the first two is a student who
   "Applications for ULA positions in F26 are open"), the upcoming ones likewise, and the most
   recently closed round of each type. Admins and instructors see their own messages and no
   dashboard, as before. The Users table no longer has a Grad Student column.
+
+# Tenth Iteration
+
+The ULA application's topic scale changes, and the ULA form gains an **Interests** section backed
+by a new admin-maintained list.
+
+* On the ULA form, each topic is rated on three levels instead of five: **1-Very comfortable**,
+  **2-Somewhat comfortable**, **3-Not familiar**. The TA form keeps its 1 (lowest) to 5 (highest)
+  scale. The backend refuses a level off the scale for the form's type, as before.
+* **ULA App Settings** gains a third list, **Interests List for ULAs**, after the ULA topics. It
+  works exactly like the majors and topics lists: add, rename and delete, plus CSV download and
+  upload in the shared one-column shape, served at `/api/admin/settings/ula-interests`. A new
+  `ula_interests` table holds it (changeset 015).
+* The ULA form gains an **Interests** section after the topic table, listing the admin's interest
+  areas, each rated **1-Not interested** to **5-Very interested**. The answers live in a new
+  `application_interests` table (changeset 015), sparse like the topic ratings, and come back on the
+  summary and when an application is reopened for editing. A TA application has no interests;
+  anything sent for one is dropped.

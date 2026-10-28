@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
@@ -17,6 +17,7 @@ import priorCourseworkFixtures from "fixtures/priorCourseworkFixtures";
 const courses = ["CMPSC     8", "CMPSC   130A", "CMPSC   156"];
 const majors = ["Computer Engineering", "Computer Science", "Statistics"];
 const topics = ["Compilers", "Java", "Python"];
+const interests = ["Grading", "Office hours", "Tutoring"];
 
 function renderForm({
   type = "TA",
@@ -28,6 +29,7 @@ function renderForm({
   recruitmentId = undefined,
   majorList = majors,
   topicList = topics,
+  interestList = interests,
   notice = undefined,
 } = {}) {
   render(
@@ -39,6 +41,7 @@ function renderForm({
           recruitmentId={recruitmentId}
           majors={majorList}
           topics={topicList}
+          interests={interestList}
           notice={notice}
           initialContents={initialContents}
           defaultNames={defaultNames}
@@ -1055,12 +1058,13 @@ describe("ApplicationForm tests", () => {
       },
     });
 
-    await userEvent.click(screen.getByTestId("ApplicationForm-topic-Java-5"));
+    // A ULA form offers 1 to 3.
+    await userEvent.click(screen.getByTestId("ApplicationForm-topic-Java-3"));
     await userEvent.click(screen.getByTestId("ApplicationForm-topic-Python-2"));
     // Changing an answer replaces it.
     await userEvent.click(screen.getByTestId("ApplicationForm-topic-Python-1"));
 
-    expect(screen.getByTestId("ApplicationForm-topic-Java-5")).toBeChecked();
+    expect(screen.getByTestId("ApplicationForm-topic-Java-3")).toBeChecked();
     expect(screen.getByTestId("ApplicationForm-topic-Python-1")).toBeChecked();
     expect(
       screen.getByTestId("ApplicationForm-topic-Python-2"),
@@ -1090,9 +1094,226 @@ describe("ApplicationForm tests", () => {
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
     // Strict: an unrated topic must be absent, not present as undefined.
     expect(submitAction.mock.calls[0][0].topicProficiencies).toStrictEqual({
-      Java: 5,
+      Java: 3,
       Python: 1,
     });
+  });
+
+  test("a ULA form heads the topic columns with the worded three-point scale", () => {
+    renderForm({ type: "ULA" });
+
+    expect(
+      screen.getByText(
+        "For each topic, choose 1 if you are very comfortable with it, 2 if somewhat comfortable, or 3 if you are not familiar with it.",
+      ),
+    ).toBeInTheDocument();
+    const group = screen.getByTestId("ApplicationForm-topicProficiencies");
+    expect(
+      [...group.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual([
+      "Topic",
+      "1-Very comfortable",
+      "2-Somewhat comfortable",
+      "3-Not familiar",
+    ]);
+    [1, 2, 3].forEach((level) =>
+      expect(
+        screen.getByTestId(`ApplicationForm-topic-Java-${level}`),
+      ).toHaveAttribute("aria-label", `Java: ${level}`),
+    );
+    expect(screen.queryByTestId("ApplicationForm-topic-Java-4")).toBeNull();
+    expect(screen.queryByTestId("ApplicationForm-topic-Java-5")).toBeNull();
+  });
+
+  // ---- interests (ULA only) ----
+
+  test("a ULA form lists each interest with radio buttons 1 to 5 under the instruction", () => {
+    renderForm({ type: "ULA" });
+
+    const group = screen.getByTestId("ApplicationForm-interests");
+    expect(group).toHaveTextContent("Interests");
+    expect(group).toHaveTextContent(
+      "For each area, choose how interested you are, with 1 being not interested and 5 being very interested.",
+    );
+    expect(
+      [...group.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual([
+      "Interest",
+      "1-Not interested",
+      "2",
+      "3",
+      "4",
+      "5-Very interested",
+    ]);
+    interests.forEach((interest) => {
+      const row = screen.getByTestId(
+        `ApplicationForm-interest-${interest.replace(/\s+/g, "-")}`,
+      );
+      expect(row).toHaveTextContent(interest);
+      [1, 2, 3, 4, 5].forEach((level) => {
+        const radio = screen.getByTestId(
+          `ApplicationForm-interest-${interest.replace(/\s+/g, "-")}-${level}`,
+        );
+        expect(radio).toHaveAttribute("type", "radio");
+        expect(radio).toHaveAttribute("aria-label", `${interest}: ${level}`);
+        expect(radio).not.toBeChecked();
+      });
+    });
+    expect(screen.queryByTestId("ApplicationForm-interests-none")).toBeNull();
+  });
+
+  test("a TA form has no interests section and sends no interests", async () => {
+    const submitAction = renderForm({
+      type: "TA",
+      initialContents: {
+        priorCoursework: priorCourseworkFixtures.threeCourses,
+        // Even a stored answer is not sent from a TA form.
+        interests: { Tutoring: 4 },
+      },
+    });
+
+    expect(screen.queryByTestId("ApplicationForm-interests")).toBeNull();
+    expect(
+      screen.queryByTestId("ApplicationForm-interest-Tutoring-4"),
+    ).toBeNull();
+
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-firstName"),
+      "Ada",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-lastName"),
+      "Lovelace",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Statistics",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].interests).toStrictEqual({});
+  });
+
+  test("picking an interest level is remembered per area and sent for answered areas only", async () => {
+    const submitAction = renderForm({
+      type: "ULA",
+      initialContents: {
+        priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+      },
+    });
+
+    await userEvent.click(
+      screen.getByTestId("ApplicationForm-interest-Tutoring-5"),
+    );
+    await userEvent.click(
+      screen.getByTestId("ApplicationForm-interest-Grading-2"),
+    );
+    // Changing an answer replaces it.
+    await userEvent.click(
+      screen.getByTestId("ApplicationForm-interest-Grading-1"),
+    );
+
+    expect(
+      screen.getByTestId("ApplicationForm-interest-Tutoring-5"),
+    ).toBeChecked();
+    expect(
+      screen.getByTestId("ApplicationForm-interest-Grading-1"),
+    ).toBeChecked();
+    expect(
+      screen.getByTestId("ApplicationForm-interest-Grading-2"),
+    ).not.toBeChecked();
+    expect(
+      screen.getByTestId("ApplicationForm-interest-Office-hours-3"),
+    ).not.toBeChecked();
+
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-firstName"),
+      "Ada",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-lastName"),
+      "Lovelace",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Statistics",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].interests).toStrictEqual({
+      Tutoring: 5,
+      Grading: 1,
+    });
+  });
+
+  test("pre-fills the interest levels from a previous ULA application", () => {
+    renderForm({
+      type: "ULA",
+      initialContents: applicationsFixtures.oneUlaApplication,
+    });
+
+    // Tutoring: 5 and Grading: 2 are stored.
+    expect(
+      screen.getByTestId("ApplicationForm-interest-Tutoring-5"),
+    ).toBeChecked();
+    expect(
+      screen.getByTestId("ApplicationForm-interest-Grading-2"),
+    ).toBeChecked();
+  });
+
+  /** An answer for an area no longer on the list must not ride along invisibly. */
+  test("a stored level for an area that is no longer listed is not sent", async () => {
+    const submitAction = renderForm({
+      type: "ULA",
+      interestList: ["Tutoring"],
+      initialContents: applicationsFixtures.oneUlaApplication,
+    });
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].interests).toStrictEqual({
+      Tutoring: 5,
+    });
+  });
+
+  test("a previous ULA application with no interest answers starts unanswered", () => {
+    renderForm({
+      type: "ULA",
+      initialContents: {
+        ...applicationsFixtures.oneUlaApplication,
+        interests: null,
+      },
+    });
+
+    [1, 2, 3, 4, 5].forEach((level) =>
+      expect(
+        screen.getByTestId(`ApplicationForm-interest-Tutoring-${level}`),
+      ).not.toBeChecked(),
+    );
+  });
+
+  test("with no interests listed, the ULA table says so; non-array interests are tolerated", () => {
+    renderForm({ type: "ULA", interestList: [] });
+    expect(
+      screen.getByTestId("ApplicationForm-interests-none"),
+    ).toHaveTextContent("No interests are listed yet.");
+    cleanup();
+
+    renderForm({ type: "ULA", interestList: null });
+    expect(
+      screen.getByTestId("ApplicationForm-interests-none"),
+    ).toBeInTheDocument();
   });
 
   test("pre-fills the ratings from a previous application", () => {

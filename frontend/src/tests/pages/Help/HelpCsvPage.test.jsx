@@ -81,7 +81,7 @@ describe("HelpCsvPage tests", () => {
 
     const heading = await screen.findByRole("heading", {
       level: 2,
-      name: "App Settings Lists CSV formats (Majors and Topics)",
+      name: "App Settings Lists CSV formats (Majors, Topics and Interests)",
     });
     expect(heading).toHaveAttribute("id", "settings-lists");
     expect(screen.getByTestId("settingsListsDescription")).toHaveTextContent(

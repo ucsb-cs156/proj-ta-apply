@@ -3,10 +3,13 @@ import {
   COURSE_INTEREST_OPTIONS,
   DEFAULT_COURSE_INTEREST,
   EMPTY_OPTIONS,
-  MAX_PROFICIENCY,
+  INTEREST_LEVELS,
   MIN_PROFICIENCY,
   OTHER_MAJOR,
-  PROFICIENCY_LEVELS,
+  TA_PROFICIENCY_LEVELS,
+  ULA_PROFICIENCY_LEVELS,
+  proficiencyInstruction,
+  proficiencyLevels,
   courseInterestLabel,
   toPayload,
   type ApplicationFormFields,
@@ -25,6 +28,7 @@ const fields = (
   graduationDate: "S27",
   priorCoursework: [],
   topicProficiencies: { Java: 5 },
+  interests: {},
   prevExperience: "TA for CS 24",
   comments: "",
   firstChoiceCourse: "CMPSC   156",
@@ -154,10 +158,41 @@ describe("toPayload", () => {
 
   // ---- topic proficiencies ----
 
-  test("the proficiency scale runs 1 to 5", () => {
+  test("the TA topic scale runs 1 to 5, headed by the numbers", () => {
     expect(MIN_PROFICIENCY).toBe(1);
-    expect(MAX_PROFICIENCY).toBe(5);
-    expect(PROFICIENCY_LEVELS).toEqual([1, 2, 3, 4, 5]);
+    expect(TA_PROFICIENCY_LEVELS).toEqual([
+      { value: 1, label: "1" },
+      { value: 2, label: "2" },
+      { value: 3, label: "3" },
+      { value: 4, label: "4" },
+      { value: 5, label: "5" },
+    ]);
+    expect(proficiencyLevels("TA")).toBe(TA_PROFICIENCY_LEVELS);
+    expect(proficiencyInstruction("TA")).toBe(
+      "Choose a level of proficiency, with 1 being the lowest, and 5 being the highest.",
+    );
+  });
+
+  test("the ULA topic scale has three worded levels", () => {
+    expect(ULA_PROFICIENCY_LEVELS).toEqual([
+      { value: 1, label: "1-Very comfortable" },
+      { value: 2, label: "2-Somewhat comfortable" },
+      { value: 3, label: "3-Not familiar" },
+    ]);
+    expect(proficiencyLevels("ULA")).toBe(ULA_PROFICIENCY_LEVELS);
+    expect(proficiencyInstruction("ULA")).toBe(
+      "For each topic, choose 1 if you are very comfortable with it, 2 if somewhat comfortable, or 3 if you are not familiar with it.",
+    );
+  });
+
+  test("the interest scale runs 1 to 5 with its ends worded", () => {
+    expect(INTEREST_LEVELS).toEqual([
+      { value: 1, label: "1-Not interested" },
+      { value: 2, label: "2" },
+      { value: 3, label: "3" },
+      { value: 4, label: "4" },
+      { value: 5, label: "5-Very interested" },
+    ]);
   });
 
   test("topic ratings are carried through as given", () => {
@@ -170,7 +205,7 @@ describe("toPayload", () => {
   /** The sentinel can never collide with a real major typed by an applicant. */
   test("the Other sentinel is not a plausible major name", () => {
     expect(OTHER_MAJOR).toBe("__OTHER__");
-    expect(EMPTY_OPTIONS).toEqual({ majors: [], topics: [] });
+    expect(EMPTY_OPTIONS).toEqual({ majors: [], topics: [], interests: [] });
   });
 
   test("everything else is carried through untouched", () => {

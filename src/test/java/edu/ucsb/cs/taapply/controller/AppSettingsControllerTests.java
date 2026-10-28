@@ -20,10 +20,12 @@ import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.controller.AppSettingsController.NameItem;
 import edu.ucsb.cs.taapply.entity.TaMajor;
 import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.entity.UlaInterest;
 import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.services.NameListCsvService;
@@ -48,8 +50,9 @@ public class AppSettingsControllerTests extends ControllerTestCase {
   @MockitoBean TaTopicRepository taTopicRepository;
   @MockitoBean UlaMajorRepository ulaMajorRepository;
   @MockitoBean UlaTopicRepository ulaTopicRepository;
+  @MockitoBean UlaInterestRepository ulaInterestRepository;
 
-  private static final String LISTS = "ta-majors,ta-topics,ula-majors,ula-topics";
+  private static final String LISTS = "ta-majors,ta-topics,ula-majors,ula-topics,ula-interests";
 
   // ---- authorization ----
 
@@ -110,7 +113,7 @@ public class AppSettingsControllerTests extends ControllerTestCase {
             .andReturn();
     assertEquals(
         "No such settings list: ta-minors (expected one of [ta-majors, ta-topics, ula-majors,"
-            + " ula-topics])",
+            + " ula-topics, ula-interests])",
         responseToJson(response).get("message"));
   }
 
@@ -125,6 +128,8 @@ public class AppSettingsControllerTests extends ControllerTestCase {
         .thenReturn(List.of(UlaMajor.builder().name("Stats").build()));
     when(ulaTopicRepository.findAll())
         .thenReturn(List.of(UlaTopic.builder().name("Python").build()));
+    when(ulaInterestRepository.findAll())
+        .thenReturn(List.of(UlaInterest.builder().name("Tutoring").build()));
 
     assertEquals(
         mapper.writeValueAsString(List.of(new NameItem("CS"))),
@@ -138,6 +143,9 @@ public class AppSettingsControllerTests extends ControllerTestCase {
     assertEquals(
         mapper.writeValueAsString(List.of(new NameItem("Python"))),
         body(get("/api/admin/settings/ula-topics/all")));
+    assertEquals(
+        mapper.writeValueAsString(List.of(new NameItem("Tutoring"))),
+        body(get("/api/admin/settings/ula-interests/all")));
   }
 
   private String body(org.springframework.test.web.servlet.RequestBuilder request)
@@ -175,7 +183,7 @@ public class AppSettingsControllerTests extends ControllerTestCase {
 
   @WithMockUser(roles = {"ADMIN"})
   @ParameterizedTest
-  @ValueSource(strings = {"ta-majors", "ta-topics", "ula-majors", "ula-topics"})
+  @ValueSource(strings = {"ta-majors", "ta-topics", "ula-majors", "ula-topics", "ula-interests"})
   public void an_admin_can_add_a_name_to_each_list(String list) throws Exception {
     MvcResult response =
         mockMvc
@@ -198,9 +206,12 @@ public class AppSettingsControllerTests extends ControllerTestCase {
       case "ula-majors" ->
           verify(ulaMajorRepository, times(1))
               .save(UlaMajor.builder().name("Computer Science").build());
-      default ->
+      case "ula-topics" ->
           verify(ulaTopicRepository, times(1))
               .save(UlaTopic.builder().name("Computer Science").build());
+      default ->
+          verify(ulaInterestRepository, times(1))
+              .save(UlaInterest.builder().name("Computer Science").build());
     }
   }
 
@@ -358,7 +369,8 @@ public class AppSettingsControllerTests extends ControllerTestCase {
             AppSettingsController.TA_MAJORS,
             AppSettingsController.TA_TOPICS,
             AppSettingsController.ULA_MAJORS,
-            AppSettingsController.ULA_TOPICS));
+            AppSettingsController.ULA_TOPICS,
+            AppSettingsController.ULA_INTERESTS));
   }
 
   // ---- CSV download ----

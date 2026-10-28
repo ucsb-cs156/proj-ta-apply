@@ -41,6 +41,18 @@ const common = [
   http.post("/api/admin/settings/ula-topics/upload/csv", () =>
     HttpResponse.json({ inserted: 1, alreadyPresent: 1 }),
   ),
+  http.post("/api/admin/settings/ula-interests/post", () =>
+    HttpResponse.json({ name: "Office hours" }),
+  ),
+  http.put("/api/admin/settings/ula-interests", () =>
+    HttpResponse.json({ name: "Renamed" }),
+  ),
+  http.delete("/api/admin/settings/ula-interests/delete", () =>
+    HttpResponse.json({ message: "removed from ula-interests" }),
+  ),
+  http.post("/api/admin/settings/ula-interests/upload/csv", () =>
+    HttpResponse.json({ inserted: 2, alreadyPresent: 0 }),
+  ),
 ];
 
 export default {
@@ -61,6 +73,9 @@ Default.parameters = {
       http.get("/api/admin/settings/ula-topics/all", () =>
         HttpResponse.json(appSettingsFixtures.twoTopics),
       ),
+      http.get("/api/admin/settings/ula-interests/all", () =>
+        HttpResponse.json(appSettingsFixtures.twoInterests),
+      ),
     ],
   },
 };
@@ -75,6 +90,9 @@ Empty.parameters = {
         HttpResponse.json([]),
       ),
       http.get("/api/admin/settings/ula-topics/all", () =>
+        HttpResponse.json([]),
+      ),
+      http.get("/api/admin/settings/ula-interests/all", () =>
         HttpResponse.json([]),
       ),
     ],

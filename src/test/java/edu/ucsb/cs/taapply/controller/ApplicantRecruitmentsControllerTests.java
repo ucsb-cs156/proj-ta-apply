@@ -13,6 +13,7 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.TaMajor;
 import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.entity.UlaInterest;
 import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
@@ -26,6 +27,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
@@ -54,6 +56,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   @MockitoBean TaTopicRepository taTopicRepository;
   @MockitoBean UlaMajorRepository ulaMajorRepository;
   @MockitoBean UlaTopicRepository ulaTopicRepository;
+  @MockitoBean UlaInterestRepository ulaInterestRepository;
 
   private static Recruitment recruitment(
       long id,
@@ -468,6 +471,11 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     when(ulaMajorRepository.findAll()).thenReturn(List.of(UlaMajor.builder().name("Math").build()));
     when(ulaTopicRepository.findAll())
         .thenReturn(List.of(UlaTopic.builder().name("Web Development").build()));
+    when(ulaInterestRepository.findAll())
+        .thenReturn(
+            List.of(
+                UlaInterest.builder().name("Tutoring").build(),
+                UlaInterest.builder().name("grading").build()));
   }
 
   /** A TA recruitment offers the TA lists, sorted case-insensitively. */
@@ -481,10 +489,13 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
         mapper.writeValueAsString(
             new ApplicantRecruitmentsController.ApplicationOptions(
                 List.of("computer engineering", "Computer Science", "Statistics"),
-                List.of("Java", "Python"))),
+                List.of("Java", "Python"),
+                List.of())),
         getJson("/api/recruitments/options?recruitmentId=1"));
     verify(ulaMajorRepository, never()).findAll();
     verify(ulaTopicRepository, never()).findAll();
+    // A TA form has no interests section, so the list is not even read.
+    verify(ulaInterestRepository, never()).findAll();
   }
 
   /** A ULA recruitment offers the ULA lists, and an admin may ask for any recruitment's lists. */
@@ -497,7 +508,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(
         mapper.writeValueAsString(
             new ApplicantRecruitmentsController.ApplicationOptions(
-                List.of("Math"), List.of("Web Development"))),
+                List.of("Math"), List.of("Web Development"), List.of("grading", "Tutoring"))),
         getJson("/api/recruitments/options?recruitmentId=2"));
     verify(taMajorRepository, never()).findAll();
     verify(taTopicRepository, never()).findAll();

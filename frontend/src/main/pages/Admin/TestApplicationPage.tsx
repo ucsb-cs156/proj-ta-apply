@@ -137,6 +137,7 @@ export default function TestApplicationPage(): React.JSX.Element {
               recruitmentId={recruitmentId}
               majors={options?.majors ?? []}
               topics={options?.topics ?? []}
+              interests={options?.interests ?? []}
               notice={(notices ?? [])[0] ?? null}
               defaultNames={{
                 firstName: currentUser.root?.user?.givenName,

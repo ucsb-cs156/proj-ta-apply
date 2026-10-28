@@ -24,6 +24,12 @@ export default function UlaAppSettingsPage(): React.JSX.Element {
           listKey="ula-topics"
           testIdPrefix="UlaAppSettingsPage-topics"
         />
+        <NameListCard
+          title="Interests List for ULAs"
+          itemLabel="interest"
+          listKey="ula-interests"
+          testIdPrefix="UlaAppSettingsPage-interests"
+        />
         <NoticeEditorCard
           type="ULA"
           testIdPrefix="UlaAppSettingsPage-notices"

@@ -154,6 +154,7 @@ export default function ApplicationPage(): React.JSX.Element {
                 recruitmentId={application.recruitmentId}
                 majors={options?.majors ?? []}
                 topics={options?.topics ?? []}
+                interests={options?.interests ?? []}
                 notice={notice}
                 initialContents={application}
                 defaultNames={{

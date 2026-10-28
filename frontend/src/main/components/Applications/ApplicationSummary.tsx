@@ -48,12 +48,15 @@ const otherCourses = (interests: Record<string, string> | null): string => {
     .join("\n");
 };
 
-/** One line per rated topic, in topic order; an empty map reads as blank. */
-const topicRatings = (proficiencies: Record<string, number> | null): string => {
-  const rated = proficiencies ?? {};
-  return Object.keys(rated)
+/** One line per answered name, in name order, each "name: level / top"; an empty map is blank. */
+const levelLines = (
+  levels: Record<string, number> | null,
+  top: number,
+): string => {
+  const answered = levels ?? {};
+  return Object.keys(answered)
     .sort((a, b) => a.localeCompare(b))
-    .map((topic) => `${topic}: ${rated[topic]} / 5`)
+    .map((name) => `${name}: ${answered[name]} / ${top}`)
     .join("\n");
 };
 
@@ -113,12 +116,21 @@ export default function ApplicationSummary({
     );
   }
 
-  rows.push(
-    {
-      label: "Topic Proficiency (1 lowest to 5 highest)",
-      value: topicRatings(application.topicProficiencies),
+  rows.push({
+    label: isTa
+      ? "Topic Proficiency (1 lowest to 5 highest)"
+      : "Topic Proficiency (1 very comfortable to 3 not familiar)",
+    value: levelLines(application.topicProficiencies, isTa ? 5 : 3),
+    mono: true,
+  });
+  if (!isTa) {
+    rows.push({
+      label: "Interests (1 not interested to 5 very interested)",
+      value: levelLines(application.interests, 5),
       mono: true,
-    },
+    });
+  }
+  rows.push(
     {
       label: "Previous Teaching Experience",
       value: show(application.prevExperience),

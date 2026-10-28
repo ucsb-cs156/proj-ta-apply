@@ -37,6 +37,9 @@ describe("UlaAppSettingsPage tests", () => {
     axiosMock
       .onGet("/api/admin/settings/ula-topics/all")
       .reply(200, appSettingsFixtures.twoTopics);
+    axiosMock
+      .onGet("/api/admin/settings/ula-interests/all")
+      .reply(200, appSettingsFixtures.twoInterests);
     axiosMock.onGet("/api/admin/notices/all").reply(200, []);
   });
 
@@ -66,9 +69,20 @@ describe("UlaAppSettingsPage tests", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Majors List for ULAs")).toBeInTheDocument();
     expect(screen.getByText("Topics List for ULAs")).toBeInTheDocument();
-    // Both are React Bootstrap cards.
+    expect(screen.getByText("Interests List for ULAs")).toBeInTheDocument();
+    // All three are React Bootstrap cards, interests after topics.
     expect(screen.getByTestId("UlaAppSettingsPage-majors")).toHaveClass("card");
     expect(screen.getByTestId("UlaAppSettingsPage-topics")).toHaveClass("card");
+    expect(screen.getByTestId("UlaAppSettingsPage-interests")).toHaveClass(
+      "card",
+    );
+    expect(
+      screen
+        .getByTestId("UlaAppSettingsPage-topics")
+        .compareDocumentPosition(
+          screen.getByTestId("UlaAppSettingsPage-interests"),
+        ),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   /** Each card is wired to the ULA list, not the other type's. */
@@ -85,6 +99,11 @@ describe("UlaAppSettingsPage tests", () => {
         "UlaAppSettingsPage-topics-table-cell-row-1-col-name",
       ),
     ).toHaveTextContent("Web Development");
+    expect(
+      await screen.findByTestId(
+        "UlaAppSettingsPage-interests-table-cell-row-1-col-name",
+      ),
+    ).toHaveTextContent("Tutoring");
 
     await waitFor(() =>
       expect(
@@ -95,6 +114,7 @@ describe("UlaAppSettingsPage tests", () => {
         expect.arrayContaining([
           "/api/admin/settings/ula-majors/all",
           "/api/admin/settings/ula-topics/all",
+          "/api/admin/settings/ula-interests/all",
         ]),
       ),
     );
