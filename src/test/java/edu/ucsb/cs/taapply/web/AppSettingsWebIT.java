@@ -1,0 +1,91 @@
+package edu.ucsb.cs.taapply.web;
+
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+import edu.ucsb.cs.taapply.WebTestCase;
+import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+/** End-to-end coverage of the TA / ULA App Settings pages: one full CRUD round on a list. */
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@ActiveProfiles("integration")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@ResourceLock("port-8080")
+@Import(IntegrationConfig.class)
+public class AppSettingsWebIT extends WebTestCase {
+
+  private void goTo(String path) {
+    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1" + path));
+  }
+
+  @Test
+  public void admin_can_add_rename_and_remove_a_ta_major_from_the_admin_menu() throws Exception {
+    setupAdminUser();
+    goTo("/");
+
+    // "Admin" also appears in the welcome text and the home page, so target the menu itself.
+    page.getByTestId("appnavbar-admin-dropdown").click();
+    page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("TA App Settings")).click();
+    assertThat(page.getByRole(AriaRole.HEADING).first()).containsText("TA App Settings");
+
+    // Empty to start.
+    assertThat(page.getByTestId("TaAppSettingsPage-majors-empty")).isVisible();
+    assertThat(page.getByTestId("TaAppSettingsPage-topics-empty")).isVisible();
+
+    // Create.
+    page.getByTestId("TaAppSettingsPage-majors-add-input").fill("Computer Science");
+    page.getByTestId("TaAppSettingsPage-majors-add-button").click();
+    assertThat(page.getByTestId("TaAppSettingsPage-majors-table-cell-row-0-col-name"))
+        .containsText("Computer Science");
+    // The topics card is a separate list and is untouched.
+    assertThat(page.getByTestId("TaAppSettingsPage-topics-empty")).isVisible();
+
+    // Update.
+    page.getByTestId("TaAppSettingsPage-majors-row-0-edit-button").click();
+    page.getByTestId("TaAppSettingsPage-majors-row-0-edit-input").fill("Computer Engineering");
+    page.getByTestId("TaAppSettingsPage-majors-row-0-save-button").click();
+    assertThat(page.getByTestId("TaAppSettingsPage-majors-table-cell-row-0-col-name"))
+        .containsText("Computer Engineering");
+
+    // It survives a reload, so it really was stored.
+    page.reload();
+    assertThat(page.getByTestId("TaAppSettingsPage-majors-table-cell-row-0-col-name"))
+        .containsText("Computer Engineering");
+
+    // Delete.
+    page.getByTestId("TaAppSettingsPage-majors-row-0-delete-button").click();
+    assertThat(page.getByTestId("TaAppSettingsPage-majors-empty")).isVisible();
+  }
+
+  @Test
+  public void ula_settings_page_is_separate_from_the_ta_one() throws Exception {
+    setupAdminUser();
+    goTo("/admin/settings/ta");
+    page.getByTestId("TaAppSettingsPage-topics-add-input").fill("Compilers");
+    page.getByTestId("TaAppSettingsPage-topics-add-button").click();
+    assertThat(page.getByTestId("TaAppSettingsPage-topics-table-cell-row-0-col-name"))
+        .containsText("Compilers");
+
+    goTo("/admin/settings/ula");
+    assertThat(page.getByRole(AriaRole.HEADING).first()).containsText("ULA App Settings");
+    assertThat(page.getByTestId("UlaAppSettingsPage-topics-empty")).isVisible();
+  }
+
+  @Test
+  public void non_admins_are_denied_the_settings_pages() throws Exception {
+    setupGradStudentUser();
+    goTo("/admin/settings/ta");
+    assertThat(page.getByText("TA App Settings")).not().isVisible();
+    assertThat(page.getByTestId("TaAppSettingsPage-majors")).not().isVisible();
+  }
+}

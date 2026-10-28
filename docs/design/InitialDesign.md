@@ -143,3 +143,44 @@ Some fields are common to both TA and ULA applications, others are specific, as 
 | available_for_lectures_second_choice_course | | |
 | available_for_at_least_one_discussion_first_choice_course | | |
 | available_for_at_least_one_discussion_first_choice_course | | |
+
+# Fifth Iteration
+
+Some of the questions on the application form should offer the applicant a list to choose from
+rather than a free-text box, and those lists will change from year to year, so admins need to be
+able to maintain them without a code change. This iteration adds the lists and the admin pages for
+them; wiring them into the application form is left for a later increment.
+
+On the Admin menu, add two menu items: **TA App Settings** and **ULA App Settings**.
+
+## TA App Settings
+
+`/admin/settings/ta` is a page headed "TA App Settings". It holds one React Bootstrap Card per
+list:
+
+1. **Majors List for TAs**, backed by a `ta_majors` table.
+2. **Topics List for TAs**, backed by a `ta_topics` table.
+
+## ULA App Settings
+
+`/admin/settings/ula` is a page headed "ULA App Settings", laid out the same way:
+
+1. **Majors List for ULAs**, backed by a `ula_majors` table.
+2. **Topics List for ULAs**, backed by a `ula_topics` table.
+
+## The tables
+
+Each of the four tables has exactly one column, `name`, a string that is also the primary key. The
+TA and ULA lists are separate tables rather than one table with a type column, so that the two
+forms can diverge freely.
+
+Admins can do all CRUD operations on each list from its card: see the names (sorted, case
+insensitive), add one, rename one in place, and remove one. Because the name is the key, a rename
+is a delete followed by an insert; the API hides that behind a single `PUT`. Names are trimmed
+before they are stored, blank names are refused, and so is adding or renaming onto a name that is
+already in the list.
+
+The four lists share one backend controller, `/api/admin/settings/{list}`, where `list` is one of
+`ta-majors`, `ta-topics`, `ula-majors` or `ula-topics`, and one frontend card component. Adding a
+fifth list later means one more table, entity and repository, one more entry in the controller's
+map, and one more card.
