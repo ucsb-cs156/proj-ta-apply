@@ -30,6 +30,12 @@ const common = [
   http.delete("/api/admin/settings/ula-topics/delete", () =>
     HttpResponse.json({ message: "removed from ula-topics" }),
   ),
+  http.post("/api/admin/settings/ula-majors/upload/csv", () =>
+    HttpResponse.json({ inserted: 2, alreadyPresent: 0 }),
+  ),
+  http.post("/api/admin/settings/ula-topics/upload/csv", () =>
+    HttpResponse.json({ inserted: 1, alreadyPresent: 1 }),
+  ),
 ];
 
 export default {
