@@ -88,6 +88,9 @@ export default function AppNavbar({
                   <NavDropdown.Item as={Link} to="/admin/developer">
                     Developer Info
                   </NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/admin/legacy-ta-application">
+                    Legacy TA Application
+                  </NavDropdown.Item>
                 </NavDropdown>
               )}
             </Nav>
