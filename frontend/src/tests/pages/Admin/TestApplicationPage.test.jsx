@@ -45,6 +45,25 @@ function renderPage(recruitmentId = 3) {
   );
 }
 
+/** Adds one UCSB course through the coursework modal; a TA application needs three. */
+async function addCourse(courseNumber) {
+  await userEvent.click(
+    screen.getByTestId("TestApplicationPage-coursework-add-button"),
+  );
+  await userEvent.type(
+    screen.getByTestId("TestApplicationPage-coursework-modal-courseNumber"),
+    courseNumber,
+  );
+  await userEvent.click(
+    screen.getByTestId("TestApplicationPage-coursework-modal-save"),
+  );
+  await waitFor(() =>
+    expect(
+      screen.queryByTestId("TestApplicationPage-coursework-modal"),
+    ).toBeNull(),
+  );
+}
+
 describe("TestApplicationPage tests", () => {
   beforeEach(() => {
     mockToast.mockClear();
@@ -231,6 +250,9 @@ describe("TestApplicationPage tests", () => {
       screen.getByTestId("TestApplicationPage-firstChoiceCourse"),
       "CMPSC   156",
     );
+    for (const number of ["CMPSC 8", "CMPSC 16", "CMPSC 24"]) {
+      await addCourse(number);
+    }
     await userEvent.click(screen.getByTestId("TestApplicationPage-submit"));
 
     await waitFor(() => expect(axiosMock.history.post.length).toBe(1));

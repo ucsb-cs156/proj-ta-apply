@@ -3,6 +3,8 @@ import { Button, Col, Form, Row, Table } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
+import PriorCourseworkSection from "main/components/PriorCoursework/PriorCourseworkSection";
+import { MIN_COURSES, type PriorCourse } from "main/utils/priorCoursework";
 import RequiredField from "main/components/Common/RequiredField";
 import RequiredFieldExplanation from "main/components/Common/RequiredFieldExplanation";
 import type { NoticeVersion } from "main/utils/notices";
@@ -24,7 +26,11 @@ import {
  */
 type RegisteredFields = Omit<
   ApplicationFormFields,
-  "major" | "courseInterests" | "topicProficiencies" | "noticeVersionId"
+  | "major"
+  | "courseInterests"
+  | "topicProficiencies"
+  | "noticeVersionId"
+  | "priorCoursework"
 >;
 
 type ApplicationFormProps = {
@@ -124,7 +130,6 @@ export default function ApplicationForm({
     gpaOverall: asString(initialContents?.gpaOverall),
     yearInProgram: asString(initialContents?.yearInProgram),
     graduationDate: asString(initialContents?.graduationDate),
-    courseworkUcsb: asString(initialContents?.courseworkUcsb),
     prevExperience: asString(initialContents?.prevExperience),
     comments: asString(initialContents?.comments),
     firstChoiceCourse: initialFirstChoice,
@@ -145,8 +150,6 @@ export default function ApplicationForm({
     languageExam: asString(initialContents?.languageExam),
     languageExamDatePassed: asString(initialContents?.languageExamDatePassed),
     classLevel: asString(initialContents?.classLevel),
-    courseworkOther: asString(initialContents?.courseworkOther),
-    coursework290: asString(initialContents?.coursework290),
     videoLink: asString(initialContents?.videoLink),
     previousServiceAsUla: asString(initialContents?.previousServiceAsUla),
   };
@@ -192,6 +195,13 @@ export default function ApplicationForm({
     }
   };
 
+  // The prior courses, edited in their own table and modal; sent with the rest on submit.
+  const [priorCoursework, setPriorCoursework] = useState<PriorCourse[]>(() => [
+    ...(initialContents?.priorCoursework ?? []),
+  ]);
+  const [tooFewCourses, setTooFewCourses] = useState(false);
+  const enoughCourses = priorCoursework.length >= MIN_COURSES[type];
+
   // The notice version the applicant has ticked the box for. Starts as whatever the application
   // already records, so editing an application shows the box ticked for the version agreed to.
   const [agreedTo, setAgreedTo] = useState<number | null>(
@@ -232,6 +242,7 @@ export default function ApplicationForm({
   ): ApplicationFormFields => ({
     ...data,
     major: chosenMajor,
+    priorCoursework,
     noticeVersionId: notice ? notice.id : null,
     courseInterests: Object.fromEntries(
       courseList.map((courseId) => [courseId, interestIn(courseId)]),
@@ -250,13 +261,15 @@ export default function ApplicationForm({
     const missingAgreement = notice !== null && !agreed;
     setMajorMissing(missingMajor);
     setAgreementMissing(missingAgreement);
-    if (missingMajor || missingAgreement) {
+    setTooFewCourses(!enoughCourses);
+    if (missingMajor || missingAgreement || !enoughCourses) {
       return;
     }
     submitAction(toPayload(answers(data, chosenMajor)));
   };
   const flagMissingAnswers = () => {
     if (major.trim() === "") setMajorMissing(true);
+    if (!enoughCourses) setTooFewCourses(true);
     // Stryker disable next-line all : without a notice the flag is never shown, so the null check
     // cannot be told apart from true
     if (notice !== null && !agreed) setAgreementMissing(true);
@@ -510,49 +523,18 @@ export default function ApplicationForm({
         </Row>
       )}
 
-      <h2 className="h5 mt-3">Coursework and experience</h2>
-      <Form.Group className="mb-3">
-        <Form.Label htmlFor={id("courseworkUcsb")}>
-          Relevant Coursework at UCSB
-        </Form.Label>
-        <Form.Control
-          id={id("courseworkUcsb")}
-          data-testid={id("courseworkUcsb")}
-          as="textarea"
-          rows={2}
-          {...register("courseworkUcsb")}
-        />
-      </Form.Group>
+      <PriorCourseworkSection
+        type={type}
+        courses={priorCoursework}
+        onChange={(courses) => {
+          setPriorCoursework(courses);
+          if (courses.length >= MIN_COURSES[type]) setTooFewCourses(false);
+        }}
+        invalid={tooFewCourses}
+        testIdPrefix={id("coursework")}
+      />
 
-      {isTa && (
-        <>
-          <Form.Group className="mb-3">
-            <Form.Label htmlFor={id("courseworkOther")}>
-              Relevant Coursework Elsewhere
-            </Form.Label>
-            <Form.Control
-              id={id("courseworkOther")}
-              data-testid={id("courseworkOther")}
-              as="textarea"
-              rows={2}
-              {...register("courseworkOther")}
-            />
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label htmlFor={id("coursework290")}>
-              290-Level Coursework
-            </Form.Label>
-            <Form.Control
-              id={id("coursework290")}
-              data-testid={id("coursework290")}
-              as="textarea"
-              rows={2}
-              {...register("coursework290")}
-            />
-          </Form.Group>
-        </>
-      )}
-
+      <h2 className="h5 mt-3">Experience</h2>
       <Form.Group className="mb-3" data-testid={id("topicProficiencies")}>
         <Form.Label as="p" className="mb-1">
           Topic Proficiency

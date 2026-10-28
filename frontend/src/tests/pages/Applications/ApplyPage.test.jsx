@@ -42,6 +42,19 @@ function renderPage(recruitmentId = 2) {
   );
 }
 
+/** Adds one UCSB course through the coursework modal; a ULA application needs at least one. */
+async function addCourse(prefix, courseNumber) {
+  await userEvent.click(screen.getByTestId(`${prefix}-coursework-add-button`));
+  await userEvent.type(
+    screen.getByTestId(`${prefix}-coursework-modal-courseNumber`),
+    courseNumber,
+  );
+  await userEvent.click(screen.getByTestId(`${prefix}-coursework-modal-save`));
+  await waitFor(() =>
+    expect(screen.queryByTestId(`${prefix}-coursework-modal`)).toBeNull(),
+  );
+}
+
 describe("ApplyPage tests", () => {
   beforeEach(() => {
     mockToast.mockClear();
@@ -99,6 +112,7 @@ describe("ApplyPage tests", () => {
     );
 
     // Unticked: refused in the browser, nothing sent.
+    await addCourse("ApplyPage", "CMPSC 16");
     await userEvent.click(screen.getByTestId("ApplyPage-submit"));
     await waitFor(() => expect(box).toHaveClass("is-invalid"));
     expect(axiosMock.history.post.length).toBe(0);
@@ -237,6 +251,7 @@ describe("ApplyPage tests", () => {
       screen.getByTestId("ApplyPage-firstChoiceCourse"),
       "CMPSC   156",
     );
+    await addCourse("ApplyPage", "CMPSC 16");
     await userEvent.click(screen.getByTestId("ApplyPage-submit"));
 
     await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
@@ -247,6 +262,16 @@ describe("ApplyPage tests", () => {
     expect(sent.firstName).toBe("Chris");
     expect(sent.major).toBe("Computer Science");
     expect(sent.topicProficiencies).toEqual({ React: 4 });
+    expect(sent.priorCoursework).toEqual([
+      {
+        ucsbCourse: true,
+        otherSchool: null,
+        courseNumber: "CMPSC 16",
+        courseTitle: null,
+        term: null,
+        grade: null,
+      },
+    ]);
     expect(sent.firstChoiceCourse).toBe("CMPSC   156");
     // The applicant does not get to choose these.
     expect(sent.status).toBeUndefined();
@@ -284,6 +309,7 @@ describe("ApplyPage tests", () => {
       screen.getByTestId("ApplyPage-firstChoiceCourse"),
       "CMPSC   156",
     );
+    await addCourse("ApplyPage", "CMPSC 16");
     await userEvent.click(screen.getByTestId("ApplyPage-submit"));
 
     await waitFor(() => expect(axiosMock.history.post.length).toBe(1));

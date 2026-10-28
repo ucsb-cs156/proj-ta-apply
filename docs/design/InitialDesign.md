@@ -220,3 +220,24 @@ agree to.
 * Until an admin has written a first version for a form type, the form shows no notice and asks for
   no agreement; the backend enforces the same rule, so a submission cannot skip the box once a
   notice exists.
+
+# Eighth Iteration
+
+The three free-text coursework questions on the TA form (relevant coursework at UCSB, coursework
+taken elsewhere, 290-level coursework) are removed, from the form and from the `applications`
+table, and replaced by a structured **prior coursework** table on both the TA and the ULA
+application.
+
+* A new `prior_coursework` table holds one row per course: an id, the owning application, whether
+  it was a **UCSB course** (boolean), the **other school** (required when it was not), the **course
+  number** (required), the **course title**, the **term** (quarter or semester) and an optional
+  **grade**. This app keeps TA and ULA applications in one `applications` table, so one
+  `application_id` foreign key stands in for the design's separate TA/ULA keys; the "exactly one
+  parent" rule is therefore satisfied by construction.
+* On the form, the applicant sees a table of the courses entered so far, sortable by every column,
+  with Add, Edit and Delete. Adding and editing happen in a modal, following the proj-frontiers
+  pattern: a **UCSB course** checkbox (ticked by default) and an **Other School** field that is
+  always visible but disabled and blank while the box is ticked.
+* A TA applicant must list at least **three** courses; a ULA applicant is told to list every course
+  that is relevant background for the courses they are applying to assist, which means at least
+  **one**. Both minimums are enforced in the browser and by the backend.

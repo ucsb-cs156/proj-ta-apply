@@ -16,8 +16,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
+import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFields;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
@@ -33,6 +35,7 @@ import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +68,39 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   private static final String ULA_EMAIL = "ula@example.org";
 
   private static final String ADMIN_EMAIL = "admin@example.org";
+
+  /** Three prior courses, enough for a TA application, one of them taken elsewhere. */
+  private static final List<PriorCourseworkFields> COURSES =
+      List.of(
+          new PriorCourseworkFields(true, null, "CMPSC 130A", "Data Structures", "F25", "A"),
+          new PriorCourseworkFields(true, "", "CMPSC 156", "Advanced App Programming", "W26", "IP"),
+          new PriorCourseworkFields(
+              false, "De Anza College", "CIS 22A", "Intro to C", "Fall 2023", ""));
+
+  /** The same three as the rows the controller should build: trimmed, blanks nulled, no ids. */
+  private static final List<PriorCoursework> EXPECTED_COURSES =
+      List.of(
+          PriorCoursework.builder()
+              .ucsbCourse(true)
+              .courseNumber("CMPSC 130A")
+              .courseTitle("Data Structures")
+              .term("F25")
+              .grade("A")
+              .build(),
+          PriorCoursework.builder()
+              .ucsbCourse(true)
+              .courseNumber("CMPSC 156")
+              .courseTitle("Advanced App Programming")
+              .term("W26")
+              .grade("IP")
+              .build(),
+          PriorCoursework.builder()
+              .ucsbCourse(false)
+              .otherSchool("De Anza College")
+              .courseNumber("CIS 22A")
+              .courseTitle("Intro to C")
+              .term("Fall 2023")
+              .build());
 
   /** The TA notice version FULL_FIELDS says the applicant agreed to. */
   private static final Long NOTICE_ID = 40L;
@@ -106,7 +142,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.gpaOverall(),
         FULL_FIELDS.yearInProgram(),
         FULL_FIELDS.graduationDate(),
-        FULL_FIELDS.courseworkUcsb(),
+        FULL_FIELDS.priorCoursework(),
         FULL_FIELDS.topicProficiencies(),
         FULL_FIELDS.prevExperience(),
         FULL_FIELDS.comments(),
@@ -121,8 +157,6 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.languageExam(),
         FULL_FIELDS.languageExamDatePassed(),
         FULL_FIELDS.classLevel(),
-        FULL_FIELDS.courseworkOther(),
-        FULL_FIELDS.coursework290(),
         FULL_FIELDS.videoLink(),
         FULL_FIELDS.previousServiceAsUla(),
         noticeVersionId);
@@ -163,7 +197,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           3.8,
           "2nd",
           "S27",
-          "CS 156, CS 130A",
+          COURSES,
           Map.of("Java", 5, "React", 3),
           "TA for CS 24",
           "Happy to help with either",
@@ -182,8 +216,6 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           LanguageExamStatus.PASSED,
           LocalDate.of(2025, 9, 1),
           ClassLevel.PHD,
-          "Compilers at another school",
-          "CS 290A",
           "https://example.org/video",
           2,
           NOTICE_ID);
@@ -199,7 +231,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           FULL_FIELDS.gpaOverall(),
           FULL_FIELDS.yearInProgram(),
           FULL_FIELDS.graduationDate(),
-          FULL_FIELDS.courseworkUcsb(),
+          FULL_FIELDS.priorCoursework(),
           FULL_FIELDS.topicProficiencies(),
           FULL_FIELDS.prevExperience(),
           FULL_FIELDS.comments(),
@@ -214,8 +246,6 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           FULL_FIELDS.languageExam(),
           FULL_FIELDS.languageExamDatePassed(),
           FULL_FIELDS.classLevel(),
-          FULL_FIELDS.courseworkOther(),
-          FULL_FIELDS.coursework290(),
           FULL_FIELDS.videoLink(),
           FULL_FIELDS.previousServiceAsUla(),
           FULL_FIELDS.noticeVersionId());
@@ -231,7 +261,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.gpaOverall(),
         FULL_FIELDS.yearInProgram(),
         FULL_FIELDS.graduationDate(),
-        FULL_FIELDS.courseworkUcsb(),
+        FULL_FIELDS.priorCoursework(),
         FULL_FIELDS.topicProficiencies(),
         FULL_FIELDS.prevExperience(),
         FULL_FIELDS.comments(),
@@ -246,8 +276,6 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.languageExam(),
         FULL_FIELDS.languageExamDatePassed(),
         FULL_FIELDS.classLevel(),
-        FULL_FIELDS.courseworkOther(),
-        FULL_FIELDS.coursework290(),
         FULL_FIELDS.videoLink(),
         FULL_FIELDS.previousServiceAsUla(),
         FULL_FIELDS.noticeVersionId());
@@ -264,7 +292,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.gpaOverall(),
         FULL_FIELDS.yearInProgram(),
         FULL_FIELDS.graduationDate(),
-        FULL_FIELDS.courseworkUcsb(),
+        FULL_FIELDS.priorCoursework(),
         proficiencies,
         FULL_FIELDS.prevExperience(),
         FULL_FIELDS.comments(),
@@ -279,11 +307,14 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.languageExam(),
         FULL_FIELDS.languageExamDatePassed(),
         FULL_FIELDS.classLevel(),
-        FULL_FIELDS.courseworkOther(),
-        FULL_FIELDS.coursework290(),
         FULL_FIELDS.videoLink(),
         FULL_FIELDS.previousServiceAsUla(),
         FULL_FIELDS.noticeVersionId());
+  }
+
+  /** The full application with a different prior coursework list. */
+  private static ApplicationFields withCourses(List<PriorCourseworkFields> courses) {
+    return withNoticeAndCourses(FULL_FIELDS.noticeVersionId(), courses);
   }
 
   /** The same values, as the entity they should produce. */
@@ -303,7 +334,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .gpaOverall(3.8)
         .yearInProgram("2nd")
         .graduationDate("S27")
-        .courseworkUcsb("CS 156, CS 130A")
+        .priorCoursework(new ArrayList<>(EXPECTED_COURSES))
         .topicProficiencies(new TreeMap<>(Map.of("Java", 5, "React", 3)))
         .prevExperience("TA for CS 24")
         .comments("Happy to help with either")
@@ -324,8 +355,6 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .languageExam(LanguageExamStatus.PASSED)
         .languageExamDatePassed(LocalDate.of(2025, 9, 1))
         .classLevel(ClassLevel.PHD)
-        .courseworkOther("Compilers at another school")
-        .coursework290("CS 290A")
         .videoLink("https://example.org/video")
         .previousServiceAsUla(2)
         .noticeVersionId(NOTICE_ID)
@@ -1379,5 +1408,306 @@ public class ApplicationsControllerTests extends ControllerTestCase {
                 .with(csrf()))
         .andExpect(status().is(400));
     verify(applicationRepository, never()).save(any());
+  }
+
+  // ---- prior coursework ----
+
+  private static PriorCourseworkFields course(String number) {
+    return new PriorCourseworkFields(true, null, number, null, null, null);
+  }
+
+  /** FULL_FIELDS agrees to the TA notice; the ULA tests need the ULA one and their own courses. */
+  private static ApplicationFields withNoticeAndCourses(
+      Long noticeVersionId, List<PriorCourseworkFields> courses) {
+    ApplicationFields f = withNotice(noticeVersionId);
+    return new ApplicationFields(
+        f.firstName(),
+        f.middleName(),
+        f.lastName(),
+        f.major(),
+        f.gpaMajor(),
+        f.gpaOverall(),
+        f.yearInProgram(),
+        f.graduationDate(),
+        courses,
+        f.topicProficiencies(),
+        f.prevExperience(),
+        f.comments(),
+        f.firstChoiceCourse(),
+        f.secondChoiceCourse(),
+        f.availableForLecturesFirstChoice(),
+        f.availableForLecturesSecondChoice(),
+        f.availableForDiscussionFirstChoice(),
+        f.availableForDiscussionSecondChoice(),
+        f.courseInterests(),
+        f.residencyStatus(),
+        f.languageExam(),
+        f.languageExamDatePassed(),
+        f.classLevel(),
+        f.videoLink(),
+        f.previousServiceAsUla(),
+        f.noticeVersionId());
+  }
+
+  /** A TA application needs three courses; two is refused before anything is saved. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void a_ta_application_with_fewer_than_three_courses_is_refused() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        mapper.writeValueAsString(
+                            withCourses(List.of(course("CMPSC 8"), course("CMPSC 16")))))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "A TA application must list at least 3 prior courses",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** A ULA application needs one; none (or a missing list) is refused. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"UNDERGRAD"})
+  @Test
+  public void a_ula_application_with_no_courses_is_refused() throws Exception {
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+
+    for (List<PriorCourseworkFields> courses :
+        java.util.Arrays.<List<PriorCourseworkFields>>asList(List.of(), null)) {
+      MvcResult response =
+          mockMvc
+              .perform(
+                  post("/api/applications/post?recruitmentId=2")
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(mapper.writeValueAsString(withNoticeAndCourses(41L, courses)))
+                      .with(csrf()))
+              .andExpect(status().is(400))
+              .andReturn();
+      assertEquals(
+          "A ULA application must list at least 1 prior course",
+          responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** One course is enough for a ULA application. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"UNDERGRAD"})
+  @Test
+  public void a_ula_application_with_one_course_is_accepted() throws Exception {
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    mapper.writeValueAsString(
+                        withNoticeAndCourses(41L, List.of(course("CMPSC 16")))))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(1, saved().getPriorCoursework().size());
+    assertEquals("CMPSC 16", saved().getPriorCoursework().get(0).getCourseNumber());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void a_course_without_a_number_is_refused() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    for (String number : java.util.Arrays.asList("   ", null)) {
+      MvcResult response =
+          mockMvc
+              .perform(
+                  post("/api/applications/post?recruitmentId=1")
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(
+                          mapper.writeValueAsString(
+                              withCourses(
+                                  List.of(course("CMPSC 8"), course("CMPSC 16"), course(number)))))
+                      .with(csrf()))
+              .andExpect(status().is(400))
+              .andReturn();
+      assertEquals(
+          "Every prior course needs a course number", responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void a_course_taken_elsewhere_needs_its_school() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    for (String school : java.util.Arrays.asList("  ", null)) {
+      MvcResult response =
+          mockMvc
+              .perform(
+                  post("/api/applications/post?recruitmentId=1")
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(
+                          mapper.writeValueAsString(
+                              withCourses(
+                                  List.of(
+                                      course("CMPSC 8"),
+                                      course("CMPSC 16"),
+                                      new PriorCourseworkFields(
+                                          false, school, "CS 101", null, null, null)))))
+                      .with(csrf()))
+              .andExpect(status().is(400))
+              .andReturn();
+      assertEquals(
+          "Prior course CS 101 needs the school it was taken at",
+          responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** Values are trimmed, blanks become null, and a UCSB course drops any school that was sent. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void prior_courses_are_stored_tidy_and_in_order() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    List<PriorCourseworkFields> sent =
+        List.of(
+            new PriorCourseworkFields(true, "Stale school", " CMPSC 8 ", " Intro ", " ", ""),
+            new PriorCourseworkFields(false, "  UCLA  ", "CS 31", null, "Fall 2024", " B+ "),
+            course("CMPSC 16"));
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withCourses(sent)))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    List<PriorCoursework> rows = saved().getPriorCoursework();
+    assertEquals(3, rows.size());
+    assertEquals(
+        PriorCoursework.builder()
+            .ucsbCourse(true)
+            .courseNumber("CMPSC 8")
+            .courseTitle("Intro")
+            .build(),
+        rows.get(0));
+    assertEquals(
+        PriorCoursework.builder()
+            .ucsbCourse(false)
+            .otherSchool("UCLA")
+            .courseNumber("CS 31")
+            .term("Fall 2024")
+            .grade("B+")
+            .build(),
+        rows.get(1));
+    assertEquals("CMPSC 16", rows.get(2).getCourseNumber());
+  }
+
+  /** Editing replaces the whole list; rows from the earlier save do not linger. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void editing_replaces_the_prior_coursework() throws Exception {
+    Application existing = application(5L, 1L, GRAD_EMAIL);
+    existing
+        .getPriorCoursework()
+        .add(PriorCoursework.builder().id(77L).courseNumber("OLD 1").build());
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    mockMvc
+        .perform(
+            put("/api/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(EXPECTED_COURSES, saved().getPriorCoursework());
+  }
+
+  /** The minimum is checked on an edit too, so courses cannot be removed below it afterwards. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"GRAD_STUDENT"})
+  @Test
+  public void editing_down_to_too_few_courses_is_refused() throws Exception {
+    Application existing = application(5L, 1L, GRAD_EMAIL);
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/applications?id=5")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(withCourses(List.of(course("CMPSC 8")))))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "A TA application must list at least 3 prior courses",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** The admin preview is held to the same rule, so it previews what applicants face. */
+  @WithMockUser(
+      username = "admin",
+      roles = {"ADMIN"})
+  @Test
+  public void a_test_application_with_too_few_courses_is_refused() throws Exception {
+    when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
+    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 3L))
+        .thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/test?recruitmentId=3")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(withCourses(List.of())))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "A TA application must list at least 3 prior courses",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @Test
+  public void the_minimums_are_three_for_ta_and_one_for_ula() {
+    assertEquals(3, ApplicationsController.minimumCourses(RecruitmentType.TA));
+    assertEquals(1, ApplicationsController.minimumCourses(RecruitmentType.ULA));
   }
 }

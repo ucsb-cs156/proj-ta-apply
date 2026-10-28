@@ -1,5 +1,6 @@
 import type { Application } from "main/components/Applications/ApplicationTable";
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
+import PriorCourseworkTable from "main/components/PriorCoursework/PriorCourseworkTable";
 import { courseInterestLabel } from "main/utils/applicationFields";
 import type { NoticeVersion } from "main/utils/notices";
 
@@ -112,21 +113,6 @@ export default function ApplicationSummary({
     );
   }
 
-  rows.push({
-    label: "Relevant Coursework at UCSB",
-    value: show(application.courseworkUcsb),
-  });
-
-  if (isTa) {
-    rows.push(
-      {
-        label: "Relevant Coursework Elsewhere",
-        value: show(application.courseworkOther),
-      },
-      { label: "290-Level Coursework", value: show(application.coursework290) },
-    );
-  }
-
   rows.push(
     {
       label: "Topic Proficiency (1 lowest to 5 highest)",
@@ -191,6 +177,23 @@ export default function ApplicationSummary({
           </div>
         ))}
       </dl>
+      <h3 className="h6 mt-3">Prior Coursework</h3>
+      {(application.priorCoursework ?? []).length === 0 ? (
+        <p
+          className="text-muted small"
+          data-testid={`${testIdPrefix}-coursework-none`}
+        >
+          No courses listed.
+        </p>
+      ) : (
+        <PriorCourseworkTable
+          courses={application.priorCoursework}
+          onEdit={() => {}}
+          onDelete={() => {}}
+          readOnly
+          testIdPrefix={`${testIdPrefix}-coursework`}
+        />
+      )}
       <NoticeAgreement
         notice={notice}
         agreed={application.noticeVersionId === notice?.id}
