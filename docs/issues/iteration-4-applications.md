@@ -64,10 +64,16 @@ A generated `id`, plus:
 Applicant fields, per the design doc's table. TA-only fields are marked; everything else is common:
 
 `firstName`, `middleName`, `lastName`, `major`, `gpaMajor`, `gpaOverall`, `yearInProgram`,
-`graduationDate`, `courseworkUcsb`, `knowledge`, `prevExperience`, `desiredCourses`, `comments`,
+`graduationDate`, `courseworkUcsb`, `knowledge`, `prevExperience`, `comments`,
 `firstChoiceCourse`, `secondChoiceCourse`, `availableForLecturesFirstChoice`,
 `availableForLecturesSecondChoice`, `availableForDiscussionFirstChoice`,
 `availableForDiscussionSecondChoice`.
+
+The design doc's free-text `desiredCourses` was replaced (issue #19) by `courseInterests`: a map
+from course id to `ENTHUSIASTIC` or `WOULD_CONSIDER`, stored in its own table
+`application_course_interests` (changeset `010`). The form shows every course in the recruitment
+with three radio buttons (Enthusiastic / Would Consider / Not Applicable or Not Interested); the
+default is never stored, and the first and second choice rows show their rank instead of options.
 
 TA only: `residencyStatus` (US Citizen / US Resident / F1 / J1 / other), `languageExam` (passed /
 failed / exempt), `languageExamDatePassed`, `classLevel` (PhD / MS), `courseworkOther`,

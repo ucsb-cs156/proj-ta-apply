@@ -1,4 +1,5 @@
 import type { Application } from "main/components/Applications/ApplicationTable";
+import { courseInterestLabel } from "main/utils/applicationFields";
 
 type ApplicationSummaryProps = {
   application: Application;
@@ -28,6 +29,19 @@ const show = (value: unknown): string =>
   value === null || value === undefined || value === "" ? "" : String(value);
 
 const yesNo = (value: boolean): string => (value ? "Yes" : "No");
+
+/**
+ * One line per course, padded course id first so they line up, in course order. The map holds
+ * only courses the applicant marked, so an empty map reads as blank, like any other unanswered
+ * question.
+ */
+const otherCourses = (interests: Record<string, string> | null): string => {
+  const marked = interests ?? {};
+  return Object.keys(marked)
+    .sort()
+    .map((courseId) => `${courseId}  ${courseInterestLabel(marked[courseId])}`)
+    .join("\n");
+};
 
 /** What the applicant submitted, shown back once the application can no longer be edited. */
 export default function ApplicationSummary({
@@ -134,7 +148,11 @@ export default function ApplicationSummary({
       label: "Available for a Second Choice Discussion",
       value: yesNo(application.availableForDiscussionSecondChoice),
     },
-    { label: "Other Courses", value: show(application.desiredCourses) },
+    {
+      label: "Other Courses of Interest",
+      value: otherCourses(application.courseInterests),
+      mono: true,
+    },
     { label: "Anything Else", value: show(application.comments) },
   );
 

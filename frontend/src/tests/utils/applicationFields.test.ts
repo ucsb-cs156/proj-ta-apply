@@ -1,5 +1,8 @@
 import { describe, test, expect } from "vitest";
 import {
+  COURSE_INTEREST_OPTIONS,
+  DEFAULT_COURSE_INTEREST,
+  courseInterestLabel,
   toPayload,
   type ApplicationFormFields,
 } from "main/utils/applicationFields";
@@ -18,7 +21,6 @@ const fields = (
   courseworkUcsb: "CS 156",
   knowledge: "Java",
   prevExperience: "TA for CS 24",
-  desiredCourses: "",
   comments: "",
   firstChoiceCourse: "CMPSC   156",
   secondChoiceCourse: "",
@@ -26,6 +28,7 @@ const fields = (
   availableForLecturesSecondChoice: false,
   availableForDiscussionFirstChoice: false,
   availableForDiscussionSecondChoice: false,
+  courseInterests: {},
   residencyStatus: "F1_STUDENT_VISA",
   languageExam: "PASSED",
   languageExamDatePassed: "2025-09-01",
@@ -79,6 +82,68 @@ describe("toPayload", () => {
     expect(
       toPayload(fields({ languageExamDatePassed: "" })).languageExamDatePassed,
     ).toBeNull();
+  });
+
+  // ---- course interests ----
+
+  /** The default says nothing, so sending it would only pad the table. */
+  test("courses left at the default are not sent", () => {
+    const payload = toPayload(
+      fields({
+        courseInterests: {
+          "CMPSC     8": "ENTHUSIASTIC",
+          "CMPSC    16": "NOT_INTERESTED",
+          "CMPSC    24": "WOULD_CONSIDER",
+        },
+      }),
+    );
+
+    expect(payload.courseInterests).toEqual({
+      "CMPSC     8": "ENTHUSIASTIC",
+      "CMPSC    24": "WOULD_CONSIDER",
+    });
+  });
+
+  /** The two choices have their own fields; an answer given before a course was chosen goes. */
+  test("the first and second choice are never among the other courses", () => {
+    const payload = toPayload(
+      fields({
+        firstChoiceCourse: "CMPSC   156",
+        secondChoiceCourse: "CMPSC   130A",
+        courseInterests: {
+          "CMPSC   156": "ENTHUSIASTIC",
+          "CMPSC   130A": "WOULD_CONSIDER",
+          "CMPSC     8": "WOULD_CONSIDER",
+        },
+      }),
+    );
+
+    expect(payload.courseInterests).toEqual({
+      "CMPSC     8": "WOULD_CONSIDER",
+    });
+  });
+
+  test("with no courses marked, the map is empty", () => {
+    expect(toPayload(fields()).courseInterests).toEqual({});
+  });
+
+  test("the options are offered in the order the issue lists them, defaulting to the last", () => {
+    expect(COURSE_INTEREST_OPTIONS.map((option) => option.value)).toEqual([
+      "ENTHUSIASTIC",
+      "WOULD_CONSIDER",
+      "NOT_INTERESTED",
+    ]);
+    expect(DEFAULT_COURSE_INTEREST).toBe("NOT_INTERESTED");
+  });
+
+  test("interest codes are spelled out for display", () => {
+    expect(courseInterestLabel("ENTHUSIASTIC")).toBe("Enthusiastic");
+    expect(courseInterestLabel("WOULD_CONSIDER")).toBe("Would Consider");
+    expect(courseInterestLabel("NOT_INTERESTED")).toBe(
+      "Not Applicable / Not Interested",
+    );
+    // An unrecognised code is better shown as nothing than as the raw code.
+    expect(courseInterestLabel("SOMETHING_ELSE")).toBe("");
   });
 
   test("everything else is carried through untouched", () => {

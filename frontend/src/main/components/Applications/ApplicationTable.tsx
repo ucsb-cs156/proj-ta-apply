@@ -24,7 +24,6 @@ export type Application = {
   courseworkUcsb: string | null;
   knowledge: string | null;
   prevExperience: string | null;
-  desiredCourses: string | null;
   comments: string | null;
   firstChoiceCourse: string | null;
   secondChoiceCourse: string | null;
@@ -32,6 +31,8 @@ export type Application = {
   availableForLecturesSecondChoice: boolean;
   availableForDiscussionFirstChoice: boolean;
   availableForDiscussionSecondChoice: boolean;
+  /** Course id to ENTHUSIASTIC or WOULD_CONSIDER; a course not listed is not of interest. */
+  courseInterests: Record<string, string>;
   residencyStatus: string | null;
   languageExam: string | null;
   languageExamDatePassed: string | null;

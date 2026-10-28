@@ -76,6 +76,7 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplyPage-major").fill("Computer Science");
     page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
     page.getByTestId("ApplyPage-availableForLecturesFirstChoice").check();
+    page.getByTestId("ApplyPage-courseInterest-CMPSC-130A-ENTHUSIASTIC").check();
     page.getByTestId("ApplyPage-submit").click();
   }
 
@@ -100,6 +101,10 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-firstName")).hasValue("Test");
     assertThat(page.getByTestId("ApplyPage-lastName")).hasValue("User");
 
+    // Every course in the recruitment is asked about, defaulting to not interested.
+    assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-130A-NOT_INTERESTED")).isChecked();
+    assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-156-NOT_INTERESTED")).isChecked();
+
     fillAndSubmit();
 
     // Back on the home page, listed as pending, with the link now saying they have applied.
@@ -114,6 +119,11 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-status")).containsText("PENDING");
     assertThat(page.getByTestId("ApplicationPage-firstName")).hasValue("Chris");
     assertThat(page.getByTestId("ApplicationPage-firstChoiceCourse")).hasValue("CMPSC   156");
+    // The first choice row says so instead of offering options; the other answer came back.
+    assertThat(page.getByTestId("ApplicationPage-courseInterest-CMPSC-156-choice"))
+        .containsText("1st choice");
+    assertThat(page.getByTestId("ApplicationPage-courseInterest-CMPSC-130A-ENTHUSIASTIC"))
+        .isChecked();
 
     page.getByTestId("ApplicationPage-lastName").fill("Gaucho-Smith");
     page.getByTestId("ApplicationPage-submit").click();
@@ -162,6 +172,8 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-firstName")).not().isVisible();
     // The answers are still shown back, just not as a form.
     assertThat(page.getByTestId("ApplicationPage-summary-Major")).containsText("Computer Science");
+    assertThat(page.getByTestId("ApplicationPage-summary-Other Courses of Interest"))
+        .containsText("CMPSC   130A  Enthusiastic");
 
     page.getByTestId("ApplicationPage-postApplicationComments").fill("Finished CS 290A since.");
     page.getByTestId("ApplicationPage-submit").click();

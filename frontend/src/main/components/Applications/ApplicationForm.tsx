@@ -1,11 +1,21 @@
-import { Button, Col, Form, Row } from "react-bootstrap";
+import { useState } from "react";
+import { Button, Col, Form, Row, Table } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import {
+  COURSE_INTEREST_OPTIONS,
+  DEFAULT_COURSE_INTEREST,
   toPayload,
   type ApplicationFormFields,
   type ApplicationPayload,
 } from "main/utils/applicationFields";
+
+/**
+ * The answers react-hook-form manages. The per-course interest answers are kept apart in plain
+ * state: the course list arrives from the backend after the form has mounted, and react-hook-form
+ * reads its defaults only once, so rows registered late would start unanswered.
+ */
+type RegisteredFields = Omit<ApplicationFormFields, "courseInterests">;
 
 type ApplicationFormProps = {
   type: "TA" | "ULA";
@@ -56,6 +66,9 @@ const CLASS_LEVEL_OPTIONS = [
   { value: "MS", label: "MS" },
 ];
 
+/** "CMPSC   156" becomes "CMPSC-156": a course id as it can appear in an element id. */
+const slug = (courseId: string): string => courseId.replace(/\s+/g, "-");
+
 export default function ApplicationForm({
   type,
   courses,
@@ -68,7 +81,7 @@ export default function ApplicationForm({
   const isTa = type === "TA";
   const courseList = Array.isArray(courses) ? courses : [];
 
-  const defaults: Partial<ApplicationFormFields> = {
+  const defaults: Partial<RegisteredFields> = {
     // Falls back to the Google account only where the application has nothing, so a name the
     // applicant edited earlier is never overwritten.
     firstName: firstAnswered(
@@ -85,7 +98,6 @@ export default function ApplicationForm({
     courseworkUcsb: asString(initialContents?.courseworkUcsb),
     knowledge: asString(initialContents?.knowledge),
     prevExperience: asString(initialContents?.prevExperience),
-    desiredCourses: asString(initialContents?.desiredCourses),
     comments: asString(initialContents?.comments),
     firstChoiceCourse: asString(initialContents?.firstChoiceCourse),
     secondChoiceCourse: asString(initialContents?.secondChoiceCourse),
@@ -117,12 +129,39 @@ export default function ApplicationForm({
     formState: { errors },
     handleSubmit,
     watch,
-  } = useForm<ApplicationFormFields>({ defaultValues: defaults });
+  } = useForm<RegisteredFields>({ defaultValues: defaults });
   // Stryker restore all
 
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() returns a new function each render; React Compiler correctly skips memoizing this component
-  const residency = watch("residencyStatus");
+  const [residency, firstChoice, secondChoice] = watch([
+    "residencyStatus",
+    "firstChoiceCourse",
+    "secondChoiceCourse",
+  ]);
   const asksAboutLanguageExam = isTa && VISA_STATUSES.includes(residency);
+
+  // Only the courses the applicant has marked; anything else reads as the default. Keyed by
+  // course id, so it does not matter which courses were on the list when the answer was given.
+  const [interests, setInterests] = useState<Record<string, string>>(() => ({
+    ...(initialContents?.courseInterests ?? {}),
+  }));
+  const interestIn = (courseId: string): string =>
+    interests[courseId] ?? DEFAULT_COURSE_INTEREST;
+
+  /** The rank a course holds, if it is one of the two choices; otherwise null. */
+  const rankOf = (courseId: string): string | null => {
+    if (courseId === firstChoice) return "1st choice";
+    if (courseId === secondChoice) return "2nd choice";
+    return null;
+  };
+
+  /** One answer per listed course, so the payload says what was asked, not only what changed. */
+  const answers = (data: RegisteredFields): ApplicationFormFields => ({
+    ...data,
+    courseInterests: Object.fromEntries(
+      courseList.map((courseId) => [courseId, interestIn(courseId)]),
+    ),
+  });
 
   const id = (name: string) => `${testIdPrefix}-${name}`;
 
@@ -146,7 +185,9 @@ export default function ApplicationForm({
   };
 
   return (
-    <Form onSubmit={handleSubmit((data) => submitAction(toPayload(data)))}>
+    <Form
+      onSubmit={handleSubmit((data) => submitAction(toPayload(answers(data))))}
+    >
       <h2 className="h5 mt-3">About you</h2>
       <Row>
         <Form.Group as={Col} md={4} className="mb-3">
@@ -467,17 +508,78 @@ export default function ApplicationForm({
         </Form.Group>
       </Row>
 
-      <Form.Group className="mb-3">
-        <Form.Label htmlFor={id("desiredCourses")}>
-          Any Other Courses You Would Like to Be Considered For
+      <Form.Group className="mb-3" data-testid={id("courseInterests")}>
+        <Form.Label as="p" className="mb-1">
+          Other Courses You Would Like to Be Considered For
         </Form.Label>
-        <Form.Control
-          id={id("desiredCourses")}
-          data-testid={id("desiredCourses")}
-          as="textarea"
-          rows={2}
-          {...register("desiredCourses")}
-        />
+        <p className="text-muted small mb-2">
+          Your first and second choices are marked below. For every other
+          course, say how interested you would be. The default is Not Applicable
+          / Not Interested.
+        </p>
+        {courseList.length === 0 ? (
+          <p
+            className="text-muted small"
+            data-testid={id("courseInterests-none")}
+          >
+            No courses are listed for this recruitment yet.
+          </p>
+        ) : (
+          <Table size="sm" responsive className="align-middle">
+            <thead>
+              <tr>
+                <th>Course</th>
+                {COURSE_INTEREST_OPTIONS.map((option) => (
+                  <th key={option.value} className="text-center fw-normal">
+                    {option.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {courseList.map((courseId) => {
+                const rank = rankOf(courseId);
+                const rowId = id(`courseInterest-${slug(courseId)}`);
+                return (
+                  <tr key={courseId} data-testid={rowId}>
+                    <td style={{ fontFamily: "monospace", whiteSpace: "pre" }}>
+                      {courseId}
+                    </td>
+                    {rank ? (
+                      <td
+                        colSpan={COURSE_INTEREST_OPTIONS.length}
+                        className="text-center"
+                        data-testid={`${rowId}-choice`}
+                      >
+                        <strong>{rank}</strong>
+                      </td>
+                    ) : (
+                      COURSE_INTEREST_OPTIONS.map((option) => (
+                        <td key={option.value} className="text-center">
+                          <Form.Check
+                            type="radio"
+                            name={rowId}
+                            id={`${rowId}-${option.value}`}
+                            data-testid={`${rowId}-${option.value}`}
+                            aria-label={`${courseId}: ${option.label}`}
+                            value={option.value}
+                            checked={interestIn(courseId) === option.value}
+                            onChange={() =>
+                              setInterests((previous) => ({
+                                ...previous,
+                                [courseId]: option.value,
+                              }))
+                            }
+                          />
+                        </td>
+                      ))
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        )}
       </Form.Group>
 
       <Form.Group className="mb-3">
