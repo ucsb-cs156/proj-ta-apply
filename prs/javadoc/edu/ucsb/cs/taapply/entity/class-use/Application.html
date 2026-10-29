@@ -62,6 +62,8 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.repository">edu.ucsb.cs.taapply.repository</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.services">edu.ucsb.cs.taapply.services</a></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <section class="class-uses">
 <ul class="block-list">
@@ -147,6 +149,23 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color"><span class="type-name-label">ApplicationRepository.</span><code><a href="../../repository/ApplicationRepository.html#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByRecruitmentIdOrderByIdAsc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Every application to one recruitment, in the order they were created.</div>
+</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="edu.ucsb.cs.taapply.services">
+<h2>Uses of <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a> in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a></h2>
+<div class="caption"><span>Method parameters in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with type arguments of type <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationCsvService.</span><code><a href="../../services/ApplicationCsvService.html#write(edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List)" class="member-name-link">write</a><wbr>(<a href="../../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The document: a header row, then one row per application, every field quoted.</div>
 </div>
 </div>
 </section>

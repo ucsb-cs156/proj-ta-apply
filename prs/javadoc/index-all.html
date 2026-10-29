@@ -178,6 +178,13 @@ ran, and when an upcoming one is expected to open.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#%3Cinit%3E()" class="member-name-link">ApplicationAccessService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAccessService</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationCsvService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">ApplicationCsvService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">The applications to one recruitment as a CSV document, one row per application, for an admin to
+open in a spreadsheet.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationCsvService.html#%3Cinit%3E()" class="member-name-link">ApplicationCsvService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationCsvService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationCsvService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.Double,java.lang.Double,java.lang.String,java.lang.String,java.util.List,java.util.Map,java.util.Map,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,boolean,boolean,java.lang.String,java.lang.String,java.util.Map,edu.ucsb.cs.taapply.enums.ResidencyStatus,edu.ucsb.cs.taapply.enums.LanguageExamStatus,java.time.LocalDate,edu.ucsb.cs.taapply.enums.ClassLevel,java.lang.String,java.lang.Integer,java.lang.Long)" class="member-name-link">ApplicationFields(String, String, String, String, Double, Double, String, String, List, Map, Map, String, String, String, String, boolean, boolean, boolean, boolean, String, String, Map, ResidencyStatus, LanguageExamStatus, LocalDate, ClassLevel, String, Integer, Long)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>ApplicationFields</code> record class.</div>
@@ -399,6 +406,8 @@ who has just chosen that course.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.html#deleteInstructor(java.lang.String)" class="member-name-link">deleteInstructor(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#deleteRecruitment(java.lang.Long)" class="member-name-link">deleteRecruitment(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#downloadCsv(java.lang.Long)" class="member-name-link">downloadCsv(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#downloadCsv(java.lang.String)" class="member-name-link">downloadCsv(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
 <dd>&nbsp;</dd>
@@ -1708,6 +1717,10 @@ the order they are declared.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/CourseInterest.html#WOULD_CONSIDER" class="member-name-link">WOULD_CONSIDER</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/CourseInterest.html" title="enum class in edu.ucsb.cs.taapply.enums">CourseInterest</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationCsvService.html#write(edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List)" class="member-name-link">write(RecruitmentType, List)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationCsvService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationCsvService</a></dt>
+<dd>
+<div class="block">The document: a header row, then one row per application, every field quoted.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/NameListCsvService.html#write(java.util.List)" class="member-name-link">write(List)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/NameListCsvService.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService</a></dt>
 <dd>
 <div class="block">The list as a CSV document: a header row, then one name per row, quoted.</div>
