@@ -81,6 +81,9 @@ public class AppSettingsWebIT extends WebTestCase {
     goTo("/admin/settings/ula");
     assertThat(page.getByRole(AriaRole.HEADING).first()).containsText("ULA App Settings");
     assertThat(page.getByTestId("UlaAppSettingsPage-topics-empty")).isVisible();
+    // The ULA page alone has an interests list, below the topics.
+    assertThat(page.getByTestId("UlaAppSettingsPage-interests-empty")).isVisible();
+    assertThat(page.getByText("Interests List for ULAs")).isVisible();
   }
 
   /** The CSV upload fills a list, and re-uploading the same file adds nothing. */

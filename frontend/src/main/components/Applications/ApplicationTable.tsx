@@ -24,8 +24,10 @@ export type Application = {
   graduationDate: string | null;
   /** The courses listed as relevant background, with their ids. */
   priorCoursework: PriorCourse[];
-  /** Topic name to self-rated proficiency 1..5; only rated topics appear. */
+  /** Topic name to self-rated proficiency (1..5 TA, 1..3 ULA); only rated topics appear. */
   topicProficiencies: Record<string, number> | null;
+  /** ULA only: interest area to level 1..5; only answered areas appear. Empty for a TA. */
+  interests: Record<string, number> | null;
   prevExperience: string | null;
   comments: string | null;
   firstChoiceCourse: string | null;

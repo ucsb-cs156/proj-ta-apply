@@ -66,8 +66,12 @@ public class ApplicationsController extends ApiController {
       String graduationDate,
       /** The courses listed as relevant background, in order; at least 3 (TA) or 1 (ULA). */
       List<PriorCourseworkFields> priorCoursework,
-      /** Topic name to self-rated proficiency 1..5; may be null or empty. */
+      /**
+       * Topic name to self-rated proficiency, 1..5 on a TA form, 1..3 on a ULA one; may be null.
+       */
       Map<String, Integer> topicProficiencies,
+      /** ULA only: interest area to level 1..5; may be null or empty, and ignored on a TA form. */
+      Map<String, Integer> interests,
       String prevExperience,
       String comments,
       String firstChoiceCourse,
@@ -186,7 +190,7 @@ public class ApplicationsController extends ApiController {
             .email(currentEmail())
             .status(ApplicationReviewStatus.PENDING)
             .build();
-    apply(fields, application);
+    apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
     return application;
   }
@@ -234,7 +238,7 @@ public class ApplicationsController extends ApiController {
                     .status(ApplicationReviewStatus.PENDING)
                     .testApplication(true)
                     .build());
-    apply(fields, application);
+    apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
     return application;
   }
@@ -259,7 +263,7 @@ public class ApplicationsController extends ApiController {
     requireAgreement(recruitment.getType(), fields);
     requireCoursework(recruitment.getType(), fields);
 
-    apply(fields, application);
+    apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
     return application;
   }
@@ -303,31 +307,57 @@ public class ApplicationsController extends ApiController {
   }
 
   public static final int MIN_PROFICIENCY = 1;
-  public static final int MAX_PROFICIENCY = 5;
+
+  /** A TA applicant rates each topic 1 (lowest) to 5 (highest). */
+  public static final int MAX_TA_PROFICIENCY = 5;
+
+  /** A ULA applicant rates each topic 1 (very comfortable), 2 (somewhat) or 3 (not familiar). */
+  public static final int MAX_ULA_PROFICIENCY = 3;
+
+  /** A ULA applicant rates each interest area 1 (not interested) to 5 (very interested). */
+  public static final int MIN_INTEREST = 1;
+
+  public static final int MAX_INTEREST = 5;
+
+  static int maxProficiency(RecruitmentType type) {
+    return type == RecruitmentType.TA ? MAX_TA_PROFICIENCY : MAX_ULA_PROFICIENCY;
+  }
 
   /**
-   * The topic ratings worth storing: every topic the applicant rated, each between 1 and 5. A
-   * missing map means no ratings. A rating outside the scale cannot come from the form's radio
+   * The answers worth storing from a name-to-level map: every name answered for, each on the scale.
+   * A missing map means no answers. A level outside the scale cannot come from the form's radio
    * buttons, so it is refused rather than clamped.
    */
-  static Map<String, Integer> topicProficienciesFrom(ApplicationFields fields) {
-    // Sorted by topic so the JSON an application is returned as is stable.
-    Map<String, Integer> proficiencies = new TreeMap<>();
-    Map<String, Integer> sent =
-        fields.topicProficiencies() == null ? Map.of() : fields.topicProficiencies();
-    for (Map.Entry<String, Integer> entry : sent.entrySet()) {
+  private static Map<String, Integer> levelsFrom(
+      Map<String, Integer> sent, String what, int min, int max) {
+    // Sorted by name so the JSON an application is returned as is stable.
+    Map<String, Integer> levels = new TreeMap<>();
+    for (Map.Entry<String, Integer> entry :
+        (sent == null ? Map.<String, Integer>of() : sent).entrySet()) {
       Integer level = entry.getValue();
       if (level == null) {
         continue;
       }
-      if (level < MIN_PROFICIENCY || level > MAX_PROFICIENCY) {
+      if (level < min || level > max) {
         throw new IllegalArgumentException(
-            "Proficiency in %s must be between %d and %d"
-                .formatted(entry.getKey(), MIN_PROFICIENCY, MAX_PROFICIENCY));
+            "%s in %s must be between %d and %d".formatted(what, entry.getKey(), min, max));
       }
-      proficiencies.put(entry.getKey(), level);
+      levels.put(entry.getKey(), level);
     }
-    return proficiencies;
+    return levels;
+  }
+
+  /** The topic ratings worth storing, on the scale the form type uses. */
+  static Map<String, Integer> topicProficienciesFrom(
+      ApplicationFields fields, RecruitmentType type) {
+    return levelsFrom(
+        fields.topicProficiencies(), "Proficiency", MIN_PROFICIENCY, maxProficiency(type));
+  }
+
+  /** The interest levels worth storing; a TA form has no interests section, so none are kept. */
+  static Map<String, Integer> interestsFrom(ApplicationFields fields, RecruitmentType type) {
+    Map<String, Integer> sent = type == RecruitmentType.TA ? null : fields.interests();
+    return levelsFrom(sent, "Interest", MIN_INTEREST, MAX_INTEREST);
   }
 
   /**
@@ -408,7 +438,8 @@ public class ApplicationsController extends ApiController {
   }
 
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
-  private static void apply(ApplicationFields fields, Application application) {
+  private static void apply(
+      ApplicationFields fields, Application application, RecruitmentType type) {
     application.setFirstName(fields.firstName());
     application.setMiddleName(fields.middleName());
     application.setLastName(fields.lastName());
@@ -419,7 +450,8 @@ public class ApplicationsController extends ApiController {
     application.setGraduationDate(fields.graduationDate());
     application.getPriorCoursework().clear();
     application.getPriorCoursework().addAll(priorCourseworkFrom(fields));
-    application.setTopicProficiencies(topicProficienciesFrom(fields));
+    application.setTopicProficiencies(topicProficienciesFrom(fields, type));
+    application.setInterests(interestsFrom(fields, type));
     application.setPrevExperience(fields.prevExperience());
     application.setComments(fields.comments());
     application.setFirstChoiceCourse(fields.firstChoiceCourse());

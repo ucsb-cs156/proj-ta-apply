@@ -9,11 +9,17 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.TaMajor;
 import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.entity.UlaInterest;
+import edu.ucsb.cs.taapply.entity.UlaMajor;
+import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
+import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
+import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -70,6 +76,9 @@ public class ApplicationsWebIT extends WebTestCase {
 
   @Autowired TaMajorRepository taMajorRepository;
   @Autowired TaTopicRepository taTopicRepository;
+  @Autowired UlaMajorRepository ulaMajorRepository;
+  @Autowired UlaTopicRepository ulaTopicRepository;
+  @Autowired UlaInterestRepository ulaInterestRepository;
   @Autowired NoticeVersionRepository noticeVersionRepository;
 
   /** The notice every TA applicant must agree to. */
@@ -80,6 +89,20 @@ public class ApplicationsWebIT extends WebTestCase {
             .content("# TA Terms\n\nBe available for the **whole** quarter.")
             .createdAt(LocalDateTime.of(2026, 1, 2, 3, 4))
             .build());
+  }
+
+  /** The admin-maintained lists the ULA form offers, and the notice its applicants agree to. */
+  private void seedUlaLists() {
+    noticeVersionRepository.save(
+        NoticeVersion.builder()
+            .type(RecruitmentType.ULA)
+            .content("# ULA Terms\n\nAttend the weekly meeting.")
+            .createdAt(LocalDateTime.of(2026, 1, 2, 3, 4))
+            .build());
+    ulaMajorRepository.save(UlaMajor.builder().name("Computer Science").build());
+    ulaTopicRepository.save(UlaTopic.builder().name("JavaScript").build());
+    ulaInterestRepository.save(UlaInterest.builder().name("Grading").build());
+    ulaInterestRepository.save(UlaInterest.builder().name("Tutoring").build());
   }
 
   /** The admin-maintained lists the TA form offers. */
@@ -269,6 +292,44 @@ public class ApplicationsWebIT extends WebTestCase {
         .containsText("Applications for ULA positions");
     assertThat(page.getByTestId("HomePageLoggedIn-dashboard-apply-" + ta.getId())).isVisible();
     assertThat(page.getByTestId("HomePageLoggedIn-dashboard-apply-" + ula.getId())).isVisible();
+  }
+
+  /** The ULA form rates topics on three levels and adds an Interests table rated 1 to 5. */
+  @Test
+  public void a_ula_application_asks_a_three_point_topic_scale_and_interests() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.ULA, LocalDate.now().plusDays(30));
+    seedUlaLists();
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+
+    // The topic table's headings are the worded three-point scale, and there is no 4 or 5.
+    assertThat(page.getByTestId("ApplyPage-topicProficiencies")).containsText("1-Very comfortable");
+    assertThat(page.getByTestId("ApplyPage-topicProficiencies")).containsText("3-Not familiar");
+    assertThat(page.getByTestId("ApplyPage-topic-JavaScript-3")).isVisible();
+    assertThat(page.getByTestId("ApplyPage-topic-JavaScript-4")).not().isVisible();
+    // The interests table lists the admin's areas with a 1 to 5 scale.
+    assertThat(page.getByTestId("ApplyPage-interests")).containsText("1-Not interested");
+    assertThat(page.getByTestId("ApplyPage-interests")).containsText("5-Very interested");
+
+    page.getByTestId("ApplyPage-firstName").fill("Chris");
+    page.getByTestId("ApplyPage-lastName").fill("Gaucho");
+    page.getByTestId("ApplyPage-major").selectOption("Computer Science");
+    page.getByTestId("ApplyPage-topic-JavaScript-2").check();
+    page.getByTestId("ApplyPage-interest-Tutoring-5").check();
+    page.getByTestId("ApplyPage-interest-Grading-1").check();
+    page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
+    addCourse("ApplyPage", "CMPSC 16");
+    page.getByTestId("ApplyPage-notice-agree").check();
+    page.getByTestId("ApplyPage-submit").click();
+
+    // Listed on the home page, and the answers come back when it is opened for editing.
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-type"))
+        .containsText("ULA");
+    page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-action-link").click();
+    assertThat(page.getByTestId("ApplicationPage-topic-JavaScript-2")).isChecked();
+    assertThat(page.getByTestId("ApplicationPage-interest-Tutoring-5")).isChecked();
+    assertThat(page.getByTestId("ApplicationPage-interest-Grading-1")).isChecked();
   }
 
   @Test

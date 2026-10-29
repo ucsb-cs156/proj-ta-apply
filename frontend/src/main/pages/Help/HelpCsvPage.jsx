@@ -58,14 +58,14 @@ export default function HelpCsvPage() {
         </Accordion>
 
         <h2 className="my-4" id="settings-lists">
-          App Settings Lists CSV formats (Majors and Topics)
+          App Settings Lists CSV formats (Majors, Topics and Interests)
         </h2>
         <p data-testid="settingsListsDescription">
           On the <i>TA App Settings</i> and <i>ULA App Settings</i> admin pages,
-          each of the four lists (TA majors, TA topics, ULA majors, ULA topics)
-          can be downloaded as a CSV file and filled from one. The two use the
-          same shape, so a list set up on a QA site can be downloaded there and
-          uploaded unchanged to production.
+          each of the five lists (TA majors, TA topics, ULA majors, ULA topics,
+          ULA interests) can be downloaded as a CSV file and filled from one.
+          All use the same shape, so a list set up on a QA site can be
+          downloaded there and uploaded unchanged to production.
         </p>
         <Accordion data-testid="settingsListsAccordion">
           <Accordion.Item eventKey="0">

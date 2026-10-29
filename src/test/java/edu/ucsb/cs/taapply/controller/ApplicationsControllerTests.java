@@ -144,6 +144,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.graduationDate(),
         FULL_FIELDS.priorCoursework(),
         FULL_FIELDS.topicProficiencies(),
+        FULL_FIELDS.interests(),
         FULL_FIELDS.prevExperience(),
         FULL_FIELDS.comments(),
         FULL_FIELDS.firstChoiceCourse(),
@@ -200,7 +201,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           "2nd",
           "S27",
           COURSES,
-          Map.of("Java", 5, "React", 3),
+          Map.of("Java", 3, "React", 2),
+          Map.of("Tutoring", 5, "Grading", 1),
           "TA for CS 24",
           "Happy to help with either",
           "CMPSC   156",
@@ -237,6 +239,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           FULL_FIELDS.graduationDate(),
           FULL_FIELDS.priorCoursework(),
           FULL_FIELDS.topicProficiencies(),
+          FULL_FIELDS.interests(),
           FULL_FIELDS.prevExperience(),
           FULL_FIELDS.comments(),
           FULL_FIELDS.firstChoiceCourse(),
@@ -269,6 +272,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.graduationDate(),
         FULL_FIELDS.priorCoursework(),
         FULL_FIELDS.topicProficiencies(),
+        FULL_FIELDS.interests(),
         FULL_FIELDS.prevExperience(),
         FULL_FIELDS.comments(),
         FULL_FIELDS.firstChoiceCourse(),
@@ -302,6 +306,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.graduationDate(),
         FULL_FIELDS.priorCoursework(),
         proficiencies,
+        FULL_FIELDS.interests(),
         FULL_FIELDS.prevExperience(),
         FULL_FIELDS.comments(),
         FULL_FIELDS.firstChoiceCourse(),
@@ -345,7 +350,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .yearInProgram("2nd")
         .graduationDate("S27")
         .priorCoursework(new ArrayList<>(EXPECTED_COURSES))
-        .topicProficiencies(new TreeMap<>(Map.of("Java", 5, "React", 3)))
+        .topicProficiencies(new TreeMap<>(Map.of("Java", 3, "React", 2)))
+        // A TA application keeps no interests, whatever was sent.
+        .interests(new TreeMap<>())
         .prevExperience("TA for CS 24")
         .comments("Happy to help with either")
         .firstChoiceCourse("CMPSC   156")
@@ -577,6 +584,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     Application expected = expectedFrom(null, 2L, ULA_EMAIL, null);
     expected.setNoticeVersionId(41L);
+    // A ULA application keeps its interest levels, sorted by name.
+    expected.setInterests(new TreeMap<>(Map.of("Grading", 1, "Tutoring", 5)));
     assertEquals(expected, saved());
   }
 
@@ -599,6 +608,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     Application expected = expectedFrom(null, 2L, GRAD_EMAIL, null);
     expected.setNoticeVersionId(41L);
+    expected.setInterests(new TreeMap<>(Map.of("Grading", 1, "Tutoring", 5)));
     assertEquals(expected, saved());
   }
 
@@ -1033,6 +1043,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     Application expected = expectedFrom(7L, 2L, ADMIN_EMAIL, "kept");
     expected.setTestApplication(true);
     expected.setNoticeVersionId(41L);
+    // A ULA recruitment, so the interest levels are kept too.
+    expected.setInterests(new TreeMap<>(Map.of("Grading", 1, "Tutoring", 5)));
     assertEquals(expected, saved());
   }
 
@@ -1370,6 +1382,215 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     verify(applicationRepository, never()).save(any());
   }
 
+  /** The same fields rebuilt with a different set of interest levels. */
+  private static ApplicationFields withInterests(
+      ApplicationFields f, Map<String, Integer> topics, Map<String, Integer> interests) {
+    return new ApplicationFields(
+        f.firstName(),
+        f.middleName(),
+        f.lastName(),
+        f.major(),
+        f.gpaMajor(),
+        f.gpaOverall(),
+        f.yearInProgram(),
+        f.graduationDate(),
+        f.priorCoursework(),
+        topics,
+        interests,
+        f.prevExperience(),
+        f.comments(),
+        f.firstChoiceCourse(),
+        f.secondChoiceCourse(),
+        f.availableForLecturesFirstChoice(),
+        f.availableForLecturesSecondChoice(),
+        f.availableForDiscussionFirstChoice(),
+        f.availableForDiscussionSecondChoice(),
+        f.availabilityCommentsFirstChoice(),
+        f.availabilityCommentsSecondChoice(),
+        f.courseInterests(),
+        f.residencyStatus(),
+        f.languageExam(),
+        f.languageExamDatePassed(),
+        f.classLevel(),
+        f.videoLink(),
+        f.previousServiceAsUla(),
+        f.noticeVersionId());
+  }
+
+  /** The full ULA application (agreeing to the ULA notice) with the given interest levels. */
+  private static ApplicationFields ulaWithInterests(Map<String, Integer> interests) {
+    ApplicationFields f = withNotice(41L);
+    return withInterests(f, f.topicProficiencies(), interests);
+  }
+
+  /** The ULA form's radio buttons offer 1 to 3, so 4 and 5 are refused there. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @ParameterizedTest
+  @ValueSource(ints = {0, 4, 5})
+  public void a_ula_topic_rating_off_its_three_point_scale_is_refused(int level) throws Exception {
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    ApplicationFields f = withNotice(41L);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=2")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        mapper.writeValueAsString(
+                            withInterests(f, Map.of("Java", level), f.interests())))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "Proficiency in Java must be between 1 and 3", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** 3 is the top of the ULA scale, so it is accepted there. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_topic_rating_of_3_is_accepted() throws Exception {
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    ApplicationFields f = withNotice(41L);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    mapper.writeValueAsString(
+                        withInterests(f, Map.of("Java", 3, "Python", 1), f.interests())))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of("Java", 3, "Python", 1), saved().getTopicProficiencies());
+  }
+
+  // ---- interests (ULA only) ----
+
+  /** Only answered areas are stored, and a level must be on the 1 to 5 scale. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void interest_levels_are_stored_and_unanswered_areas_are_skipped() throws Exception {
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+
+    Map<String, Integer> sent = new HashMap<>();
+    sent.put("Tutoring", 1);
+    sent.put("Grading", 5);
+    sent.put("Office hours", null); // shown but never answered
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(ulaWithInterests(sent)))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of("Tutoring", 1, "Grading", 5), saved().getInterests());
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_missing_interests_map_is_stored_as_empty() throws Exception {
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(ulaWithInterests(null)))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of(), saved().getInterests());
+  }
+
+  /** The radio buttons offer 1 to 5; anything else did not come from the form. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @ParameterizedTest
+  @ValueSource(ints = {0, 6, -1})
+  public void an_interest_level_off_the_scale_is_refused(int level) throws Exception {
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=2")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(ulaWithInterests(Map.of("Tutoring", level))))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "Interest in Tutoring must be between 1 and 5", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** A TA form has no interests section, so whatever is sent for one is dropped, not stored. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void interests_sent_with_a_ta_application_are_ignored() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    // Not even checked against the scale: an off-scale level on a TA form is simply dropped.
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    mapper.writeValueAsString(
+                        withInterests(
+                            FULL_FIELDS, FULL_FIELDS.topicProficiencies(), Map.of("Tutoring", 9))))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of(), saved().getInterests());
+  }
+
+  /** Editing replaces the earlier interest levels rather than merging with them. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void editing_replaces_the_interest_levels() throws Exception {
+    Application existing = application(6L, 2L, ULA_EMAIL);
+    existing.getInterests().put("Grading", 2);
+    when(applicationRepository.findById(6L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+
+    mockMvc
+        .perform(
+            put("/api/applications?id=6")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(ulaWithInterests(Map.of("Tutoring", 4))))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(Map.of("Tutoring", 4), saved().getInterests());
+  }
+
   // ---- prior coursework ----
 
   private static PriorCourseworkFields course(String number) {
@@ -1391,6 +1612,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.graduationDate(),
         courses,
         f.topicProficiencies(),
+        f.interests(),
         f.prevExperience(),
         f.comments(),
         f.firstChoiceCourse(),

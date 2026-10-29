@@ -88,6 +88,68 @@ describe("ApplicationSummary tests", () => {
     expect(cell).toHaveStyle({ whiteSpace: "pre" });
   });
 
+  /** The ULA form rates topics on three levels, and asks about interests as well. */
+  test("a ULA summary shows the three-point topic scale and the interest levels", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneUlaApplication,
+          topicProficiencies: { React: 1, JavaScript: 3 },
+          interests: { Tutoring: 5, Grading: 2 },
+        }}
+        type="ULA"
+      />,
+    );
+
+    const topics = screen.getByTestId(
+      "ApplicationSummary-Topic Proficiency (1 very comfortable to 3 not familiar)",
+    );
+    expect(topics.textContent).toBe("JavaScript: 3 / 3\nReact: 1 / 3");
+    const interests = screen.getByTestId(
+      "ApplicationSummary-Interests (1 not interested to 5 very interested)",
+    );
+    expect(interests.textContent).toBe("Grading: 2 / 5\nTutoring: 5 / 5");
+    expect(interests).toHaveStyle({ whiteSpace: "pre" });
+    expect(
+      screen.queryByTestId(
+        "ApplicationSummary-Topic Proficiency (1 lowest to 5 highest)",
+      ),
+    ).toBeNull();
+  });
+
+  test("a ULA application with no interest answers shows a blank interests row", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneUlaApplication,
+          interests: null,
+        }}
+        type="ULA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-Interests (1 not interested to 5 very interested)",
+      ).textContent,
+    ).toBe("");
+  });
+
+  test("a TA summary has no interests row", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneTaApplication}
+        type="TA"
+      />,
+    );
+
+    expect(
+      screen.queryByTestId(
+        "ApplicationSummary-Interests (1 not interested to 5 very interested)",
+      ),
+    ).toBeNull();
+  });
+
   test("an application with no ratings shows a blank rating row", () => {
     render(
       <ApplicationSummary

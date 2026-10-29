@@ -12,24 +12,27 @@ import type { NoticeVersion } from "main/utils/notices";
 import {
   COURSE_INTEREST_OPTIONS,
   DEFAULT_COURSE_INTEREST,
+  INTEREST_LEVELS,
   OTHER_MAJOR,
-  PROFICIENCY_LEVELS,
+  proficiencyInstruction,
+  proficiencyLevels,
   toPayload,
   type ApplicationFormFields,
   type ApplicationPayload,
 } from "main/utils/applicationFields";
 
 /**
- * The answers react-hook-form manages. The major, the per-course interest answers and the topic
- * ratings are kept apart in plain state: their option lists arrive from the backend after the form
- * has mounted, and react-hook-form reads its defaults only once, so fields registered late would
- * start unanswered.
+ * The answers react-hook-form manages. The major, the per-course interest answers, the topic
+ * ratings and the interest levels are kept apart in plain state: their option lists arrive from the
+ * backend after the form has mounted, and react-hook-form reads its defaults only once, so fields
+ * registered late would start unanswered.
  */
 type RegisteredFields = Omit<
   ApplicationFormFields,
   | "major"
   | "courseInterests"
   | "topicProficiencies"
+  | "interests"
   | "noticeVersionId"
   | "priorCoursework"
 >;
@@ -47,6 +50,8 @@ type ApplicationFormProps = {
   majors: string[];
   /** The admin-maintained topics list for this kind of application. */
   topics: string[];
+  /** The admin-maintained ULA interests list; a TA form has no interests section and ignores it. */
+  interests?: string[];
   /**
    * The "Notices, Terms and Conditions" version to show and require agreement to: the current one
    * for a new application, the one agreed to for an existing one. Null when none exists yet.
@@ -106,6 +111,7 @@ export default function ApplicationForm({
   recruitmentId,
   majors,
   topics,
+  interests: interestOptions,
   notice = null,
   initialContents,
   defaultNames,
@@ -119,6 +125,9 @@ export default function ApplicationForm({
   const majorList = Array.isArray(majors) ? majors : [];
   // Stryker disable next-line all : don't test default value of empty list
   const topicList = Array.isArray(topics) ? topics : [];
+  // Stryker disable next-line all : don't test default value of empty list
+  const interestList = Array.isArray(interestOptions) ? interestOptions : [];
+  const topicLevels = proficiencyLevels(type);
 
   // Kept as plain strings so the course dropdowns can keep an earlier choice selectable.
   const initialFirstChoice = asString(initialContents?.firstChoiceCourse);
@@ -229,6 +238,11 @@ export default function ApplicationForm({
     () => ({ ...(initialContents?.topicProficiencies ?? {}) }),
   );
 
+  // Likewise only the interest areas the applicant has answered for, keyed by name.
+  const [interestLevels, setInterestLevels] = useState<Record<string, number>>(
+    () => ({ ...(initialContents?.interests ?? {}) }),
+  );
+
   // Only the courses the applicant has marked; anything else reads as the default. Keyed by
   // course id, so it does not matter which courses were on the list when the answer was given.
   const [interests, setInterests] = useState<Record<string, string>>(() => ({
@@ -265,6 +279,14 @@ export default function ApplicationForm({
         .filter((topic) => proficiencies[topic] !== undefined)
         .map((topic) => [topic, proficiencies[topic]]),
     ),
+    // A TA form never shows the section, so it sends nothing for it.
+    interests: isTa
+      ? {}
+      : Object.fromEntries(
+          interestList
+            .filter((interest) => interestLevels[interest] !== undefined)
+            .map((interest) => [interest, interestLevels[interest]]),
+        ),
   });
 
   /** The major and the agreement are outside react-hook-form, so their required checks run here. */
@@ -552,10 +574,7 @@ export default function ApplicationForm({
         <Form.Label as="p" className="mb-1">
           Topic Proficiency
         </Form.Label>
-        <p className="text-muted small mb-2">
-          Choose a level of proficiency, with 1 being the lowest, and 5 being
-          the highest.
-        </p>
+        <p className="text-muted small mb-2">{proficiencyInstruction(type)}</p>
         {topicList.length === 0 ? (
           <p
             className="text-muted small"
@@ -568,9 +587,9 @@ export default function ApplicationForm({
             <thead>
               <tr>
                 <th>Topic</th>
-                {PROFICIENCY_LEVELS.map((level) => (
-                  <th key={level} className="text-center fw-normal">
-                    {level}
+                {topicLevels.map((level) => (
+                  <th key={level.value} className="text-center fw-normal">
+                    {level.label}
                   </th>
                 ))}
               </tr>
@@ -581,7 +600,7 @@ export default function ApplicationForm({
                 return (
                   <tr key={topic} data-testid={rowId}>
                     <td>{topic}</td>
-                    {PROFICIENCY_LEVELS.map((level) => (
+                    {topicLevels.map(({ value: level }) => (
                       <td key={level} className="text-center">
                         <Form.Check
                           type="radio"
@@ -607,6 +626,65 @@ export default function ApplicationForm({
           </Table>
         )}
       </Form.Group>
+
+      {!isTa && (
+        <Form.Group className="mb-3" data-testid={id("interests")}>
+          <Form.Label as="p" className="mb-1">
+            Interests
+          </Form.Label>
+          <p className="text-muted small mb-2">
+            For each area, choose how interested you are, with 1 being not
+            interested and 5 being very interested.
+          </p>
+          {interestList.length === 0 ? (
+            <p className="text-muted small" data-testid={id("interests-none")}>
+              No interests are listed yet.
+            </p>
+          ) : (
+            <Table size="sm" responsive className="align-middle">
+              <thead>
+                <tr>
+                  <th>Interest</th>
+                  {INTEREST_LEVELS.map((level) => (
+                    <th key={level.value} className="text-center fw-normal">
+                      {level.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {interestList.map((interest) => {
+                  const rowId = id(`interest-${slug(interest)}`);
+                  return (
+                    <tr key={interest} data-testid={rowId}>
+                      <td>{interest}</td>
+                      {INTEREST_LEVELS.map(({ value: level }) => (
+                        <td key={level} className="text-center">
+                          <Form.Check
+                            type="radio"
+                            name={rowId}
+                            id={`${rowId}-${level}`}
+                            data-testid={`${rowId}-${level}`}
+                            aria-label={`${interest}: ${level}`}
+                            value={level}
+                            checked={interestLevels[interest] === level}
+                            onChange={() =>
+                              setInterestLevels((previous) => ({
+                                ...previous,
+                                [interest]: level,
+                              }))
+                            }
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          )}
+        </Form.Group>
+      )}
 
       <Form.Group className="mb-3">
         <Form.Label htmlFor={id("prevExperience")}>

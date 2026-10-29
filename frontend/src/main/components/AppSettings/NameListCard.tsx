@@ -15,9 +15,9 @@ import {
 /** One row of any of the admin-maintained name lists. */
 export type NameItem = { name: string };
 
-/** The four lists the backend serves under /api/admin/settings/{list}. */
+/** The five lists the backend serves under /api/admin/settings/{list}. */
 export type NameListKey =
-  "ta-majors" | "ta-topics" | "ula-majors" | "ula-topics";
+  "ta-majors" | "ta-topics" | "ula-majors" | "ula-topics" | "ula-interests";
 
 type NameListCardProps = {
   /** Card heading, e.g. "Majors List for TAs". */

@@ -4,6 +4,7 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.TaMajor;
 import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.entity.UlaInterest;
 import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
@@ -14,6 +15,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
@@ -56,9 +58,14 @@ public class ApplicantRecruitmentsController extends ApiController {
   @Autowired TaTopicRepository taTopicRepository;
   @Autowired UlaMajorRepository ulaMajorRepository;
   @Autowired UlaTopicRepository ulaTopicRepository;
+  @Autowired UlaInterestRepository ulaInterestRepository;
 
-  /** The admin-maintained lists the application form for one recruitment offers. */
-  public static record ApplicationOptions(List<String> majors, List<String> topics) {}
+  /**
+   * The admin-maintained lists the application form for one recruitment offers. The interests are a
+   * ULA question only, so a TA recruitment's list is empty.
+   */
+  public static record ApplicationOptions(
+      List<String> majors, List<String> topics, List<String> interests) {}
 
   /** Every recruitment, most recent quarter first, TA before ULA within a quarter. */
   private List<Recruitment> all() {
@@ -181,8 +188,8 @@ public class ApplicantRecruitmentsController extends ApiController {
   @Operation(
       summary = "The majors and topics lists the application form for a recruitment offers",
       description =
-          "The TA lists for a TA recruitment, the ULA lists for a ULA one, each sorted. 404 for an"
-              + " unknown recruitment.")
+          "The TA lists for a TA recruitment, the ULA lists for a ULA one, each sorted. Only a ULA"
+              + " recruitment has interests. 404 for an unknown recruitment.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/options")
   public ApplicationOptions applicationOptions(
@@ -199,7 +206,8 @@ public class ApplicantRecruitmentsController extends ApiController {
                   .map(TaMajor::getName)),
           sorted(
               StreamSupport.stream(taTopicRepository.findAll().spliterator(), false)
-                  .map(TaTopic::getName)));
+                  .map(TaTopic::getName)),
+          List.of());
     }
     return new ApplicationOptions(
         sorted(
@@ -207,6 +215,9 @@ public class ApplicantRecruitmentsController extends ApiController {
                 .map(UlaMajor::getName)),
         sorted(
             StreamSupport.stream(ulaTopicRepository.findAll().spliterator(), false)
-                .map(UlaTopic::getName)));
+                .map(UlaTopic::getName)),
+        sorted(
+            StreamSupport.stream(ulaInterestRepository.findAll().spliterator(), false)
+                .map(UlaInterest::getName)));
   }
 }

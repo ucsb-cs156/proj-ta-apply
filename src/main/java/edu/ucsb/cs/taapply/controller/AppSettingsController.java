@@ -3,11 +3,13 @@ package edu.ucsb.cs.taapply.controller;
 import com.opencsv.exceptions.CsvException;
 import edu.ucsb.cs.taapply.entity.TaMajor;
 import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.entity.UlaInterest;
 import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.services.NameListCsvService;
@@ -41,11 +43,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * The four admin-maintained name lists behind the TA and ULA application forms: the majors and the
- * topics an applicant may pick from.
+ * The five admin-maintained name lists behind the TA and ULA application forms: the majors and the
+ * topics an applicant may pick from, and for ULAs the interest areas they rate.
  *
- * <p>Each list is its own table with a single string column that is also the key, so the four are
- * served by one controller keyed on the {@code list} path segment rather than four copies of the
+ * <p>Each list is its own table with a single string column that is also the key, so the five are
+ * served by one controller keyed on the {@code list} path segment rather than five copies of the
  * same CRUD code. Renaming is a delete plus an insert, since the name is the key.
  */
 @Tag(name = "AppSettings")
@@ -70,11 +72,13 @@ public class AppSettingsController extends ApiController {
   public static final String TA_TOPICS = "ta-topics";
   public static final String ULA_MAJORS = "ula-majors";
   public static final String ULA_TOPICS = "ula-topics";
+  public static final String ULA_INTERESTS = "ula-interests";
 
   @Autowired TaMajorRepository taMajorRepository;
   @Autowired TaTopicRepository taTopicRepository;
   @Autowired UlaMajorRepository ulaMajorRepository;
   @Autowired UlaTopicRepository ulaTopicRepository;
+  @Autowired UlaInterestRepository ulaInterestRepository;
   @Autowired NameListCsvService nameListCsvService;
 
   private final Map<String, NameList> lists = new LinkedHashMap<>();
@@ -87,6 +91,9 @@ public class AppSettingsController extends ApiController {
         ULA_MAJORS, new NameList(ulaMajorRepository, n -> UlaMajor.builder().name(n).build()));
     lists.put(
         ULA_TOPICS, new NameList(ulaTopicRepository, n -> UlaTopic.builder().name(n).build()));
+    lists.put(
+        ULA_INTERESTS,
+        new NameList(ulaInterestRepository, n -> UlaInterest.builder().name(n).build()));
   }
 
   private NameList listNamed(String list) {
@@ -121,12 +128,13 @@ public class AppSettingsController extends ApiController {
     if (row instanceof TaMajor m) return m.getName();
     if (row instanceof TaTopic t) return t.getName();
     if (row instanceof UlaMajor m) return m.getName();
-    return ((UlaTopic) row).getName();
+    if (row instanceof UlaTopic t) return t.getName();
+    return ((UlaInterest) row).getName();
   }
 
   @Operation(
       summary = "Every name in a list, sorted",
-      description = "list is one of ta-majors, ta-topics, ula-majors, ula-topics.")
+      description = "list is one of ta-majors, ta-topics, ula-majors, ula-topics, ula-interests.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/{list}/all")
   public List<NameItem> all(@PathVariable String list) {

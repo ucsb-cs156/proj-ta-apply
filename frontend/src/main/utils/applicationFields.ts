@@ -20,20 +20,61 @@ export const DEFAULT_COURSE_INTEREST: CourseInterestValue = "NOT_INTERESTED";
 export const courseInterestLabel = (value: string): string =>
   COURSE_INTEREST_OPTIONS.find((option) => option.value === value)?.label ?? "";
 
-/** The lowest and highest self-rating an applicant can give for a topic. */
-export const MIN_PROFICIENCY = 1;
-export const MAX_PROFICIENCY = 5;
+/** One radio button on a rating scale: the stored number and the column heading above it. */
+export type ScaleLevel = { value: number; label: string };
 
-/** 1 through 5, in order, for the radio buttons beside each topic. */
-export const PROFICIENCY_LEVELS: number[] = [1, 2, 3, 4, 5];
+/** The lowest self-rating an applicant can give for a topic, on either form. */
+export const MIN_PROFICIENCY = 1;
+
+/** A TA applicant rates each topic 1 (lowest) to 5 (highest); the headings are the numbers. */
+export const TA_PROFICIENCY_LEVELS: ScaleLevel[] = [1, 2, 3, 4, 5].map(
+  (value) => ({ value, label: String(value) }),
+);
+
+/** A ULA applicant rates each topic on three levels, worded so that 1 is the most comfortable. */
+export const ULA_PROFICIENCY_LEVELS: ScaleLevel[] = [
+  { value: 1, label: "1-Very comfortable" },
+  { value: 2, label: "2-Somewhat comfortable" },
+  { value: 3, label: "3-Not familiar" },
+];
+
+/** The topic scale for a form type. */
+export const proficiencyLevels = (type: "TA" | "ULA"): ScaleLevel[] =>
+  type === "TA" ? TA_PROFICIENCY_LEVELS : ULA_PROFICIENCY_LEVELS;
+
+/** The instruction above the topic table for a form type. */
+export const proficiencyInstruction = (type: "TA" | "ULA"): string =>
+  type === "TA"
+    ? "Choose a level of proficiency, with 1 being the lowest, and 5 being the highest."
+    : "For each topic, choose 1 if you are very comfortable with it, 2 if somewhat comfortable, or 3 if you are not familiar with it.";
+
+/** A ULA applicant rates each interest area 1 (not interested) to 5 (very interested). */
+export const INTEREST_LEVELS: ScaleLevel[] = [
+  { value: 1, label: "1-Not interested" },
+  { value: 2, label: "2" },
+  { value: 3, label: "3" },
+  { value: 4, label: "4" },
+  { value: 5, label: "5-Very interested" },
+];
 
 /** The option value that means "my major is not on the list"; never stored. */
 export const OTHER_MAJOR = "__OTHER__";
 
-/** The admin-maintained lists the form for one recruitment offers, from /api/recruitments/options. */
-export type ApplicationOptions = { majors: string[]; topics: string[] };
+/**
+ * The admin-maintained lists the form for one recruitment offers, from /api/recruitments/options.
+ * Only a ULA recruitment has interests; a TA one sends an empty list.
+ */
+export type ApplicationOptions = {
+  majors: string[];
+  topics: string[];
+  interests: string[];
+};
 
-export const EMPTY_OPTIONS: ApplicationOptions = { majors: [], topics: [] };
+export const EMPTY_OPTIONS: ApplicationOptions = {
+  majors: [],
+  topics: [],
+  interests: [],
+};
 
 /** Everything the applicant may set. Deliberately not the whole entity: status is not theirs. */
 export type ApplicationFormFields = {
@@ -47,8 +88,10 @@ export type ApplicationFormFields = {
   graduationDate: string;
   /** The courses listed as relevant background, in order; see utils/priorCoursework. */
   priorCoursework: PriorCourse[];
-  /** Topic name to self-rated proficiency 1..5, only for topics the applicant rated. */
+  /** Topic name to self-rated proficiency (1..5 on a TA form, 1..3 on a ULA one), rated ones only. */
   topicProficiencies: Record<string, number>;
+  /** ULA only: interest area to level 1..5, for the areas the applicant answered. */
+  interests: Record<string, number>;
   prevExperience: string;
   comments: string;
   firstChoiceCourse: string;
