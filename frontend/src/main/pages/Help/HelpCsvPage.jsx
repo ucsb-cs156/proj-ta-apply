@@ -236,11 +236,13 @@ export default function HelpCsvPage() {
           <code>priorUcsbEmployment</code>, <code>employeeId</code>,{" "}
           <code>i9Appointment</code>, <code>trainingCommitment</code>,{" "}
           <code>trainingCommitmentExplanation</code>, <code>changingMajor</code>
-          ) and, last, <code>interests</code>. Answers that are lists are folded
-          into one column each: <code>priorCoursework</code> holds each
-          course&apos;s school (<code>UCSB</code> or the other school&apos;s
-          name), number, title, term and grade separated by commas, with the
-          courses separated by semicolons, for example{" "}
+          ), the six lecture and section availability columns (only the ULA form
+          asks about availability) and, last, <code>interests</code>. Answers
+          that are lists are folded into one column each:{" "}
+          <code>priorCoursework</code> holds each course&apos;s school (
+          <code>UCSB</code> or the other school&apos;s name), number, title,
+          term and grade separated by commas, with the courses separated by
+          semicolons, for example{" "}
           <code>
             UCSB,CMPSC 130A,Data Structures,F25,A;De Anza College,CIS 22A,Intro
             to C,Fall 2023,
