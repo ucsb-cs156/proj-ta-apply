@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-65-legacy-import","number":68,"title":"Import legacy TA applications so returning applicants start from their old answers","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/68"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-sample-data-obfuscation","number":67,"title":"Obfuscated sample of the legacy TA application data, with the script that makes it","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/67"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-65-legacy-import","number":68,"title":"Import legacy TA applications so returning applicants start from their old answers","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/68"}]
