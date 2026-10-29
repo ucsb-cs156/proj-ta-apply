@@ -409,6 +409,19 @@ export default function ApplicationForm({
       <p className="mb-0 mt-3">
         <RequiredFieldExplanation />
       </p>
+      {/* First, so the applicant reads the terms before answering (issue #77). */}
+      <div className="mt-3">
+        <NoticeAgreement
+          notice={notice}
+          agreed={agreed}
+          invalid={agreementMissing}
+          onChange={(checked) => {
+            setAgreementMissing(false);
+            setAgreedTo(checked && notice ? notice.id : null);
+          }}
+          testIdPrefix={id("notice")}
+        />
+      </div>
       <h2 className="h5 mt-3">About you</h2>
       <Row>
         <Form.Group as={Col} md={4} className="mb-3">
@@ -1195,17 +1208,6 @@ export default function ApplicationForm({
           {...register("comments")}
         />
       </Form.Group>
-
-      <NoticeAgreement
-        notice={notice}
-        agreed={agreed}
-        invalid={agreementMissing}
-        onChange={(checked) => {
-          setAgreementMissing(false);
-          setAgreedTo(checked && notice ? notice.id : null);
-        }}
-        testIdPrefix={id("notice")}
-      />
 
       <Button type="submit" data-testid={id("submit")}>
         {buttonLabel}
