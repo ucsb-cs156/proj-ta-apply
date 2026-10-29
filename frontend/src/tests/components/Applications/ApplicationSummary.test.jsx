@@ -277,7 +277,7 @@ describe("ApplicationSummary tests", () => {
     render(
       <ApplicationSummary
         application={applicationsFixtures.oneTaApplication}
-        type="TA"
+        type="ULA"
       />,
     );
 
@@ -311,7 +311,7 @@ describe("ApplicationSummary tests", () => {
           availabilityCommentsFirstChoice: "Free any afternoon but Wednesday.",
           availabilityCommentsSecondChoice: null,
         }}
-        type="TA"
+        type="ULA"
       />,
     );
 
@@ -553,6 +553,37 @@ describe("ApplicationSummary tests", () => {
     ]) {
       expect(screen.queryByTestId(`ApplicationSummary-${label}`)).toBeNull();
     }
+  });
+
+  /** Only the ULA form asks about availability (issue #76). */
+  test("a TA summary has no availability rows", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneTaApplication}
+        type="TA"
+      />,
+    );
+
+    for (const label of [
+      "Available for a First Choice Lecture",
+      "Available for a First Choice Discussion",
+      "First Choice Availability Comments",
+      "Available for a Second Choice Lecture",
+      "Available for a Second Choice Discussion",
+      "Second Choice Availability Comments",
+    ]) {
+      expect(screen.queryByTestId(`ApplicationSummary-${label}`)).toBeNull();
+    }
+    expect(
+      screen.getByTestId("ApplicationSummary-First Choice Course"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("ApplicationSummary-Second Choice Course"),
+    ).toBeInTheDocument();
+    // Exactly the TA rows, nothing in place of the availability ones.
+    expect(
+      screen.getByTestId("ApplicationSummary").querySelectorAll("dt"),
+    ).toHaveLength(16);
   });
 
   /** Issue #77: the agreement is shown first on the summary too, as on the form. */

@@ -394,6 +394,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** The same values, as the entity they should produce. */
   private static Application expectedFrom(
       Long id, Long recruitmentId, String email, String postApplicationComments) {
+    // Recruitment 2 is the ULA one; only a ULA application keeps the availability answers (#76).
+    boolean ula = recruitmentId == 2L;
     return Application.builder()
         .id(id)
         .recruitmentId(recruitmentId)
@@ -416,12 +418,12 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .comments("Happy to help with either")
         .firstChoiceCourse("CMPSC   156")
         .secondChoiceCourse("CMPSC   130A")
-        .availableForLecturesFirstChoice(true)
-        .availableForLecturesSecondChoice(true)
-        .availableForDiscussionFirstChoice(true)
-        .availableForDiscussionSecondChoice(true)
-        .availabilityCommentsFirstChoice("Free T R afternoons")
-        .availabilityCommentsSecondChoice("Any section but Friday")
+        .availableForLecturesFirstChoice(ula)
+        .availableForLecturesSecondChoice(ula)
+        .availableForDiscussionFirstChoice(ula)
+        .availableForDiscussionSecondChoice(ula)
+        .availabilityCommentsFirstChoice(ula ? "Free T R afternoons" : null)
+        .availabilityCommentsSecondChoice(ula ? "Any section but Friday" : null)
         .courseInterests(
             new HashMap<>(
                 Map.of(
@@ -2506,5 +2508,57 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     assertEquals(-1, response.getResponse().getContentAsString().indexOf("Interview"));
     assertEquals("Interview Tuesday; strong candidate", existing.getAdminComments());
+  }
+
+  /** Only the ULA form asks about availability (issue #76); a TA application never keeps it. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_application_drops_any_availability_answers_it_is_sent() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    // FULL_FIELDS answers yes to all four and fills both comment boxes.
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    Application saved = saved();
+    assertEquals(false, saved.isAvailableForLecturesFirstChoice());
+    assertEquals(false, saved.isAvailableForLecturesSecondChoice());
+    assertEquals(false, saved.isAvailableForDiscussionFirstChoice());
+    assertEquals(false, saved.isAvailableForDiscussionSecondChoice());
+    assertNull(saved.getAvailabilityCommentsFirstChoice());
+    assertNull(saved.getAvailabilityCommentsSecondChoice());
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_application_keeps_its_availability_answers() throws Exception {
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    mapper.writeValueAsString(
+                        withNoticeAndCourses(41L, List.of(course("CMPSC 16")))))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    Application saved = saved();
+    assertEquals(true, saved.isAvailableForLecturesFirstChoice());
+    assertEquals(true, saved.isAvailableForDiscussionSecondChoice());
+    assertEquals("Free T R afternoons", saved.getAvailabilityCommentsFirstChoice());
+    assertEquals("Any section but Friday", saved.getAvailabilityCommentsSecondChoice());
   }
 }
