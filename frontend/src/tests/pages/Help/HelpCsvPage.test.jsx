@@ -155,4 +155,30 @@ describe("HelpCsvPage tests", () => {
     await screen.findByRole("heading", { level: 1 });
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
+
+  /** Issue #65: the legacy import's format, with the anchor the TA App Settings card links to. */
+  test("documents the legacy TA applications import", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <HelpCsvPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Legacy TA Applications CSV upload format",
+      }),
+    ).toHaveAttribute("id", "legacy-ta-applications");
+    expect(screen.getByTestId("legacyImportDescription")).toHaveTextContent(
+      "creates one application per row in that quarter's TA recruitment, as if the student had entered it",
+    );
+    expect(screen.getByTestId("legacyImportMapping")).toHaveTextContent(
+      "CS as a major means Computer Science",
+    );
+    expect(screen.getByTestId("legacyImportCsvExample").textContent).toBe(
+      csvFixtures.legacyTaApplications,
+    );
+  });
 });

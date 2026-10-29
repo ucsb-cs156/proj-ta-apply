@@ -5,6 +5,7 @@ import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
+import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 
 const common = [
   http.get("/api/currentUser", () =>
@@ -42,6 +43,17 @@ const common = [
   ),
   http.post("/api/admin/settings/ta-topics/upload/csv", () =>
     HttpResponse.json({ inserted: 1, alreadyPresent: 1 }),
+  ),
+  http.get("/api/admin/recruitments/all", () =>
+    HttpResponse.json(recruitmentsFixtures.threeRecruitments),
+  ),
+  http.post("/api/admin/applications/legacy/upload", () =>
+    HttpResponse.json({
+      inserted: 2,
+      alreadyPresent: 0,
+      skipped: 0,
+      problems: [],
+    }),
   ),
 ];
 

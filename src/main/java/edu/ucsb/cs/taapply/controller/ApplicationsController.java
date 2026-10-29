@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,11 +150,23 @@ public class ApplicationsController extends ApiController {
 
   @Operation(
       summary = "The applicant's most recent application, for pre-filling a new one",
-      description = "Empty if they have never applied.")
+      description =
+          "The one for the most recent recruitment quarter (newest row first within a quarter)."
+              + " Empty if they have never applied.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/prefill")
   public List<Application> prefill() {
-    return applicationRepository.findByEmailOrderByIdDesc(currentEmail()).stream()
+    List<Application> mine = applicationRepository.findByEmailOrderByIdDesc(currentEmail());
+    // By recruitment quarter rather than by id: an application imported from the legacy app's
+    // data gets a newer id than one the student made since, yet is the older of the two.
+    Map<Long, String> quarters = new HashMap<>();
+    recruitmentRepository
+        .findAllById(mine.stream().map(Application::getRecruitmentId).toList())
+        .forEach(r -> quarters.put(r.getId(), r.getQuarter()));
+    return mine.stream()
+        .sorted(
+            Comparator.comparing((Application a) -> quarters.getOrDefault(a.getRecruitmentId(), ""))
+                .reversed())
         .limit(1)
         .toList();
   }
