@@ -467,6 +467,38 @@ The ULA application asks everything the ULA Google Form asked (issue #72).
 * **Importing prior ULA data** (issue #70): the Google Form's single `GPA` maps to **Overall GPA**
   (`gpaOverall`), not GPA in Major.
 
+
+# Twenty-first Iteration
+
+Applications from the ULA Google Form can be brought in, as the legacy TA ones can (issue #70).
+
+* **Admin > ULA App Settings** gains an **Import ULA Form Responses** card, the ULA counterpart of
+  the TA page's import: the admin picks the quarter (one of the ULA recruitments that exist) and the
+  form's response sheet downloaded as CSV, and `POST /api/admin/applications/legacy-ula/upload?quarter=`
+  creates one pending application per row in that recruitment. Re-uploading is safe; rows without a
+  usable email are reported.
+* `LegacyUlaApplicationCsvService` finds columns by the start of their question text, so the form's
+  original headers and the condensed ones in `docs/sample-data/legacy-ula-csv-example.csv` both
+  work, and the grids by their bracketed labels. The perm number, graduation, BS/MS, employment,
+  previous-service, training, GPA (as Overall GPA), major, changing-major and video answers map to
+  their fields; the course-preference grid, first and second choice and the availability answers map
+  to the course interests, choices and availability fields; the familiarity grids become topic
+  proficiencies and the activity grid interests, named as the ULA lists spell them when a name
+  matches ("CSIL computing environment" matches "CSIL"). A topic or activity the lists lack is added
+  to them, and the card lists what was added in a modal. What has no field (a free-text TA-eligibility
+  answer, a choice the recruitment does not list, "only one lecture a week") goes into the comments;
+  the timestamp goes into the admin comments.
+  
+  
+# Twenty-second Iteration
+
+Applicants never receive the admin comments (issue #75). Every response of the applicant-facing
+endpoints (`/api/applications/mine`, `/api/applications?id=`, `/api/applications/prefill`, and the
+responses of an applicant's own POST and PUT, including the admin's test-application preview) is a
+copy of the application with `adminComments` blanked; the stored row is untouched, and the admin
+endpoints under `/api/admin/applications` keep returning it. No applicant page showed the field, but
+until now it left the server with every applicant response.
+
 # Twenty-fifth Iteration
 
 On the ULA application form, **GPA in Major**, **Overall GPA**, **Year in Program**, **Expected

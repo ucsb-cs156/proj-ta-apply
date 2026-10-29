@@ -2479,4 +2479,138 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertNull(saved().getGpaMajor());
     assertNull(saved().getGraduationDate());
   }
+
+  // ---- applicants never see the admin comments (issue #75) ----
+
+  private static Application withAdminComments(Application application) {
+    application.setAdminComments("Interview Tuesday; strong candidate");
+    return application;
+  }
+
+  /** The stripped copy has everything else, and the stored row keeps the comments. */
+  @Test
+  public void forApplicant_blanks_only_the_admin_comments_on_a_copy() {
+    Application stored = withAdminComments(application(5L, 1L, GRAD_EMAIL));
+    stored.setComments("Happy to help");
+
+    Application shown = ApplicationsController.forApplicant(stored);
+
+    assertNull(shown.getAdminComments());
+    assertEquals("Interview Tuesday; strong candidate", stored.getAdminComments());
+    assertEquals(5L, shown.getId());
+    assertEquals(GRAD_EMAIL, shown.getEmail());
+    assertEquals("Happy to help", shown.getComments());
+    assertEquals(stored.toBuilder().adminComments(null).build(), shown);
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void mine_and_one_and_prefill_leave_out_the_admin_comments() throws Exception {
+    Application mine = withAdminComments(application(5L, 1L, GRAD_EMAIL));
+    when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL)).thenReturn(List.of(mine));
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(mine));
+    when(recruitmentRepository.findAllById(List.of(1L)))
+        .thenReturn(List.of(recruitment(1L, "20262")));
+    String expected = mapper.writeValueAsString(ApplicationsController.forApplicant(mine));
+
+    for (String url : List.of("/api/applications/mine", "/api/applications/prefill")) {
+      MvcResult response = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+      assertEquals("[" + expected + "]", response.getResponse().getContentAsString());
+      assertEquals(-1, response.getResponse().getContentAsString().indexOf("Interview"));
+    }
+    MvcResult response =
+        mockMvc.perform(get("/api/applications?id=5")).andExpect(status().isOk()).andReturn();
+    assertEquals(expected, response.getResponse().getContentAsString());
+    assertEquals(-1, response.getResponse().getContentAsString().indexOf("Interview"));
+    // The row itself is untouched.
+    assertEquals("Interview Tuesday; strong candidate", mine.getAdminComments());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void editing_and_commenting_leave_out_the_admin_comments_but_keep_them_stored()
+      throws Exception {
+    Application existing = withAdminComments(application(5L, 1L, GRAD_EMAIL));
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    MvcResult edited =
+        mockMvc
+            .perform(
+                put("/api/applications?id=5")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body())
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+    assertEquals(-1, edited.getResponse().getContentAsString().indexOf("Interview"));
+    assertEquals(
+        true, edited.getResponse().getContentAsString().contains("\"adminComments\":null"));
+    assertEquals("Interview Tuesday; strong candidate", existing.getAdminComments());
+
+    MvcResult commented =
+        mockMvc
+            .perform(
+                put("/api/applications/comments?id=5&postApplicationComments=Took%20CS%20190J")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+    assertEquals(-1, commented.getResponse().getContentAsString().indexOf("Interview"));
+    assertEquals(
+        true, commented.getResponse().getContentAsString().contains("\"adminComments\":null"));
+    assertEquals("Interview Tuesday; strong candidate", existing.getAdminComments());
+    verify(applicationRepository, times(2)).save(existing);
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_new_application_s_response_has_no_admin_comments() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body())
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(
+        true, response.getResponse().getContentAsString().contains("\"adminComments\":null"));
+  }
+
+  /** The admin's preview goes through the same copy, so its response is shaped the same way. */
+  @WithMockUser(
+      username = "admin",
+      roles = {"USER", "ADMIN"})
+  @Test
+  public void a_test_application_s_response_has_no_admin_comments_either() throws Exception {
+    Application existing = withAdminComments(application(8L, 1L, ADMIN_EMAIL));
+    existing.setTestApplication(true);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 1L))
+        .thenReturn(Optional.of(existing));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/test?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body())
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(-1, response.getResponse().getContentAsString().indexOf("Interview"));
+    assertEquals("Interview Tuesday; strong candidate", existing.getAdminComments());
+  }
 }

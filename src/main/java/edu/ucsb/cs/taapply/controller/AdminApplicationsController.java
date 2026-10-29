@@ -13,6 +13,7 @@ import edu.ucsb.cs.taapply.services.ApplicationAuditService;
 import edu.ucsb.cs.taapply.services.ApplicationCsvService;
 import edu.ucsb.cs.taapply.services.LegacyApplicationCsvService;
 import edu.ucsb.cs.taapply.services.LegacyApplicationCsvService.ImportResult;
+import edu.ucsb.cs.taapply.services.LegacyUlaApplicationCsvService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,6 +49,7 @@ public class AdminApplicationsController extends ApiController {
   @Autowired ApplicationCsvService applicationCsvService;
   @Autowired ApplicationAuditService applicationAuditService;
   @Autowired LegacyApplicationCsvService legacyApplicationCsvService;
+  @Autowired LegacyUlaApplicationCsvService legacyUlaApplicationCsvService;
 
   @Operation(
       summary = "Every application to a recruitment, oldest first",
@@ -121,6 +123,41 @@ public class AdminApplicationsController extends ApiController {
                             .formatted(quarter.strip())));
     ImportResult result = legacyApplicationCsvService.upload(file, recruitment);
     log.info("Legacy CSV import into recruitment {}: {}", recruitment.getId(), result);
+    return result;
+  }
+
+  @Operation(
+      summary = "Import the ULA application Google Form's responses into a ULA recruitment",
+      description =
+          "The ULA counterpart of the legacy TA import: one application per row of the form's"
+              + " response sheet, as if the student had entered it. The quarter names the ULA"
+              + " recruitment, as F26 or 20264; 400 if no ULA recruitment exists for it. Rows"
+              + " already imported are left alone; rows without a usable email are reported. A"
+              + " familiarity topic or activity the ULA lists do not have is added to them, and the"
+              + " result says which.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping(
+      value = "/legacy-ula/upload",
+      consumes = {"multipart/form-data"})
+  public LegacyUlaApplicationCsvService.ImportResult uploadLegacyUlaCsv(
+      @Parameter(name = "quarter", description = "QYY such as F26, or YYYYQ such as 20264")
+          @RequestParam
+          String quarter,
+      @Parameter(name = "file") @RequestParam("file") MultipartFile file)
+      throws IOException, CsvException {
+    String yyyyq = LegacyApplicationCsvService.toYyyyq(quarter);
+    Recruitment recruitment =
+        recruitmentRepository
+            .findByQuarterAndType(yyyyq, RecruitmentType.ULA)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        ("There is no ULA recruitment for %s; create it under Admin >"
+                                + " Recruitments first")
+                            .formatted(quarter.strip())));
+    LegacyUlaApplicationCsvService.ImportResult result =
+        legacyUlaApplicationCsvService.upload(file, recruitment);
+    log.info("ULA form CSV import into recruitment {}: {}", recruitment.getId(), result);
     return result;
   }
 
