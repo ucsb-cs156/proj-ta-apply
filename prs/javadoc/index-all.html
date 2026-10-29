@@ -85,9 +85,9 @@ and the admin's own comments on it.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#%3Cinit%3E()" class="member-name-link">AdminApplicationsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#%3Cinit%3E(edu.ucsb.cs.taapply.entity.Admin,java.util.List)" class="member-name-link">AdminDTO(Admin, List)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#%3Cinit%3E(edu.ucsb.cs.taapply.entity.Admin,java.util.List,java.util.Optional)" class="member-name-link">AdminDTO(Admin, List, Optional)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#%3Cinit%3E(java.lang.String,boolean)" class="member-name-link">AdminDTO(String, boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#%3Cinit%3E(java.lang.String,boolean,java.lang.String,java.lang.String)" class="member-name-link">AdminDTO(String, boolean, String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>AdminDTO</code> record class.</div>
 </dd>
@@ -98,7 +98,10 @@ and the admin's own comments on it.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.html#%3Cinit%3E()" class="member-name-link">AdminsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">An admin with their name from the users table, which has a row for them only once they have
+logged in: until then both names are null.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UsersPageDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UsersPageDTO</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
@@ -503,6 +506,10 @@ consideration date has not passed.</div>
 <dd>
 <div class="block">Returns the value of the <code>email</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html#email()" class="member-name-link">email()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>email</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.html#EMAIL_HEADER" class="member-name-link">EMAIL_HEADER</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html#endQuarterFor(java.lang.String)" class="member-name-link">endQuarterFor(String)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></dt>
@@ -556,6 +563,10 @@ both Summer and Fall are reachable.</div>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/NoticesController.NoticeContent.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.NoticeContent.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController.NoticeContent</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
@@ -601,7 +612,15 @@ both Summer and Fall are reachable.</div>
 <dl class="index">
 <dt><a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html#F1_STUDENT_VISA" class="member-name-link">F1_STUDENT_VISA</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ResidencyStatus</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#familyName()" class="member-name-link">familyName()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>familyName</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html#familyName()" class="member-name-link">familyName()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>familyName</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html#familyName()" class="member-name-link">familyName()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>familyName</code> record component.</div>
 </dd>
@@ -759,7 +778,15 @@ recruitment can record instructors, meeting times and enrollment.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/models/Quarter.html#getYYYYQ()" class="member-name-link">getYYYYQ()</a> - Method in class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/Quarter.html" title="class in edu.ucsb.cs.taapply.models">Quarter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#givenName()" class="member-name-link">givenName()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>givenName</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html#givenName()" class="member-name-link">givenName()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>givenName</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html#givenName()" class="member-name-link">givenName()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>givenName</code> record component.</div>
 </dd>
@@ -839,6 +866,10 @@ applicant, and anyone in the admin or instructor tables whatever their address.<
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/NoticesController.NoticeContent.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.NoticeContent.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController.NoticeContent</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -911,6 +942,12 @@ routing works correctly in production.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/Instructor.html#%3Cinit%3E()" class="member-name-link">Instructor()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/Instructor.html" title="class in edu.ucsb.cs.taapply.entity">Instructor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html#%3Cinit%3E(edu.ucsb.cs.taapply.entity.Instructor,java.util.Optional)" class="member-name-link">InstructorDTO(Instructor, Optional)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">InstructorDTO(String, String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>InstructorDTO</code> record class.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/InstructorRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">InstructorRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html#instructors()" class="member-name-link">instructors()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html" title="class in edu.ucsb.cs.taapply.models">CourseSections.Meeting</a></dt>
@@ -921,6 +958,11 @@ routing works correctly in production.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.html#%3Cinit%3E()" class="member-name-link">InstructorsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">An instructor with their name from the users table, which has a row for them only once they
+have logged in: until then both names are null.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorsCSVController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>
 <div class="block">Bulk upload of instructor email addresses from a CSV file.</div>
@@ -995,6 +1037,22 @@ a U.S. citizen, passed as a U.S. permanent resident, passed on an F1 or J1 visa,
 <dd>
 <div class="block">Returns the value of the <code>lastName</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html#lastOnline()" class="member-name-link">lastOnline()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>lastOnline</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.interceptors">LastOnlineInterceptor</a> - Class in <a href="edu/ucsb/cs/taapply/interceptors/package-summary.html">edu.ucsb.cs.taapply.interceptors</a></dt>
+<dd>
+<div class="block">Keeps 
+<details class="invalid-tag">
+<summary>invalid reference</summary>
+<pre><code>lastOnline</code></pre>
+</details>
+ current: on each API request from a signed-in user,
+their row is stamped with the time, if the stamp it carries is more than a minute old.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html#%3Cinit%3E()" class="member-name-link">LastOnlineInterceptor()</a> - Constructor for class edu.ucsb.cs.taapply.interceptors.<a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">LastOnlineInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/JobsController.html#launchPopulateCourses(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">launchPopulateCourses(String, String, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/JobsController.html" title="class in edu.ucsb.cs.taapply.controller">JobsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/JobsController.html#launchPopulateRecruitmentCourses(java.lang.Long)" class="member-name-link">launchPopulateRecruitmentCourses(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/JobsController.html" title="class in edu.ucsb.cs.taapply.controller">JobsController</a></dt>
@@ -1242,6 +1300,8 @@ does.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#prefill()" class="member-name-link">prefill()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html#preHandle(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,java.lang.Object)" class="member-name-link">preHandle(HttpServletRequest, HttpServletResponse, Object)</a> - Method in class edu.ucsb.cs.taapply.interceptors.<a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">LastOnlineInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/interceptors/RoleUpdateInterceptor.html#preHandle(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,java.lang.Object)" class="member-name-link">preHandle(HttpServletRequest, HttpServletResponse, Object)</a> - Method in class edu.ucsb.cs.taapply.interceptors.<a href="edu/ucsb/cs/taapply/interceptors/RoleUpdateInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">RoleUpdateInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#prevExperience()" class="member-name-link">prevExperience()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
@@ -1333,6 +1393,10 @@ quarter as reported by the UCSB API.</div>
 <dt><a href="edu/ucsb/cs/taapply/enums/RecruitmentType.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a> - Enum Class in <a href="edu/ucsb/cs/taapply/enums/package-summary.html">edu.ucsb.cs.taapply.enums</a></dt>
 <dd>
 <div class="block">Whether a recruitment is for TA positions (grad students) or ULA positions (undergrads).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html#REFRESH_AFTER" class="member-name-link">REFRESH_AFTER</a> - Static variable in class edu.ucsb.cs.taapply.interceptors.<a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">LastOnlineInterceptor</a></dt>
+<dd>
+<div class="block">How stale a stamp must be before a request refreshes it.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#rename(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">rename(String, String, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
 <dd>&nbsp;</dd>
@@ -1540,6 +1604,10 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/NoticesController.NoticeContent.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.NoticeContent.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController.NoticeContent</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
@@ -1722,7 +1790,7 @@ currently is.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/User.html#%3Cinit%3E()" class="member-name-link">User()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/User.html" title="class in edu.ucsb.cs.taapply.entity">User</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html#%3Cinit%3E(long,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)" class="member-name-link">UserDTO(long, String, String, String, boolean, boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html#%3Cinit%3E(long,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,java.time.Instant)" class="member-name-link">UserDTO(long, String, String, String, boolean, boolean, Instant)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>UserDTO</code> record class.</div>
 </dd>

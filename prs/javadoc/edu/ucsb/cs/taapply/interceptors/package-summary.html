@@ -84,8 +84,18 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="RoleUpdateInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">RoleUpdateInterceptor</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="LastOnlineInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">LastOnlineInterceptor</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">Keeps 
+<details class="invalid-tag">
+<summary>invalid reference</summary>
+<pre><code>lastOnline</code></pre>
+</details>
+ current: on each API request from a signed-in user,
+their row is stamped with the time, if the stamp it carries is more than a minute old.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="RoleUpdateInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">RoleUpdateInterceptor</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Recomputes a user's roles on each request, so a role added or removed in the database takes
 effect without requiring re-login.</div>
 </div>

@@ -60,7 +60,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E(edu.ucsb.cs.taapply.entity.User,boolean,boolean)" tabindex="0">UserDTO(User, boolean, boolean)</a></li>
-<li><a href="#%3Cinit%3E(long,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)" tabindex="0">UserDTO(long, String, String, String, boolean, boolean)</a></li>
+<li><a href="#%3Cinit%3E(long,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,java.time.Instant)" tabindex="0">UserDTO(long, String, String, String, boolean, boolean, Instant)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -74,6 +74,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#email()" tabindex="0">email()</a></li>
 <li><a href="#admin()" tabindex="0">admin()</a></li>
 <li><a href="#instructor()" tabindex="0">instructor()</a></li>
+<li><a href="#lastOnline()" tabindex="0">lastOnline()</a></li>
 </ol>
 </li>
 </ol>
@@ -95,7 +96,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="horizontal-scroll">
-<div class="type-signature"><span class="modifiers">public static record </span><span class="element-name type-name-label">AdminsController.UserDTO</span>(long&nbsp;id, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;givenName, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;familyName, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email, boolean&nbsp;admin, boolean&nbsp;instructor)
+<div class="type-signature"><span class="modifiers">public static record </span><span class="element-name type-name-label">AdminsController.UserDTO</span>(long&nbsp;id, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;givenName, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;familyName, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email, boolean&nbsp;admin, boolean&nbsp;instructor, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a>&nbsp;lastOnline)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 </div>
 </section>
@@ -109,12 +110,13 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(long,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)" class="member-name-link">UserDTO</a><wbr>(long&nbsp;id,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(long,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,java.time.Instant)" class="member-name-link">UserDTO</a><wbr>(long&nbsp;id,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;givenName,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;familyName,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
  boolean&nbsp;admin,
- boolean&nbsp;instructor)</code></div>
+ boolean&nbsp;instructor,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a>&nbsp;lastOnline)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>UserDTO</code> record class.</div>
 </div>
@@ -176,9 +178,14 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>instructor</code> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#lastOnline()" class="member-name-link">lastOnline</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <code>lastOnline</code> record component.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
 </div>
@@ -209,7 +216,7 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="&lt;init&gt;(long,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)">
+<section class="detail" id="&lt;init&gt;(long,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,java.time.Instant)">
 <h3>UserDTO</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">UserDTO</span><wbr><span class="parameters">(long&nbsp;id,
@@ -217,7 +224,8 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;familyName,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
  boolean&nbsp;admin,
- boolean&nbsp;instructor)</span></div>
+ boolean&nbsp;instructor,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a>&nbsp;lastOnline)</span></div>
 <div class="block">Creates an instance of a <code>UserDTO</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -227,6 +235,7 @@ loadScripts(document, 'script');</script>
 <dd><code>email</code> - the value for the <code>email</code> record component</dd>
 <dd><code>admin</code> - the value for the <code>admin</code> record component</dd>
 <dd><code>instructor</code> - the value for the <code>instructor</code> record component</dd>
+<dd><code>lastOnline</code> - the value for the <code>lastOnline</code> record component</dd>
 </dl>
 </div>
 </section>
@@ -360,6 +369,19 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the value of the <code>instructor</code> record component</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="lastOnline()">
+<h3>lastOnline</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Instant.html" title="class or interface in java.time" class="external-link">Instant</a></span>&nbsp;<span class="element-name">lastOnline</span>()</div>
+<div class="block">Returns the value of the <code>lastOnline</code> record component.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the value of the <code>lastOnline</code> record component</dd>
 </dl>
 </div>
 </section>

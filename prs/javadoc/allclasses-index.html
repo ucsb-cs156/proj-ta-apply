@@ -67,7 +67,10 @@ and the admin's own comments on it.</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/AdminsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">&nbsp;</div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="block">An admin with their name from the users table, which has a row for them only once they have
+logged in: until then both names are null.</div>
+</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="edu/ucsb/cs/taapply/controller/AdminsController.UsersPageDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UsersPageDTO</a></div>
@@ -226,23 +229,38 @@ the stored PAT cannot reach).</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/InstructorsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsCSVController</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="block">An instructor with their name from the users table, which has a row for them only once they
+have logged in: until then both names are null.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsCSVController</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Bulk upload of instructor email addresses from a CSV file.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/JobsController.html" title="class in edu.ucsb.cs.taapply.controller">JobsController</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/JobsController.html" title="class in edu.ucsb.cs.taapply.controller">JobsController</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">App-level job endpoints.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/JobUserProviderImpl.html" title="class in edu.ucsb.cs.taapply.services">JobUserProviderImpl</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/JobUserProviderImpl.html" title="class in edu.ucsb.cs.taapply.services">JobUserProviderImpl</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Bridge between the lib-jobs library and this app's notion of "current user"; lib-jobs uses it to
 stamp createdById/createdByEmail on Job records.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="edu/ucsb/cs/taapply/enums/LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="edu/ucsb/cs/taapply/enums/LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
 <div class="block">The TA language exam question, with the answers the legacy form offered, in its order: exempt as
 a U.S. citizen, passed as a U.S. permanent resident, passed on an F1 or J1 visa, or not passed.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">LastOnlineInterceptor</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Keeps 
+<details class="invalid-tag">
+<summary>invalid reference</summary>
+<pre><code>lastOnline</code></pre>
+</details>
+ current: on each API request from a signed-in user,
+their row is stamped with the time, if the stamp it carries is more than a minute old.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/config/MongoConfig.html" title="class in edu.ucsb.cs.taapply.config">MongoConfig</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
