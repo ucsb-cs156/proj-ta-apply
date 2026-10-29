@@ -86,7 +86,8 @@ public class ApplicationsController extends ApiController {
       Map<String, CourseInterest> courseInterests,
       edu.ucsb.cs.taapply.enums.ResidencyStatus residencyStatus,
       edu.ucsb.cs.taapply.enums.LanguageExamStatus languageExam,
-      LocalDate languageExamDatePassed,
+      /** Quarter and year, free text, e.g. F25. */
+      String languageExamDatePassed,
       edu.ucsb.cs.taapply.enums.ClassLevel classLevel,
       String videoLink,
       Integer previousServiceAsUla,

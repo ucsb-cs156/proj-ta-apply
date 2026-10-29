@@ -88,13 +88,15 @@ const RESIDENCY_OPTIONS = [
   { value: "OTHER", label: "Other" },
 ];
 
-/** Only these two are asked about the language exam; everyone else is exempt by definition. */
-const VISA_STATUSES = ["F1_STUDENT_VISA", "J1_STUDENT_VISA"];
-
+/** The TA language exam answers, worded and ordered as on the legacy form. */
 const LANGUAGE_EXAM_OPTIONS = [
-  { value: "PASSED", label: "Passed" },
-  { value: "FAILED", label: "Failed" },
-  { value: "EXEMPT", label: "Exempt" },
+  { value: "EXEMPT_US_CITIZEN", label: "exempt (U.S. Citizen)" },
+  {
+    value: "PASSED_US_PERMANENT_RESIDENT",
+    label: "passed (U.S. Perm. Resident)",
+  },
+  { value: "PASSED_F1_OR_J1_VISA", label: "passed (F1 or J1 visa)" },
+  { value: "NOT_PASSED", label: "not passed" },
 ];
 
 const CLASS_LEVEL_OPTIONS = [
@@ -186,12 +188,10 @@ export default function ApplicationForm({
   // Stryker restore all
 
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() returns a new function each render; React Compiler correctly skips memoizing this component
-  const [residency, firstChoice, secondChoice] = watch([
-    "residencyStatus",
+  const [firstChoice, secondChoice] = watch([
     "firstChoiceCourse",
     "secondChoiceCourse",
   ]);
-  const asksAboutLanguageExam = isTa && VISA_STATUSES.includes(residency);
 
   // The major is stored as plain text. If it is on the list the dropdown shows it; if not (the
   // applicant chose Other, or the list changed since) the dropdown shows Other with the text
@@ -497,38 +497,34 @@ export default function ApplicationForm({
               ))}
             </Form.Select>
           </Form.Group>
-          {asksAboutLanguageExam && (
-            <>
-              <Form.Group as={Col} md={3} className="mb-3">
-                <Form.Label htmlFor={id("languageExam")}>
-                  Language Exam
-                </Form.Label>
-                <Form.Select
-                  id={id("languageExam")}
-                  data-testid={id("languageExam")}
-                  {...register("languageExam")}
-                >
-                  <option value="">Choose one</option>
-                  {LANGUAGE_EXAM_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-              <Form.Group as={Col} md={3} className="mb-3">
-                <Form.Label htmlFor={id("languageExamDatePassed")}>
-                  Date Passed
-                </Form.Label>
-                <Form.Control
-                  id={id("languageExamDatePassed")}
-                  data-testid={id("languageExamDatePassed")}
-                  type="date"
-                  {...register("languageExamDatePassed")}
-                />
-              </Form.Group>
-            </>
-          )}
+          <Form.Group as={Col} md={3} className="mb-3">
+            <Form.Label htmlFor={id("languageExam")}>
+              TA Language Exam
+            </Form.Label>
+            <Form.Select
+              id={id("languageExam")}
+              data-testid={id("languageExam")}
+              {...register("languageExam")}
+            >
+              <option value="">Choose one</option>
+              {LANGUAGE_EXAM_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+          <Form.Group as={Col} md={3} className="mb-3">
+            <Form.Label htmlFor={id("languageExamDatePassed")}>
+              Quarter and Year Language Exam Passed
+            </Form.Label>
+            <Form.Control
+              id={id("languageExamDatePassed")}
+              data-testid={id("languageExamDatePassed")}
+              placeholder="e.g. F25"
+              {...register("languageExamDatePassed")}
+            />
+          </Form.Group>
         </Row>
       )}
 

@@ -1,0 +1,56 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "018-language-exam-date-passed-as-text",
+        "author": "pc",
+        "comment": "The legacy form asks for the quarter and year the exam was passed, as free text.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "sqlCheck": {
+                "expectedResult": "1",
+                "sql": "SELECT COUNT(*) FROM information_schema.columns WHERE LOWER(table_name) = 'applications' AND LOWER(column_name) = 'language_exam_date_passed' AND LOWER(data_type) LIKE '%char%'"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "modifyDataType": {
+              "tableName": "applications",
+              "columnName": "language_exam_date_passed",
+              "newDataType": "VARCHAR(255)"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "018-language-exam-legacy-options",
+        "author": "pc",
+        "comment": "Room for the longer option names, and the old answers mapped onto the legacy ones.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "columnExists": { "tableName": "applications", "columnName": "language_exam" } }
+        ],
+        "changes": [
+          {
+            "modifyDataType": {
+              "tableName": "applications",
+              "columnName": "language_exam",
+              "newDataType": "VARCHAR(32)"
+            }
+          },
+          {
+            "sql": {
+              "sql": "UPDATE applications SET language_exam = 'PASSED_F1_OR_J1_VISA' WHERE language_exam = 'PASSED'; UPDATE applications SET language_exam = 'NOT_PASSED' WHERE language_exam = 'FAILED'; UPDATE applications SET language_exam = 'EXEMPT_US_CITIZEN' WHERE language_exam = 'EXEMPT'"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

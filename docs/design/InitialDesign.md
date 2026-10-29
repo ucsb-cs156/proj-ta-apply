@@ -354,3 +354,17 @@ Admins can edit a student's application, and every change is recorded in the aud
   the prior course rows on every save, so an edited course shows as one row removed and one added.
 * The read-only view of an application ends with an **Audit Trail** section listing that
   application's rows, oldest first, from `GET /api/admin/audittrail/application?type=&id=`.
+
+# Fifteenth Iteration
+
+The TA form's language exam questions follow the legacy form.
+
+* **TA Language Exam** is asked of every TA applicant, right after Residency Status, with the
+  legacy form's four answers in its order: *exempt (U.S. Citizen)*, *passed (U.S. Perm. Resident)*,
+  *passed (F1 or J1 visa)*, *not passed*. It was previously shown only to F1 and J1 visa holders,
+  with the answers Passed, Failed and Exempt.
+* **Quarter and Year Language Exam Passed** is free text, as on the legacy form (e.g. F25), in
+  place of the date picker. The ULA form asks neither question.
+* Changeset 018 widens `language_exam`, maps the old answers onto the new ones (PASSED to
+  *passed (F1 or J1 visa)*, FAILED to *not passed*, EXEMPT to *exempt (U.S. Citizen)*) and
+  changes `language_exam_date_passed` from a date to text.

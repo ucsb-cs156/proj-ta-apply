@@ -219,8 +219,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
               "CMPSC    16",
               CourseInterest.WOULD_CONSIDER),
           ResidencyStatus.F1_STUDENT_VISA,
-          LanguageExamStatus.PASSED,
-          LocalDate.of(2025, 9, 1),
+          LanguageExamStatus.PASSED_F1_OR_J1_VISA,
+          "F25",
           ClassLevel.PHD,
           "https://example.org/video",
           2,
@@ -371,8 +371,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
                     "CMPSC    16",
                     CourseInterest.WOULD_CONSIDER)))
         .residencyStatus(ResidencyStatus.F1_STUDENT_VISA)
-        .languageExam(LanguageExamStatus.PASSED)
-        .languageExamDatePassed(LocalDate.of(2025, 9, 1))
+        .languageExam(LanguageExamStatus.PASSED_F1_OR_J1_VISA)
+        .languageExamDatePassed("F25")
         .classLevel(ClassLevel.PHD)
         .videoLink("https://example.org/video")
         .previousServiceAsUla(2)

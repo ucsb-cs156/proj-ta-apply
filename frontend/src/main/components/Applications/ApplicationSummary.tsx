@@ -22,9 +22,10 @@ const RESIDENCY_LABELS: Record<string, string> = {
 };
 
 const LANGUAGE_EXAM_LABELS: Record<string, string> = {
-  PASSED: "Passed",
-  FAILED: "Failed",
-  EXEMPT: "Exempt",
+  EXEMPT_US_CITIZEN: "exempt (U.S. Citizen)",
+  PASSED_US_PERMANENT_RESIDENT: "passed (U.S. Perm. Resident)",
+  PASSED_F1_OR_J1_VISA: "passed (F1 or J1 visa)",
+  NOT_PASSED: "not passed",
 };
 
 const CLASS_LEVEL_LABELS: Record<string, string> = { PHD: "PhD", MS: "MS" };
@@ -98,11 +99,11 @@ export default function ApplicationSummary({
         value: RESIDENCY_LABELS[show(application.residencyStatus)] ?? "",
       },
       {
-        label: "Language Exam",
+        label: "TA Language Exam",
         value: LANGUAGE_EXAM_LABELS[show(application.languageExam)] ?? "",
       },
       {
-        label: "Language Exam Date Passed",
+        label: "Quarter and Year Language Exam Passed",
         value: show(application.languageExamDatePassed),
       },
     );

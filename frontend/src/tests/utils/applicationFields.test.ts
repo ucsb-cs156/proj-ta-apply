@@ -41,8 +41,8 @@ const fields = (
   availabilityCommentsSecondChoice: "",
   courseInterests: {},
   residencyStatus: "F1_STUDENT_VISA",
-  languageExam: "PASSED",
-  languageExamDatePassed: "2025-09-01",
+  languageExam: "PASSED_F1_OR_J1_VISA",
+  languageExamDatePassed: "F25",
   classLevel: "PHD",
   videoLink: "",
   previousServiceAsUla: "2",
@@ -57,7 +57,7 @@ describe("toPayload", () => {
     expect(payload.gpaMajor).toBe(3.9);
     expect(payload.gpaOverall).toBe(3.8);
     expect(payload.previousServiceAsUla).toBe(2);
-    expect(payload.languageExamDatePassed).toBe("2025-09-01");
+    expect(payload.languageExamDatePassed).toBe("F25");
   });
 
   /** An unanswered number is no answer at all, and must not arrive as zero. */

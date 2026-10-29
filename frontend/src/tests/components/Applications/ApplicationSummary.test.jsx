@@ -184,8 +184,13 @@ describe("ApplicationSummary tests", () => {
       screen.getByTestId("ApplicationSummary-Residency Status"),
     ).toHaveTextContent("F1 Student Visa");
     expect(
-      screen.getByTestId("ApplicationSummary-Language Exam"),
-    ).toHaveTextContent("Passed");
+      screen.getByTestId("ApplicationSummary-TA Language Exam"),
+    ).toHaveTextContent("passed (F1 or J1 visa)");
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-Quarter and Year Language Exam Passed",
+      ),
+    ).toHaveTextContent("F25");
     expect(screen.queryByTestId("ApplicationSummary-Video Link")).toBeNull();
   });
 
@@ -446,7 +451,7 @@ describe("ApplicationSummary tests", () => {
       screen.getByTestId("ApplicationSummary-Residency Status"),
     ).toHaveTextContent("");
     expect(
-      screen.getByTestId("ApplicationSummary-Language Exam"),
+      screen.getByTestId("ApplicationSummary-TA Language Exam"),
     ).toHaveTextContent("");
   });
 

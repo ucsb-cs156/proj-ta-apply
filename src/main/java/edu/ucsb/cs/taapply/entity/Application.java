@@ -6,7 +6,6 @@ import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import jakarta.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -185,11 +184,12 @@ public class Application {
   @Enumerated(EnumType.STRING)
   private ResidencyStatus residencyStatus;
 
-  /** Only F1 and J1 visa holders take the exam; everyone else is EXEMPT. */
+  /** The TA language exam, with the legacy form's four answers; asked of every TA applicant. */
   @Enumerated(EnumType.STRING)
   private LanguageExamStatus languageExam;
 
-  private LocalDate languageExamDatePassed;
+  /** "Quarter and Year Language Exam Passed", free text as on the legacy form, e.g. F25. */
+  private String languageExamDatePassed;
 
   @Enumerated(EnumType.STRING)
   private ClassLevel classLevel;
