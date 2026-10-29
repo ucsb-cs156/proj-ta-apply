@@ -26,7 +26,10 @@ export default function TaAppSettingsPage(): React.JSX.Element {
           testIdPrefix="TaAppSettingsPage-topics"
         />
         <NoticeEditorCard type="TA" testIdPrefix="TaAppSettingsPage-notices" />
-        <LegacyApplicationsUploadCard testIdPrefix="TaAppSettingsPage-legacy" />
+        <LegacyApplicationsUploadCard
+          type="TA"
+          testIdPrefix="TaAppSettingsPage-legacy"
+        />
       </div>
     </BasicLayout>
   );

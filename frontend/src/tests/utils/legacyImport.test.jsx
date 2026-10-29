@@ -1,7 +1,13 @@
 import {
   LEGACY_CSV_HELP_PATH,
   LEGACY_IMPORT_URL,
+  LEGACY_ULA_CSV_HELP_PATH,
+  LEGACY_ULA_IMPORT_URL,
+  helpPath,
   importSummary,
+  importUrl,
+  listsToRefresh,
+  quarterOptions,
   taQuarterOptions,
 } from "main/utils/legacyImport";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
@@ -68,5 +74,31 @@ describe("legacyImport utilities", () => {
     ).toBe(
       "Import complete: 0 applications added, 86 already present, 0 rows skipped",
     );
+  });
+
+  /** Issue #70: the same card serves the ULA form's responses. */
+  test("each form type has its own endpoint, help anchor and lists to refresh", () => {
+    expect(importUrl("TA")).toBe(LEGACY_IMPORT_URL);
+    expect(importUrl("ULA")).toBe(LEGACY_ULA_IMPORT_URL);
+    expect(LEGACY_ULA_IMPORT_URL).toBe(
+      "/api/admin/applications/legacy-ula/upload",
+    );
+    expect(helpPath("TA")).toBe(LEGACY_CSV_HELP_PATH);
+    expect(helpPath("ULA")).toBe(LEGACY_ULA_CSV_HELP_PATH);
+    expect(LEGACY_ULA_CSV_HELP_PATH).toBe("/help/csv#legacy-ula-applications");
+    expect(listsToRefresh("TA")).toEqual(["/api/admin/settings/ta-topics/all"]);
+    expect(listsToRefresh("ULA")).toEqual([
+      "/api/admin/settings/ula-topics/all",
+      "/api/admin/settings/ula-interests/all",
+    ]);
+  });
+
+  test("quarterOptions lists the recruitments of the asked-for type, newest first", () => {
+    expect(
+      quarterOptions(recruitmentsFixtures.threeRecruitments, "ULA"),
+    ).toEqual([{ quarter: "20261", label: "W26" }]);
+    expect(
+      quarterOptions(recruitmentsFixtures.threeRecruitments, "TA"),
+    ).toEqual(taQuarterOptions(recruitmentsFixtures.threeRecruitments));
   });
 });
