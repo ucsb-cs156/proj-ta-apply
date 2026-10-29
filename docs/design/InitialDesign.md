@@ -519,6 +519,7 @@ shown version starts ticked, and with no notice written yet the section is absen
 summary of an application shows the agreement first too. The apply, edit and admin test-application
 pages all share the form, so all three change.
 
+
 # Twenty-fifth Iteration
 
 On the ULA application form, **GPA in Major**, **Overall GPA**, **Year in Program**, **Expected
@@ -528,3 +529,13 @@ ULA application (the applicant's POST and PUT and the admin's test application).
 them optional, and an admin's edit of an existing application is not held to them, as with the
 other ULA questions. Since the count of quarters served decides whether the training commitment is
 asked, every first-time applicant now sees that question.
+
+# Twenty-sixth Iteration
+
+Small UX fixes (issue #84). `OurTable` takes a `fitContent` flag that sizes the table to its content
+(Bootstrap `w-auto`) instead of the full width of the page; the Admins and Instructors tables use
+it, so the email column has its natural width and the spare room is on the right rather than
+stretched across the columns. The explanation on **Admin > Courses** now reads "This table shows
+courses in CMPSC that have been offered in the quarters you have populated this table from" and
+"the next time the course is offered".
+

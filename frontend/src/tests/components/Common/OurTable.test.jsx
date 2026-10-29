@@ -84,6 +84,22 @@ describe("OurTable tests", () => {
       await waitFor(() => expect(clickMeCallback).toBeCalledTimes(1));
     });
 
+    /** Issue #84: fitContent sizes the table to its columns (Bootstrap w-auto). */
+    test("the table fills the width unless fitContent is set", async () => {
+      const { rerender } = render(
+        <OurTable columns={columns} data={threeRows} />,
+      );
+      const table = screen.getByTestId("testid");
+      expect(table).toHaveClass("table", "table-striped", "table-bordered");
+      expect(table).not.toHaveClass("w-auto");
+      expect(table.className).toBe("table table-striped table-bordered");
+
+      rerender(<OurTable columns={columns} data={threeRows} fitContent />);
+      expect(screen.getByTestId("testid").className).toBe(
+        "table table-striped table-bordered w-auto",
+      );
+    });
+
     test("default testid is testid", async () => {
       render(<OurTable columns={columns} data={threeRows} />);
       await screen.findByTestId("testid-header-col1");

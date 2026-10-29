@@ -65,24 +65,18 @@ export default function RoleEmailTable({
     {
       header: "Email",
       accessorKey: "email", // accessor is the "key" in the data
-      // Takes the slack from Bootstrap's full-width table, so Delete shrinks to its button
-      // instead of the two columns splitting the width evenly.
-      meta: { style: { width: "100%" } },
     },
     {
       header: "First Name",
       accessorKey: "givenName",
-      meta: { style: { width: "1%", whiteSpace: "nowrap" as const } },
     },
     {
       header: "Last Name",
       accessorKey: "familyName",
-      meta: { style: { width: "1%", whiteSpace: "nowrap" as const } },
     },
     {
       header: "Delete",
       accessorKey: "isInAdminEmails",
-      meta: { style: { width: "1%", whiteSpace: "nowrap" as const } },
       cell: ({ cell }: { cell: Cell<RoleEmail, unknown> }) => {
         if (!cell.row.original.isInAdminEmails) {
           return (
@@ -106,11 +100,14 @@ export default function RoleEmailTable({
     },
   ];
 
+  // The table takes its natural width (issue #84): on a wide screen the email column no
+  // longer stretches to fill the page, and the extra room is left on the right.
   return (
     <OurTable
       data={Array.isArray(data) ? data : []}
       columns={columns}
       testid={testIdPrefix}
+      fitContent
     />
   );
 }
