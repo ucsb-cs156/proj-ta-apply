@@ -85,14 +85,24 @@ public class LegacyImportWebIT extends WebTestCase {
             page.getByText(
                 "Import complete: 2 applications added, 0 already present, 0 rows skipped"))
         .isVisible();
+    // The TA topics list was empty, so every rated topic was added to it and is reported.
+    assertThat(page.getByTestId("TaAppSettingsPage-legacy-added-topics-modal")).isVisible();
+    assertThat(page.getByTestId("TaAppSettingsPage-legacy-added-topics")).containsText("C++");
+    assertThat(page.getByTestId("TaAppSettingsPage-legacy-added-topics")).containsText("Python");
+    assertThat(page.getByTestId("TaAppSettingsPage-legacy-added-topics")).containsText("Java");
+    page.getByTestId("TaAppSettingsPage-legacy-added-topics-dismiss").click();
+    assertThat(page.getByTestId("TaAppSettingsPage-legacy-added-topics-modal")).not().isVisible();
+    assertThat(page.getByTestId("TaAppSettingsPage-topics-table-cell-row-0-col-name"))
+        .containsText("C++");
 
-    // The same file again changes nothing.
+    // The same file again changes nothing, and adds no topics.
     page.getByTestId("TaAppSettingsPage-legacy-file").setInputFiles(csv);
     page.getByTestId("TaAppSettingsPage-legacy-button").click();
     assertThat(
             page.getByText(
                 "Import complete: 0 applications added, 2 already present, 0 rows skipped"))
         .isVisible();
+    assertThat(page.getByTestId("TaAppSettingsPage-legacy-added-topics-modal")).not().isVisible();
 
     // The imported applications are there to review, with the legacy answers matched in.
     goTo("/admin/recruitments/" + w26.getId() + "/applications");
