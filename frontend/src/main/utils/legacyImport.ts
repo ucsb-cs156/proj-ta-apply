@@ -8,6 +8,8 @@ export type LegacyImportResult = {
   skipped: number;
   /** One line per skipped row, saying which row and why. */
   problems: string[];
+  /** Knowledge topics that were not on the TA topics list and were added to it by the import. */
+  addedTopics: string[];
 };
 
 export const LEGACY_IMPORT_URL = "/api/admin/applications/legacy/upload";

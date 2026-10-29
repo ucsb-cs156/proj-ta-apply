@@ -593,7 +593,8 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
         Recruitment.builder().id(4L).quarter("20261").type(RecruitmentType.TA).build();
     when(recruitmentRepository.findByQuarterAndType("20261", RecruitmentType.TA))
         .thenReturn(Optional.of(w26));
-    ImportResult result = new ImportResult(2, 1, 1, List.of("row 4: no usable email address"));
+    ImportResult result =
+        new ImportResult(2, 1, 1, List.of("row 4: no usable email address"), List.of("Rust"));
     when(legacyApplicationCsvService.upload(any(), eq(w26))).thenReturn(result);
 
     MvcResult response =

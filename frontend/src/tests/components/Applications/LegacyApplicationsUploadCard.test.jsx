@@ -112,6 +112,7 @@ describe("LegacyApplicationsUploadCard tests", () => {
       alreadyPresent: 1,
       skipped: 1,
       problems: ["row 4: no usable email address"],
+      addedTopics: [],
     });
     const invalidateQueriesSpy = renderCard();
     const select = await screen.findByTestId("Card-quarter");
@@ -142,6 +143,64 @@ describe("LegacyApplicationsUploadCard tests", () => {
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({
       queryKey: ["/api/admin/applications/all"],
     });
+    expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+      queryKey: ["/api/admin/settings/ta-topics/all"],
+    });
+    // Nothing was added to the topics list, so no modal.
+    expect(screen.queryByTestId("Card-added-topics-modal")).toBeNull();
+  });
+
+  test("topics the import added to the TA topics list are shown in a modal until dismissed", async () => {
+    axiosMock.onPost(uploadUrl).reply(200, {
+      inserted: 3,
+      alreadyPresent: 0,
+      skipped: 0,
+      problems: [],
+      addedTopics: ["Python", "Unix/Linux"],
+    });
+    renderCard();
+    const select = await screen.findByTestId("Card-quarter");
+    await waitFor(() => expect(select.options.length).toBe(3));
+    await userEvent.selectOptions(select, "20261");
+    await userEvent.upload(screen.getByTestId("Card-file"), csv());
+    await userEvent.click(screen.getByTestId("Card-button"));
+
+    const modal = await screen.findByTestId("Card-added-topics-modal");
+    expect(modal).toHaveTextContent("Topics added to the TA topics list");
+    expect(modal).toHaveTextContent(
+      "The imported applications rated these topics, which were not on the TA topics list, so the import added them.",
+    );
+    const items = [
+      ...screen.getByTestId("Card-added-topics").querySelectorAll("li"),
+    ];
+    expect(items.map((li) => li.textContent)).toEqual(["Python", "Unix/Linux"]);
+
+    await userEvent.click(screen.getByTestId("Card-added-topics-dismiss"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("Card-added-topics-modal")).toBeNull(),
+    );
+  });
+
+  test("the added-topics modal also closes from its corner button", async () => {
+    axiosMock.onPost(uploadUrl).reply(200, {
+      inserted: 1,
+      alreadyPresent: 0,
+      skipped: 0,
+      problems: [],
+      addedTopics: ["Rust"],
+    });
+    renderCard();
+    const select = await screen.findByTestId("Card-quarter");
+    await waitFor(() => expect(select.options.length).toBe(3));
+    await userEvent.selectOptions(select, "20261");
+    await userEvent.upload(screen.getByTestId("Card-file"), csv());
+    await userEvent.click(screen.getByTestId("Card-button"));
+
+    const modal = await screen.findByTestId("Card-added-topics-modal");
+    await userEvent.click(modal.querySelector(".btn-close"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("Card-added-topics-modal")).toBeNull(),
+    );
   });
 
   test("a refused import keeps the chosen file", async () => {

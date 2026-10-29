@@ -53,6 +53,7 @@ const common = [
       alreadyPresent: 0,
       skipped: 0,
       problems: [],
+      addedTopics: ["Cryptography"],
     }),
   ),
 ];

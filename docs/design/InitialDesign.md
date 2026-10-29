@@ -429,7 +429,8 @@ form (issue #65).
   Computer Science, matched to the TA majors list; the three coursework cells as prior coursework
   rows (a UCSB course number gets its `CMPSC` prefix, a course taken elsewhere keeps its school and
   the UCSB course it was equivalent to, a 290 seminar keeps its description and instructor);
-  `knowledge` as topic proficiencies, named as the TA topics list spells them when they match;
+  `knowledge` as topic proficiencies, named as the TA topics list spells them when they match (a
+  topic the list lacks is added to it, and the card lists what was added in a modal);
   `prev_experience` as one line per course; desired courses as ENTHUSIASTIC interest in each course
   the recruitment lists. Preferred job and hours, and desired courses the recruitment does not
   list, go into the applicant's comments so nothing is lost and they can edit it; the export's

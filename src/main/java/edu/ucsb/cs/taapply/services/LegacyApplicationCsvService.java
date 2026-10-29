@@ -5,6 +5,7 @@ import com.opencsv.exceptions.CsvException;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.TaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -64,9 +65,16 @@ public class LegacyApplicationCsvService {
   @Autowired private TaTopicRepository taTopicRepository;
   @Autowired private TaMajorRepository taMajorRepository;
 
-  /** What an upload did; {@code problems} names each skipped row and why. */
+  /**
+   * What an upload did; {@code problems} names each skipped row and why, and {@code addedTopics}
+   * the knowledge topics that were not on the TA topics list and were added to it.
+   */
   public static record ImportResult(
-      int inserted, int alreadyPresent, int skipped, List<String> problems) {}
+      int inserted,
+      int alreadyPresent,
+      int skipped,
+      List<String> problems,
+      List<String> addedTopics) {}
 
   /** The columns a legacy export must have for a row to be imported at all. */
   public static final List<String> REQUIRED_COLUMNS = List.of("email", "first_name", "last_name");
@@ -126,6 +134,10 @@ public class LegacyApplicationCsvService {
     int inserted = 0;
     int alreadyPresent = 0;
     List<String> problems = new ArrayList<>();
+    // A knowledge topic the TA topics list does not have is added to it, so the form shows the
+    // imported rating rather than keeping it under a name no one can see.
+    Set<String> knownTopics = new TreeSet<>(topics);
+    List<String> addedTopics = new ArrayList<>();
 
     try (InputStream inputStream = new BufferedInputStream(file.getInputStream());
         InputStreamReader reader = new InputStreamReader(inputStream);
@@ -154,18 +166,27 @@ public class LegacyApplicationCsvService {
           alreadyPresent++;
           continue;
         }
-        applicationRepository.save(map(row, email, recruitment, courseIds, topics, majors));
+        Application application = map(row, email, recruitment, courseIds, topics, majors);
+        for (String topic : application.getTopicProficiencies().keySet()) {
+          if (knownTopics.add(topic)) {
+            taTopicRepository.save(TaTopic.builder().name(topic).build());
+            addedTopics.add(topic);
+          }
+        }
+        applicationRepository.save(application);
         inserted++;
       }
     }
 
     log.info(
-        "Legacy application CSV upload into recruitment {}: inserted={} alreadyPresent={} skipped={}",
+        "Legacy application CSV upload into recruitment {}: inserted={} alreadyPresent={} skipped={}"
+            + " addedTopics={}",
         recruitment.getId(),
         inserted,
         alreadyPresent,
-        problems.size());
-    return new ImportResult(inserted, alreadyPresent, problems.size(), problems);
+        problems.size(),
+        addedTopics);
+    return new ImportResult(inserted, alreadyPresent, problems.size(), problems, addedTopics);
   }
 
   /** Column name (lower case, trimmed) to position; 400 if a required column is missing. */
@@ -466,9 +487,13 @@ public class LegacyApplicationCsvService {
     return lines.isEmpty() ? null : String.join("\n", lines);
   }
 
-  /** Letters and digits only, lower case, for matching names spelled differently. */
+  /**
+   * Lower case with spaces and ordinary punctuation dropped, for matching names spelled differently
+   * ("Unix/Linux" and "Unix / Linux"). The characters that tell languages apart are kept, so "C"
+   * and "C++" and "C#" stay three topics.
+   */
   static String key(String name) {
-    return name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+    return name.toLowerCase(Locale.ROOT).replaceAll("[\\s/\\-_.,()&:;']", "");
   }
 
   /** "TeachingBasicsToBeginners" to "Teaching Basics To Beginners"; "C++" stays "C++". */

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Button, Card, Form } from "react-bootstrap";
+import { Button, Card, Form, Modal } from "react-bootstrap";
 import { Link } from "react-router";
 import { toast } from "react-toastify";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
@@ -38,6 +38,8 @@ export default function LegacyApplicationsUploadCard({
 
   const [quarter, setQuarter] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  // The topics the last import added to the TA topics list, shown in a modal until dismissed.
+  const [addedTopics, setAddedTopics] = useState<string[]>([]);
   // So the file box can be emptied after an import; a file input cannot be controlled.
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -49,12 +51,13 @@ export default function LegacyApplicationsUploadCard({
     {
       onSuccess: (result) => {
         toast(importSummary(result));
+        setAddedTopics(result.addedTopics);
         setFile(null);
         // Stryker disable next-line all : the input is always mounted when an upload succeeds
         if (fileInput.current) fileInput.current.value = "";
       },
     },
-    ["/api/admin/applications/all"],
+    ["/api/admin/applications/all", "/api/admin/settings/ta-topics/all"],
   );
 
   const id = (suffix: string) => `${testIdPrefix}-${suffix}`;
@@ -70,7 +73,8 @@ export default function LegacyApplicationsUploadCard({
           quarter&apos;s TA recruitment. Each row becomes an application as if
           the student had entered it, so their next application starts filled in
           with those answers. Rows for students who already have an application
-          in that recruitment are skipped, so re-uploading is safe.{" "}
+          in that recruitment are skipped, so re-uploading is safe. Knowledge
+          topics not yet on the TA topics list are added to it.{" "}
           <Link to={LEGACY_CSV_HELP_PATH} data-testid={id("help-link")}>
             CSV format details
           </Link>
@@ -136,6 +140,39 @@ export default function LegacyApplicationsUploadCard({
           </Form>
         )}
       </Card.Body>
+      <Modal
+        show={addedTopics.length > 0}
+        onHide={() => setAddedTopics([])}
+        centered={true}
+        data-testid={id("added-topics-modal")}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title as="h2" className="h5">
+            Topics added to the TA topics list
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            The imported applications rated these topics, which were not on the
+            TA topics list, so the import added them. The Topics List for TAs
+            card above shows them now; rename or remove any you do not want.
+          </p>
+          <ul data-testid={id("added-topics")}>
+            {addedTopics.map((topic) => (
+              <li key={topic}>{topic}</li>
+            ))}
+          </ul>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="primary"
+            onClick={() => setAddedTopics([])}
+            data-testid={id("added-topics-dismiss")}
+          >
+            Dismiss
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Card>
   );
 }

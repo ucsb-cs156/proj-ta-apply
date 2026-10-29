@@ -142,7 +142,8 @@ export default function HelpCsvPage() {
                 <code>description:instructor:grade</code>) become rows of the
                 prior coursework table; <code>knowledge</code> (
                 <code>topic:rating</code>) becomes topic proficiencies, named as
-                the TA topics list spells them when they match;{" "}
+                the TA topics list spells them when they match, and a topic the
+                list does not have is added to it (the import reports which);{" "}
                 <code>prev_experience</code> becomes one line per course; the
                 desired courses become enthusiastic interest in each course the
                 recruitment lists. Preferred job and hours, and desired courses
