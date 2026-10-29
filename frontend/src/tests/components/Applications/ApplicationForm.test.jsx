@@ -188,18 +188,6 @@ describe("ApplicationForm tests", () => {
         `ApplicationForm-${name}`,
       );
     });
-    // Checkboxes: Form.Check renders its label from the id.
-    [
-      "availableForLecturesFirstChoice",
-      "availableForDiscussionFirstChoice",
-      "availableForLecturesSecondChoice",
-      "availableForDiscussionSecondChoice",
-    ].forEach((name) =>
-      expect(screen.getByTestId(`ApplicationForm-${name}`)).toHaveAttribute(
-        "id",
-        `ApplicationForm-${name}`,
-      ),
-    );
   });
 
   test("a ULA application wires its own labels too", () => {
@@ -225,6 +213,18 @@ describe("ApplicationForm tests", () => {
       );
     });
     expect(screen.getByTestId("ApplicationForm-ula-only")).toBeInTheDocument();
+    // Checkboxes: Form.Check renders its label from the id. Availability is a ULA question (#76).
+    [
+      "availableForLecturesFirstChoice",
+      "availableForDiscussionFirstChoice",
+      "availableForLecturesSecondChoice",
+      "availableForDiscussionSecondChoice",
+    ].forEach((name) =>
+      expect(screen.getByTestId(`ApplicationForm-${name}`)).toHaveAttribute(
+        "id",
+        `ApplicationForm-${name}`,
+      ),
+    );
   });
 
   test("the submit button can be relabelled", () => {
@@ -426,7 +426,7 @@ describe("ApplicationForm tests", () => {
 
   /** The card sits between the dropdown and the availability checkboxes it informs. */
   test("choosing a course shows its lecture and section times above the availability questions", async () => {
-    renderForm({ recruitmentId: 7 });
+    renderForm({ type: "ULA", recruitmentId: 7 });
 
     expect(
       screen.queryByTestId("ApplicationForm-firstChoiceSections"),
@@ -476,7 +476,7 @@ describe("ApplicationForm tests", () => {
   });
 
   test("the second choice gets its own card, and clearing the choice removes it", async () => {
-    renderForm({ recruitmentId: 7 });
+    renderForm({ type: "ULA", recruitmentId: 7 });
 
     await userEvent.selectOptions(
       screen.getByTestId("ApplicationForm-secondChoiceCourse"),
@@ -502,6 +502,7 @@ describe("ApplicationForm tests", () => {
 
   test("a previously chosen course shows its times straight away", async () => {
     renderForm({
+      type: "ULA",
       recruitmentId: 7,
       initialContents: applicationsFixtures.oneTaApplication,
     });
@@ -516,7 +517,10 @@ describe("ApplicationForm tests", () => {
 
   /** A story or a test with no backend passes no recruitment, and gets no lookups. */
   test("without a recruitment no times are looked up", async () => {
-    renderForm({ initialContents: applicationsFixtures.oneTaApplication });
+    renderForm({
+      type: "ULA",
+      initialContents: applicationsFixtures.oneUlaApplication,
+    });
 
     expect(
       screen.queryByTestId("ApplicationForm-firstChoiceSections"),
@@ -579,7 +583,17 @@ describe("ApplicationForm tests", () => {
   });
 
   test("pre-fills the availability comments, with null as blank", () => {
-    renderForm({ initialContents: applicationsFixtures.oneTaApplication });
+    renderForm({
+      type: "ULA",
+      initialContents: {
+        ...applicationsFixtures.oneUlaApplication,
+        availabilityCommentsFirstChoice:
+          applicationsFixtures.oneTaApplication.availabilityCommentsFirstChoice,
+        availabilityCommentsSecondChoice:
+          applicationsFixtures.oneTaApplication
+            .availabilityCommentsSecondChoice,
+      },
+    });
 
     expect(
       screen.getByTestId("ApplicationForm-availabilityCommentsFirstChoice"),
@@ -587,6 +601,13 @@ describe("ApplicationForm tests", () => {
     expect(
       screen.getByTestId("ApplicationForm-availabilityCommentsSecondChoice"),
     ).toHaveValue("");
+    // The checkboxes come from the ULA application too.
+    expect(
+      screen.getByTestId("ApplicationForm-availableForLecturesFirstChoice"),
+    ).toBeChecked();
+    expect(
+      screen.getByTestId("ApplicationForm-availableForLecturesSecondChoice"),
+    ).not.toBeChecked();
   });
 
   // ---- interest in the other courses ----
@@ -1763,12 +1784,6 @@ describe("ApplicationForm tests", () => {
     expect(
       screen.getByTestId("ApplicationForm-languageExamDatePassed"),
     ).toHaveValue("F25");
-    expect(
-      screen.getByTestId("ApplicationForm-availableForLecturesFirstChoice"),
-    ).toBeChecked();
-    expect(
-      screen.getByTestId("ApplicationForm-availableForLecturesSecondChoice"),
-    ).not.toBeChecked();
   });
 
   /** Nulls in a stored application must not surface as the string "null". */
@@ -1843,6 +1858,57 @@ describe("ApplicationForm tests", () => {
 
     expect(screen.getByTestId("ApplicationForm-firstName")).toHaveValue("");
     expect(screen.getByTestId("ApplicationForm-gpaMajor")).toHaveValue(null);
+  });
+
+  // ---- availability is a ULA question (issue #76) ----
+
+  test("a TA form asks about courses but not availability, and looks up no times", async () => {
+    renderForm({ type: "TA", recruitmentId: 7 });
+
+    expect(screen.getByText("Courses")).toBeInTheDocument();
+    expect(screen.queryByText("Courses and availability")).toBeNull();
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-secondChoiceCourse"),
+      "CMPSC   130A",
+    );
+    for (const name of [
+      "firstChoiceSections",
+      "secondChoiceSections",
+      "availableForLecturesFirstChoice",
+      "availableForDiscussionFirstChoice",
+      "availabilityCommentsFirstChoice",
+      "availableForLecturesSecondChoice",
+      "availableForDiscussionSecondChoice",
+      "availabilityCommentsSecondChoice",
+    ]) {
+      expect(screen.queryByTestId(`ApplicationForm-${name}`)).toBeNull();
+    }
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/recruitments/sections",
+      ),
+    ).toHaveLength(0);
+  });
+
+  test("a ULA form is headed Courses and availability and asks all of it", () => {
+    renderForm({ type: "ULA" });
+
+    expect(screen.getByText("Courses and availability")).toBeInTheDocument();
+    for (const name of [
+      "availableForLecturesFirstChoice",
+      "availableForDiscussionFirstChoice",
+      "availabilityCommentsFirstChoice",
+      "availableForLecturesSecondChoice",
+      "availableForDiscussionSecondChoice",
+      "availabilityCommentsSecondChoice",
+    ]) {
+      expect(screen.getByTestId(`ApplicationForm-${name}`)).toBeInTheDocument();
+    }
+    // Unanswered to start.
     expect(
       screen.getByTestId("ApplicationForm-availableForLecturesFirstChoice"),
     ).not.toBeChecked();

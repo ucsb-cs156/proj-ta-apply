@@ -21,8 +21,8 @@ import org.springframework.stereotype.Service;
  * prior courses as the course fields separated by commas and the courses by semicolons; the topic
  * ratings, interests and course interests as {@code name:value} pairs separated by commas (e.g.
  * {@code C++:5,Java:4}), in name order. The columns differ by form type: a TA file has the
- * residency, language exam and class level columns, a ULA file the video link, previous service and
- * interests columns.
+ * residency, language exam and class level columns, a ULA file the video link, previous service,
+ * availability and interests columns.
  */
 @Service
 public class ApplicationCsvService {
@@ -70,13 +70,17 @@ public class ApplicationCsvService {
               "trainingCommitmentExplanation", Application::getTrainingCommitmentExplanation),
           new Column("changingMajor", Application::getChangingMajor));
 
-  private static final List<Column> AFTER_TYPE =
+  private static final List<Column> CHOICES =
       List.of(
           new Column("priorCoursework", a -> courses(a.getPriorCoursework())),
           new Column("topicProficiencies", a -> pairs(a.getTopicProficiencies())),
           new Column("prevExperience", Application::getPrevExperience),
           new Column("firstChoiceCourse", Application::getFirstChoiceCourse),
-          new Column("secondChoiceCourse", Application::getSecondChoiceCourse),
+          new Column("secondChoiceCourse", Application::getSecondChoiceCourse));
+
+  /** Only the ULA form asks about availability (issue #76), so only a ULA file has the columns. */
+  private static final List<Column> AVAILABILITY =
+      List.of(
           new Column(
               "availableForLecturesFirstChoice", Application::isAvailableForLecturesFirstChoice),
           new Column(
@@ -90,7 +94,11 @@ public class ApplicationCsvService {
               "availableForDiscussionSecondChoice",
               Application::isAvailableForDiscussionSecondChoice),
           new Column(
-              "availabilityCommentsSecondChoice", Application::getAvailabilityCommentsSecondChoice),
+              "availabilityCommentsSecondChoice",
+              Application::getAvailabilityCommentsSecondChoice));
+
+  private static final List<Column> AFTER_TYPE =
+      List.of(
           new Column("courseInterests", a -> pairs(a.getCourseInterests())),
           new Column("comments", Application::getComments),
           new Column("postApplicationComments", Application::getPostApplicationComments),
@@ -104,6 +112,10 @@ public class ApplicationCsvService {
   static List<Column> columns(RecruitmentType type) {
     List<Column> columns = new ArrayList<>(BEFORE_TYPE);
     columns.addAll(type == RecruitmentType.TA ? TA_ONLY : ULA_ONLY);
+    columns.addAll(CHOICES);
+    if (type == RecruitmentType.ULA) {
+      columns.addAll(AVAILABILITY);
+    }
     columns.addAll(AFTER_TYPE);
     if (type == RecruitmentType.ULA) {
       columns.add(INTERESTS);
