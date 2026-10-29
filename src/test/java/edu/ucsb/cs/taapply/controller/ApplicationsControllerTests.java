@@ -2183,9 +2183,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     postUla(withUla("1234567", true, OtherCampusJob.NO, true, 0, TrainingCommitment.UNSURE), 200);
     assertEquals(TrainingCommitment.UNSURE, saved().getTrainingCommitment());
-    // Returning applicants, and one who left the count blank, are not asked.
+    // Returning applicants are not asked.
     postUla(withUla("1234567", true, OtherCampusJob.NO, true, 1, null), 200);
-    postUla(withUla("1234567", true, OtherCampusJob.NO, true, null, null), 200);
   }
 
   /** A TA form asks none of this, so a TA application is saved without any of it. */
@@ -2374,6 +2373,113 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertEquals(
         "A ULA application needs your perm number", responseToJson(response).get("message"));
     verify(applicationRepository, never()).save(any());
+  }
+
+  // ---- the academic answers a ULA applicant must give (issue #78) ----
+
+  /** The ULA fields with the academic answers replaced. */
+  private static ApplicationFields withAcademics(
+      ApplicationFields f,
+      Double gpaMajor,
+      Double gpaOverall,
+      String yearInProgram,
+      String graduationDate) {
+    return new ApplicationFields(
+        f.firstName(),
+        f.middleName(),
+        f.lastName(),
+        f.major(),
+        gpaMajor,
+        gpaOverall,
+        yearInProgram,
+        graduationDate,
+        f.priorCoursework(),
+        f.topicProficiencies(),
+        f.interests(),
+        f.prevExperience(),
+        f.comments(),
+        f.firstChoiceCourse(),
+        f.secondChoiceCourse(),
+        f.availableForLecturesFirstChoice(),
+        f.availableForLecturesSecondChoice(),
+        f.availableForDiscussionFirstChoice(),
+        f.availableForDiscussionSecondChoice(),
+        f.availabilityCommentsFirstChoice(),
+        f.availabilityCommentsSecondChoice(),
+        f.courseInterests(),
+        f.residencyStatus(),
+        f.languageExam(),
+        f.languageExamDatePassed(),
+        f.classLevel(),
+        f.videoLink(),
+        f.previousServiceAsUla(),
+        f.permNumber(),
+        f.bsMsStudent(),
+        f.studentStatusNextQuarter(),
+        f.wantsTaEligibility(),
+        f.otherCampusJob(),
+        f.priorUcsbEmployment(),
+        f.employeeId(),
+        f.i9Appointment(),
+        f.trainingCommitment(),
+        f.trainingCommitmentExplanation(),
+        f.changingMajor(),
+        f.noticeVersionId());
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_application_needs_both_gpas_the_year_the_graduation_and_the_service_count()
+      throws Exception {
+    ApplicationFields ok = withUla("1234567", true, OtherCampusJob.NO, true, 2, null);
+
+    MvcResult response = postUla(withAcademics(ok, null, 3.8, "2nd", "S27"), 400);
+    assertEquals(
+        "A ULA application needs your GPA in major", responseToJson(response).get("message"));
+    response = postUla(withAcademics(ok, 3.9, null, "2nd", "S27"), 400);
+    assertEquals(
+        "A ULA application needs your overall GPA", responseToJson(response).get("message"));
+    for (String blank : java.util.Arrays.asList(null, "  ")) {
+      response = postUla(withAcademics(ok, 3.9, 3.8, blank, "S27"), 400);
+      assertEquals(
+          "A ULA application needs your year in program", responseToJson(response).get("message"));
+      response = postUla(withAcademics(ok, 3.9, 3.8, "2nd", blank), 400);
+      assertEquals(
+          "A ULA application needs your expected graduation",
+          responseToJson(response).get("message"));
+    }
+    response = postUla(withUla("1234567", true, OtherCampusJob.NO, true, null, null), 400);
+    assertEquals(
+        "A ULA application needs the number of quarters you have served as a ULA (0 if none)",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+
+    postUla(withAcademics(ok, 3.9, 3.8, "2nd", "S27"), 200);
+    verify(applicationRepository, times(1)).save(any());
+  }
+
+  /** A TA applicant may leave all of these blank, as before. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_application_may_leave_the_academic_answers_blank() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    ApplicationFields bare = withAcademics(FULL_FIELDS, null, null, null, null);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(bare))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertNull(saved().getGpaMajor());
+    assertNull(saved().getGraduationDate());
   }
 
   // ---- applicants never see the admin comments (issue #75) ----
