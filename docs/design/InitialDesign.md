@@ -508,3 +508,15 @@ least one discussion section** or the availability comments for either choice; t
 all of them. A TA application stores none of those answers, whatever the client sends (so a
 pre-filled earlier answer cannot linger), the admin's view and the TA CSV leave the rows and columns
 out, and a TA application's audit trail never records them. Existing stored values are not deleted.
+
+# Twenty-eighth Iteration
+
+**Admin > Recruitments** shows cards instead of its thirteen-column table (issue #86), which
+overflowed a laptop screen. `RecruitmentCards` has a **Sort by** bar (Quarter, Type, Status and
+the four dates; a click sorts ascending by that key, a second click reverses, and the list starts
+newest quarter first as the backend lists them) above one card per recruitment: quarter, type and a
+status badge in the header, the four dates in the body, and the six actions (open/close
+applications, Courses, Test Application, Download CSV, Review Applications, Delete) in the footer,
+wrapping on a narrow screen. The sorting is done in the component. `RecruitmentTable` keeps only
+its seven field columns, for the read-only repeat of a recruitment at the top of its applications
+page; the Playwright flows address the cards by position (`RecruitmentsIndexPage-card-0-...`).
