@@ -39,7 +39,7 @@ public class NoticesController extends ApiController {
       description =
           "The most recently saved version for TA or ULA. An empty list means no notice has been"
               + " written yet, in which case the form shows none and asks for no agreement.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/notices/current")
   public List<NoticeVersion> current(@Parameter(name = "type") @RequestParam RecruitmentType type) {
     return noticeVersionRepository.findFirstByTypeOrderByIdDesc(type).stream().toList();
@@ -48,7 +48,7 @@ public class NoticesController extends ApiController {
   @Operation(
       summary = "One saved version by id",
       description = "So an application can show exactly the text its applicant agreed to.")
-  @PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+  @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/notices")
   public NoticeVersion byId(@Parameter(name = "id") @RequestParam Long id) {
     return noticeVersionRepository

@@ -4,7 +4,6 @@ import edu.ucsb.cs.taapply.entity.Admin;
 import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
-import edu.ucsb.cs.taapply.repository.GradStudentRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.utilities.CanonicalFormConverter;
@@ -35,7 +34,6 @@ public class AdminsController extends ApiController {
 
   @Autowired AdminRepository adminRepository;
   @Autowired InstructorRepository instructorRepository;
-  @Autowired GradStudentRepository gradStudentRepository;
   @Autowired UserRepository userRepository;
 
   @Value("#{'${app.admin.emails}'.split(',')}")
@@ -53,17 +51,15 @@ public class AdminsController extends ApiController {
       String familyName,
       String email,
       boolean admin,
-      boolean instructor,
-      boolean gradStudent) {
-    public UserDTO(User user, boolean admin, boolean instructor, boolean gradStudent) {
+      boolean instructor) {
+    public UserDTO(User user, boolean admin, boolean instructor) {
       this(
           user.getId(),
           user.getGivenName(),
           user.getFamilyName(),
           user.getEmail(),
           admin,
-          instructor,
-          gradStudent);
+          instructor);
     }
   }
 
@@ -111,8 +107,7 @@ public class AdminsController extends ApiController {
                     new UserDTO(
                         user,
                         adminRepository.existsByEmail(user.getEmail()),
-                        instructorRepository.existsByEmail(user.getEmail()),
-                        gradStudentRepository.existsByEmail(user.getEmail())));
+                        instructorRepository.existsByEmail(user.getEmail())));
 
     return new UsersPageDTO(userPage);
   }

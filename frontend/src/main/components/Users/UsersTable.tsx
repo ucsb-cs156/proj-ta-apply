@@ -9,7 +9,6 @@ export type User = {
   email: string;
   admin: boolean;
   instructor: boolean;
-  gradStudent: boolean;
 };
 
 const columns: LegacyColumn[] = [
@@ -41,14 +40,6 @@ const columns: LegacyColumn[] = [
     header: "Instructor",
     id: "instructor",
     accessorKey: "instructor",
-    cell: ({ cell }: { cell: Cell<User, unknown> }) => {
-      return String(cell.getValue());
-    }, // convert boolean to string for display
-  },
-  {
-    header: "Grad Student",
-    id: "gradStudent",
-    accessorKey: "gradStudent",
     cell: ({ cell }: { cell: Cell<User, unknown> }) => {
       return String(cell.getValue());
     }, // convert boolean to string for display

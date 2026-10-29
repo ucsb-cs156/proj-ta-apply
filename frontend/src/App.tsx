@@ -5,8 +5,6 @@ import AdminsIndexPage from "main/pages/Admin/AdminsIndexPage";
 import AdminsCreatePage from "main/pages/Admin/AdminsCreatePage";
 import InstructorsIndexPage from "main/pages/Admin/InstructorsIndexPage";
 import InstructorsCreatePage from "main/pages/Admin/InstructorsCreatePage";
-import GradStudentsIndexPage from "main/pages/Admin/GradStudentsIndexPage";
-import GradStudentsCreatePage from "main/pages/Admin/GradStudentsCreatePage";
 import CoursesIndexPage from "main/pages/Admin/CoursesIndexPage";
 import RecruitmentsIndexPage from "main/pages/Admin/RecruitmentsIndexPage";
 import RecruitmentCoursesPage from "main/pages/Admin/RecruitmentCoursesPage";
@@ -32,8 +30,8 @@ import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
 import LegacyTaApplicationPage from "main/pages/Admin/LegacyTaApplicationPage";
 
-/** Grad students apply for TA positions, undergrads for ULA ones. */
-const APPLICANT_ROLES = ["ROLE_GRAD_STUDENT", "ROLE_UNDERGRAD"];
+/** Any signed-in user may apply; there is no separate applicant role. */
+const APPLICANT_ROLES = ["ROLE_USER"];
 
 export default function App() {
   const currentUser = useCurrentUser();
@@ -110,26 +108,6 @@ export default function App() {
           element={
             <ProtectedPage
               component={<InstructorsCreatePage />}
-              enforceRole={"ROLE_ADMIN"}
-              currentUser={currentUser}
-            />
-          }
-        />
-        <Route
-          path="/admin/gradstudents"
-          element={
-            <ProtectedPage
-              component={<GradStudentsIndexPage />}
-              enforceRole={"ROLE_ADMIN"}
-              currentUser={currentUser}
-            />
-          }
-        />
-        <Route
-          path="/admin/gradstudents/create"
-          element={
-            <ProtectedPage
-              component={<GradStudentsCreatePage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

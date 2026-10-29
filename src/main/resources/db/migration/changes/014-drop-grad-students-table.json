@@ -1,0 +1,16 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "014-drop-grad-students-table",
+        "author": "pc",
+        "comment": "The grad student role is gone (issue #45): any signed-in UCSB user is an applicant.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "tableExists": { "tableName": "grad_students" } }
+        ],
+        "changes": [{ "dropTable": { "tableName": "grad_students" } }]
+      }
+    }
+  ]
+}

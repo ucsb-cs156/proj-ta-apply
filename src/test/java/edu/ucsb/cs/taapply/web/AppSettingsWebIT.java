@@ -145,7 +145,7 @@ public class AppSettingsWebIT extends WebTestCase {
 
   @Test
   public void non_admins_are_denied_the_settings_pages() throws Exception {
-    setupGradStudentUser();
+    setupInstructorUser();
     goTo("/admin/settings/ta");
     assertThat(page.getByText("TA App Settings")).not().isVisible();
     assertThat(page.getByTestId("TaAppSettingsPage-majors")).not().isVisible();

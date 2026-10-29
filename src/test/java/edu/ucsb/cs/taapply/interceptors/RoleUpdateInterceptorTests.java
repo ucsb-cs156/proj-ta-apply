@@ -11,7 +11,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import edu.ucsb.cs.taapply.config.SecurityConfig;
 import edu.ucsb.cs.taapply.controller.DummyController;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
-import edu.ucsb.cs.taapply.repository.GradStudentRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.services.RoleAssignmentService;
 import edu.ucsb.cs.taapply.testconfig.TestConfig;
@@ -30,12 +29,11 @@ public class RoleUpdateInterceptorTests {
 
   @MockitoBean AdminRepository adminRepository;
   @MockitoBean InstructorRepository instructorRepository;
-  @MockitoBean GradStudentRepository gradStudentRepository;
 
   @Autowired MockMvc mockMvc;
 
   @Test
-  public void a_regular_ucsb_user_is_a_user_and_an_undergrad() throws Exception {
+  public void a_regular_ucsb_user_is_just_a_user() throws Exception {
     when(adminRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
     when(instructorRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
 
@@ -46,7 +44,7 @@ public class RoleUpdateInterceptorTests {
                     oidcLogin()
                         .userInfoToken(t -> t.email("user@ucsb.edu"))
                         .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
-        .andExpect(authenticated().withRoles("USER", "UNDERGRAD"));
+        .andExpect(authenticated().withRoles("USER"));
   }
 
   @Test
@@ -93,7 +91,7 @@ public class RoleUpdateInterceptorTests {
                         .authorities(
                             new SimpleGrantedAuthority("ROLE_USER"),
                             new SimpleGrantedAuthority("ROLE_ADMIN"))))
-        .andExpect(authenticated().withRoles("USER", "UNDERGRAD"));
+        .andExpect(authenticated().withRoles("USER"));
   }
 
   @Test
@@ -110,7 +108,7 @@ public class RoleUpdateInterceptorTests {
                         .authorities(
                             new SimpleGrantedAuthority("ROLE_USER"),
                             new SimpleGrantedAuthority("ROLE_INSTRUCTOR"))))
-        .andExpect(authenticated().withRoles("USER", "UNDERGRAD"));
+        .andExpect(authenticated().withRoles("USER"));
   }
 
   @Test
@@ -149,46 +147,11 @@ public class RoleUpdateInterceptorTests {
         .andExpect(authenticated().withRoles("USER"));
   }
 
+  /** The two roles are independent, so a user may hold both at once. */
   @Test
-  public void grad_student_in_db_gets_grad_student_role() throws Exception {
-    when(adminRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
-    when(instructorRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
-    when(gradStudentRepository.existsByEmail("user@ucsb.edu")).thenReturn(true);
-
-    mockMvc
-        .perform(
-            get("/dummycontroller/interceptorTest")
-                .with(
-                    oidcLogin()
-                        .userInfoToken(t -> t.email("user@ucsb.edu"))
-                        .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
-        .andExpect(authenticated().withRoles("USER", "GRAD_STUDENT"));
-  }
-
-  @Test
-  public void grad_student_role_removed_when_user_loses_grad_student_status() throws Exception {
-    when(adminRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
-    when(instructorRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
-    when(gradStudentRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
-
-    mockMvc
-        .perform(
-            get("/dummycontroller/interceptorTest")
-                .with(
-                    oidcLogin()
-                        .userInfoToken(t -> t.email("user@ucsb.edu"))
-                        .authorities(
-                            new SimpleGrantedAuthority("ROLE_USER"),
-                            new SimpleGrantedAuthority("ROLE_GRAD_STUDENT"))))
-        .andExpect(authenticated().withRoles("USER", "UNDERGRAD"));
-  }
-
-  /** The roles are independent, so a user may hold all three at once. */
-  @Test
-  public void user_can_hold_admin_instructor_and_grad_student_simultaneously() throws Exception {
+  public void user_can_hold_admin_and_instructor_simultaneously() throws Exception {
     when(adminRepository.existsByEmail("user@ucsb.edu")).thenReturn(true);
     when(instructorRepository.existsByEmail("user@ucsb.edu")).thenReturn(true);
-    when(gradStudentRepository.existsByEmail("user@ucsb.edu")).thenReturn(true);
 
     mockMvc
         .perform(
@@ -197,7 +160,7 @@ public class RoleUpdateInterceptorTests {
                     oidcLogin()
                         .userInfoToken(t -> t.email("user@ucsb.edu"))
                         .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
-        .andExpect(authenticated().withRoles("USER", "ADMIN", "INSTRUCTOR", "GRAD_STUDENT"));
+        .andExpect(authenticated().withRoles("USER", "ADMIN", "INSTRUCTOR"));
   }
 
   /**
@@ -208,7 +171,6 @@ public class RoleUpdateInterceptorTests {
   public void email_in_admin_emails_property_gets_admin_role() throws Exception {
     when(adminRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(false);
     when(instructorRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(false);
-    when(gradStudentRepository.existsByEmail("phtcon@ucsb.edu")).thenReturn(false);
 
     mockMvc
         .perform(
@@ -218,41 +180,5 @@ public class RoleUpdateInterceptorTests {
                         .userInfoToken(t -> t.email("phtcon@ucsb.edu"))
                         .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
         .andExpect(authenticated().withRoles("USER", "ADMIN"));
-  }
-
-  /** UNDERGRAD is for UCSB addresses only, so an outside address gets just ROLE_USER. */
-  @Test
-  public void a_non_ucsb_user_does_not_get_the_undergrad_role() throws Exception {
-    when(adminRepository.existsByEmail("someone@gmail.com")).thenReturn(false);
-    when(instructorRepository.existsByEmail("someone@gmail.com")).thenReturn(false);
-    when(gradStudentRepository.existsByEmail("someone@gmail.com")).thenReturn(false);
-
-    mockMvc
-        .perform(
-            get("/dummycontroller/interceptorTest")
-                .with(
-                    oidcLogin()
-                        .userInfoToken(t -> t.email("someone@gmail.com"))
-                        .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
-        .andExpect(authenticated().withRoles("USER"));
-  }
-
-  /** Being made a grad student takes the undergrad role away on the very next request. */
-  @Test
-  public void undergrad_role_is_dropped_when_the_user_becomes_a_grad_student() throws Exception {
-    when(adminRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
-    when(instructorRepository.existsByEmail("user@ucsb.edu")).thenReturn(false);
-    when(gradStudentRepository.existsByEmail("user@ucsb.edu")).thenReturn(true);
-
-    mockMvc
-        .perform(
-            get("/dummycontroller/interceptorTest")
-                .with(
-                    oidcLogin()
-                        .userInfoToken(t -> t.email("user@ucsb.edu"))
-                        .authorities(
-                            new SimpleGrantedAuthority("ROLE_USER"),
-                            new SimpleGrantedAuthority("ROLE_UNDERGRAD"))))
-        .andExpect(authenticated().withRoles("USER", "GRAD_STUDENT"));
   }
 }

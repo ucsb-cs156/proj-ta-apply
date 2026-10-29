@@ -426,74 +426,22 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .andExpect(status().is(403));
   }
 
-  @WithMockUser(roles = {"USER"})
-  @Test
-  public void plain_users_are_refused_everywhere() throws Exception {
-    mockMvc.perform(get("/api/applications/mine")).andExpect(status().is(403));
-    mockMvc.perform(get("/api/applications?id=1")).andExpect(status().is(403));
-    mockMvc.perform(get("/api/applications/prefill")).andExpect(status().is(403));
-    mockMvc
-        .perform(
-            post("/api/applications/post?recruitmentId=1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}")
-                .with(csrf()))
-        .andExpect(status().is(403));
-    mockMvc
-        .perform(
-            put("/api/applications?id=1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}")
-                .with(csrf()))
-        .andExpect(status().is(403));
-    mockMvc
-        .perform(put("/api/applications/comments?id=1&postApplicationComments=hi").with(csrf()))
-        .andExpect(status().is(403));
-    mockMvc
-        .perform(
-            post("/api/applications/test?recruitmentId=1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}")
-                .with(csrf()))
-        .andExpect(status().is(403));
-  }
-
-  /**
-   * An admin can look at their own (empty) list, but is not an applicant and cannot write real
-   * applications; test applications go through /test, covered below.
-   */
+  /** An admin is a signed-in user like any other here, so their own (empty) list is readable. */
   @WithMockUser(
       username = "admin",
-      roles = {"ADMIN"})
+      roles = {"USER", "ADMIN"})
   @Test
-  public void an_admin_may_read_but_not_write() throws Exception {
+  public void an_admin_may_read_their_own_list() throws Exception {
     when(applicationRepository.findByEmailOrderByIdDesc("admin@example.org")).thenReturn(List.of());
 
     mockMvc.perform(get("/api/applications/mine")).andExpect(status().isOk());
-    mockMvc
-        .perform(
-            post("/api/applications/post?recruitmentId=1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}")
-                .with(csrf()))
-        .andExpect(status().is(403));
-    mockMvc
-        .perform(
-            put("/api/applications?id=1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}")
-                .with(csrf()))
-        .andExpect(status().is(403));
-    mockMvc
-        .perform(put("/api/applications/comments?id=1&postApplicationComments=hi").with(csrf()))
-        .andExpect(status().is(403));
   }
 
   // ---- GET /mine ----
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void mine_lists_only_the_current_users_applications() throws Exception {
     List<Application> mine =
@@ -511,7 +459,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void an_applicant_can_read_their_own_application() throws Exception {
     Application mine = application(5L, 1L, GRAD_EMAIL);
@@ -526,7 +474,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** The row exists; refusing it as forbidden rather than missing is deliberate. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void an_applicant_cannot_read_someone_elses_application() throws Exception {
     when(applicationRepository.findById(5L))
@@ -542,7 +490,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void reading_an_application_that_does_not_exist_is_a_404() throws Exception {
     when(applicationRepository.findById(5L)).thenReturn(Optional.empty());
@@ -559,7 +507,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void prefill_returns_only_the_most_recent_application() throws Exception {
     Application newest = application(2L, 1L, GRAD_EMAIL);
@@ -575,7 +523,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void prefill_is_empty_for_a_first_time_applicant() throws Exception {
     when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL)).thenReturn(List.of());
@@ -590,9 +538,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
-  public void a_grad_student_can_apply_to_an_open_ta_recruitment() throws Exception {
+  public void a_signed_in_user_can_apply_to_an_open_ta_recruitment() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
     when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
 
@@ -613,9 +561,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "ula",
-      roles = {"UNDERGRAD"})
+      roles = {"USER"})
   @Test
-  public void an_undergrad_can_apply_to_an_open_ula_recruitment() throws Exception {
+  public void a_signed_in_user_can_apply_to_an_open_ula_recruitment() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
     when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
 
@@ -632,36 +580,36 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertEquals(expected, saved());
   }
 
-  /** The type check is server side, not merely a hidden link. */
+  /** There is no applicant type: the same user may apply to a TA and to a ULA recruitment. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
-  public void a_grad_student_cannot_apply_to_a_ula_recruitment() throws Exception {
+  public void the_same_user_may_apply_to_a_ula_recruitment_too() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 2L)).thenReturn(false);
 
-    MvcResult response =
-        mockMvc
-            .perform(
-                post("/api/applications/post?recruitmentId=2")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(body())
-                    .with(csrf()))
-            .andExpect(status().is(403))
-            .andReturn();
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withNotice(41L)))
+                .with(csrf()))
+        .andExpect(status().isOk());
 
-    assertEquals(
-        "You are not eligible to apply to this recruitment",
-        responseToJson(response).get("message"));
-    verify(applicationRepository, never()).save(any());
+    Application expected = expectedFrom(null, 2L, GRAD_EMAIL, null);
+    expected.setNoticeVersionId(41L);
+    assertEquals(expected, saved());
   }
 
+  /** Being an instructor or an admin does not stop someone applying either. */
   @WithMockUser(
       username = "ula",
-      roles = {"UNDERGRAD"})
+      roles = {"USER", "INSTRUCTOR", "ADMIN"})
   @Test
-  public void an_undergrad_cannot_apply_to_a_ta_recruitment() throws Exception {
+  public void an_instructor_or_admin_may_apply_as_well() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 1L)).thenReturn(false);
 
     mockMvc
         .perform(
@@ -669,14 +617,14 @@ public class ApplicationsControllerTests extends ControllerTestCase {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body())
                 .with(csrf()))
-        .andExpect(status().is(403));
+        .andExpect(status().isOk());
 
-    verify(applicationRepository, never()).save(any());
+    assertEquals(expectedFrom(null, 1L, ULA_EMAIL, null), saved());
   }
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void applying_to_a_recruitment_that_does_not_exist_is_a_404() throws Exception {
     when(recruitmentRepository.findById(9L)).thenReturn(Optional.empty());
@@ -697,7 +645,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void applying_to_a_closed_recruitment_is_refused() throws Exception {
     when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
@@ -720,7 +668,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void a_second_application_to_the_same_recruitment_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -746,7 +694,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void an_applicant_can_edit_their_own_application_before_the_deadline() throws Exception {
     Application existing = application(5L, 1L, GRAD_EMAIL);
@@ -773,7 +721,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Each availability answer has to be able to go back to no, not merely to yes. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void editing_can_clear_the_availability_answers() throws Exception {
     Application existing = application(5L, 1L, GRAD_EMAIL);
@@ -808,7 +756,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
    */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void course_interests_keep_only_the_answers_that_say_something() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -834,7 +782,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** An older client, or a test via Swagger, may leave the map out altogether. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void a_missing_course_interest_map_is_stored_as_empty() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -854,7 +802,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Editing replaces the earlier answers rather than merging with them. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void editing_replaces_the_course_interests() throws Exception {
     Application existing = application(5L, 1L, GRAD_EMAIL);
@@ -878,7 +826,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void editing_is_refused_once_the_deadline_has_passed() throws Exception {
     when(applicationRepository.findById(5L))
@@ -904,7 +852,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void an_applicant_cannot_edit_someone_elses_application() throws Exception {
     when(applicationRepository.findById(5L))
@@ -928,7 +876,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** The FK should make this impossible, but the lookup still has to handle it. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void editing_an_application_whose_recruitment_is_missing_is_a_404() throws Exception {
     when(applicationRepository.findById(5L))
@@ -954,7 +902,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** The whole point of the separate endpoint: comments outlive the editing deadline. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void comments_can_still_be_updated_after_the_deadline() throws Exception {
     Application existing = application(5L, 4L, GRAD_EMAIL);
@@ -977,7 +925,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void comments_are_refused_once_the_recruitment_is_closed() throws Exception {
     when(applicationRepository.findById(5L))
@@ -996,7 +944,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void an_applicant_cannot_comment_on_someone_elses_application() throws Exception {
     when(applicationRepository.findById(5L))
@@ -1018,7 +966,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Test applications are an admin tool; applicants have the real thing. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT", "UNDERGRAD"})
+      roles = {"USER"})
   @Test
   public void applicants_cannot_enter_test_applications() throws Exception {
     mockMvc
@@ -1142,7 +1090,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Only rated topics are stored, and a rating must be on the 1 to 5 scale. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void topic_ratings_are_stored_and_unrated_topics_are_skipped() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -1166,7 +1114,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void a_missing_topic_rating_map_is_stored_as_empty() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -1186,7 +1134,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** The radio buttons offer 1 to 5; anything else did not come from the form. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @ParameterizedTest
   @ValueSource(ints = {0, 6, -1})
   public void a_topic_rating_off_the_scale_is_refused(int level) throws Exception {
@@ -1211,7 +1159,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** The boundary values are both fine. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void topic_ratings_of_1_and_5_are_accepted() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -1231,7 +1179,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Editing replaces the earlier ratings rather than merging with them. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void editing_replaces_the_topic_ratings() throws Exception {
     Application existing = application(5L, 1L, GRAD_EMAIL);
@@ -1255,7 +1203,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Once a notice exists, an application that did not agree to one is refused. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void applying_without_agreeing_to_the_notice_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -1280,7 +1228,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Before any notice has been written for the type, there is nothing to agree to. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void with_no_notice_written_yet_no_agreement_is_needed() throws Exception {
     when(noticeVersionRepository.findFirstByTypeOrderByIdDesc(RecruitmentType.TA))
@@ -1302,7 +1250,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** An older version is fine: the applicant agreed to what they were shown. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void agreeing_to_an_earlier_version_of_the_notice_is_accepted() throws Exception {
     NoticeVersion older =
@@ -1329,7 +1277,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void agreeing_to_a_notice_version_that_does_not_exist_is_a_404() throws Exception {
     when(noticeVersionRepository.findById(99L)).thenReturn(Optional.empty());
@@ -1353,7 +1301,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** A grad student cannot satisfy the TA rule with the ULA notice. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void agreeing_to_the_other_forms_notice_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -1376,7 +1324,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Editing re-checks the rule, and records the version agreed to on the edit. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void editing_also_requires_agreement() throws Exception {
     Application existing = application(5L, 1L, GRAD_EMAIL);
@@ -1466,7 +1414,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** A TA application needs three courses; two is refused before anything is saved. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void a_ta_application_with_fewer_than_three_courses_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -1493,7 +1441,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** A ULA application needs one; none (or a missing list) is refused. */
   @WithMockUser(
       username = "ula",
-      roles = {"UNDERGRAD"})
+      roles = {"USER"})
   @Test
   public void a_ula_application_with_no_courses_is_refused() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
@@ -1520,7 +1468,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** One course is enough for a ULA application. */
   @WithMockUser(
       username = "ula",
-      roles = {"UNDERGRAD"})
+      roles = {"USER"})
   @Test
   public void a_ula_application_with_one_course_is_accepted() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
@@ -1542,7 +1490,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void a_course_without_a_number_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -1569,7 +1517,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void a_course_taken_elsewhere_needs_its_school() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -1602,7 +1550,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Values are trimmed, blanks become null, and a UCSB course drops any school that was sent. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void prior_courses_are_stored_tidy_and_in_order() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
@@ -1646,7 +1594,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Editing replaces the whole list; rows from the earlier save do not linger. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void editing_replaces_the_prior_coursework() throws Exception {
     Application existing = application(5L, 1L, GRAD_EMAIL);
@@ -1670,7 +1618,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** The minimum is checked on an edit too, so courses cannot be removed below it afterwards. */
   @WithMockUser(
       username = "grad",
-      roles = {"GRAD_STUDENT"})
+      roles = {"USER"})
   @Test
   public void editing_down_to_too_few_courses_is_refused() throws Exception {
     Application existing = application(5L, 1L, GRAD_EMAIL);

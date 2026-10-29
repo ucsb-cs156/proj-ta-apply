@@ -74,9 +74,9 @@ public class SecurityConfig {
     return web -> web.ignoring().requestMatchers(antMatcher("/h2-console/**"));
   }
 
-  // There is deliberately no RoleHierarchy bean. ADMIN, INSTRUCTOR and GRAD_STUDENT are
-  // independent roles that a user may hold in any combination, so a linear hierarchy cannot
-  // express them. ROLE_USER is instead granted unconditionally to every authenticated user in
+  // There is deliberately no RoleHierarchy bean. ADMIN and INSTRUCTOR are independent roles that
+  // a user may hold in any combination, so a linear hierarchy cannot express them. ROLE_USER is
+  // instead granted unconditionally to every authenticated user in
   // GoogleSignInServiceImpl and RoleUpdateInterceptor. Endpoints serving more than one role use
   // hasAnyRole(...) rather than relying on inheritance.
 }

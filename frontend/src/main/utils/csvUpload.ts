@@ -24,8 +24,8 @@ export function csvUploadAxiosParams(
 }
 
 /**
- * The toast an admin sees after an upload. Shared so the grad students and instructors pages
- * report results in the same words.
+ * The toast an admin sees after an upload, kept apart from the page so any later role table's
+ * upload reports results in the same words.
  */
 export function uploadResultMessage(result: UploadResult): string {
   let message = `Upload complete: ${result.inserted} added, ${result.alreadyPresent} already present, ${result.invalid} invalid`;

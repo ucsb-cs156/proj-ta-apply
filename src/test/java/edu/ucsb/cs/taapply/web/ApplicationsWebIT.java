@@ -172,11 +172,11 @@ public class ApplicationsWebIT extends WebTestCase {
   }
 
   @Test
-  public void a_grad_student_applies_and_the_application_is_listed() throws Exception {
+  public void a_regular_user_applies_and_the_application_is_listed() throws Exception {
     Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
     seedTaLists();
 
-    setupGradStudentUser();
+    setupRegularUser();
     goTo("/");
 
     Locator applyLink = page.getByTestId("HomePageLoggedIn-dashboard-apply-" + recruitment.getId());
@@ -254,21 +254,21 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-lastName")).hasValue("Gaucho-Smith");
   }
 
-  /** The type rule is enforced server side, so the URL is no way around it. */
+  /** Any signed-in user sees every open recruitment, each labelled with its type. */
   @Test
-  public void an_undergrad_cannot_apply_to_a_ta_recruitment() throws Exception {
-    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+  public void a_regular_user_sees_open_recruitments_of_both_types() throws Exception {
+    Recruitment ta = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    Recruitment ula = seedRecruitment(RecruitmentType.ULA, LocalDate.now().plusDays(30));
 
-    // A UCSB address with no other role gets ROLE_UNDERGRAD.
     setupRegularUser();
     goTo("/");
 
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-none-open"))
-        .containsText("Applications for ULA positions are not currently being accepted.");
-
-    goTo("/apply/" + recruitment.getId());
-    assertThat(page.getByTestId("ApplyPage-unavailable")).isVisible();
-    assertThat(page.getByTestId("ApplyPage-submit")).not().isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-open-" + ta.getId()))
+        .containsText("Applications for TA positions");
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-open-" + ula.getId()))
+        .containsText("Applications for ULA positions");
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-apply-" + ta.getId())).isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-apply-" + ula.getId())).isVisible();
   }
 
   @Test
@@ -276,7 +276,7 @@ public class ApplicationsWebIT extends WebTestCase {
     Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
     seedTaLists();
 
-    setupGradStudentUser();
+    setupRegularUser();
     goTo("/apply/" + recruitment.getId());
     fillAndSubmit();
 

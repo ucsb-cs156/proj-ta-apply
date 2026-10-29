@@ -119,52 +119,33 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     mockMvc.perform(get("/api/recruitments/recentlyClosed")).andExpect(status().is(403));
   }
 
-  @WithMockUser(roles = {"USER"})
-  @Test
-  public void a_plain_user_gets_nothing() throws Exception {
-    mockMvc.perform(get("/api/recruitments/open")).andExpect(status().is(403));
-    mockMvc.perform(get("/api/recruitments/upcoming")).andExpect(status().is(403));
-    mockMvc.perform(get("/api/recruitments/recentlyClosed")).andExpect(status().is(403));
-  }
-
-  /**
-   * An instructor may reach the endpoint through the admin role but is not an applicant, so the
-   * answer is an empty list rather than everyone else's recruitments.
-   */
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void a_non_applicant_sees_no_recruitments() throws Exception {
-    seedAll();
-
-    assertEquals("[]", getJson("/api/recruitments/open"));
-    assertEquals("[]", getJson("/api/recruitments/upcoming"));
-    assertEquals("[]", getJson("/api/recruitments/recentlyClosed"));
-  }
-
   // ---- open ----
 
-  /** The ULA recruitment is open too, and must not appear. */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  /** Both types are open, and a signed-in user sees both; each carries its type. */
+  @WithMockUser(roles = {"USER"})
   @Test
-  public void a_grad_student_sees_only_open_ta_recruitments() throws Exception {
+  public void a_signed_in_user_sees_every_open_recruitment_of_either_type() throws Exception {
     seedAll();
 
-    assertEquals(mapper.writeValueAsString(List.of(OPEN_TA)), getJson("/api/recruitments/open"));
+    assertEquals(
+        mapper.writeValueAsString(List.of(OPEN_TA, OPEN_ULA)), getJson("/api/recruitments/open"));
   }
 
-  @WithMockUser(roles = {"UNDERGRAD"})
+  /** Admins and instructors hold ROLE_USER too, so the same answer comes back for them. */
+  @WithMockUser(roles = {"USER", "ADMIN", "INSTRUCTOR"})
   @Test
-  public void an_undergrad_sees_only_open_ula_recruitments() throws Exception {
+  public void an_admin_or_instructor_sees_the_same_recruitments() throws Exception {
     seedAll();
 
-    assertEquals(mapper.writeValueAsString(List.of(OPEN_ULA)), getJson("/api/recruitments/open"));
+    assertEquals(
+        mapper.writeValueAsString(List.of(OPEN_TA, OPEN_ULA)), getJson("/api/recruitments/open"));
   }
 
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void nothing_open_is_an_empty_list() throws Exception {
     when(recruitmentRepository.findAllByOrderByQuarterDescTypeAsc())
-        .thenReturn(List.of(CLOSED_TA, OPEN_ULA));
+        .thenReturn(List.of(UPCOMING_TA, CLOSED_TA));
 
     assertEquals("[]", getJson("/api/recruitments/open"));
   }
@@ -172,7 +153,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   // ---- upcoming ----
 
   /** Created but never opened; the closed one that has opened before is not upcoming. */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void upcoming_is_the_closed_recruitment_that_has_never_opened() throws Exception {
     seedAll();
@@ -181,7 +162,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
         mapper.writeValueAsString(List.of(UPCOMING_TA)), getJson("/api/recruitments/upcoming"));
   }
 
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void an_open_recruitment_is_not_upcoming() throws Exception {
     when(recruitmentRepository.findAllByOrderByQuarterDescTypeAsc()).thenReturn(List.of(OPEN_TA));
@@ -191,8 +172,8 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
 
   // ---- recently closed ----
 
-  /** Both have closed; only the most recent quarter is reported. */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  /** Both TA rounds have closed; only the most recent quarter is reported. */
+  @WithMockUser(roles = {"USER"})
   @Test
   public void recently_closed_reports_only_the_most_recent() throws Exception {
     seedAll();
@@ -201,8 +182,36 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
         mapper.writeValueAsString(List.of(CLOSED_TA)), getJson("/api/recruitments/recentlyClosed"));
   }
 
+  /** One per type: the last TA round and the last ULA round, each the most recent of its kind. */
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void recently_closed_reports_the_most_recent_of_each_type() throws Exception {
+    Recruitment closedUla =
+        recruitment(
+            7L,
+            "20254",
+            RecruitmentType.ULA,
+            ApplicationStatus.CLOSED,
+            LocalDate.of(2025, 4, 1),
+            LocalDate.of(2025, 5, 1));
+    Recruitment olderClosedUla =
+        recruitment(
+            8L,
+            "20253",
+            RecruitmentType.ULA,
+            ApplicationStatus.CLOSED,
+            LocalDate.of(2025, 1, 1),
+            LocalDate.of(2025, 2, 1));
+    when(recruitmentRepository.findAllByOrderByQuarterDescTypeAsc())
+        .thenReturn(List.of(CLOSED_TA, OLDER_CLOSED_TA, closedUla, olderClosedUla));
+
+    assertEquals(
+        mapper.writeValueAsString(List.of(CLOSED_TA, closedUla)),
+        getJson("/api/recruitments/recentlyClosed"));
+  }
+
   /** A recruitment that has never opened has never closed either. */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void a_never_opened_recruitment_is_not_recently_closed() throws Exception {
     when(recruitmentRepository.findAllByOrderByQuarterDescTypeAsc())
@@ -211,7 +220,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals("[]", getJson("/api/recruitments/recentlyClosed"));
   }
 
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void an_open_recruitment_is_not_recently_closed() throws Exception {
     when(recruitmentRepository.findAllByOrderByQuarterDescTypeAsc()).thenReturn(List.of(OPEN_TA));
@@ -223,7 +232,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
    * A reopened recruitment still carries the closing date of its earlier round, so having closed
    * once is not enough to report it as closed now.
    */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void a_reopened_recruitment_is_not_recently_closed() throws Exception {
     Recruitment reopened =
@@ -241,34 +250,20 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
 
   // ---- applicable ----
 
-  /** Everything of their type, whatever its state, so their own applications can be labelled. */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  /** Everything, whatever its type or state, so a user's own applications can be labelled. */
+  @WithMockUser(roles = {"USER"})
   @Test
-  public void applicable_is_every_recruitment_of_their_type() throws Exception {
+  public void applicable_is_every_recruitment() throws Exception {
     seedAll();
 
     assertEquals(
-        mapper.writeValueAsString(List.of(UPCOMING_TA, OPEN_TA, CLOSED_TA, OLDER_CLOSED_TA)),
+        mapper.writeValueAsString(
+            List.of(UPCOMING_TA, OPEN_TA, OPEN_ULA, CLOSED_TA, OLDER_CLOSED_TA)),
         getJson("/api/recruitments/applicable"));
-  }
-
-  @WithMockUser(roles = {"UNDERGRAD"})
-  @Test
-  public void applicable_excludes_the_other_type() throws Exception {
-    seedAll();
-
-    assertEquals(
-        mapper.writeValueAsString(List.of(OPEN_ULA)), getJson("/api/recruitments/applicable"));
   }
 
   @Test
   public void logged_out_users_cannot_read_applicable_recruitments() throws Exception {
-    mockMvc.perform(get("/api/recruitments/applicable")).andExpect(status().is(403));
-  }
-
-  @WithMockUser(roles = {"USER"})
-  @Test
-  public void a_plain_user_cannot_read_applicable_recruitments() throws Exception {
     mockMvc.perform(get("/api/recruitments/applicable")).andExpect(status().is(403));
   }
 
@@ -288,10 +283,10 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
    * A course with two lectures is two rows in the recruitment but one choice on the form, and a
    * removed row is not on offer at all.
    */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void course_choices_are_distinct_sorted_and_exclude_removed() throws Exception {
-    seedAll();
+    when(recruitmentRepository.existsById(1L)).thenReturn(true);
     when(recruitmentCourseRepository.findByRecruitmentId(1L))
         .thenReturn(
             List.of(
@@ -305,32 +300,17 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
         getJson("/api/recruitments/courses?recruitmentId=1"));
   }
 
-  /** Not their type, so not their course list. */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
-  @Test
-  public void course_choices_are_empty_for_a_recruitment_of_the_other_type() throws Exception {
-    seedAll();
-
-    assertEquals("[]", getJson("/api/recruitments/courses?recruitmentId=2"));
-    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
-  }
-
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void course_choices_are_empty_for_a_recruitment_that_does_not_exist() throws Exception {
-    seedAll();
+    when(recruitmentRepository.existsById(99L)).thenReturn(false);
 
     assertEquals("[]", getJson("/api/recruitments/courses?recruitmentId=99"));
+    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
   }
 
   @Test
   public void logged_out_users_cannot_read_course_choices() throws Exception {
-    mockMvc.perform(get("/api/recruitments/courses?recruitmentId=1")).andExpect(status().is(403));
-  }
-
-  @WithMockUser(roles = {"USER"})
-  @Test
-  public void a_plain_user_cannot_read_course_choices() throws Exception {
     mockMvc.perform(get("/api/recruitments/courses?recruitmentId=1")).andExpect(status().is(403));
   }
 
@@ -393,7 +373,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
    * The lowest enroll code of the course's lectures is looked up; a removed row and other courses
    * play no part. The answer is the offering's sections, lectures flagged, in section order.
    */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void section_times_come_from_the_ucsb_api_via_the_lowest_lecture_enroll_code()
       throws Exception {
@@ -426,8 +406,8 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     verify(ucsbCurriculumService).getOffering("20262", "07492");
   }
 
-  /** An admin previewing the form has no applicable type, but still needs the card. */
-  @WithMockUser(roles = {"ADMIN"})
+  /** An admin previewing the form is a signed-in user like any other here. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
   @Test
   public void an_admin_can_read_section_times_for_any_recruitment() throws Exception {
     seedAll();
@@ -443,7 +423,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   }
 
   /** A course the recruitment does not list is answered with no meetings, and no API call. */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void a_course_not_in_the_recruitment_has_no_section_times() throws Exception {
     seedAll();
@@ -457,7 +437,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     verify(ucsbCurriculumService, never()).getOffering(any(), any());
   }
 
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void section_times_for_a_missing_recruitment_are_a_404() throws Exception {
     seedAll();
@@ -467,25 +447,8 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     verify(ucsbCurriculumService, never()).getOffering(any(), any());
   }
 
-  /** Not their type, so not their business: unlike the course list, this says so. */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
-  @Test
-  public void section_times_for_a_recruitment_of_the_other_type_are_refused() throws Exception {
-    seedAll();
-    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-
-    mockMvc.perform(sectionsRequest(2L)).andExpect(status().is(403));
-    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
-  }
-
   @Test
   public void logged_out_users_cannot_read_section_times() throws Exception {
-    mockMvc.perform(sectionsRequest(1L)).andExpect(status().is(403));
-  }
-
-  @WithMockUser(roles = {"USER"})
-  @Test
-  public void a_plain_user_cannot_read_section_times() throws Exception {
     mockMvc.perform(sectionsRequest(1L)).andExpect(status().is(403));
   }
 
@@ -508,7 +471,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   }
 
   /** A TA recruitment offers the TA lists, sorted case-insensitively. */
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void options_for_a_ta_recruitment_are_the_ta_lists_sorted() throws Exception {
     seedLists();
@@ -525,7 +488,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   }
 
   /** A ULA recruitment offers the ULA lists, and an admin may ask for any recruitment's lists. */
-  @WithMockUser(roles = {"ADMIN"})
+  @WithMockUser(roles = {"USER", "ADMIN"})
   @Test
   public void options_for_a_ula_recruitment_are_the_ula_lists() throws Exception {
     seedLists();
@@ -540,7 +503,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     verify(taTopicRepository, never()).findAll();
   }
 
-  @WithMockUser(roles = {"UNDERGRAD"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void options_for_an_unknown_recruitment_are_a_404() throws Exception {
     when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
@@ -555,12 +518,6 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
 
   @Test
   public void logged_out_users_cannot_read_options() throws Exception {
-    mockMvc.perform(get("/api/recruitments/options?recruitmentId=1")).andExpect(status().is(403));
-  }
-
-  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
-  @Test
-  public void a_user_who_is_not_an_applicant_or_admin_cannot_read_options() throws Exception {
     mockMvc.perform(get("/api/recruitments/options?recruitmentId=1")).andExpect(status().is(403));
   }
 }

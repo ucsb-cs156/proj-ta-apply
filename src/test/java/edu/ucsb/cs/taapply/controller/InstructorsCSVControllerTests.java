@@ -55,7 +55,7 @@ public class InstructorsCSVControllerTests extends ControllerTestCase {
         .andExpect(status().is(403));
   }
 
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
   @Test
   public void instructors_cannot_upload() throws Exception {
     mockMvc

@@ -37,22 +37,24 @@ export default {
 
 const Template = () => <HomePageLoggedIn />;
 
-export const UndergradNothingOpen = Template.bind({});
-UndergradNothingOpen.parameters = {
+export const NothingOpen = Template.bind({});
+NothingOpen.parameters = {
   msw: { handlers: handlers(apiCurrentUserFixtures.userOnly) },
 };
 
-export const UndergradApplicationsOpen = Template.bind({});
-UndergradApplicationsOpen.parameters = {
+export const ApplicationsOpen = Template.bind({});
+ApplicationsOpen.parameters = {
   msw: {
-    handlers: handlers(apiCurrentUserFixtures.userOnly, { open: [openUla] }),
+    handlers: handlers(apiCurrentUserFixtures.userOnly, {
+      open: [openUla, { ...upcomingTa, id: 9 }],
+    }),
   },
 };
 
-export const GradStudentWithAnApplication = Template.bind({});
-GradStudentWithAnApplication.parameters = {
+export const WithAnApplication = Template.bind({});
+WithAnApplication.parameters = {
   msw: {
-    handlers: handlers(apiCurrentUserFixtures.gradStudentUser, {
+    handlers: handlers(apiCurrentUserFixtures.userOnly, {
       upcoming: [upcomingTa],
       recentlyClosed: [closedTa],
       applications: [applicationsFixtures.oneTaApplication],

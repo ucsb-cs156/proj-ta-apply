@@ -36,10 +36,7 @@ describe("AboutTaApply tests", () => {
 
     expect(screen.getByText("Proj-ta-apply allows:")).toBeInTheDocument();
     expect(
-      screen.getByText(/Grad Students to apply for TA positions/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Undergrad students to apply for ULA positions/),
+      screen.getByText(/Students to apply for TA and ULA positions/),
     ).toBeInTheDocument();
 
     expect(

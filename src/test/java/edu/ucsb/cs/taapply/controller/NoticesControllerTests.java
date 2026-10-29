@@ -65,15 +65,18 @@ public class NoticesControllerTests extends ControllerTestCase {
         .andExpect(status().is(403));
   }
 
+  /** Any signed-in user may read: there is no applicant role, so an instructor can too. */
   @WithMockUser(roles = {"USER", "INSTRUCTOR"})
   @Test
-  public void users_who_are_neither_applicants_nor_admins_are_refused() throws Exception {
-    mockMvc.perform(get("/api/notices/current?type=TA")).andExpect(status().is(403));
-    mockMvc.perform(get("/api/notices?id=1")).andExpect(status().is(403));
+  public void any_signed_in_user_may_read_the_current_notice() throws Exception {
+    when(noticeVersionRepository.findFirstByTypeOrderByIdDesc(RecruitmentType.TA))
+        .thenReturn(Optional.empty());
+
+    mockMvc.perform(get("/api/notices/current?type=TA")).andExpect(status().isOk());
   }
 
-  /** Applicants may read, but the history and the saving are for admins. */
-  @WithMockUser(roles = {"GRAD_STUDENT", "UNDERGRAD"})
+  /** Anyone may read, but the history and the saving are for admins. */
+  @WithMockUser(roles = {"USER"})
   @Test
   public void applicants_cannot_see_the_history_or_save() throws Exception {
     mockMvc.perform(get("/api/admin/notices/all?type=TA")).andExpect(status().is(403));
@@ -89,7 +92,7 @@ public class NoticesControllerTests extends ControllerTestCase {
 
   // ---- current ----
 
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void current_is_the_latest_version_for_the_type_as_a_one_element_list() throws Exception {
     when(noticeVersionRepository.findFirstByTypeOrderByIdDesc(RecruitmentType.TA))
@@ -103,7 +106,7 @@ public class NoticesControllerTests extends ControllerTestCase {
   }
 
   /** No notice written yet is an empty list, not an error, so the form can show nothing. */
-  @WithMockUser(roles = {"UNDERGRAD"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void current_is_empty_before_any_notice_is_written() throws Exception {
     when(noticeVersionRepository.findFirstByTypeOrderByIdDesc(RecruitmentType.ULA))
@@ -120,7 +123,7 @@ public class NoticesControllerTests extends ControllerTestCase {
 
   // ---- by id ----
 
-  @WithMockUser(roles = {"GRAD_STUDENT"})
+  @WithMockUser(roles = {"USER"})
   @Test
   public void a_version_can_be_fetched_by_id() throws Exception {
     when(noticeVersionRepository.findById(1L)).thenReturn(Optional.of(TA_V1));
@@ -131,7 +134,7 @@ public class NoticesControllerTests extends ControllerTestCase {
     assertEquals(mapper.writeValueAsString(TA_V1), response.getResponse().getContentAsString());
   }
 
-  @WithMockUser(roles = {"ADMIN"})
+  @WithMockUser(roles = {"USER", "ADMIN"})
   @Test
   public void a_missing_version_is_a_404() throws Exception {
     when(noticeVersionRepository.findById(99L)).thenReturn(Optional.empty());

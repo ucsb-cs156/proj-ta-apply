@@ -74,7 +74,7 @@ public class AppSettingsControllerTests extends ControllerTestCase {
         .andExpect(status().is(403));
   }
 
-  @WithMockUser(roles = {"USER", "INSTRUCTOR", "GRAD_STUDENT", "UNDERGRAD"})
+  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
   @Test
   public void non_admins_are_refused_everywhere() throws Exception {
     mockMvc.perform(get("/api/admin/settings/ta-majors/all")).andExpect(status().is(403));

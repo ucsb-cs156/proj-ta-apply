@@ -123,7 +123,6 @@ describe("AppNavbar tests", () => {
       "Users",
       "Admins",
       "Instructors",
-      "Grad Students",
       "Courses",
       "Recruitments",
       "TA App Settings",

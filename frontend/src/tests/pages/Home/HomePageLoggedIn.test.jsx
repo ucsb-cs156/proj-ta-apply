@@ -55,27 +55,11 @@ describe("HomePageLoggedIn tests", () => {
 
   // ---- role messages ----
 
-  test("the request-access message is shown for ROLE_UNDERGRAD", async () => {
-    renderHome(apiCurrentUserFixtures.userOnly);
-    expect(
-      await screen.findByTestId("HomePageLoggedIn-undergrad"),
-    ).toBeInTheDocument();
-  });
-
-  /** The backend withholds ROLE_UNDERGRAD from a non-UCSB address, so the message is withheld. */
-  test("a signed-in user without ROLE_UNDERGRAD sees no request-access message", async () => {
-    renderHome(apiCurrentUserFixtures.nonUcsbUser);
-
-    await screen.findByTestId("HomePageLoggedIn-greeting");
-    expect(screen.queryByTestId("HomePageLoggedIn-undergrad")).toBeNull();
-  });
-
   test("an admin sees the admin message but is not treated as an applicant", async () => {
     renderHome(apiCurrentUserFixtures.adminUser);
     await screen.findByTestId("HomePageLoggedIn-admin");
     // Roles are independent: admin does not imply anything else.
     expect(screen.queryByTestId("HomePageLoggedIn-instructor")).toBeNull();
-    expect(screen.queryByTestId("HomePageLoggedIn-undergrad")).toBeNull();
     expect(screen.queryByTestId("HomePageLoggedIn-dashboard")).toBeNull();
   });
 
@@ -83,7 +67,15 @@ describe("HomePageLoggedIn tests", () => {
     renderHome(apiCurrentUserFixtures.instructorUser);
     await screen.findByTestId("HomePageLoggedIn-instructor");
     expect(screen.queryByTestId("HomePageLoggedIn-admin")).toBeNull();
-    expect(screen.queryByTestId("HomePageLoggedIn-undergrad")).toBeNull();
+    expect(screen.queryByTestId("HomePageLoggedIn-dashboard")).toBeNull();
+  });
+
+  test("a user who is both admin and instructor sees both messages and no dashboard", async () => {
+    renderHome(apiCurrentUserFixtures.adminAndInstructorUser);
+    await screen.findByTestId("HomePageLoggedIn-admin");
+    expect(
+      screen.getByTestId("HomePageLoggedIn-instructor"),
+    ).toBeInTheDocument();
     expect(screen.queryByTestId("HomePageLoggedIn-dashboard")).toBeNull();
   });
 
@@ -104,42 +96,39 @@ describe("HomePageLoggedIn tests", () => {
 
   // ---- the applicant dashboard ----
 
-  test("a grad student is told about TA positions", async () => {
-    renderHome(apiCurrentUserFixtures.gradStudentUser);
-
-    expect(
-      await screen.findByTestId("HomePageLoggedIn-dashboard-none-open"),
-    ).toHaveTextContent(
-      "Applications for TA positions are not currently being accepted.",
-    );
-    // A grad student is not asked to request access.
-    expect(screen.queryByTestId("HomePageLoggedIn-undergrad")).toBeNull();
-  });
-
-  test("an undergrad is told about ULA positions", async () => {
+  /** A user with no other role is an applicant, and there is no TA/ULA split any more. */
+  test("a plain user gets the dashboard and is told nothing is open", async () => {
     renderHome(apiCurrentUserFixtures.userOnly);
 
     expect(
       await screen.findByTestId("HomePageLoggedIn-dashboard-none-open"),
-    ).toHaveTextContent(
-      "Applications for ULA positions are not currently being accepted.",
-    );
+    ).toHaveTextContent("Applications are not currently being accepted.");
+    expect(screen.queryByTestId("HomePageLoggedIn-admin")).toBeNull();
+    expect(screen.queryByTestId("HomePageLoggedIn-instructor")).toBeNull();
   });
 
-  test("an open recruitment gives the applicant a link to apply", async () => {
-    renderHome(apiCurrentUserFixtures.userOnly, { open: [openUla] });
+  test("open recruitments of both types give the applicant links to apply", async () => {
+    renderHome(apiCurrentUserFixtures.userOnly, {
+      open: [openUla, { ...upcomingTa, id: 9 }],
+    });
 
     const link = await screen.findByTestId(
       "HomePageLoggedIn-dashboard-apply-2",
     );
     expect(link).toHaveAttribute("href", "/apply/2");
     expect(
+      screen.getByTestId("HomePageLoggedIn-dashboard-open-2"),
+    ).toHaveTextContent("ULA positions");
+    expect(
+      screen.getByTestId("HomePageLoggedIn-dashboard-open-9"),
+    ).toHaveTextContent("TA positions");
+    expect(
       screen.queryByTestId("HomePageLoggedIn-dashboard-none-open"),
     ).toBeNull();
   });
 
   test("an upcoming recruitment reports its tentative opening date", async () => {
-    renderHome(apiCurrentUserFixtures.gradStudentUser, {
+    renderHome(apiCurrentUserFixtures.userOnly, {
       upcoming: [upcomingTa],
     });
 
@@ -149,7 +138,7 @@ describe("HomePageLoggedIn tests", () => {
   });
 
   test("a recently closed recruitment reports its dates", async () => {
-    renderHome(apiCurrentUserFixtures.gradStudentUser, {
+    renderHome(apiCurrentUserFixtures.userOnly, {
       recentlyClosed: [closedTa],
     });
 
@@ -172,20 +161,10 @@ describe("HomePageLoggedIn tests", () => {
   });
 
   test("an applicant who has never applied is told so", async () => {
-    renderHome(apiCurrentUserFixtures.gradStudentUser);
+    renderHome(apiCurrentUserFixtures.userOnly);
 
     expect(
       await screen.findByTestId("HomePageLoggedIn-dashboard-no-applications"),
-    ).toHaveTextContent("You have not applied for any TA positions yet.");
-  });
-
-  /** Instructor and grad student are independent, and the grad student half still applies. */
-  test("a user who is both instructor and grad student sees both", async () => {
-    renderHome(apiCurrentUserFixtures.instructorAndGradStudentUser);
-
-    await screen.findByTestId("HomePageLoggedIn-instructor");
-    expect(
-      await screen.findByTestId("HomePageLoggedIn-dashboard-none-open"),
-    ).toHaveTextContent("TA positions");
+    ).toHaveTextContent("You have not applied for any positions yet.");
   });
 });

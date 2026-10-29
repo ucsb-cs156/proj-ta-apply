@@ -1,6 +1,5 @@
 package edu.ucsb.cs.taapply.services;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -8,22 +7,11 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 public class ApplicationAccessServiceTests {
 
   private final ApplicationAccessService service = new ApplicationAccessService();
-
-  private static Set<GrantedAuthority> roles(String... names) {
-    return java.util.Arrays.stream(names)
-        .map(n -> (GrantedAuthority) new SimpleGrantedAuthority(n))
-        .collect(java.util.stream.Collectors.toSet());
-  }
 
   private static Recruitment recruitment(ApplicationStatus status, LocalDate deadline) {
     return Recruitment.builder()
@@ -32,36 +20,6 @@ public class ApplicationAccessServiceTests {
         .applicationStatus(status)
         .primaryConsiderationDate(deadline)
         .build();
-  }
-
-  // ---- who may apply to what ----
-
-  @Test
-  public void a_grad_student_applies_for_ta_positions() {
-    assertEquals(
-        Optional.of(RecruitmentType.TA), service.applicableType(roles("ROLE_GRAD_STUDENT")));
-  }
-
-  @Test
-  public void an_undergrad_applies_for_ula_positions() {
-    assertEquals(Optional.of(RecruitmentType.ULA), service.applicableType(roles("ROLE_UNDERGRAD")));
-  }
-
-  /** An admin or instructor is not an applicant. */
-  @Test
-  public void anyone_else_applies_for_nothing() {
-    assertEquals(Optional.empty(), service.applicableType(roles("ROLE_USER", "ROLE_ADMIN")));
-    assertEquals(Optional.empty(), service.applicableType(roles("ROLE_INSTRUCTOR")));
-    assertEquals(Optional.empty(), service.applicableType(List.of()));
-    assertEquals(Optional.empty(), service.applicableType(null));
-  }
-
-  /** Not expected, since UNDERGRAD is only granted absent the other roles, but defined anyway. */
-  @Test
-  public void holding_both_roles_resolves_to_ta() {
-    assertEquals(
-        Optional.of(RecruitmentType.TA),
-        service.applicableType(roles("ROLE_GRAD_STUDENT", "ROLE_UNDERGRAD")));
   }
 
   // ---- when applications may be created ----

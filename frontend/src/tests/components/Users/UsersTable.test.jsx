@@ -21,7 +21,6 @@ describe("UserTable tests", () => {
       "Email",
       "Admin",
       "Instructor",
-      "Grad Student",
     ];
     const expectedFields = [
       "id",
@@ -30,7 +29,6 @@ describe("UserTable tests", () => {
       "email",
       "admin",
       "instructor",
-      "gradStudent",
     ];
     const testId = "UsersTable";
 
@@ -61,13 +59,7 @@ describe("UserTable tests", () => {
       screen.getByTestId(`${testId}-cell-row-2-col-instructor`),
     ).toHaveTextContent("true");
 
-    // Roles are independent: row 0 is both an admin and a grad student.
-    expect(
-      screen.getByTestId(`${testId}-cell-row-0-col-gradStudent`),
-    ).toHaveTextContent("true");
-    expect(
-      screen.getByTestId(`${testId}-cell-row-2-col-gradStudent`),
-    ).toHaveTextContent("false");
+    expect(screen.queryByText("Grad Student")).toBeNull();
     expect(
       screen.getByTestId(`${testId}-cell-row-1-col-instructor`),
     ).toHaveTextContent("false");
