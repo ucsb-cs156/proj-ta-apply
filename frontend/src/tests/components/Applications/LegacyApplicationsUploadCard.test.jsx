@@ -112,6 +112,8 @@ describe("LegacyApplicationsUploadCard tests", () => {
     expect(screen.getByTestId("Card-button")).toHaveClass(
       "btn-outline-primary",
     );
+    // The label still points at the file picker inside the group.
+    expect(screen.getByLabelText("Legacy CSV export")).toBe(input);
   });
 
   test("Import is disabled until both a quarter and a file are chosen", async () => {
