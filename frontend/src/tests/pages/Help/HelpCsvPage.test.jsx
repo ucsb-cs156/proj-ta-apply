@@ -66,7 +66,13 @@ describe("HelpCsvPage tests", () => {
     );
 
     expect(screen.getByTestId("downloadsSummary")).toHaveTextContent(
-      "The only CSV downloads currently offered are the App Settings lists described above.",
+      "the Recruitments admin page offers a CSV button per recruitment that downloads every application to it",
+    );
+    expect(screen.getByTestId("applicationsCsvDescription")).toHaveTextContent(
+      "C++:5,Java:4",
+    );
+    expect(screen.getByTestId("applicationsCsvDescription")).toHaveTextContent(
+      "courses separated by semicolons",
     );
   });
 

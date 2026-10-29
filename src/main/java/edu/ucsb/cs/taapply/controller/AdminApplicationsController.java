@@ -5,12 +5,16 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.ApplicationCsvService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -30,6 +34,7 @@ public class AdminApplicationsController extends ApiController {
 
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired ApplicationCsvService applicationCsvService;
 
   @Operation(
       summary = "Every application to a recruitment, oldest first",
@@ -44,6 +49,33 @@ public class AdminApplicationsController extends ApiController {
       throw new EntityNotFoundException(Recruitment.class, recruitmentId);
     }
     return applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId);
+  }
+
+  @Operation(
+      summary = "Every application to a recruitment as a CSV file",
+      description =
+          "One row per application, test applications included and flagged. The columns differ by"
+              + " form type; the one-to-many answers are folded into one column each (courses"
+              + " separated by semicolons, their fields by commas; ratings as name:value pairs"
+              + " separated by commas). 404 for a recruitment that does not exist.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @GetMapping(value = "/csv", produces = "text/csv")
+  public ResponseEntity<String> downloadCsv(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    String csv =
+        applicationCsvService.write(
+            recruitment.getType(),
+            applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));
+    return ResponseEntity.ok()
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=\"applications-%d.csv\"".formatted(recruitmentId))
+        .contentType(new MediaType("text", "csv"))
+        .body(csv);
   }
 
   @Operation(summary = "One application, whoever it belongs to")

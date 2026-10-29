@@ -5,6 +5,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
+import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.Course;
@@ -168,6 +169,29 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-actualOpeningDate"))
         .not()
         .isEmpty();
+  }
+
+  /** The CSV button hands the browser a file named after the recruitment, with the TA columns. */
+  @Test
+  public void the_csv_button_downloads_the_recruitment_s_applications() throws Exception {
+    stubOfferings();
+    setupAdminUser();
+    goToRecruitments();
+    createTaRecruitment();
+
+    Locator csvButton = page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-csv-button");
+    waitFor(csvButton);
+    assertThat(csvButton).containsText("CSV");
+
+    Download download = page.waitForDownload(csvButton::click);
+    String firstLine = java.nio.file.Files.readAllLines(download.path()).get(0);
+    assertThat(page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-type")).containsText("TA");
+    org.junit.jupiter.api.Assertions.assertTrue(
+        download.suggestedFilename().matches("applications-\\d+\\.csv"),
+        download.suggestedFilename());
+    org.junit.jupiter.api.Assertions.assertTrue(
+        firstLine.startsWith("\"id\",\"submittedAt\",\"email\""), firstLine);
+    org.junit.jupiter.api.Assertions.assertTrue(firstLine.contains("\"classLevel\""), firstLine);
   }
 
   @Test
