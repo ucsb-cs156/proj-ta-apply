@@ -466,3 +466,13 @@ The ULA application asks everything the ULA Google Form asked (issue #72).
   trail, on the admin's view, in the CSV download and in the pre-fill of the next application.
 * **Importing prior ULA data** (issue #70): the Google Form's single `GPA` maps to **Overall GPA**
   (`gpaOverall`), not GPA in Major.
+
+# Twenty-fifth Iteration
+
+On the ULA application form, **GPA in Major**, **Overall GPA**, **Year in Program**, **Expected
+Graduation** and **Quarters Previously Served as a ULA** are required (issue #78): the required mark
+on each label, a message when one is left blank on submit, and the same rule in the backend for a
+ULA application (the applicant's POST and PUT and the admin's test application). The TA form leaves
+them optional, and an admin's edit of an existing application is not held to them, as with the
+other ULA questions. Since the count of quarters served decides whether the training commitment is
+asked, every first-time applicant now sees that question.

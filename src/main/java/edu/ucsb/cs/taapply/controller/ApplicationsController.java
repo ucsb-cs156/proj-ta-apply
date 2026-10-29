@@ -474,8 +474,10 @@ public class ApplicationsController extends ApiController {
   /**
    * The questions a ULA applicant must answer, as on the Google Form the ULA application used to
    * be: the perm number, whether they are a BS/MS student, the two employment questions, and, for a
-   * first-time applicant (no previous service), the training commitment. A TA form asks none of
-   * these. An admin editing an application is held only to the perm number's format.
+   * first-time applicant (no previous service), the training commitment. Since issue #78 also both
+   * GPAs, the year in program, the expected graduation and the count of quarters served. A TA form
+   * requires none of these. An admin editing an application is held only to the perm number's
+   * format.
    */
   static void requireUlaAnswers(RecruitmentType type, ApplicationFields fields) {
     if (type != RecruitmentType.ULA) {
@@ -494,6 +496,22 @@ public class ApplicationsController extends ApiController {
     }
     if (fields.priorUcsbEmployment() == null) {
       throw new IllegalArgumentException("Please say whether you have been employed at UCSB");
+    }
+    if (fields.gpaMajor() == null) {
+      throw new IllegalArgumentException("A ULA application needs your GPA in major");
+    }
+    if (fields.gpaOverall() == null) {
+      throw new IllegalArgumentException("A ULA application needs your overall GPA");
+    }
+    if (blankToNull(fields.yearInProgram()) == null) {
+      throw new IllegalArgumentException("A ULA application needs your year in program");
+    }
+    if (blankToNull(fields.graduationDate()) == null) {
+      throw new IllegalArgumentException("A ULA application needs your expected graduation");
+    }
+    if (fields.previousServiceAsUla() == null) {
+      throw new IllegalArgumentException(
+          "A ULA application needs the number of quarters you have served as a ULA (0 if none)");
     }
     if (Integer.valueOf(0).equals(fields.previousServiceAsUla())
         && fields.trainingCommitment() == null) {

@@ -58,6 +58,14 @@ async function addCourse(prefix, courseNumber) {
 
 /** The ULA form's own required questions (issue #72). */
 async function fillUlaRequired() {
+  await userEvent.type(screen.getByTestId("ApplyPage-gpaMajor"), "3.9");
+  await userEvent.type(screen.getByTestId("ApplyPage-gpaOverall"), "3.8");
+  await userEvent.type(screen.getByTestId("ApplyPage-yearInProgram"), "2nd");
+  await userEvent.type(screen.getByTestId("ApplyPage-graduationDate"), "S27");
+  await userEvent.type(
+    screen.getByTestId("ApplyPage-previousServiceAsUla"),
+    "2",
+  );
   await userEvent.type(screen.getByTestId("ApplyPage-permNumber"), "1234567");
   await userEvent.selectOptions(
     screen.getByTestId("ApplyPage-bsMsStudent"),

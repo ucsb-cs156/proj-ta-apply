@@ -496,43 +496,65 @@ export default function ApplicationForm({
           )}
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
-          <Form.Label htmlFor={id("gpaMajor")}>GPA in Major</Form.Label>
+          <Form.Label htmlFor={id("gpaMajor")}>
+            GPA in Major {!isTa && <RequiredField />}
+          </Form.Label>
           <Form.Control
             id={id("gpaMajor")}
             data-testid={id("gpaMajor")}
             type="number"
             step="0.01"
-            {...register("gpaMajor")}
+            isInvalid={Boolean(errors.gpaMajor)}
+            {...register("gpaMajor", { required: !isTa })}
           />
+          <Form.Control.Feedback type="invalid">
+            {errors.gpaMajor && "Your GPA in major is required."}
+          </Form.Control.Feedback>
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
-          <Form.Label htmlFor={id("gpaOverall")}>Overall GPA</Form.Label>
+          <Form.Label htmlFor={id("gpaOverall")}>
+            Overall GPA {!isTa && <RequiredField />}
+          </Form.Label>
           <Form.Control
             id={id("gpaOverall")}
             data-testid={id("gpaOverall")}
             type="number"
             step="0.01"
-            {...register("gpaOverall")}
+            isInvalid={Boolean(errors.gpaOverall)}
+            {...register("gpaOverall", { required: !isTa })}
           />
+          <Form.Control.Feedback type="invalid">
+            {errors.gpaOverall && "Your overall GPA is required."}
+          </Form.Control.Feedback>
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
-          <Form.Label htmlFor={id("yearInProgram")}>Year in Program</Form.Label>
+          <Form.Label htmlFor={id("yearInProgram")}>
+            Year in Program {!isTa && <RequiredField />}
+          </Form.Label>
           <Form.Control
             id={id("yearInProgram")}
             data-testid={id("yearInProgram")}
-            {...register("yearInProgram")}
+            isInvalid={Boolean(errors.yearInProgram)}
+            {...register("yearInProgram", { required: !isTa })}
           />
+          <Form.Control.Feedback type="invalid">
+            {errors.yearInProgram && "Your year in program is required."}
+          </Form.Control.Feedback>
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
           <Form.Label htmlFor={id("graduationDate")}>
-            Expected Graduation
+            Expected Graduation {!isTa && <RequiredField />}
           </Form.Label>
           <Form.Control
             id={id("graduationDate")}
             data-testid={id("graduationDate")}
             placeholder="e.g. S27"
-            {...register("graduationDate")}
+            isInvalid={Boolean(errors.graduationDate)}
+            {...register("graduationDate", { required: !isTa })}
           />
+          <Form.Control.Feedback type="invalid">
+            {errors.graduationDate && "Your expected graduation is required."}
+          </Form.Control.Feedback>
           {!isTa && (
             <Form.Text muted data-testid={id("graduationDate-note")}>
               {GRADUATION_NOTE}
@@ -650,15 +672,21 @@ export default function ApplicationForm({
             </Form.Group>
             <Form.Group as={Col} md={3} className="mb-3">
               <Form.Label htmlFor={id("previousServiceAsUla")}>
-                Quarters Previously Served as a ULA
+                Quarters Previously Served as a ULA <RequiredField />
               </Form.Label>
               <Form.Control
                 id={id("previousServiceAsUla")}
                 data-testid={id("previousServiceAsUla")}
                 type="number"
                 min="0"
-                {...register("previousServiceAsUla")}
+                placeholder="0 if none"
+                isInvalid={Boolean(errors.previousServiceAsUla)}
+                {...register("previousServiceAsUla", { required: true })}
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.previousServiceAsUla &&
+                  "Enter how many quarters you have served as a ULA (0 if none)."}
+              </Form.Control.Feedback>
             </Form.Group>
             <Form.Group as={Col} md={6} className="mb-3">
               <Form.Label htmlFor={id("videoLink")}>Video Link</Form.Label>

@@ -57,6 +57,17 @@ function renderForm({
 /** The ULA form's own required questions (issue #72), when the form is a ULA one. */
 async function fillRequiredUla(prefix = "ApplicationForm") {
   if (!screen.queryByTestId(`${prefix}-permNumber`)) return;
+  // The academic answers a ULA applicant must give (issue #78).
+  for (const [name, value] of [
+    ["gpaMajor", "3.9"],
+    ["gpaOverall", "3.8"],
+    ["yearInProgram", "2nd"],
+    ["graduationDate", "S27"],
+    ["previousServiceAsUla", "2"],
+  ]) {
+    const control = screen.getByTestId(`${prefix}-${name}`);
+    if (control.value === "") await userEvent.type(control, value);
+  }
   await userEvent.type(screen.getByTestId(`${prefix}-permNumber`), "1234567");
   await userEvent.selectOptions(
     screen.getByTestId(`${prefix}-bsMsStudent`),
@@ -840,8 +851,8 @@ describe("ApplicationForm tests", () => {
     expect(payload.lastName).toBe("Lovelace");
     expect(payload.major).toBe("Computer Science");
     expect(payload.gpaMajor).toBe(3.9);
-    // Unanswered, so null rather than zero.
-    expect(payload.gpaOverall).toBeNull();
+    // Required on a ULA form since #78, so filled in by the helper.
+    expect(payload.gpaOverall).toBe(3.8);
     expect(payload.previousServiceAsUla).toBe(2);
     expect(payload.firstChoiceCourse).toBe("CMPSC   156");
     expect(payload.secondChoiceCourse).toBe("");
@@ -2103,6 +2114,10 @@ describe("ApplicationForm tests", () => {
       await fillRequired();
       expect(screen.queryByTestId("ApplicationForm-training")).toBeNull();
 
+      // The helper filled in 2 quarters of service; this applicant has none.
+      await userEvent.clear(
+        screen.getByTestId("ApplicationForm-previousServiceAsUla"),
+      );
       await userEvent.type(
         screen.getByTestId("ApplicationForm-previousServiceAsUla"),
         "0",
@@ -2269,5 +2284,118 @@ describe("ApplicationForm tests", () => {
         "",
       );
     });
+  });
+
+  // ---- the academic answers are required of a ULA applicant (issue #78) ----
+
+  test("a ULA form marks the five academic answers required and refuses to submit without them", async () => {
+    const submitAction = renderForm({
+      type: "ULA",
+      initialContents: {
+        priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+      },
+    });
+    for (const label of [
+      "GPA in Major",
+      "Overall GPA",
+      "Year in Program",
+      "Expected Graduation",
+      "Quarters Previously Served as a ULA",
+    ]) {
+      expect(labelNamed(label).textContent).toMatch(/\*\s*$/);
+    }
+    await fillRequired();
+    for (const name of [
+      "gpaMajor",
+      "gpaOverall",
+      "yearInProgram",
+      "graduationDate",
+      "previousServiceAsUla",
+    ]) {
+      await userEvent.clear(screen.getByTestId(`ApplicationForm-${name}`));
+    }
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    expect(
+      await screen.findByText("Your GPA in major is required."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Your overall GPA is required."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Your year in program is required."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Your expected graduation is required."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Enter how many quarters you have served as a ULA (0 if none).",
+      ),
+    ).toBeInTheDocument();
+    for (const name of [
+      "gpaMajor",
+      "gpaOverall",
+      "yearInProgram",
+      "graduationDate",
+      "previousServiceAsUla",
+    ]) {
+      expect(screen.getByTestId(`ApplicationForm-${name}`)).toHaveClass(
+        "is-invalid",
+      );
+    }
+    expect(submitAction).not.toHaveBeenCalled();
+
+    await userEvent.type(screen.getByTestId("ApplicationForm-gpaMajor"), "3.5");
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-gpaOverall"),
+      "3.4",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-yearInProgram"),
+      "3rd",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-graduationDate"),
+      "W27",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-previousServiceAsUla"),
+      "1",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    const payload = submitAction.mock.calls[0][0];
+    expect(payload.gpaMajor).toBe(3.5);
+    expect(payload.gpaOverall).toBe(3.4);
+    expect(payload.yearInProgram).toBe("3rd");
+    expect(payload.graduationDate).toBe("W27");
+    expect(payload.previousServiceAsUla).toBe(1);
+  });
+
+  test("a TA form leaves the academic answers optional and unmarked", async () => {
+    const submitAction = renderForm({
+      type: "TA",
+      initialContents: {
+        priorCoursework: priorCourseworkFixtures.threeCourses ?? [
+          priorCourseworkFixtures.ucsbCourse,
+          { ...priorCourseworkFixtures.ucsbCourse, courseNumber: "CMPSC 130B" },
+          { ...priorCourseworkFixtures.ucsbCourse, courseNumber: "CMPSC 138" },
+        ],
+      },
+    });
+    for (const label of [
+      "GPA in Major",
+      "Overall GPA",
+      "Year in Program",
+      "Expected Graduation",
+    ]) {
+      expect(labelNamed(label).textContent).not.toMatch(/\*/);
+    }
+    await fillRequired();
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].gpaMajor).toBeNull();
   });
 });
