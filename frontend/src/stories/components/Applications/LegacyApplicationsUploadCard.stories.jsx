@@ -42,3 +42,26 @@ NoTaRecruitments.parameters = {
     ],
   },
 };
+
+/** The same card for the ULA form's responses; its import adds to two lists. */
+export const UlaFormResponses = Template.bind({});
+UlaFormResponses.args = { type: "ULA" };
+UlaFormResponses.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/admin/recruitments/all", () =>
+        HttpResponse.json(recruitmentsFixtures.threeRecruitments),
+      ),
+      http.post("/api/admin/applications/legacy-ula/upload", () =>
+        HttpResponse.json({
+          inserted: 82,
+          alreadyPresent: 0,
+          skipped: 0,
+          problems: [],
+          addedTopics: ["Jupyter Notebooks", "React"],
+          addedInterests: ["Exploring teaching as a career option"],
+        }),
+      ),
+    ],
+  },
+};

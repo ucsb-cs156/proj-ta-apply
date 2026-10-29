@@ -158,6 +158,64 @@ export default function HelpCsvPage() {
           </Accordion.Item>
         </Accordion>
 
+        <h2 className="my-4" id="legacy-ula-applications">
+          ULA Form Responses CSV upload format
+        </h2>
+        <p data-testid="legacyUlaImportDescription">
+          On the <i>ULA App Settings</i> admin page, the{" "}
+          <i>Import ULA Form Responses</i> card takes the ULA application Google
+          Form&apos;s &quot;Form Responses&quot; sheet, downloaded as CSV, and a
+          quarter, and creates one application per row in that quarter&apos;s
+          ULA recruitment, as if the student had entered it. The recruitment
+          must exist first; a row whose email already has an application in it
+          is skipped, so re-uploading is safe, and a row without a usable email
+          is skipped and reported. Columns are found by the start of their
+          question text, so both the form&apos;s original headers and the
+          condensed ones in{" "}
+          <code>docs/sample-data/legacy-ula-csv-example.csv</code> are accepted.
+        </p>
+        <Accordion data-testid="legacyUlaImportAccordion">
+          <Accordion.Item eventKey="0">
+            <Accordion.Header>
+              How the form&apos;s columns are matched
+            </Accordion.Header>
+            <Accordion.Body>
+              <p data-testid="legacyUlaImportMapping">
+                The file must have <code>Email Address</code>,{" "}
+                <code>First name</code> and <code>Last name</code>; the other
+                questions are used when present. The perm number, expected
+                graduation, BS/MS answers, prior-employment answers (the
+                employee ID only when it is a number), previous LA service
+                (&quot;More than 6&quot; reads as 7), training commitment and
+                explanation, GPA (as Overall GPA), major (matched to the ULA
+                majors list, <code>CMPSC (Computer Science)</code> becoming
+                Computer Science), changing major and video link map to the
+                matching fields. The course-preference grid becomes Enthusiastic
+                or Would Consider interest in each course the recruitment lists
+                (Not Applicable is dropped); First and Second Choice become the
+                two choices when the recruitment lists them, otherwise a note in
+                the comments; the lecture and section availability answers
+                become yes/no, with &quot;Only one per week&quot; noted in the
+                availability comments. The familiarity grids become topic
+                proficiencies and the activity grid becomes interests, named as
+                the ULA lists spell them when a name matches (
+                <code>CSIL computing environment</code> matches{" "}
+                <code>CSIL</code>); a name the lists lack is added to them, and
+                the import reports which. A free-text answer to the
+                TA-eligibility question goes into the applicant&apos;s comments;
+                the timestamp goes into the admin comments. Here is an example
+                with a few of the columns and one row:
+              </p>
+              <pre
+                className="csvExample"
+                data-testid="legacyUlaImportCsvExample"
+              >
+                {csvFixtures.legacyUlaResponses}
+              </pre>
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
+
         <h2 className="my-4">CSV Download formats</h2>
         <p data-testid="downloadsSummary">
           Besides the App Settings lists described above, the{" "}

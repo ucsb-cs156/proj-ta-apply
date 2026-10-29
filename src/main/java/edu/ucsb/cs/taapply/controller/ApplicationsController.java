@@ -466,7 +466,7 @@ public class ApplicationsController extends ApiController {
   static final Pattern PERM_NUMBER = Pattern.compile("[A-Z0-9]{7}");
 
   /** The perm number as stored: trimmed and upper case; a blank one is no answer. */
-  static String normalizePermNumber(String permNumber) {
+  public static String normalizePermNumber(String permNumber) {
     String text = blankToNull(permNumber);
     return text == null ? null : text.toUpperCase();
   }
