@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationAuditService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">ApplicationAuditService.java</span></div><h1>ApplicationAuditService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.AuditTrail;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.AuditTrailRepository;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * Writes the audit trail for an admin's edit of a student's application: one row per field whose
+ * value changed, with the value before and after as strings.
+ *
+ * &lt;p&gt;The caller takes a {@link #snapshot} before applying the edit and calls {@link #record} with
+ * it afterwards. A snapshot is the application's answers as strings, keyed by field name: the plain
+ * fields one entry each, and each row of the join tables (a prior course, a topic rating, an
+ * interest level, a course interest) as the JSON of that row. Rows are compared as a set, so a row
+ * that disappeared is recorded with a null new value, and a row that appeared with a null old
+ * value; a prior course that was edited therefore shows as one row removed and one added, since the
+ * form rebuilds those rows on every save and they carry no identity across it.
+ */
+@Service
+<span class="fc" id="L34">public class ApplicationAuditService {</span>
+
+  @Autowired private AuditTrailRepository auditTrailRepository;
+  @Autowired private ObjectMapper objectMapper;
+
+  /** The fields an admin may change, with how to read each as a string; null reads as null. */
+<span class="fc" id="L40">  private static final Map&lt;String, Function&lt;Application, Object&gt;&gt; FIELDS = new LinkedHashMap&lt;&gt;();</span>
+
+  static {
+<span class="fc" id="L43">    FIELDS.put(&quot;firstName&quot;, Application::getFirstName);</span>
+<span class="fc" id="L44">    FIELDS.put(&quot;middleName&quot;, Application::getMiddleName);</span>
+<span class="fc" id="L45">    FIELDS.put(&quot;lastName&quot;, Application::getLastName);</span>
+<span class="fc" id="L46">    FIELDS.put(&quot;major&quot;, Application::getMajor);</span>
+<span class="fc" id="L47">    FIELDS.put(&quot;gpaMajor&quot;, Application::getGpaMajor);</span>
+<span class="fc" id="L48">    FIELDS.put(&quot;gpaOverall&quot;, Application::getGpaOverall);</span>
+<span class="fc" id="L49">    FIELDS.put(&quot;yearInProgram&quot;, Application::getYearInProgram);</span>
+<span class="fc" id="L50">    FIELDS.put(&quot;graduationDate&quot;, Application::getGraduationDate);</span>
+<span class="fc" id="L51">    FIELDS.put(&quot;prevExperience&quot;, Application::getPrevExperience);</span>
+<span class="fc" id="L52">    FIELDS.put(&quot;comments&quot;, Application::getComments);</span>
+<span class="fc" id="L53">    FIELDS.put(&quot;firstChoiceCourse&quot;, Application::getFirstChoiceCourse);</span>
+<span class="fc" id="L54">    FIELDS.put(&quot;secondChoiceCourse&quot;, Application::getSecondChoiceCourse);</span>
+<span class="fc" id="L55">    FIELDS.put(&quot;availableForLecturesFirstChoice&quot;, Application::isAvailableForLecturesFirstChoice);</span>
+<span class="fc" id="L56">    FIELDS.put(&quot;availableForLecturesSecondChoice&quot;, Application::isAvailableForLecturesSecondChoice);</span>
+<span class="fc" id="L57">    FIELDS.put(</span>
+        &quot;availableForDiscussionFirstChoice&quot;, Application::isAvailableForDiscussionFirstChoice);
+<span class="fc" id="L59">    FIELDS.put(</span>
+        &quot;availableForDiscussionSecondChoice&quot;, Application::isAvailableForDiscussionSecondChoice);
+<span class="fc" id="L61">    FIELDS.put(&quot;availabilityCommentsFirstChoice&quot;, Application::getAvailabilityCommentsFirstChoice);</span>
+<span class="fc" id="L62">    FIELDS.put(</span>
+        &quot;availabilityCommentsSecondChoice&quot;, Application::getAvailabilityCommentsSecondChoice);
+<span class="fc" id="L64">    FIELDS.put(&quot;residencyStatus&quot;, Application::getResidencyStatus);</span>
+<span class="fc" id="L65">    FIELDS.put(&quot;languageExam&quot;, Application::getLanguageExam);</span>
+<span class="fc" id="L66">    FIELDS.put(&quot;languageExamDatePassed&quot;, Application::getLanguageExamDatePassed);</span>
+<span class="fc" id="L67">    FIELDS.put(&quot;classLevel&quot;, Application::getClassLevel);</span>
+<span class="fc" id="L68">    FIELDS.put(&quot;videoLink&quot;, Application::getVideoLink);</span>
+<span class="fc" id="L69">    FIELDS.put(&quot;previousServiceAsUla&quot;, Application::getPreviousServiceAsUla);</span>
+<span class="fc" id="L70">    FIELDS.put(&quot;noticeVersionId&quot;, Application::getNoticeVersionId);</span>
+<span class="fc" id="L71">  }</span>
+
+  /** The answers as strings: a plain field's value, or a join table's rows as JSON. */
+<span class="fc" id="L74">  public record Snapshot(Map&lt;String, String&gt; fields, Map&lt;String, Set&lt;String&gt;&gt; rows) {}</span>
+
+  public Snapshot snapshot(Application application) {
+<span class="fc" id="L77">    Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L78">    FIELDS.forEach((name, getter) -&gt; fields.put(name, text(getter.apply(application))));</span>
+
+<span class="fc" id="L80">    Map&lt;String, Set&lt;String&gt;&gt; rows = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L81">    rows.put(&quot;priorCoursework&quot;, courseRows(application.getPriorCoursework()));</span>
+<span class="fc" id="L82">    rows.put(</span>
+<span class="fc" id="L83">        &quot;topicProficiencies&quot;, mapRows(application.getTopicProficiencies(), &quot;topic&quot;, &quot;proficiency&quot;));</span>
+<span class="fc" id="L84">    rows.put(&quot;interests&quot;, mapRows(application.getInterests(), &quot;interest&quot;, &quot;level&quot;));</span>
+<span class="fc" id="L85">    rows.put(&quot;courseInterests&quot;, mapRows(application.getCourseInterests(), &quot;courseId&quot;, &quot;interest&quot;));</span>
+<span class="fc" id="L86">    return new Snapshot(fields, rows);</span>
+  }
+
+  /**
+   * Records every difference between the snapshot taken before the edit and the application as it
+   * is now, and returns the rows written (empty when nothing changed).
+   */
+  public List&lt;AuditTrail&gt; record(Snapshot before, Application after, RecruitmentType type) {
+<span class="fc" id="L94">    Snapshot now = snapshot(after);</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">    Long taId = type == RecruitmentType.TA ? after.getId() : null;</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">    Long ulaId = type == RecruitmentType.ULA ? after.getId() : null;</span>
+<span class="fc" id="L97">    List&lt;AuditTrail&gt; changes = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L99">    before</span>
+<span class="fc" id="L100">        .fields()</span>
+<span class="fc" id="L101">        .forEach(</span>
+            (name, old) -&gt; {
+<span class="fc" id="L103">              String current = now.fields().get(name);</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">              if (!Objects.equals(old, current)) {</span>
+<span class="fc" id="L105">                changes.add(row(taId, ulaId, name, old, current));</span>
+              }
+<span class="fc" id="L107">            });</span>
+
+<span class="fc" id="L109">    before</span>
+<span class="fc" id="L110">        .rows()</span>
+<span class="fc" id="L111">        .forEach(</span>
+            (name, oldRows) -&gt; {
+<span class="fc" id="L113">              Set&lt;String&gt; newRows = now.rows().get(name);</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">              for (String gone : oldRows) {</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">                if (!newRows.contains(gone)) {</span>
+<span class="fc" id="L116">                  changes.add(row(taId, ulaId, name, gone, null));</span>
+                }
+<span class="fc" id="L118">              }</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">              for (String added : newRows) {</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">                if (!oldRows.contains(added)) {</span>
+<span class="fc" id="L121">                  changes.add(row(taId, ulaId, name, null, added));</span>
+                }
+<span class="fc" id="L123">              }</span>
+<span class="fc" id="L124">            });</span>
+
+<span class="fc bfc" id="L126" title="All 2 branches covered.">    if (!changes.isEmpty()) {</span>
+<span class="fc" id="L127">      auditTrailRepository.saveAll(changes);</span>
+    }
+<span class="fc" id="L129">    return changes;</span>
+  }
+
+  private static AuditTrail row(
+      Long taId, Long ulaId, String field, String oldValue, String newValue) {
+<span class="fc" id="L134">    return AuditTrail.builder()</span>
+<span class="fc" id="L135">        .taApplicationId(taId)</span>
+<span class="fc" id="L136">        .ulaApplicationId(ulaId)</span>
+<span class="fc" id="L137">        .fieldName(field)</span>
+<span class="fc" id="L138">        .oldValue(oldValue)</span>
+<span class="fc" id="L139">        .newValue(newValue)</span>
+<span class="fc" id="L140">        .build();</span>
+  }
+
+  /** A blank answer and no answer are the same thing: the form sends &quot;&quot; for a field left empty. */
+  private static String text(Object value) {
+<span class="fc bfc" id="L145" title="All 2 branches covered.">    if (value == null) {</span>
+<span class="fc" id="L146">      return null;</span>
+    }
+<span class="fc" id="L148">    String text = String.valueOf(value);</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">    return text.isBlank() ? null : text;</span>
+  }
+
+  /**
+   * Each prior course as JSON, without its id: the rows are rebuilt on every save, so ids differ.
+   */
+  private Set&lt;String&gt; courseRows(List&lt;PriorCoursework&gt; courses) {
+<span class="fc" id="L156">    Set&lt;String&gt; rows = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L157" title="All 4 branches covered.">    for (PriorCoursework course : courses == null ? List.&lt;PriorCoursework&gt;of() : courses) {</span>
+<span class="fc" id="L158">      Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L159">      row.put(&quot;ucsbCourse&quot;, course.isUcsbCourse());</span>
+<span class="fc" id="L160">      row.put(&quot;otherSchool&quot;, course.getOtherSchool());</span>
+<span class="fc" id="L161">      row.put(&quot;courseNumber&quot;, course.getCourseNumber());</span>
+<span class="fc" id="L162">      row.put(&quot;courseTitle&quot;, course.getCourseTitle());</span>
+<span class="fc" id="L163">      row.put(&quot;term&quot;, course.getTerm());</span>
+<span class="fc" id="L164">      row.put(&quot;grade&quot;, course.getGrade());</span>
+<span class="fc" id="L165">      rows.add(json(row));</span>
+<span class="fc" id="L166">    }</span>
+<span class="fc" id="L167">    return rows;</span>
+  }
+
+  /** Each map entry as a JSON row with the given key and value names, in key order. */
+  private Set&lt;String&gt; mapRows(Map&lt;String, ?&gt; values, String keyName, String valueName) {
+<span class="fc" id="L172">    Set&lt;String&gt; rows = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">    Map&lt;String, ?&gt; sorted = values == null ? Map.of() : new TreeMap&lt;&gt;(values);</span>
+<span class="fc" id="L174">    sorted.forEach(</span>
+        (key, value) -&gt; {
+<span class="fc" id="L176">          Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L177">          row.put(keyName, key);</span>
+<span class="fc" id="L178">          row.put(valueName, value);</span>
+<span class="fc" id="L179">          rows.add(json(row));</span>
+<span class="fc" id="L180">        });</span>
+<span class="fc" id="L181">    return rows;</span>
+  }
+
+  /** valueToTree rather than writeValueAsString: a map of simple values has no checked failure. */
+  private String json(Map&lt;String, Object&gt; row) {
+<span class="fc" id="L186">    return objectMapper.valueToTree(row).toString();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
