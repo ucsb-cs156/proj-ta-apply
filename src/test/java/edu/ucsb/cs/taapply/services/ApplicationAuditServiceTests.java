@@ -116,6 +116,20 @@ public class ApplicationAuditServiceTests {
     assertEquals(List.of(row(null, 7L, "major", "Computer Science", null)), changes);
   }
 
+  /** The form sends "" for a field left empty, which is no change from null, and vice versa. */
+  @Test
+  public void a_blank_answer_and_no_answer_are_the_same() {
+    Application application = application();
+    ApplicationAuditService.Snapshot before = service.snapshot(application);
+
+    application.setMiddleName(""); // was null
+    application.setComments("   "); // was null
+    application.setMajor(""); // was "Computer Science": blanked
+    List<AuditTrail> changes = service.record(before, application, RecruitmentType.TA);
+
+    assertEquals(List.of(row(7L, null, "major", "Computer Science", null)), changes);
+  }
+
   /**
    * Join-table rows are JSON of the whole row; a removed row has no new value, an added one no old.
    */
