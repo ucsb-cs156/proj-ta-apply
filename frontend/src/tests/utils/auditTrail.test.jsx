@@ -3,6 +3,8 @@ import {
   SHOWN_PREFIX,
   SORT_OPTIONS,
   abbreviate,
+  appId,
+  appLabel,
   isLong,
 } from "main/utils/auditTrail";
 
@@ -25,8 +27,8 @@ describe("auditTrail utils", () => {
     expect(SORT_OPTIONS.map((o) => o.value)).toEqual([
       "id",
       "editedAt",
-      "ulaApplicationId",
       "taApplicationId",
+      "ulaApplicationId",
       "fieldName",
       "oldValue",
       "newValue",
@@ -34,11 +36,30 @@ describe("auditTrail utils", () => {
     expect(SORT_OPTIONS.map((o) => o.label)).toEqual([
       "id",
       "Edited",
-      "ULA Application",
-      "TA Application",
+      "App (TA id)",
+      "App (ULA id)",
       "Field",
       "Old Value",
       "New Value",
     ]);
+  });
+
+  /** Issue #63: the two id columns shown as one. */
+  test("appLabel and appId name whichever application a row belongs to", () => {
+    expect(appLabel({ taApplicationId: 7, ulaApplicationId: null })).toBe(
+      "TA 7",
+    );
+    expect(appId({ taApplicationId: 7, ulaApplicationId: null })).toBe(7);
+    expect(appLabel({ taApplicationId: null, ulaApplicationId: 14 })).toBe(
+      "ULA 14",
+    );
+    expect(appId({ taApplicationId: null, ulaApplicationId: 14 })).toBe(14);
+    // Bad data: the check constraint forbids both or neither, but the page must not crash.
+    expect(appLabel({ taApplicationId: null, ulaApplicationId: null })).toBe(
+      "",
+    );
+    expect(appId({ taApplicationId: null, ulaApplicationId: null })).toBeNull();
+    expect(appLabel({ taApplicationId: 3, ulaApplicationId: 4 })).toBe("TA 3");
+    expect(appId({ taApplicationId: 3, ulaApplicationId: 4 })).toBe(3);
   });
 });

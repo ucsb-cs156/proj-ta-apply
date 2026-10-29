@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Button, Modal } from "react-bootstrap";
+import { Link } from "react-router";
 import type { Cell } from "@tanstack/react-table";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
-import { abbreviate, isLong } from "main/utils/auditTrail";
+import { abbreviate, appId, appLabel, isLong } from "main/utils/auditTrail";
+import { adminApplicationPath } from "main/utils/adminApplications";
 
 /** One change an admin made to one field of an application. */
 export type AuditTrailRow = {
@@ -90,20 +92,24 @@ export default function AuditTrailTable({
           : "",
     },
     {
-      header: "ULA Application",
-      id: "ulaApplicationId",
-      accessorKey: "ulaApplicationId",
+      // The TA and ULA ids as one column: "TA 7" or "ULA 9", linking to that application.
+      header: "App",
+      id: "app",
       meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<AuditTrailRow, unknown> }) =>
-        show(cell.row.original.ulaApplicationId),
-    },
-    {
-      header: "TA Application",
-      id: "taApplicationId",
-      accessorKey: "taApplicationId",
-      meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<AuditTrailRow, unknown> }) =>
-        show(cell.row.original.taApplicationId),
+      cell: ({ cell }: { cell: Cell<AuditTrailRow, unknown> }) => {
+        const id = appId(cell.row.original);
+        if (id === null) {
+          return "";
+        }
+        return (
+          <Link
+            to={adminApplicationPath(id)}
+            data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-app-link`}
+          >
+            {appLabel(cell.row.original)}
+          </Link>
+        );
+      },
     },
     {
       header: "Field",

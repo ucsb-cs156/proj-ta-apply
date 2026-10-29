@@ -369,3 +369,12 @@ The TA form's language exam questions follow the legacy form.
 * Changeset 018 widens `language_exam`, maps the old answers onto the new ones (PASSED to
   *passed (F1 or J1 visa)*, FAILED to *not passed*, EXEMPT to *exempt (U.S. Citizen)*) and
   changes `language_exam_date_passed` from a date to text.
+
+# Eighteenth Iteration
+
+The audit trail table's two id columns are one (issue #63).
+
+* **ULA Application** and **TA Application** are replaced by **App**, reading "TA 7" or "ULA 9",
+  which links to that application's admin page (`/admin/applications/:id`). The two ids stay
+  separate in the database and the API; only the table joins them. The page's **Sort by** list
+  keeps both, as *App (TA id)* and *App (ULA id)*, since the server sorts by one column.
