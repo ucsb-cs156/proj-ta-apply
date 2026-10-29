@@ -498,3 +498,12 @@ responses of an applicant's own POST and PUT, including the admin's test-applica
 copy of the application with `adminComments` blanked; the stored row is untouched, and the admin
 endpoints under `/api/admin/applications` keep returning it. No applicant page showed the field, but
 until now it left the server with every applicant response.
+
+# Twenty-seventh Iteration
+
+The three CSV upload widgets share one compact layout (issue #87). The topic and interest lists on
+**TA App Settings** and **ULA App Settings** (`NameListCard`), the legacy application import on those
+pages (`LegacyApplicationsUploadCard`) and the bulk email upload on **Admin > Instructors**
+(`RoleEmailCsvUploadForm`) each put the file picker and its button side by side in a small
+`InputGroup` that takes its natural width (`d-inline-flex w-auto`), so the button sits right after
+the file name instead of at the far edge of the page or on the next line.

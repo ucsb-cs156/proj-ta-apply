@@ -97,6 +97,23 @@ describe("LegacyApplicationsUploadCard tests", () => {
     expect(screen.queryByTestId("Card-button")).toBeNull();
   });
 
+  /** Issue #87: the file picker and the Import button sit side by side at their natural width. */
+  test("the file picker and the Import button share a natural-width input group", async () => {
+    renderCard();
+    const input = await screen.findByTestId("Card-file");
+    const group = input.parentElement;
+    expect(group).toHaveClass(
+      "input-group",
+      "input-group-sm",
+      "d-inline-flex",
+      "w-auto",
+    );
+    expect(screen.getByTestId("Card-button").parentElement).toBe(group);
+    expect(screen.getByTestId("Card-button")).toHaveClass(
+      "btn-outline-primary",
+    );
+  });
+
   test("Import is disabled until both a quarter and a file are chosen", async () => {
     renderCard();
     const select = await screen.findByTestId("Card-quarter");
