@@ -438,38 +438,37 @@ import org.springframework.web.bind.annotation.RestController;
   }
 
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
-  private static void apply(
-      ApplicationFields fields, Application application, RecruitmentType type) {
-<span class="fc" id="L443">    application.setFirstName(fields.firstName());</span>
-<span class="fc" id="L444">    application.setMiddleName(fields.middleName());</span>
-<span class="fc" id="L445">    application.setLastName(fields.lastName());</span>
-<span class="fc" id="L446">    application.setMajor(fields.major());</span>
-<span class="fc" id="L447">    application.setGpaMajor(fields.gpaMajor());</span>
-<span class="fc" id="L448">    application.setGpaOverall(fields.gpaOverall());</span>
-<span class="fc" id="L449">    application.setYearInProgram(fields.yearInProgram());</span>
-<span class="fc" id="L450">    application.setGraduationDate(fields.graduationDate());</span>
-<span class="fc" id="L451">    application.getPriorCoursework().clear();</span>
-<span class="fc" id="L452">    application.getPriorCoursework().addAll(priorCourseworkFrom(fields));</span>
-<span class="fc" id="L453">    application.setTopicProficiencies(topicProficienciesFrom(fields, type));</span>
-<span class="fc" id="L454">    application.setInterests(interestsFrom(fields, type));</span>
-<span class="fc" id="L455">    application.setPrevExperience(fields.prevExperience());</span>
-<span class="fc" id="L456">    application.setComments(fields.comments());</span>
-<span class="fc" id="L457">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
-<span class="fc" id="L458">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
-<span class="fc" id="L459">    application.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
-<span class="fc" id="L460">    application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
-<span class="fc" id="L461">    application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
-<span class="fc" id="L462">    application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
-<span class="fc" id="L463">    application.setAvailabilityCommentsFirstChoice(fields.availabilityCommentsFirstChoice());</span>
-<span class="fc" id="L464">    application.setAvailabilityCommentsSecondChoice(fields.availabilityCommentsSecondChoice());</span>
-<span class="fc" id="L465">    application.setCourseInterests(courseInterestsFrom(fields));</span>
-<span class="fc" id="L466">    application.setResidencyStatus(fields.residencyStatus());</span>
-<span class="fc" id="L467">    application.setLanguageExam(fields.languageExam());</span>
-<span class="fc" id="L468">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
-<span class="fc" id="L469">    application.setClassLevel(fields.classLevel());</span>
-<span class="fc" id="L470">    application.setVideoLink(fields.videoLink());</span>
-<span class="fc" id="L471">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
-<span class="fc" id="L472">    application.setNoticeVersionId(fields.noticeVersionId());</span>
-<span class="fc" id="L473">  }</span>
+  static void apply(ApplicationFields fields, Application application, RecruitmentType type) {
+<span class="fc" id="L442">    application.setFirstName(fields.firstName());</span>
+<span class="fc" id="L443">    application.setMiddleName(fields.middleName());</span>
+<span class="fc" id="L444">    application.setLastName(fields.lastName());</span>
+<span class="fc" id="L445">    application.setMajor(fields.major());</span>
+<span class="fc" id="L446">    application.setGpaMajor(fields.gpaMajor());</span>
+<span class="fc" id="L447">    application.setGpaOverall(fields.gpaOverall());</span>
+<span class="fc" id="L448">    application.setYearInProgram(fields.yearInProgram());</span>
+<span class="fc" id="L449">    application.setGraduationDate(fields.graduationDate());</span>
+<span class="fc" id="L450">    application.getPriorCoursework().clear();</span>
+<span class="fc" id="L451">    application.getPriorCoursework().addAll(priorCourseworkFrom(fields));</span>
+<span class="fc" id="L452">    application.setTopicProficiencies(topicProficienciesFrom(fields, type));</span>
+<span class="fc" id="L453">    application.setInterests(interestsFrom(fields, type));</span>
+<span class="fc" id="L454">    application.setPrevExperience(fields.prevExperience());</span>
+<span class="fc" id="L455">    application.setComments(fields.comments());</span>
+<span class="fc" id="L456">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
+<span class="fc" id="L457">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
+<span class="fc" id="L458">    application.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
+<span class="fc" id="L459">    application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
+<span class="fc" id="L460">    application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
+<span class="fc" id="L461">    application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
+<span class="fc" id="L462">    application.setAvailabilityCommentsFirstChoice(fields.availabilityCommentsFirstChoice());</span>
+<span class="fc" id="L463">    application.setAvailabilityCommentsSecondChoice(fields.availabilityCommentsSecondChoice());</span>
+<span class="fc" id="L464">    application.setCourseInterests(courseInterestsFrom(fields));</span>
+<span class="fc" id="L465">    application.setResidencyStatus(fields.residencyStatus());</span>
+<span class="fc" id="L466">    application.setLanguageExam(fields.languageExam());</span>
+<span class="fc" id="L467">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
+<span class="fc" id="L468">    application.setClassLevel(fields.classLevel());</span>
+<span class="fc" id="L469">    application.setVideoLink(fields.videoLink());</span>
+<span class="fc" id="L470">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
+<span class="fc" id="L471">    application.setNoticeVersionId(fields.noticeVersionId());</span>
+<span class="fc" id="L472">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

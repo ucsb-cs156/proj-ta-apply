@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminApplicationsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">AdminApplicationsController.java</span></div><h1>AdminApplicationsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.ApplicationAuditService;
 import edu.ucsb.cs.taapply.services.ApplicationCsvService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,12 +33,13 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = &quot;AdminApplications&quot;)
 @RequestMapping(&quot;/api/admin/applications&quot;)
 @RestController
-<span class="fc" id="L32">@Slf4j</span>
-<span class="fc" id="L33">public class AdminApplicationsController extends ApiController {</span>
+<span class="fc" id="L36">@Slf4j</span>
+<span class="fc" id="L37">public class AdminApplicationsController extends ApiController {</span>
 
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired ApplicationCsvService applicationCsvService;
+  @Autowired ApplicationAuditService applicationAuditService;
 
   @Operation(
       summary = &quot;Every application to a recruitment, oldest first&quot;,
@@ -45,10 +50,10 @@ import org.springframework.web.bind.annotation.RestController;
   @GetMapping(&quot;/all&quot;)
   public List&lt;Application&gt; allForRecruitment(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc bfc" id="L48" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
-<span class="fc" id="L49">      throw new EntityNotFoundException(Recruitment.class, recruitmentId);</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
+<span class="fc" id="L54">      throw new EntityNotFoundException(Recruitment.class, recruitmentId);</span>
     }
-<span class="fc" id="L51">    return applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId);</span>
+<span class="fc" id="L56">    return applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId);</span>
   }
 
   @Operation(
@@ -62,29 +67,62 @@ import org.springframework.web.bind.annotation.RestController;
   @GetMapping(value = &quot;/csv&quot;, produces = &quot;text/csv&quot;)
   public ResponseEntity&lt;String&gt; downloadCsv(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc" id="L65">    Recruitment recruitment =</span>
+<span class="fc" id="L70">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L67">            .findById(recruitmentId)</span>
-<span class="fc" id="L68">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc" id="L69">    String csv =</span>
-<span class="fc" id="L70">        applicationCsvService.write(</span>
-<span class="fc" id="L71">            recruitment.getType(),</span>
-<span class="fc" id="L72">            applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));</span>
-<span class="fc" id="L73">    return ResponseEntity.ok()</span>
-<span class="fc" id="L74">        .header(</span>
+<span class="fc" id="L72">            .findById(recruitmentId)</span>
+<span class="fc" id="L73">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L74">    String csv =</span>
+<span class="fc" id="L75">        applicationCsvService.write(</span>
+<span class="fc" id="L76">            recruitment.getType(),</span>
+<span class="fc" id="L77">            applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));</span>
+<span class="fc" id="L78">    return ResponseEntity.ok()</span>
+<span class="fc" id="L79">        .header(</span>
             HttpHeaders.CONTENT_DISPOSITION,
-<span class="fc" id="L76">            &quot;attachment; filename=\&quot;applications-%d.csv\&quot;&quot;.formatted(recruitmentId))</span>
-<span class="fc" id="L77">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;))</span>
-<span class="fc" id="L78">        .body(csv);</span>
+<span class="fc" id="L81">            &quot;attachment; filename=\&quot;applications-%d.csv\&quot;&quot;.formatted(recruitmentId))</span>
+<span class="fc" id="L82">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;))</span>
+<span class="fc" id="L83">        .body(csv);</span>
   }
 
   @Operation(summary = &quot;One application, whoever it belongs to&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @GetMapping(&quot;&quot;)
   public Application getApplication(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
-<span class="fc" id="L85">    return applicationRepository</span>
-<span class="fc" id="L86">        .findById(id)</span>
-<span class="fc" id="L87">        .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L90">    return applicationRepository</span>
+<span class="fc" id="L91">        .findById(id)</span>
+<span class="fc" id="L92">        .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+  }
+
+  @Operation(
+      summary = &quot;Edit a student's application as an admin, recording every change&quot;,
+      description =
+          &quot;Takes the same fields as the applicant's own edit, with no deadline or open/closed rule:&quot;
+              + &quot; an admin may correct an application at any time. Each field whose value changes&quot;
+              + &quot; gets a row in the audit trail. The coursework minimum still applies; the notice&quot;
+              + &quot; agreement rule does not, since the applicant agreed, not the admin. 404 for an&quot;
+              + &quot; application that does not exist.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;&quot;)
+  public Application editApplication(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id, @RequestBody ApplicationFields fields) {
+<span class="fc" id="L107">    Application application =</span>
+        applicationRepository
+<span class="fc" id="L109">            .findById(id)</span>
+<span class="fc" id="L110">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L111">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L113">            .findById(application.getRecruitmentId())</span>
+<span class="fc" id="L114">            .orElseThrow(</span>
+                () -&gt;
+<span class="fc" id="L116">                    new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));</span>
+<span class="fc" id="L117">    ApplicationsController.requireCoursework(recruitment.getType(), fields);</span>
+
+<span class="fc" id="L119">    ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);</span>
+<span class="fc" id="L120">    ApplicationsController.apply(fields, application, recruitment.getType());</span>
+<span class="fc" id="L121">    applicationRepository.save(application);</span>
+<span class="fc" id="L122">    List&lt;AuditTrail&gt; changes =</span>
+<span class="fc" id="L123">        applicationAuditService.record(before, application, recruitment.getType());</span>
+<span class="fc" id="L124">    log.info(&quot;Admin edited application {}: {} field(s) changed&quot;, id, changes.size());</span>
+<span class="fc" id="L125">    return application;</span>
   }
 
   @Operation(
@@ -96,13 +134,13 @@ import org.springframework.web.bind.annotation.RestController;
   public Application updateAdminComments(
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;adminComments&quot;) @RequestParam String adminComments) {
-<span class="fc" id="L99">    Application application =</span>
+<span class="fc" id="L137">    Application application =</span>
         applicationRepository
-<span class="fc" id="L101">            .findById(id)</span>
-<span class="fc" id="L102">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
-<span class="fc" id="L103">    application.setAdminComments(adminComments);</span>
-<span class="fc" id="L104">    applicationRepository.save(application);</span>
-<span class="fc" id="L105">    return application;</span>
+<span class="fc" id="L139">            .findById(id)</span>
+<span class="fc" id="L140">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L141">    application.setAdminComments(adminComments);</span>
+<span class="fc" id="L142">    applicationRepository.save(application);</span>
+<span class="fc" id="L143">    return application;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

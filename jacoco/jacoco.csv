@@ -2,6 +2,7 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 taapply,edu.ucsb.cs.taapply.services,ApiRetryHelper.ApiUnavailableException,0,4,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,ApplicationCsvService,0,469,0,14,0,46,0,23,0,16
 taapply,edu.ucsb.cs.taapply.services,RoleEmailCsvService,0,152,0,16,0,39,0,12,0,4
+taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService.Snapshot,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,ApplicationCsvService.Column,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,SystemInfoService,0,3,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,CurrentUserService,0,10,0,2,0,2,0,3,0,2
@@ -9,6 +10,7 @@ taapply,edu.ucsb.cs.taapply.services,NameListCsvService,0,144,0,14,0,31,0,12,0,5
 taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService,0,178,0,12,0,42,0,14,0,8
 taapply,edu.ucsb.cs.taapply.services,RoleEmailCsvService.UploadResult,0,15,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService.UploadResult,0,9,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService,0,468,0,26,0,97,0,26,0,13
 taapply,edu.ucsb.cs.taapply.services,SystemInfoServiceImpl,0,68,0,4,0,18,0,5,0,3
 taapply,edu.ucsb.cs.taapply.services,UCSBCurriculumService,0,355,0,24,0,72,0,23,0,11
 taapply,edu.ucsb.cs.taapply.services,RoleAssignmentService,0,89,0,14,0,17,0,13,0,6
@@ -36,7 +38,7 @@ taapply,edu.ucsb.cs.taapply.enums,CourseInterest,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ResidencyStatus,0,33,0,0,0,6,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,AuditTrailController.AuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,754,0,66,0,164,0,63,0,30
-taapply,edu.ucsb.cs.taapply.controller,AdminApplicationsController,0,114,0,2,0,26,0,10,0,9
+taapply,edu.ucsb.cs.taapply.controller,AdminApplicationsController,0,182,0,2,0,41,0,13,0,12
 taapply,edu.ucsb.cs.taapply.controller,NoticesController,0,66,0,4,0,12,0,9,0,7
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController.ApplicationOptions,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,0,60,0,4,0,16,0,8,0,6
