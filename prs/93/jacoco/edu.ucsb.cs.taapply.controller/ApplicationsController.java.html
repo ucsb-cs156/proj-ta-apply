@@ -486,108 +486,126 @@ import org.springframework.web.bind.annotation.RestController;
   /**
    * The questions a ULA applicant must answer, as on the Google Form the ULA application used to
    * be: the perm number, whether they are a BS/MS student, the two employment questions, and, for a
-   * first-time applicant (no previous service), the training commitment. A TA form asks none of
-   * these. An admin editing an application is held only to the perm number's format.
+   * first-time applicant (no previous service), the training commitment. Since issue #78 also both
+   * GPAs, the year in program, the expected graduation and the count of quarters served. A TA form
+   * requires none of these. An admin editing an application is held only to the perm number's
+   * format.
    */
   static void requireUlaAnswers(RecruitmentType type, ApplicationFields fields) {
-<span class="fc bfc" id="L493" title="All 2 branches covered.">    if (type != RecruitmentType.ULA) {</span>
-<span class="fc" id="L494">      return;</span>
+<span class="fc bfc" id="L495" title="All 2 branches covered.">    if (type != RecruitmentType.ULA) {</span>
+<span class="fc" id="L496">      return;</span>
     }
-<span class="fc bfc" id="L496" title="All 2 branches covered.">    if (normalizePermNumber(fields.permNumber()) == null) {</span>
-<span class="fc" id="L497">      throw new IllegalArgumentException(&quot;A ULA application needs your perm number&quot;);</span>
+<span class="fc bfc" id="L498" title="All 2 branches covered.">    if (normalizePermNumber(fields.permNumber()) == null) {</span>
+<span class="fc" id="L499">      throw new IllegalArgumentException(&quot;A ULA application needs your perm number&quot;);</span>
     }
-<span class="fc" id="L499">    requirePermNumberFormat(fields);</span>
-<span class="fc bfc" id="L500" title="All 2 branches covered.">    if (fields.bsMsStudent() == null) {</span>
-<span class="fc" id="L501">      throw new IllegalArgumentException(&quot;Please say whether you are a BS/MS student&quot;);</span>
+<span class="fc" id="L501">    requirePermNumberFormat(fields);</span>
+<span class="fc bfc" id="L502" title="All 2 branches covered.">    if (fields.bsMsStudent() == null) {</span>
+<span class="fc" id="L503">      throw new IllegalArgumentException(&quot;Please say whether you are a BS/MS student&quot;);</span>
     }
-<span class="fc bfc" id="L503" title="All 2 branches covered.">    if (fields.otherCampusJob() == null) {</span>
-<span class="fc" id="L504">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L505" title="All 2 branches covered.">    if (fields.otherCampusJob() == null) {</span>
+<span class="fc" id="L506">      throw new IllegalArgumentException(</span>
           &quot;Please say whether you will have another campus job this quarter&quot;);
     }
-<span class="fc bfc" id="L507" title="All 2 branches covered.">    if (fields.priorUcsbEmployment() == null) {</span>
-<span class="fc" id="L508">      throw new IllegalArgumentException(&quot;Please say whether you have been employed at UCSB&quot;);</span>
+<span class="fc bfc" id="L509" title="All 2 branches covered.">    if (fields.priorUcsbEmployment() == null) {</span>
+<span class="fc" id="L510">      throw new IllegalArgumentException(&quot;Please say whether you have been employed at UCSB&quot;);</span>
     }
-<span class="fc bfc" id="L510" title="All 2 branches covered.">    if (Integer.valueOf(0).equals(fields.previousServiceAsUla())</span>
-<span class="fc bfc" id="L511" title="All 2 branches covered.">        &amp;&amp; fields.trainingCommitment() == null) {</span>
-<span class="fc" id="L512">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L512" title="All 2 branches covered.">    if (fields.gpaMajor() == null) {</span>
+<span class="fc" id="L513">      throw new IllegalArgumentException(&quot;A ULA application needs your GPA in major&quot;);</span>
+    }
+<span class="fc bfc" id="L515" title="All 2 branches covered.">    if (fields.gpaOverall() == null) {</span>
+<span class="fc" id="L516">      throw new IllegalArgumentException(&quot;A ULA application needs your overall GPA&quot;);</span>
+    }
+<span class="fc bfc" id="L518" title="All 2 branches covered.">    if (blankToNull(fields.yearInProgram()) == null) {</span>
+<span class="fc" id="L519">      throw new IllegalArgumentException(&quot;A ULA application needs your year in program&quot;);</span>
+    }
+<span class="fc bfc" id="L521" title="All 2 branches covered.">    if (blankToNull(fields.graduationDate()) == null) {</span>
+<span class="fc" id="L522">      throw new IllegalArgumentException(&quot;A ULA application needs your expected graduation&quot;);</span>
+    }
+<span class="fc bfc" id="L524" title="All 2 branches covered.">    if (fields.previousServiceAsUla() == null) {</span>
+<span class="fc" id="L525">      throw new IllegalArgumentException(</span>
+          &quot;A ULA application needs the number of quarters you have served as a ULA (0 if none)&quot;);
+    }
+<span class="fc bfc" id="L528" title="All 2 branches covered.">    if (Integer.valueOf(0).equals(fields.previousServiceAsUla())</span>
+<span class="fc bfc" id="L529" title="All 2 branches covered.">        &amp;&amp; fields.trainingCommitment() == null) {</span>
+<span class="fc" id="L530">      throw new IllegalArgumentException(</span>
           &quot;As a first-time ULA applicant, please answer the training commitment question&quot;);
     }
-<span class="fc" id="L515">  }</span>
+<span class="fc" id="L533">  }</span>
 
   /** Fresh rows from the request, trimmed; replaces whatever the application had. */
   static List&lt;PriorCoursework&gt; priorCourseworkFrom(ApplicationFields fields) {
-<span class="fc" id="L519">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L520" title="All 2 branches covered.">    for (PriorCourseworkFields row : fields.priorCoursework()) {</span>
-<span class="fc" id="L521">      rows.add(</span>
-<span class="fc" id="L522">          PriorCoursework.builder()</span>
-<span class="fc" id="L523">              .ucsbCourse(row.ucsbCourse())</span>
-<span class="fc bfc" id="L524" title="All 2 branches covered.">              .otherSchool(row.ucsbCourse() ? null : row.otherSchool().strip())</span>
-<span class="fc" id="L525">              .courseNumber(row.courseNumber().strip())</span>
-<span class="fc" id="L526">              .courseTitle(blankToNull(row.courseTitle()))</span>
-<span class="fc" id="L527">              .term(blankToNull(row.term()))</span>
-<span class="fc" id="L528">              .grade(blankToNull(row.grade()))</span>
-<span class="fc" id="L529">              .build());</span>
-<span class="fc" id="L530">    }</span>
-<span class="fc" id="L531">    return rows;</span>
+<span class="fc" id="L537">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L538" title="All 2 branches covered.">    for (PriorCourseworkFields row : fields.priorCoursework()) {</span>
+<span class="fc" id="L539">      rows.add(</span>
+<span class="fc" id="L540">          PriorCoursework.builder()</span>
+<span class="fc" id="L541">              .ucsbCourse(row.ucsbCourse())</span>
+<span class="fc bfc" id="L542" title="All 2 branches covered.">              .otherSchool(row.ucsbCourse() ? null : row.otherSchool().strip())</span>
+<span class="fc" id="L543">              .courseNumber(row.courseNumber().strip())</span>
+<span class="fc" id="L544">              .courseTitle(blankToNull(row.courseTitle()))</span>
+<span class="fc" id="L545">              .term(blankToNull(row.term()))</span>
+<span class="fc" id="L546">              .grade(blankToNull(row.grade()))</span>
+<span class="fc" id="L547">              .build());</span>
+<span class="fc" id="L548">    }</span>
+<span class="fc" id="L549">    return rows;</span>
   }
 
   private static String blankToNull(String value) {
-<span class="fc bfc" id="L535" title="All 4 branches covered.">    return value == null || value.isBlank() ? null : value.strip();</span>
+<span class="fc bfc" id="L553" title="All 4 branches covered.">    return value == null || value.isBlank() ? null : value.strip();</span>
   }
 
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
   static void apply(ApplicationFields fields, Application application, RecruitmentType type) {
-<span class="fc" id="L540">    application.setFirstName(fields.firstName());</span>
-<span class="fc" id="L541">    application.setMiddleName(fields.middleName());</span>
-<span class="fc" id="L542">    application.setLastName(fields.lastName());</span>
-<span class="fc" id="L543">    application.setMajor(fields.major());</span>
-<span class="fc" id="L544">    application.setGpaMajor(fields.gpaMajor());</span>
-<span class="fc" id="L545">    application.setGpaOverall(fields.gpaOverall());</span>
-<span class="fc" id="L546">    application.setYearInProgram(fields.yearInProgram());</span>
-<span class="fc" id="L547">    application.setGraduationDate(fields.graduationDate());</span>
-<span class="fc" id="L548">    application.getPriorCoursework().clear();</span>
-<span class="fc" id="L549">    application.getPriorCoursework().addAll(priorCourseworkFrom(fields));</span>
-<span class="fc" id="L550">    application.setTopicProficiencies(topicProficienciesFrom(fields, type));</span>
-<span class="fc" id="L551">    application.setInterests(interestsFrom(fields, type));</span>
-<span class="fc" id="L552">    application.setPrevExperience(fields.prevExperience());</span>
-<span class="fc" id="L553">    application.setComments(fields.comments());</span>
-<span class="fc" id="L554">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
-<span class="fc" id="L555">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
+<span class="fc" id="L558">    application.setFirstName(fields.firstName());</span>
+<span class="fc" id="L559">    application.setMiddleName(fields.middleName());</span>
+<span class="fc" id="L560">    application.setLastName(fields.lastName());</span>
+<span class="fc" id="L561">    application.setMajor(fields.major());</span>
+<span class="fc" id="L562">    application.setGpaMajor(fields.gpaMajor());</span>
+<span class="fc" id="L563">    application.setGpaOverall(fields.gpaOverall());</span>
+<span class="fc" id="L564">    application.setYearInProgram(fields.yearInProgram());</span>
+<span class="fc" id="L565">    application.setGraduationDate(fields.graduationDate());</span>
+<span class="fc" id="L566">    application.getPriorCoursework().clear();</span>
+<span class="fc" id="L567">    application.getPriorCoursework().addAll(priorCourseworkFrom(fields));</span>
+<span class="fc" id="L568">    application.setTopicProficiencies(topicProficienciesFrom(fields, type));</span>
+<span class="fc" id="L569">    application.setInterests(interestsFrom(fields, type));</span>
+<span class="fc" id="L570">    application.setPrevExperience(fields.prevExperience());</span>
+<span class="fc" id="L571">    application.setComments(fields.comments());</span>
+<span class="fc" id="L572">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
+<span class="fc" id="L573">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
     // Only the ULA form asks about availability (issue #76); a TA application keeps none, even
     // when a pre-filled earlier answer comes along with the request.
-<span class="fc bfc" id="L558" title="All 2 branches covered.">    boolean asksAvailability = type == RecruitmentType.ULA;</span>
-<span class="fc bfc" id="L559" title="All 2 branches covered.">    application.setAvailableForLecturesFirstChoice(</span>
-<span class="fc bfc" id="L560" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForLecturesFirstChoice());</span>
-<span class="fc bfc" id="L561" title="All 2 branches covered.">    application.setAvailableForLecturesSecondChoice(</span>
-<span class="fc bfc" id="L562" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForLecturesSecondChoice());</span>
-<span class="fc bfc" id="L563" title="All 2 branches covered.">    application.setAvailableForDiscussionFirstChoice(</span>
-<span class="fc bfc" id="L564" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForDiscussionFirstChoice());</span>
-<span class="fc bfc" id="L565" title="All 2 branches covered.">    application.setAvailableForDiscussionSecondChoice(</span>
-<span class="fc bfc" id="L566" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForDiscussionSecondChoice());</span>
-<span class="fc" id="L567">    application.setAvailabilityCommentsFirstChoice(</span>
-<span class="fc bfc" id="L568" title="All 2 branches covered.">        asksAvailability ? fields.availabilityCommentsFirstChoice() : null);</span>
-<span class="fc" id="L569">    application.setAvailabilityCommentsSecondChoice(</span>
-<span class="fc bfc" id="L570" title="All 2 branches covered.">        asksAvailability ? fields.availabilityCommentsSecondChoice() : null);</span>
-<span class="fc" id="L571">    application.setCourseInterests(courseInterestsFrom(fields));</span>
-<span class="fc" id="L572">    application.setResidencyStatus(fields.residencyStatus());</span>
-<span class="fc" id="L573">    application.setLanguageExam(fields.languageExam());</span>
-<span class="fc" id="L574">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
-<span class="fc" id="L575">    application.setClassLevel(fields.classLevel());</span>
-<span class="fc" id="L576">    application.setVideoLink(fields.videoLink());</span>
-<span class="fc" id="L577">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
-<span class="fc" id="L578">    application.setPermNumber(normalizePermNumber(fields.permNumber()));</span>
-<span class="fc" id="L579">    application.setBsMsStudent(fields.bsMsStudent());</span>
-<span class="fc" id="L580">    application.setStudentStatusNextQuarter(fields.studentStatusNextQuarter());</span>
-<span class="fc" id="L581">    application.setWantsTaEligibility(fields.wantsTaEligibility());</span>
-<span class="fc" id="L582">    application.setOtherCampusJob(fields.otherCampusJob());</span>
-<span class="fc" id="L583">    application.setPriorUcsbEmployment(fields.priorUcsbEmployment());</span>
-<span class="fc" id="L584">    application.setEmployeeId(blankToNull(fields.employeeId()));</span>
-<span class="fc" id="L585">    application.setI9Appointment(fields.i9Appointment());</span>
-<span class="fc" id="L586">    application.setTrainingCommitment(fields.trainingCommitment());</span>
-<span class="fc" id="L587">    application.setTrainingCommitmentExplanation(</span>
-<span class="fc" id="L588">        blankToNull(fields.trainingCommitmentExplanation()));</span>
-<span class="fc" id="L589">    application.setChangingMajor(fields.changingMajor());</span>
-<span class="fc" id="L590">    application.setNoticeVersionId(fields.noticeVersionId());</span>
-<span class="fc" id="L591">  }</span>
+<span class="fc bfc" id="L576" title="All 2 branches covered.">    boolean asksAvailability = type == RecruitmentType.ULA;</span>
+<span class="fc bfc" id="L577" title="All 2 branches covered.">    application.setAvailableForLecturesFirstChoice(</span>
+<span class="fc bfc" id="L578" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForLecturesFirstChoice());</span>
+<span class="fc bfc" id="L579" title="All 2 branches covered.">    application.setAvailableForLecturesSecondChoice(</span>
+<span class="fc bfc" id="L580" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForLecturesSecondChoice());</span>
+<span class="fc bfc" id="L581" title="All 2 branches covered.">    application.setAvailableForDiscussionFirstChoice(</span>
+<span class="fc bfc" id="L582" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForDiscussionFirstChoice());</span>
+<span class="fc bfc" id="L583" title="All 2 branches covered.">    application.setAvailableForDiscussionSecondChoice(</span>
+<span class="fc bfc" id="L584" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForDiscussionSecondChoice());</span>
+<span class="fc" id="L585">    application.setAvailabilityCommentsFirstChoice(</span>
+<span class="fc bfc" id="L586" title="All 2 branches covered.">        asksAvailability ? fields.availabilityCommentsFirstChoice() : null);</span>
+<span class="fc" id="L587">    application.setAvailabilityCommentsSecondChoice(</span>
+<span class="fc bfc" id="L588" title="All 2 branches covered.">        asksAvailability ? fields.availabilityCommentsSecondChoice() : null);</span>
+<span class="fc" id="L589">    application.setCourseInterests(courseInterestsFrom(fields));</span>
+<span class="fc" id="L590">    application.setResidencyStatus(fields.residencyStatus());</span>
+<span class="fc" id="L591">    application.setLanguageExam(fields.languageExam());</span>
+<span class="fc" id="L592">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
+<span class="fc" id="L593">    application.setClassLevel(fields.classLevel());</span>
+<span class="fc" id="L594">    application.setVideoLink(fields.videoLink());</span>
+<span class="fc" id="L595">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
+<span class="fc" id="L596">    application.setPermNumber(normalizePermNumber(fields.permNumber()));</span>
+<span class="fc" id="L597">    application.setBsMsStudent(fields.bsMsStudent());</span>
+<span class="fc" id="L598">    application.setStudentStatusNextQuarter(fields.studentStatusNextQuarter());</span>
+<span class="fc" id="L599">    application.setWantsTaEligibility(fields.wantsTaEligibility());</span>
+<span class="fc" id="L600">    application.setOtherCampusJob(fields.otherCampusJob());</span>
+<span class="fc" id="L601">    application.setPriorUcsbEmployment(fields.priorUcsbEmployment());</span>
+<span class="fc" id="L602">    application.setEmployeeId(blankToNull(fields.employeeId()));</span>
+<span class="fc" id="L603">    application.setI9Appointment(fields.i9Appointment());</span>
+<span class="fc" id="L604">    application.setTrainingCommitment(fields.trainingCommitment());</span>
+<span class="fc" id="L605">    application.setTrainingCommitmentExplanation(</span>
+<span class="fc" id="L606">        blankToNull(fields.trainingCommitmentExplanation()));</span>
+<span class="fc" id="L607">    application.setChangingMajor(fields.changingMajor());</span>
+<span class="fc" id="L608">    application.setNoticeVersionId(fields.noticeVersionId());</span>
+<span class="fc" id="L609">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
