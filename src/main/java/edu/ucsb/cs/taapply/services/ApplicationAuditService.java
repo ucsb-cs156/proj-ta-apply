@@ -140,8 +140,13 @@ public class ApplicationAuditService {
         .build();
   }
 
+  /** A blank answer and no answer are the same thing: the form sends "" for a field left empty. */
   private static String text(Object value) {
-    return value == null ? null : String.valueOf(value);
+    if (value == null) {
+      return null;
+    }
+    String text = String.valueOf(value);
+    return text.isBlank() ? null : text;
   }
 
   /**
