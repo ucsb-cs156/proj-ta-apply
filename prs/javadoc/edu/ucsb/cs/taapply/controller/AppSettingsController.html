@@ -64,6 +64,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#TA_TOPICS" tabindex="0">TA_TOPICS</a></li>
 <li><a href="#ULA_MAJORS" tabindex="0">ULA_MAJORS</a></li>
 <li><a href="#ULA_TOPICS" tabindex="0">ULA_TOPICS</a></li>
+<li><a href="#ULA_INTERESTS" tabindex="0">ULA_INTERESTS</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
@@ -100,11 +101,11 @@ loadScripts(document, 'script');</script>
 @RestController
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">AppSettingsController</span>
 <span class="extends-implements">extends <a href="ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></span></div>
-<div class="block">The four admin-maintained name lists behind the TA and ULA application forms: the majors and the
-topics an applicant may pick from.
+<div class="block">The five admin-maintained name lists behind the TA and ULA application forms: the majors and the
+topics an applicant may pick from, and for ULAs the interest areas they rate.
 
-<p>Each list is its own table with a single string column that is also the key, so the four are
-served by one controller keyed on the <code>list</code> path segment rather than four copies of the
+<p>Each list is its own table with a single string column that is also the key, so the five are
+served by one controller keyed on the <code>list</code> path segment rather than five copies of the
 same CRUD code. Renaming is a delete plus an insert, since the name is the key.</div>
 </div>
 </section>
@@ -143,11 +144,14 @@ same CRUD code. Renaming is a delete plus an insert, since the name is the key.<
 <div class="col-second odd-row-color"><code><a href="#TA_TOPICS" class="member-name-link">TA_TOPICS</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#ULA_MAJORS" class="member-name-link">ULA_MAJORS</a></code></div>
+<div class="col-second even-row-color"><code><a href="#ULA_INTERESTS" class="member-name-link">ULA_INTERESTS</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#ULA_TOPICS" class="member-name-link">ULA_TOPICS</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ULA_MAJORS" class="member-name-link">ULA_MAJORS</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#ULA_TOPICS" class="member-name-link">ULA_TOPICS</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -276,6 +280,22 @@ same CRUD code. Renaming is a delete plus an insert, since the name is the key.<
 <dd>
 <ul class="tag-list">
 <li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.AppSettingsController.ULA_TOPICS">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="ULA_INTERESTS">
+<h3>ULA_INTERESTS</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ULA_INTERESTS</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.AppSettingsController.ULA_INTERESTS">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>

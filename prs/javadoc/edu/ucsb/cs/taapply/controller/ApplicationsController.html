@@ -63,7 +63,10 @@ loadScripts(document, 'script');</script>
 <li><a href="#MIN_TA_COURSES" tabindex="0">MIN_TA_COURSES</a></li>
 <li><a href="#MIN_ULA_COURSES" tabindex="0">MIN_ULA_COURSES</a></li>
 <li><a href="#MIN_PROFICIENCY" tabindex="0">MIN_PROFICIENCY</a></li>
-<li><a href="#MAX_PROFICIENCY" tabindex="0">MAX_PROFICIENCY</a></li>
+<li><a href="#MAX_TA_PROFICIENCY" tabindex="0">MAX_TA_PROFICIENCY</a></li>
+<li><a href="#MAX_ULA_PROFICIENCY" tabindex="0">MAX_ULA_PROFICIENCY</a></li>
+<li><a href="#MIN_INTEREST" tabindex="0">MIN_INTEREST</a></li>
+<li><a href="#MAX_INTEREST" tabindex="0">MAX_INTEREST</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
@@ -142,17 +145,32 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>static final int</code></div>
-<div class="col-second even-row-color"><code><a href="#MAX_PROFICIENCY" class="member-name-link">MAX_PROFICIENCY</a></code></div>
+<div class="col-second even-row-color"><code><a href="#MAX_INTEREST" class="member-name-link">MAX_INTEREST</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final int</code></div>
-<div class="col-second odd-row-color"><code><a href="#MIN_PROFICIENCY" class="member-name-link">MIN_PROFICIENCY</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#MAX_TA_PROFICIENCY" class="member-name-link">MAX_TA_PROFICIENCY</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">A TA applicant rates each topic 1 (lowest) to 5 (highest).</div>
+</div>
+<div class="col-first even-row-color"><code>static final int</code></div>
+<div class="col-second even-row-color"><code><a href="#MAX_ULA_PROFICIENCY" class="member-name-link">MAX_ULA_PROFICIENCY</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">A ULA applicant rates each topic 1 (very comfortable), 2 (somewhat) or 3 (not familiar).</div>
+</div>
+<div class="col-first odd-row-color"><code>static final int</code></div>
+<div class="col-second odd-row-color"><code><a href="#MIN_INTEREST" class="member-name-link">MIN_INTEREST</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">A ULA applicant rates each interest area 1 (not interested) to 5 (very interested).</div>
+</div>
+<div class="col-first even-row-color"><code>static final int</code></div>
+<div class="col-second even-row-color"><code><a href="#MIN_PROFICIENCY" class="member-name-link">MIN_PROFICIENCY</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static final int</code></div>
+<div class="col-second odd-row-color"><code><a href="#MIN_TA_COURSES" class="member-name-link">MIN_TA_COURSES</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final int</code></div>
-<div class="col-second even-row-color"><code><a href="#MIN_TA_COURSES" class="member-name-link">MIN_TA_COURSES</a></code></div>
+<div class="col-second even-row-color"><code><a href="#MIN_ULA_COURSES" class="member-name-link">MIN_ULA_COURSES</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>static final int</code></div>
-<div class="col-second odd-row-color"><code><a href="#MIN_ULA_COURSES" class="member-name-link">MIN_ULA_COURSES</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -274,15 +292,66 @@ ownership is checked explicitly rather than relying on a query happening to filt
 </section>
 </li>
 <li>
-<section class="detail" id="MAX_PROFICIENCY">
-<h3>MAX_PROFICIENCY</h3>
+<section class="detail" id="MAX_TA_PROFICIENCY">
+<h3>MAX_TA_PROFICIENCY</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">MAX_PROFICIENCY</span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">MAX_TA_PROFICIENCY</span></div>
+<div class="block">A TA applicant rates each topic 1 (lowest) to 5 (highest).</div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
 <ul class="tag-list">
-<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.ApplicationsController.MAX_PROFICIENCY">Constant Field Values</a></li>
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.ApplicationsController.MAX_TA_PROFICIENCY">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="MAX_ULA_PROFICIENCY">
+<h3>MAX_ULA_PROFICIENCY</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">MAX_ULA_PROFICIENCY</span></div>
+<div class="block">A ULA applicant rates each topic 1 (very comfortable), 2 (somewhat) or 3 (not familiar).</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.ApplicationsController.MAX_ULA_PROFICIENCY">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="MIN_INTEREST">
+<h3>MIN_INTEREST</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">MIN_INTEREST</span></div>
+<div class="block">A ULA applicant rates each interest area 1 (not interested) to 5 (very interested).</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.ApplicationsController.MIN_INTEREST">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="MAX_INTEREST">
+<h3>MAX_INTEREST</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">MAX_INTEREST</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.ApplicationsController.MAX_INTEREST">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
