@@ -553,32 +553,41 @@ import org.springframework.web.bind.annotation.RestController;
 <span class="fc" id="L553">    application.setComments(fields.comments());</span>
 <span class="fc" id="L554">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
 <span class="fc" id="L555">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
-<span class="fc" id="L556">    application.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
-<span class="fc" id="L557">    application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
-<span class="fc" id="L558">    application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
-<span class="fc" id="L559">    application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
-<span class="fc" id="L560">    application.setAvailabilityCommentsFirstChoice(fields.availabilityCommentsFirstChoice());</span>
-<span class="fc" id="L561">    application.setAvailabilityCommentsSecondChoice(fields.availabilityCommentsSecondChoice());</span>
-<span class="fc" id="L562">    application.setCourseInterests(courseInterestsFrom(fields));</span>
-<span class="fc" id="L563">    application.setResidencyStatus(fields.residencyStatus());</span>
-<span class="fc" id="L564">    application.setLanguageExam(fields.languageExam());</span>
-<span class="fc" id="L565">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
-<span class="fc" id="L566">    application.setClassLevel(fields.classLevel());</span>
-<span class="fc" id="L567">    application.setVideoLink(fields.videoLink());</span>
-<span class="fc" id="L568">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
-<span class="fc" id="L569">    application.setPermNumber(normalizePermNumber(fields.permNumber()));</span>
-<span class="fc" id="L570">    application.setBsMsStudent(fields.bsMsStudent());</span>
-<span class="fc" id="L571">    application.setStudentStatusNextQuarter(fields.studentStatusNextQuarter());</span>
-<span class="fc" id="L572">    application.setWantsTaEligibility(fields.wantsTaEligibility());</span>
-<span class="fc" id="L573">    application.setOtherCampusJob(fields.otherCampusJob());</span>
-<span class="fc" id="L574">    application.setPriorUcsbEmployment(fields.priorUcsbEmployment());</span>
-<span class="fc" id="L575">    application.setEmployeeId(blankToNull(fields.employeeId()));</span>
-<span class="fc" id="L576">    application.setI9Appointment(fields.i9Appointment());</span>
-<span class="fc" id="L577">    application.setTrainingCommitment(fields.trainingCommitment());</span>
-<span class="fc" id="L578">    application.setTrainingCommitmentExplanation(</span>
-<span class="fc" id="L579">        blankToNull(fields.trainingCommitmentExplanation()));</span>
-<span class="fc" id="L580">    application.setChangingMajor(fields.changingMajor());</span>
-<span class="fc" id="L581">    application.setNoticeVersionId(fields.noticeVersionId());</span>
-<span class="fc" id="L582">  }</span>
+    // Only the ULA form asks about availability (issue #76); a TA application keeps none, even
+    // when a pre-filled earlier answer comes along with the request.
+<span class="fc bfc" id="L558" title="All 2 branches covered.">    boolean asksAvailability = type == RecruitmentType.ULA;</span>
+<span class="fc bfc" id="L559" title="All 2 branches covered.">    application.setAvailableForLecturesFirstChoice(</span>
+<span class="fc bfc" id="L560" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForLecturesFirstChoice());</span>
+<span class="fc bfc" id="L561" title="All 2 branches covered.">    application.setAvailableForLecturesSecondChoice(</span>
+<span class="fc bfc" id="L562" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForLecturesSecondChoice());</span>
+<span class="fc bfc" id="L563" title="All 2 branches covered.">    application.setAvailableForDiscussionFirstChoice(</span>
+<span class="fc bfc" id="L564" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForDiscussionFirstChoice());</span>
+<span class="fc bfc" id="L565" title="All 2 branches covered.">    application.setAvailableForDiscussionSecondChoice(</span>
+<span class="fc bfc" id="L566" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForDiscussionSecondChoice());</span>
+<span class="fc" id="L567">    application.setAvailabilityCommentsFirstChoice(</span>
+<span class="fc bfc" id="L568" title="All 2 branches covered.">        asksAvailability ? fields.availabilityCommentsFirstChoice() : null);</span>
+<span class="fc" id="L569">    application.setAvailabilityCommentsSecondChoice(</span>
+<span class="fc bfc" id="L570" title="All 2 branches covered.">        asksAvailability ? fields.availabilityCommentsSecondChoice() : null);</span>
+<span class="fc" id="L571">    application.setCourseInterests(courseInterestsFrom(fields));</span>
+<span class="fc" id="L572">    application.setResidencyStatus(fields.residencyStatus());</span>
+<span class="fc" id="L573">    application.setLanguageExam(fields.languageExam());</span>
+<span class="fc" id="L574">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
+<span class="fc" id="L575">    application.setClassLevel(fields.classLevel());</span>
+<span class="fc" id="L576">    application.setVideoLink(fields.videoLink());</span>
+<span class="fc" id="L577">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
+<span class="fc" id="L578">    application.setPermNumber(normalizePermNumber(fields.permNumber()));</span>
+<span class="fc" id="L579">    application.setBsMsStudent(fields.bsMsStudent());</span>
+<span class="fc" id="L580">    application.setStudentStatusNextQuarter(fields.studentStatusNextQuarter());</span>
+<span class="fc" id="L581">    application.setWantsTaEligibility(fields.wantsTaEligibility());</span>
+<span class="fc" id="L582">    application.setOtherCampusJob(fields.otherCampusJob());</span>
+<span class="fc" id="L583">    application.setPriorUcsbEmployment(fields.priorUcsbEmployment());</span>
+<span class="fc" id="L584">    application.setEmployeeId(blankToNull(fields.employeeId()));</span>
+<span class="fc" id="L585">    application.setI9Appointment(fields.i9Appointment());</span>
+<span class="fc" id="L586">    application.setTrainingCommitment(fields.trainingCommitment());</span>
+<span class="fc" id="L587">    application.setTrainingCommitmentExplanation(</span>
+<span class="fc" id="L588">        blankToNull(fields.trainingCommitmentExplanation()));</span>
+<span class="fc" id="L589">    application.setChangingMajor(fields.changingMajor());</span>
+<span class="fc" id="L590">    application.setNoticeVersionId(fields.noticeVersionId());</span>
+<span class="fc" id="L591">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
