@@ -299,3 +299,22 @@ Admins can look over the applications to a recruitment, as a whole and one at a 
 * A new admin-only controller, `/api/admin/applications`, serves the list for a recruitment
   (`/all?recruitmentId=`), one application by id, and the comments update (`PUT /adminComments`).
   Nothing in it changes what the applicant wrote.
+
+# Thirteenth Iteration
+
+A new **Audit Trail** table records every change an admin makes to a field of a student's
+application. Nothing writes to it yet: the admin edit that will is the next iteration, and the
+table and its page come first so that feature has somewhere to record what it does.
+
+* Table `audit_trail` (changeset 017): `id`, `edited_at` (stamped on insert), `ula_application_id`,
+  `ta_application_id`, `field_name` (required), `old_value`, `new_value`. A check constraint
+  requires exactly one of the two application ids. Values are strings whatever the field's type;
+  a row of a join table (a prior course, a topic rating, an interest) is stored as the JSON of the
+  whole row. The old value is null when the field was blank or a row was added; the new value is
+  null when the admin blanked an optional field or deleted a row.
+* **Admin > Audit Trail** shows the whole table, paged on the server, sorted by any column in
+  either direction (newest first by default), via `GET /api/admin/audittrail/all`. An old or new
+  value longer than 30 characters is shown as its first 15 characters, an ellipsis and a
+  **[See value]** link that opens the whole value in a modal.
+* `GET /api/admin/audittrail/application?type=TA|ULA&id=` returns one application's rows,
+  oldest first, for the next iteration's per-application view.

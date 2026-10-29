@@ -31,6 +31,7 @@ import AdminApplicationPage from "main/pages/Admin/AdminApplicationPage";
 import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
 import LegacyTaApplicationPage from "main/pages/Admin/LegacyTaApplicationPage";
+import AuditTrailPage from "main/pages/Admin/AuditTrailPage";
 
 /** Any signed-in user may apply; there is no separate applicant role. */
 const APPLICANT_ROLES = ["ROLE_USER"];
@@ -200,6 +201,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<LegacyTaApplicationPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/audittrail"
+          element={
+            <ProtectedPage
+              component={<AuditTrailPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

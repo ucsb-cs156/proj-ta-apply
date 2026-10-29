@@ -82,6 +82,9 @@ export default function AppNavbar({
                   <NavDropdown.Item as={Link} to="/admin/legacy-ta-application">
                     Legacy TA Application
                   </NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/admin/audittrail">
+                    Audit Trail
+                  </NavDropdown.Item>
                 </NavDropdown>
               )}
               {hasRole(currentUser, "ROLE_ADMIN") && (
