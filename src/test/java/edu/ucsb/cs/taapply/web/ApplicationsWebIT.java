@@ -335,6 +335,11 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-permNumber"))
         .hasClass(java.util.regex.Pattern.compile("is-invalid"));
     page.getByTestId("ApplyPage-permNumber").fill("a1b2c3d");
+    // Both GPAs, the year and the expected graduation are required of a ULA applicant (#78).
+    page.getByTestId("ApplyPage-gpaMajor").fill("3.9");
+    page.getByTestId("ApplyPage-gpaOverall").fill("3.8");
+    page.getByTestId("ApplyPage-yearInProgram").fill("2nd");
+    page.getByTestId("ApplyPage-graduationDate").fill("S27");
     assertThat(page.getByTestId("ApplyPage-studentStatusNextQuarter")).not().isVisible();
     page.getByTestId("ApplyPage-bsMsStudent").selectOption("true");
     page.getByTestId("ApplyPage-studentStatusNextQuarter").selectOption("GRADUATE");
