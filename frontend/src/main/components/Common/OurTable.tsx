@@ -26,6 +26,11 @@ type OurTableProps<T extends object> = {
   columns: LegacyColumn[];
   testid?: string;
   enableSorting?: boolean;
+  /**
+   * Size the table to its content (Bootstrap `w-auto`) instead of the full width of the page,
+   * so each column has its natural width and the slack is left on the right (issue #84).
+   */
+  fitContent?: boolean;
 };
 
 export default function OurTable<T extends object>({
@@ -33,6 +38,7 @@ export default function OurTable<T extends object>({
   columns,
   testid = "testid",
   enableSorting = true,
+  fitContent = false,
 }: OurTableProps<T>): React.JSX.Element {
   const newColumns = convertOldStyleColumnsToNewStyle(columns);
   const memoizedData = useMemo(() => data, [data]);
@@ -51,7 +57,10 @@ export default function OurTable<T extends object>({
   });
 
   return (
-    <table className="table table-striped table-bordered" data-testid={testid}>
+    <table
+      className={`table table-striped table-bordered${fitContent ? " w-auto" : ""}`}
+      data-testid={testid}
+    >
       <thead>
         {table.getHeaderGroups().map((headerGroup, i) => (
           <tr

@@ -55,6 +55,14 @@ describe("CoursesIndexPage tests", () => {
     renderPage();
 
     expect(await screen.findByText("Courses")).toBeInTheDocument();
+    // Issue #84: the wording of the explanation.
+    expect(
+      screen.getByText(/This table shows courses in/).closest("p"),
+    ).toHaveTextContent(
+      "This table shows courses in CMPSC that have been offered in the quarters you have populated this table from. " +
+        "Tick the boxes to indicate whether each course should be listed under TA applications and/or ULA applications " +
+        "the next time the course is offered.",
+    );
     // Subject area comes from systemInfo, not a hardcoded literal.
     expect(await screen.findByText("CMPSC")).toBeInTheDocument();
     expect(
