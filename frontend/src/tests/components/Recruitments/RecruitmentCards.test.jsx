@@ -185,7 +185,15 @@ describe("RecruitmentCards tests", () => {
   });
 
   test("Open Applications and Close Applications ask the backend to flip the status", async () => {
-    renderCards();
+    const queryClient = new QueryClient();
+    const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RecruitmentCards recruitments={three} testIdPrefix="Cards" />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
     // Card 0 is S26 TA, CLOSED (id 3); card 2 is W26 ULA, OPEN (id 2).
     const openButton = screen.getByTestId("Cards-card-0-status-button");
     expect(openButton).toHaveTextContent("Open Applications");
@@ -198,6 +206,11 @@ describe("RecruitmentCards tests", () => {
     await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
     expect(axiosMock.history.put[0].url).toBe("/api/admin/recruitments/status");
     expect(axiosMock.history.put[0].params).toEqual({ id: 3, status: "OPEN" });
+    // The list is refreshed from the backend afterwards.
+    await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(1));
+    expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+      queryKey: ["/api/admin/recruitments/all"],
+    });
 
     await userEvent.click(closeButton);
     await waitFor(() => expect(axiosMock.history.put.length).toBe(2));

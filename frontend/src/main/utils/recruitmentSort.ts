@@ -28,9 +28,9 @@ export function sortRecruitments(
 ): Recruitment[] {
   const text = (recruitment: Recruitment): string => recruitment[key] ?? "";
   return [...recruitments].sort((a, b) => {
-    const byKey = text(a).localeCompare(text(b)) * (descending ? -1 : 1);
+    const byKey = text(a).localeCompare(text(b));
     if (byKey !== 0) {
-      return byKey;
+      return descending ? -byKey : byKey;
     }
     return b.quarter.localeCompare(a.quarter) || a.type.localeCompare(b.type);
   });
