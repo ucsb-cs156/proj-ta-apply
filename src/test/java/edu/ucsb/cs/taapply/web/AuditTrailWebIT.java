@@ -59,8 +59,11 @@ public class AuditTrailWebIT extends WebTestCase {
     // Newest first: the comments change, with its long old value cut short.
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-0-col-fieldName"))
         .containsText("comments");
-    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-0-col-ulaApplicationId"))
-        .containsText("9");
+    // The TA and ULA ids are one "App" column, linking to the application's page.
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-0-col-app")).containsText("ULA 9");
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-0-col-app-link"))
+        .hasAttribute("href", "/admin/applications/9");
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-1-col-app")).containsText("TA 7");
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-0-col-oldValue"))
         .containsText("Happy to help w... [See value]");
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-1-col-fieldName"))

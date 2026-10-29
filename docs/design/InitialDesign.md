@@ -370,6 +370,7 @@ The TA form's language exam questions follow the legacy form.
   *passed (F1 or J1 visa)*, FAILED to *not passed*, EXEMPT to *exempt (U.S. Citizen)*) and
   changes `language_exam_date_passed` from a date to text.
 
+
 # Sixteenth Iteration
 
 The recruitments page is easier to work with on a wide screen (issue #60).
@@ -397,3 +398,11 @@ Admins can see who has been using the app, and who their admins and instructors 
   in has no users row, so their names are blank; a note at the top of each page says so.
 
 
+# Eighteenth Iteration
+
+The audit trail table's two id columns are one (issue #63).
+
+* **ULA Application** and **TA Application** are replaced by **App**, reading "TA 7" or "ULA 9",
+  which links to that application's admin page (`/admin/applications/:id`). The two ids stay
+  separate in the database and the API; only the table joins them. The page's **Sort by** list
+  keeps both, as *App (TA id)* and *App (ULA id)*, since the server sorts by one column.
