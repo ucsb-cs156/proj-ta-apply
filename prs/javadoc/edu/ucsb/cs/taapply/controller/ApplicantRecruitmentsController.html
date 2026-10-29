@@ -95,9 +95,8 @@ loadScripts(document, 'script');</script>
 <div class="block">What an applicant needs to know about recruitments: whether they can apply now, when a past one
 ran, and when an upcoming one is expected to open.
 
-<p>Every response is filtered to the type the current user may apply to, so a grad student is
-never shown a ULA recruitment and vice versa. That filtering happens here rather than in the
-page, so it cannot be bypassed.</div>
+<p>Any signed-in user may apply to any recruitment, TA or ULA, so nothing here is filtered by who
+is asking; each recruitment carries its type for the page to show.</div>
 </div>
 </section>
 <section class="summary">
@@ -205,7 +204,7 @@ page, so it cannot be bypassed.</div>
 <section class="detail" id="openRecruitments()">
 <h3>openRecruitments</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/open")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</span>&nbsp;<span class="element-name">openRecruitments</span>()</div>
 </div>
@@ -215,7 +214,7 @@ page, so it cannot be bypassed.</div>
 <section class="detail" id="upcomingRecruitments()">
 <h3>upcomingRecruitments</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/upcoming")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</span>&nbsp;<span class="element-name">upcomingRecruitments</span>()</div>
 </div>
@@ -225,7 +224,7 @@ page, so it cannot be bypassed.</div>
 <section class="detail" id="recentlyClosed()">
 <h3>recentlyClosed</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/recentlyClosed")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</span>&nbsp;<span class="element-name">recentlyClosed</span>()</div>
 </div>
@@ -235,7 +234,7 @@ page, so it cannot be bypassed.</div>
 <section class="detail" id="applicableRecruitments()">
 <h3>applicableRecruitments</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/applicable")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</span>&nbsp;<span class="element-name">applicableRecruitments</span>()</div>
 </div>
@@ -245,7 +244,7 @@ page, so it cannot be bypassed.</div>
 <section class="detail" id="courseChoices(java.lang.Long)">
 <h3>courseChoices</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/courses")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">courseChoices</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</span></div>
@@ -256,7 +255,7 @@ page, so it cannot be bypassed.</div>
 <section class="detail" id="courseSections(java.lang.Long,java.lang.String)">
 <h3>courseSections</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/sections")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../models/CourseSections.html" title="class in edu.ucsb.cs.taapply.models">CourseSections</a></span>&nbsp;<span class="element-name">courseSections</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
@@ -274,7 +273,7 @@ page, so it cannot be bypassed.</div>
 <section class="detail" id="applicationOptions(java.lang.Long)">
 <h3>applicationOptions</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/options")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ApplicantRecruitmentsController.ApplicationOptions.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController.ApplicationOptions</a></span>&nbsp;<span class="element-name">applicationOptions</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</span></div>

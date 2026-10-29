@@ -189,7 +189,7 @@ append-only history of versions. Applicants read; admins read the history and ap
 <section class="detail" id="current(edu.ucsb.cs.taapply.enums.RecruitmentType)">
 <h3>current</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/notices/current")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/NoticeVersion.html" title="class in edu.ucsb.cs.taapply.entity">NoticeVersion</a>&gt;</span>&nbsp;<span class="element-name">current</span><wbr><span class="parameters">(@RequestParam
  <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</span></div>
@@ -200,7 +200,7 @@ append-only history of versions. Applicants read; admins read the history and ap
 <section class="detail" id="byId(java.lang.Long)">
 <h3>byId</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/notices")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/NoticeVersion.html" title="class in edu.ucsb.cs.taapply.entity">NoticeVersion</a></span>&nbsp;<span class="element-name">byId</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id)</span></div>

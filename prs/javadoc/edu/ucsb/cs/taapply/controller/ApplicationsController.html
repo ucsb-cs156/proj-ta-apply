@@ -317,7 +317,7 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <section class="detail" id="myApplications()">
 <h3>myApplications</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/mine")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</span>&nbsp;<span class="element-name">myApplications</span>()</div>
 </div>
@@ -327,7 +327,7 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <section class="detail" id="getApplication(java.lang.Long)">
 <h3>getApplication</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span>&nbsp;<span class="element-name">getApplication</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id)</span></div>
@@ -338,7 +338,7 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <section class="detail" id="prefill()">
 <h3>prefill</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/prefill")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</span>&nbsp;<span class="element-name">prefill</span>()</div>
 </div>
@@ -348,7 +348,7 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <section class="detail" id="postApplication(java.lang.Long,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)">
 <h3>postApplication</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @PostMapping("/post")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span>&nbsp;<span class="element-name">postApplication</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
@@ -374,7 +374,7 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <section class="detail" id="updateApplication(java.lang.Long,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)">
 <h3>updateApplication</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @PutMapping("")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span>&nbsp;<span class="element-name">updateApplication</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
@@ -387,7 +387,7 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <section class="detail" id="updateComments(java.lang.Long,java.lang.String)">
 <h3>updateComments</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @PutMapping("/comments")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span>&nbsp;<span class="element-name">updateComments</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,

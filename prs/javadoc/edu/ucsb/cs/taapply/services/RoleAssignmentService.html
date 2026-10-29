@@ -62,8 +62,6 @@ loadScripts(document, 'script');</script>
 <li><a href="#ROLE_USER" tabindex="0">ROLE_USER</a></li>
 <li><a href="#ROLE_ADMIN" tabindex="0">ROLE_ADMIN</a></li>
 <li><a href="#ROLE_INSTRUCTOR" tabindex="0">ROLE_INSTRUCTOR</a></li>
-<li><a href="#ROLE_GRAD_STUDENT" tabindex="0">ROLE_GRAD_STUDENT</a></li>
-<li><a href="#ROLE_UNDERGRAD" tabindex="0">ROLE_UNDERGRAD</a></li>
 <li><a href="#UCSB_EMAIL_SUFFIX" tabindex="0">UCSB_EMAIL_SUFFIX</a></li>
 <li><a href="#MANAGED_ROLES" tabindex="0">MANAGED_ROLES</a></li>
 <li><a href="#ACCESS_ROLES" tabindex="0">ACCESS_ROLES</a></li>
@@ -76,7 +74,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
-<li><a href="#grantsAccess(java.util.Collection)" tabindex="0">grantsAccess(Collection)</a></li>
+<li><a href="#grantsAccess(java.lang.String,java.util.Collection)" tabindex="0">grantsAccess(String, Collection)</a></li>
 <li><a href="#isUcsbEmail(java.lang.String)" tabindex="0">isUcsbEmail(String)</a></li>
 <li><a href="#authoritiesFor(java.lang.String)" tabindex="0">authoritiesFor(String)</a></li>
 </ol>
@@ -103,8 +101,9 @@ loadScripts(document, 'script');</script>
 RoleUpdateInterceptor</code> (on every request). Those two must always agree, and they previously held
 separate copies of the logic, which is a drift risk that grows with each new role.
 
-<p>ADMIN, INSTRUCTOR and GRAD_STUDENT are independent: a user may hold any combination. UNDERGRAD
-is the exception, being defined by the absence of the other three.</div>
+<p>There are three roles. ADMIN and INSTRUCTOR are independent: a user may hold either, both or
+neither. USER is held by everyone who is signed in. A user with nothing but USER is an applicant:
+a UCSB student who may apply to any open TA or ULA recruitment.</div>
 </div>
 </section>
 <section class="summary">
@@ -121,7 +120,7 @@ is the exception, being defined by the absence of the other three.</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second even-row-color"><code><a href="#ACCESS_ROLES" class="member-name-link">ACCESS_ROLES</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">Holding at least one of these is what entitles someone to use the app at all.</div>
+<div class="block">Holding one of these entitles someone to use the app whatever their address.</div>
 </div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second odd-row-color"><code><a href="#MANAGED_ROLES" class="member-name-link">MANAGED_ROLES</a></code></div>
@@ -132,13 +131,7 @@ is the exception, being defined by the absence of the other three.</div>
 <div class="col-second even-row-color"><code><a href="#ROLE_ADMIN" class="member-name-link">ROLE_ADMIN</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#ROLE_GRAD_STUDENT" class="member-name-link">ROLE_GRAD_STUDENT</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#ROLE_INSTRUCTOR" class="member-name-link">ROLE_INSTRUCTOR</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#ROLE_UNDERGRAD" class="member-name-link">ROLE_UNDERGRAD</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ROLE_INSTRUCTOR" class="member-name-link">ROLE_INSTRUCTOR</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#ROLE_USER" class="member-name-link">ROLE_USER</a></code></div>
@@ -179,9 +172,11 @@ is the exception, being defined by the absence of the other three.</div>
 <div class="block">Every authority the given email should hold.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#grantsAccess(java.util.Collection)" class="member-name-link">grantsAccess</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;? extends org.springframework.security.core.GrantedAuthority&gt;&nbsp;authorities)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#grantsAccess(java.lang.String,java.util.Collection)" class="member-name-link">grantsAccess</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;? extends org.springframework.security.core.GrantedAuthority&gt;&nbsp;authorities)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Whether these authorities entitle the holder to use the app.</div>
+<div class="block">Whether this user may use the app: anyone with a UCSB address, who is then at least an
+applicant, and anyone in the admin or instructor tables whatever their address.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isUcsbEmail(java.lang.String)" class="member-name-link">isUcsbEmail</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</code></div>
@@ -254,38 +249,6 @@ is the exception, being defined by the absence of the other three.</div>
 </section>
 </li>
 <li>
-<section class="detail" id="ROLE_GRAD_STUDENT">
-<h3>ROLE_GRAD_STUDENT</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ROLE_GRAD_STUDENT</span></div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="tag-list">
-<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.RoleAssignmentService.ROLE_GRAD_STUDENT">Constant Field Values</a></li>
-</ul>
-</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="ROLE_UNDERGRAD">
-<h3>ROLE_UNDERGRAD</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ROLE_UNDERGRAD</span></div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="tag-list">
-<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.RoleAssignmentService.ROLE_UNDERGRAD">Constant Field Values</a></li>
-</ul>
-</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
 <section class="detail" id="UCSB_EMAIL_SUFFIX">
 <h3>UCSB_EMAIL_SUFFIX</h3>
 <div class="horizontal-scroll">
@@ -316,7 +279,7 @@ removed from the database is dropped from a live session too.</div>
 <h3>ACCESS_ROLES</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">ACCESS_ROLES</span></div>
-<div class="block">Holding at least one of these is what entitles someone to use the app at all. ROLE_USER is not
+<div class="block">Holding one of these entitles someone to use the app whatever their address. ROLE_USER is not
 among them: it is granted to anyone who can complete a Google login, which is not a decision
 this app makes.</div>
 </div>
@@ -347,12 +310,15 @@ this app makes.</div>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="grantsAccess(java.util.Collection)">
+<section class="detail" id="grantsAccess(java.lang.String,java.util.Collection)">
 <h3>grantsAccess</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">grantsAccess</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;? extends org.springframework.security.core.GrantedAuthority&gt;&nbsp;authorities)</span></div>
-<div class="block">Whether these authorities entitle the holder to use the app. A signed-in Google user with a
-non-UCSB address who is in none of the role tables has only ROLE_USER, and is turned away.</div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">grantsAccess</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;? extends org.springframework.security.core.GrantedAuthority&gt;&nbsp;authorities)</span></div>
+<div class="block">Whether this user may use the app: anyone with a UCSB address, who is then at least an
+applicant, and anyone in the admin or instructor tables whatever their address. A signed-in
+Google user with an outside address who is in neither table has only ROLE_USER, and is turned
+away.</div>
 </div>
 </section>
 </li>

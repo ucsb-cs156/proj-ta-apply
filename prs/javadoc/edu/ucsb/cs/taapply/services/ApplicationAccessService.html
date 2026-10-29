@@ -63,7 +63,6 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
-<li><a href="#applicableType(java.util.Collection)" tabindex="0">applicableType(Collection)</a></li>
 <li><a href="#acceptingApplications(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">acceptingApplications(Recruitment)</a></li>
 <li><a href="#editable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" tabindex="0">editable(Recruitment, LocalDate)</a></li>
 <li><a href="#commentable(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">commentable(Recruitment)</a></li>
@@ -88,8 +87,9 @@ loadScripts(document, 'script');</script>
 <div class="block">The rules about who may apply to what, and when an application may still be changed.
 
 <p>Kept in one place because the same questions are asked by several endpoints and by the
-frontend, and because getting them wrong is the worst failure this iteration could ship: a grad
-student applying to a ULA recruitment, or an applicant editing after the deadline.</div>
+frontend, and because getting them wrong is the worst failure this iteration could ship: an
+applicant editing after the deadline. Any signed-in user may apply to any recruitment, TA or ULA,
+so there is no rule here about who applies to what.</div>
 </div>
 </section>
 <section class="summary">
@@ -123,20 +123,15 @@ student applying to a ULA recruitment, or an applicant editing after the deadlin
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Applications may only be created against an open recruitment.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applicableType(java.util.Collection)" class="member-name-link">applicableType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;? extends org.springframework.security.core.GrantedAuthority&gt;&nbsp;authorities)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#commentable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">commentable</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">The kind of recruitment this user may apply to, from their role.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#commentable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">commentable</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Whether post-application comments may still be changed.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#editable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">editable</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#editable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">editable</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Whether the whole application may still be edited: the recruitment is open and the primary
 consideration date has not passed.</div>
 </div>
@@ -173,16 +168,6 @@ consideration date has not passed.</div>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
-<li>
-<section class="detail" id="applicableType(java.util.Collection)">
-<h3>applicableType</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&gt;</span>&nbsp;<span class="element-name">applicableType</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;? extends org.springframework.security.core.GrantedAuthority&gt;&nbsp;authorities)</span></div>
-<div class="block">The kind of recruitment this user may apply to, from their role. Grad students apply for TA
-positions and undergrads for ULA positions; anyone else applies for nothing.</div>
-</div>
-</section>
-</li>
 <li>
 <section class="detail" id="acceptingApplications(edu.ucsb.cs.taapply.entity.Recruitment)">
 <h3>acceptingApplications</h3>
