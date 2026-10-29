@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-ta-import-adds-topics","number":73,"title":"Legacy TA import adds unknown knowledge topics to the TA topics list and says so","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/73"}]
+pull_requests: []
