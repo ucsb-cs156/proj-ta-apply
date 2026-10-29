@@ -156,14 +156,15 @@ import org.springframework.web.multipart.MultipartFile;
                 () -&gt;
 <span class="fc" id="L157">                    new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));</span>
 <span class="fc" id="L158">    ApplicationsController.requireCoursework(recruitment.getType(), fields);</span>
+<span class="fc" id="L159">    ApplicationsController.requirePermNumberFormat(fields);</span>
 
-<span class="fc" id="L160">    ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);</span>
-<span class="fc" id="L161">    ApplicationsController.apply(fields, application, recruitment.getType());</span>
-<span class="fc" id="L162">    applicationRepository.save(application);</span>
-<span class="fc" id="L163">    List&lt;AuditTrail&gt; changes =</span>
-<span class="fc" id="L164">        applicationAuditService.record(before, application, recruitment.getType());</span>
-<span class="fc" id="L165">    log.info(&quot;Admin edited application {}: {} field(s) changed&quot;, id, changes.size());</span>
-<span class="fc" id="L166">    return application;</span>
+<span class="fc" id="L161">    ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);</span>
+<span class="fc" id="L162">    ApplicationsController.apply(fields, application, recruitment.getType());</span>
+<span class="fc" id="L163">    applicationRepository.save(application);</span>
+<span class="fc" id="L164">    List&lt;AuditTrail&gt; changes =</span>
+<span class="fc" id="L165">        applicationAuditService.record(before, application, recruitment.getType());</span>
+<span class="fc" id="L166">    log.info(&quot;Admin edited application {}: {} field(s) changed&quot;, id, changes.size());</span>
+<span class="fc" id="L167">    return application;</span>
   }
 
   @Operation(
@@ -175,13 +176,13 @@ import org.springframework.web.multipart.MultipartFile;
   public Application updateAdminComments(
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;adminComments&quot;) @RequestParam String adminComments) {
-<span class="fc" id="L178">    Application application =</span>
+<span class="fc" id="L179">    Application application =</span>
         applicationRepository
-<span class="fc" id="L180">            .findById(id)</span>
-<span class="fc" id="L181">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
-<span class="fc" id="L182">    application.setAdminComments(adminComments);</span>
-<span class="fc" id="L183">    applicationRepository.save(application);</span>
-<span class="fc" id="L184">    return application;</span>
+<span class="fc" id="L181">            .findById(id)</span>
+<span class="fc" id="L182">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L183">    application.setAdminComments(adminComments);</span>
+<span class="fc" id="L184">    applicationRepository.save(application);</span>
+<span class="fc" id="L185">    return application;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
