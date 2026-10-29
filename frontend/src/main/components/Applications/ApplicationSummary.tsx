@@ -233,6 +233,14 @@ export default function ApplicationSummary({
 
   return (
     <>
+      {/* First, as on the form itself (issue #77). */}
+      <NoticeAgreement
+        notice={notice}
+        agreed={application.noticeVersionId === notice?.id}
+        onChange={() => {}}
+        readOnly
+        testIdPrefix={`${testIdPrefix}-notice`}
+      />
       <dl className="row" data-testid={testIdPrefix}>
         {rows.map((row) => (
           <div className="row mb-1" key={row.label}>
@@ -268,13 +276,6 @@ export default function ApplicationSummary({
           testIdPrefix={`${testIdPrefix}-coursework`}
         />
       )}
-      <NoticeAgreement
-        notice={notice}
-        agreed={application.noticeVersionId === notice?.id}
-        onChange={() => {}}
-        readOnly
-        testIdPrefix={`${testIdPrefix}-notice`}
-      />
     </>
   );
 }
