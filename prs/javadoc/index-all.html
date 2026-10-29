@@ -178,6 +178,17 @@ ran, and when an upcoming one is expected to open.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#%3Cinit%3E()" class="member-name-link">ApplicationAccessService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAccessService</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">Writes the audit trail for an admin's edit of a student's application: one row per field whose
+value changed, with the value before and after as strings.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html#%3Cinit%3E()" class="member-name-link">ApplicationAuditService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a> - Record Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">The answers as strings: a plain field's value, or a join table's rows as JSON.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationCsvService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">ApplicationCsvService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
 <dd>
 <div class="block">The applications to one recruitment as a CSV document, one row per application, for an admin to
@@ -448,6 +459,8 @@ who has just chosen that course.</div>
 <div class="block">Whether the whole application may still be edited: the recruitment is open and the primary
 consideration date has not passed.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#editApplication(java.lang.Long,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">editApplication(Long, ApplicationsController.ApplicationFields)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/package-summary.html">edu.ucsb.cs.taapply</a> - package edu.ucsb.cs.taapply</dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/collections/package-summary.html">edu.ucsb.cs.taapply.collections</a> - package edu.ucsb.cs.taapply.collections</dt>
@@ -555,6 +568,10 @@ both Summer and Fall are reachable.</div>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/NameListCsvService.UploadResult.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/NameListCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService.UploadResult</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
@@ -589,6 +606,10 @@ both Summer and Fall are reachable.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html#familyName()" class="member-name-link">familyName()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>familyName</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html#fields()" class="member-name-link">fields()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>fields</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/config/SecurityConfig.html#filterChain(org.springframework.security.config.annotation.web.builders.HttpSecurity)" class="member-name-link">filterChain(HttpSecurity)</a> - Method in class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/SecurityConfig.html" title="class in edu.ucsb.cs.taapply.config">SecurityConfig</a></dt>
 <dd>&nbsp;</dd>
@@ -829,6 +850,10 @@ applicant, and anyone in the admin or instructor tables whatever their address.<
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html" title="class in edu.ucsb.cs.taapply.models">CourseSections.Meeting</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -1268,6 +1293,11 @@ does.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html#recentlyClosed()" class="member-name-link">recentlyClosed()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">record(ApplicationAuditService.Snapshot, Application, RecruitmentType)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService</a></dt>
+<dd>
+<div class="block">Records every difference between the snapshot taken before the edit and the application as it
+is now, and returns the rows written (empty when nothing changed).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/Recruitment.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
 <dd>
 <div class="block">A hiring round for one quarter and one type of position.</div>
@@ -1342,6 +1372,10 @@ effect without requiring re-login.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/interceptors/RoleUpdateInterceptor.html#%3Cinit%3E()" class="member-name-link">RoleUpdateInterceptor()</a> - Constructor for class edu.ucsb.cs.taapply.interceptors.<a href="edu/ucsb/cs/taapply/interceptors/RoleUpdateInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">RoleUpdateInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html#rows()" class="member-name-link">rows()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>rows</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/startup/ScaffoldApplicationRunner.html#run(org.springframework.boot.ApplicationArguments)" class="member-name-link">run(ApplicationArguments)</a> - Method in class edu.ucsb.cs.taapply.startup.<a href="edu/ucsb/cs/taapply/startup/ScaffoldApplicationRunner.html" title="class in edu.ucsb.cs.taapply.startup">ScaffoldApplicationRunner</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/startup/WiremockApplicationRunner.html#run(org.springframework.boot.ApplicationArguments)" class="member-name-link">run(ApplicationArguments)</a> - Method in class edu.ucsb.cs.taapply.startup.<a href="edu/ucsb/cs/taapply/startup/WiremockApplicationRunner.html" title="class in edu.ucsb.cs.taapply.startup">WiremockApplicationRunner</a></dt>
@@ -1396,6 +1430,12 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/utilities/Sleep.html#sleepQuietly(long)" class="member-name-link">sleepQuietly(long)</a> - Static method in class edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/Sleep.html" title="class in edu.ucsb.cs.taapply.utilities">Sleep</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html#snapshot(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">snapshot(Application)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html#%3Cinit%3E(java.util.Map,java.util.Map)" class="member-name-link">Snapshot(Map, Map)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>Snapshot</code> record class.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AuditTrailController.html#SORTABLE" class="member-name-link">SORTABLE</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AuditTrailController.html" title="class in edu.ucsb.cs.taapply.controller">AuditTrailController</a></dt>
 <dd>
 <div class="block">The columns the page may sort by: every column of the table.</div>
@@ -1511,6 +1551,10 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/models/Quarter.html#toString()" class="member-name-link">toString()</a> - Method in class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/Quarter.html" title="class in edu.ucsb.cs.taapply.models">Quarter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/NameListCsvService.UploadResult.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/NameListCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService.UploadResult</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>

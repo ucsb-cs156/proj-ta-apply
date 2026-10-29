@@ -166,10 +166,18 @@ the order they are declared.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicationCsvService.</span><code><a href="../../services/ApplicationCsvService.html#write(edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List)" class="member-name-link">write</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/AuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">AuditTrail</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">record</a><wbr>(<a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a>&nbsp;before,
+ <a href="../../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;after,
+ <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
 <div class="col-last even-row-color">
+<div class="block">Records every difference between the snapshot taken before the edit and the application as it
+is now, and returns the rows written (empty when nothing changed).</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">ApplicationCsvService.</span><code><a href="../../services/ApplicationCsvService.html#write(edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List)" class="member-name-link">write</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">The document: a header row, then one row per application, every field quoted.</div>
 </div>
 </div>
