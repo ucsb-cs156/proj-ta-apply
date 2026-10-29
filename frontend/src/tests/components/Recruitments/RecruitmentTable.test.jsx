@@ -55,8 +55,50 @@ describe("RecruitmentTable tests", () => {
       "Applications",
       "Courses",
       "Test",
+      "Review",
       "Delete",
     ]);
+  });
+
+  /** For repeating one recruitment at the top of its applications page: fields, no buttons. */
+  test("readOnly shows only the field columns and no buttons", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <RecruitmentTable
+            recruitments={[recruitmentsFixtures.threeRecruitments[0]]}
+            readOnly
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const headers = Array.from(
+      document.querySelectorAll('[data-testid="RecruitmentTable"] thead th'),
+    ).map((th) => th.textContent.trim());
+    expect(headers).toEqual([
+      "Quarter",
+      "Type",
+      "Status",
+      "Tentative Opening",
+      "Primary Consideration",
+      "Actually Opened",
+      "Actually Closed",
+    ]);
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
+    expect(
+      screen.getByTestId("RecruitmentTable-cell-row-0-col-quarter"),
+    ).toHaveTextContent("S26");
+  });
+
+  test("the Applications button links to that recruitment's review page", () => {
+    renderTable();
+    const link = screen.getByTestId(
+      "RecruitmentTable-cell-row-1-col-review-button",
+    );
+    expect(link).toHaveTextContent("Applications");
+    expect(link).toHaveAttribute("href", "/admin/recruitments/2/applications");
   });
 
   /** Stored as YYYYQ so it sorts; shown as QYY because that is how people say it. */

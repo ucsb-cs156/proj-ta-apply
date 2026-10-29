@@ -46,6 +46,10 @@ export type Application = {
   classLevel: string | null;
   videoLink: string | null;
   previousServiceAsUla: number | null;
+  /** When the application was first submitted, as an ISO date-time; null for rows older than it. */
+  submittedAt: string | null;
+  /** An admin's free-text notes; null until an admin writes some. */
+  adminComments: string | null;
   /** The notice version the applicant agreed to; null for applications older than any notice. */
   noticeVersionId: number | null;
 };

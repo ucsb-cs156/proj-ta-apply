@@ -4,6 +4,7 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 
 import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
+import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
@@ -14,6 +15,7 @@ import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
@@ -80,6 +82,7 @@ public class ApplicationsWebIT extends WebTestCase {
   @Autowired UlaTopicRepository ulaTopicRepository;
   @Autowired UlaInterestRepository ulaInterestRepository;
   @Autowired NoticeVersionRepository noticeVersionRepository;
+  @Autowired ApplicationRepository applicationRepository;
 
   /** The notice every TA applicant must agree to. */
   private NoticeVersion seedTaNotice() {
@@ -367,6 +370,61 @@ public class ApplicationsWebIT extends WebTestCase {
     page.reload();
     assertThat(page.getByTestId("ApplicationPage-postApplicationComments"))
         .hasValue("Finished CS 290A since.");
+  }
+
+  /** An admin reviews the applications to a recruitment and leaves comments on one (issue #49). */
+  @Test
+  public void an_admin_can_review_the_applications_and_comment_on_one() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(recruitment.getId())
+            .email("grad@ucsb.edu")
+            .firstName("Ada")
+            .lastName("Lovelace")
+            .major("Computer Science")
+            .classLevel(edu.ucsb.cs.taapply.enums.ClassLevel.PHD)
+            .firstChoiceCourse("CMPSC   156")
+            .build());
+
+    setupAdminUser();
+    goTo("/admin/recruitments");
+    page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-review-button").click();
+
+    // The one recruitment repeated at the top, the count, and the application listed.
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-recruitment-cell-row-0-col-type"))
+        .containsText("TA");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-count"))
+        .containsText("1 Application Received");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-name"))
+        .containsText("Ada Lovelace");
+    assertThat(
+            page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-classLevel"))
+        .containsText("PhD");
+    assertThat(
+            page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-submittedAt"))
+        .not()
+        .isEmpty();
+
+    // The id opens the read-only application; Save returns to the list with the comments kept.
+    page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
+    assertThat(page.getByTestId("AdminApplicationPage-summary-Name")).containsText("Ada Lovelace");
+    assertThat(page.getByTestId("AdminApplicationPage-about")).containsText("grad@ucsb.edu");
+    page.getByTestId("AdminApplicationPage-adminComments").fill("Interview on Tuesday");
+    page.getByTestId("AdminApplicationPage-save").click();
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-count"))
+        .containsText("1 Application Received");
+
+    page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
+    assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
+        .hasValue("Interview on Tuesday");
+    // Cancel goes back without saving.
+    page.getByTestId("AdminApplicationPage-adminComments").fill("discarded");
+    page.getByTestId("AdminApplicationPage-cancel").click();
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-count")).isVisible();
+    page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
+    assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
+        .hasValue("Interview on Tuesday");
   }
 
   /** An admin previews the form from the recruitments table; the result is flagged as a test. */
