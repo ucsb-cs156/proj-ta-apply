@@ -563,7 +563,7 @@ public class LegacyApplicationCsvService {
     return lines.isEmpty() ? null : String.join("\n", lines);
   }
 
-  /** Where the row came from and the export's bookkeeping, for admins only. */
+  /** Where the row came from and the export's bookkeeping (not must_hire), for admins only. */
   static String adminComments(Map<String, String> row) {
     List<String> parts = new ArrayList<>();
     parts.add("Imported from the legacy TA application");
@@ -579,10 +579,8 @@ public class LegacyApplicationCsvService {
     if (modified != null) {
       parts.add("last modified " + modified);
     }
-    String mustHire = blankToNull(row.get("must_hire"));
-    if (mustHire != null && !"0".equals(mustHire)) {
-      parts.add("must_hire " + mustHire);
-    }
+    // The export's must_hire column is deliberately left out: it was not used in recent
+    // recruitments, so it reads "no" even for a must-hire, which would mislead (issue #74).
     String text = String.join("; ", parts) + ".";
     String reviewer = blankToNull(row.get("comments_reviewer"));
     if (reviewer != null) {

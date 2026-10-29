@@ -532,17 +532,21 @@ public class LegacyApplicationCsvServiceTests {
             List.of("CMPSC 111")));
   }
 
+  /** must_hire is left out whatever it says: the column was unused and always reads no (#74). */
   @Test
-  public void admin_comments_record_where_the_row_came_from() {
+  public void admin_comments_record_where_the_row_came_from_but_never_must_hire() {
     assertEquals(
         "Imported from the legacy TA application.",
         LegacyApplicationCsvService.adminComments(Map.of("must_hire", "0")));
     assertEquals(
         "Imported from the legacy TA application.",
+        LegacyApplicationCsvService.adminComments(Map.of("must_hire", "1")));
+    assertEquals(
+        "Imported from the legacy TA application.",
         LegacyApplicationCsvService.adminComments(Map.of()));
     assertEquals(
         "Imported from the legacy TA application; legacy quarter F25; submitted 2025-11-01"
-            + " 09:00:00; last modified 2025-11-02 10:00:00; must_hire 1.\n"
+            + " 09:00:00; last modified 2025-11-02 10:00:00.\n"
             + "Reviewer comments: Hire, please",
         LegacyApplicationCsvService.adminComments(
             Map.of(

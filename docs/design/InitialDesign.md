@@ -428,7 +428,8 @@ form (issue #65).
   `prev_experience` as one line per course; desired courses as ENTHUSIASTIC interest in each course
   the recruitment lists. Preferred job and hours, and desired courses the recruitment does not
   list, go into the applicant's comments so nothing is lost and they can edit it; the export's
-  dates, must_hire and reviewer comments go into the admin comments.
+  dates and reviewer comments go into the admin comments. Its `must_hire` column is left out: it was
+  not used in recent recruitments and always reads no, even for a must-hire (issue #74).
 * The pre-fill of a new application (`GET /api/applications/prefill`) now picks the applicant's
   application for the most recent recruitment quarter rather than the most recently inserted row,
   since an imported application is newer as a row but older as an application.
