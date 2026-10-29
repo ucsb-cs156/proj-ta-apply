@@ -8,6 +8,7 @@ import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
+import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 
 const axiosMock = new AxiosMockAdapter(axios);
 
@@ -38,6 +39,9 @@ describe("TaAppSettingsPage tests", () => {
       .onGet("/api/admin/settings/ta-topics/all")
       .reply(200, appSettingsFixtures.twoTopics);
     axiosMock.onGet("/api/admin/notices/all").reply(200, []);
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, recruitmentsFixtures.threeRecruitments);
   });
 
   test("has a Notices, Terms and Conditions card for the TA form", async () => {
@@ -96,5 +100,20 @@ describe("TaAppSettingsPage tests", () => {
         ]),
       ),
     );
+  });
+
+  /** Issue #65: the legacy export is imported from here, into one TA recruitment. */
+  test("has an Import Legacy TA Applications card offering the TA quarters", async () => {
+    renderPage();
+
+    expect(screen.getByTestId("TaAppSettingsPage-legacy")).toHaveClass("card");
+    expect(
+      screen.getByRole("heading", { name: "Import Legacy TA Applications" }),
+    ).toBeInTheDocument();
+    const select = await screen.findByTestId(
+      "TaAppSettingsPage-legacy-quarter",
+    );
+    await waitFor(() => expect(select.options.length).toBe(3));
+    expect(select.options[1].textContent).toBe("S26");
   });
 });

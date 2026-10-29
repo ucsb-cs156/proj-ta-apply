@@ -108,6 +108,55 @@ export default function HelpCsvPage() {
           </Accordion.Item>
         </Accordion>
 
+        <h2 className="my-4" id="legacy-ta-applications">
+          Legacy TA Applications CSV upload format
+        </h2>
+        <p data-testid="legacyImportDescription">
+          On the <i>TA App Settings</i> admin page, the{" "}
+          <i>Import Legacy TA Applications</i> card takes the old PHP TA
+          application&apos;s database export and a quarter, and creates one
+          application per row in that quarter&apos;s TA recruitment, as if the
+          student had entered it. A student who applied through the old app then
+          finds their next application already filled in with those answers. The
+          recruitment must exist first (create it under <i>Recruitments</i>); a
+          row whose email already has an application in it is skipped, so
+          re-uploading is safe, and a row without a usable email is skipped and
+          reported.
+        </p>
+        <Accordion data-testid="legacyImportAccordion">
+          <Accordion.Item eventKey="0">
+            <Accordion.Header>
+              How the legacy columns are matched
+            </Accordion.Header>
+            <Accordion.Body>
+              <p data-testid="legacyImportMapping">
+                The file must have a header row with at least <code>email</code>
+                , <code>first_name</code> and <code>last_name</code>; the other
+                legacy columns are used when present and ignored when not.
+                Names, GPAs, year, graduation date, residency status, language
+                exam and class level map to the matching fields; <code>CS</code>{" "}
+                as a major means Computer Science. <code>coursework_ucsb</code>{" "}
+                (<code>course:grade</code>), <code>coursework_other</code> (
+                <code>title:school:equivalent UCSB course</code>) and{" "}
+                <code>coursework_290</code> (
+                <code>description:instructor:grade</code>) become rows of the
+                prior coursework table; <code>knowledge</code> (
+                <code>topic:rating</code>) becomes topic proficiencies, named as
+                the TA topics list spells them when they match;{" "}
+                <code>prev_experience</code> becomes one line per course; the
+                desired courses become enthusiastic interest in each course the
+                recruitment lists. Preferred job and hours, and desired courses
+                the recruitment does not list, are kept in the applicant&apos;s
+                comments; the submission dates and reviewer comments go into the
+                admin comments. Here is an example with one row:
+              </p>
+              <pre className="csvExample" data-testid="legacyImportCsvExample">
+                {csvFixtures.legacyTaApplications}
+              </pre>
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
+
         <h2 className="my-4">CSV Download formats</h2>
         <p data-testid="downloadsSummary">
           Besides the App Settings lists described above, the{" "}

@@ -1,12 +1,18 @@
-# Sample data from the legacy TA application
+# Sample data from the legacy applications
 
-`legacy-csv-example.csv` is an export of the legacy PHP TA application's database with every
-value that could be traced to a real applicant removed or replaced. It has the real export's
-header, row count and column formats, so it can be used to design and test the CSV import of
-legacy data, and it is safe to keep in the repository.
+Two files here are exports of the applications students made before this app existed, with every
+value that could be traced to a real applicant removed or replaced. Each has its real export's
+header, row count and column formats, so it can be used to design and test the import of legacy
+data, and is safe to keep in the repository.
 
-The real export is FERPA-protected. Never commit it. The file here was produced from it by
-`obfuscate-legacy-ta-app-data.py`, and only the output is committed.
+| File | What it is | Made by |
+|---|---|---|
+| `legacy-ta-app-csv-example.csv` | The legacy PHP **TA** application's database export | `obfuscate-legacy-ta-app-data.py` |
+| `legacy-ula-csv-example.csv` | The **ULA** application Google Form's "Form Responses" sheet, downloaded as CSV | `obfuscate-legacy-ula-app-data.py` |
+
+The real exports are FERPA-protected. Never commit them. Only the scripts' output is committed.
+
+# The TA export: `obfuscate-legacy-ta-app-data.py`
 
 ## Usage
 
@@ -28,7 +34,7 @@ and the output file should not be used.
 The file in this directory was made with:
 
 ```
-python3 docs/sample-data/obfuscate-legacy-ta-app-data.py sample-data-original.csv docs/sample-data/legacy-csv-example.csv
+python3 docs/sample-data/obfuscate-legacy-ta-app-data.py sample-data-original.csv docs/sample-data/legacy-ta-app-csv-example.csv
 ```
 
 ## What the script does
@@ -84,3 +90,62 @@ The steps run in this order.
 The last three columns of the export (`modified_by`, `application_quarter`, `must_hire`) hold a
 single value each and are left as they are, as are the two empty columns
 (`desired_courses_grad` and the unnamed trailing column).
+
+# The ULA export: `obfuscate-legacy-ula-app-data.py`
+
+## Usage
+
+```
+python3 docs/sample-data/obfuscate-legacy-ula-app-data.py INPUT.csv OUTPUT.csv [--seed N]
+```
+
+| Parameter | Meaning |
+|---|---|
+| `INPUT.csv` | The ULA application form's "Form Responses" sheet, downloaded from Google Sheets as CSV (read only). |
+| `OUTPUT.csv` | Where the obfuscated CSV is written; overwritten if it exists. |
+| `--seed N` | Random seed, default `20261030`. The same input and seed always give the same output. |
+
+Standard library only, Python 3.9 or later. It prints the number of rows written, any notes, and
+the result of its checks; it exits with status 1 if a check fails. Columns are found by the start
+of their header text (the form's question), so a question's wording may grow without breaking it,
+and a column that is missing is skipped with a note. The file in this directory was made with:
+
+```
+python3 docs/sample-data/obfuscate-legacy-ula-app-data.py "ULA-Application-F26 (Responses) - Form Responses 1.csv" docs/sample-data/legacy-ula-csv-example.csv
+```
+
+## What the script does
+
+1. **Fake identities.** Every row gets a unique fake first and last name (list names that also
+   occur in the input are dropped first), an email built from the fake name on the row's original
+   domain, a random seven-digit perm number, and, where the row had a numeric employee ID, a random
+   seven-digit one; an employee ID that was a remark rather than a number becomes `N/A`.
+2. **Free text replaced.** The TA-eligibility question keeps its two canned answers; any other
+   answer (free text about the applicant's own plans) becomes one neutral sentence. Each
+   non-blank availability comment is replaced by one of a few generic ones, so the count of rows
+   with a comment is kept.
+3. **Video links replaced by viral videos.** Each link becomes a YouTube link to a well-known
+   viral video (Rick Astley's *Never Gonna Give You Up*, *Trololo*, *Nyan Cat*, *Keyboard Cat*,
+   *Charlie bit my finger*, *Gangnam Style*, …), in the short `youtu.be` form where the row used
+   it and the long `youtube.com/watch` form otherwise (Google Drive and other hosts included), so
+   nothing points at a real applicant's video and nobody mistakes a link for one.
+4. **Permutation in blocks.** Answers are shuffled across rows in blocks, so answers that belong
+   together stay consistent within a row while no row keeps any one applicant's set: expected
+   graduation; BS/MS status with the two follow-up questions it reveals; other campus job; prior
+   UCSB employment with the employee ID; previous LA service; the training commitment with its
+   explanation; the whole course-preference grid with the first and second choice and the four
+   availability answers and the availability comment; GPA; major with "changing major?"; all the
+   familiarity ratings; all the activity interests.
+5. **Timestamps shifted.** Each timestamp moves by a random one to seventy-two hours either way,
+   keeping the form's `M/D/YYYY H:MM:SS` layout.
+6. **Checks.** Before writing, the script confirms that no applicant name, email local part,
+   perm number, employee ID or video id from the input remains anywhere, that no timestamp or
+   whole row equals one from the input, that emails and perm numbers are unique, and that the
+   text is ASCII.
+7. **One record per line.** The form puts line breaks inside some of its question texts. In the
+   output every header is one line: the training-commitment paragraph is headed
+   `Agree to statement`, and the four availability questions `Lectures: first choice`,
+   `Lectures: second choice`, `Sections: first choice` and `Sections: second choice`; any other
+   header with a line break is collapsed to one line and reported in a note. No cell can carry a
+   line break, since the only free-text answers are replaced in step 2 and every other column is
+   categorical; the final checks confirm it.

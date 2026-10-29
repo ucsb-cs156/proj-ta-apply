@@ -2,12 +2,14 @@ package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -25,6 +27,9 @@ import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAuditService;
 import edu.ucsb.cs.taapply.services.ApplicationCsvService;
+import edu.ucsb.cs.taapply.services.LegacyApplicationCsvService;
+import edu.ucsb.cs.taapply.services.LegacyApplicationCsvService.ImportResult;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,9 +41,11 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.multipart.MultipartFile;
 
 @WebMvcTest(controllers = AdminApplicationsController.class)
 @Import({
@@ -52,6 +59,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean UserRepository userRepository;
   @MockitoBean AuditTrailRepository auditTrailRepository;
+  @MockitoBean LegacyApplicationCsvService legacyApplicationCsvService;
 
   private static Application application(long id, long recruitmentId, String email, boolean test) {
     return Application.builder()
@@ -543,5 +551,103 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
 
     assertEquals("Application with id 5 not found", responseToJson(response).get("message"));
     verify(applicationRepository, never()).save(any());
+  }
+
+  // ---- POST /legacy/upload ----
+
+  private static MockMultipartFile legacyCsv() {
+    return new MockMultipartFile(
+        "file",
+        "legacy.csv",
+        "text/csv",
+        "email,first_name,last_name\nada@ucsb.edu,Ada,Lovelace\n".getBytes(StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void logged_out_users_cannot_upload_legacy_applications() throws Exception {
+    mockMvc
+        .perform(
+            multipart("/api/admin/applications/legacy/upload?quarter=W26")
+                .file(legacyCsv())
+                .with(csrf()))
+        .andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
+  @Test
+  public void non_admins_cannot_upload_legacy_applications() throws Exception {
+    mockMvc
+        .perform(
+            multipart("/api/admin/applications/legacy/upload?quarter=W26")
+                .file(legacyCsv())
+                .with(csrf()))
+        .andExpect(status().is(403));
+    verify(legacyApplicationCsvService, never()).upload(any(), any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void the_quarter_names_the_ta_recruitment_and_the_file_goes_to_the_service()
+      throws Exception {
+    Recruitment w26 =
+        Recruitment.builder().id(4L).quarter("20261").type(RecruitmentType.TA).build();
+    when(recruitmentRepository.findByQuarterAndType("20261", RecruitmentType.TA))
+        .thenReturn(Optional.of(w26));
+    ImportResult result = new ImportResult(2, 1, 1, List.of("row 4: no usable email address"));
+    when(legacyApplicationCsvService.upload(any(), eq(w26))).thenReturn(result);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                multipart("/api/admin/applications/legacy/upload?quarter=w26")
+                    .file(legacyCsv())
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(mapper.writeValueAsString(result), response.getResponse().getContentAsString());
+    ArgumentCaptor<MultipartFile> file = ArgumentCaptor.forClass(MultipartFile.class);
+    verify(legacyApplicationCsvService, times(1)).upload(file.capture(), eq(w26));
+    assertEquals("legacy.csv", file.getValue().getOriginalFilename());
+    verify(recruitmentRepository, times(1)).findByQuarterAndType("20261", RecruitmentType.TA);
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void a_quarter_with_no_ta_recruitment_is_a_400_saying_to_create_it() throws Exception {
+    when(recruitmentRepository.findByQuarterAndType("20264", RecruitmentType.TA))
+        .thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                multipart("/api/admin/applications/legacy/upload?quarter=F26")
+                    .file(legacyCsv())
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "There is no TA recruitment for F26; create it under Admin > Recruitments first",
+        responseToJson(response).get("message"));
+    verify(legacyApplicationCsvService, never()).upload(any(), any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void a_malformed_quarter_is_a_400() throws Exception {
+    MvcResult response =
+        mockMvc
+            .perform(
+                multipart("/api/admin/applications/legacy/upload?quarter=Winter")
+                    .file(legacyCsv())
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "Quarter should be like W26, S26, M26 or F26 (or 20261), not 'Winter'",
+        responseToJson(response).get("message"));
+    verify(recruitmentRepository, never()).findByQuarterAndType(any(), any());
   }
 }

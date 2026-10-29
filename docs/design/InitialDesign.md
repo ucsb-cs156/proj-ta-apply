@@ -406,3 +406,29 @@ The audit trail table's two id columns are one (issue #63).
   which links to that application's admin page (`/admin/applications/:id`). The two ids stay
   separate in the database and the API; only the table joins them. The page's **Sort by** list
   keeps both, as *App (TA id)* and *App (ULA id)*, since the server sorts by one column.
+
+# Nineteenth Iteration
+
+Applications from the legacy PHP app can be brought in, so returning TAs do not start from a blank
+form (issue #65).
+
+* **Admin > TA App Settings** gains an **Import Legacy TA Applications** card: the admin picks the
+  quarter (one of the TA recruitments that exist, as W26) and the legacy export file, and
+  `POST /api/admin/applications/legacy/upload?quarter=` creates one pending application per row in
+  that recruitment, as if the student had entered it. The recruitment must exist first. A row whose
+  email already has an application there is left alone, so re-uploading is safe; a row with no
+  usable email is skipped and reported. The format is the one in
+  `docs/sample-data/legacy-ta-app-csv-example.csv`, documented on **Help > CSV formats**.
+* `LegacyApplicationCsvService` matches the legacy columns to the new fields as well as it can:
+  names, GPAs, year, graduation date, residency, language exam and class level directly; "CS" as
+  Computer Science, matched to the TA majors list; the three coursework cells as prior coursework
+  rows (a UCSB course number gets its `CMPSC` prefix, a course taken elsewhere keeps its school and
+  the UCSB course it was equivalent to, a 290 seminar keeps its description and instructor);
+  `knowledge` as topic proficiencies, named as the TA topics list spells them when they match;
+  `prev_experience` as one line per course; desired courses as ENTHUSIASTIC interest in each course
+  the recruitment lists. Preferred job and hours, and desired courses the recruitment does not
+  list, go into the applicant's comments so nothing is lost and they can edit it; the export's
+  dates, must_hire and reviewer comments go into the admin comments.
+* The pre-fill of a new application (`GET /api/applications/prefill`) now picks the applicant's
+  application for the most recent recruitment quarter rather than the most recently inserted row,
+  since an imported application is newer as a row but older as an application.

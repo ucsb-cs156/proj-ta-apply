@@ -516,10 +516,12 @@ public class ApplicationsControllerTests extends ControllerTestCase {
       username = "grad",
       roles = {"USER"})
   @Test
-  public void prefill_returns_only_the_most_recent_application() throws Exception {
+  public void prefill_returns_only_the_application_for_the_most_recent_quarter() throws Exception {
     Application newest = application(2L, 1L, GRAD_EMAIL);
     when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL))
         .thenReturn(List.of(newest, application(1L, 3L, GRAD_EMAIL)));
+    when(recruitmentRepository.findAllById(List.of(1L, 3L)))
+        .thenReturn(List.of(recruitment(1L, "20262"), recruitment(3L, "20261")));
 
     MvcResult response =
         mockMvc.perform(get("/api/applications/prefill")).andExpect(status().isOk()).andReturn();
@@ -528,12 +530,60 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         mapper.writeValueAsString(List.of(newest)), response.getResponse().getContentAsString());
   }
 
+  private static Recruitment recruitment(long id, String quarter) {
+    return Recruitment.builder().id(id).quarter(quarter).type(RecruitmentType.TA).build();
+  }
+
+  /**
+   * An application imported from the legacy app's data gets a newer id than one the student made
+   * since, yet belongs to an older quarter: the student's own, newer answers must win.
+   */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void prefill_prefers_the_newest_quarter_over_the_newest_row() throws Exception {
+    Application imported = application(9L, 3L, GRAD_EMAIL);
+    Application own = application(2L, 1L, GRAD_EMAIL);
+    when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL))
+        .thenReturn(List.of(imported, own));
+    when(recruitmentRepository.findAllById(List.of(3L, 1L)))
+        .thenReturn(List.of(recruitment(3L, "20251"), recruitment(1L, "20262")));
+
+    MvcResult response =
+        mockMvc.perform(get("/api/applications/prefill")).andExpect(status().isOk()).andReturn();
+
+    assertEquals(
+        mapper.writeValueAsString(List.of(own)), response.getResponse().getContentAsString());
+  }
+
+  /** A recruitment that has since been deleted sorts its application last. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void prefill_sorts_an_application_whose_recruitment_is_gone_last() throws Exception {
+    Application orphan = application(9L, 8L, GRAD_EMAIL);
+    Application own = application(2L, 1L, GRAD_EMAIL);
+    when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL))
+        .thenReturn(List.of(orphan, own));
+    when(recruitmentRepository.findAllById(List.of(8L, 1L)))
+        .thenReturn(List.of(recruitment(1L, "20201")));
+
+    MvcResult response =
+        mockMvc.perform(get("/api/applications/prefill")).andExpect(status().isOk()).andReturn();
+
+    assertEquals(
+        mapper.writeValueAsString(List.of(own)), response.getResponse().getContentAsString());
+  }
+
   @WithMockUser(
       username = "grad",
       roles = {"USER"})
   @Test
   public void prefill_is_empty_for_a_first_time_applicant() throws Exception {
     when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL)).thenReturn(List.of());
+    when(recruitmentRepository.findAllById(List.of())).thenReturn(List.of());
 
     MvcResult response =
         mockMvc.perform(get("/api/applications/prefill")).andExpect(status().isOk()).andReturn();

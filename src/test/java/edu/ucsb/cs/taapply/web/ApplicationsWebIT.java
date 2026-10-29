@@ -454,9 +454,8 @@ public class ApplicationsWebIT extends WebTestCase {
     // And the whole-table page lists them against the TA application.
     goTo("/admin/audittrail");
     assertThat(page.getByTestId("AuditTrailPage-total")).containsText("4 changes recorded.");
-    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-taApplicationId"))
-        .not()
-        .isEmpty();
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-app")).containsText("TA ");
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-app-link")).isVisible();
   }
 
   /** An admin previews the form from the recruitments table; the result is flagged as a test. */

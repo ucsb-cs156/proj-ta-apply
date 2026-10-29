@@ -1,17 +1,22 @@
 package edu.ucsb.cs.taapply.controller;
 
+import com.opencsv.exceptions.CsvException;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAuditService;
 import edu.ucsb.cs.taapply.services.ApplicationCsvService;
+import edu.ucsb.cs.taapply.services.LegacyApplicationCsvService;
+import edu.ucsb.cs.taapply.services.LegacyApplicationCsvService.ImportResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +25,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * An admin's view of the applications to a recruitment: the whole list, one application in full,
@@ -40,6 +47,7 @@ public class AdminApplicationsController extends ApiController {
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired ApplicationCsvService applicationCsvService;
   @Autowired ApplicationAuditService applicationAuditService;
+  @Autowired LegacyApplicationCsvService legacyApplicationCsvService;
 
   @Operation(
       summary = "Every application to a recruitment, oldest first",
@@ -81,6 +89,39 @@ public class AdminApplicationsController extends ApiController {
             "attachment; filename=\"applications-%d.csv\"".formatted(recruitmentId))
         .contentType(new MediaType("text", "csv"))
         .body(csv);
+  }
+
+  @Operation(
+      summary = "Import the legacy TA application's CSV export into a TA recruitment",
+      description =
+          "One application per row, as if the student had entered it, so their next application"
+              + " is pre-filled from it. The quarter names the TA recruitment, as W26 or 20261;"
+              + " 400 if no TA recruitment exists for it, so create one first. A row whose email"
+              + " already has an application in the recruitment is left alone, so re-uploading is"
+              + " safe; a row without a usable email is skipped and reported.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping(
+      value = "/legacy/upload",
+      consumes = {"multipart/form-data"})
+  public ImportResult uploadLegacyCsv(
+      @Parameter(name = "quarter", description = "QYY such as W26, or YYYYQ such as 20261")
+          @RequestParam
+          String quarter,
+      @Parameter(name = "file") @RequestParam("file") MultipartFile file)
+      throws IOException, CsvException {
+    String yyyyq = LegacyApplicationCsvService.toYyyyq(quarter);
+    Recruitment recruitment =
+        recruitmentRepository
+            .findByQuarterAndType(yyyyq, RecruitmentType.TA)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        ("There is no TA recruitment for %s; create it under Admin >"
+                                + " Recruitments first")
+                            .formatted(quarter.strip())));
+    ImportResult result = legacyApplicationCsvService.upload(file, recruitment);
+    log.info("Legacy CSV import into recruitment {}: {}", recruitment.getId(), result);
+    return result;
   }
 
   @Operation(summary = "One application, whoever it belongs to")
