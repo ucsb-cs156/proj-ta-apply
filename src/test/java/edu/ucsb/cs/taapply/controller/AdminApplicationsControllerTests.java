@@ -9,14 +9,18 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.ApplicationCsvService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +33,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(controllers = AdminApplicationsController.class)
-@Import(edu.ucsb.cs.taapply.testconfig.TestConfig.class)
+@Import({edu.ucsb.cs.taapply.testconfig.TestConfig.class, ApplicationCsvService.class})
 public class AdminApplicationsControllerTests extends ControllerTestCase {
 
   @MockitoBean ApplicationRepository applicationRepository;
@@ -56,6 +60,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
   public void logged_out_users_are_refused_everywhere() throws Exception {
     mockMvc.perform(get("/api/admin/applications/all?recruitmentId=1")).andExpect(status().is(403));
     mockMvc.perform(get("/api/admin/applications?id=1")).andExpect(status().is(403));
+    mockMvc.perform(get("/api/admin/applications/csv?recruitmentId=1")).andExpect(status().is(403));
     mockMvc
         .perform(put("/api/admin/applications/adminComments?id=1&adminComments=x").with(csrf()))
         .andExpect(status().is(403));
@@ -66,10 +71,88 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
   public void applicants_and_instructors_are_refused_everywhere() throws Exception {
     mockMvc.perform(get("/api/admin/applications/all?recruitmentId=1")).andExpect(status().is(403));
     mockMvc.perform(get("/api/admin/applications?id=1")).andExpect(status().is(403));
+    mockMvc.perform(get("/api/admin/applications/csv?recruitmentId=1")).andExpect(status().is(403));
     mockMvc
         .perform(put("/api/admin/applications/adminComments?id=1&adminComments=x").with(csrf()))
         .andExpect(status().is(403));
     verify(applicationRepository, never()).save(any());
+  }
+
+  // ---- CSV download ----
+
+  private static Recruitment recruitment(long id, RecruitmentType type) {
+    return Recruitment.builder().id(id).quarter("20262").type(type).build();
+  }
+
+  /** The file names the recruitment, and its columns follow the recruitment's type. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_can_download_a_recruitment_s_applications_as_csv() throws Exception {
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.ULA)));
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L))
+        .thenReturn(
+            List.of(
+                application(1L, 7L, "a@ucsb.edu", false),
+                application(2L, 7L, "admin@ucsb.edu", true)));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/applications/csv?recruitmentId=7"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Type", "text/csv"))
+            .andExpect(
+                header()
+                    .string("Content-Disposition", "attachment; filename=\"applications-7.csv\""))
+            .andReturn();
+
+    String csv = response.getResponse().getContentAsString();
+    String[] lines = csv.split("\n");
+    assertEquals(3, lines.length);
+    assertEquals(true, lines[0].startsWith("\"id\",\"submittedAt\",\"email\""));
+    // ULA columns, so interests is the last header and the TA-only ones are absent.
+    assertEquals(true, lines[0].endsWith("\"interests\""));
+    assertEquals(-1, lines[0].indexOf("classLevel"));
+    assertEquals(
+        true,
+        lines[1].startsWith("\"1\",\"2026-04-01T09:30\",\"a@ucsb.edu\",\"PENDING\",\"false\""));
+    assertEquals(
+        true,
+        lines[2].startsWith("\"2\",\"2026-04-01T09:30\",\"admin@ucsb.edu\",\"PENDING\",\"true\""));
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void a_ta_recruitment_downloads_with_the_ta_columns() throws Exception {
+    when(recruitmentRepository.findById(8L))
+        .thenReturn(Optional.of(recruitment(8L, RecruitmentType.TA)));
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(8L)).thenReturn(List.of());
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/applications/csv?recruitmentId=8"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    String[] lines = response.getResponse().getContentAsString().split("\n");
+    assertEquals(1, lines.length);
+    assertEquals(true, lines[0].contains("\"classLevel\",\"residencyStatus\""));
+    assertEquals(-1, lines[0].indexOf("interests"));
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void a_csv_for_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/applications/csv?recruitmentId=99"))
+            .andExpect(status().is(404))
+            .andReturn();
+
+    assertEquals("Recruitment with id 99 not found", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).findByRecruitmentIdOrderByIdAsc(any());
   }
 
   // ---- all for a recruitment ----
