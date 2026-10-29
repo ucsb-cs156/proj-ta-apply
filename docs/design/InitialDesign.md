@@ -137,6 +137,11 @@ Some fields are common to both TA and ULA applications, others are specific, as 
 | comments | | | 
 | video_link | | * |
 | previous_service_as_ula (number of times) | | * |
+| perm_number (7 letters or digits, stored upper case; required) | | * |
+| bs_ms_student (yes/no), and if yes: student_status_next_quarter (undergraduate/graduate) and wants_ta_eligibility (yes/no) | | * |
+| other_campus_job (yes/no/not sure), prior_ucsb_employment (yes/no) with employee_id, i9_appointment (yes/no) | | * |
+| training_commitment (agree/unsure/cannot) with explanation, for first-time applicants | | * |
+| changing_major (yes/no) | | * |
 | first_choice_course | | |
 | second_choice_course | | |
 | available_for_lectures_first_choice_course | | |
@@ -429,10 +434,70 @@ form (issue #65).
   `prev_experience` as one line per course; desired courses as ENTHUSIASTIC interest in each course
   the recruitment lists. Preferred job and hours, and desired courses the recruitment does not
   list, go into the applicant's comments so nothing is lost and they can edit it; the export's
-  dates, must_hire and reviewer comments go into the admin comments.
+  dates and reviewer comments go into the admin comments. Its `must_hire` column is left out: it was
+  not used in recent recruitments and always reads no, even for a must-hire (issue #74).
 * The pre-fill of a new application (`GET /api/applications/prefill`) now picks the applicant's
   application for the most recent recruitment quarter rather than the most recently inserted row,
   since an imported application is newer as a row but older as an application.
+
+# Twentieth Iteration
+
+The ULA application asks everything the ULA Google Form asked (issue #72).
+
+* **Perm number**, required of a ULA applicant: exactly 7 characters, letters and digits only,
+  stored upper case whatever case was typed. An admin editing an application is held only to the
+  format.
+* **BS/MS student?**, required. When yes, two more questions appear: the applicant's **student
+  status in the quarter applied for** (undergraduate or graduate; choosing graduate shows a warning
+  that ULA positions are funded for undergraduates only and that they are strongly encouraged to
+  apply to be a TA instead) and whether they **want TA eligibility and will take the Fall TA
+  training**, with the note that they are not eligible for TA positions until they do.
+* **Prior employment**: **another campus job this quarter** (yes, no, not sure yet; required),
+  **prior UCSB employment** (required) with the **employee ID** when yes, and whether they have
+  made or will make an **I-9 appointment**. None of these affects the decision; they speed up the
+  paperwork.
+* For a first-time applicant (previous service 0), the **training commitment** statement with
+  I AGREE / I am UNSURE / I CANNOT, required, and an explanation box for the latter two.
+* **Changing major?** under the major, and the Google Form's guidance texts: the video
+  instructions and the returning-LA exception, the training requirement, the course-preference
+  tiers and the B-or-better rule, the "3-Not Applicable" meaning, the employee-ID caution and the
+  graduation-date eligibility note.
+* The new answers are fields of the application (null on a TA application), appear in the audit
+  trail, on the admin's view, in the CSV download and in the pre-fill of the next application.
+* **Importing prior ULA data** (issue #70): the Google Form's single `GPA` maps to **Overall GPA**
+  (`gpaOverall`), not GPA in Major.
+
+
+# Twenty-first Iteration
+
+Applications from the ULA Google Form can be brought in, as the legacy TA ones can (issue #70).
+
+* **Admin > ULA App Settings** gains an **Import ULA Form Responses** card, the ULA counterpart of
+  the TA page's import: the admin picks the quarter (one of the ULA recruitments that exist) and the
+  form's response sheet downloaded as CSV, and `POST /api/admin/applications/legacy-ula/upload?quarter=`
+  creates one pending application per row in that recruitment. Re-uploading is safe; rows without a
+  usable email are reported.
+* `LegacyUlaApplicationCsvService` finds columns by the start of their question text, so the form's
+  original headers and the condensed ones in `docs/sample-data/legacy-ula-csv-example.csv` both
+  work, and the grids by their bracketed labels. The perm number, graduation, BS/MS, employment,
+  previous-service, training, GPA (as Overall GPA), major, changing-major and video answers map to
+  their fields; the course-preference grid, first and second choice and the availability answers map
+  to the course interests, choices and availability fields; the familiarity grids become topic
+  proficiencies and the activity grid interests, named as the ULA lists spell them when a name
+  matches ("CSIL computing environment" matches "CSIL"). A topic or activity the lists lack is added
+  to them, and the card lists what was added in a modal. What has no field (a free-text TA-eligibility
+  answer, a choice the recruitment does not list, "only one lecture a week") goes into the comments;
+  the timestamp goes into the admin comments.
+  
+  
+# Twenty-second Iteration
+
+Applicants never receive the admin comments (issue #75). Every response of the applicant-facing
+endpoints (`/api/applications/mine`, `/api/applications?id=`, `/api/applications/prefill`, and the
+responses of an applicant's own POST and PUT, including the admin's test-application preview) is a
+copy of the application with `adminComments` blanked; the stored row is untouched, and the admin
+endpoints under `/api/admin/applications` keep returning it. No applicant page showed the field, but
+until now it left the server with every applicant response.
 
 # Twenty-third Iteration
 

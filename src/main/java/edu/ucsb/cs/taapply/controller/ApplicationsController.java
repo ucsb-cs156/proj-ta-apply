@@ -6,7 +6,10 @@ import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
+import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.enums.StudentStatus;
+import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -24,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -92,6 +96,19 @@ public class ApplicationsController extends ApiController {
       edu.ucsb.cs.taapply.enums.ClassLevel classLevel,
       String videoLink,
       Integer previousServiceAsUla,
+      // ---- ULA only, from the Google Form the ULA application used to be (issue #72) ----
+      /** 7 letters or digits, any case; stored upper case. Required of a ULA applicant. */
+      String permNumber,
+      Boolean bsMsStudent,
+      StudentStatus studentStatusNextQuarter,
+      Boolean wantsTaEligibility,
+      OtherCampusJob otherCampusJob,
+      Boolean priorUcsbEmployment,
+      String employeeId,
+      Boolean i9Appointment,
+      TrainingCommitment trainingCommitment,
+      String trainingCommitmentExplanation,
+      Boolean changingMajor,
       /** The notice version the applicant ticked the agreement box for; see requireAgreement. */
       Long noticeVersionId) {}
 
@@ -109,6 +126,15 @@ public class ApplicationsController extends ApiController {
 
   private String currentEmail() {
     return getCurrentUser().getUser().getEmail();
+  }
+
+  /**
+   * An application as its applicant may see it: without the admin comments, which are the staff's
+   * notes about them. A copy, so the stored row is untouched; every applicant-facing response goes
+   * through here (issue #75).
+   */
+  static Application forApplicant(Application application) {
+    return application.toBuilder().adminComments(null).build();
   }
 
   /** Loads an application, refusing anyone else's rather than merely not finding it. */
@@ -136,7 +162,9 @@ public class ApplicationsController extends ApiController {
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/mine")
   public List<Application> myApplications() {
-    return applicationRepository.findByEmailOrderByIdDesc(currentEmail());
+    return applicationRepository.findByEmailOrderByIdDesc(currentEmail()).stream()
+        .map(ApplicationsController::forApplicant)
+        .toList();
   }
 
   @Operation(
@@ -145,7 +173,7 @@ public class ApplicationsController extends ApiController {
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("")
   public Application getApplication(@Parameter(name = "id") @RequestParam Long id) {
-    return mine(id);
+    return forApplicant(mine(id));
   }
 
   @Operation(
@@ -168,6 +196,7 @@ public class ApplicationsController extends ApiController {
             Comparator.comparing((Application a) -> quarters.getOrDefault(a.getRecruitmentId(), ""))
                 .reversed())
         .limit(1)
+        .map(ApplicationsController::forApplicant)
         .toList();
   }
 
@@ -197,6 +226,7 @@ public class ApplicationsController extends ApiController {
 
     requireAgreement(recruitment.getType(), fields);
     requireCoursework(recruitment.getType(), fields);
+    requireUlaAnswers(recruitment.getType(), fields);
 
     Application application =
         Application.builder()
@@ -206,7 +236,7 @@ public class ApplicationsController extends ApiController {
             .build();
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
-    return application;
+    return forApplicant(application);
   }
 
   @Operation(
@@ -229,6 +259,7 @@ public class ApplicationsController extends ApiController {
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
     requireAgreement(recruitment.getType(), fields);
     requireCoursework(recruitment.getType(), fields);
+    requireUlaAnswers(recruitment.getType(), fields);
 
     // The unique (email, recruitment) constraint allows one row per admin per recruitment, and an
     // admin testing a form will naturally submit it more than once, so the second submission
@@ -254,7 +285,7 @@ public class ApplicationsController extends ApiController {
                     .build());
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
-    return application;
+    return forApplicant(application);
   }
 
   @Operation(
@@ -276,10 +307,11 @@ public class ApplicationsController extends ApiController {
     }
     requireAgreement(recruitment.getType(), fields);
     requireCoursework(recruitment.getType(), fields);
+    requireUlaAnswers(recruitment.getType(), fields);
 
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
-    return application;
+    return forApplicant(application);
   }
 
   @Operation(
@@ -300,7 +332,7 @@ public class ApplicationsController extends ApiController {
 
     application.setPostApplicationComments(postApplicationComments);
     applicationRepository.save(application);
-    return application;
+    return forApplicant(application);
   }
 
   /**
@@ -430,6 +462,58 @@ public class ApplicationsController extends ApiController {
     }
   }
 
+  /** A perm number is 7 letters or digits; see requireUlaAnswers. */
+  static final Pattern PERM_NUMBER = Pattern.compile("[A-Z0-9]{7}");
+
+  /** The perm number as stored: trimmed and upper case; a blank one is no answer. */
+  public static String normalizePermNumber(String permNumber) {
+    String text = blankToNull(permNumber);
+    return text == null ? null : text.toUpperCase();
+  }
+
+  /**
+   * The perm number rule, which holds whoever is saving: when one is given it must be exactly 7
+   * letters or digits (checked after upper-casing, so case does not matter).
+   */
+  static void requirePermNumberFormat(ApplicationFields fields) {
+    String perm = normalizePermNumber(fields.permNumber());
+    if (perm != null && !PERM_NUMBER.matcher(perm).matches()) {
+      throw new IllegalArgumentException(
+          "Perm number must be exactly 7 characters, letters and digits only");
+    }
+  }
+
+  /**
+   * The questions a ULA applicant must answer, as on the Google Form the ULA application used to
+   * be: the perm number, whether they are a BS/MS student, the two employment questions, and, for a
+   * first-time applicant (no previous service), the training commitment. A TA form asks none of
+   * these. An admin editing an application is held only to the perm number's format.
+   */
+  static void requireUlaAnswers(RecruitmentType type, ApplicationFields fields) {
+    if (type != RecruitmentType.ULA) {
+      return;
+    }
+    if (normalizePermNumber(fields.permNumber()) == null) {
+      throw new IllegalArgumentException("A ULA application needs your perm number");
+    }
+    requirePermNumberFormat(fields);
+    if (fields.bsMsStudent() == null) {
+      throw new IllegalArgumentException("Please say whether you are a BS/MS student");
+    }
+    if (fields.otherCampusJob() == null) {
+      throw new IllegalArgumentException(
+          "Please say whether you will have another campus job this quarter");
+    }
+    if (fields.priorUcsbEmployment() == null) {
+      throw new IllegalArgumentException("Please say whether you have been employed at UCSB");
+    }
+    if (Integer.valueOf(0).equals(fields.previousServiceAsUla())
+        && fields.trainingCommitment() == null) {
+      throw new IllegalArgumentException(
+          "As a first-time ULA applicant, please answer the training commitment question");
+    }
+  }
+
   /** Fresh rows from the request, trimmed; replaces whatever the application had. */
   static List<PriorCoursework> priorCourseworkFrom(ApplicationFields fields) {
     List<PriorCoursework> rows = new ArrayList<>();
@@ -491,6 +575,18 @@ public class ApplicationsController extends ApiController {
     application.setClassLevel(fields.classLevel());
     application.setVideoLink(fields.videoLink());
     application.setPreviousServiceAsUla(fields.previousServiceAsUla());
+    application.setPermNumber(normalizePermNumber(fields.permNumber()));
+    application.setBsMsStudent(fields.bsMsStudent());
+    application.setStudentStatusNextQuarter(fields.studentStatusNextQuarter());
+    application.setWantsTaEligibility(fields.wantsTaEligibility());
+    application.setOtherCampusJob(fields.otherCampusJob());
+    application.setPriorUcsbEmployment(fields.priorUcsbEmployment());
+    application.setEmployeeId(blankToNull(fields.employeeId()));
+    application.setI9Appointment(fields.i9Appointment());
+    application.setTrainingCommitment(fields.trainingCommitment());
+    application.setTrainingCommitmentExplanation(
+        blankToNull(fields.trainingCommitmentExplanation()));
+    application.setChangingMajor(fields.changingMajor());
     application.setNoticeVersionId(fields.noticeVersionId());
   }
 }

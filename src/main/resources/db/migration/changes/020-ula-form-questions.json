@@ -1,0 +1,39 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "020-ula-form-questions",
+        "author": "pc",
+        "comment": "The ULA questions the Google Form asked that the application lacked (issue #72).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "applications", "columnName": "perm_number" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [
+                { "column": { "name": "perm_number", "type": "VARCHAR(16)" } },
+                { "column": { "name": "bs_ms_student", "type": "BOOLEAN" } },
+                { "column": { "name": "student_status_next_quarter", "type": "VARCHAR(32)" } },
+                { "column": { "name": "wants_ta_eligibility", "type": "BOOLEAN" } },
+                { "column": { "name": "other_campus_job", "type": "VARCHAR(32)" } },
+                { "column": { "name": "prior_ucsb_employment", "type": "BOOLEAN" } },
+                { "column": { "name": "employee_id", "type": "VARCHAR(64)" } },
+                { "column": { "name": "i9_appointment", "type": "BOOLEAN" } },
+                { "column": { "name": "training_commitment", "type": "VARCHAR(32)" } },
+                { "column": { "name": "training_commitment_explanation", "type": "VARCHAR(4000)" } },
+                { "column": { "name": "changing_major", "type": "BOOLEAN" } }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

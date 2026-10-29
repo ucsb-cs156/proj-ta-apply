@@ -13,7 +13,10 @@ import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
+import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.enums.StudentStatus;
+import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.repository.AuditTrailRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -228,6 +231,41 @@ public class ApplicationAuditServiceTests {
     assertEquals(0, bareBefore.rows().get("topicProficiencies").size());
     assertNull(bareBefore.fields().get("major"));
     assertEquals(List.of(), service.record(bareBefore, bare, RecruitmentType.ULA));
+  }
+
+  /** Issue #72: the ULA questions from the Google Form are audited like every other field. */
+  @Test
+  public void every_ula_question_from_the_google_form_is_audited() {
+    Application application = application();
+    ApplicationAuditService.Snapshot before = service.snapshot(application);
+
+    application.setPermNumber("A1B2C3D");
+    application.setBsMsStudent(true);
+    application.setStudentStatusNextQuarter(StudentStatus.GRADUATE);
+    application.setWantsTaEligibility(false);
+    application.setOtherCampusJob(OtherCampusJob.NOT_SURE);
+    application.setPriorUcsbEmployment(true);
+    application.setEmployeeId("1234567");
+    application.setI9Appointment(true);
+    application.setTrainingCommitment(TrainingCommitment.UNSURE);
+    application.setTrainingCommitmentExplanation("Might have a Friday lab");
+    application.setChangingMajor(true);
+    List<AuditTrail> changes = service.record(before, application, RecruitmentType.ULA);
+
+    assertEquals(
+        List.of(
+            row(null, 7L, "permNumber", null, "A1B2C3D"),
+            row(null, 7L, "bsMsStudent", null, "true"),
+            row(null, 7L, "studentStatusNextQuarter", null, "GRADUATE"),
+            row(null, 7L, "wantsTaEligibility", null, "false"),
+            row(null, 7L, "otherCampusJob", null, "NOT_SURE"),
+            row(null, 7L, "priorUcsbEmployment", null, "true"),
+            row(null, 7L, "employeeId", null, "1234567"),
+            row(null, 7L, "i9Appointment", null, "true"),
+            row(null, 7L, "trainingCommitment", null, "UNSURE"),
+            row(null, 7L, "trainingCommitmentExplanation", null, "Might have a Friday lab"),
+            row(null, 7L, "changingMajor", null, "true")),
+        changes);
   }
 
   /** Only the ULA form asks about availability (#76): a TA edit never audits those fields. */

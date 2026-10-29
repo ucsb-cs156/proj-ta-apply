@@ -4,7 +4,10 @@ import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
+import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
+import edu.ucsb.cs.taapply.enums.StudentStatus;
+import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,7 +32,7 @@ import org.hibernate.annotations.CreationTimestamp;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Builder
+@Builder(toBuilder = true)
 @Entity(name = "applications")
 @Table(
     uniqueConstraints =
@@ -199,4 +202,44 @@ public class Application {
   private String videoLink;
 
   private Integer previousServiceAsUla;
+
+  /** The UCSB perm number, 7 letters or digits, stored upper case. Required of a ULA applicant. */
+  private String permNumber;
+
+  /** Accepted to, or considering applying to, a BS/MS program. */
+  private Boolean bsMsStudent;
+
+  /** For a BS/MS student: their status in the quarter applied for. */
+  @Enumerated(EnumType.STRING)
+  private StudentStatus studentStatusNextQuarter;
+
+  /** For a BS/MS student: whether they want TA eligibility and so will take the Fall training. */
+  private Boolean wantsTaEligibility;
+
+  @Enumerated(EnumType.STRING)
+  private OtherCampusJob otherCampusJob;
+
+  /** Ever paid by the University of California in any position. */
+  private Boolean priorUcsbEmployment;
+
+  /** The UCPath employee id, for someone who has been employed at UCSB; never the perm or SSN. */
+  private String employeeId;
+
+  /**
+   * Has made, or will make, an appointment to complete the I-9 employment verification. Named
+   * explicitly: the naming strategy would not put an underscore after the digit.
+   */
+  @Column(name = "i9_appointment")
+  private Boolean i9Appointment;
+
+  /** A first-time applicant's answer to the mandatory training commitment statement. */
+  @Enumerated(EnumType.STRING)
+  private TrainingCommitment trainingCommitment;
+
+  /** Why they are unsure or cannot commit, when they said so. */
+  @Column(length = 4000)
+  private String trainingCommitmentExplanation;
+
+  /** Changing into, or adding, a CS, CE or CCS Computing major. */
+  private Boolean changingMajor;
 }

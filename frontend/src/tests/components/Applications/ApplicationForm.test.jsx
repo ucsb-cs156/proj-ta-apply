@@ -54,6 +54,24 @@ function renderForm({
   return submitAction;
 }
 
+/** The ULA form's own required questions (issue #72), when the form is a ULA one. */
+async function fillRequiredUla(prefix = "ApplicationForm") {
+  if (!screen.queryByTestId(`${prefix}-permNumber`)) return;
+  await userEvent.type(screen.getByTestId(`${prefix}-permNumber`), "1234567");
+  await userEvent.selectOptions(
+    screen.getByTestId(`${prefix}-bsMsStudent`),
+    "false",
+  );
+  await userEvent.selectOptions(
+    screen.getByTestId(`${prefix}-otherCampusJob`),
+    "NO",
+  );
+  await userEvent.selectOptions(
+    screen.getByTestId(`${prefix}-priorUcsbEmployment`),
+    "false",
+  );
+}
+
 /** Names, a listed major and a first choice: everything else required, so one thing can be tested. */
 async function fillRequired(prefix = "ApplicationForm") {
   await userEvent.type(screen.getByTestId(`${prefix}-firstName`), "Ada");
@@ -66,6 +84,7 @@ async function fillRequired(prefix = "ApplicationForm") {
     screen.getByTestId(`${prefix}-firstChoiceCourse`),
     "CMPSC   156",
   );
+  await fillRequiredUla(prefix);
 }
 
 /**
@@ -177,6 +196,12 @@ describe("ApplicationForm tests", () => {
     [
       ["Quarters Previously Served as a ULA", "previousServiceAsUla"],
       ["Video Link", "videoLink"],
+      ["Perm Number", "permNumber"],
+      ["BS/MS student?", "bsMsStudent"],
+      ["Other campus job this quarter?", "otherCampusJob"],
+      ["Prior UCSB employment?", "priorUcsbEmployment"],
+      ["I-9 appointment made or planned?", "i9Appointment"],
+      ["Changing major?", "changingMajor"],
     ].forEach(([label, name]) => {
       expect(screen.getByTestId(`ApplicationForm-${name}`)).toHaveAttribute(
         "id",
@@ -243,6 +268,21 @@ describe("ApplicationForm tests", () => {
     expect(
       screen.queryByTestId("ApplicationForm-previousServiceAsUla"),
     ).toBeNull();
+    // Nor any of the Google Form's ULA questions (issue #72).
+    for (const name of [
+      "permNumber",
+      "bsMsStudent",
+      "otherCampusJob",
+      "priorUcsbEmployment",
+      "i9Appointment",
+      "changingMajor",
+      "graduationDate-note",
+      "videoLink-note",
+      "course-preferences-guidance",
+      "training",
+    ]) {
+      expect(screen.queryByTestId(`ApplicationForm-${name}`)).toBeNull();
+    }
   });
 
   test("a ULA application asks the ULA-only questions and not the TA ones", () => {
@@ -533,6 +573,7 @@ describe("ApplicationForm tests", () => {
       "Mornings only",
     );
 
+    await fillRequiredUla();
     await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
 
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
@@ -701,6 +742,7 @@ describe("ApplicationForm tests", () => {
       "CMPSC   130A",
     );
 
+    await fillRequiredUla();
     await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
 
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
@@ -809,6 +851,7 @@ describe("ApplicationForm tests", () => {
     await userEvent.click(
       screen.getByTestId("ApplicationForm-availableForLecturesFirstChoice"),
     );
+    await fillRequiredUla();
 
     await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
 
@@ -882,6 +925,7 @@ describe("ApplicationForm tests", () => {
       screen.getByTestId("ApplicationForm-firstChoiceCourse"),
       "CMPSC   156",
     );
+    await fillRequiredUla();
     await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
 
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
@@ -1133,6 +1177,7 @@ describe("ApplicationForm tests", () => {
       screen.getByTestId("ApplicationForm-firstChoiceCourse"),
       "CMPSC   156",
     );
+    await fillRequiredUla();
     await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
 
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
@@ -1295,6 +1340,7 @@ describe("ApplicationForm tests", () => {
       screen.getByTestId("ApplicationForm-firstChoiceCourse"),
       "CMPSC   156",
     );
+    await fillRequiredUla();
     await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
 
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
@@ -1866,5 +1912,428 @@ describe("ApplicationForm tests", () => {
     expect(
       screen.getByTestId("ApplicationForm-availableForLecturesFirstChoice"),
     ).not.toBeChecked();
+  });
+
+  // ---- the ULA questions from the Google Form (issue #72) ----
+
+  describe("the ULA questions from the Google Form", () => {
+    test("a ULA form asks them, with the form's guidance, and marks the required ones", () => {
+      renderForm({ type: "ULA" });
+
+      for (const name of [
+        "permNumber",
+        "bsMsStudent",
+        "otherCampusJob",
+        "priorUcsbEmployment",
+        "i9Appointment",
+        "changingMajor",
+      ]) {
+        expect(
+          screen.getByTestId(`ApplicationForm-${name}`),
+        ).toBeInTheDocument();
+      }
+      for (const label of [
+        "Perm Number",
+        "BS/MS student?",
+        "Other campus job this quarter?",
+        "Prior UCSB employment?",
+      ]) {
+        expect(labelNamed(label).textContent).toMatch(/\*\s*$/);
+      }
+      expect(
+        labelNamed("I-9 appointment made or planned?").textContent,
+      ).not.toMatch(/\*/);
+      expect(
+        screen.getByTestId("ApplicationForm-graduationDate-note"),
+      ).toHaveTextContent("you are not eligible to serve as a ULA");
+      expect(
+        screen.getByTestId("ApplicationForm-videoLink-note"),
+      ).toHaveTextContent(
+        "For returning ULAs it is optional but strongly encouraged",
+      );
+      expect(
+        screen.getByTestId("ApplicationForm-course-preferences-guidance"),
+      ).toHaveTextContent("with a B or better");
+      expect(screen.getByText("BS/MS program")).toBeInTheDocument();
+      expect(screen.getByText("Prior employment")).toBeInTheDocument();
+      expect(screen.getByTestId("ApplicationForm-bs-ms")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("ApplicationForm-employment"),
+      ).toBeInTheDocument();
+      // Each select starts on a blank "Choose one".
+      for (const name of [
+        "bsMsStudent",
+        "otherCampusJob",
+        "priorUcsbEmployment",
+        "i9Appointment",
+        "changingMajor",
+      ]) {
+        const select = screen.getByTestId(`ApplicationForm-${name}`);
+        expect(select.options[0].value).toBe("");
+        expect(select.options[0].textContent).toBe("Choose one");
+      }
+      expect(
+        screen.getByText(
+          "Your answers here do not affect the decision on your application; they let us start the hiring paperwork sooner if you are offered a position.",
+        ),
+      ).toBeInTheDocument();
+      // The follow-ups wait for the answers that reveal them.
+      expect(
+        screen.queryByTestId("ApplicationForm-studentStatusNextQuarter"),
+      ).toBeNull();
+      expect(
+        screen.queryByTestId("ApplicationForm-wantsTaEligibility"),
+      ).toBeNull();
+      expect(screen.queryByTestId("ApplicationForm-employeeId")).toBeNull();
+      expect(screen.queryByTestId("ApplicationForm-training")).toBeNull();
+    });
+
+    test("the perm number is required and must be seven letters or digits", async () => {
+      const submitAction = renderForm({
+        type: "ULA",
+        initialContents: {
+          priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+        },
+      });
+      await fillRequired();
+      await userEvent.clear(screen.getByTestId("ApplicationForm-permNumber"));
+
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      expect(
+        await screen.findByText("Your perm number is required."),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("ApplicationForm-permNumber")).toHaveClass(
+        "is-invalid",
+      );
+
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-permNumber"),
+        "12-4567",
+      );
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      expect(
+        await screen.findByText(
+          "Exactly 7 characters, letters and digits only.",
+        ),
+      ).toBeInTheDocument();
+      expect(submitAction).not.toHaveBeenCalled();
+
+      await userEvent.clear(screen.getByTestId("ApplicationForm-permNumber"));
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-permNumber"),
+        "a1b2c3d",
+      );
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+      // Sent as typed; the backend upper-cases it.
+      expect(submitAction.mock.calls[0][0].permNumber).toBe("a1b2c3d");
+    });
+
+    test("the BS/MS and employment questions are required", async () => {
+      const submitAction = renderForm({
+        type: "ULA",
+        initialContents: {
+          priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+        },
+      });
+      await fillRequired();
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-bsMsStudent"),
+        "",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-otherCampusJob"),
+        "",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-priorUcsbEmployment"),
+        "",
+      );
+
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+      expect(
+        await screen.findByText("Please say whether you are a BS/MS student."),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("ApplicationForm-bsMsStudent")).toHaveClass(
+        "is-invalid",
+      );
+      expect(screen.getByTestId("ApplicationForm-otherCampusJob")).toHaveClass(
+        "is-invalid",
+      );
+      expect(
+        screen.getByTestId("ApplicationForm-priorUcsbEmployment"),
+      ).toHaveClass("is-invalid");
+      expect(submitAction).not.toHaveBeenCalled();
+    });
+
+    test("saying yes to BS/MS asks the two follow-ups, and graduate status warns", async () => {
+      renderForm({ type: "ULA" });
+
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-bsMsStudent"),
+        "true",
+      );
+      const status = screen.getByTestId(
+        "ApplicationForm-studentStatusNextQuarter",
+      );
+      expect(status).toBeInTheDocument();
+      expect(
+        screen.getByTestId("ApplicationForm-wantsTaEligibility"),
+      ).toBeInTheDocument();
+      // The follow-ups' labels are wired to their selects.
+      expect(status).toHaveAttribute(
+        "id",
+        "ApplicationForm-studentStatusNextQuarter",
+      );
+      expect(
+        labelNamed("Student status in the quarter you are applying for"),
+      ).toHaveAttribute("for", "ApplicationForm-studentStatusNextQuarter");
+      expect(
+        screen.getByTestId("ApplicationForm-wantsTaEligibility"),
+      ).toHaveAttribute("id", "ApplicationForm-wantsTaEligibility");
+      expect(
+        labelNamed("TA eligibility and the Fall TA training"),
+      ).toHaveAttribute("for", "ApplicationForm-wantsTaEligibility");
+      expect(
+        screen.getByText(
+          /Do you want to be eligible for TA positions in the future, and if so, will you enroll in the TA training course the next time it is offered in Fall\?/,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /You will not be eligible for TA positions unless and until/,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("ApplicationForm-graduate-warning"),
+      ).toBeNull();
+
+      await userEvent.selectOptions(status, "GRADUATE");
+      expect(
+        screen.getByTestId("ApplicationForm-graduate-warning"),
+      ).toHaveTextContent("strongly encouraged to apply to be a TA instead");
+      await userEvent.selectOptions(status, "UNDERGRADUATE");
+      expect(
+        screen.queryByTestId("ApplicationForm-graduate-warning"),
+      ).toBeNull();
+
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-bsMsStudent"),
+        "false",
+      );
+      expect(
+        screen.queryByTestId("ApplicationForm-studentStatusNextQuarter"),
+      ).toBeNull();
+      expect(
+        screen.queryByTestId("ApplicationForm-wantsTaEligibility"),
+      ).toBeNull();
+    });
+
+    test("prior UCSB employment asks for the employee ID, with the UCPath caution", async () => {
+      renderForm({ type: "ULA" });
+
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-priorUcsbEmployment"),
+        "true",
+      );
+      expect(
+        screen.getByTestId("ApplicationForm-employeeId"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/It is NOT your perm number and NOT your SSN/),
+      ).toBeInTheDocument();
+      expect(labelNamed("Employee ID number")).toHaveAttribute(
+        "for",
+        "ApplicationForm-employeeId",
+      );
+      expect(screen.getByTestId("ApplicationForm-employeeId")).toHaveAttribute(
+        "id",
+        "ApplicationForm-employeeId",
+      );
+
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-priorUcsbEmployment"),
+        "false",
+      );
+      expect(screen.queryByTestId("ApplicationForm-employeeId")).toBeNull();
+    });
+
+    test("a first-time applicant must answer the training commitment, explaining unsure or cannot", async () => {
+      const submitAction = renderForm({
+        type: "ULA",
+        initialContents: {
+          priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+        },
+      });
+      await fillRequired();
+      expect(screen.queryByTestId("ApplicationForm-training")).toBeNull();
+
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-previousServiceAsUla"),
+        "0",
+      );
+      expect(
+        screen.getByTestId("ApplicationForm-training-statement"),
+      ).toHaveTextContent("five mandatory training sessions");
+      expect(
+        screen.getByTestId("ApplicationForm-training"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("ApplicationForm-trainingCommitment"),
+      ).toHaveAttribute("id", "ApplicationForm-trainingCommitment");
+      expect(labelNamed("Your commitment")).toHaveAttribute(
+        "for",
+        "ApplicationForm-trainingCommitment",
+      );
+      expect(labelNamed("Your commitment").textContent).toMatch(/\*\s*$/);
+      expect(
+        screen.queryByTestId("ApplicationForm-trainingCommitmentExplanation"),
+      ).toBeNull();
+
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      expect(
+        await screen.findByText(
+          "As a first-time ULA applicant, please answer this question.",
+        ),
+      ).toBeInTheDocument();
+      expect(submitAction).not.toHaveBeenCalled();
+
+      const commitment = screen.getByTestId(
+        "ApplicationForm-trainingCommitment",
+      );
+      await userEvent.selectOptions(commitment, "AGREE");
+      expect(
+        screen.queryByTestId("ApplicationForm-trainingCommitmentExplanation"),
+      ).toBeNull();
+      await userEvent.selectOptions(commitment, "CANNOT");
+      expect(
+        screen.getByTestId("ApplicationForm-trainingCommitmentExplanation"),
+      ).toHaveAttribute("id", "ApplicationForm-trainingCommitmentExplanation");
+      expect(labelNamed("Please explain")).toHaveAttribute(
+        "for",
+        "ApplicationForm-trainingCommitmentExplanation",
+      );
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-trainingCommitmentExplanation"),
+        "Friday lab",
+      );
+      await userEvent.selectOptions(commitment, "UNSURE");
+      expect(
+        screen.getByTestId("ApplicationForm-trainingCommitmentExplanation"),
+      ).toHaveValue("Friday lab");
+
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+      const payload = submitAction.mock.calls[0][0];
+      expect(payload.previousServiceAsUla).toBe(0);
+      expect(payload.trainingCommitment).toBe("UNSURE");
+      expect(payload.trainingCommitmentExplanation).toBe("Friday lab");
+    });
+
+    test("a returning applicant is not asked about the training", async () => {
+      renderForm({ type: "ULA" });
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-previousServiceAsUla"),
+        "2",
+      );
+      expect(screen.queryByTestId("ApplicationForm-training")).toBeNull();
+    });
+
+    test("submits the ULA answers as booleans and codes", async () => {
+      const submitAction = renderForm({
+        type: "ULA",
+        initialContents: {
+          priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+        },
+      });
+      await fillRequired();
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-bsMsStudent"),
+        "true",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-studentStatusNextQuarter"),
+        "UNDERGRADUATE",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-wantsTaEligibility"),
+        "true",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-otherCampusJob"),
+        "NOT_SURE",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-priorUcsbEmployment"),
+        "true",
+      );
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-employeeId"),
+        "1234567",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-i9Appointment"),
+        "false",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-changingMajor"),
+        "true",
+      );
+
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+      const payload = submitAction.mock.calls[0][0];
+      expect(payload.permNumber).toBe("1234567");
+      expect(payload.bsMsStudent).toBe(true);
+      expect(payload.studentStatusNextQuarter).toBe("UNDERGRADUATE");
+      expect(payload.wantsTaEligibility).toBe(true);
+      expect(payload.otherCampusJob).toBe("NOT_SURE");
+      expect(payload.priorUcsbEmployment).toBe(true);
+      expect(payload.employeeId).toBe("1234567");
+      expect(payload.i9Appointment).toBe(false);
+      expect(payload.trainingCommitment).toBeNull();
+      expect(payload.changingMajor).toBe(true);
+    });
+
+    test("pre-fills the ULA answers from a previous application, with nulls blank", () => {
+      renderForm({
+        type: "ULA",
+        initialContents: {
+          ...applicationsFixtures.oneUlaApplication,
+          i9Appointment: null,
+          changingMajor: null,
+        },
+      });
+
+      expect(screen.getByTestId("ApplicationForm-permNumber")).toHaveValue(
+        "A1B2C3D",
+      );
+      expect(screen.getByTestId("ApplicationForm-bsMsStudent")).toHaveValue(
+        "true",
+      );
+      expect(
+        screen.getByTestId("ApplicationForm-studentStatusNextQuarter"),
+      ).toHaveValue("UNDERGRADUATE");
+      expect(
+        screen.getByTestId("ApplicationForm-wantsTaEligibility"),
+      ).toHaveValue("true");
+      expect(screen.getByTestId("ApplicationForm-otherCampusJob")).toHaveValue(
+        "NOT_SURE",
+      );
+      expect(
+        screen.getByTestId("ApplicationForm-priorUcsbEmployment"),
+      ).toHaveValue("true");
+      expect(screen.getByTestId("ApplicationForm-employeeId")).toHaveValue(
+        "1234567",
+      );
+      expect(screen.getByTestId("ApplicationForm-i9Appointment")).toHaveValue(
+        "",
+      );
+      expect(screen.getByTestId("ApplicationForm-changingMajor")).toHaveValue(
+        "",
+      );
+    });
   });
 });

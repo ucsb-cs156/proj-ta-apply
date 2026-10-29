@@ -74,6 +74,10 @@ describe("HelpCsvPage tests", () => {
     expect(screen.getByTestId("applicationsCsvDescription")).toHaveTextContent(
       "courses separated by semicolons",
     );
+    // Issue #72: the ULA questions are columns of a ULA file too.
+    expect(screen.getByTestId("applicationsCsvDescription")).toHaveTextContent(
+      "permNumber, bsMsStudent",
+    );
   });
 
   test("documents the App Settings lists CSV shape, with an anchor the admin pages link to", async () => {
@@ -179,6 +183,32 @@ describe("HelpCsvPage tests", () => {
     );
     expect(screen.getByTestId("legacyImportCsvExample").textContent).toBe(
       csvFixtures.legacyTaApplications,
+    );
+  });
+
+  /** Issue #70: the ULA form's responses import, with the anchor the ULA settings card links to. */
+  test("documents the ULA form responses import", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <HelpCsvPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "ULA Form Responses CSV upload format",
+      }),
+    ).toHaveAttribute("id", "legacy-ula-applications");
+    expect(screen.getByTestId("legacyUlaImportDescription")).toHaveTextContent(
+      "creates one application per row in that quarter's ULA recruitment",
+    );
+    expect(screen.getByTestId("legacyUlaImportMapping")).toHaveTextContent(
+      "CSIL computing environment matches CSIL",
+    );
+    expect(screen.getByTestId("legacyUlaImportCsvExample").textContent).toBe(
+      csvFixtures.legacyUlaResponses,
     );
   });
 });

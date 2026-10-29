@@ -29,6 +29,7 @@ import edu.ucsb.cs.taapply.services.ApplicationAuditService;
 import edu.ucsb.cs.taapply.services.ApplicationCsvService;
 import edu.ucsb.cs.taapply.services.LegacyApplicationCsvService;
 import edu.ucsb.cs.taapply.services.LegacyApplicationCsvService.ImportResult;
+import edu.ucsb.cs.taapply.services.LegacyUlaApplicationCsvService;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
   @MockitoBean UserRepository userRepository;
   @MockitoBean AuditTrailRepository auditTrailRepository;
   @MockitoBean LegacyApplicationCsvService legacyApplicationCsvService;
+  @MockitoBean LegacyUlaApplicationCsvService legacyUlaApplicationCsvService;
 
   private static Application application(long id, long recruitmentId, String email, boolean test) {
     return Application.builder()
@@ -648,6 +650,153 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
 
     assertEquals(
         "Quarter should be like W26, S26, M26 or F26 (or 20261), not 'Winter'",
+        responseToJson(response).get("message"));
+    verify(recruitmentRepository, never()).findByQuarterAndType(any(), any());
+  }
+
+  // ---- the ULA perm number on an admin edit (issue #72) ----
+
+  /** An admin is held only to the perm number's format, not to answering the ULA questions. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_edit_of_a_ula_application_needs_no_ula_answers_but_a_valid_perm_number()
+      throws Exception {
+    Application existing = editable();
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.ULA)));
+
+    // No perm number and none of the other ULA answers: fine for an admin. (The rating is on the
+    // ULA scale, as the body's default of 4 is a TA rating.)
+    Map<String, Object> ulaScale = Map.of("topicProficiencies", Map.of("Java", 3));
+    mockMvc
+        .perform(
+            put("/api/admin/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(editBody(ulaScale))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    // A perm number typed in lower case is stored upper case.
+    Map<String, Object> lowerCase = new HashMap<>(ulaScale);
+    lowerCase.put("permNumber", "a1b2c3d");
+    mockMvc
+        .perform(
+            put("/api/admin/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(editBody(lowerCase))
+                .with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals("A1B2C3D", existing.getPermNumber());
+    verify(applicationRepository, times(2)).save(existing);
+
+    // A malformed one is refused, as for the applicant.
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/applications?id=5")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        editBody(
+                            Map.of(
+                                "permNumber", "12-4567", "topicProficiencies", Map.of("Java", 3))))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+    assertEquals(
+        "Perm number must be exactly 7 characters, letters and digits only",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, times(2)).save(any());
+  }
+
+  // ---- POST /legacy-ula/upload (issue #70) ----
+
+  @Test
+  public void logged_out_users_cannot_upload_ula_form_responses() throws Exception {
+    mockMvc
+        .perform(
+            multipart("/api/admin/applications/legacy-ula/upload?quarter=F26")
+                .file(legacyCsv())
+                .with(csrf()))
+        .andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"USER", "INSTRUCTOR"})
+  @Test
+  public void non_admins_cannot_upload_ula_form_responses() throws Exception {
+    mockMvc
+        .perform(
+            multipart("/api/admin/applications/legacy-ula/upload?quarter=F26")
+                .file(legacyCsv())
+                .with(csrf()))
+        .andExpect(status().is(403));
+    verify(legacyUlaApplicationCsvService, never()).upload(any(), any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void the_quarter_names_the_ula_recruitment_and_the_file_goes_to_the_ula_service()
+      throws Exception {
+    Recruitment f26 =
+        Recruitment.builder().id(9L).quarter("20264").type(RecruitmentType.ULA).build();
+    when(recruitmentRepository.findByQuarterAndType("20264", RecruitmentType.ULA))
+        .thenReturn(Optional.of(f26));
+    LegacyUlaApplicationCsvService.ImportResult result =
+        new LegacyUlaApplicationCsvService.ImportResult(
+            3, 1, 0, List.of(), List.of("React"), List.of("Grading"));
+    when(legacyUlaApplicationCsvService.upload(any(), eq(f26))).thenReturn(result);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                multipart("/api/admin/applications/legacy-ula/upload?quarter=f26")
+                    .file(legacyCsv())
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(mapper.writeValueAsString(result), response.getResponse().getContentAsString());
+    ArgumentCaptor<MultipartFile> file = ArgumentCaptor.forClass(MultipartFile.class);
+    verify(legacyUlaApplicationCsvService, times(1)).upload(file.capture(), eq(f26));
+    assertEquals("legacy.csv", file.getValue().getOriginalFilename());
+    verify(legacyApplicationCsvService, never()).upload(any(), any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void a_quarter_with_no_ula_recruitment_is_a_400_saying_to_create_it() throws Exception {
+    when(recruitmentRepository.findByQuarterAndType("20261", RecruitmentType.ULA))
+        .thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                multipart("/api/admin/applications/legacy-ula/upload?quarter=W26")
+                    .file(legacyCsv())
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "There is no ULA recruitment for W26; create it under Admin > Recruitments first",
+        responseToJson(response).get("message"));
+    verify(legacyUlaApplicationCsvService, never()).upload(any(), any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void a_malformed_quarter_is_a_400_for_the_ula_import_too() throws Exception {
+    MvcResult response =
+        mockMvc
+            .perform(
+                multipart("/api/admin/applications/legacy-ula/upload?quarter=Fall")
+                    .file(legacyCsv())
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "Quarter should be like W26, S26, M26 or F26 (or 20261), not 'Fall'",
         responseToJson(response).get("message"));
     verify(recruitmentRepository, never()).findByQuarterAndType(any(), any());
   }

@@ -46,6 +46,17 @@ const fields = (
   classLevel: "PHD",
   videoLink: "",
   previousServiceAsUla: "2",
+  permNumber: "a1b2c3d",
+  bsMsStudent: "true",
+  studentStatusNextQuarter: "GRADUATE",
+  wantsTaEligibility: "false",
+  otherCampusJob: "NOT_SURE",
+  priorUcsbEmployment: "true",
+  employeeId: "1234567",
+  i9Appointment: "",
+  trainingCommitment: "UNSURE",
+  trainingCommitmentExplanation: "Might have a Friday lab",
+  changingMajor: "false",
   noticeVersionId: 1,
   ...overrides,
 });
@@ -221,5 +232,39 @@ describe("toPayload", () => {
     expect(payload.availabilityCommentsSecondChoice).toBe("");
     expect(payload.residencyStatus).toBe("F1_STUDENT_VISA");
     expect(payload.classLevel).toBe("PHD");
+  });
+
+  /** Issue #72: the ULA yes/no questions travel as "true"/"false" and arrive as booleans. */
+  test("the ULA yes/no answers become booleans, and blank ones null", () => {
+    const payload = toPayload(fields());
+    expect(payload.bsMsStudent).toBe(true);
+    expect(payload.wantsTaEligibility).toBe(false);
+    expect(payload.priorUcsbEmployment).toBe(true);
+    expect(payload.i9Appointment).toBeNull();
+    expect(payload.changingMajor).toBe(false);
+    expect(payload.studentStatusNextQuarter).toBe("GRADUATE");
+    expect(payload.otherCampusJob).toBe("NOT_SURE");
+    expect(payload.trainingCommitment).toBe("UNSURE");
+    // Text answers travel as they are; the backend upper-cases the perm number.
+    expect(payload.permNumber).toBe("a1b2c3d");
+    expect(payload.employeeId).toBe("1234567");
+    expect(payload.trainingCommitmentExplanation).toBe(
+      "Might have a Friday lab",
+    );
+
+    const blank = toPayload(
+      fields({
+        bsMsStudent: "",
+        studentStatusNextQuarter: "",
+        otherCampusJob: "",
+        trainingCommitment: "",
+        changingMajor: "",
+      }),
+    );
+    expect(blank.bsMsStudent).toBeNull();
+    expect(blank.studentStatusNextQuarter).toBeNull();
+    expect(blank.otherCampusJob).toBeNull();
+    expect(blank.trainingCommitment).toBeNull();
+    expect(blank.changingMajor).toBeNull();
   });
 });

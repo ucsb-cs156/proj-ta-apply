@@ -469,6 +469,92 @@ describe("ApplicationSummary tests", () => {
     ).toBeInTheDocument();
   });
 
+  /** Issue #72: the ULA questions from the Google Form, spelled out. */
+  test("a ULA summary shows the Google Form questions' answers, spelled out", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneUlaApplication}
+        type="ULA"
+      />,
+    );
+
+    const row = (label) => screen.getByTestId(`ApplicationSummary-${label}`);
+    expect(row("Perm Number")).toHaveTextContent("A1B2C3D");
+    expect(row("BS/MS Student")).toHaveTextContent("Yes");
+    expect(row("Student Status in the Quarter Applied For")).toHaveTextContent(
+      "Undergraduate",
+    );
+    expect(row("Wants TA Eligibility (Fall TA Training)")).toHaveTextContent(
+      "Yes",
+    );
+    expect(row("Other Campus Job")).toHaveTextContent("Not sure yet");
+    expect(row("Prior UCSB Employment")).toHaveTextContent("Yes");
+    expect(row("Employee ID")).toHaveTextContent("1234567");
+    expect(row("I-9 Appointment")).toHaveTextContent("No");
+    expect(row("Changing Major")).toHaveTextContent("No");
+    // Not a first-time applicant, so the training question was not asked.
+    expect(row("Training Commitment").textContent).toBe("");
+    expect(row("Training Commitment Explanation").textContent).toBe("");
+  });
+
+  test("a ULA summary spells out the training commitment when it was answered", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneUlaApplication,
+          previousServiceAsUla: 0,
+          trainingCommitment: "UNSURE",
+          trainingCommitmentExplanation: "Might have a Friday lab",
+          studentStatusNextQuarter: "GRADUATE",
+          otherCampusJob: "YES",
+          bsMsStudent: null,
+        }}
+        type="ULA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("ApplicationSummary-Training Commitment"),
+    ).toHaveTextContent(
+      "I am UNSURE if I can commit to this training at this point.",
+    );
+    expect(
+      screen.getByTestId("ApplicationSummary-Training Commitment Explanation"),
+    ).toHaveTextContent("Might have a Friday lab");
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-Student Status in the Quarter Applied For",
+      ),
+    ).toHaveTextContent("Graduate");
+    expect(
+      screen.getByTestId("ApplicationSummary-Other Campus Job"),
+    ).toHaveTextContent("Yes");
+    expect(
+      screen.getByTestId("ApplicationSummary-BS/MS Student").textContent,
+    ).toBe("");
+  });
+
+  test("a TA summary has none of the ULA questions", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneTaApplication}
+        type="TA"
+      />,
+    );
+
+    for (const label of [
+      "Perm Number",
+      "BS/MS Student",
+      "Other Campus Job",
+      "Prior UCSB Employment",
+      "I-9 Appointment",
+      "Training Commitment",
+      "Changing Major",
+    ]) {
+      expect(screen.queryByTestId(`ApplicationSummary-${label}`)).toBeNull();
+    }
+  });
+
   /** Only the ULA form asks about availability (issue #76). */
   test("a TA summary has no availability rows", () => {
     render(
