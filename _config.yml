@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-60-compact-headings","number":62,"title":"Compact headings on Admin > Recruitments, and a wider content column on every page","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/62"}]
+pull_requests: []
