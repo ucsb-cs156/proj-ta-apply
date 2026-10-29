@@ -67,23 +67,34 @@ import org.springframework.stereotype.Service;
 <span class="fc" id="L67">    FIELDS.put(&quot;classLevel&quot;, Application::getClassLevel);</span>
 <span class="fc" id="L68">    FIELDS.put(&quot;videoLink&quot;, Application::getVideoLink);</span>
 <span class="fc" id="L69">    FIELDS.put(&quot;previousServiceAsUla&quot;, Application::getPreviousServiceAsUla);</span>
-<span class="fc" id="L70">    FIELDS.put(&quot;noticeVersionId&quot;, Application::getNoticeVersionId);</span>
-<span class="fc" id="L71">  }</span>
+<span class="fc" id="L70">    FIELDS.put(&quot;permNumber&quot;, Application::getPermNumber);</span>
+<span class="fc" id="L71">    FIELDS.put(&quot;bsMsStudent&quot;, Application::getBsMsStudent);</span>
+<span class="fc" id="L72">    FIELDS.put(&quot;studentStatusNextQuarter&quot;, Application::getStudentStatusNextQuarter);</span>
+<span class="fc" id="L73">    FIELDS.put(&quot;wantsTaEligibility&quot;, Application::getWantsTaEligibility);</span>
+<span class="fc" id="L74">    FIELDS.put(&quot;otherCampusJob&quot;, Application::getOtherCampusJob);</span>
+<span class="fc" id="L75">    FIELDS.put(&quot;priorUcsbEmployment&quot;, Application::getPriorUcsbEmployment);</span>
+<span class="fc" id="L76">    FIELDS.put(&quot;employeeId&quot;, Application::getEmployeeId);</span>
+<span class="fc" id="L77">    FIELDS.put(&quot;i9Appointment&quot;, Application::getI9Appointment);</span>
+<span class="fc" id="L78">    FIELDS.put(&quot;trainingCommitment&quot;, Application::getTrainingCommitment);</span>
+<span class="fc" id="L79">    FIELDS.put(&quot;trainingCommitmentExplanation&quot;, Application::getTrainingCommitmentExplanation);</span>
+<span class="fc" id="L80">    FIELDS.put(&quot;changingMajor&quot;, Application::getChangingMajor);</span>
+<span class="fc" id="L81">    FIELDS.put(&quot;noticeVersionId&quot;, Application::getNoticeVersionId);</span>
+<span class="fc" id="L82">  }</span>
 
   /** The answers as strings: a plain field's value, or a join table's rows as JSON. */
-<span class="fc" id="L74">  public record Snapshot(Map&lt;String, String&gt; fields, Map&lt;String, Set&lt;String&gt;&gt; rows) {}</span>
+<span class="fc" id="L85">  public record Snapshot(Map&lt;String, String&gt; fields, Map&lt;String, Set&lt;String&gt;&gt; rows) {}</span>
 
   public Snapshot snapshot(Application application) {
-<span class="fc" id="L77">    Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L78">    FIELDS.forEach((name, getter) -&gt; fields.put(name, text(getter.apply(application))));</span>
+<span class="fc" id="L88">    Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L89">    FIELDS.forEach((name, getter) -&gt; fields.put(name, text(getter.apply(application))));</span>
 
-<span class="fc" id="L80">    Map&lt;String, Set&lt;String&gt;&gt; rows = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L81">    rows.put(&quot;priorCoursework&quot;, courseRows(application.getPriorCoursework()));</span>
-<span class="fc" id="L82">    rows.put(</span>
-<span class="fc" id="L83">        &quot;topicProficiencies&quot;, mapRows(application.getTopicProficiencies(), &quot;topic&quot;, &quot;proficiency&quot;));</span>
-<span class="fc" id="L84">    rows.put(&quot;interests&quot;, mapRows(application.getInterests(), &quot;interest&quot;, &quot;level&quot;));</span>
-<span class="fc" id="L85">    rows.put(&quot;courseInterests&quot;, mapRows(application.getCourseInterests(), &quot;courseId&quot;, &quot;interest&quot;));</span>
-<span class="fc" id="L86">    return new Snapshot(fields, rows);</span>
+<span class="fc" id="L91">    Map&lt;String, Set&lt;String&gt;&gt; rows = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L92">    rows.put(&quot;priorCoursework&quot;, courseRows(application.getPriorCoursework()));</span>
+<span class="fc" id="L93">    rows.put(</span>
+<span class="fc" id="L94">        &quot;topicProficiencies&quot;, mapRows(application.getTopicProficiencies(), &quot;topic&quot;, &quot;proficiency&quot;));</span>
+<span class="fc" id="L95">    rows.put(&quot;interests&quot;, mapRows(application.getInterests(), &quot;interest&quot;, &quot;level&quot;));</span>
+<span class="fc" id="L96">    rows.put(&quot;courseInterests&quot;, mapRows(application.getCourseInterests(), &quot;courseId&quot;, &quot;interest&quot;));</span>
+<span class="fc" id="L97">    return new Snapshot(fields, rows);</span>
   }
 
   /**
@@ -91,99 +102,99 @@ import org.springframework.stereotype.Service;
    * is now, and returns the rows written (empty when nothing changed).
    */
   public List&lt;AuditTrail&gt; record(Snapshot before, Application after, RecruitmentType type) {
-<span class="fc" id="L94">    Snapshot now = snapshot(after);</span>
-<span class="fc bfc" id="L95" title="All 2 branches covered.">    Long taId = type == RecruitmentType.TA ? after.getId() : null;</span>
-<span class="fc bfc" id="L96" title="All 2 branches covered.">    Long ulaId = type == RecruitmentType.ULA ? after.getId() : null;</span>
-<span class="fc" id="L97">    List&lt;AuditTrail&gt; changes = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L105">    Snapshot now = snapshot(after);</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">    Long taId = type == RecruitmentType.TA ? after.getId() : null;</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">    Long ulaId = type == RecruitmentType.ULA ? after.getId() : null;</span>
+<span class="fc" id="L108">    List&lt;AuditTrail&gt; changes = new ArrayList&lt;&gt;();</span>
 
-<span class="fc" id="L99">    before</span>
-<span class="fc" id="L100">        .fields()</span>
-<span class="fc" id="L101">        .forEach(</span>
+<span class="fc" id="L110">    before</span>
+<span class="fc" id="L111">        .fields()</span>
+<span class="fc" id="L112">        .forEach(</span>
             (name, old) -&gt; {
-<span class="fc" id="L103">              String current = now.fields().get(name);</span>
-<span class="fc bfc" id="L104" title="All 2 branches covered.">              if (!Objects.equals(old, current)) {</span>
-<span class="fc" id="L105">                changes.add(row(taId, ulaId, name, old, current));</span>
+<span class="fc" id="L114">              String current = now.fields().get(name);</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">              if (!Objects.equals(old, current)) {</span>
+<span class="fc" id="L116">                changes.add(row(taId, ulaId, name, old, current));</span>
               }
-<span class="fc" id="L107">            });</span>
+<span class="fc" id="L118">            });</span>
 
-<span class="fc" id="L109">    before</span>
-<span class="fc" id="L110">        .rows()</span>
-<span class="fc" id="L111">        .forEach(</span>
+<span class="fc" id="L120">    before</span>
+<span class="fc" id="L121">        .rows()</span>
+<span class="fc" id="L122">        .forEach(</span>
             (name, oldRows) -&gt; {
-<span class="fc" id="L113">              Set&lt;String&gt; newRows = now.rows().get(name);</span>
-<span class="fc bfc" id="L114" title="All 2 branches covered.">              for (String gone : oldRows) {</span>
-<span class="fc bfc" id="L115" title="All 2 branches covered.">                if (!newRows.contains(gone)) {</span>
-<span class="fc" id="L116">                  changes.add(row(taId, ulaId, name, gone, null));</span>
+<span class="fc" id="L124">              Set&lt;String&gt; newRows = now.rows().get(name);</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">              for (String gone : oldRows) {</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">                if (!newRows.contains(gone)) {</span>
+<span class="fc" id="L127">                  changes.add(row(taId, ulaId, name, gone, null));</span>
                 }
-<span class="fc" id="L118">              }</span>
-<span class="fc bfc" id="L119" title="All 2 branches covered.">              for (String added : newRows) {</span>
-<span class="fc bfc" id="L120" title="All 2 branches covered.">                if (!oldRows.contains(added)) {</span>
-<span class="fc" id="L121">                  changes.add(row(taId, ulaId, name, null, added));</span>
+<span class="fc" id="L129">              }</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">              for (String added : newRows) {</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">                if (!oldRows.contains(added)) {</span>
+<span class="fc" id="L132">                  changes.add(row(taId, ulaId, name, null, added));</span>
                 }
-<span class="fc" id="L123">              }</span>
-<span class="fc" id="L124">            });</span>
+<span class="fc" id="L134">              }</span>
+<span class="fc" id="L135">            });</span>
 
-<span class="fc bfc" id="L126" title="All 2 branches covered.">    if (!changes.isEmpty()) {</span>
-<span class="fc" id="L127">      auditTrailRepository.saveAll(changes);</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">    if (!changes.isEmpty()) {</span>
+<span class="fc" id="L138">      auditTrailRepository.saveAll(changes);</span>
     }
-<span class="fc" id="L129">    return changes;</span>
+<span class="fc" id="L140">    return changes;</span>
   }
 
   private static AuditTrail row(
       Long taId, Long ulaId, String field, String oldValue, String newValue) {
-<span class="fc" id="L134">    return AuditTrail.builder()</span>
-<span class="fc" id="L135">        .taApplicationId(taId)</span>
-<span class="fc" id="L136">        .ulaApplicationId(ulaId)</span>
-<span class="fc" id="L137">        .fieldName(field)</span>
-<span class="fc" id="L138">        .oldValue(oldValue)</span>
-<span class="fc" id="L139">        .newValue(newValue)</span>
-<span class="fc" id="L140">        .build();</span>
+<span class="fc" id="L145">    return AuditTrail.builder()</span>
+<span class="fc" id="L146">        .taApplicationId(taId)</span>
+<span class="fc" id="L147">        .ulaApplicationId(ulaId)</span>
+<span class="fc" id="L148">        .fieldName(field)</span>
+<span class="fc" id="L149">        .oldValue(oldValue)</span>
+<span class="fc" id="L150">        .newValue(newValue)</span>
+<span class="fc" id="L151">        .build();</span>
   }
 
   /** A blank answer and no answer are the same thing: the form sends &quot;&quot; for a field left empty. */
   private static String text(Object value) {
-<span class="fc bfc" id="L145" title="All 2 branches covered.">    if (value == null) {</span>
-<span class="fc" id="L146">      return null;</span>
+<span class="fc bfc" id="L156" title="All 2 branches covered.">    if (value == null) {</span>
+<span class="fc" id="L157">      return null;</span>
     }
-<span class="fc" id="L148">    String text = String.valueOf(value);</span>
-<span class="fc bfc" id="L149" title="All 2 branches covered.">    return text.isBlank() ? null : text;</span>
+<span class="fc" id="L159">    String text = String.valueOf(value);</span>
+<span class="fc bfc" id="L160" title="All 2 branches covered.">    return text.isBlank() ? null : text;</span>
   }
 
   /**
    * Each prior course as JSON, without its id: the rows are rebuilt on every save, so ids differ.
    */
   private Set&lt;String&gt; courseRows(List&lt;PriorCoursework&gt; courses) {
-<span class="fc" id="L156">    Set&lt;String&gt; rows = new LinkedHashSet&lt;&gt;();</span>
-<span class="fc bfc" id="L157" title="All 4 branches covered.">    for (PriorCoursework course : courses == null ? List.&lt;PriorCoursework&gt;of() : courses) {</span>
-<span class="fc" id="L158">      Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L159">      row.put(&quot;ucsbCourse&quot;, course.isUcsbCourse());</span>
-<span class="fc" id="L160">      row.put(&quot;otherSchool&quot;, course.getOtherSchool());</span>
-<span class="fc" id="L161">      row.put(&quot;courseNumber&quot;, course.getCourseNumber());</span>
-<span class="fc" id="L162">      row.put(&quot;courseTitle&quot;, course.getCourseTitle());</span>
-<span class="fc" id="L163">      row.put(&quot;term&quot;, course.getTerm());</span>
-<span class="fc" id="L164">      row.put(&quot;grade&quot;, course.getGrade());</span>
-<span class="fc" id="L165">      rows.add(json(row));</span>
-<span class="fc" id="L166">    }</span>
-<span class="fc" id="L167">    return rows;</span>
+<span class="fc" id="L167">    Set&lt;String&gt; rows = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L168" title="All 4 branches covered.">    for (PriorCoursework course : courses == null ? List.&lt;PriorCoursework&gt;of() : courses) {</span>
+<span class="fc" id="L169">      Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L170">      row.put(&quot;ucsbCourse&quot;, course.isUcsbCourse());</span>
+<span class="fc" id="L171">      row.put(&quot;otherSchool&quot;, course.getOtherSchool());</span>
+<span class="fc" id="L172">      row.put(&quot;courseNumber&quot;, course.getCourseNumber());</span>
+<span class="fc" id="L173">      row.put(&quot;courseTitle&quot;, course.getCourseTitle());</span>
+<span class="fc" id="L174">      row.put(&quot;term&quot;, course.getTerm());</span>
+<span class="fc" id="L175">      row.put(&quot;grade&quot;, course.getGrade());</span>
+<span class="fc" id="L176">      rows.add(json(row));</span>
+<span class="fc" id="L177">    }</span>
+<span class="fc" id="L178">    return rows;</span>
   }
 
   /** Each map entry as a JSON row with the given key and value names, in key order. */
   private Set&lt;String&gt; mapRows(Map&lt;String, ?&gt; values, String keyName, String valueName) {
-<span class="fc" id="L172">    Set&lt;String&gt; rows = new LinkedHashSet&lt;&gt;();</span>
-<span class="fc bfc" id="L173" title="All 2 branches covered.">    Map&lt;String, ?&gt; sorted = values == null ? Map.of() : new TreeMap&lt;&gt;(values);</span>
-<span class="fc" id="L174">    sorted.forEach(</span>
+<span class="fc" id="L183">    Set&lt;String&gt; rows = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L184" title="All 2 branches covered.">    Map&lt;String, ?&gt; sorted = values == null ? Map.of() : new TreeMap&lt;&gt;(values);</span>
+<span class="fc" id="L185">    sorted.forEach(</span>
         (key, value) -&gt; {
-<span class="fc" id="L176">          Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L177">          row.put(keyName, key);</span>
-<span class="fc" id="L178">          row.put(valueName, value);</span>
-<span class="fc" id="L179">          rows.add(json(row));</span>
-<span class="fc" id="L180">        });</span>
-<span class="fc" id="L181">    return rows;</span>
+<span class="fc" id="L187">          Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L188">          row.put(keyName, key);</span>
+<span class="fc" id="L189">          row.put(valueName, value);</span>
+<span class="fc" id="L190">          rows.add(json(row));</span>
+<span class="fc" id="L191">        });</span>
+<span class="fc" id="L192">    return rows;</span>
   }
 
   /** valueToTree rather than writeValueAsString: a map of simple values has no checked failure. */
   private String json(Map&lt;String, Object&gt; row) {
-<span class="fc" id="L186">    return objectMapper.valueToTree(row).toString();</span>
+<span class="fc" id="L197">    return objectMapper.valueToTree(row).toString();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
