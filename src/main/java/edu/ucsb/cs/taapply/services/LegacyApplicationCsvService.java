@@ -49,7 +49,7 @@ import org.springframework.web.util.HtmlUtils;
  * #map}); the answers the new form has no field for (preferred job and hours, desired courses the
  * recruitment does not list) go into the applicant's comments, and the export's bookkeeping (when
  * it was submitted and modified, the reviewer's comments) into the admin comments. The format is
- * the one in {@code docs/sample-data/legacy-csv-example.csv}.
+ * the one in {@code docs/sample-data/legacy-ta-app-csv-example.csv}.
  *
  * <p>Rows are independent: a row whose email already has an application in the recruitment is
  * counted and left alone, so re-uploading is safe, and a row without a usable email is skipped and

@@ -418,7 +418,7 @@ form (issue #65).
   that recruitment, as if the student had entered it. The recruitment must exist first. A row whose
   email already has an application there is left alone, so re-uploading is safe; a row with no
   usable email is skipped and reported. The format is the one in
-  `docs/sample-data/legacy-csv-example.csv`, documented on **Help > CSV formats**.
+  `docs/sample-data/legacy-ta-app-csv-example.csv`, documented on **Help > CSV formats**.
 * `LegacyApplicationCsvService` matches the legacy columns to the new fields as well as it can:
   names, GPAs, year, graduation date, residency, language exam and class level directly; "CS" as
   Computer Science, matched to the TA majors list; the three coursework cells as prior coursework

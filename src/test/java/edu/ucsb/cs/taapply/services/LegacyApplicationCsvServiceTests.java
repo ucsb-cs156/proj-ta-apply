@@ -56,7 +56,7 @@ public class LegacyApplicationCsvServiceTests {
   @MockitoBean TaMajorRepository taMajorRepository;
 
   /** The committed, obfuscated export: the real format with no real data in it. */
-  private static final Path SAMPLE = Path.of("docs/sample-data/legacy-csv-example.csv");
+  private static final Path SAMPLE = Path.of("docs/sample-data/legacy-ta-app-csv-example.csv");
 
   private static final Recruitment TA =
       Recruitment.builder().id(5L).quarter("20261").type(RecruitmentType.TA).build();
