@@ -137,6 +137,24 @@ export default function RecruitmentTable({
       ),
     },
     {
+      header: "Download",
+      id: "csv",
+      accessorKey: "id",
+      meta: shrinkToContent,
+      // A plain link, so the browser saves the file itself; the backend names it after the
+      // recruitment and lays the columns out for its type.
+      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => (
+        <a
+          className="btn btn-outline-secondary"
+          href={`/api/admin/applications/csv?recruitmentId=${cell.row.original.id}`}
+          download={`applications-${cell.row.original.id}.csv`}
+          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-csv-button`}
+        >
+          CSV
+        </a>
+      ),
+    },
+    {
       header: "Review",
       id: "review",
       accessorKey: "id",
