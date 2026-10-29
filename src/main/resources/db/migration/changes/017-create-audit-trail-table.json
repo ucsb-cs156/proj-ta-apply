@@ -1,0 +1,49 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "017-create-audit-trail-table",
+        "author": "pc",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "audit_trail" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "audit_trail",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "primaryKey": true, "nullable": false }
+                  }
+                },
+                { "column": { "name": "edited_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "ula_application_id", "type": "BIGINT" } },
+                { "column": { "name": "ta_application_id", "type": "BIGINT" } },
+                {
+                  "column": {
+                    "name": "field_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                { "column": { "name": "old_value", "type": "VARCHAR(4000)" } },
+                { "column": { "name": "new_value", "type": "VARCHAR(4000)" } }
+              ]
+            }
+          },
+          {
+            "sql": {
+              "comment": "Exactly one of the two application ids is set: one is null and the other is not.",
+              "sql": "ALTER TABLE audit_trail ADD CONSTRAINT ck_audit_trail_one_application CHECK ((ula_application_id IS NULL) <> (ta_application_id IS NULL))"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

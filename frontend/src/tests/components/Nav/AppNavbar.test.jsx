@@ -128,6 +128,7 @@ describe("AppNavbar tests", () => {
       "TA App Settings",
       "ULA App Settings",
       "Legacy TA Application",
+      "Audit Trail",
     ];
 
     await waitFor(() => {
