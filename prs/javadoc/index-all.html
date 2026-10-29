@@ -68,6 +68,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/config/CorsConfig.html#addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry)" class="member-name-link">addCorsMappings(CorsRegistry)</a> - Method in class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/CorsConfig.html" title="class in edu.ucsb.cs.taapply.config">CorsConfig</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html#addedTopics()" class="member-name-link">addedTopics()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>addedTopics</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/WebConfig.html#addInterceptors(org.springframework.web.servlet.config.annotation.InterceptorRegistry)" class="member-name-link">addInterceptors(InterceptorRegistry)</a> - Method in class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/WebConfig.html" title="class in edu.ucsb.cs.taapply.config">WebConfig</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html#admin()" class="member-name-link">admin()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></dt>
@@ -923,7 +927,7 @@ applicant, and anyone in the admin or instructor tables whatever their address.<
 <dd>
 <div class="block">Returns the value of the <code>id</code> record component.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html#%3Cinit%3E(int,int,int,java.util.List)" class="member-name-link">ImportResult(int, int, int, List)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html#%3Cinit%3E(int,int,int,java.util.List,java.util.List)" class="member-name-link">ImportResult(int, int, int, List, List)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>ImportResult</code> record class.</div>
 </dd>
@@ -1092,7 +1096,8 @@ row, "as if" each student had entered it, so their next application can be pre-f
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a> - Record Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
 <dd>
-<div class="block">What an upload did; <code>problems</code> names each skipped row and why.</div>
+<div class="block">What an upload did; <code>problems</code> names each skipped row and why, and <code>addedTopics</code>
+the knowledge topics that were not on the TA topics list and were added to it.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html#LEVEL_ALL" class="member-name-link">LEVEL_ALL</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html" title="class in edu.ucsb.cs.taapply.services">UCSBCurriculumService</a></dt>
 <dd>
