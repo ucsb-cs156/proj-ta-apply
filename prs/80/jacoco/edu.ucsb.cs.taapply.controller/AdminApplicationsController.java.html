@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminApplicationsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">AdminApplicationsController.java</span></div><h1>AdminApplicationsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import com.opencsv.exceptions.CsvException;
+import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.AuditTrail;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.ApplicationAuditService;
+import edu.ucsb.cs.taapply.services.ApplicationCsvService;
+import edu.ucsb.cs.taapply.services.LegacyApplicationCsvService;
+import edu.ucsb.cs.taapply.services.LegacyApplicationCsvService.ImportResult;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.io.IOException;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+/**
+ * An admin's view of the applications to a recruitment: the whole list, one application in full,
+ * and the admin's own comments on it. Nothing here changes what the applicant wrote.
+ */
+@Tag(name = &quot;AdminApplications&quot;)
+@RequestMapping(&quot;/api/admin/applications&quot;)
+@RestController
+<span class="fc" id="L43">@Slf4j</span>
+<span class="fc" id="L44">public class AdminApplicationsController extends ApiController {</span>
+
+  @Autowired ApplicationRepository applicationRepository;
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired ApplicationCsvService applicationCsvService;
+  @Autowired ApplicationAuditService applicationAuditService;
+  @Autowired LegacyApplicationCsvService legacyApplicationCsvService;
+
+  @Operation(
+      summary = &quot;Every application to a recruitment, oldest first&quot;,
+      description =
+          &quot;Test applications are included, flagged by testApplication, so the page can set them&quot;
+              + &quot; apart. 404 for a recruitment that does not exist.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/all&quot;)
+  public List&lt;Application&gt; allForRecruitment(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
+<span class="fc bfc" id="L61" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
+<span class="fc" id="L62">      throw new EntityNotFoundException(Recruitment.class, recruitmentId);</span>
+    }
+<span class="fc" id="L64">    return applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId);</span>
+  }
+
+  @Operation(
+      summary = &quot;Every application to a recruitment as a CSV file&quot;,
+      description =
+          &quot;One row per application, test applications included and flagged. The columns differ by&quot;
+              + &quot; form type; the one-to-many answers are folded into one column each (courses&quot;
+              + &quot; separated by semicolons, their fields by commas; ratings as name:value pairs&quot;
+              + &quot; separated by commas). 404 for a recruitment that does not exist.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(value = &quot;/csv&quot;, produces = &quot;text/csv&quot;)
+  public ResponseEntity&lt;String&gt; downloadCsv(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
+<span class="fc" id="L78">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L80">            .findById(recruitmentId)</span>
+<span class="fc" id="L81">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L82">    String csv =</span>
+<span class="fc" id="L83">        applicationCsvService.write(</span>
+<span class="fc" id="L84">            recruitment.getType(),</span>
+<span class="fc" id="L85">            applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));</span>
+<span class="fc" id="L86">    return ResponseEntity.ok()</span>
+<span class="fc" id="L87">        .header(</span>
+            HttpHeaders.CONTENT_DISPOSITION,
+<span class="fc" id="L89">            &quot;attachment; filename=\&quot;applications-%d.csv\&quot;&quot;.formatted(recruitmentId))</span>
+<span class="fc" id="L90">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;))</span>
+<span class="fc" id="L91">        .body(csv);</span>
+  }
+
+  @Operation(
+      summary = &quot;Import the legacy TA application's CSV export into a TA recruitment&quot;,
+      description =
+          &quot;One application per row, as if the student had entered it, so their next application&quot;
+              + &quot; is pre-filled from it. The quarter names the TA recruitment, as W26 or 20261;&quot;
+              + &quot; 400 if no TA recruitment exists for it, so create one first. A row whose email&quot;
+              + &quot; already has an application in the recruitment is left alone, so re-uploading is&quot;
+              + &quot; safe; a row without a usable email is skipped and reported.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(
+      value = &quot;/legacy/upload&quot;,
+      consumes = {&quot;multipart/form-data&quot;})
+  public ImportResult uploadLegacyCsv(
+      @Parameter(name = &quot;quarter&quot;, description = &quot;QYY such as W26, or YYYYQ such as 20261&quot;)
+          @RequestParam
+          String quarter,
+      @Parameter(name = &quot;file&quot;) @RequestParam(&quot;file&quot;) MultipartFile file)
+      throws IOException, CsvException {
+<span class="fc" id="L112">    String yyyyq = LegacyApplicationCsvService.toYyyyq(quarter);</span>
+<span class="fc" id="L113">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L115">            .findByQuarterAndType(yyyyq, RecruitmentType.TA)</span>
+<span class="fc" id="L116">            .orElseThrow(</span>
+                () -&gt;
+<span class="fc" id="L118">                    new IllegalArgumentException(</span>
+                        (&quot;There is no TA recruitment for %s; create it under Admin &gt;&quot;
+                                + &quot; Recruitments first&quot;)
+<span class="fc" id="L121">                            .formatted(quarter.strip())));</span>
+<span class="fc" id="L122">    ImportResult result = legacyApplicationCsvService.upload(file, recruitment);</span>
+<span class="fc" id="L123">    log.info(&quot;Legacy CSV import into recruitment {}: {}&quot;, recruitment.getId(), result);</span>
+<span class="fc" id="L124">    return result;</span>
+  }
+
+  @Operation(summary = &quot;One application, whoever it belongs to&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;&quot;)
+  public Application getApplication(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
+<span class="fc" id="L131">    return applicationRepository</span>
+<span class="fc" id="L132">        .findById(id)</span>
+<span class="fc" id="L133">        .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+  }
+
+  @Operation(
+      summary = &quot;Edit a student's application as an admin, recording every change&quot;,
+      description =
+          &quot;Takes the same fields as the applicant's own edit, with no deadline or open/closed rule:&quot;
+              + &quot; an admin may correct an application at any time. Each field whose value changes&quot;
+              + &quot; gets a row in the audit trail. The coursework minimum still applies; the notice&quot;
+              + &quot; agreement rule does not, since the applicant agreed, not the admin. 404 for an&quot;
+              + &quot; application that does not exist.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;&quot;)
+  public Application editApplication(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id, @RequestBody ApplicationFields fields) {
+<span class="fc" id="L148">    Application application =</span>
+        applicationRepository
+<span class="fc" id="L150">            .findById(id)</span>
+<span class="fc" id="L151">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L152">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L154">            .findById(application.getRecruitmentId())</span>
+<span class="fc" id="L155">            .orElseThrow(</span>
+                () -&gt;
+<span class="fc" id="L157">                    new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));</span>
+<span class="fc" id="L158">    ApplicationsController.requireCoursework(recruitment.getType(), fields);</span>
+<span class="fc" id="L159">    ApplicationsController.requirePermNumberFormat(fields);</span>
+
+<span class="fc" id="L161">    ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);</span>
+<span class="fc" id="L162">    ApplicationsController.apply(fields, application, recruitment.getType());</span>
+<span class="fc" id="L163">    applicationRepository.save(application);</span>
+<span class="fc" id="L164">    List&lt;AuditTrail&gt; changes =</span>
+<span class="fc" id="L165">        applicationAuditService.record(before, application, recruitment.getType());</span>
+<span class="fc" id="L166">    log.info(&quot;Admin edited application {}: {} field(s) changed&quot;, id, changes.size());</span>
+<span class="fc" id="L167">    return application;</span>
+  }
+
+  @Operation(
+      summary = &quot;Save the admin's comments on an application&quot;,
+      description =
+          &quot;Free text, kept apart from the applicant's own answers; replaces the earlier text.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;/adminComments&quot;)
+  public Application updateAdminComments(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;adminComments&quot;) @RequestParam String adminComments) {
+<span class="fc" id="L179">    Application application =</span>
+        applicationRepository
+<span class="fc" id="L181">            .findById(id)</span>
+<span class="fc" id="L182">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L183">    application.setAdminComments(adminComments);</span>
+<span class="fc" id="L184">    applicationRepository.save(application);</span>
+<span class="fc" id="L185">    return application;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
