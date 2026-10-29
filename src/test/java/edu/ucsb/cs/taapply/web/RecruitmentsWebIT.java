@@ -166,9 +166,7 @@ public class RecruitmentsWebIT extends WebTestCase {
 
     assertThat(page.getByTestId("RecruitmentsIndexPage-card-0-status-button"))
         .containsText("Close");
-    assertThat(page.getByTestId("RecruitmentsIndexPage-card-0-actualOpeningDate"))
-        .not()
-        .isEmpty();
+    assertThat(page.getByTestId("RecruitmentsIndexPage-card-0-actualOpeningDate")).not().isEmpty();
   }
 
   /** The CSV button hands the browser a file named after the recruitment, with the TA columns. */
