@@ -13,6 +13,7 @@ import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 import { submittedText } from "main/utils/adminApplications";
+import auditTrailFixtures from "fixtures/auditTrailFixtures";
 
 const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
@@ -68,6 +69,52 @@ describe("AdminApplicationPage tests", () => {
     axiosMock
       .onPut("/api/admin/applications/adminComments")
       .reply(200, { ...ula, adminComments: "Interview Tuesday" });
+    axiosMock.onGet("/api/admin/audittrail/application").reply(200, []);
+  });
+
+  test("has an Edit button leading to the admin's edit form", async () => {
+    renderPage();
+
+    const button = await screen.findByTestId("AdminApplicationPage-edit");
+    expect(button).toHaveTextContent("Edit");
+    expect(button).toHaveAttribute(
+      "href",
+      `/admin/applications/${ula.id}/edit`,
+    );
+  });
+
+  /** The rows for this application only, asked for by the recruitment's type and the id. */
+  test("ends with this application's audit trail, or a note that there is none", async () => {
+    renderPage();
+
+    expect(
+      await screen.findByTestId("AdminApplicationPage-audit-none"),
+    ).toHaveTextContent("No admin has changed this application.");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/audittrail/application",
+        )[0].params,
+      ).toEqual({ type: "ULA", id: String(ula.id) }),
+    );
+  });
+
+  test("lists the audit trail rows when there are some", async () => {
+    axiosMock
+      .onGet("/api/admin/audittrail/application")
+      .reply(200, auditTrailFixtures.threeRows.slice(1));
+    renderPage();
+
+    expect(
+      await screen.findByTestId(
+        "AdminApplicationPage-audit-cell-row-0-col-fieldName",
+      ),
+    ).toHaveTextContent("priorCoursework");
+    expect(
+      screen.getByTestId("AdminApplicationPage-audit-cell-row-1-col-fieldName"),
+    ).toHaveTextContent("comments");
+    expect(screen.queryByTestId("AdminApplicationPage-audit-none")).toBeNull();
+    expect(screen.getByText("Audit Trail")).toBeInTheDocument();
   });
 
   test("shows who applied, when, and the application read only, with the agreed notice", async () => {

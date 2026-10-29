@@ -438,8 +438,7 @@ public class ApplicationsController extends ApiController {
   }
 
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
-  private static void apply(
-      ApplicationFields fields, Application application, RecruitmentType type) {
+  static void apply(ApplicationFields fields, Application application, RecruitmentType type) {
     application.setFirstName(fields.firstName());
     application.setMiddleName(fields.middleName());
     application.setLastName(fields.lastName());

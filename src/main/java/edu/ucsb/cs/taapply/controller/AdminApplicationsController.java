@@ -1,10 +1,13 @@
 package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.ApplicationAuditService;
 import edu.ucsb.cs.taapply.services.ApplicationCsvService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +39,7 @@ public class AdminApplicationsController extends ApiController {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired ApplicationCsvService applicationCsvService;
+  @Autowired ApplicationAuditService applicationAuditService;
 
   @Operation(
       summary = "Every application to a recruitment, oldest first",
@@ -85,6 +90,39 @@ public class AdminApplicationsController extends ApiController {
     return applicationRepository
         .findById(id)
         .orElseThrow(() -> new EntityNotFoundException(Application.class, id));
+  }
+
+  @Operation(
+      summary = "Edit a student's application as an admin, recording every change",
+      description =
+          "Takes the same fields as the applicant's own edit, with no deadline or open/closed rule:"
+              + " an admin may correct an application at any time. Each field whose value changes"
+              + " gets a row in the audit trail. The coursework minimum still applies; the notice"
+              + " agreement rule does not, since the applicant agreed, not the admin. 404 for an"
+              + " application that does not exist.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PutMapping("")
+  public Application editApplication(
+      @Parameter(name = "id") @RequestParam Long id, @RequestBody ApplicationFields fields) {
+    Application application =
+        applicationRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Application.class, id));
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(application.getRecruitmentId())
+            .orElseThrow(
+                () ->
+                    new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));
+    ApplicationsController.requireCoursework(recruitment.getType(), fields);
+
+    ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);
+    ApplicationsController.apply(fields, application, recruitment.getType());
+    applicationRepository.save(application);
+    List<AuditTrail> changes =
+        applicationAuditService.record(before, application, recruitment.getType());
+    log.info("Admin edited application {}: {} field(s) changed", id, changes.size());
+    return application;
   }
 
   @Operation(

@@ -5,6 +5,7 @@ import AdminApplicationPage from "main/pages/Admin/AdminApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import noticesFixtures from "fixtures/noticesFixtures";
+import auditTrailFixtures from "fixtures/auditTrailFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -24,6 +25,13 @@ const common = [
   ),
 ];
 
+const withAuditRows = http.get("/api/admin/audittrail/application", () =>
+  HttpResponse.json(auditTrailFixtures.threeRows.slice(1)),
+);
+const noAuditRows = http.get("/api/admin/audittrail/application", () =>
+  HttpResponse.json([]),
+);
+
 const routeTo = (id) => ({ initialEntries: [`/admin/applications/${id}`] });
 
 export default {
@@ -38,13 +46,14 @@ const Template = () => (
   </Routes>
 );
 
-/** A ULA application with admin comments already written. */
+/** A ULA application with admin comments already written, and two audited changes. */
 export const UlaWithComments = Template.bind({});
 UlaWithComments.parameters = {
   reactRouter: routeTo(applicationsFixtures.oneUlaApplication.id),
   msw: {
     handlers: [
       ...common,
+      withAuditRows,
       http.get("/api/admin/applications", () =>
         HttpResponse.json(applicationsFixtures.oneUlaApplication),
       ),
@@ -52,13 +61,14 @@ UlaWithComments.parameters = {
   },
 };
 
-/** A TA application nobody has commented on yet. */
+/** A TA application nobody has commented on or edited yet. */
 export const TaNoCommentsYet = Template.bind({});
 TaNoCommentsYet.parameters = {
   reactRouter: routeTo(applicationsFixtures.oneTaApplication.id),
   msw: {
     handlers: [
       ...common,
+      noAuditRows,
       http.get("/api/admin/applications", () =>
         HttpResponse.json(applicationsFixtures.oneTaApplication),
       ),

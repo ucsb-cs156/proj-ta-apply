@@ -336,3 +336,22 @@ table and its page come first so that feature has somewhere to record what it do
   **[See value]** link that opens the whole value in a modal.
 * `GET /api/admin/audittrail/application?type=TA|ULA&id=` returns one application's rows,
   oldest first, for the next iteration's per-application view.
+
+# Fourteenth Iteration
+
+Admins can edit a student's application, and every change is recorded in the audit trail.
+
+* The applications overview page gains an **Edit** button per row, and the read-only view of an
+  application gains an **Edit** button at the top. Both lead to `/admin/applications/:id/edit`:
+  the same form the applicant filled in, with their answers in it, saved through
+  `PUT /api/admin/applications?id=` (admins only). An admin may correct an application at any time:
+  no deadline or open/closed rule applies, and the notice agreement rule does not either (the
+  applicant agreed, not the admin). The coursework minimum still holds.
+* Before applying the edit the backend snapshots the application's answers as strings; afterwards
+  it compares, and writes one `audit_trail` row per field whose value changed, against the TA or
+  ULA application id by the recruitment's type. A join-table row (a prior course, a topic rating,
+  an interest level, a course interest) is recorded as the JSON of the whole row: a row that
+  disappeared with a null new value, a row that appeared with a null old value. The form rebuilds
+  the prior course rows on every save, so an edited course shows as one row removed and one added.
+* The read-only view of an application ends with an **Audit Trail** section listing that
+  application's rows, oldest first, from `GET /api/admin/audittrail/application?type=&id=`.

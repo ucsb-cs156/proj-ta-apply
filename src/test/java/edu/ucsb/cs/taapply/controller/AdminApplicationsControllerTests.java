@@ -14,31 +14,44 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.AuditTrail;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.AuditTrailRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.ApplicationAuditService;
 import edu.ucsb.cs.taapply.services.ApplicationCsvService;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(controllers = AdminApplicationsController.class)
-@Import({edu.ucsb.cs.taapply.testconfig.TestConfig.class, ApplicationCsvService.class})
+@Import({
+  edu.ucsb.cs.taapply.testconfig.TestConfig.class,
+  ApplicationCsvService.class,
+  ApplicationAuditService.class
+})
 public class AdminApplicationsControllerTests extends ControllerTestCase {
 
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean UserRepository userRepository;
+  @MockitoBean AuditTrailRepository auditTrailRepository;
 
   private static Application application(long id, long recruitmentId, String email, boolean test) {
     return Application.builder()
@@ -64,6 +77,13 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(put("/api/admin/applications/adminComments?id=1&adminComments=x").with(csrf()))
         .andExpect(status().is(403));
+    mockMvc
+        .perform(
+            put("/api/admin/applications?id=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}")
+                .with(csrf()))
+        .andExpect(status().is(403));
   }
 
   @WithMockUser(roles = {"USER", "INSTRUCTOR"})
@@ -74,6 +94,13 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     mockMvc.perform(get("/api/admin/applications/csv?recruitmentId=1")).andExpect(status().is(403));
     mockMvc
         .perform(put("/api/admin/applications/adminComments?id=1&adminComments=x").with(csrf()))
+        .andExpect(status().is(403));
+    mockMvc
+        .perform(
+            put("/api/admin/applications?id=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}")
+                .with(csrf()))
         .andExpect(status().is(403));
     verify(applicationRepository, never()).save(any());
   }
@@ -242,6 +269,218 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertEquals("Application with id 5 not found", responseToJson(response).get("message"));
+  }
+
+  // ---- edit, with an audit trail ----
+
+  /** A TA application with three courses, so the coursework rule is met before and after. */
+  private static Application editable() {
+    Application application = application(5L, 7L, "ada@ucsb.edu", false);
+    application.setMajor("Computer Science");
+    application.setPriorCoursework(
+        new ArrayList<>(
+            List.of(
+                PriorCoursework.builder().id(1L).ucsbCourse(true).courseNumber("CMPSC 8").build(),
+                PriorCoursework.builder().id(2L).ucsbCourse(true).courseNumber("CMPSC 16").build(),
+                PriorCoursework.builder()
+                    .id(3L)
+                    .ucsbCourse(true)
+                    .courseNumber("CMPSC 24")
+                    .build())));
+    application.setTopicProficiencies(new HashMap<>(Map.of("Java", 4)));
+    return application;
+  }
+
+  /** The same three courses as the form sends them, plus whatever else the test sets. */
+  private String editBody(Map<String, Object> changes) throws Exception {
+    Map<String, Object> body = new HashMap<>();
+    body.put("firstName", "Ada");
+    body.put("lastName", "Lovelace");
+    body.put("major", "Computer Science");
+    body.put(
+        "priorCoursework",
+        List.of(
+            Map.of("ucsbCourse", true, "courseNumber", "CMPSC 8"),
+            Map.of("ucsbCourse", true, "courseNumber", "CMPSC 16"),
+            Map.of("ucsbCourse", true, "courseNumber", "CMPSC 24")));
+    body.put("topicProficiencies", Map.of("Java", 4));
+    body.putAll(changes);
+    return mapper.writeValueAsString(body);
+  }
+
+  private static AuditTrail change(
+      Long ta, Long ula, String field, String oldValue, String newValue) {
+    return AuditTrail.builder()
+        .taApplicationId(ta)
+        .ulaApplicationId(ula)
+        .fieldName(field)
+        .oldValue(oldValue)
+        .newValue(newValue)
+        .build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<AuditTrail> audited() {
+    ArgumentCaptor<List<AuditTrail>> captor = ArgumentCaptor.forClass(List.class);
+    verify(auditTrailRepository, times(1)).saveAll(captor.capture());
+    return captor.getValue();
+  }
+
+  /** Every changed field is applied and gets an audit row; unchanged ones get none. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_edit_is_saved_and_each_changed_field_is_audited() throws Exception {
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(editable()));
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.TA)));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/applications?id=5")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        editBody(
+                            Map.of(
+                                "major",
+                                "Computer Engineering",
+                                "gpaMajor",
+                                3.5,
+                                "topicProficiencies",
+                                Map.of("Java", 5))))
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    ArgumentCaptor<Application> saved = ArgumentCaptor.forClass(Application.class);
+    verify(applicationRepository, times(1)).save(saved.capture());
+    assertEquals("Computer Engineering", saved.getValue().getMajor());
+    assertEquals(3.5, saved.getValue().getGpaMajor());
+    assertEquals(Map.of("Java", 5), saved.getValue().getTopicProficiencies());
+    // Untouched answers stay: the name, the courses.
+    assertEquals("Lovelace", saved.getValue().getLastName());
+    assertEquals(3, saved.getValue().getPriorCoursework().size());
+    assertEquals(
+        mapper.writeValueAsString(saved.getValue()), response.getResponse().getContentAsString());
+
+    assertEquals(
+        List.of(
+            change(5L, null, "major", "Computer Science", "Computer Engineering"),
+            change(5L, null, "gpaMajor", null, "3.5"),
+            change(5L, null, "topicProficiencies", "{\"topic\":\"Java\",\"proficiency\":4}", null),
+            change(5L, null, "topicProficiencies", null, "{\"topic\":\"Java\",\"proficiency\":5}")),
+        audited());
+  }
+
+  /** Saving the same answers again changes nothing and audits nothing. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_edit_that_changes_nothing_audits_nothing() throws Exception {
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(editable()));
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.TA)));
+
+    mockMvc
+        .perform(
+            put("/api/admin/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(editBody(Map.of()))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    verify(applicationRepository, times(1)).save(any());
+    verify(auditTrailRepository, never()).saveAll(any());
+  }
+
+  /** A ULA application's rows fill the ULA id column. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void a_ula_edit_is_audited_against_the_ula_application_id() throws Exception {
+    // A ULA topic rating is 1 to 3, so the stored and sent ratings are on that scale.
+    Application existing = editable();
+    existing.setTopicProficiencies(new HashMap<>(Map.of("Java", 3)));
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.ULA)));
+
+    mockMvc
+        .perform(
+            put("/api/admin/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    editBody(Map.of("lastName", "Byron", "topicProficiencies", Map.of("Java", 3))))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(List.of(change(null, 5L, "lastName", "Lovelace", "Byron")), audited());
+  }
+
+  /** The coursework minimum is kept; the notice agreement rule is not the admin's to meet. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_edit_with_too_few_courses_is_refused_before_anything_is_saved() throws Exception {
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(editable()));
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.TA)));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/applications?id=5")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        editBody(
+                            Map.of(
+                                "priorCoursework",
+                                List.of(Map.of("ucsbCourse", true, "courseNumber", "CMPSC 8")))))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "A TA application must list at least 3 prior courses",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+    verify(auditTrailRepository, never()).saveAll(any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void editing_a_missing_application_is_a_404() throws Exception {
+    when(applicationRepository.findById(5L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/applications?id=5")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(editBody(Map.of()))
+                    .with(csrf()))
+            .andExpect(status().is(404))
+            .andReturn();
+
+    assertEquals("Application with id 5 not found", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void editing_an_application_whose_recruitment_is_gone_is_a_404() throws Exception {
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(editable()));
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/applications?id=5")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(editBody(Map.of()))
+                    .with(csrf()))
+            .andExpect(status().is(404))
+            .andReturn();
+
+    assertEquals("Recruitment with id 7 not found", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
   }
 
   // ---- admin comments ----
