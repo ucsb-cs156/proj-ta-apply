@@ -1,0 +1,29 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "019-add-last-online-to-users",
+        "author": "pc",
+        "comment": "When each user last used the app, for the Admin > Users table (issue #61).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "users", "columnName": "last_online" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "users",
+              "columns": [
+                { "column": { "name": "last_online", "type": "TIMESTAMP WITH TIME ZONE" } }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

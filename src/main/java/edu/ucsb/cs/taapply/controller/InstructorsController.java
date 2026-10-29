@@ -1,10 +1,15 @@
 package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.entity.Instructor;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
+import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.utilities.CanonicalFormConverter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +28,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class InstructorsController extends ApiController {
 
   @Autowired InstructorRepository instructorRepository;
+  @Autowired UserRepository userRepository;
+
+  /**
+   * An instructor with their name from the users table, which has a row for them only once they
+   * have logged in: until then both names are null.
+   */
+  public static record InstructorDTO(String email, String givenName, String familyName) {
+    public InstructorDTO(Instructor instructor, Optional<User> user) {
+      this(
+          instructor.getEmail(),
+          user.map(User::getGivenName).orElse(null),
+          user.map(User::getFamilyName).orElse(null));
+    }
+  }
 
   @Operation(summary = "Create a new Instructor")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -37,8 +56,13 @@ public class InstructorsController extends ApiController {
   @Operation(summary = "List all Instructors")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/get")
-  public Iterable<Instructor> allInstructors() {
-    return instructorRepository.findAll();
+  public List<InstructorDTO> allInstructors() {
+    Iterable<Instructor> instructors = instructorRepository.findAll();
+    return StreamSupport.stream(instructors.spliterator(), false)
+        .map(
+            instructor ->
+                new InstructorDTO(instructor, userRepository.findByEmail(instructor.getEmail())))
+        .toList();
   }
 
   @Operation(summary = "Delete an Instructor by email")

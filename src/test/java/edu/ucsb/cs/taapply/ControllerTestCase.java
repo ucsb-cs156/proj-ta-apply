@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs.taapply.config.SecurityConfig;
+import edu.ucsb.cs.taapply.interceptors.LastOnlineInterceptor;
 import edu.ucsb.cs.taapply.interceptors.RoleUpdateInterceptor;
 import edu.ucsb.cs.taapply.services.CurrentUserService;
 import edu.ucsb.cs.taapply.services.GrantedAuthoritiesService;
@@ -21,9 +22,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * Base class for all controller tests. Provides MockMvc, ObjectMapper, and a no-op
- * RoleUpdateInterceptor so individual tests don't need to mock
- * AdminRepository/InstructorRepository.
+ * Base class for all controller tests. Provides MockMvc, ObjectMapper, and no-op
+ * RoleUpdateInterceptor and LastOnlineInterceptor so individual tests don't need to mock
+ * AdminRepository/InstructorRepository/UserRepository for them.
  */
 @ActiveProfiles("test")
 @Import({TestConfig.class, SecurityConfig.class})
@@ -35,10 +36,12 @@ public abstract class ControllerTestCase {
   @Autowired public ObjectMapper mapper;
 
   @MockitoBean RoleUpdateInterceptor roleUpdateInterceptor;
+  @MockitoBean LastOnlineInterceptor lastOnlineInterceptor;
 
   @PostConstruct
-  void passthroughInterceptor() throws Exception {
+  void passthroughInterceptors() throws Exception {
     when(roleUpdateInterceptor.preHandle(any(), any(), any())).thenReturn(true);
+    when(lastOnlineInterceptor.preHandle(any(), any(), any())).thenReturn(true);
   }
 
   @SuppressWarnings("unchecked")

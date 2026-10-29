@@ -1,6 +1,6 @@
 /**
  * Format a timestamp into a human-readable date and time
- * @param {string} timestamp - ISO format timestamp string
+ * @param {string | null | undefined} timestamp - ISO format timestamp string; blank when missing
  * @returns {string} - Formatted date and time string
  */
 export function formatTime(timestamp) {

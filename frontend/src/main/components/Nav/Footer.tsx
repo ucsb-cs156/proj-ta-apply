@@ -9,10 +9,8 @@ export default function Footer() {
       }}
     >
       <div
+        className="content-column"
         style={{
-          width: "1126px",
-          maxWidth: "100%",
-          margin: "0 auto",
           padding: "16px 20px",
           color: "#475569",
           fontSize: "0.95rem",

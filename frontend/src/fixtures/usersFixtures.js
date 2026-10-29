@@ -11,6 +11,7 @@ const usersFixtures = {
       familyName: "Conrad",
       admin: true,
       instructor: false,
+      lastOnline: "2026-04-01T17:30:00Z",
     },
     {
       id: 2,
@@ -23,6 +24,7 @@ const usersFixtures = {
       familyName: "Conrad",
       admin: false,
       instructor: false,
+      lastOnline: "2026-03-28T09:05:12.345Z",
     },
     {
       id: 3,
@@ -35,6 +37,8 @@ const usersFixtures = {
       familyName: "Zzyxx",
       admin: false,
       instructor: true,
+      // A row from before last_online was recorded.
+      lastOnline: null,
     },
   ],
 };

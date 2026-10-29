@@ -12,6 +12,7 @@ import edu.ucsb.cs.taapply.config.SecurityConfig;
 import edu.ucsb.cs.taapply.controller.DummyController;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
+import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.RoleAssignmentService;
 import edu.ucsb.cs.taapply.testconfig.TestConfig;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,8 @@ public class RoleUpdateInterceptorTests {
 
   @MockitoBean AdminRepository adminRepository;
   @MockitoBean InstructorRepository instructorRepository;
+  // LastOnlineInterceptor is a HandlerInterceptor too, so @WebMvcTest loads it; give it its repo.
+  @MockitoBean UserRepository userRepository;
 
   @Autowired MockMvc mockMvc;
 

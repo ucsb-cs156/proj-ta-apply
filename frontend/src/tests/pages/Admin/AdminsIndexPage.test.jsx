@@ -193,4 +193,21 @@ describe("AdminsIndexPage tests", () => {
       [],
     );
   });
+
+  /** Issue #61: the name columns are blank for anyone who has not logged in yet. */
+  test("explains at the top where the names come from", async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AdminsIndexPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByTestId("AdminsIndexPage-names-note"),
+    ).toHaveTextContent(
+      "First and Last name are populated when the user logs in for the first time.",
+    );
+  });
 });

@@ -1,6 +1,7 @@
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import RoleEmailTable, {
+  NAMES_NOTE,
   type RoleEmail,
 } from "main/components/Users/RoleEmailTable";
 import RoleEmailCsvUploadForm, {
@@ -53,6 +54,7 @@ export default function InstructorsIndexPage(): React.JSX.Element {
       <div className="pt-2">
         {createButton()}
         <h1>Instructors</h1>
+        <p data-testid="InstructorsIndexPage-names-note">{NAMES_NOTE}</p>
         <RoleEmailTable
           data={instructors ?? []}
           deleteEndpoint="/api/admin/instructors/delete"

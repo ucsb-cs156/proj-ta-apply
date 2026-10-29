@@ -2,6 +2,7 @@ import { useBackend } from "main/utils/useBackend";
 import { Link } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import RoleEmailTable, {
+  NAMES_NOTE,
   type RoleEmail,
 } from "main/components/Users/RoleEmailTable";
 
@@ -30,6 +31,7 @@ export default function AdminsIndexPage(): React.JSX.Element {
       <div className="pt-2">
         {createButton()}
         <h1>Admins</h1>
+        <p data-testid="AdminsIndexPage-names-note">{NAMES_NOTE}</p>
         <RoleEmailTable
           data={admins ?? []}
           deleteEndpoint="/api/admin/delete"
