@@ -1,6 +1,7 @@
 import OurTable from "main/components/Common/OurTable";
 import type { Cell } from "@tanstack/react-table";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
+import { formatTime } from "main/utils/dateUtils";
 
 export type User = {
   id: number;
@@ -9,6 +10,8 @@ export type User = {
   email: string;
   admin: boolean;
   instructor: boolean;
+  /** ISO instant of their last request; null for a row from before this was recorded. */
+  lastOnline?: string | null;
 };
 
 const columns: LegacyColumn[] = [
@@ -27,6 +30,13 @@ const columns: LegacyColumn[] = [
   {
     header: "Email",
     accessorKey: "email",
+  },
+  {
+    header: "Last Online",
+    accessorKey: "lastOnline",
+    // Sorted on the ISO value; shown in the admin's own time zone, blank when never recorded.
+    cell: ({ cell }: { cell: Cell<User, unknown> }) =>
+      formatTime(cell.getValue() as string | null),
   },
   {
     header: "Admin",

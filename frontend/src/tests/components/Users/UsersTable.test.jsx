@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import usersFixtures from "fixtures/usersFixtures";
 import UsersTable from "main/components/Users/UsersTable";
+import { formatTime } from "main/utils/dateUtils";
 
 describe("UserTable tests", () => {
   test("renders without crashing for empty table", () => {
@@ -19,6 +20,7 @@ describe("UserTable tests", () => {
       "First Name",
       "Last Name",
       "Email",
+      "Last Online",
       "Admin",
       "Instructor",
     ];
@@ -27,6 +29,7 @@ describe("UserTable tests", () => {
       "givenName",
       "familyName",
       "email",
+      "lastOnline",
       "admin",
       "instructor",
     ];
@@ -63,5 +66,41 @@ describe("UserTable tests", () => {
     expect(
       screen.getByTestId(`${testId}-cell-row-1-col-instructor`),
     ).toHaveTextContent("false");
+  });
+
+  /** Issue #61: when each user last used the app, as proj-happycows shows it. */
+  test("Last Online is shown in the viewer's locale, and blank when never recorded", () => {
+    render(<UsersTable users={usersFixtures.threeUsers} />);
+
+    const shown = screen.getByTestId("UsersTable-cell-row-0-col-lastOnline");
+    expect(shown).toHaveTextContent(formatTime("2026-04-01T17:30:00Z"));
+    expect(shown.textContent).toBe(
+      new Date("2026-04-01T17:30:00Z").toLocaleString(),
+    );
+    expect(
+      screen.getByTestId("UsersTable-cell-row-1-col-lastOnline").textContent,
+    ).toBe(new Date("2026-03-28T09:05:12.345Z").toLocaleString());
+    expect(
+      screen.getByTestId("UsersTable-cell-row-2-col-lastOnline").textContent,
+    ).toBe("");
+  });
+
+  test("Last Online sorts by the instant, not the text shown", async () => {
+    render(<UsersTable users={usersFixtures.threeUsers} />);
+    // Ascending: the null first, then March, then April.
+    const header = screen.getByTestId(
+      "UsersTable-header-lastOnline-sort-header",
+    );
+    header.click();
+    await screen.findByText("🔼");
+    // Cell test ids keep the original data index, so read the rows in DOM order.
+    const idsInOrder = () =>
+      Array.from(
+        document.querySelectorAll('[data-testid="UsersTable"] tbody tr'),
+      ).map((tr) => tr.querySelector("td").textContent);
+    expect(idsInOrder()).toEqual(["3", "2", "1"]);
+    header.click();
+    await screen.findByText("🔽");
+    expect(idsInOrder()).toEqual(["1", "2", "3"]);
   });
 });

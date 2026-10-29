@@ -369,3 +369,16 @@ The TA form's language exam questions follow the legacy form.
 * Changeset 018 widens `language_exam`, maps the old answers onto the new ones (PASSED to
   *passed (F1 or J1 visa)*, FAILED to *not passed*, EXEMPT to *exempt (U.S. Citizen)*) and
   changes `language_exam_date_passed` from a date to text.
+
+# Seventeenth Iteration
+
+Admins can see who has been using the app, and who their admins and instructors are (issue #61).
+
+* `users` gains `last_online` (changeset 019). It is stamped at sign-in, and `LastOnlineInterceptor`
+  refreshes it on any `/api/**` request from a signed-in user whose stamp is more than a minute
+  old, so a page load's burst of requests writes the row once. **Admin > Users** shows it as
+  **Last Online**, in the admin's own time zone, blank for a row from before the column existed;
+  the column sorts by the instant, not the text.
+* **Admin > Admins** and **Admin > Instructors** gain **First Name** and **Last Name**, looked up by
+  email in the users table (`AdminDTO` and the new `InstructorDTO`). Someone who has never logged
+  in has no users row, so their names are blank; a note at the top of each page says so.

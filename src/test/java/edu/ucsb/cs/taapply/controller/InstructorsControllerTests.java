@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -14,10 +15,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.Instructor;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -102,15 +105,39 @@ public class InstructorsControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void logged_in_admins_can_get() throws Exception {
+    // ins has logged in, so the users table knows their name; other never has.
     Instructor instructor = Instructor.builder().email("ins@ucsb.edu").build();
-    ArrayList<Instructor> expectedInstructors = new ArrayList<>(Arrays.asList(instructor));
-    when(instructorRepository.findAll()).thenReturn(new ArrayList<>(Arrays.asList(instructor)));
+    Instructor other = Instructor.builder().email("other@ucsb.edu").build();
+    User user =
+        User.builder().id(4L).email("ins@ucsb.edu").givenName("Ina").familyName("Structor").build();
+    when(instructorRepository.findAll())
+        .thenReturn(new ArrayList<>(Arrays.asList(instructor, other)));
+    when(userRepository.findByEmail("ins@ucsb.edu")).thenReturn(Optional.of(user));
+    when(userRepository.findByEmail("other@ucsb.edu")).thenReturn(Optional.empty());
 
     MvcResult response =
         mockMvc.perform(get("/api/admin/instructors/get")).andExpect(status().isOk()).andReturn();
 
     verify(instructorRepository, times(1)).findAll();
-    String expectedJson = mapper.writeValueAsString(expectedInstructors);
+    verify(userRepository, times(1)).findByEmail("ins@ucsb.edu");
+    verify(userRepository, times(1)).findByEmail("other@ucsb.edu");
+    List<InstructorsController.InstructorDTO> expected =
+        List.of(
+            new InstructorsController.InstructorDTO("ins@ucsb.edu", "Ina", "Structor"),
+            new InstructorsController.InstructorDTO("other@ucsb.edu", null, null));
+    // The record's own accessors, since the JSON comparison below is built from the same record.
+    InstructorsController.InstructorDTO dto1 =
+        new InstructorsController.InstructorDTO(instructor, Optional.of(user));
+    InstructorsController.InstructorDTO dto2 =
+        new InstructorsController.InstructorDTO(other, Optional.empty());
+    assertEquals(expected, List.of(dto1, dto2));
+    assertEquals("ins@ucsb.edu", dto1.email());
+    assertEquals("Ina", dto1.givenName());
+    assertEquals("Structor", dto1.familyName());
+    assertEquals("other@ucsb.edu", dto2.email());
+    assertNull(dto2.givenName());
+    assertNull(dto2.familyName());
+    String expectedJson = mapper.writeValueAsString(expected);
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);
   }

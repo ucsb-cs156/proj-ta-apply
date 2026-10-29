@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.services;
 
 import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,26 +58,21 @@ public class GoogleSignInServiceImpl extends OidcUserService implements GoogleSi
 
     if (existing.isPresent()) {
       User user = existing.get();
-      boolean changed = false;
       if (!Objects.equals(fullName, user.getFullName())) {
         user.setFullName(fullName);
-        changed = true;
       }
       if (!Objects.equals(givenName, user.getGivenName())) {
         user.setGivenName(givenName);
-        changed = true;
       }
       if (!Objects.equals(familyName, user.getFamilyName())) {
         user.setFamilyName(familyName);
-        changed = true;
       }
       if (!Objects.equals(pictureUrl, user.getPictureUrl())) {
         user.setPictureUrl(pictureUrl);
-        changed = true;
       }
-      if (changed) {
-        userRepository.save(user);
-      }
+      // Signing in is being online; LastOnlineInterceptor keeps the stamp current from here.
+      user.setLastOnline(Instant.now());
+      userRepository.save(user);
     } else {
       User newUser =
           User.builder()
@@ -86,6 +82,7 @@ public class GoogleSignInServiceImpl extends OidcUserService implements GoogleSi
               .givenName(givenName)
               .familyName(familyName)
               .pictureUrl(pictureUrl)
+              .lastOnline(Instant.now())
               .build();
       userRepository.save(newUser);
     }

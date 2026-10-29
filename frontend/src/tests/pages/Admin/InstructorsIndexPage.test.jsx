@@ -263,4 +263,21 @@ describe("InstructorsIndexPage tests", () => {
       "Upload complete: 1 added, 0 already present, 2 invalid (nope, also-nope)",
     );
   });
+
+  /** Issue #61: the name columns are blank for anyone who has not logged in yet. */
+  test("explains at the top where the names come from", async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <InstructorsIndexPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByTestId("InstructorsIndexPage-names-note"),
+    ).toHaveTextContent(
+      "First and Last name are populated when the user logs in for the first time.",
+    );
+  });
 });
