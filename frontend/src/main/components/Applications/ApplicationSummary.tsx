@@ -176,6 +176,36 @@ export default function ApplicationSummary({
       mono: true,
     });
   }
+  // Only the ULA form asks about availability (issue #76).
+  const availability = (choice: "First" | "Second") =>
+    isTa
+      ? []
+      : [
+          {
+            label: `Available for a ${choice} Choice Lecture`,
+            value: yesNo(
+              choice === "First"
+                ? application.availableForLecturesFirstChoice
+                : application.availableForLecturesSecondChoice,
+            ),
+          },
+          {
+            label: `Available for a ${choice} Choice Discussion`,
+            value: yesNo(
+              choice === "First"
+                ? application.availableForDiscussionFirstChoice
+                : application.availableForDiscussionSecondChoice,
+            ),
+          },
+          {
+            label: `${choice} Choice Availability Comments`,
+            value: show(
+              choice === "First"
+                ? application.availabilityCommentsFirstChoice
+                : application.availabilityCommentsSecondChoice,
+            ),
+          },
+        ];
   rows.push(
     {
       label: "Previous Teaching Experience",
@@ -186,35 +216,13 @@ export default function ApplicationSummary({
       value: show(application.firstChoiceCourse),
       mono: true,
     },
-    {
-      label: "Available for a First Choice Lecture",
-      value: yesNo(application.availableForLecturesFirstChoice),
-    },
-    {
-      label: "Available for a First Choice Discussion",
-      value: yesNo(application.availableForDiscussionFirstChoice),
-    },
-    {
-      label: "First Choice Availability Comments",
-      value: show(application.availabilityCommentsFirstChoice),
-    },
+    ...availability("First"),
     {
       label: "Second Choice Course",
       value: show(application.secondChoiceCourse),
       mono: true,
     },
-    {
-      label: "Available for a Second Choice Lecture",
-      value: yesNo(application.availableForLecturesSecondChoice),
-    },
-    {
-      label: "Available for a Second Choice Discussion",
-      value: yesNo(application.availableForDiscussionSecondChoice),
-    },
-    {
-      label: "Second Choice Availability Comments",
-      value: show(application.availabilityCommentsSecondChoice),
-    },
+    ...availability("Second"),
     {
       label: "Other Courses of Interest",
       value: otherCourses(application.courseInterests),
@@ -225,6 +233,14 @@ export default function ApplicationSummary({
 
   return (
     <>
+      {/* First, as on the form itself (issue #77). */}
+      <NoticeAgreement
+        notice={notice}
+        agreed={application.noticeVersionId === notice?.id}
+        onChange={() => {}}
+        readOnly
+        testIdPrefix={`${testIdPrefix}-notice`}
+      />
       <dl className="row" data-testid={testIdPrefix}>
         {rows.map((row) => (
           <div className="row mb-1" key={row.label}>
@@ -260,13 +276,6 @@ export default function ApplicationSummary({
           testIdPrefix={`${testIdPrefix}-coursework`}
         />
       )}
-      <NoticeAgreement
-        notice={notice}
-        agreed={application.noticeVersionId === notice?.id}
-        onChange={() => {}}
-        readOnly
-        testIdPrefix={`${testIdPrefix}-notice`}
-      />
     </>
   );
 }

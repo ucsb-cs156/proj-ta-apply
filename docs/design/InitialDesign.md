@@ -499,6 +499,26 @@ copy of the application with `adminComments` blanked; the stored row is untouche
 endpoints under `/api/admin/applications` keep returning it. No applicant page showed the field, but
 until now it left the server with every applicant response.
 
+# Twenty-third Iteration
+
+Availability is a ULA question (issue #76). The TA application form keeps its first and second
+choice course and the other-courses interest table, but no longer shows the **Lecture and Section
+Times** card under a chosen course, nor **Available for at least one lecture**, **Available for at
+least one discussion section** or the availability comments for either choice; the ULA form keeps
+all of them. A TA application stores none of those answers, whatever the client sends (so a
+pre-filled earlier answer cannot linger), the admin's view and the TA CSV leave the rows and columns
+out, and a TA application's audit trail never records them. Existing stored values are not deleted.
+
+# Twenty-fourth Iteration
+
+The **Notices, Terms and Conditions** section sits at the top of the application form, right after
+the required-field explanation and before **About you**, so applicants read the terms before they
+answer anything (issue #77). It behaves as before: the box must be ticked before submitting, an
+unticked box is flagged alongside other missing answers, an application that already agreed to the
+shown version starts ticked, and with no notice written yet the section is absent. The read-only
+summary of an application shows the agreement first too. The apply, edit and admin test-application
+pages all share the form, so all three change.
+
 # Twenty-seventh Iteration
 
 The three CSV upload widgets share one compact layout (issue #87). The topic and interest lists on
@@ -507,3 +527,4 @@ pages (`LegacyApplicationsUploadCard`) and the bulk email upload on **Admin > In
 (`RoleEmailCsvUploadForm`) each put the file picker and its button side by side in a small
 `InputGroup` that takes its natural width (`d-inline-flex w-auto`), so the button sits right after
 the file name instead of at the far edge of the page or on the next line.
+
