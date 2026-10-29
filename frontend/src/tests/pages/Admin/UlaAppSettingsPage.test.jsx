@@ -8,6 +8,7 @@ import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
+import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 
 const axiosMock = new AxiosMockAdapter(axios);
 
@@ -41,6 +42,9 @@ describe("UlaAppSettingsPage tests", () => {
       .onGet("/api/admin/settings/ula-interests/all")
       .reply(200, appSettingsFixtures.twoInterests);
     axiosMock.onGet("/api/admin/notices/all").reply(200, []);
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, recruitmentsFixtures.threeRecruitments);
   });
 
   test("has a Notices, Terms and Conditions card for the ULA form", async () => {
@@ -118,5 +122,20 @@ describe("UlaAppSettingsPage tests", () => {
         ]),
       ),
     );
+  });
+
+  /** Issue #70: the ULA form's responses are imported from here, into one ULA recruitment. */
+  test("has an Import ULA Form Responses card offering the ULA quarters", async () => {
+    renderPage();
+
+    expect(screen.getByTestId("UlaAppSettingsPage-legacy")).toHaveClass("card");
+    expect(
+      screen.getByRole("heading", { name: "Import ULA Form Responses" }),
+    ).toBeInTheDocument();
+    const select = await screen.findByTestId(
+      "UlaAppSettingsPage-legacy-quarter",
+    );
+    await waitFor(() => expect(select.options.length).toBe(2));
+    expect(select.options[1].textContent).toBe("W26");
   });
 });

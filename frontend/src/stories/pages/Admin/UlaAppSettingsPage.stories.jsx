@@ -5,6 +5,7 @@ import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
+import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 
 const common = [
   http.get("/api/currentUser", () =>
@@ -14,6 +15,19 @@ const common = [
     HttpResponse.json(systemInfoFixtures.showingNeither),
   ),
   http.get("/api/admin/notices/all", () => HttpResponse.json([])),
+  http.get("/api/admin/recruitments/all", () =>
+    HttpResponse.json(recruitmentsFixtures.threeRecruitments),
+  ),
+  http.post("/api/admin/applications/legacy-ula/upload", () =>
+    HttpResponse.json({
+      inserted: 82,
+      alreadyPresent: 0,
+      skipped: 0,
+      problems: [],
+      addedTopics: ["Jupyter Notebooks"],
+      addedInterests: ["Exploring teaching as a career option"],
+    }),
+  ),
   http.post("/api/admin/notices", () =>
     HttpResponse.json({ ...noticesFixtures.taV2, id: 9 }),
   ),

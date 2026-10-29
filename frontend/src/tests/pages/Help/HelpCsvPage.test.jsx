@@ -185,4 +185,30 @@ describe("HelpCsvPage tests", () => {
       csvFixtures.legacyTaApplications,
     );
   });
+
+  /** Issue #70: the ULA form's responses import, with the anchor the ULA settings card links to. */
+  test("documents the ULA form responses import", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <HelpCsvPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "ULA Form Responses CSV upload format",
+      }),
+    ).toHaveAttribute("id", "legacy-ula-applications");
+    expect(screen.getByTestId("legacyUlaImportDescription")).toHaveTextContent(
+      "creates one application per row in that quarter's ULA recruitment",
+    );
+    expect(screen.getByTestId("legacyUlaImportMapping")).toHaveTextContent(
+      "CSIL computing environment matches CSIL",
+    );
+    expect(screen.getByTestId("legacyUlaImportCsvExample").textContent).toBe(
+      csvFixtures.legacyUlaResponses,
+    );
+  });
 });
