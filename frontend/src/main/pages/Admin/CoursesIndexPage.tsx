@@ -79,10 +79,11 @@ export default function CoursesIndexPage(): React.JSX.Element {
       <div className="pt-2">
         <h1>Courses</h1>
         <p>
-          Courses in <strong>{subjectArea}</strong> that have been offered in
-          the quarters you populate. Tick the boxes to indicate whether each
-          course should be listed under TA applications and/or ULA applications
-          the next time it is offered.
+          This table shows courses in <strong>{subjectArea}</strong> that have
+          been offered in the quarters you have populated this table from. Tick
+          the boxes to indicate whether each course should be listed under TA
+          applications and/or ULA applications the next time the course is
+          offered.
         </p>
 
         <Form
