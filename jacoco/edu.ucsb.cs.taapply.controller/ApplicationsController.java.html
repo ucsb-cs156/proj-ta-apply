@@ -66,8 +66,12 @@ import org.springframework.web.bind.annotation.RestController;
       String graduationDate,
       /** The courses listed as relevant background, in order; at least 3 (TA) or 1 (ULA). */
       List&lt;PriorCourseworkFields&gt; priorCoursework,
-      /** Topic name to self-rated proficiency 1..5; may be null or empty. */
+      /**
+       * Topic name to self-rated proficiency, 1..5 on a TA form, 1..3 on a ULA one; may be null.
+       */
       Map&lt;String, Integer&gt; topicProficiencies,
+      /** ULA only: interest area to level 1..5; may be null or empty, and ignored on a TA form. */
+      Map&lt;String, Integer&gt; interests,
       String prevExperience,
       String comments,
       String firstChoiceCourse,
@@ -90,7 +94,7 @@ import org.springframework.web.bind.annotation.RestController;
       Long noticeVersionId) {}
 
   /** One row of the prior coursework table. Ids are not accepted: rows are rebuilt on each save. */
-<span class="fc" id="L93">  public static record PriorCourseworkFields(</span>
+<span class="fc" id="L97">  public static record PriorCourseworkFields(</span>
       boolean ucsbCourse,
       String otherSchool,
       String courseNumber,
@@ -102,35 +106,35 @@ import org.springframework.web.bind.annotation.RestController;
   public static final int MIN_ULA_COURSES = 1;
 
   private String currentEmail() {
-<span class="fc" id="L105">    return getCurrentUser().getUser().getEmail();</span>
+<span class="fc" id="L109">    return getCurrentUser().getUser().getEmail();</span>
   }
 
   /** Loads an application, refusing anyone else's rather than merely not finding it. */
   private Application mine(Long id) {
-<span class="fc" id="L110">    Application application =</span>
+<span class="fc" id="L114">    Application application =</span>
         applicationRepository
-<span class="fc" id="L112">            .findById(id)</span>
-<span class="fc" id="L113">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L116">            .findById(id)</span>
+<span class="fc" id="L117">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
 
-<span class="fc bfc" id="L115" title="All 2 branches covered.">    if (!currentEmail().equals(application.getEmail())) {</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">    if (!currentEmail().equals(application.getEmail())) {</span>
       // Deliberately not a 404: the row exists, it simply is not theirs.
-<span class="fc" id="L117">      throw new ForbiddenException(&quot;That application belongs to someone else&quot;);</span>
+<span class="fc" id="L121">      throw new ForbiddenException(&quot;That application belongs to someone else&quot;);</span>
     }
-<span class="fc" id="L119">    return application;</span>
+<span class="fc" id="L123">    return application;</span>
   }
 
   private Recruitment recruitmentFor(Application application) {
-<span class="fc" id="L123">    return recruitmentRepository</span>
-<span class="fc" id="L124">        .findById(application.getRecruitmentId())</span>
-<span class="fc" id="L125">        .orElseThrow(</span>
-<span class="fc" id="L126">            () -&gt; new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));</span>
+<span class="fc" id="L127">    return recruitmentRepository</span>
+<span class="fc" id="L128">        .findById(application.getRecruitmentId())</span>
+<span class="fc" id="L129">        .orElseThrow(</span>
+<span class="fc" id="L130">            () -&gt; new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));</span>
   }
 
   @Operation(summary = &quot;The current user's own applications, newest first&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;/mine&quot;)
   public List&lt;Application&gt; myApplications() {
-<span class="fc" id="L133">    return applicationRepository.findByEmailOrderByIdDesc(currentEmail());</span>
+<span class="fc" id="L137">    return applicationRepository.findByEmailOrderByIdDesc(currentEmail());</span>
   }
 
   @Operation(
@@ -139,7 +143,7 @@ import org.springframework.web.bind.annotation.RestController;
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;&quot;)
   public Application getApplication(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
-<span class="fc" id="L142">    return mine(id);</span>
+<span class="fc" id="L146">    return mine(id);</span>
   }
 
   @Operation(
@@ -148,9 +152,9 @@ import org.springframework.web.bind.annotation.RestController;
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;/prefill&quot;)
   public List&lt;Application&gt; prefill() {
-<span class="fc" id="L151">    return applicationRepository.findByEmailOrderByIdDesc(currentEmail()).stream()</span>
-<span class="fc" id="L152">        .limit(1)</span>
-<span class="fc" id="L153">        .toList();</span>
+<span class="fc" id="L155">    return applicationRepository.findByEmailOrderByIdDesc(currentEmail()).stream()</span>
+<span class="fc" id="L156">        .limit(1)</span>
+<span class="fc" id="L157">        .toList();</span>
   }
 
   @Operation(
@@ -164,31 +168,31 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestBody ApplicationFields fields) {
 
-<span class="fc" id="L167">    Recruitment recruitment =</span>
+<span class="fc" id="L171">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L169">            .findById(recruitmentId)</span>
-<span class="fc" id="L170">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L173">            .findById(recruitmentId)</span>
+<span class="fc" id="L174">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
 
-<span class="fc bfc" id="L172" title="All 2 branches covered.">    if (!applicationAccessService.acceptingApplications(recruitment)) {</span>
-<span class="fc" id="L173">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">    if (!applicationAccessService.acceptingApplications(recruitment)) {</span>
+<span class="fc" id="L177">      throw new IllegalArgumentException(</span>
           &quot;Applications are not currently open for this recruitment&quot;);
     }
-<span class="fc bfc" id="L176" title="All 2 branches covered.">    if (applicationRepository.existsByEmailAndRecruitmentId(currentEmail(), recruitmentId)) {</span>
-<span class="fc" id="L177">      throw new IllegalArgumentException(&quot;You already have an application for this recruitment&quot;);</span>
+<span class="fc bfc" id="L180" title="All 2 branches covered.">    if (applicationRepository.existsByEmailAndRecruitmentId(currentEmail(), recruitmentId)) {</span>
+<span class="fc" id="L181">      throw new IllegalArgumentException(&quot;You already have an application for this recruitment&quot;);</span>
     }
 
-<span class="fc" id="L180">    requireAgreement(recruitment.getType(), fields);</span>
-<span class="fc" id="L181">    requireCoursework(recruitment.getType(), fields);</span>
+<span class="fc" id="L184">    requireAgreement(recruitment.getType(), fields);</span>
+<span class="fc" id="L185">    requireCoursework(recruitment.getType(), fields);</span>
 
     Application application =
-<span class="fc" id="L184">        Application.builder()</span>
-<span class="fc" id="L185">            .recruitmentId(recruitmentId)</span>
-<span class="fc" id="L186">            .email(currentEmail())</span>
-<span class="fc" id="L187">            .status(ApplicationReviewStatus.PENDING)</span>
-<span class="fc" id="L188">            .build();</span>
-<span class="fc" id="L189">    apply(fields, application);</span>
-<span class="fc" id="L190">    applicationRepository.save(application);</span>
-<span class="fc" id="L191">    return application;</span>
+<span class="fc" id="L188">        Application.builder()</span>
+<span class="fc" id="L189">            .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L190">            .email(currentEmail())</span>
+<span class="fc" id="L191">            .status(ApplicationReviewStatus.PENDING)</span>
+<span class="fc" id="L192">            .build();</span>
+<span class="fc" id="L193">    apply(fields, application, recruitment.getType());</span>
+<span class="fc" id="L194">    applicationRepository.save(application);</span>
+<span class="fc" id="L195">    return application;</span>
   }
 
   @Operation(
@@ -205,38 +209,38 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestBody ApplicationFields fields) {
 
-<span class="fc" id="L208">    Recruitment recruitment =</span>
+<span class="fc" id="L212">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L210">            .findById(recruitmentId)</span>
-<span class="fc" id="L211">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc" id="L212">    requireAgreement(recruitment.getType(), fields);</span>
-<span class="fc" id="L213">    requireCoursework(recruitment.getType(), fields);</span>
+<span class="fc" id="L214">            .findById(recruitmentId)</span>
+<span class="fc" id="L215">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L216">    requireAgreement(recruitment.getType(), fields);</span>
+<span class="fc" id="L217">    requireCoursework(recruitment.getType(), fields);</span>
 
     // The unique (email, recruitment) constraint allows one row per admin per recruitment, and an
     // admin testing a form will naturally submit it more than once, so the second submission
     // overwrites the first rather than being refused.
-<span class="fc" id="L218">    Optional&lt;Application&gt; existing =</span>
-<span class="fc" id="L219">        applicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);</span>
+<span class="fc" id="L222">    Optional&lt;Application&gt; existing =</span>
+<span class="fc" id="L223">        applicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);</span>
 
     // An admin who is also a grad student may have a real application here; a test run must
     // never silently turn that into a test application.
-<span class="fc bfc" id="L223" title="All 4 branches covered.">    if (existing.isPresent() &amp;&amp; !existing.get().isTestApplication()) {</span>
-<span class="fc" id="L224">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L227" title="All 4 branches covered.">    if (existing.isPresent() &amp;&amp; !existing.get().isTestApplication()) {</span>
+<span class="fc" id="L228">      throw new IllegalArgumentException(</span>
           &quot;You already have a real application for this recruitment&quot;);
     }
 
-<span class="fc" id="L228">    Application application =</span>
-<span class="fc" id="L229">        existing.orElseGet(</span>
+<span class="fc" id="L232">    Application application =</span>
+<span class="fc" id="L233">        existing.orElseGet(</span>
             () -&gt;
-<span class="fc" id="L231">                Application.builder()</span>
-<span class="fc" id="L232">                    .recruitmentId(recruitmentId)</span>
-<span class="fc" id="L233">                    .email(currentEmail())</span>
-<span class="fc" id="L234">                    .status(ApplicationReviewStatus.PENDING)</span>
-<span class="fc" id="L235">                    .testApplication(true)</span>
-<span class="fc" id="L236">                    .build());</span>
-<span class="fc" id="L237">    apply(fields, application);</span>
-<span class="fc" id="L238">    applicationRepository.save(application);</span>
-<span class="fc" id="L239">    return application;</span>
+<span class="fc" id="L235">                Application.builder()</span>
+<span class="fc" id="L236">                    .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L237">                    .email(currentEmail())</span>
+<span class="fc" id="L238">                    .status(ApplicationReviewStatus.PENDING)</span>
+<span class="fc" id="L239">                    .testApplication(true)</span>
+<span class="fc" id="L240">                    .build());</span>
+<span class="fc" id="L241">    apply(fields, application, recruitment.getType());</span>
+<span class="fc" id="L242">    applicationRepository.save(application);</span>
+<span class="fc" id="L243">    return application;</span>
   }
 
   @Operation(
@@ -249,19 +253,19 @@ import org.springframework.web.bind.annotation.RestController;
   public Application updateApplication(
       @Parameter(name = &quot;id&quot;) @RequestParam Long id, @RequestBody ApplicationFields fields) {
 
-<span class="fc" id="L252">    Application application = mine(id);</span>
-<span class="fc" id="L253">    Recruitment recruitment = recruitmentFor(application);</span>
-<span class="fc bfc" id="L254" title="All 2 branches covered.">    if (!applicationAccessService.editable(recruitment, LocalDate.now())) {</span>
-<span class="fc" id="L255">      throw new ForbiddenException(</span>
+<span class="fc" id="L256">    Application application = mine(id);</span>
+<span class="fc" id="L257">    Recruitment recruitment = recruitmentFor(application);</span>
+<span class="fc bfc" id="L258" title="All 2 branches covered.">    if (!applicationAccessService.editable(recruitment, LocalDate.now())) {</span>
+<span class="fc" id="L259">      throw new ForbiddenException(</span>
           &quot;This application can no longer be edited; you may still update your post application&quot;
               + &quot; comments&quot;);
     }
-<span class="fc" id="L259">    requireAgreement(recruitment.getType(), fields);</span>
-<span class="fc" id="L260">    requireCoursework(recruitment.getType(), fields);</span>
+<span class="fc" id="L263">    requireAgreement(recruitment.getType(), fields);</span>
+<span class="fc" id="L264">    requireCoursework(recruitment.getType(), fields);</span>
 
-<span class="fc" id="L262">    apply(fields, application);</span>
-<span class="fc" id="L263">    applicationRepository.save(application);</span>
-<span class="fc" id="L264">    return application;</span>
+<span class="fc" id="L266">    apply(fields, application, recruitment.getType());</span>
+<span class="fc" id="L267">    applicationRepository.save(application);</span>
+<span class="fc" id="L268">    return application;</span>
   }
 
   @Operation(
@@ -275,14 +279,14 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;postApplicationComments&quot;) @RequestParam String postApplicationComments) {
 
-<span class="fc" id="L278">    Application application = mine(id);</span>
-<span class="fc bfc" id="L279" title="All 2 branches covered.">    if (!applicationAccessService.commentable(recruitmentFor(application))) {</span>
-<span class="fc" id="L280">      throw new ForbiddenException(&quot;This recruitment is closed&quot;);</span>
+<span class="fc" id="L282">    Application application = mine(id);</span>
+<span class="fc bfc" id="L283" title="All 2 branches covered.">    if (!applicationAccessService.commentable(recruitmentFor(application))) {</span>
+<span class="fc" id="L284">      throw new ForbiddenException(&quot;This recruitment is closed&quot;);</span>
     }
 
-<span class="fc" id="L283">    application.setPostApplicationComments(postApplicationComments);</span>
-<span class="fc" id="L284">    applicationRepository.save(application);</span>
-<span class="fc" id="L285">    return application;</span>
+<span class="fc" id="L287">    application.setPostApplicationComments(postApplicationComments);</span>
+<span class="fc" id="L288">    applicationRepository.save(application);</span>
+<span class="fc" id="L289">    return application;</span>
   }
 
   /**
@@ -292,42 +296,68 @@ import org.springframework.web.bind.annotation.RestController;
    * the form does not even ask about them. A missing map means no answers.
    */
   static Map&lt;String, CourseInterest&gt; courseInterestsFrom(ApplicationFields fields) {
-<span class="fc" id="L295">    Map&lt;String, CourseInterest&gt; interests = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L296" title="All 2 branches covered.">    if (fields.courseInterests() != null) {</span>
-<span class="fc" id="L297">      interests.putAll(fields.courseInterests());</span>
+<span class="fc" id="L299">    Map&lt;String, CourseInterest&gt; interests = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">    if (fields.courseInterests() != null) {</span>
+<span class="fc" id="L301">      interests.putAll(fields.courseInterests());</span>
     }
-<span class="fc bfc" id="L299" title="All 2 branches covered.">    interests.values().removeIf(interest -&gt; interest == CourseInterest.NOT_INTERESTED);</span>
-<span class="fc" id="L300">    interests.remove(fields.firstChoiceCourse());</span>
-<span class="fc" id="L301">    interests.remove(fields.secondChoiceCourse());</span>
-<span class="fc" id="L302">    return interests;</span>
+<span class="fc bfc" id="L303" title="All 2 branches covered.">    interests.values().removeIf(interest -&gt; interest == CourseInterest.NOT_INTERESTED);</span>
+<span class="fc" id="L304">    interests.remove(fields.firstChoiceCourse());</span>
+<span class="fc" id="L305">    interests.remove(fields.secondChoiceCourse());</span>
+<span class="fc" id="L306">    return interests;</span>
   }
 
   public static final int MIN_PROFICIENCY = 1;
-  public static final int MAX_PROFICIENCY = 5;
+
+  /** A TA applicant rates each topic 1 (lowest) to 5 (highest). */
+  public static final int MAX_TA_PROFICIENCY = 5;
+
+  /** A ULA applicant rates each topic 1 (very comfortable), 2 (somewhat) or 3 (not familiar). */
+  public static final int MAX_ULA_PROFICIENCY = 3;
+
+  /** A ULA applicant rates each interest area 1 (not interested) to 5 (very interested). */
+  public static final int MIN_INTEREST = 1;
+
+  public static final int MAX_INTEREST = 5;
+
+  static int maxProficiency(RecruitmentType type) {
+<span class="fc bfc" id="L323" title="All 2 branches covered.">    return type == RecruitmentType.TA ? MAX_TA_PROFICIENCY : MAX_ULA_PROFICIENCY;</span>
+  }
 
   /**
-   * The topic ratings worth storing: every topic the applicant rated, each between 1 and 5. A
-   * missing map means no ratings. A rating outside the scale cannot come from the form's radio
+   * The answers worth storing from a name-to-level map: every name answered for, each on the scale.
+   * A missing map means no answers. A level outside the scale cannot come from the form's radio
    * buttons, so it is refused rather than clamped.
    */
-  static Map&lt;String, Integer&gt; topicProficienciesFrom(ApplicationFields fields) {
-    // Sorted by topic so the JSON an application is returned as is stable.
-<span class="fc" id="L315">    Map&lt;String, Integer&gt; proficiencies = new TreeMap&lt;&gt;();</span>
-    Map&lt;String, Integer&gt; sent =
-<span class="fc bfc" id="L317" title="All 2 branches covered.">        fields.topicProficiencies() == null ? Map.of() : fields.topicProficiencies();</span>
-<span class="fc bfc" id="L318" title="All 2 branches covered.">    for (Map.Entry&lt;String, Integer&gt; entry : sent.entrySet()) {</span>
-<span class="fc" id="L319">      Integer level = entry.getValue();</span>
-<span class="fc bfc" id="L320" title="All 2 branches covered.">      if (level == null) {</span>
-<span class="fc" id="L321">        continue;</span>
+  private static Map&lt;String, Integer&gt; levelsFrom(
+      Map&lt;String, Integer&gt; sent, String what, int min, int max) {
+    // Sorted by name so the JSON an application is returned as is stable.
+<span class="fc" id="L334">    Map&lt;String, Integer&gt; levels = new TreeMap&lt;&gt;();</span>
+    for (Map.Entry&lt;String, Integer&gt; entry :
+<span class="fc bfc" id="L336" title="All 4 branches covered.">        (sent == null ? Map.&lt;String, Integer&gt;of() : sent).entrySet()) {</span>
+<span class="fc" id="L337">      Integer level = entry.getValue();</span>
+<span class="fc bfc" id="L338" title="All 2 branches covered.">      if (level == null) {</span>
+<span class="fc" id="L339">        continue;</span>
       }
-<span class="fc bfc" id="L323" title="All 4 branches covered.">      if (level &lt; MIN_PROFICIENCY || level &gt; MAX_PROFICIENCY) {</span>
-<span class="fc" id="L324">        throw new IllegalArgumentException(</span>
-            &quot;Proficiency in %s must be between %d and %d&quot;
-<span class="fc" id="L326">                .formatted(entry.getKey(), MIN_PROFICIENCY, MAX_PROFICIENCY));</span>
+<span class="fc bfc" id="L341" title="All 4 branches covered.">      if (level &lt; min || level &gt; max) {</span>
+<span class="fc" id="L342">        throw new IllegalArgumentException(</span>
+<span class="fc" id="L343">            &quot;%s in %s must be between %d and %d&quot;.formatted(what, entry.getKey(), min, max));</span>
       }
-<span class="fc" id="L328">      proficiencies.put(entry.getKey(), level);</span>
-<span class="fc" id="L329">    }</span>
-<span class="fc" id="L330">    return proficiencies;</span>
+<span class="fc" id="L345">      levels.put(entry.getKey(), level);</span>
+<span class="fc" id="L346">    }</span>
+<span class="fc" id="L347">    return levels;</span>
+  }
+
+  /** The topic ratings worth storing, on the scale the form type uses. */
+  static Map&lt;String, Integer&gt; topicProficienciesFrom(
+      ApplicationFields fields, RecruitmentType type) {
+<span class="fc" id="L353">    return levelsFrom(</span>
+<span class="fc" id="L354">        fields.topicProficiencies(), &quot;Proficiency&quot;, MIN_PROFICIENCY, maxProficiency(type));</span>
+  }
+
+  /** The interest levels worth storing; a TA form has no interests section, so none are kept. */
+  static Map&lt;String, Integer&gt; interestsFrom(ApplicationFields fields, RecruitmentType type) {
+<span class="fc bfc" id="L359" title="All 2 branches covered.">    Map&lt;String, Integer&gt; sent = type == RecruitmentType.TA ? null : fields.interests();</span>
+<span class="fc" id="L360">    return levelsFrom(sent, &quot;Interest&quot;, MIN_INTEREST, MAX_INTEREST);</span>
   }
 
   /**
@@ -338,27 +368,27 @@ import org.springframework.web.bind.annotation.RestController;
    * written yet the form shows none, so nothing is required.
    */
   void requireAgreement(RecruitmentType type, ApplicationFields fields) {
-<span class="fc" id="L341">    Long versionId = fields.noticeVersionId();</span>
-<span class="fc bfc" id="L342" title="All 2 branches covered.">    if (versionId == null) {</span>
-<span class="fc bfc" id="L343" title="All 2 branches covered.">      if (noticeVersionRepository.findFirstByTypeOrderByIdDesc(type).isPresent()) {</span>
-<span class="fc" id="L344">        throw new IllegalArgumentException(</span>
+<span class="fc" id="L371">    Long versionId = fields.noticeVersionId();</span>
+<span class="fc bfc" id="L372" title="All 2 branches covered.">    if (versionId == null) {</span>
+<span class="fc bfc" id="L373" title="All 2 branches covered.">      if (noticeVersionRepository.findFirstByTypeOrderByIdDesc(type).isPresent()) {</span>
+<span class="fc" id="L374">        throw new IllegalArgumentException(</span>
             &quot;You must agree to the Notices, Terms and Conditions to submit this application&quot;);
       }
-<span class="fc" id="L347">      return;</span>
+<span class="fc" id="L377">      return;</span>
     }
-<span class="fc" id="L349">    NoticeVersion version =</span>
+<span class="fc" id="L379">    NoticeVersion version =</span>
         noticeVersionRepository
-<span class="fc" id="L351">            .findById(versionId)</span>
-<span class="fc" id="L352">            .orElseThrow(() -&gt; new EntityNotFoundException(NoticeVersion.class, versionId));</span>
-<span class="fc bfc" id="L353" title="All 2 branches covered.">    if (version.getType() != type) {</span>
-<span class="fc" id="L354">      throw new IllegalArgumentException(</span>
-<span class="fc" id="L355">          &quot;Notice version %d is not a %s notice&quot;.formatted(versionId, type));</span>
+<span class="fc" id="L381">            .findById(versionId)</span>
+<span class="fc" id="L382">            .orElseThrow(() -&gt; new EntityNotFoundException(NoticeVersion.class, versionId));</span>
+<span class="fc bfc" id="L383" title="All 2 branches covered.">    if (version.getType() != type) {</span>
+<span class="fc" id="L384">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L385">          &quot;Notice version %d is not a %s notice&quot;.formatted(versionId, type));</span>
     }
-<span class="fc" id="L357">  }</span>
+<span class="fc" id="L387">  }</span>
 
   /** How many prior courses an application of this type must list. */
   static int minimumCourses(RecruitmentType type) {
-<span class="fc bfc" id="L361" title="All 2 branches covered.">    return type == RecruitmentType.TA ? MIN_TA_COURSES : MIN_ULA_COURSES;</span>
+<span class="fc bfc" id="L391" title="All 2 branches covered.">    return type == RecruitmentType.TA ? MIN_TA_COURSES : MIN_ULA_COURSES;</span>
   }
 
   /**
@@ -368,76 +398,78 @@ import org.springframework.web.bind.annotation.RestController;
    */
   static void requireCoursework(RecruitmentType type, ApplicationFields fields) {
     List&lt;PriorCourseworkFields&gt; rows =
-<span class="fc bfc" id="L371" title="All 2 branches covered.">        fields.priorCoursework() == null ? List.of() : fields.priorCoursework();</span>
-<span class="fc" id="L372">    int minimum = minimumCourses(type);</span>
-<span class="fc bfc" id="L373" title="All 2 branches covered.">    if (rows.size() &lt; minimum) {</span>
-<span class="fc" id="L374">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L401" title="All 2 branches covered.">        fields.priorCoursework() == null ? List.of() : fields.priorCoursework();</span>
+<span class="fc" id="L402">    int minimum = minimumCourses(type);</span>
+<span class="fc bfc" id="L403" title="All 2 branches covered.">    if (rows.size() &lt; minimum) {</span>
+<span class="fc" id="L404">      throw new IllegalArgumentException(</span>
           &quot;A %s application must list at least %d prior course%s&quot;
-<span class="fc bfc" id="L376" title="All 2 branches covered.">              .formatted(type, minimum, minimum == 1 ? &quot;&quot; : &quot;s&quot;));</span>
+<span class="fc bfc" id="L406" title="All 2 branches covered.">              .formatted(type, minimum, minimum == 1 ? &quot;&quot; : &quot;s&quot;));</span>
     }
-<span class="fc bfc" id="L378" title="All 2 branches covered.">    for (PriorCourseworkFields row : rows) {</span>
-<span class="fc bfc" id="L379" title="All 4 branches covered.">      if (row.courseNumber() == null || row.courseNumber().isBlank()) {</span>
-<span class="fc" id="L380">        throw new IllegalArgumentException(&quot;Every prior course needs a course number&quot;);</span>
+<span class="fc bfc" id="L408" title="All 2 branches covered.">    for (PriorCourseworkFields row : rows) {</span>
+<span class="fc bfc" id="L409" title="All 4 branches covered.">      if (row.courseNumber() == null || row.courseNumber().isBlank()) {</span>
+<span class="fc" id="L410">        throw new IllegalArgumentException(&quot;Every prior course needs a course number&quot;);</span>
       }
-<span class="fc bfc" id="L382" title="All 6 branches covered.">      if (!row.ucsbCourse() &amp;&amp; (row.otherSchool() == null || row.otherSchool().isBlank())) {</span>
-<span class="fc" id="L383">        throw new IllegalArgumentException(</span>
-<span class="fc" id="L384">            &quot;Prior course %s needs the school it was taken at&quot;.formatted(row.courseNumber()));</span>
+<span class="fc bfc" id="L412" title="All 6 branches covered.">      if (!row.ucsbCourse() &amp;&amp; (row.otherSchool() == null || row.otherSchool().isBlank())) {</span>
+<span class="fc" id="L413">        throw new IllegalArgumentException(</span>
+<span class="fc" id="L414">            &quot;Prior course %s needs the school it was taken at&quot;.formatted(row.courseNumber()));</span>
       }
-<span class="fc" id="L386">    }</span>
-<span class="fc" id="L387">  }</span>
+<span class="fc" id="L416">    }</span>
+<span class="fc" id="L417">  }</span>
 
   /** Fresh rows from the request, trimmed; replaces whatever the application had. */
   static List&lt;PriorCoursework&gt; priorCourseworkFrom(ApplicationFields fields) {
-<span class="fc" id="L391">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L392" title="All 2 branches covered.">    for (PriorCourseworkFields row : fields.priorCoursework()) {</span>
-<span class="fc" id="L393">      rows.add(</span>
-<span class="fc" id="L394">          PriorCoursework.builder()</span>
-<span class="fc" id="L395">              .ucsbCourse(row.ucsbCourse())</span>
-<span class="fc bfc" id="L396" title="All 2 branches covered.">              .otherSchool(row.ucsbCourse() ? null : row.otherSchool().strip())</span>
-<span class="fc" id="L397">              .courseNumber(row.courseNumber().strip())</span>
-<span class="fc" id="L398">              .courseTitle(blankToNull(row.courseTitle()))</span>
-<span class="fc" id="L399">              .term(blankToNull(row.term()))</span>
-<span class="fc" id="L400">              .grade(blankToNull(row.grade()))</span>
-<span class="fc" id="L401">              .build());</span>
-<span class="fc" id="L402">    }</span>
-<span class="fc" id="L403">    return rows;</span>
+<span class="fc" id="L421">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L422" title="All 2 branches covered.">    for (PriorCourseworkFields row : fields.priorCoursework()) {</span>
+<span class="fc" id="L423">      rows.add(</span>
+<span class="fc" id="L424">          PriorCoursework.builder()</span>
+<span class="fc" id="L425">              .ucsbCourse(row.ucsbCourse())</span>
+<span class="fc bfc" id="L426" title="All 2 branches covered.">              .otherSchool(row.ucsbCourse() ? null : row.otherSchool().strip())</span>
+<span class="fc" id="L427">              .courseNumber(row.courseNumber().strip())</span>
+<span class="fc" id="L428">              .courseTitle(blankToNull(row.courseTitle()))</span>
+<span class="fc" id="L429">              .term(blankToNull(row.term()))</span>
+<span class="fc" id="L430">              .grade(blankToNull(row.grade()))</span>
+<span class="fc" id="L431">              .build());</span>
+<span class="fc" id="L432">    }</span>
+<span class="fc" id="L433">    return rows;</span>
   }
 
   private static String blankToNull(String value) {
-<span class="fc bfc" id="L407" title="All 4 branches covered.">    return value == null || value.isBlank() ? null : value.strip();</span>
+<span class="fc bfc" id="L437" title="All 4 branches covered.">    return value == null || value.isBlank() ? null : value.strip();</span>
   }
 
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
-  private static void apply(ApplicationFields fields, Application application) {
-<span class="fc" id="L412">    application.setFirstName(fields.firstName());</span>
-<span class="fc" id="L413">    application.setMiddleName(fields.middleName());</span>
-<span class="fc" id="L414">    application.setLastName(fields.lastName());</span>
-<span class="fc" id="L415">    application.setMajor(fields.major());</span>
-<span class="fc" id="L416">    application.setGpaMajor(fields.gpaMajor());</span>
-<span class="fc" id="L417">    application.setGpaOverall(fields.gpaOverall());</span>
-<span class="fc" id="L418">    application.setYearInProgram(fields.yearInProgram());</span>
-<span class="fc" id="L419">    application.setGraduationDate(fields.graduationDate());</span>
-<span class="fc" id="L420">    application.getPriorCoursework().clear();</span>
-<span class="fc" id="L421">    application.getPriorCoursework().addAll(priorCourseworkFrom(fields));</span>
-<span class="fc" id="L422">    application.setTopicProficiencies(topicProficienciesFrom(fields));</span>
-<span class="fc" id="L423">    application.setPrevExperience(fields.prevExperience());</span>
-<span class="fc" id="L424">    application.setComments(fields.comments());</span>
-<span class="fc" id="L425">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
-<span class="fc" id="L426">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
-<span class="fc" id="L427">    application.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
-<span class="fc" id="L428">    application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
-<span class="fc" id="L429">    application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
-<span class="fc" id="L430">    application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
-<span class="fc" id="L431">    application.setAvailabilityCommentsFirstChoice(fields.availabilityCommentsFirstChoice());</span>
-<span class="fc" id="L432">    application.setAvailabilityCommentsSecondChoice(fields.availabilityCommentsSecondChoice());</span>
-<span class="fc" id="L433">    application.setCourseInterests(courseInterestsFrom(fields));</span>
-<span class="fc" id="L434">    application.setResidencyStatus(fields.residencyStatus());</span>
-<span class="fc" id="L435">    application.setLanguageExam(fields.languageExam());</span>
-<span class="fc" id="L436">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
-<span class="fc" id="L437">    application.setClassLevel(fields.classLevel());</span>
-<span class="fc" id="L438">    application.setVideoLink(fields.videoLink());</span>
-<span class="fc" id="L439">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
-<span class="fc" id="L440">    application.setNoticeVersionId(fields.noticeVersionId());</span>
-<span class="fc" id="L441">  }</span>
+  private static void apply(
+      ApplicationFields fields, Application application, RecruitmentType type) {
+<span class="fc" id="L443">    application.setFirstName(fields.firstName());</span>
+<span class="fc" id="L444">    application.setMiddleName(fields.middleName());</span>
+<span class="fc" id="L445">    application.setLastName(fields.lastName());</span>
+<span class="fc" id="L446">    application.setMajor(fields.major());</span>
+<span class="fc" id="L447">    application.setGpaMajor(fields.gpaMajor());</span>
+<span class="fc" id="L448">    application.setGpaOverall(fields.gpaOverall());</span>
+<span class="fc" id="L449">    application.setYearInProgram(fields.yearInProgram());</span>
+<span class="fc" id="L450">    application.setGraduationDate(fields.graduationDate());</span>
+<span class="fc" id="L451">    application.getPriorCoursework().clear();</span>
+<span class="fc" id="L452">    application.getPriorCoursework().addAll(priorCourseworkFrom(fields));</span>
+<span class="fc" id="L453">    application.setTopicProficiencies(topicProficienciesFrom(fields, type));</span>
+<span class="fc" id="L454">    application.setInterests(interestsFrom(fields, type));</span>
+<span class="fc" id="L455">    application.setPrevExperience(fields.prevExperience());</span>
+<span class="fc" id="L456">    application.setComments(fields.comments());</span>
+<span class="fc" id="L457">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
+<span class="fc" id="L458">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
+<span class="fc" id="L459">    application.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
+<span class="fc" id="L460">    application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
+<span class="fc" id="L461">    application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
+<span class="fc" id="L462">    application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
+<span class="fc" id="L463">    application.setAvailabilityCommentsFirstChoice(fields.availabilityCommentsFirstChoice());</span>
+<span class="fc" id="L464">    application.setAvailabilityCommentsSecondChoice(fields.availabilityCommentsSecondChoice());</span>
+<span class="fc" id="L465">    application.setCourseInterests(courseInterestsFrom(fields));</span>
+<span class="fc" id="L466">    application.setResidencyStatus(fields.residencyStatus());</span>
+<span class="fc" id="L467">    application.setLanguageExam(fields.languageExam());</span>
+<span class="fc" id="L468">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
+<span class="fc" id="L469">    application.setClassLevel(fields.classLevel());</span>
+<span class="fc" id="L470">    application.setVideoLink(fields.videoLink());</span>
+<span class="fc" id="L471">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
+<span class="fc" id="L472">    application.setNoticeVersionId(fields.noticeVersionId());</span>
+<span class="fc" id="L473">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
