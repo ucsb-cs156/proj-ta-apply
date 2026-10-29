@@ -59,6 +59,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#findByEmailOrderByIdDesc(java.lang.String)" tabindex="0">findByEmailOrderByIdDesc(String)</a></li>
 <li><a href="#findByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" tabindex="0">findByEmailAndRecruitmentId(String, Long)</a></li>
+<li><a href="#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" tabindex="0">findByRecruitmentIdOrderByIdAsc(Long)</a></li>
 <li><a href="#existsByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" tabindex="0">existsByEmailAndRecruitmentId(String, Long)</a></li>
 </ol>
 </li>
@@ -107,6 +108,11 @@ extends org.springframework.data.repository.CrudRepository&lt;<a href="../entity
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Every application belonging to one person, newest first.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByRecruitmentIdOrderByIdAsc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Every application to one recruitment, in the order they were created.</div>
+</div>
 </div>
 </div>
 </div>
@@ -139,6 +145,15 @@ extends org.springframework.data.repository.CrudRepository&lt;<a href="../entity
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</span>&nbsp;<span class="element-name">findByEmailAndRecruitmentId</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="findByRecruitmentIdOrderByIdAsc(java.lang.Long)">
+<h3>findByRecruitmentIdOrderByIdAsc</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</span>&nbsp;<span class="element-name">findByRecruitmentIdOrderByIdAsc</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</span></div>
+<div class="block">Every application to one recruitment, in the order they were created.</div>
 </div>
 </section>
 </li>
