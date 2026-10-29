@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
@@ -6,7 +6,9 @@ import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 import { vi } from "vitest";
 
-import RecruitmentTable from "main/components/Recruitments/RecruitmentTable";
+import RecruitmentTable, {
+  TEST_APPLICATION_TOOLTIP,
+} from "main/components/Recruitments/RecruitmentTable";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 
 const axiosMock = new AxiosMockAdapter(axios);
@@ -54,11 +56,54 @@ describe("RecruitmentTable tests", () => {
       "Actually Closed",
       "Applications",
       "Courses",
-      "Test",
+      "Test Application",
       "Download",
       "Review",
       "Delete",
     ]);
+  });
+
+  /** Two-line headings keep the date columns, and the Test column, narrow (issue #60). */
+  test("the date headings and the Test Application heading are on two lines", () => {
+    renderTable();
+
+    for (const column of [
+      "tentativeOpeningDate",
+      "primaryConsiderationDate",
+      "actualOpeningDate",
+      "actualClosingDate",
+      "test",
+    ]) {
+      const th = screen.getByTestId(`RecruitmentTable-header-${column}`);
+      expect(th.querySelector("br"), column).not.toBeNull();
+    }
+    // The other headings are one line.
+    expect(
+      screen.getByTestId("RecruitmentTable-header-quarter").querySelector("br"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("RecruitmentTable-header-tentativeOpeningDate"),
+    ).toHaveTextContent("Tentative Opening");
+    expect(
+      screen.getByTestId("RecruitmentTable-header-primaryConsiderationDate"),
+    ).toHaveTextContent("Primary Consideration");
+    expect(
+      screen.getByTestId("RecruitmentTable-header-actualOpeningDate"),
+    ).toHaveTextContent("Actually Opened");
+    expect(
+      screen.getByTestId("RecruitmentTable-header-actualClosingDate"),
+    ).toHaveTextContent("Actually Closed");
+  });
+
+  test("the Test Application heading explains itself in a tooltip", () => {
+    renderTable();
+    const heading = within(
+      screen.getByTestId("RecruitmentTable-header-test"),
+    ).getByTitle(TEST_APPLICATION_TOOLTIP);
+    expect(heading).toHaveTextContent("Test Application");
+    expect(TEST_APPLICATION_TOOLTIP).toBe(
+      "Submit a test application to see what the form looks like to applicants",
+    );
   });
 
   test("the CSV button downloads that recruitment's applications from the backend", () => {
@@ -179,12 +224,13 @@ describe("RecruitmentTable tests", () => {
     ).toHaveAttribute("href", "/admin/recruitments/3/courses");
   });
 
-  test("the Test Application button links to that recruitment's preview page", () => {
+  test("the Test button links to that recruitment's preview page, with the tooltip", () => {
     renderTable();
     const button = screen.getByTestId(
       "RecruitmentTable-cell-row-1-col-test-button",
     );
-    expect(button).toHaveTextContent("Test Application");
+    expect(button).toHaveTextContent("Test");
+    expect(button).toHaveAttribute("title", TEST_APPLICATION_TOOLTIP);
     expect(button).toHaveAttribute(
       "href",
       "/admin/recruitments/2/test-application",

@@ -23,7 +23,10 @@ export default function BasicLayout({ children, banner }: BasicLayoutProps) {
         systemInfo={systemInfo}
       />
       {banner}
-      <main className="main-content" data-testid="BasicLayout-main-content">
+      <main
+        className="main-content content-column"
+        data-testid="BasicLayout-main-content"
+      >
         {children}
       </main>
       <Footer />
