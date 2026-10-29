@@ -33,6 +33,7 @@ taapply,edu.ucsb.cs.taapply.enums,RecruitmentType,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,CourseInterest,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ResidencyStatus,0,33,0,0,0,6,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,754,0,66,0,164,0,63,0,30
+taapply,edu.ucsb.cs.taapply.controller,AdminApplicationsController,0,63,0,2,0,14,0,8,0,7
 taapply,edu.ucsb.cs.taapply.controller,NoticesController,0,66,0,4,0,12,0,9,0,7
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController.ApplicationOptions,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,0,60,0,4,0,16,0,8,0,6
