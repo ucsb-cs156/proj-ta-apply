@@ -121,8 +121,8 @@ public class ApplicationRepositoryTests {
                         "CMPSC    16",
                         CourseInterest.WOULD_CONSIDER)))
             .residencyStatus(ResidencyStatus.F1_STUDENT_VISA)
-            .languageExam(LanguageExamStatus.PASSED)
-            .languageExamDatePassed(LocalDate.of(2025, 9, 1))
+            .languageExam(LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT)
+            .languageExamDatePassed("W24")
             .classLevel(ClassLevel.PHD)
             .videoLink("https://example.org/v")
             .previousServiceAsUla(2)
@@ -162,8 +162,8 @@ public class ApplicationRepositoryTests {
     // So do the ULA interest levels (changeset 015), keyed by interest name.
     assertEquals(Map.of("Tutoring", 4, "Grading", 1), found.getInterests());
     assertEquals(ResidencyStatus.F1_STUDENT_VISA, found.getResidencyStatus());
-    assertEquals(LanguageExamStatus.PASSED, found.getLanguageExam());
-    assertEquals(LocalDate.of(2025, 9, 1), found.getLanguageExamDatePassed());
+    assertEquals(LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT, found.getLanguageExam());
+    assertEquals("W24", found.getLanguageExamDatePassed());
     assertEquals(ClassLevel.PHD, found.getClassLevel());
     // Prior courses come back from their own table, in the order they were given, with ids.
     assertEquals(2, found.getPriorCoursework().size());

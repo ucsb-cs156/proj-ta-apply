@@ -154,8 +154,8 @@ describe("ApplicationForm tests", () => {
       ["Expected Graduation", "graduationDate"],
       ["Class Level", "classLevel"],
       ["Residency Status", "residencyStatus"],
-      ["Language Exam", "languageExam"],
-      ["Date Passed", "languageExamDatePassed"],
+      ["TA Language Exam", "languageExam"],
+      ["Quarter and Year Language Exam Passed", "languageExamDatePassed"],
       ["Previous Teaching Experience", "prevExperience"],
       ["First Choice Course", "firstChoiceCourse"],
       ["Second Choice Course", "secondChoiceCourse"],
@@ -258,40 +258,63 @@ describe("ApplicationForm tests", () => {
     expect(screen.queryByTestId("ApplicationForm-languageExam")).toBeNull();
   });
 
-  /** Only F1 and J1 holders take the exam, so nobody else is asked about it. */
-  test("the language exam questions appear only for a visa holder", async () => {
+  /** As on the legacy form: every TA applicant is asked, whatever their residency. */
+  test("the language exam questions are asked of every TA applicant, with the legacy answers", async () => {
     renderForm({ type: "TA" });
 
-    expect(screen.queryByTestId("ApplicationForm-languageExam")).toBeNull();
+    const exam = screen.getByTestId("ApplicationForm-languageExam");
+    expect(exam).toHaveAttribute("id", "ApplicationForm-languageExam");
+    expect(labelNamed("TA Language Exam")).toHaveAttribute(
+      "for",
+      "ApplicationForm-languageExam",
+    );
+    expect([...exam.options].map((o) => o.textContent)).toEqual([
+      "Choose one",
+      "exempt (U.S. Citizen)",
+      "passed (U.S. Perm. Resident)",
+      "passed (F1 or J1 visa)",
+      "not passed",
+    ]);
+    expect([...exam.options].map((o) => o.value)).toEqual([
+      "",
+      "EXEMPT_US_CITIZEN",
+      "PASSED_US_PERMANENT_RESIDENT",
+      "PASSED_F1_OR_J1_VISA",
+      "NOT_PASSED",
+    ]);
+    // The quarter and year is free text, as on the legacy form, not a date picker.
+    const passed = screen.getByTestId("ApplicationForm-languageExamDatePassed");
+    expect(passed).not.toHaveAttribute("type", "date");
+    expect(passed).toHaveAttribute("placeholder", "e.g. F25");
+    expect(labelNamed("Quarter and Year Language Exam Passed")).toHaveAttribute(
+      "for",
+      "ApplicationForm-languageExamDatePassed",
+    );
 
+    // Still asked after choosing a residency that the old form would have hidden them for.
     await userEvent.selectOptions(
       screen.getByTestId("ApplicationForm-residencyStatus"),
       "US_CITIZEN",
     );
-    expect(screen.queryByTestId("ApplicationForm-languageExam")).toBeNull();
-
-    await userEvent.selectOptions(
-      screen.getByTestId("ApplicationForm-residencyStatus"),
-      "F1_STUDENT_VISA",
-    );
     expect(
-      await screen.findByTestId("ApplicationForm-languageExam"),
-    ).toHaveAttribute("id", "ApplicationForm-languageExam");
-    expect(labelNamed("Language Exam")).toHaveAttribute(
-      "for",
-      "ApplicationForm-languageExam",
-    );
+      screen.getByTestId("ApplicationForm-languageExam"),
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId("ApplicationForm-languageExamDatePassed"),
     ).toBeInTheDocument();
+  });
 
-    await userEvent.selectOptions(
-      screen.getByTestId("ApplicationForm-residencyStatus"),
-      "J1_STUDENT_VISA",
-    );
-    expect(
-      await screen.findByTestId("ApplicationForm-languageExam"),
-    ).toBeInTheDocument();
+  test("the exam questions sit right after Residency, as on the legacy form", () => {
+    renderForm({ type: "TA" });
+
+    const row = screen.getByTestId("ApplicationForm-ta-only");
+    const order = [...row.querySelectorAll("label")].map((l) => l.textContent);
+    expect(order).toEqual([
+      "Class Level",
+      "Residency Status",
+      "TA Language Exam",
+      "Quarter and Year Language Exam Passed",
+    ]);
   });
 
   // ---- course choices ----
@@ -1688,10 +1711,12 @@ describe("ApplicationForm tests", () => {
     expect(screen.getByTestId("ApplicationForm-residencyStatus")).toHaveValue(
       "F1_STUDENT_VISA",
     );
-    // F1, so the exam questions are asked, and answered.
     expect(screen.getByTestId("ApplicationForm-languageExam")).toHaveValue(
-      "PASSED",
+      "PASSED_F1_OR_J1_VISA",
     );
+    expect(
+      screen.getByTestId("ApplicationForm-languageExamDatePassed"),
+    ).toHaveValue("F25");
     expect(
       screen.getByTestId("ApplicationForm-availableForLecturesFirstChoice"),
     ).toBeChecked();

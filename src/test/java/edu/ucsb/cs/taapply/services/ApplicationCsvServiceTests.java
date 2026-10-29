@@ -12,7 +12,6 @@ import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import java.io.StringReader;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -131,8 +130,8 @@ public class ApplicationCsvServiceTests {
                     "CMPSC    16",
                     CourseInterest.WOULD_CONSIDER)))
         .residencyStatus(ResidencyStatus.F1_STUDENT_VISA)
-        .languageExam(LanguageExamStatus.PASSED)
-        .languageExamDatePassed(LocalDate.of(2025, 9, 1))
+        .languageExam(LanguageExamStatus.PASSED_F1_OR_J1_VISA)
+        .languageExamDatePassed("F25")
         .classLevel(ClassLevel.PHD)
         .videoLink("https://example.org/video")
         .previousServiceAsUla(2)
@@ -168,8 +167,8 @@ public class ApplicationCsvServiceTests {
             "S27",
             "PHD",
             "F1_STUDENT_VISA",
-            "PASSED",
-            "2025-09-01",
+            "PASSED_F1_OR_J1_VISA",
+            "F25",
             // Course fields separated by commas, courses by semicolons; a blank grade stays blank.
             "UCSB,CMPSC 130A,Data Structures,F25,A;De Anza College,CIS 22A,Intro to C,Fall 2023,",
             // name:value pairs, in name order.
@@ -209,6 +208,7 @@ public class ApplicationCsvServiceTests {
     // And none of the TA-only answers leak in.
     assertEquals(-1, List.of(rows.get(0)).indexOf("classLevel"));
     assertEquals(-1, String.join("|", row).indexOf("F1_STUDENT_VISA"));
+    assertEquals(-1, String.join("|", row).indexOf("PASSED_F1_OR_J1_VISA"));
   }
 
   /** Every cell is quoted, so commas and semicolons inside an answer survive a round trip. */
