@@ -466,7 +466,7 @@ import org.springframework.web.bind.annotation.RestController;
 <span class="fc" id="L466">  static final Pattern PERM_NUMBER = Pattern.compile(&quot;[A-Z0-9]{7}&quot;);</span>
 
   /** The perm number as stored: trimmed and upper case; a blank one is no answer. */
-  static String normalizePermNumber(String permNumber) {
+  public static String normalizePermNumber(String permNumber) {
 <span class="fc" id="L470">    String text = blankToNull(permNumber);</span>
 <span class="fc bfc" id="L471" title="All 2 branches covered.">    return text == null ? null : text.toUpperCase();</span>
   }
