@@ -97,10 +97,18 @@ body {
   background-color: #f7ede1;
 }
 
-.main-content {
-  width: 1126px;
+/* The centered column every page's content sits in: BasicLayout's <main> and the footer's inner
+   row. It used to be a fixed 1126px, which on a wide screen left gutters that pushed wide admin
+   tables off the right edge of the screen (issue #60). Each gutter is now half what the fixed
+   column left: a quarter of the viewport's excess over 1126px, so the column is that excess
+   over 2 plus 1126px, i.e. 50% + 563px. Below 1126px it is the full width, as before. */
+.content-column {
+  width: calc(50% + 563px);
   max-width: 100%;
   margin: 0 auto;
+}
+
+.main-content {
   border-inline: 1px solid var(--border);
   background: #f7ede1;
   flex: 1;

@@ -41,6 +41,11 @@ describe("BasicLayout tests", () => {
     );
     expect(screen.getByTestId("test-child")).toBeInTheDocument();
     expect(screen.getByText("Hello from child")).toBeInTheDocument();
+    // The content column is shared with the footer, so the two line up (see index.css).
+    expect(screen.getByTestId("BasicLayout-main-content")).toHaveClass(
+      "main-content",
+      "content-column",
+    );
   });
 
   test("renders a banner between the navbar and the content when given one", () => {

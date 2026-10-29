@@ -12,5 +12,7 @@ describe("Footer tests", () => {
     const aboutLink = screen.getByRole("link", { name: "About TA Apply" });
     expect(aboutLink).toBeInTheDocument();
     expect(aboutLink).toHaveAttribute("href", "/help/about");
+    // The footer's row is as wide as the page's content column (see index.css).
+    expect(aboutLink.closest("div")).toHaveClass("content-column");
   });
 });
