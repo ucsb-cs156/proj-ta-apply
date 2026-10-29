@@ -183,7 +183,29 @@
 <a name='L118'></a><a href='#L118'>118</a>
 <a name='L119'></a><a href='#L119'>119</a>
 <a name='L120'></a><a href='#L120'>120</a>
-<a name='L121'></a><a href='#L121'>121</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -205,6 +227,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -415,9 +459,31 @@ export default function HelpCsvPage() {
 &nbsp;
         &lt;h2 className="my-4"&gt;CSV Download formats&lt;/h2&gt;
         &lt;p data-testid="downloadsSummary"&gt;
-          The only CSV downloads currently offered are the App Settings lists
-          described above. This section will be updated as download features are
-          added.
+          Besides the App Settings lists described above, the{" "}
+          &lt;i&gt;Recruitments&lt;/i&gt; admin page offers a &lt;b&gt;CSV&lt;/b&gt; button per
+          recruitment that downloads every application to it, one row per
+          application, with a header row and every cell quoted. Test
+          applications are included, flagged in the &lt;code&gt;testApplication&lt;/code&gt;{" "}
+          column.
+        &lt;/p&gt;
+        &lt;p data-testid="applicationsCsvDescription"&gt;
+          The columns differ by recruitment type: a TA file has{" "}
+          &lt;code&gt;classLevel&lt;/code&gt;, &lt;code&gt;residencyStatus&lt;/code&gt;,{" "}
+          &lt;code&gt;languageExam&lt;/code&gt; and &lt;code&gt;languageExamDatePassed&lt;/code&gt;; a
+          ULA file has &lt;code&gt;previousServiceAsUla&lt;/code&gt;, &lt;code&gt;videoLink&lt;/code&gt;{" "}
+          and, last, &lt;code&gt;interests&lt;/code&gt;. Answers that are lists are folded
+          into one column each: &lt;code&gt;priorCoursework&lt;/code&gt; holds each
+          course&amp;apos;s school (&lt;code&gt;UCSB&lt;/code&gt; or the other school&amp;apos;s
+          name), number, title, term and grade separated by commas, with the
+          courses separated by semicolons, for example{" "}
+          &lt;code&gt;
+            UCSB,CMPSC 130A,Data Structures,F25,A;De Anza College,CIS 22A,Intro
+            to C,Fall 2023,
+          &lt;/code&gt;
+          ; &lt;code&gt;topicProficiencies&lt;/code&gt;, &lt;code&gt;interests&lt;/code&gt; and{" "}
+          &lt;code&gt;courseInterests&lt;/code&gt; hold &lt;code&gt;name:value&lt;/code&gt; pairs
+          separated by commas, in name order, for example{" "}
+          &lt;code&gt;C++:5,Java:4&lt;/code&gt;.
         &lt;/p&gt;
       &lt;/div&gt;
     &lt;/BasicLayout&gt;
@@ -430,7 +496,7 @@ export default function HelpCsvPage() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-29T05:01:27.586Z
+                at 2026-10-29T15:18:46.554Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
