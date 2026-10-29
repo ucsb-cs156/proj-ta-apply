@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-72-ula-form-questions","number":80,"title":"ULA application: ask everything the ULA Google Form asked","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/80"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-70-ula-import","number":81,"title":"Import the ULA application form's responses into a ULA recruitment","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/81"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-72-ula-form-questions","number":80,"title":"ULA application: ask everything the ULA Google Form asked","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/80"}]
