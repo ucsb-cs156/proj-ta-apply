@@ -509,6 +509,16 @@ all of them. A TA application stores none of those answers, whatever the client 
 pre-filled earlier answer cannot linger), the admin's view and the TA CSV leave the rows and columns
 out, and a TA application's audit trail never records them. Existing stored values are not deleted.
 
+# Twenty-fourth Iteration
+
+The **Notices, Terms and Conditions** section sits at the top of the application form, right after
+the required-field explanation and before **About you**, so applicants read the terms before they
+answer anything (issue #77). It behaves as before: the box must be ticked before submitting, an
+unticked box is flagged alongside other missing answers, an application that already agreed to the
+shown version starts ticked, and with no notice written yet the section is absent. The read-only
+summary of an application shows the agreement first too. The apply, edit and admin test-application
+pages all share the form, so all three change.
+
 # Twenty-fifth Iteration
 
 On the ULA application form, **GPA in Major**, **Overall GPA**, **Year in Program**, **Expected

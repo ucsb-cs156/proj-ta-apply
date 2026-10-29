@@ -152,12 +152,13 @@ describe("ApplicationForm tests", () => {
       .map((mark) => mark.closest("label"))
       .filter((label) => label !== null)
       .map((label) => label.textContent.replace(/\s*\*\s*$/, "").trim());
+    // The agreement comes first: the notice is at the top of the form (issue #77).
     expect(marked).toEqual([
+      "I have read and understood the text above, and I agree to the terms and conditions it specifies",
       "First Name",
       "Last Name",
       "Major",
       "First Choice Course",
-      "I have read and understood the text above, and I agree to the terms and conditions it specifies",
     ]);
     // And nothing optional is marked.
     ["Middle Name", "GPA in Major", "Second Choice Course"].forEach((label) =>
@@ -2463,5 +2464,33 @@ describe("ApplicationForm tests", () => {
     await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
     expect(submitAction.mock.calls[0][0].gpaMajor).toBeNull();
+  });
+
+  // ---- the notice comes first (issue #77) ----
+
+  test("the notice is shown at the top of the form, before About you and far above Submit", () => {
+    renderForm({ notice: noticesFixtures.taV1 });
+
+    const notice = screen.getByTestId("ApplicationForm-notice");
+    const aboutYou = screen.getByText("About you");
+    const firstName = screen.getByTestId("ApplicationForm-firstName");
+    const submit = screen.getByTestId("ApplicationForm-submit");
+    expect(
+      notice.compareDocumentPosition(aboutYou) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      notice.compareDocumentPosition(firstName) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      notice.compareDocumentPosition(submit) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // And still after the required-field explanation that opens the form.
+    expect(
+      screen
+        .getByText(/required/i, { selector: "p *" })
+        .compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
