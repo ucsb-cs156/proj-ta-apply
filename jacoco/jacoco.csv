@@ -12,7 +12,9 @@ taapply,edu.ucsb.cs.taapply.services,RoleEmailCsvService.UploadResult,0,15,0,0,0
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService.UploadResult,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService,0,468,0,26,0,97,0,26,0,13
 taapply,edu.ucsb.cs.taapply.services,SystemInfoServiceImpl,0,68,0,4,0,18,0,5,0,3
+taapply,edu.ucsb.cs.taapply.services,LegacyApplicationCsvService,0,1439,0,182,0,300,0,124,0,33
 taapply,edu.ucsb.cs.taapply.services,UCSBCurriculumService,0,355,0,24,0,72,0,23,0,11
+taapply,edu.ucsb.cs.taapply.services,LegacyApplicationCsvService.ImportResult,0,15,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RoleAssignmentService,0,89,0,14,0,17,0,13,0,6
 taapply,edu.ucsb.cs.taapply.services,JobUserProviderImpl,0,26,0,4,0,5,0,5,0,3
 taapply,edu.ucsb.cs.taapply.services,ApiRetryHelper,0,320,0,16,0,65,0,19,0,11
@@ -37,8 +39,8 @@ taapply,edu.ucsb.cs.taapply.enums,RecruitmentType,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,CourseInterest,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ResidencyStatus,0,33,0,0,0,6,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,AuditTrailController.AuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
-taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,754,0,66,0,164,0,63,0,30
-taapply,edu.ucsb.cs.taapply.controller,AdminApplicationsController,0,182,0,2,0,41,0,13,0,12
+taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,791,0,66,0,172,0,65,0,32
+taapply,edu.ucsb.cs.taapply.controller,AdminApplicationsController,0,222,0,2,0,50,0,15,0,14
 taapply,edu.ucsb.cs.taapply.controller,NoticesController,0,66,0,4,0,12,0,9,0,7
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController.ApplicationOptions,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,0,60,0,4,0,16,0,8,0,6

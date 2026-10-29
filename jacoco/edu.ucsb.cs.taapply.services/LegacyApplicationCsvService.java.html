@@ -1,0 +1,594 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LegacyApplicationCsvService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">LegacyApplicationCsvService.java</span></div><h1>LegacyApplicationCsvService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.ClassLevel;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
+import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.enums.ResidencyStatus;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.TaMajorRepository;
+import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.utilities.CanonicalFormConverter;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.HtmlUtils;
+
+/**
+ * Imports the legacy PHP TA application's CSV export into a TA recruitment, one application per
+ * row, &quot;as if&quot; each student had entered it, so their next application can be pre-filled from it.
+ *
+ * &lt;p&gt;The legacy columns are matched to the new form's fields as well as they can be (see {@link
+ * #map}); the answers the new form has no field for (preferred job and hours, desired courses the
+ * recruitment does not list) go into the applicant's comments, and the export's bookkeeping (when
+ * it was submitted and modified, the reviewer's comments) into the admin comments. The format is
+ * the one in {@code docs/sample-data/legacy-ta-app-csv-example.csv}.
+ *
+ * &lt;p&gt;Rows are independent: a row whose email already has an application in the recruitment is
+ * counted and left alone, so re-uploading is safe, and a row without a usable email is skipped and
+ * reported rather than failing the rest.
+ */
+@Service
+<span class="fc" id="L59">@Slf4j</span>
+<span class="fc" id="L60">public class LegacyApplicationCsvService {</span>
+
+  @Autowired private ApplicationRepository applicationRepository;
+  @Autowired private RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired private TaTopicRepository taTopicRepository;
+  @Autowired private TaMajorRepository taMajorRepository;
+
+  /** What an upload did; {@code problems} names each skipped row and why. */
+<span class="fc" id="L68">  public static record ImportResult(</span>
+      int inserted, int alreadyPresent, int skipped, List&lt;String&gt; problems) {}
+
+  /** The columns a legacy export must have for a row to be imported at all. */
+<span class="fc" id="L72">  public static final List&lt;String&gt; REQUIRED_COLUMNS = List.of(&quot;email&quot;, &quot;first_name&quot;, &quot;last_name&quot;);</span>
+
+  static final String COURSE_PREFIX = &quot;CMPSC &quot;;
+
+  // ---- the quarter the admin names ------------------------------------------------------------
+
+<span class="fc" id="L78">  private static final Map&lt;Character, Character&gt; QUARTER_LETTERS =</span>
+<span class="fc" id="L79">      Map.of('W', '1', 'S', '2', 'M', '3', 'F', '4');</span>
+
+  /**
+   * A quarter as an admin writes it, QYY such as W26, or already YYYYQ such as 20261, to YYYYQ.
+   *
+   * @throws IllegalArgumentException for anything else
+   */
+  public static String toYyyyq(String quarter) {
+<span class="fc bfc" id="L87" title="All 2 branches covered.">    String q = quarter == null ? &quot;&quot; : quarter.strip().toUpperCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">    if (q.matches(&quot;\\d{4}[1-4]&quot;)) {</span>
+<span class="fc" id="L89">      return q;</span>
+    }
+<span class="fc bfc" id="L91" title="All 2 branches covered.">    if (q.matches(&quot;[WSMF]\\d{2}&quot;)) {</span>
+<span class="fc" id="L92">      return &quot;20&quot; + q.substring(1) + QUARTER_LETTERS.get(q.charAt(0));</span>
+    }
+<span class="fc" id="L94">    throw new IllegalArgumentException(</span>
+<span class="fc" id="L95">        &quot;Quarter should be like W26, S26, M26 or F26 (or 20261), not '%s'&quot;.formatted(quarter));</span>
+  }
+
+  // ---- the upload -----------------------------------------------------------------------------
+
+  /**
+   * Reads the file and saves one application per row into the recruitment.
+   *
+   * @throws ResponseStatusException 400 if the recruitment is not a TA one, the file is empty, or a
+   *     required column is missing
+   */
+  public ImportResult upload(MultipartFile file, Recruitment recruitment)
+      throws IOException, CsvException {
+<span class="fc bfc" id="L108" title="All 2 branches covered.">    if (recruitment.getType() != RecruitmentType.TA) {</span>
+<span class="fc" id="L109">      throw new ResponseStatusException(</span>
+          HttpStatus.BAD_REQUEST,
+          &quot;Legacy TA applications can only be imported into a TA recruitment&quot;);
+    }
+<span class="fc" id="L113">    Set&lt;String&gt; courseIds = new TreeSet&lt;&gt;();</span>
+<span class="fc" id="L114">    recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        .filter(c -&gt; !c.isRemoved())</span>
+<span class="fc" id="L116">        .forEach(c -&gt; courseIds.add(c.getCourseId()));</span>
+<span class="fc" id="L117">    List&lt;String&gt; topics =</span>
+<span class="fc" id="L118">        StreamSupport.stream(taTopicRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L119">            .map(t -&gt; t.getName())</span>
+<span class="fc" id="L120">            .toList();</span>
+<span class="fc" id="L121">    List&lt;String&gt; majors =</span>
+<span class="fc" id="L122">        StreamSupport.stream(taMajorRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L123">            .map(m -&gt; m.getName())</span>
+<span class="fc" id="L124">            .toList();</span>
+
+<span class="fc" id="L126">    int inserted = 0;</span>
+<span class="fc" id="L127">    int alreadyPresent = 0;</span>
+<span class="fc" id="L128">    List&lt;String&gt; problems = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L130">    try (InputStream inputStream = new BufferedInputStream(file.getInputStream());</span>
+<span class="fc" id="L131">        InputStreamReader reader = new InputStreamReader(inputStream);</span>
+<span class="fc" id="L132">        CSVReader csvReader = new CSVReader(reader)) {</span>
+
+<span class="fc" id="L134">      String[] headers = csvReader.readNext();</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">      if (headers == null) {</span>
+<span class="fc" id="L136">        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;CSV file is empty&quot;);</span>
+      }
+<span class="fc" id="L138">      Map&lt;String, Integer&gt; columns = columnIndexes(headers);</span>
+
+      String[] cells;
+<span class="fc" id="L141">      int rowNumber = 1;</span>
+<span class="fc bfc" id="L142" title="All 2 branches covered.">      while ((cells = csvReader.readNext()) != null) {</span>
+<span class="fc" id="L143">        rowNumber++;</span>
+<span class="fc" id="L144">        Map&lt;String, String&gt; row = rowMap(columns, cells);</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        if (row.values().stream().allMatch(String::isBlank)) {</span>
+<span class="fc" id="L146">          continue;</span>
+        }
+<span class="fc" id="L148">        String email = email(row);</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if (email == null) {</span>
+<span class="fc" id="L150">          problems.add(&quot;row %d: no usable email address&quot;.formatted(rowNumber));</span>
+<span class="fc" id="L151">          continue;</span>
+        }
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        if (applicationRepository.existsByEmailAndRecruitmentId(email, recruitment.getId())) {</span>
+<span class="fc" id="L154">          alreadyPresent++;</span>
+<span class="fc" id="L155">          continue;</span>
+        }
+<span class="fc" id="L157">        applicationRepository.save(map(row, email, recruitment, courseIds, topics, majors));</span>
+<span class="fc" id="L158">        inserted++;</span>
+<span class="fc" id="L159">      }</span>
+    }
+
+<span class="fc" id="L162">    log.info(</span>
+        &quot;Legacy application CSV upload into recruitment {}: inserted={} alreadyPresent={} skipped={}&quot;,
+<span class="fc" id="L164">        recruitment.getId(),</span>
+<span class="fc" id="L165">        inserted,</span>
+<span class="fc" id="L166">        alreadyPresent,</span>
+<span class="fc" id="L167">        problems.size());</span>
+<span class="fc" id="L168">    return new ImportResult(inserted, alreadyPresent, problems.size(), problems);</span>
+  }
+
+  /** Column name (lower case, trimmed) to position; 400 if a required column is missing. */
+  static Map&lt;String, Integer&gt; columnIndexes(String[] headers) {
+<span class="fc" id="L173">    Map&lt;String, Integer&gt; columns = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">    for (int i = 0; i &lt; headers.length; i++) {</span>
+<span class="fc" id="L175">      String name = headers[i].strip().toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">      if (!name.isEmpty()) {</span>
+<span class="fc" id="L177">        columns.putIfAbsent(name, i);</span>
+      }
+    }
+<span class="fc bfc" id="L180" title="All 2 branches covered.">    List&lt;String&gt; missing = REQUIRED_COLUMNS.stream().filter(c -&gt; !columns.containsKey(c)).toList();</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">    if (!missing.isEmpty()) {</span>
+<span class="fc" id="L182">      throw new ResponseStatusException(</span>
+<span class="fc" id="L183">          HttpStatus.BAD_REQUEST, &quot;CSV file is missing the column(s) %s&quot;.formatted(missing));</span>
+    }
+<span class="fc" id="L185">    return columns;</span>
+  }
+
+  /** The row as column name to trimmed value; a short row reads as blank in its missing cells. */
+  static Map&lt;String, String&gt; rowMap(Map&lt;String, Integer&gt; columns, String[] cells) {
+<span class="fc" id="L190">    Map&lt;String, String&gt; row = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L191">    columns.forEach(</span>
+<span class="fc bfc" id="L192" title="All 2 branches covered.">        (name, index) -&gt; row.put(name, index &lt; cells.length ? cells[index].strip() : &quot;&quot;));</span>
+<span class="fc" id="L193">    return row;</span>
+  }
+
+  /** The row's email in canonical form, or null when there is nothing usable. */
+  static String email(Map&lt;String, String&gt; row) {
+<span class="fc" id="L198">    String raw = row.getOrDefault(&quot;email&quot;, &quot;&quot;);</span>
+<span class="fc bfc" id="L199" title="All 4 branches covered.">    if (raw.isBlank() || !raw.contains(&quot;@&quot;)) {</span>
+<span class="fc" id="L200">      return null;</span>
+    }
+<span class="fc" id="L202">    return CanonicalFormConverter.convertToValidEmail(raw).strip();</span>
+  }
+
+  // ---- one row to one application ---------------------------------------------------------------
+
+  /**
+   * The application a legacy row becomes, pending and never a test application, with no agreed
+   * notice (the student never saw one).
+   *
+   * @param courseIds the recruitment's padded course ids, for matching the desired courses
+   * @param topics the TA topics list, for matching the knowledge ratings' names
+   * @param majors the TA majors list, for matching the major
+   */
+  static Application map(
+      Map&lt;String, String&gt; row,
+      String email,
+      Recruitment recruitment,
+      Set&lt;String&gt; courseIds,
+      Collection&lt;String&gt; topics,
+      Collection&lt;String&gt; majors) {
+<span class="fc" id="L222">    List&lt;String&gt; unmatchedCourses = new ArrayList&lt;&gt;();</span>
+    Application application =
+<span class="fc" id="L224">        Application.builder()</span>
+<span class="fc" id="L225">            .recruitmentId(recruitment.getId())</span>
+<span class="fc" id="L226">            .email(email)</span>
+<span class="fc" id="L227">            .status(ApplicationReviewStatus.PENDING)</span>
+<span class="fc" id="L228">            .firstName(text(row, &quot;first_name&quot;))</span>
+<span class="fc" id="L229">            .middleName(text(row, &quot;middle_name&quot;))</span>
+<span class="fc" id="L230">            .lastName(text(row, &quot;last_name&quot;))</span>
+<span class="fc" id="L231">            .major(major(row.get(&quot;major&quot;), majors))</span>
+<span class="fc" id="L232">            .gpaMajor(gpa(row.get(&quot;gpa_major&quot;)))</span>
+<span class="fc" id="L233">            .gpaOverall(gpa(row.get(&quot;gpa_overall&quot;)))</span>
+<span class="fc" id="L234">            .yearInProgram(textOrNullForZero(row.get(&quot;year_in_program&quot;)))</span>
+<span class="fc" id="L235">            .graduationDate(textOrNullForZero(row.get(&quot;graduation_date&quot;)))</span>
+<span class="fc" id="L236">            .residencyStatus(residency(row.get(&quot;residency_status&quot;)))</span>
+<span class="fc" id="L237">            .languageExam(languageExam(row.get(&quot;language_exam&quot;)))</span>
+<span class="fc" id="L238">            .languageExamDatePassed(textOrNullForZero(row.get(&quot;language_exam_date_passed&quot;)))</span>
+<span class="fc" id="L239">            .classLevel(classLevel(row.get(&quot;class_level&quot;)))</span>
+<span class="fc" id="L240">            .prevExperience(prevExperience(row.get(&quot;prev_experience&quot;)))</span>
+<span class="fc" id="L241">            .topicProficiencies(knowledge(row.get(&quot;knowledge&quot;), topics))</span>
+<span class="fc" id="L242">            .courseInterests(</span>
+<span class="fc" id="L243">                desiredCourses(</span>
+<span class="fc" id="L244">                    row.get(&quot;desired_courses_upper&quot;),</span>
+<span class="fc" id="L245">                    row.get(&quot;desired_courses_lower&quot;),</span>
+                    courseIds,
+                    unmatchedCourses))
+<span class="fc" id="L248">            .adminComments(adminComments(row))</span>
+<span class="fc" id="L249">            .build();</span>
+<span class="fc" id="L250">    application.getPriorCoursework().addAll(priorCoursework(row));</span>
+<span class="fc" id="L251">    application.setComments(comments(row, unmatchedCourses));</span>
+<span class="fc" id="L252">    return application;</span>
+  }
+
+  // ---- field by field -------------------------------------------------------------------------
+
+  private static String text(Map&lt;String, String&gt; row, String column) {
+<span class="fc" id="L258">    return blankToNull(row.get(column));</span>
+  }
+
+  static String blankToNull(String value) {
+<span class="fc bfc" id="L262" title="All 4 branches covered.">    return value == null || value.isBlank() ? null : value.strip();</span>
+  }
+
+  /** The legacy form stored &quot;0&quot; for an unanswered year or date; that is no answer. */
+  static String textOrNullForZero(String value) {
+<span class="fc" id="L267">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">    return &quot;0&quot;.equals(text) ? null : text;</span>
+  }
+
+  /** A GPA as a number; blank, unparseable or zero (the legacy &quot;not given&quot;) is no answer. */
+  static Double gpa(String value) {
+<span class="fc" id="L273">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L274" title="All 2 branches covered.">    if (text == null) {</span>
+<span class="fc" id="L275">      return null;</span>
+    }
+    try {
+<span class="fc" id="L278">      double gpa = Double.parseDouble(text);</span>
+<span class="fc bfc" id="L279" title="All 2 branches covered.">      return gpa == 0 ? null : gpa;</span>
+<span class="fc" id="L280">    } catch (NumberFormatException e) {</span>
+<span class="fc" id="L281">      return null;</span>
+    }
+  }
+
+  /**
+   * The major as the new form's list spells it when it can be matched, else the legacy text so the
+   * form shows it under &quot;Other&quot;. The legacy form's &quot;CS&quot; means Computer Science.
+   */
+  static String major(String value, Collection&lt;String&gt; majors) {
+<span class="fc" id="L290">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">    if (text == null) {</span>
+<span class="fc" id="L292">      return null;</span>
+    }
+<span class="fc bfc" id="L294" title="All 2 branches covered.">    String wanted = text.equalsIgnoreCase(&quot;CS&quot;) ? &quot;Computer Science&quot; : text;</span>
+<span class="fc bfc" id="L295" title="All 2 branches covered.">    for (String major : majors) {</span>
+<span class="fc bfc" id="L296" title="All 2 branches covered.">      if (major.equalsIgnoreCase(wanted)) {</span>
+<span class="fc" id="L297">        return major;</span>
+      }
+<span class="fc" id="L299">    }</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">    for (String major : majors) {</span>
+<span class="fc bfc" id="L301" title="All 2 branches covered.">      if (major.toLowerCase(Locale.ROOT).contains(wanted.toLowerCase(Locale.ROOT))) {</span>
+<span class="fc" id="L302">        return major;</span>
+      }
+<span class="fc" id="L304">    }</span>
+<span class="fc" id="L305">    return wanted;</span>
+  }
+
+  /** &quot;U.S. Citizen&quot;, &quot;U.S. Resident&quot;, &quot;F1 (Student) Visa&quot;, &quot;J1 ...&quot; or anything else. */
+  static ResidencyStatus residency(String value) {
+<span class="fc" id="L310">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L311" title="All 2 branches covered.">    if (text == null) {</span>
+<span class="fc" id="L312">      return null;</span>
+    }
+<span class="fc" id="L314">    String lower = text.toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L315" title="All 2 branches covered.">    if (lower.contains(&quot;citizen&quot;)) {</span>
+<span class="fc" id="L316">      return ResidencyStatus.US_CITIZEN;</span>
+    }
+<span class="fc bfc" id="L318" title="All 2 branches covered.">    if (lower.contains(&quot;resident&quot;)) {</span>
+<span class="fc" id="L319">      return ResidencyStatus.US_RESIDENT;</span>
+    }
+<span class="fc bfc" id="L321" title="All 4 branches covered.">    if (lower.contains(&quot;f1&quot;) || lower.contains(&quot;f-1&quot;)) {</span>
+<span class="fc" id="L322">      return ResidencyStatus.F1_STUDENT_VISA;</span>
+    }
+<span class="fc bfc" id="L324" title="All 4 branches covered.">    if (lower.contains(&quot;j1&quot;) || lower.contains(&quot;j-1&quot;)) {</span>
+<span class="fc" id="L325">      return ResidencyStatus.J1_STUDENT_VISA;</span>
+    }
+<span class="fc" id="L327">    return ResidencyStatus.OTHER;</span>
+  }
+
+  /** The legacy form's own four answers, matched by their distinctive words. */
+  static LanguageExamStatus languageExam(String value) {
+<span class="fc" id="L332">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L333" title="All 2 branches covered.">    if (text == null) {</span>
+<span class="fc" id="L334">      return null;</span>
+    }
+<span class="fc" id="L336">    String lower = text.toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L337" title="All 2 branches covered.">    if (lower.contains(&quot;exempt&quot;)) {</span>
+<span class="fc" id="L338">      return LanguageExamStatus.EXEMPT_US_CITIZEN;</span>
+    }
+<span class="fc bfc" id="L340" title="All 2 branches covered.">    if (lower.contains(&quot;not&quot;)) {</span>
+<span class="fc" id="L341">      return LanguageExamStatus.NOT_PASSED;</span>
+    }
+<span class="fc bfc" id="L343" title="All 4 branches covered.">    if (lower.contains(&quot;perm&quot;) || lower.contains(&quot;resident&quot;)) {</span>
+<span class="fc" id="L344">      return LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT;</span>
+    }
+<span class="fc bfc" id="L346" title="All 2 branches covered.">    if (lower.contains(&quot;pass&quot;)) {</span>
+<span class="fc" id="L347">      return LanguageExamStatus.PASSED_F1_OR_J1_VISA;</span>
+    }
+<span class="fc" id="L349">    return null;</span>
+  }
+
+  static ClassLevel classLevel(String value) {
+<span class="fc" id="L353">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L354" title="All 2 branches covered.">    if (text == null) {</span>
+<span class="fc" id="L355">      return null;</span>
+    }
+<span class="fc" id="L357">    String lower = text.toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L358" title="All 2 branches covered.">    if (lower.contains(&quot;ph&quot;)) {</span>
+<span class="fc" id="L359">      return ClassLevel.PHD;</span>
+    }
+<span class="fc bfc" id="L361" title="All 4 branches covered.">    if (lower.contains(&quot;ms&quot;) || lower.contains(&quot;master&quot;)) {</span>
+<span class="fc" id="L362">      return ClassLevel.MS;</span>
+    }
+<span class="fc" id="L364">    return null;</span>
+  }
+
+  /** The entries of a legacy list cell: comma-separated, each colon-separated into fields. */
+  static List&lt;String[]&gt; entries(String cell, int fields) {
+<span class="fc" id="L369">    List&lt;String[]&gt; parsed = new ArrayList&lt;&gt;();</span>
+    // A blank entry splits into one field, so it fails the field count like any other odd entry.
+<span class="fc bfc" id="L371" title="All 4 branches covered.">    for (String entry : cell == null ? new String[0] : cell.split(&quot;,&quot;)) {</span>
+<span class="fc" id="L372">      String[] parts = entry.split(&quot;:&quot;, -1);</span>
+<span class="fc bfc" id="L373" title="All 2 branches covered.">      if (parts.length != fields) {</span>
+<span class="fc" id="L374">        continue;</span>
+      }
+<span class="fc" id="L376">      String[] clean = new String[fields];</span>
+<span class="fc bfc" id="L377" title="All 2 branches covered.">      for (int i = 0; i &lt; fields; i++) {</span>
+<span class="fc" id="L378">        clean[i] = HtmlUtils.htmlUnescape(parts[i]).strip();</span>
+      }
+<span class="fc" id="L380">      parsed.add(clean);</span>
+    }
+<span class="fc" id="L382">    return parsed;</span>
+  }
+
+  /** &quot;130A&quot; becomes &quot;CMPSC 130A&quot;; a value that already names a department is left alone. */
+  static String courseNumber(String legacy) {
+<span class="fc" id="L387">    String text = legacy.strip();</span>
+<span class="fc bfc" id="L388" title="All 2 branches covered.">    return text.matches(&quot;\\d+[A-Z]*(/[A-Z]+)?&quot;) ? COURSE_PREFIX + text : text;</span>
+  }
+
+<span class="fc" id="L391">  private static final Pattern COURSE_CODE_290 =</span>
+<span class="fc" id="L392">      Pattern.compile(&quot;(?:CMPSC|CS)?\\s*(29\\d[A-Z]?)\\b&quot;, Pattern.CASE_INSENSITIVE);</span>
+
+  /**
+   * The three legacy coursework cells as rows of the new table: UCSB courses ({@code
+   * course:grade}), courses taken elsewhere ({@code title:school:equivalent UCSB course}) and
+   * 290-level seminars ({@code description:instructor:grade}), in that order.
+   */
+  static List&lt;PriorCoursework&gt; priorCoursework(Map&lt;String, String&gt; row) {
+<span class="fc" id="L400">    List&lt;PriorCoursework&gt; courses = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L401" title="All 2 branches covered.">    for (String[] e : entries(row.get(&quot;coursework_ucsb&quot;), 2)) {</span>
+<span class="fc bfc" id="L402" title="All 2 branches covered.">      if (e[0].isEmpty()) {</span>
+<span class="fc" id="L403">        continue;</span>
+      }
+<span class="fc" id="L405">      courses.add(</span>
+<span class="fc" id="L406">          PriorCoursework.builder()</span>
+<span class="fc" id="L407">              .ucsbCourse(true)</span>
+<span class="fc" id="L408">              .courseNumber(courseNumber(e[0]))</span>
+<span class="fc" id="L409">              .grade(blankToNull(e[1]))</span>
+<span class="fc" id="L410">              .build());</span>
+<span class="fc" id="L411">    }</span>
+<span class="fc bfc" id="L412" title="All 2 branches covered.">    for (String[] e : entries(row.get(&quot;coursework_other&quot;), 3)) {</span>
+<span class="fc bfc" id="L413" title="All 4 branches covered.">      if (e[0].isEmpty() &amp;&amp; e[2].isEmpty()) {</span>
+<span class="fc" id="L414">        continue;</span>
+      }
+      // The legacy form asked which UCSB course it was equivalent to, not for a course number.
+<span class="fc bfc" id="L417" title="All 2 branches covered.">      String number = e[2].isEmpty() ? e[0] : &quot;%s (equivalent)&quot;.formatted(courseNumber(e[2]));</span>
+<span class="fc" id="L418">      courses.add(</span>
+<span class="fc" id="L419">          PriorCoursework.builder()</span>
+<span class="fc" id="L420">              .ucsbCourse(false)</span>
+<span class="fc bfc" id="L421" title="All 2 branches covered.">              .otherSchool(e[1].isEmpty() ? &quot;(school not given)&quot; : e[1])</span>
+<span class="fc" id="L422">              .courseNumber(number)</span>
+<span class="fc" id="L423">              .courseTitle(blankToNull(e[0]))</span>
+<span class="fc" id="L424">              .build());</span>
+<span class="fc" id="L425">    }</span>
+<span class="fc bfc" id="L426" title="All 2 branches covered.">    for (String[] e : entries(row.get(&quot;coursework_290&quot;), 3)) {</span>
+<span class="fc bfc" id="L427" title="All 2 branches covered.">      if (e[0].isEmpty()) {</span>
+<span class="fc" id="L428">        continue;</span>
+      }
+<span class="fc" id="L430">      Matcher code = COURSE_CODE_290.matcher(e[0]);</span>
+<span class="fc" id="L431">      boolean coded = code.find();</span>
+      String number =
+<span class="fc bfc" id="L433" title="All 2 branches covered.">          coded ? COURSE_PREFIX + code.group(1).toUpperCase(Locale.ROOT) : &quot;CMPSC 290-level&quot;;</span>
+<span class="fc bfc" id="L434" title="All 2 branches covered.">      String title = coded ? e[0].substring(0, code.start()) + e[0].substring(code.end()) : e[0];</span>
+<span class="fc" id="L435">      title = title.replaceAll(&quot;^[\\s\\-:;,]+&quot;, &quot;&quot;).strip();</span>
+<span class="fc bfc" id="L436" title="All 2 branches covered.">      if (!e[1].isEmpty()) {</span>
+<span class="fc bfc" id="L437" title="All 2 branches covered.">        title = (title.isEmpty() ? &quot;&quot; : title + &quot; &quot;) + &quot;(%s)&quot;.formatted(e[1]);</span>
+      }
+<span class="fc" id="L439">      courses.add(</span>
+<span class="fc" id="L440">          PriorCoursework.builder()</span>
+<span class="fc" id="L441">              .ucsbCourse(true)</span>
+<span class="fc" id="L442">              .courseNumber(number)</span>
+<span class="fc" id="L443">              .courseTitle(blankToNull(title))</span>
+<span class="fc" id="L444">              .grade(blankToNull(e[2]))</span>
+<span class="fc" id="L445">              .build());</span>
+<span class="fc" id="L446">    }</span>
+<span class="fc" id="L447">    return courses;</span>
+  }
+
+  /** &quot;130A:TA:Fall 2024&quot; entries as lines of text, one per course. */
+  static String prevExperience(String cell) {
+<span class="fc" id="L452">    List&lt;String&gt; lines = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L453" title="All 2 branches covered.">    for (String[] e : entries(cell, 3)) {</span>
+<span class="fc bfc" id="L454" title="All 2 branches covered.">      if (e[0].isEmpty()) {</span>
+<span class="fc" id="L455">        continue;</span>
+      }
+<span class="fc" id="L457">      String line = courseNumber(e[0]);</span>
+<span class="fc bfc" id="L458" title="All 2 branches covered.">      if (!e[1].isEmpty()) {</span>
+<span class="fc" id="L459">        line += &quot;: &quot; + e[1];</span>
+      }
+<span class="fc bfc" id="L461" title="All 2 branches covered.">      if (!e[2].isEmpty()) {</span>
+<span class="fc" id="L462">        line += &quot;, &quot; + e[2];</span>
+      }
+<span class="fc" id="L464">      lines.add(line);</span>
+<span class="fc" id="L465">    }</span>
+<span class="fc bfc" id="L466" title="All 2 branches covered.">    return lines.isEmpty() ? null : String.join(&quot;\n&quot;, lines);</span>
+  }
+
+  /** Letters and digits only, lower case, for matching names spelled differently. */
+  static String key(String name) {
+<span class="fc" id="L471">    return name.toLowerCase(Locale.ROOT).replaceAll(&quot;[^a-z0-9]&quot;, &quot;&quot;);</span>
+  }
+
+  /** &quot;TeachingBasicsToBeginners&quot; to &quot;Teaching Basics To Beginners&quot;; &quot;C++&quot; stays &quot;C++&quot;. */
+  static String prettify(String legacyTopic) {
+<span class="fc" id="L476">    return legacyTopic.replaceAll(&quot;(?&lt;=[a-z])(?=[A-Z])&quot;, &quot; &quot;);</span>
+  }
+
+  /**
+   * The knowledge ratings ({@code C++:3,Python:5,...}) as topic proficiencies on the TA scale,
+   * named as the TA topics list spells them when a topic matches, else as the legacy name reads.
+   */
+  static Map&lt;String, Integer&gt; knowledge(String cell, Collection&lt;String&gt; topics) {
+<span class="fc" id="L484">    Map&lt;String, String&gt; byKey = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L485" title="All 2 branches covered.">    for (String topic : topics) {</span>
+<span class="fc" id="L486">      byKey.putIfAbsent(key(topic), topic);</span>
+<span class="fc" id="L487">    }</span>
+<span class="fc" id="L488">    Map&lt;String, Integer&gt; ratings = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L489" title="All 2 branches covered.">    for (String[] e : entries(cell, 2)) {</span>
+      int level;
+      try {
+<span class="fc" id="L492">        level = Integer.parseInt(e[1]);</span>
+<span class="fc" id="L493">      } catch (NumberFormatException ex) {</span>
+<span class="fc" id="L494">        continue;</span>
+<span class="fc" id="L495">      }</span>
+<span class="fc bfc" id="L496" title="All 6 branches covered.">      if (e[0].isEmpty() || level &lt; 1 || level &gt; 5) {</span>
+<span class="fc" id="L497">        continue;</span>
+      }
+<span class="fc" id="L499">      ratings.put(byKey.getOrDefault(key(e[0]), prettify(e[0])), level);</span>
+<span class="fc" id="L500">    }</span>
+<span class="fc" id="L501">    return ratings;</span>
+  }
+
+  /** The number part of a padded course id: &quot;CMPSC 156&quot; gives &quot;156&quot;. */
+  static String numberOf(String courseId) {
+<span class="fc" id="L506">    String[] parts = courseId.strip().split(&quot;\\s+&quot;);</span>
+<span class="fc" id="L507">    return parts[parts.length - 1];</span>
+  }
+
+  /**
+   * The desired courses (two cells of comma-separated numbers) as ENTHUSIASTIC interest in each
+   * course the recruitment lists; a course it does not list is added to {@code unmatched} so it can
+   * be kept as text.
+   */
+  static Map&lt;String, CourseInterest&gt; desiredCourses(
+      String upper, String lower, Set&lt;String&gt; courseIds, List&lt;String&gt; unmatched) {
+<span class="fc" id="L517">    Map&lt;String, String&gt; byNumber = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L518" title="All 2 branches covered.">    for (String courseId : courseIds) {</span>
+<span class="fc" id="L519">      byNumber.putIfAbsent(numberOf(courseId).toUpperCase(Locale.ROOT), courseId);</span>
+<span class="fc" id="L520">    }</span>
+<span class="fc" id="L521">    Map&lt;String, CourseInterest&gt; interests = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L522" title="All 2 branches covered.">    for (String cell : new String[] {upper, lower}) {</span>
+<span class="fc bfc" id="L523" title="All 2 branches covered.">      if (cell == null) {</span>
+<span class="fc" id="L524">        continue;</span>
+      }
+<span class="fc bfc" id="L526" title="All 2 branches covered.">      for (String number : cell.split(&quot;,&quot;)) {</span>
+<span class="fc" id="L527">        String wanted = number.strip().toUpperCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L528" title="All 2 branches covered.">        if (wanted.isEmpty()) {</span>
+<span class="fc" id="L529">          continue;</span>
+        }
+<span class="fc" id="L531">        String courseId = byNumber.get(wanted);</span>
+<span class="fc bfc" id="L532" title="All 2 branches covered.">        if (courseId != null) {</span>
+<span class="fc" id="L533">          interests.put(courseId, CourseInterest.ENTHUSIASTIC);</span>
+<span class="fc bfc" id="L534" title="All 2 branches covered.">        } else if (!unmatched.contains(courseNumber(wanted))) {</span>
+<span class="fc" id="L535">          unmatched.add(courseNumber(wanted));</span>
+        }
+      }
+    }
+<span class="fc" id="L539">    return interests;</span>
+  }
+
+  /**
+   * The applicant's comments: what they wrote, then the legacy answers the new form has no field
+   * for, so nothing they said is lost and they can edit it next time.
+   */
+  static String comments(Map&lt;String, String&gt; row, List&lt;String&gt; unmatchedCourses) {
+<span class="fc" id="L547">    List&lt;String&gt; lines = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L548">    String own = blankToNull(row.get(&quot;comments_applicant&quot;));</span>
+<span class="fc bfc" id="L549" title="All 2 branches covered.">    if (own != null) {</span>
+<span class="fc" id="L550">      lines.add(HtmlUtils.htmlUnescape(own));</span>
+    }
+<span class="fc" id="L552">    String job = blankToNull(row.get(&quot;preferred_job&quot;));</span>
+<span class="fc bfc" id="L553" title="All 2 branches covered.">    if (job != null) {</span>
+<span class="fc" id="L554">      lines.add(&quot;Preferred job: &quot; + job);</span>
+    }
+<span class="fc" id="L556">    String hours = textOrNullForZero(row.get(&quot;preferred_hours&quot;));</span>
+<span class="fc bfc" id="L557" title="All 2 branches covered.">    if (hours != null) {</span>
+<span class="fc" id="L558">      lines.add(&quot;Preferred hours per week: &quot; + hours);</span>
+    }
+<span class="fc bfc" id="L560" title="All 2 branches covered.">    if (!unmatchedCourses.isEmpty()) {</span>
+<span class="fc" id="L561">      lines.add(&quot;Also interested in: &quot; + String.join(&quot;, &quot;, unmatchedCourses));</span>
+    }
+<span class="fc bfc" id="L563" title="All 2 branches covered.">    return lines.isEmpty() ? null : String.join(&quot;\n&quot;, lines);</span>
+  }
+
+  /** Where the row came from and the export's bookkeeping, for admins only. */
+  static String adminComments(Map&lt;String, String&gt; row) {
+<span class="fc" id="L568">    List&lt;String&gt; parts = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L569">    parts.add(&quot;Imported from the legacy TA application&quot;);</span>
+<span class="fc" id="L570">    String quarter = blankToNull(row.get(&quot;application_quarter&quot;));</span>
+<span class="fc bfc" id="L571" title="All 2 branches covered.">    if (quarter != null) {</span>
+<span class="fc" id="L572">      parts.add(&quot;legacy quarter &quot; + quarter);</span>
+    }
+<span class="fc" id="L574">    String submitted = blankToNull(row.get(&quot;date_submitted&quot;));</span>
+<span class="fc bfc" id="L575" title="All 2 branches covered.">    if (submitted != null) {</span>
+<span class="fc" id="L576">      parts.add(&quot;submitted &quot; + submitted);</span>
+    }
+<span class="fc" id="L578">    String modified = blankToNull(row.get(&quot;date_modified&quot;));</span>
+<span class="fc bfc" id="L579" title="All 2 branches covered.">    if (modified != null) {</span>
+<span class="fc" id="L580">      parts.add(&quot;last modified &quot; + modified);</span>
+    }
+<span class="fc" id="L582">    String mustHire = blankToNull(row.get(&quot;must_hire&quot;));</span>
+<span class="fc bfc" id="L583" title="All 4 branches covered.">    if (mustHire != null &amp;&amp; !&quot;0&quot;.equals(mustHire)) {</span>
+<span class="fc" id="L584">      parts.add(&quot;must_hire &quot; + mustHire);</span>
+    }
+<span class="fc" id="L586">    String text = String.join(&quot;; &quot;, parts) + &quot;.&quot;;</span>
+<span class="fc" id="L587">    String reviewer = blankToNull(row.get(&quot;comments_reviewer&quot;));</span>
+<span class="fc bfc" id="L588" title="All 2 branches covered.">    if (reviewer != null) {</span>
+<span class="fc" id="L589">      text += &quot;\nReviewer comments: &quot; + HtmlUtils.htmlUnescape(reviewer);</span>
+    }
+<span class="fc" id="L591">    return text;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
