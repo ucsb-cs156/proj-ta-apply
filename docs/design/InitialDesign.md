@@ -300,6 +300,7 @@ Admins can look over the applications to a recruitment, as a whole and one at a 
   (`/all?recruitmentId=`), one application by id, and the comments update (`PUT /adminComments`).
   Nothing in it changes what the applicant wrote.
 
+
 # Twelfth Iteration
 
 The recruitments table gains a **CSV** button per recruitment (column "Download") that downloads
