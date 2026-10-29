@@ -16,6 +16,21 @@ export type Recruitment = {
   actualClosingDate: string | null;
 };
 
+/**
+ * A heading on two lines, so a column of dates is no wider than its dates. The space before the
+ * break keeps the heading's text ("Tentative Opening") whole for screen readers and tests.
+ */
+const stacked = (top: string, bottom: string): React.JSX.Element => (
+  <>
+    {top} <br />
+    {bottom}
+  </>
+);
+
+/** On the Test column's heading and on each of its buttons. */
+export const TEST_APPLICATION_TOOLTIP =
+  "Submit a test application to see what the form looks like to applicants";
+
 type RecruitmentTableProps = {
   recruitments: Recruitment[];
   /** Not needed when readOnly: the Delete column is not shown then. */
@@ -65,22 +80,22 @@ export default function RecruitmentTable({
       meta: shrinkToContent,
     },
     {
-      header: "Tentative Opening",
+      header: stacked("Tentative", "Opening"),
       accessorKey: "tentativeOpeningDate",
       meta: shrinkToContent,
     },
     {
-      header: "Primary Consideration",
+      header: stacked("Primary", "Consideration"),
       accessorKey: "primaryConsiderationDate",
       meta: shrinkToContent,
     },
     {
-      header: "Actually Opened",
+      header: stacked("Actually", "Opened"),
       accessorKey: "actualOpeningDate",
       meta: shrinkToContent,
     },
     {
-      header: "Actually Closed",
+      header: stacked("Actually", "Closed"),
       accessorKey: "actualClosingDate",
       meta: { style: { width: "100%" } },
     },
@@ -122,7 +137,12 @@ export default function RecruitmentTable({
       ),
     },
     {
-      header: "Test",
+      header: (
+        <span title={TEST_APPLICATION_TOOLTIP}>
+          Test <br />
+          Application
+        </span>
+      ),
       id: "test",
       accessorKey: "id",
       meta: shrinkToContent,
@@ -130,9 +150,10 @@ export default function RecruitmentTable({
         <Link
           className="btn btn-secondary"
           to={`/admin/recruitments/${cell.row.original.id}/test-application`}
+          title={TEST_APPLICATION_TOOLTIP}
           data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-test-button`}
         >
-          Test Application
+          Test
         </Link>
       ),
     },
