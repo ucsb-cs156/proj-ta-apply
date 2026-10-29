@@ -299,3 +299,20 @@ Admins can look over the applications to a recruitment, as a whole and one at a 
 * A new admin-only controller, `/api/admin/applications`, serves the list for a recruitment
   (`/all?recruitmentId=`), one application by id, and the comments update (`PUT /adminComments`).
   Nothing in it changes what the applicant wrote.
+
+# Twelfth Iteration
+
+The recruitments table gains a **CSV** button per recruitment (column "Download") that downloads
+every application to that recruitment as a CSV file, `applications-<id>.csv`, served by
+`GET /api/admin/applications/csv?recruitmentId=` (admins only).
+
+* One row per application, a header row, every cell quoted. Test applications are included and
+  flagged in the `testApplication` column.
+* The columns follow the recruitment's type: a TA file carries `classLevel`, `residencyStatus`,
+  `languageExam` and `languageExamDatePassed`; a ULA file carries `previousServiceAsUla`,
+  `videoLink` and, last, `interests`.
+* The one-to-many answers are folded into one column each. `priorCoursework` lists each course's
+  fields (school, number, title, term, grade) separated by commas, with the courses separated by
+  semicolons. `topicProficiencies`, `interests` and `courseInterests` hold `name:value` pairs
+  separated by commas, in name order (e.g. `C++:5,Java:4`).
+* The Help > CSV page documents the shape.

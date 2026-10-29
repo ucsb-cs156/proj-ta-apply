@@ -55,9 +55,23 @@ describe("RecruitmentTable tests", () => {
       "Applications",
       "Courses",
       "Test",
+      "Download",
       "Review",
       "Delete",
     ]);
+  });
+
+  test("the CSV button downloads that recruitment's applications from the backend", () => {
+    renderTable();
+    const link = screen.getByTestId(
+      "RecruitmentTable-cell-row-1-col-csv-button",
+    );
+    expect(link).toHaveTextContent("CSV");
+    expect(link).toHaveAttribute(
+      "href",
+      "/api/admin/applications/csv?recruitmentId=2",
+    );
+    expect(link).toHaveAttribute("download", "applications-2.csv");
   });
 
   /** For repeating one recruitment at the top of its applications page: fields, no buttons. */
