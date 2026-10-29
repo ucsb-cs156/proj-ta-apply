@@ -5,12 +5,16 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.ApplicationCsvService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -25,11 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = &quot;AdminApplications&quot;)
 @RequestMapping(&quot;/api/admin/applications&quot;)
 @RestController
-<span class="fc" id="L28">@Slf4j</span>
-<span class="fc" id="L29">public class AdminApplicationsController extends ApiController {</span>
+<span class="fc" id="L32">@Slf4j</span>
+<span class="fc" id="L33">public class AdminApplicationsController extends ApiController {</span>
 
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired ApplicationCsvService applicationCsvService;
 
   @Operation(
       summary = &quot;Every application to a recruitment, oldest first&quot;,
@@ -40,19 +45,46 @@ import org.springframework.web.bind.annotation.RestController;
   @GetMapping(&quot;/all&quot;)
   public List&lt;Application&gt; allForRecruitment(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc bfc" id="L43" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
-<span class="fc" id="L44">      throw new EntityNotFoundException(Recruitment.class, recruitmentId);</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
+<span class="fc" id="L49">      throw new EntityNotFoundException(Recruitment.class, recruitmentId);</span>
     }
-<span class="fc" id="L46">    return applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId);</span>
+<span class="fc" id="L51">    return applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId);</span>
+  }
+
+  @Operation(
+      summary = &quot;Every application to a recruitment as a CSV file&quot;,
+      description =
+          &quot;One row per application, test applications included and flagged. The columns differ by&quot;
+              + &quot; form type; the one-to-many answers are folded into one column each (courses&quot;
+              + &quot; separated by semicolons, their fields by commas; ratings as name:value pairs&quot;
+              + &quot; separated by commas). 404 for a recruitment that does not exist.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(value = &quot;/csv&quot;, produces = &quot;text/csv&quot;)
+  public ResponseEntity&lt;String&gt; downloadCsv(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
+<span class="fc" id="L65">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L67">            .findById(recruitmentId)</span>
+<span class="fc" id="L68">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L69">    String csv =</span>
+<span class="fc" id="L70">        applicationCsvService.write(</span>
+<span class="fc" id="L71">            recruitment.getType(),</span>
+<span class="fc" id="L72">            applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));</span>
+<span class="fc" id="L73">    return ResponseEntity.ok()</span>
+<span class="fc" id="L74">        .header(</span>
+            HttpHeaders.CONTENT_DISPOSITION,
+<span class="fc" id="L76">            &quot;attachment; filename=\&quot;applications-%d.csv\&quot;&quot;.formatted(recruitmentId))</span>
+<span class="fc" id="L77">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;))</span>
+<span class="fc" id="L78">        .body(csv);</span>
   }
 
   @Operation(summary = &quot;One application, whoever it belongs to&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @GetMapping(&quot;&quot;)
   public Application getApplication(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
-<span class="fc" id="L53">    return applicationRepository</span>
-<span class="fc" id="L54">        .findById(id)</span>
-<span class="fc" id="L55">        .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L85">    return applicationRepository</span>
+<span class="fc" id="L86">        .findById(id)</span>
+<span class="fc" id="L87">        .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
   }
 
   @Operation(
@@ -64,13 +96,13 @@ import org.springframework.web.bind.annotation.RestController;
   public Application updateAdminComments(
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;adminComments&quot;) @RequestParam String adminComments) {
-<span class="fc" id="L67">    Application application =</span>
+<span class="fc" id="L99">    Application application =</span>
         applicationRepository
-<span class="fc" id="L69">            .findById(id)</span>
-<span class="fc" id="L70">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
-<span class="fc" id="L71">    application.setAdminComments(adminComments);</span>
-<span class="fc" id="L72">    applicationRepository.save(application);</span>
-<span class="fc" id="L73">    return application;</span>
+<span class="fc" id="L101">            .findById(id)</span>
+<span class="fc" id="L102">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L103">    application.setAdminComments(adminComments);</span>
+<span class="fc" id="L104">    applicationRepository.save(application);</span>
+<span class="fc" id="L105">    return application;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
