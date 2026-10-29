@@ -1,6 +1,9 @@
 package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -18,6 +21,7 @@ import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.AdminRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -156,22 +160,47 @@ public class AdminsControllerTests extends ControllerTestCase {
   public void logged_in_admin_can_get_all_admins() throws Exception {
     List<String> adminEmailList = Arrays.asList("acdamstedt@ucsb.edu");
 
+    // admin1 has logged in, so the users table knows their name; admin2 never has.
     Admin admin1 = Admin.builder().email("acdamstedt@ucsb.edu").build();
-    AdminsController.AdminDTO adminDTO1 = new AdminsController.AdminDTO(admin1, adminEmailList);
-
+    User user1 =
+        User.builder()
+            .id(3L)
+            .email("acdamstedt@ucsb.edu")
+            .givenName("Andrew")
+            .familyName("Damstedt")
+            .build();
     Admin admin2 = Admin.builder().email("other@ucsb.edu").build();
-    AdminsController.AdminDTO adminDTO2 = new AdminsController.AdminDTO(admin2, adminEmailList);
 
     ArrayList<Admin> expectedAdmins = new ArrayList<>(Arrays.asList(admin1, admin2));
-    ArrayList<AdminsController.AdminDTO> expectedAdminDTOs =
-        new ArrayList<>(Arrays.asList(adminDTO1, adminDTO2));
+    List<AdminsController.AdminDTO> expectedAdminDTOs =
+        List.of(
+            new AdminsController.AdminDTO("acdamstedt@ucsb.edu", true, "Andrew", "Damstedt"),
+            new AdminsController.AdminDTO("other@ucsb.edu", false, null, null));
+    // The record's own accessors, since the JSON comparison below is built from the same record.
+    AdminsController.AdminDTO dto1 =
+        new AdminsController.AdminDTO(admin1, adminEmailList, Optional.of(user1));
+    AdminsController.AdminDTO dto2 =
+        new AdminsController.AdminDTO(admin2, adminEmailList, Optional.empty());
+    assertEquals(expectedAdminDTOs, List.of(dto1, dto2));
+    assertEquals("acdamstedt@ucsb.edu", dto1.email());
+    assertTrue(dto1.isInAdminEmails());
+    assertEquals("Andrew", dto1.givenName());
+    assertEquals("Damstedt", dto1.familyName());
+    assertEquals("other@ucsb.edu", dto2.email());
+    assertFalse(dto2.isInAdminEmails());
+    assertNull(dto2.givenName());
+    assertNull(dto2.familyName());
 
     when(adminRepository.findAll()).thenReturn(expectedAdmins);
+    when(userRepository.findByEmail("acdamstedt@ucsb.edu")).thenReturn(Optional.of(user1));
+    when(userRepository.findByEmail("other@ucsb.edu")).thenReturn(Optional.empty());
 
     MvcResult response =
         mockMvc.perform(get("/api/admin/all")).andExpect(status().isOk()).andReturn();
 
     verify(adminRepository, times(1)).findAll();
+    verify(userRepository, times(1)).findByEmail("acdamstedt@ucsb.edu");
+    verify(userRepository, times(1)).findByEmail("other@ucsb.edu");
     String expectedJson = mapper.writeValueAsString(expectedAdminDTOs);
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);
@@ -186,6 +215,7 @@ public class AdminsControllerTests extends ControllerTestCase {
             .givenName("Phill")
             .familyName("Conrad")
             .email("phtcon@ucsb.edu")
+            .lastOnline(Instant.parse("2026-04-01T17:30:00Z"))
             .build();
     User user2 =
         User.builder()
@@ -193,7 +223,7 @@ public class AdminsControllerTests extends ControllerTestCase {
             .givenName("Craig")
             .familyName("Zzyxx")
             .email("craig.zzyzx@example.org")
-            .build();
+            .build(); // a row from before last_online existed: null
 
     PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("id"));
     Page<User> usersPage = new PageImpl<>(List.of(user1, user2), pageRequest, 2);
@@ -223,6 +253,25 @@ public class AdminsControllerTests extends ControllerTestCase {
     String expectedJson = mapper.writeValueAsString(expectedPage);
     String responseString = response.getResponse().getContentAsString();
     assertEquals(expectedJson, responseString);
+    assertTrue(responseString.contains("\"lastOnline\":\"2026-04-01T17:30:00Z\""));
+    // The records' own accessors, since the JSON comparison above is built from the same records.
+    AdminsController.UserDTO dto1 = expectedUsers.get(0);
+    assertEquals(1L, dto1.id());
+    assertEquals("Phill", dto1.givenName());
+    assertEquals("Conrad", dto1.familyName());
+    assertEquals("phtcon@ucsb.edu", dto1.email());
+    assertTrue(dto1.admin());
+    assertFalse(dto1.instructor());
+    assertEquals(Instant.parse("2026-04-01T17:30:00Z"), dto1.lastOnline());
+    AdminsController.UserDTO dto2 = expectedUsers.get(1);
+    assertFalse(dto2.admin());
+    assertTrue(dto2.instructor());
+    assertNull(dto2.lastOnline());
+    assertEquals(0, expectedPage.number());
+    assertEquals(2, new AdminsController.UsersPageDTO(List.of(), 2, 10, 0, 0).number());
+    assertEquals(10, expectedPage.size());
+    assertEquals(2L, expectedPage.totalElements());
+    assertEquals(1, expectedPage.totalPages());
   }
 
   @WithMockUser(roles = {"ADMIN"})

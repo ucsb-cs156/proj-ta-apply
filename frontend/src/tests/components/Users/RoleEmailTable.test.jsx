@@ -1,6 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import RoleEmailTable from "main/components/Users/RoleEmailTable";
+import RoleEmailTable, {
+  NAMES_NOTE,
+} from "main/components/Users/RoleEmailTable";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import axios from "axios";
@@ -259,5 +261,45 @@ describe("RoleEmailTable", () => {
     expect(
       screen.getByTestId("RoleEmailTable-cell-row-0-col-isInAdminEmails"),
     ).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
+  });
+
+  /** Issue #61: names from the users table, so only for people who have logged in. */
+  test("First and Last Name columns come after Email and are blank until the person has logged in", () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RoleEmailTable data={roleEmailFixtures.threeItems} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const headers = Array.from(
+      document.querySelectorAll('[data-testid="RoleEmailTable"] thead th'),
+    ).map((th) => th.textContent.trim());
+    expect(headers).toEqual(["Email", "First Name", "Last Name", "Delete"]);
+
+    expect(
+      screen.getByTestId("RoleEmailTable-cell-row-0-col-givenName"),
+    ).toHaveTextContent("Ina");
+    expect(
+      screen.getByTestId("RoleEmailTable-cell-row-0-col-familyName"),
+    ).toHaveTextContent("Structor");
+    expect(
+      screen.getByTestId("RoleEmailTable-cell-row-1-col-givenName").textContent,
+    ).toBe("");
+    expect(
+      screen.getByTestId("RoleEmailTable-cell-row-1-col-familyName")
+        .textContent,
+    ).toBe("");
+    // The name columns shrink to their content like Delete; Email still takes the slack.
+    expect(
+      screen.getByTestId("RoleEmailTable-cell-row-0-col-givenName"),
+    ).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
+    expect(
+      screen.getByTestId("RoleEmailTable-cell-row-0-col-familyName"),
+    ).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
+    expect(NAMES_NOTE).toBe(
+      "First and Last name are populated when the user logs in for the first time.",
+    );
   });
 });

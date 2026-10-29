@@ -9,7 +9,14 @@ import type { AxiosRequestConfig } from "axios";
 export type RoleEmail = {
   email: string;
   isInAdminEmails?: boolean;
+  /** From the users table, so known only once this person has logged in. */
+  givenName?: string | null;
+  familyName?: string | null;
 };
+
+/** Shown above the Admins and Instructors tables, where the name columns are often blank. */
+export const NAMES_NOTE =
+  "First and Last name are populated when the user logs in for the first time.";
 
 type RoleEmailTableProps = {
   data: RoleEmail[];
@@ -61,6 +68,16 @@ export default function RoleEmailTable({
       // Takes the slack from Bootstrap's full-width table, so Delete shrinks to its button
       // instead of the two columns splitting the width evenly.
       meta: { style: { width: "100%" } },
+    },
+    {
+      header: "First Name",
+      accessorKey: "givenName",
+      meta: { style: { width: "1%", whiteSpace: "nowrap" as const } },
+    },
+    {
+      header: "Last Name",
+      accessorKey: "familyName",
+      meta: { style: { width: "1%", whiteSpace: "nowrap" as const } },
     },
     {
       header: "Delete",

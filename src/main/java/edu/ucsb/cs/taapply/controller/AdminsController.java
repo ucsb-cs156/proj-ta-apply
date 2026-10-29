@@ -10,7 +10,9 @@ import edu.ucsb.cs.taapply.utilities.CanonicalFormConverter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,9 +41,18 @@ public class AdminsController extends ApiController {
   @Value("#{'${app.admin.emails}'.split(',')}")
   List<String> adminEmails;
 
-  public static record AdminDTO(String email, boolean isInAdminEmails) {
-    public AdminDTO(Admin admin, List<String> adminEmails) {
-      this(admin.getEmail(), adminEmails.contains(admin.getEmail()));
+  /**
+   * An admin with their name from the users table, which has a row for them only once they have
+   * logged in: until then both names are null.
+   */
+  public static record AdminDTO(
+      String email, boolean isInAdminEmails, String givenName, String familyName) {
+    public AdminDTO(Admin admin, List<String> adminEmails, Optional<User> user) {
+      this(
+          admin.getEmail(),
+          adminEmails.contains(admin.getEmail()),
+          user.map(User::getGivenName).orElse(null),
+          user.map(User::getFamilyName).orElse(null));
     }
   }
 
@@ -51,7 +62,8 @@ public class AdminsController extends ApiController {
       String familyName,
       String email,
       boolean admin,
-      boolean instructor) {
+      boolean instructor,
+      Instant lastOnline) {
     public UserDTO(User user, boolean admin, boolean instructor) {
       this(
           user.getId(),
@@ -59,7 +71,8 @@ public class AdminsController extends ApiController {
           user.getFamilyName(),
           user.getEmail(),
           admin,
-          instructor);
+          instructor,
+          user.getLastOnline());
     }
   }
 
@@ -90,7 +103,8 @@ public class AdminsController extends ApiController {
   public Iterable<AdminDTO> allAdmins() {
     Iterable<Admin> admins = adminRepository.findAll();
     return StreamSupport.stream(admins.spliterator(), false)
-        .map(admin -> new AdminDTO(admin, adminEmails))
+        .map(
+            admin -> new AdminDTO(admin, adminEmails, userRepository.findByEmail(admin.getEmail())))
         .toList();
   }
 

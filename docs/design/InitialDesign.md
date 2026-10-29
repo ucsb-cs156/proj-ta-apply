@@ -382,3 +382,18 @@ The recruitments page is easier to work with on a wide screen (issue #60).
 * On every page, the content column (and the footer under it) is wider: each side gutter is half
   what the old fixed 1126px column left on that screen, so the column is `50% + 563px` of the
   viewport, and still the full width on screens narrower than 1126px.
+
+# Seventeenth Iteration
+
+Admins can see who has been using the app, and who their admins and instructors are (issue #61).
+
+* `users` gains `last_online` (changeset 019). It is stamped at sign-in, and `LastOnlineInterceptor`
+  refreshes it on any `/api/**` request from a signed-in user whose stamp is more than a minute
+  old, so a page load's burst of requests writes the row once. **Admin > Users** shows it as
+  **Last Online**, in the admin's own time zone, blank for a row from before the column existed;
+  the column sorts by the instant, not the text.
+* **Admin > Admins** and **Admin > Instructors** gain **First Name** and **Last Name**, looked up by
+  email in the users table (`AdminDTO` and the new `InstructorDTO`). Someone who has never logged
+  in has no users row, so their names are blank; a note at the top of each page says so.
+
+
