@@ -425,6 +425,38 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
     assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
         .hasValue("Interview on Tuesday");
+    // Nothing edited yet, so the audit trail section says so.
+    assertThat(page.getByTestId("AdminApplicationPage-audit-none")).isVisible();
+
+    // Edit the major; the change is saved and shows up in the application's audit trail.
+    page.getByTestId("AdminApplicationPage-edit").click();
+    assertThat(page.getByTestId("AdminApplicationEditPage-firstName")).hasValue("Ada");
+    page.getByTestId("AdminApplicationEditPage-major").selectOption("__OTHER__");
+    page.getByTestId("AdminApplicationEditPage-otherMajor").fill("Statistics");
+    addCourse("AdminApplicationEditPage", "CMPSC 130A");
+    addCourse("AdminApplicationEditPage", "CMPSC 130B");
+    addCourse("AdminApplicationEditPage", "CMPSC 156");
+    page.getByTestId("AdminApplicationEditPage-submit").click();
+
+    assertThat(page.getByTestId("AdminApplicationPage-summary-Major")).containsText("Statistics");
+    assertThat(page.getByTestId("AdminApplicationPage-audit-cell-row-0-col-fieldName"))
+        .containsText("major");
+    assertThat(page.getByTestId("AdminApplicationPage-audit-cell-row-0-col-oldValue"))
+        .containsText("Computer Science");
+    assertThat(page.getByTestId("AdminApplicationPage-audit-cell-row-0-col-newValue"))
+        .containsText("Statistics");
+    // The three courses added are rows too, with a JSON new value and no old value.
+    assertThat(page.getByTestId("AdminApplicationPage-audit-cell-row-1-col-fieldName"))
+        .containsText("priorCoursework");
+    assertThat(page.getByTestId("AdminApplicationPage-audit-cell-row-1-col-newValue-see"))
+        .isVisible();
+
+    // And the whole-table page lists them against the TA application.
+    goTo("/admin/audittrail");
+    assertThat(page.getByTestId("AuditTrailPage-total")).containsText("4 changes recorded.");
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-taApplicationId"))
+        .not()
+        .isEmpty();
   }
 
   /** An admin previews the form from the recruitments table; the result is flagged as a test. */

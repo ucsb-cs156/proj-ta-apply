@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { Button, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
@@ -10,9 +10,13 @@ import type { Recruitment } from "main/components/Recruitments/RecruitmentTable"
 import type { NoticeVersion } from "main/utils/notices";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import {
+  adminApplicationEditPath,
   applicationsListPath,
   submittedText,
 } from "main/utils/adminApplications";
+import AuditTrailTable, {
+  type AuditTrailRow,
+} from "main/components/AuditTrail/AuditTrailTable";
 
 /**
  * One application as an admin sees it: /admin/applications/:id. Everything the applicant wrote is
@@ -59,6 +63,22 @@ export default function AdminApplicationPage(): React.JSX.Element {
 
   const listPath = applicationsListPath(application?.recruitmentId ?? "");
 
+  // Every change an admin has made to this application, oldest first; which id column the rows
+  // sit in depends on the recruitment's type, so this waits for the recruitment.
+  const { data: auditTrail } = useBackend<AuditTrailRow[]>(
+    ["/api/admin/audittrail/application", recruitment?.type, id],
+    {
+      method: "GET",
+      url: "/api/admin/audittrail/application",
+      params: { type: recruitment?.type, id },
+    },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    false,
+    // Stryker disable next-line all : the guard only avoids a pointless request
+    { enabled: Boolean(recruitment) },
+  );
+
   const saveMutation = useBackendMutation<string, Application>(
     (adminComments) => ({
       url: "/api/admin/applications/adminComments",
@@ -85,6 +105,13 @@ export default function AdminApplicationPage(): React.JSX.Element {
 
         {application && (
           <>
+            <Link
+              className="btn btn-primary mb-3"
+              to={adminApplicationEditPath(id ?? "")}
+              data-testid="AdminApplicationPage-edit"
+            >
+              Edit
+            </Link>
             <p data-testid="AdminApplicationPage-about">
               {application.testApplication ? "Test application" : "Application"}{" "}
               from {application.email}, submitted{" "}
@@ -141,6 +168,21 @@ export default function AdminApplicationPage(): React.JSX.Element {
                 Cancel
               </Button>
             </Form>
+
+            <h2 className="h4 mt-4">Audit Trail</h2>
+            {(auditTrail ?? []).length === 0 ? (
+              <p
+                className="text-muted"
+                data-testid="AdminApplicationPage-audit-none"
+              >
+                No admin has changed this application.
+              </p>
+            ) : (
+              <AuditTrailTable
+                rows={auditTrail ?? []}
+                testIdPrefix="AdminApplicationPage-audit"
+              />
+            )}
           </>
         )}
       </div>

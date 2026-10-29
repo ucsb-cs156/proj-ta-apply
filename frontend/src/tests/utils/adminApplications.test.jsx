@@ -1,4 +1,6 @@
 import {
+  adminApplicationEditPath,
+  adminApplicationPath,
   applicationsListPath,
   receivedText,
   submittedText,
@@ -34,6 +36,13 @@ describe("adminApplications utils", () => {
         { ...applicationsFixtures.oneTestApplication, id: 99 },
       ]),
     ).toBe("0 Applications Received (plus 2 test applications)");
+  });
+
+  test("the application view and edit paths take a number or a string id", () => {
+    expect(adminApplicationPath(5)).toBe("/admin/applications/5");
+    expect(adminApplicationPath("5")).toBe("/admin/applications/5");
+    expect(adminApplicationEditPath(5)).toBe("/admin/applications/5/edit");
+    expect(adminApplicationEditPath("5")).toBe("/admin/applications/5/edit");
   });
 
   test("applicationsListPath points at the recruitment's applications page", () => {

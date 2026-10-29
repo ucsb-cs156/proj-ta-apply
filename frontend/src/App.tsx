@@ -28,6 +28,7 @@ import ApplicationPage from "main/pages/Applications/ApplicationPage";
 import TestApplicationPage from "main/pages/Admin/TestApplicationPage";
 import RecruitmentApplicationsPage from "main/pages/Admin/RecruitmentApplicationsPage";
 import AdminApplicationPage from "main/pages/Admin/AdminApplicationPage";
+import AdminApplicationEditPage from "main/pages/Admin/AdminApplicationEditPage";
 import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
 import LegacyTaApplicationPage from "main/pages/Admin/LegacyTaApplicationPage";
@@ -161,6 +162,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<AdminApplicationPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/applications/:id/edit"
+          element={
+            <ProtectedPage
+              component={<AdminApplicationEditPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

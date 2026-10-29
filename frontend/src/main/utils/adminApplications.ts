@@ -14,6 +14,14 @@ export const receivedText = (applications: Application[]): string => {
     : `${base} (plus ${tests} test ${tests === 1 ? "application" : "applications"})`;
 };
 
+/** The admin's read-only view of one application. */
+export const adminApplicationPath = (id: number | string): string =>
+  `/admin/applications/${id}`;
+
+/** The admin's edit form for one application. */
+export const adminApplicationEditPath = (id: number | string): string =>
+  `/admin/applications/${id}/edit`;
+
 /** Where Save and Cancel on the admin's view of an application go back to. */
 export const applicationsListPath = (recruitmentId: number | string): string =>
   `/admin/recruitments/${recruitmentId}/applications`;

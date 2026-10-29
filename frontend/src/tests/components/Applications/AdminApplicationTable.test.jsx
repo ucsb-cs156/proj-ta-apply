@@ -32,7 +32,18 @@ describe("AdminApplicationTable tests", () => {
       "Level",
       "First Choice",
       "Second Choice",
+      "Edit",
     ]);
+  });
+
+  test("each row has an Edit button leading to the admin's edit form", () => {
+    renderTable();
+
+    const button = screen.getByTestId(
+      "AdminApplicationTable-cell-row-0-col-edit-button",
+    );
+    expect(button).toHaveTextContent("Edit");
+    expect(button).toHaveAttribute("href", `/admin/applications/${ta.id}/edit`);
   });
 
   test("a ULA table swaps Level for Expected Graduation", () => {
@@ -49,6 +60,7 @@ describe("AdminApplicationTable tests", () => {
       "Expected Graduation",
       "First Choice",
       "Second Choice",
+      "Edit",
     ]);
     expect(
       screen.getByTestId("AdminApplicationTable-cell-row-0-col-graduationDate"),
@@ -186,7 +198,7 @@ describe("AdminApplicationTable tests", () => {
 
   test("renders an empty table, and tolerates a non-array prop", () => {
     renderTable({ applications: null });
-    expect(screen.getAllByRole("columnheader")).toHaveLength(7);
+    expect(screen.getAllByRole("columnheader")).toHaveLength(8);
     expect(
       screen.queryByTestId("AdminApplicationTable-cell-row-0-col-id-link"),
     ).toBeNull();

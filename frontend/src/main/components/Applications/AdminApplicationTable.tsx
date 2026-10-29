@@ -3,7 +3,10 @@ import type { Cell } from "@tanstack/react-table";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import type { Application } from "main/components/Applications/ApplicationTable";
-import { submittedText } from "main/utils/adminApplications";
+import {
+  adminApplicationEditPath,
+  submittedText,
+} from "main/utils/adminApplications";
 
 type AdminApplicationTableProps = {
   applications: Application[];
@@ -112,6 +115,21 @@ export default function AdminApplicationTable({
       accessorFn: (application: Application) =>
         show(application.secondChoiceCourse),
       meta: shrinkToContent,
+    },
+    {
+      header: "Edit",
+      id: "edit",
+      accessorKey: "id",
+      meta: shrinkToContent,
+      cell: ({ cell }: { cell: Cell<Application, unknown> }) => (
+        <Link
+          className="btn btn-primary btn-sm"
+          to={adminApplicationEditPath(cell.row.original.id)}
+          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-edit-button`}
+        >
+          Edit
+        </Link>
+      ),
     },
   ];
 
