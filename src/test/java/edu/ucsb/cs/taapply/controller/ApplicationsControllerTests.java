@@ -27,8 +27,11 @@ import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
+import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
+import edu.ucsb.cs.taapply.enums.StudentStatus;
+import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -163,6 +166,17 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.classLevel(),
         FULL_FIELDS.videoLink(),
         FULL_FIELDS.previousServiceAsUla(),
+        FULL_FIELDS.permNumber(),
+        FULL_FIELDS.bsMsStudent(),
+        FULL_FIELDS.studentStatusNextQuarter(),
+        FULL_FIELDS.wantsTaEligibility(),
+        FULL_FIELDS.otherCampusJob(),
+        FULL_FIELDS.priorUcsbEmployment(),
+        FULL_FIELDS.employeeId(),
+        FULL_FIELDS.i9Appointment(),
+        FULL_FIELDS.trainingCommitment(),
+        FULL_FIELDS.trainingCommitmentExplanation(),
+        FULL_FIELDS.changingMajor(),
         noticeVersionId);
   }
 
@@ -225,6 +239,17 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           ClassLevel.PHD,
           "https://example.org/video",
           2,
+          "a1b2c3d",
+          true,
+          StudentStatus.UNDERGRADUATE,
+          true,
+          OtherCampusJob.NO,
+          true,
+          "1234567",
+          false,
+          TrainingCommitment.AGREE,
+          null,
+          false,
           NOTICE_ID);
 
   /** The same application with every availability answer turned off. */
@@ -258,6 +283,17 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           FULL_FIELDS.classLevel(),
           FULL_FIELDS.videoLink(),
           FULL_FIELDS.previousServiceAsUla(),
+          FULL_FIELDS.permNumber(),
+          FULL_FIELDS.bsMsStudent(),
+          FULL_FIELDS.studentStatusNextQuarter(),
+          FULL_FIELDS.wantsTaEligibility(),
+          FULL_FIELDS.otherCampusJob(),
+          FULL_FIELDS.priorUcsbEmployment(),
+          FULL_FIELDS.employeeId(),
+          FULL_FIELDS.i9Appointment(),
+          FULL_FIELDS.trainingCommitment(),
+          FULL_FIELDS.trainingCommitmentExplanation(),
+          FULL_FIELDS.changingMajor(),
           FULL_FIELDS.noticeVersionId());
 
   /** The full application with a different set of course interest answers. */
@@ -291,6 +327,17 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.classLevel(),
         FULL_FIELDS.videoLink(),
         FULL_FIELDS.previousServiceAsUla(),
+        FULL_FIELDS.permNumber(),
+        FULL_FIELDS.bsMsStudent(),
+        FULL_FIELDS.studentStatusNextQuarter(),
+        FULL_FIELDS.wantsTaEligibility(),
+        FULL_FIELDS.otherCampusJob(),
+        FULL_FIELDS.priorUcsbEmployment(),
+        FULL_FIELDS.employeeId(),
+        FULL_FIELDS.i9Appointment(),
+        FULL_FIELDS.trainingCommitment(),
+        FULL_FIELDS.trainingCommitmentExplanation(),
+        FULL_FIELDS.changingMajor(),
         FULL_FIELDS.noticeVersionId());
   }
 
@@ -325,6 +372,17 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.classLevel(),
         FULL_FIELDS.videoLink(),
         FULL_FIELDS.previousServiceAsUla(),
+        FULL_FIELDS.permNumber(),
+        FULL_FIELDS.bsMsStudent(),
+        FULL_FIELDS.studentStatusNextQuarter(),
+        FULL_FIELDS.wantsTaEligibility(),
+        FULL_FIELDS.otherCampusJob(),
+        FULL_FIELDS.priorUcsbEmployment(),
+        FULL_FIELDS.employeeId(),
+        FULL_FIELDS.i9Appointment(),
+        FULL_FIELDS.trainingCommitment(),
+        FULL_FIELDS.trainingCommitmentExplanation(),
+        FULL_FIELDS.changingMajor(),
         FULL_FIELDS.noticeVersionId());
   }
 
@@ -377,6 +435,18 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .classLevel(ClassLevel.PHD)
         .videoLink("https://example.org/video")
         .previousServiceAsUla(2)
+        // The perm number is stored upper case whatever was typed.
+        .permNumber("A1B2C3D")
+        .bsMsStudent(true)
+        .studentStatusNextQuarter(StudentStatus.UNDERGRADUATE)
+        .wantsTaEligibility(true)
+        .otherCampusJob(OtherCampusJob.NO)
+        .priorUcsbEmployment(true)
+        .employeeId("1234567")
+        .i9Appointment(false)
+        .trainingCommitment(TrainingCommitment.AGREE)
+        .trainingCommitmentExplanation(null)
+        .changingMajor(false)
         .noticeVersionId(NOTICE_ID)
         .build();
   }
@@ -1465,6 +1535,17 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.classLevel(),
         f.videoLink(),
         f.previousServiceAsUla(),
+        f.permNumber(),
+        f.bsMsStudent(),
+        f.studentStatusNextQuarter(),
+        f.wantsTaEligibility(),
+        f.otherCampusJob(),
+        f.priorUcsbEmployment(),
+        f.employeeId(),
+        f.i9Appointment(),
+        f.trainingCommitment(),
+        f.trainingCommitmentExplanation(),
+        f.changingMajor(),
         f.noticeVersionId());
   }
 
@@ -1681,6 +1762,17 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.classLevel(),
         f.videoLink(),
         f.previousServiceAsUla(),
+        f.permNumber(),
+        f.bsMsStudent(),
+        f.studentStatusNextQuarter(),
+        f.wantsTaEligibility(),
+        f.otherCampusJob(),
+        f.priorUcsbEmployment(),
+        f.employeeId(),
+        f.i9Appointment(),
+        f.trainingCommitment(),
+        f.trainingCommitmentExplanation(),
+        f.changingMajor(),
         f.noticeVersionId());
   }
 
@@ -1944,6 +2036,342 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   public void the_minimums_are_three_for_ta_and_one_for_ula() {
     assertEquals(3, ApplicationsController.minimumCourses(RecruitmentType.TA));
     assertEquals(1, ApplicationsController.minimumCourses(RecruitmentType.ULA));
+  }
+
+  // ---- the ULA questions from the Google Form (issue #72) ----
+
+  /** FULL_FIELDS with the ULA answers replaced, for the ULA recruitment and notice. */
+  private static ApplicationFields withUla(
+      String permNumber,
+      Boolean bsMsStudent,
+      OtherCampusJob otherCampusJob,
+      Boolean priorUcsbEmployment,
+      Integer previousServiceAsUla,
+      TrainingCommitment trainingCommitment) {
+    ApplicationFields f = withNoticeAndCourses(41L, List.of(course("CMPSC 16")));
+    return new ApplicationFields(
+        f.firstName(),
+        f.middleName(),
+        f.lastName(),
+        f.major(),
+        f.gpaMajor(),
+        f.gpaOverall(),
+        f.yearInProgram(),
+        f.graduationDate(),
+        f.priorCoursework(),
+        f.topicProficiencies(),
+        f.interests(),
+        f.prevExperience(),
+        f.comments(),
+        f.firstChoiceCourse(),
+        f.secondChoiceCourse(),
+        f.availableForLecturesFirstChoice(),
+        f.availableForLecturesSecondChoice(),
+        f.availableForDiscussionFirstChoice(),
+        f.availableForDiscussionSecondChoice(),
+        f.availabilityCommentsFirstChoice(),
+        f.availabilityCommentsSecondChoice(),
+        f.courseInterests(),
+        f.residencyStatus(),
+        f.languageExam(),
+        f.languageExamDatePassed(),
+        f.classLevel(),
+        f.videoLink(),
+        previousServiceAsUla,
+        permNumber,
+        bsMsStudent,
+        f.studentStatusNextQuarter(),
+        f.wantsTaEligibility(),
+        otherCampusJob,
+        priorUcsbEmployment,
+        f.employeeId(),
+        f.i9Appointment(),
+        trainingCommitment,
+        f.trainingCommitmentExplanation(),
+        f.changingMajor(),
+        f.noticeVersionId());
+  }
+
+  private MvcResult postUla(ApplicationFields fields, int status) throws Exception {
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    return mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(fields))
+                .with(csrf()))
+        .andExpect(status().is(status))
+        .andReturn();
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_application_stores_its_perm_number_upper_case_and_the_other_answers()
+      throws Exception {
+    postUla(withUla(" a1b2c3d ", false, OtherCampusJob.NOT_SURE, false, 2, null), 200);
+
+    Application saved = saved();
+    assertEquals("A1B2C3D", saved.getPermNumber());
+    assertEquals(false, saved.getBsMsStudent());
+    assertEquals(StudentStatus.UNDERGRADUATE, saved.getStudentStatusNextQuarter());
+    assertEquals(true, saved.getWantsTaEligibility());
+    assertEquals(OtherCampusJob.NOT_SURE, saved.getOtherCampusJob());
+    assertEquals(false, saved.getPriorUcsbEmployment());
+    assertEquals("1234567", saved.getEmployeeId());
+    assertEquals(false, saved.getI9Appointment());
+    assertNull(saved.getTrainingCommitment());
+    assertNull(saved.getTrainingCommitmentExplanation());
+    assertEquals(false, saved.getChangingMajor());
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_application_needs_a_perm_number_of_seven_letters_or_digits() throws Exception {
+    for (String missing : java.util.Arrays.asList(null, "", "   ")) {
+      MvcResult response = postUla(withUla(missing, true, OtherCampusJob.NO, true, 2, null), 400);
+      assertEquals(
+          "A ULA application needs your perm number", responseToJson(response).get("message"));
+    }
+    for (String bad : List.of("123456", "12345678", "A1B2-3D", "A1B2C3 ", "1234567Z")) {
+      MvcResult response = postUla(withUla(bad, true, OtherCampusJob.NO, true, 2, null), 400);
+      assertEquals(
+          "Perm number must be exactly 7 characters, letters and digits only",
+          responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_application_needs_the_bs_ms_and_employment_answers() throws Exception {
+    MvcResult response = postUla(withUla("1234567", null, OtherCampusJob.NO, true, 2, null), 400);
+    assertEquals(
+        "Please say whether you are a BS/MS student", responseToJson(response).get("message"));
+
+    response = postUla(withUla("1234567", true, null, true, 2, null), 400);
+    assertEquals(
+        "Please say whether you will have another campus job this quarter",
+        responseToJson(response).get("message"));
+
+    response = postUla(withUla("1234567", true, OtherCampusJob.YES, null, 2, null), 400);
+    assertEquals(
+        "Please say whether you have been employed at UCSB",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** The training commitment is asked of first-time applicants only: previous service 0. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_first_time_ula_applicant_must_answer_the_training_commitment() throws Exception {
+    MvcResult response = postUla(withUla("1234567", true, OtherCampusJob.NO, true, 0, null), 400);
+    assertEquals(
+        "As a first-time ULA applicant, please answer the training commitment question",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+
+    postUla(withUla("1234567", true, OtherCampusJob.NO, true, 0, TrainingCommitment.UNSURE), 200);
+    assertEquals(TrainingCommitment.UNSURE, saved().getTrainingCommitment());
+    // Returning applicants, and one who left the count blank, are not asked.
+    postUla(withUla("1234567", true, OtherCampusJob.NO, true, 1, null), 200);
+    postUla(withUla("1234567", true, OtherCampusJob.NO, true, null, null), 200);
+  }
+
+  /** A TA form asks none of this, so a TA application is saved without any of it. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_application_needs_none_of_the_ula_answers() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    ApplicationFields f = withUla(null, null, null, null, 0, null);
+    ApplicationFields ta =
+        new ApplicationFields(
+            f.firstName(),
+            f.middleName(),
+            f.lastName(),
+            f.major(),
+            f.gpaMajor(),
+            f.gpaOverall(),
+            f.yearInProgram(),
+            f.graduationDate(),
+            COURSES,
+            f.topicProficiencies(),
+            f.interests(),
+            f.prevExperience(),
+            f.comments(),
+            f.firstChoiceCourse(),
+            f.secondChoiceCourse(),
+            f.availableForLecturesFirstChoice(),
+            f.availableForLecturesSecondChoice(),
+            f.availableForDiscussionFirstChoice(),
+            f.availableForDiscussionSecondChoice(),
+            f.availabilityCommentsFirstChoice(),
+            f.availabilityCommentsSecondChoice(),
+            f.courseInterests(),
+            f.residencyStatus(),
+            f.languageExam(),
+            f.languageExamDatePassed(),
+            f.classLevel(),
+            f.videoLink(),
+            f.previousServiceAsUla(),
+            f.permNumber(),
+            f.bsMsStudent(),
+            f.studentStatusNextQuarter(),
+            f.wantsTaEligibility(),
+            f.otherCampusJob(),
+            f.priorUcsbEmployment(),
+            f.employeeId(),
+            f.i9Appointment(),
+            f.trainingCommitment(),
+            f.trainingCommitmentExplanation(),
+            f.changingMajor(),
+            NOTICE_ID);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(ta))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertNull(saved().getPermNumber());
+    assertNull(saved().getBsMsStudent());
+    assertNull(saved().getOtherCampusJob());
+  }
+
+  /** The same rule guards an edit. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void editing_a_ula_application_applies_the_same_rules() throws Exception {
+    Application existing = application(6L, 2L, ULA_EMAIL);
+    when(applicationRepository.findById(6L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/applications?id=6")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        mapper.writeValueAsString(
+                            withUla("12-4567", true, OtherCampusJob.NO, true, 2, null)))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+    assertEquals(
+        "Perm number must be exactly 7 characters, letters and digits only",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @Test
+  public void perm_numbers_are_trimmed_and_upper_cased_and_blank_is_none() {
+    assertNull(ApplicationsController.normalizePermNumber(null));
+    assertNull(ApplicationsController.normalizePermNumber("  "));
+    assertEquals("A1B2C3D", ApplicationsController.normalizePermNumber(" a1b2c3d "));
+    assertEquals("1234567", ApplicationsController.normalizePermNumber("1234567"));
+  }
+
+  /** The same fields with an explanation of the training answer. */
+  private static ApplicationFields withExplanation(ApplicationFields f, String explanation) {
+    return new ApplicationFields(
+        f.firstName(),
+        f.middleName(),
+        f.lastName(),
+        f.major(),
+        f.gpaMajor(),
+        f.gpaOverall(),
+        f.yearInProgram(),
+        f.graduationDate(),
+        f.priorCoursework(),
+        f.topicProficiencies(),
+        f.interests(),
+        f.prevExperience(),
+        f.comments(),
+        f.firstChoiceCourse(),
+        f.secondChoiceCourse(),
+        f.availableForLecturesFirstChoice(),
+        f.availableForLecturesSecondChoice(),
+        f.availableForDiscussionFirstChoice(),
+        f.availableForDiscussionSecondChoice(),
+        f.availabilityCommentsFirstChoice(),
+        f.availabilityCommentsSecondChoice(),
+        f.courseInterests(),
+        f.residencyStatus(),
+        f.languageExam(),
+        f.languageExamDatePassed(),
+        f.classLevel(),
+        f.videoLink(),
+        f.previousServiceAsUla(),
+        f.permNumber(),
+        f.bsMsStudent(),
+        f.studentStatusNextQuarter(),
+        f.wantsTaEligibility(),
+        f.otherCampusJob(),
+        f.priorUcsbEmployment(),
+        f.employeeId(),
+        f.i9Appointment(),
+        f.trainingCommitment(),
+        explanation,
+        f.changingMajor(),
+        f.noticeVersionId());
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void the_training_explanation_is_kept_and_a_blank_one_is_no_answer() throws Exception {
+    ApplicationFields unsure =
+        withUla("1234567", true, OtherCampusJob.NO, true, 0, TrainingCommitment.UNSURE);
+    postUla(withExplanation(unsure, " Might have a Friday lab "), 200);
+    postUla(withExplanation(unsure, "   "), 200);
+
+    ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+    verify(applicationRepository, times(2)).save(captor.capture());
+    assertEquals(
+        "Might have a Friday lab", captor.getAllValues().get(0).getTrainingCommitmentExplanation());
+    assertNull(captor.getAllValues().get(1).getTrainingCommitmentExplanation());
+  }
+
+  /** An admin previewing the ULA form is held to the same ULA rules as an applicant. */
+  @WithMockUser(
+      username = "admin",
+      roles = {"USER", "ADMIN"})
+  @Test
+  public void a_test_application_for_a_ula_recruitment_needs_the_ula_answers() throws Exception {
+    when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
+    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 2L))
+        .thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/test?recruitmentId=2")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        mapper.writeValueAsString(
+                            withUla(null, true, OtherCampusJob.NO, true, 2, null)))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+    assertEquals(
+        "A ULA application needs your perm number", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
   }
 
   // ---- applicants never see the admin comments (issue #75) ----

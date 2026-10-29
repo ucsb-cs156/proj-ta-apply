@@ -156,6 +156,7 @@ public class AdminApplicationsController extends ApiController {
                 () ->
                     new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));
     ApplicationsController.requireCoursework(recruitment.getType(), fields);
+    ApplicationsController.requirePermNumberFormat(fields);
 
     ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);
     ApplicationsController.apply(fields, application, recruitment.getType());

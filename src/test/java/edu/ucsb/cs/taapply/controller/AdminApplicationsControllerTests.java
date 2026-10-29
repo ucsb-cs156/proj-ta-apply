@@ -593,7 +593,8 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
         Recruitment.builder().id(4L).quarter("20261").type(RecruitmentType.TA).build();
     when(recruitmentRepository.findByQuarterAndType("20261", RecruitmentType.TA))
         .thenReturn(Optional.of(w26));
-    ImportResult result = new ImportResult(2, 1, 1, List.of("row 4: no usable email address"));
+    ImportResult result =
+        new ImportResult(2, 1, 1, List.of("row 4: no usable email address"), List.of("Rust"));
     when(legacyApplicationCsvService.upload(any(), eq(w26))).thenReturn(result);
 
     MvcResult response =
@@ -649,5 +650,60 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
         "Quarter should be like W26, S26, M26 or F26 (or 20261), not 'Winter'",
         responseToJson(response).get("message"));
     verify(recruitmentRepository, never()).findByQuarterAndType(any(), any());
+  }
+
+  // ---- the ULA perm number on an admin edit (issue #72) ----
+
+  /** An admin is held only to the perm number's format, not to answering the ULA questions. */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_edit_of_a_ula_application_needs_no_ula_answers_but_a_valid_perm_number()
+      throws Exception {
+    Application existing = editable();
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.ULA)));
+
+    // No perm number and none of the other ULA answers: fine for an admin. (The rating is on the
+    // ULA scale, as the body's default of 4 is a TA rating.)
+    Map<String, Object> ulaScale = Map.of("topicProficiencies", Map.of("Java", 3));
+    mockMvc
+        .perform(
+            put("/api/admin/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(editBody(ulaScale))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    // A perm number typed in lower case is stored upper case.
+    Map<String, Object> lowerCase = new HashMap<>(ulaScale);
+    lowerCase.put("permNumber", "a1b2c3d");
+    mockMvc
+        .perform(
+            put("/api/admin/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(editBody(lowerCase))
+                .with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals("A1B2C3D", existing.getPermNumber());
+    verify(applicationRepository, times(2)).save(existing);
+
+    // A malformed one is refused, as for the applicant.
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/applications?id=5")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        editBody(
+                            Map.of(
+                                "permNumber", "12-4567", "topicProficiencies", Map.of("Java", 3))))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+    assertEquals(
+        "Perm number must be exactly 7 characters, letters and digits only",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, times(2)).save(any());
   }
 }

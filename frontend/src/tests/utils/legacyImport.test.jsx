@@ -43,6 +43,7 @@ describe("legacyImport utilities", () => {
         alreadyPresent: 1,
         skipped: 1,
         problems: ["row 4: no usable email address"],
+        addedTopics: [],
       }),
     ).toBe(
       "Import complete: 2 applications added, 1 already present, 1 row skipped (row 4: no usable email address)",

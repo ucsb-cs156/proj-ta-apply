@@ -143,7 +143,24 @@ public class LegacyApplicationCsvServiceTests {
 
     ImportResult result = service.upload(file, TA);
 
-    assertEquals(new ImportResult(86, 0, 0, List.of()), result);
+    // The sample's knowledge topics, less the two already on the list, are added to it, once each.
+    List<String> expectedAdded =
+        List.of(
+            "Assembly/MIPS",
+            "C",
+            "Compilers",
+            "Cryptography",
+            "Java",
+            "Mathematics",
+            "Mobile App Development",
+            "Professional/Industry SWE",
+            "Python",
+            "Unix/Linux",
+            "VR/AR/Mixed Reality");
+    assertEquals(new ImportResult(86, 0, 0, List.of(), result.addedTopics()), result);
+    assertEquals(expectedAdded, result.addedTopics().stream().sorted().toList());
+    assertEquals(expectedAdded.size(), result.addedTopics().size());
+    verify(taTopicRepository, times(expectedAdded.size())).save(any());
     assertEquals(86, result.inserted());
     assertEquals(0, result.alreadyPresent());
     assertEquals(0, result.skipped());
@@ -172,7 +189,10 @@ public class LegacyApplicationCsvServiceTests {
 
     ImportResult result = service.upload(csv(HEADER + ROW + noEmail + blankRow + ROW), TA);
 
-    assertEquals(new ImportResult(0, 2, 1, List.of("row 3: no usable email address")), result);
+    assertEquals(
+        new ImportResult(0, 2, 1, List.of("row 3: no usable email address"), List.of()), result);
+    assertEquals(List.of(), result.addedTopics());
+    verify(taTopicRepository, never()).save(any());
     assertEquals(0, result.inserted());
     assertEquals(2, result.alreadyPresent());
     assertEquals(1, result.skipped());
@@ -187,7 +207,9 @@ public class LegacyApplicationCsvServiceTests {
 
     ImportResult result = service.upload(csv(HEADER + ROW), TA);
 
-    assertEquals(new ImportResult(1, 0, 0, List.of()), result);
+    // Python is rated but not on the TA topics list, so it is added; the other two were there.
+    assertEquals(new ImportResult(1, 0, 0, List.of(), List.of("Python")), result);
+    verify(taTopicRepository, times(1)).save(TaTopic.builder().name("Python").build());
     ArgumentCaptor<Application> saved = ArgumentCaptor.forClass(Application.class);
     verify(applicationRepository, times(1)).save(saved.capture());
     Application a = saved.getValue();
@@ -494,7 +516,13 @@ public class LegacyApplicationCsvServiceTests {
             "Professional/Industry SWE", 2),
         ratings);
     assertTrue(LegacyApplicationCsvService.knowledge(null, topics).isEmpty());
-    assertEquals("c", LegacyApplicationCsvService.key("C++"));
+    assertEquals("c++", LegacyApplicationCsvService.key("C++"));
+    assertEquals("c", LegacyApplicationCsvService.key("C"));
+    assertEquals("unixlinux", LegacyApplicationCsvService.key("Unix / Linux"));
+    // C is rated but only C++ is on the list: they must not be confused
+    assertEquals(
+        Map.of("C", 2, "C++", 3),
+        LegacyApplicationCsvService.knowledge("C:2,C++:3", List.of("C++")));
     assertEquals("C++", LegacyApplicationCsvService.prettify("C++"));
   }
 
@@ -532,17 +560,21 @@ public class LegacyApplicationCsvServiceTests {
             List.of("CMPSC 111")));
   }
 
+  /** must_hire is left out whatever it says: the column was unused and always reads no (#74). */
   @Test
-  public void admin_comments_record_where_the_row_came_from() {
+  public void admin_comments_record_where_the_row_came_from_but_never_must_hire() {
     assertEquals(
         "Imported from the legacy TA application.",
         LegacyApplicationCsvService.adminComments(Map.of("must_hire", "0")));
     assertEquals(
         "Imported from the legacy TA application.",
+        LegacyApplicationCsvService.adminComments(Map.of("must_hire", "1")));
+    assertEquals(
+        "Imported from the legacy TA application.",
         LegacyApplicationCsvService.adminComments(Map.of()));
     assertEquals(
         "Imported from the legacy TA application; legacy quarter F25; submitted 2025-11-01"
-            + " 09:00:00; last modified 2025-11-02 10:00:00; must_hire 1.\n"
+            + " 09:00:00; last modified 2025-11-02 10:00:00.\n"
             + "Reviewer comments: Hire, please",
         LegacyApplicationCsvService.adminComments(
             Map.of(
