@@ -3,6 +3,13 @@ import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import PriorCourseworkTable from "main/components/PriorCoursework/PriorCourseworkTable";
 import { courseInterestLabel } from "main/utils/applicationFields";
 import type { NoticeVersion } from "main/utils/notices";
+import {
+  OTHER_CAMPUS_JOB_OPTIONS,
+  STUDENT_STATUS_OPTIONS,
+  TRAINING_COMMITMENT_OPTIONS,
+  labelOf,
+  yesNoLabel,
+} from "main/utils/ulaQuestions";
 
 type ApplicationSummaryProps = {
   application: Application;
@@ -109,11 +116,49 @@ export default function ApplicationSummary({
     );
   } else {
     rows.push(
+      { label: "Perm Number", value: show(application.permNumber) },
       {
         label: "Quarters Previously Served as a ULA",
         value: show(application.previousServiceAsUla),
       },
       { label: "Video Link", value: show(application.videoLink) },
+      { label: "Changing Major", value: yesNoLabel(application.changingMajor) },
+      { label: "BS/MS Student", value: yesNoLabel(application.bsMsStudent) },
+      {
+        label: "Student Status in the Quarter Applied For",
+        value: labelOf(
+          STUDENT_STATUS_OPTIONS,
+          application.studentStatusNextQuarter,
+        ),
+      },
+      {
+        label: "Wants TA Eligibility (Fall TA Training)",
+        value: yesNoLabel(application.wantsTaEligibility),
+      },
+      {
+        label: "Other Campus Job",
+        value: labelOf(OTHER_CAMPUS_JOB_OPTIONS, application.otherCampusJob),
+      },
+      {
+        label: "Prior UCSB Employment",
+        value: yesNoLabel(application.priorUcsbEmployment),
+      },
+      { label: "Employee ID", value: show(application.employeeId) },
+      {
+        label: "I-9 Appointment",
+        value: yesNoLabel(application.i9Appointment),
+      },
+      {
+        label: "Training Commitment",
+        value: labelOf(
+          TRAINING_COMMITMENT_OPTIONS,
+          application.trainingCommitment,
+        ),
+      },
+      {
+        label: "Training Commitment Explanation",
+        value: show(application.trainingCommitmentExplanation),
+      },
     );
   }
 

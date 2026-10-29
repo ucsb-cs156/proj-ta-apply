@@ -324,6 +324,35 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
     addCourse("ApplyPage", "CMPSC 16");
     page.getByTestId("ApplyPage-notice-agree").check();
+
+    // The questions from the ULA Google Form (issue #72). The perm number is required and
+    // checked; the follow-up questions appear as the earlier answers call for them.
+    page.getByTestId("ApplyPage-submit").click();
+    assertThat(page.getByTestId("ApplyPage-permNumber"))
+        .hasClass(java.util.regex.Pattern.compile("is-invalid"));
+    page.getByTestId("ApplyPage-permNumber").fill("12-4567");
+    page.getByTestId("ApplyPage-submit").click();
+    assertThat(page.getByTestId("ApplyPage-permNumber"))
+        .hasClass(java.util.regex.Pattern.compile("is-invalid"));
+    page.getByTestId("ApplyPage-permNumber").fill("a1b2c3d");
+    assertThat(page.getByTestId("ApplyPage-studentStatusNextQuarter")).not().isVisible();
+    page.getByTestId("ApplyPage-bsMsStudent").selectOption("true");
+    page.getByTestId("ApplyPage-studentStatusNextQuarter").selectOption("GRADUATE");
+    assertThat(page.getByTestId("ApplyPage-graduate-warning"))
+        .containsText("strongly encouraged to apply to be a TA instead");
+    page.getByTestId("ApplyPage-wantsTaEligibility").selectOption("true");
+    page.getByTestId("ApplyPage-otherCampusJob").selectOption("NOT_SURE");
+    assertThat(page.getByTestId("ApplyPage-employeeId")).not().isVisible();
+    page.getByTestId("ApplyPage-priorUcsbEmployment").selectOption("true");
+    page.getByTestId("ApplyPage-employeeId").fill("1234567");
+    page.getByTestId("ApplyPage-i9Appointment").selectOption("false");
+    assertThat(page.getByTestId("ApplyPage-training")).not().isVisible();
+    page.getByTestId("ApplyPage-previousServiceAsUla").fill("0");
+    assertThat(page.getByTestId("ApplyPage-training-statement"))
+        .containsText("five mandatory training sessions");
+    page.getByTestId("ApplyPage-trainingCommitment").selectOption("UNSURE");
+    page.getByTestId("ApplyPage-trainingCommitmentExplanation").fill("Might have a Friday lab");
+    page.getByTestId("ApplyPage-changingMajor").selectOption("false");
     page.getByTestId("ApplyPage-submit").click();
 
     // Listed on the home page, and the answers come back when it is opened for editing.
@@ -333,6 +362,15 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-topic-JavaScript-2")).isChecked();
     assertThat(page.getByTestId("ApplicationPage-interest-Tutoring-5")).isChecked();
     assertThat(page.getByTestId("ApplicationPage-interest-Grading-1")).isChecked();
+    // Stored upper case; the follow-ups come back with the answers that reveal them.
+    assertThat(page.getByTestId("ApplicationPage-permNumber")).hasValue("A1B2C3D");
+    assertThat(page.getByTestId("ApplicationPage-bsMsStudent")).hasValue("true");
+    assertThat(page.getByTestId("ApplicationPage-studentStatusNextQuarter")).hasValue("GRADUATE");
+    assertThat(page.getByTestId("ApplicationPage-graduate-warning")).isVisible();
+    assertThat(page.getByTestId("ApplicationPage-employeeId")).hasValue("1234567");
+    assertThat(page.getByTestId("ApplicationPage-trainingCommitment")).hasValue("UNSURE");
+    assertThat(page.getByTestId("ApplicationPage-trainingCommitmentExplanation"))
+        .hasValue("Might have a Friday lab");
   }
 
   @Test

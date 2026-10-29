@@ -67,6 +67,17 @@ public class ApplicationAuditService {
     FIELDS.put("classLevel", Application::getClassLevel);
     FIELDS.put("videoLink", Application::getVideoLink);
     FIELDS.put("previousServiceAsUla", Application::getPreviousServiceAsUla);
+    FIELDS.put("permNumber", Application::getPermNumber);
+    FIELDS.put("bsMsStudent", Application::getBsMsStudent);
+    FIELDS.put("studentStatusNextQuarter", Application::getStudentStatusNextQuarter);
+    FIELDS.put("wantsTaEligibility", Application::getWantsTaEligibility);
+    FIELDS.put("otherCampusJob", Application::getOtherCampusJob);
+    FIELDS.put("priorUcsbEmployment", Application::getPriorUcsbEmployment);
+    FIELDS.put("employeeId", Application::getEmployeeId);
+    FIELDS.put("i9Appointment", Application::getI9Appointment);
+    FIELDS.put("trainingCommitment", Application::getTrainingCommitment);
+    FIELDS.put("trainingCommitmentExplanation", Application::getTrainingCommitmentExplanation);
+    FIELDS.put("changingMajor", Application::getChangingMajor);
     FIELDS.put("noticeVersionId", Application::getNoticeVersionId);
   }
 

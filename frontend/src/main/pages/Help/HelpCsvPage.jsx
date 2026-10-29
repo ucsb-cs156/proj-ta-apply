@@ -170,8 +170,14 @@ export default function HelpCsvPage() {
           The columns differ by recruitment type: a TA file has{" "}
           <code>classLevel</code>, <code>residencyStatus</code>,{" "}
           <code>languageExam</code> and <code>languageExamDatePassed</code>; a
-          ULA file has <code>previousServiceAsUla</code>, <code>videoLink</code>{" "}
-          and, last, <code>interests</code>. Answers that are lists are folded
+          ULA file has <code>previousServiceAsUla</code>, <code>videoLink</code>
+          , the ULA questions from the old Google Form (<code>permNumber</code>,{" "}
+          <code>bsMsStudent</code>, <code>studentStatusNextQuarter</code>,{" "}
+          <code>wantsTaEligibility</code>, <code>otherCampusJob</code>,{" "}
+          <code>priorUcsbEmployment</code>, <code>employeeId</code>,{" "}
+          <code>i9Appointment</code>, <code>trainingCommitment</code>,{" "}
+          <code>trainingCommitmentExplanation</code>, <code>changingMajor</code>
+          ) and, last, <code>interests</code>. Answers that are lists are folded
           into one column each: <code>priorCoursework</code> holds each
           course&apos;s school (<code>UCSB</code> or the other school&apos;s
           name), number, title, term and grade separated by commas, with the

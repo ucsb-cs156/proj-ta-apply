@@ -56,7 +56,19 @@ public class ApplicationCsvService {
   private static final List<Column> ULA_ONLY =
       List.of(
           new Column("previousServiceAsUla", Application::getPreviousServiceAsUla),
-          new Column("videoLink", Application::getVideoLink));
+          new Column("videoLink", Application::getVideoLink),
+          new Column("permNumber", Application::getPermNumber),
+          new Column("bsMsStudent", Application::getBsMsStudent),
+          new Column("studentStatusNextQuarter", Application::getStudentStatusNextQuarter),
+          new Column("wantsTaEligibility", Application::getWantsTaEligibility),
+          new Column("otherCampusJob", Application::getOtherCampusJob),
+          new Column("priorUcsbEmployment", Application::getPriorUcsbEmployment),
+          new Column("employeeId", Application::getEmployeeId),
+          new Column("i9Appointment", Application::getI9Appointment),
+          new Column("trainingCommitment", Application::getTrainingCommitment),
+          new Column(
+              "trainingCommitmentExplanation", Application::getTrainingCommitmentExplanation),
+          new Column("changingMajor", Application::getChangingMajor));
 
   private static final List<Column> AFTER_TYPE =
       List.of(

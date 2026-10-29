@@ -74,6 +74,10 @@ describe("HelpCsvPage tests", () => {
     expect(screen.getByTestId("applicationsCsvDescription")).toHaveTextContent(
       "courses separated by semicolons",
     );
+    // Issue #72: the ULA questions are columns of a ULA file too.
+    expect(screen.getByTestId("applicationsCsvDescription")).toHaveTextContent(
+      "permNumber, bsMsStudent",
+    );
   });
 
   test("documents the App Settings lists CSV shape, with an anchor the admin pages link to", async () => {
