@@ -59,9 +59,10 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#enum-constant-detail" tabindex="0">Enum Constant Details</a>
 <ol class="toc-list">
-<li><a href="#PASSED" tabindex="0">PASSED</a></li>
-<li><a href="#FAILED" tabindex="0">FAILED</a></li>
-<li><a href="#EXEMPT" tabindex="0">EXEMPT</a></li>
+<li><a href="#EXEMPT_US_CITIZEN" tabindex="0">EXEMPT_US_CITIZEN</a></li>
+<li><a href="#PASSED_US_PERMANENT_RESIDENT" tabindex="0">PASSED_US_PERMANENT_RESIDENT</a></li>
+<li><a href="#PASSED_F1_OR_J1_VISA" tabindex="0">PASSED_F1_OR_J1_VISA</a></li>
+<li><a href="#NOT_PASSED" tabindex="0">NOT_PASSED</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -91,8 +92,9 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public enum </span><span class="element-name type-name-label">LanguageExamStatus</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Enum.html" title="class or interface in java.lang" class="external-link">Enum</a>&lt;<a href="LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a>&gt;</span></div>
-<div class="block">The spoken language exam, asked of TA applicants. Only F1 and J1 visa holders take it; everyone
-else is <code>EXEMPT</code>.</div>
+<div class="block">The TA language exam question, with the answers the legacy form offered, in its order: exempt as
+a U.S. citizen, passed as a U.S. permanent resident, passed on an F1 or J1 visa, or not passed.
+Asked of every TA applicant; the ULA form does not ask it.</div>
 </div>
 </section>
 <section class="summary">
@@ -114,12 +116,14 @@ else is <code>EXEMPT</code>.</div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Enum Constant</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code><a href="#EXEMPT" class="member-name-link">EXEMPT</a></code></div>
+<div class="col-first even-row-color"><code><a href="#EXEMPT_US_CITIZEN" class="member-name-link">EXEMPT_US_CITIZEN</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code><a href="#FAILED" class="member-name-link">FAILED</a></code></div>
+<div class="col-first odd-row-color"><code><a href="#NOT_PASSED" class="member-name-link">NOT_PASSED</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code><a href="#PASSED" class="member-name-link">PASSED</a></code></div>
+<div class="col-first even-row-color"><code><a href="#PASSED_F1_OR_J1_VISA" class="member-name-link">PASSED_F1_OR_J1_VISA</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="#PASSED_US_PERMANENT_RESIDENT" class="member-name-link">PASSED_US_PERMANENT_RESIDENT</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -166,26 +170,34 @@ the order they are declared.</div>
 <h2>Enum Constant Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="PASSED">
-<h3>PASSED</h3>
+<section class="detail" id="EXEMPT_US_CITIZEN">
+<h3>EXEMPT_US_CITIZEN</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></span>&nbsp;<span class="element-name">PASSED</span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></span>&nbsp;<span class="element-name">EXEMPT_US_CITIZEN</span></div>
 </div>
 </section>
 </li>
 <li>
-<section class="detail" id="FAILED">
-<h3>FAILED</h3>
+<section class="detail" id="PASSED_US_PERMANENT_RESIDENT">
+<h3>PASSED_US_PERMANENT_RESIDENT</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></span>&nbsp;<span class="element-name">FAILED</span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></span>&nbsp;<span class="element-name">PASSED_US_PERMANENT_RESIDENT</span></div>
 </div>
 </section>
 </li>
 <li>
-<section class="detail" id="EXEMPT">
-<h3>EXEMPT</h3>
+<section class="detail" id="PASSED_F1_OR_J1_VISA">
+<h3>PASSED_F1_OR_J1_VISA</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></span>&nbsp;<span class="element-name">EXEMPT</span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></span>&nbsp;<span class="element-name">PASSED_F1_OR_J1_VISA</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="NOT_PASSED">
+<h3>NOT_PASSED</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></span>&nbsp;<span class="element-name">NOT_PASSED</span></div>
 </div>
 </section>
 </li>
