@@ -267,4 +267,26 @@ public class ApplicationAuditServiceTests {
             row(null, 7L, "changingMajor", null, "true")),
         changes);
   }
+
+  /** Only the ULA form asks about availability (#76): a TA edit never audits those fields. */
+  @Test
+  public void availability_changes_are_audited_for_a_ula_application_only() {
+    Application application = application();
+    ApplicationAuditService.Snapshot before = service.snapshot(application);
+    application.setAvailableForLecturesFirstChoice(true);
+    application.setAvailabilityCommentsSecondChoice("Fridays only");
+    application.setMajor("Statistics");
+
+    assertEquals(
+        List.of(row(7L, null, "major", "Computer Science", "Statistics")),
+        service.record(before, application, RecruitmentType.TA));
+
+    assertEquals(
+        List.of(
+            row(null, 7L, "major", "Computer Science", "Statistics"),
+            row(null, 7L, "availableForLecturesFirstChoice", "false", "true"),
+            row(null, 7L, "availabilityCommentsSecondChoice", null, "Fridays only")),
+        service.record(before, application, RecruitmentType.ULA));
+    assertEquals(6, ApplicationAuditService.ULA_AVAILABILITY_FIELDS.size());
+  }
 }
