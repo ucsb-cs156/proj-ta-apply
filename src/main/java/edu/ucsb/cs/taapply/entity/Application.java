@@ -29,7 +29,7 @@ import org.hibernate.annotations.CreationTimestamp;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Builder
+@Builder(toBuilder = true)
 @Entity(name = "applications")
 @Table(
     uniqueConstraints =

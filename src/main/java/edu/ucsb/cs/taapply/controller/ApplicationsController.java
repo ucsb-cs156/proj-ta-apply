@@ -111,6 +111,15 @@ public class ApplicationsController extends ApiController {
     return getCurrentUser().getUser().getEmail();
   }
 
+  /**
+   * An application as its applicant may see it: without the admin comments, which are the staff's
+   * notes about them. A copy, so the stored row is untouched; every applicant-facing response goes
+   * through here (issue #75).
+   */
+  static Application forApplicant(Application application) {
+    return application.toBuilder().adminComments(null).build();
+  }
+
   /** Loads an application, refusing anyone else's rather than merely not finding it. */
   private Application mine(Long id) {
     Application application =
@@ -136,7 +145,9 @@ public class ApplicationsController extends ApiController {
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/mine")
   public List<Application> myApplications() {
-    return applicationRepository.findByEmailOrderByIdDesc(currentEmail());
+    return applicationRepository.findByEmailOrderByIdDesc(currentEmail()).stream()
+        .map(ApplicationsController::forApplicant)
+        .toList();
   }
 
   @Operation(
@@ -145,7 +156,7 @@ public class ApplicationsController extends ApiController {
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("")
   public Application getApplication(@Parameter(name = "id") @RequestParam Long id) {
-    return mine(id);
+    return forApplicant(mine(id));
   }
 
   @Operation(
@@ -168,6 +179,7 @@ public class ApplicationsController extends ApiController {
             Comparator.comparing((Application a) -> quarters.getOrDefault(a.getRecruitmentId(), ""))
                 .reversed())
         .limit(1)
+        .map(ApplicationsController::forApplicant)
         .toList();
   }
 
@@ -206,7 +218,7 @@ public class ApplicationsController extends ApiController {
             .build();
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
-    return application;
+    return forApplicant(application);
   }
 
   @Operation(
@@ -254,7 +266,7 @@ public class ApplicationsController extends ApiController {
                     .build());
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
-    return application;
+    return forApplicant(application);
   }
 
   @Operation(
@@ -279,7 +291,7 @@ public class ApplicationsController extends ApiController {
 
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
-    return application;
+    return forApplicant(application);
   }
 
   @Operation(
@@ -300,7 +312,7 @@ public class ApplicationsController extends ApiController {
 
     application.setPostApplicationComments(postApplicationComments);
     applicationRepository.save(application);
-    return application;
+    return forApplicant(application);
   }
 
   /**

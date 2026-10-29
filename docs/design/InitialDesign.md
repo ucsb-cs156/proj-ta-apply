@@ -432,3 +432,12 @@ form (issue #65).
 * The pre-fill of a new application (`GET /api/applications/prefill`) now picks the applicant's
   application for the most recent recruitment quarter rather than the most recently inserted row,
   since an imported application is newer as a row but older as an application.
+
+# Twenty-second Iteration
+
+Applicants never receive the admin comments (issue #75). Every response of the applicant-facing
+endpoints (`/api/applications/mine`, `/api/applications?id=`, `/api/applications/prefill`, and the
+responses of an applicant's own POST and PUT, including the admin's test-application preview) is a
+copy of the application with `adminComments` blanked; the stored row is untouched, and the admin
+endpoints under `/api/admin/applications` keep returning it. No applicant page showed the field, but
+until now it left the server with every applicant response.
