@@ -121,4 +121,85 @@ public class LegacyImportWebIT extends WebTestCase {
             "Imported from the legacy TA application; legacy quarter W26; submitted 2025-11-01"
                 + " 09:00:00; last modified 2025-11-20 10:00:00.");
   }
+
+  /** The ULA form's response sheet, with the condensed headers, two rows. */
+  private static final String ULA_CSV =
+      "Timestamp,Email Address,First name,Last name,Perm number,Expected graduation date,"
+          + "BS/MS student?,Other Campus Job?,Prior UCSB employment?,Previous LA Service for CS,"
+          + "Agree to statement,Course Preferences [8   (Kharitonova Y)],"
+          + "Course Preferences [156   (Conrad P T)],First Choice,Second Choice,"
+          + "Lectures: first choice,Sections: first choice,Availability Comments,GPA,Major,"
+          + "Rate your familiarity with these languages/systems [JavaScript],"
+          + "Activity Interests [Exploring teaching as a career option],Video Link\n"
+          + "5/9/2026 13:45:12,ada.lovelace@ucsb.edu,Ada,Lovelace,a1b2c3d,S27,No,No,Yes,0,"
+          + "I AGREE to this commitment.,2-Would Consider,1-Enthusiastic,156   (Conrad P T),"
+          + "8   (Kharitonova Y),Both lectures per week,Yes,,3.8,CMPSC (Computer Science),"
+          + "1-Very comfortable,4,https://youtu.be/dQw4w9WgXcQ\n"
+          + "5/9/2026 14:00:00,grace.hopper@ucsb.edu,Grace,Hopper,1234567,W27,Yes,Not sure yet,No,"
+          + "2,,1-Enthusiastic,3-Not Applicable,8   (Kharitonova Y),,Only one per week,Yes,"
+          + "Fridays are hard.,3.6,CMPEN (Computer Engineering),2-Somewhat comfortable,5-Very"
+          + " interested,\n";
+
+  @Test
+  public void admin_imports_the_ula_form_responses_into_a_ula_recruitment() throws Exception {
+    Recruitment f26 =
+        recruitmentRepository.save(
+            Recruitment.builder()
+                .quarter("20264")
+                .type(RecruitmentType.ULA)
+                .applicationStatus(ApplicationStatus.CLOSED)
+                .tentativeOpeningDate(LocalDate.of(2026, 5, 1))
+                .primaryConsiderationDate(LocalDate.of(2026, 5, 17))
+                .build());
+    recruitmentCourseRepository.save(
+        RecruitmentCourse.builder()
+            .recruitmentId(f26.getId())
+            .courseId("CMPSC   156")
+            .section("0100")
+            .enrollCode("07492")
+            .title("ADV APP PROGRAM")
+            .removed(false)
+            .build());
+
+    setupAdminUser();
+    goTo("/admin/settings/ula");
+    assertThat(page.getByTestId("UlaAppSettingsPage-legacy")).isVisible();
+
+    FilePayload csv =
+        new FilePayload("responses.csv", "text/csv", ULA_CSV.getBytes(StandardCharsets.UTF_8));
+    page.getByTestId("UlaAppSettingsPage-legacy-quarter").selectOption("20264");
+    page.getByTestId("UlaAppSettingsPage-legacy-file").setInputFiles(csv);
+    page.getByTestId("UlaAppSettingsPage-legacy-button").click();
+    assertThat(
+            page.getByText(
+                "Import complete: 2 applications added, 0 already present, 0 rows skipped"))
+        .isVisible();
+    // Both ULA lists were empty, so the rated topic and activity were added and are reported.
+    assertThat(page.getByTestId("UlaAppSettingsPage-legacy-added-topics"))
+        .containsText("JavaScript");
+    assertThat(page.getByTestId("UlaAppSettingsPage-legacy-added-interests"))
+        .containsText("Exploring teaching as a career option");
+    page.getByTestId("UlaAppSettingsPage-legacy-added-topics-dismiss").click();
+    assertThat(page.getByTestId("UlaAppSettingsPage-topics-table-cell-row-0-col-name"))
+        .containsText("JavaScript");
+    assertThat(page.getByTestId("UlaAppSettingsPage-interests-table-cell-row-0-col-name"))
+        .containsText("Exploring teaching as a career option");
+
+    // The imported applications are there to review, with the form's answers matched in.
+    goTo("/admin/recruitments/" + f26.getId() + "/applications");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-count"))
+        .containsText("2 Applications Received");
+    page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
+    assertThat(page.getByTestId("AdminApplicationPage-summary-Perm Number"))
+        .containsText("A1B2C3D");
+    assertThat(page.getByTestId("AdminApplicationPage-summary-Major"))
+        .containsText("Computer Science");
+    assertThat(page.getByTestId("AdminApplicationPage-summary-Overall GPA")).containsText("3.8");
+    assertThat(page.getByTestId("AdminApplicationPage-summary-First Choice Course"))
+        .containsText("CMPSC   156");
+    assertThat(page.getByTestId("AdminApplicationPage-summary-Training Commitment"))
+        .containsText("I AGREE to this commitment.");
+    assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
+        .hasValue("Imported from the ULA application form; submitted 5/9/2026 13:45:12.");
+  }
 }
