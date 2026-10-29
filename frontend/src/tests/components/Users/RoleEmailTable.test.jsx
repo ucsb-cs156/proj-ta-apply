@@ -246,7 +246,8 @@ describe("RoleEmailTable", () => {
     });
   });
 
-  test("the Delete column shrinks to its button and Email takes the slack", () => {
+  /** Issue #84: the table is as wide as its content, not the page, so no column is stretched. */
+  test("the table takes its natural width and no column is given a width of its own", () => {
     render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
@@ -255,12 +256,20 @@ describe("RoleEmailTable", () => {
       </QueryClientProvider>,
     );
 
-    expect(
-      screen.getByTestId("RoleEmailTable-cell-row-0-col-email"),
-    ).toHaveStyle({ width: "100%" });
-    expect(
-      screen.getByTestId("RoleEmailTable-cell-row-0-col-isInAdminEmails"),
-    ).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
+    expect(screen.getByTestId("RoleEmailTable")).toHaveClass(
+      "table",
+      "table-striped",
+      "table-bordered",
+      "w-auto",
+    );
+    for (const col of ["email", "givenName", "familyName", "isInAdminEmails"]) {
+      expect(
+        screen.getByTestId(`RoleEmailTable-cell-row-0-col-${col}`),
+      ).not.toHaveAttribute("style");
+      expect(
+        screen.getByTestId(`RoleEmailTable-header-${col}`),
+      ).not.toHaveAttribute("style");
+    }
   });
 
   /** Issue #61: names from the users table, so only for people who have logged in. */
@@ -291,13 +300,6 @@ describe("RoleEmailTable", () => {
       screen.getByTestId("RoleEmailTable-cell-row-1-col-familyName")
         .textContent,
     ).toBe("");
-    // The name columns shrink to their content like Delete; Email still takes the slack.
-    expect(
-      screen.getByTestId("RoleEmailTable-cell-row-0-col-givenName"),
-    ).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
-    expect(
-      screen.getByTestId("RoleEmailTable-cell-row-0-col-familyName"),
-    ).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
     expect(NAMES_NOTE).toBe(
       "First and Last name are populated when the user logs in for the first time.",
     );
