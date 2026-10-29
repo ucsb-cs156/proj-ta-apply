@@ -466,3 +466,13 @@ The ULA application asks everything the ULA Google Form asked (issue #72).
   trail, on the admin's view, in the CSV download and in the pre-fill of the next application.
 * **Importing prior ULA data** (issue #70): the Google Form's single `GPA` maps to **Overall GPA**
   (`gpaOverall`), not GPA in Major.
+
+# Twenty-fourth Iteration
+
+The **Notices, Terms and Conditions** section sits at the top of the application form, right after
+the required-field explanation and before **About you**, so applicants read the terms before they
+answer anything (issue #77). It behaves as before: the box must be ticked before submitting, an
+unticked box is flagged alongside other missing answers, an application that already agreed to the
+shown version starts ticked, and with no notice written yet the section is absent. The read-only
+summary of an application shows the agreement first too. The apply, edit and admin test-application
+pages all share the form, so all three change.

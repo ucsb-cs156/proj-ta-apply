@@ -554,4 +554,22 @@ describe("ApplicationSummary tests", () => {
       expect(screen.queryByTestId(`ApplicationSummary-${label}`)).toBeNull();
     }
   });
+
+  /** Issue #77: the agreement is shown first on the summary too, as on the form. */
+  test("the notice agreement comes before the answers", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneTaApplication}
+        type="TA"
+        notice={noticesFixtures.taV1}
+      />,
+    );
+
+    const notice = screen.getByTestId("ApplicationSummary-notice");
+    const answers = screen.getByTestId("ApplicationSummary");
+    expect(
+      notice.compareDocumentPosition(answers) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });
