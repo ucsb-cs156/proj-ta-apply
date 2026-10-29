@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Col, Form, Row, Table } from "react-bootstrap";
+import { Alert, Button, Col, Form, Row, Table } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import CourseSectionsCard from "main/components/Applications/CourseSectionsCard";
@@ -20,6 +20,32 @@ import {
   type ApplicationFormFields,
   type ApplicationPayload,
 } from "main/utils/applicationFields";
+import {
+  BS_MS_QUESTION,
+  CHANGING_MAJOR_QUESTION,
+  COURSE_PREFERENCES_GUIDANCE,
+  EMPLOYEE_ID_NOTE,
+  EMPLOYMENT_INTRO,
+  GRADUATE_WARNING,
+  GRADUATION_NOTE,
+  I9_QUESTION,
+  OTHER_CAMPUS_JOB_OPTIONS,
+  OTHER_CAMPUS_JOB_QUESTION,
+  PERM_NUMBER_HINT,
+  PERM_NUMBER_PATTERN,
+  PRIOR_EMPLOYMENT_QUESTION,
+  STUDENT_STATUS_OPTIONS,
+  STUDENT_STATUS_QUESTION,
+  TA_ELIGIBILITY_NOTE,
+  TA_ELIGIBILITY_QUESTION,
+  TRAINING_COMMITMENT_OPTIONS,
+  TRAINING_EXPLANATION_PROMPT,
+  TRAINING_STATEMENT,
+  VIDEO_GUIDANCE,
+  YES_NO_OPTIONS,
+  booleanToSelect,
+  type Option,
+} from "main/utils/ulaQuestions";
 
 /**
  * The answers react-hook-form manages. The major, the per-course interest answers, the topic
@@ -176,6 +202,21 @@ export default function ApplicationForm({
     classLevel: asString(initialContents?.classLevel),
     videoLink: asString(initialContents?.videoLink),
     previousServiceAsUla: asString(initialContents?.previousServiceAsUla),
+    permNumber: asString(initialContents?.permNumber),
+    bsMsStudent: booleanToSelect(initialContents?.bsMsStudent),
+    studentStatusNextQuarter: asString(
+      initialContents?.studentStatusNextQuarter,
+    ),
+    wantsTaEligibility: booleanToSelect(initialContents?.wantsTaEligibility),
+    otherCampusJob: asString(initialContents?.otherCampusJob),
+    priorUcsbEmployment: booleanToSelect(initialContents?.priorUcsbEmployment),
+    employeeId: asString(initialContents?.employeeId),
+    i9Appointment: booleanToSelect(initialContents?.i9Appointment),
+    trainingCommitment: asString(initialContents?.trainingCommitment),
+    trainingCommitmentExplanation: asString(
+      initialContents?.trainingCommitmentExplanation,
+    ),
+    changingMajor: booleanToSelect(initialContents?.changingMajor),
   };
 
   // Stryker disable all
@@ -188,10 +229,30 @@ export default function ApplicationForm({
   // Stryker restore all
 
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() returns a new function each render; React Compiler correctly skips memoizing this component
-  const [firstChoice, secondChoice] = watch([
+  const watched = watch([
     "firstChoiceCourse",
     "secondChoiceCourse",
+    "bsMsStudent",
+    "studentStatusNextQuarter",
+    "priorUcsbEmployment",
+    "previousServiceAsUla",
+    "trainingCommitment",
   ]);
+  const [
+    firstChoice,
+    secondChoice,
+    bsMsStudent,
+    studentStatus,
+    priorUcsbEmployment,
+    previousService,
+    trainingCommitment,
+  ] = watched;
+  // The ULA questions that depend on an earlier answer, as the Google Form revealed them.
+  const asksBsMsFollowUps = !isTa && bsMsStudent === "true";
+  const asksEmployeeId = !isTa && priorUcsbEmployment === "true";
+  const asksTraining = !isTa && previousService === "0";
+  const asksTrainingExplanation =
+    asksTraining && ["UNSURE", "CANNOT"].includes(trainingCommitment);
 
   // The major is stored as plain text. If it is on the list the dropdown shows it; if not (the
   // applicant chose Other, or the list changed since) the dropdown shows Other with the text
@@ -311,6 +372,18 @@ export default function ApplicationForm({
   };
 
   const id = (name: string) => `${testIdPrefix}-${name}`;
+
+  /** A select with a blank first option, for the ULA questions that take one of a few answers. */
+  const choices = (options: Option[], blank = "Choose one") => (
+    <>
+      <option value="">{blank}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </>
+  );
 
   // A course chosen earlier stays selectable even if the recruitment no longer offers it, or
   // has not finished loading. Otherwise editing an application would silently drop the choice.
@@ -460,8 +533,30 @@ export default function ApplicationForm({
             placeholder="e.g. S27"
             {...register("graduationDate")}
           />
+          {!isTa && (
+            <Form.Text muted data-testid={id("graduationDate-note")}>
+              {GRADUATION_NOTE}
+            </Form.Text>
+          )}
         </Form.Group>
       </Row>
+      {!isTa && (
+        <Row>
+          <Form.Group as={Col} md={6} className="mb-3">
+            <Form.Label htmlFor={id("changingMajor")}>
+              Changing major?
+            </Form.Label>
+            <Form.Select
+              id={id("changingMajor")}
+              data-testid={id("changingMajor")}
+              {...register("changingMajor")}
+            >
+              {choices(YES_NO_OPTIONS)}
+            </Form.Select>
+            <Form.Text muted>{CHANGING_MAJOR_QUESTION}</Form.Text>
+          </Form.Group>
+        </Row>
+      )}
 
       {isTa && (
         <Row data-testid={id("ta-only")}>
@@ -529,29 +624,227 @@ export default function ApplicationForm({
       )}
 
       {!isTa && (
-        <Row data-testid={id("ula-only")}>
-          <Form.Group as={Col} md={3} className="mb-3">
-            <Form.Label htmlFor={id("previousServiceAsUla")}>
-              Quarters Previously Served as a ULA
-            </Form.Label>
-            <Form.Control
-              id={id("previousServiceAsUla")}
-              data-testid={id("previousServiceAsUla")}
-              type="number"
-              min="0"
-              {...register("previousServiceAsUla")}
-            />
-          </Form.Group>
-          <Form.Group as={Col} md={9} className="mb-3">
-            <Form.Label htmlFor={id("videoLink")}>Video Link</Form.Label>
-            <Form.Control
-              id={id("videoLink")}
-              data-testid={id("videoLink")}
-              placeholder="https://"
-              {...register("videoLink")}
-            />
-          </Form.Group>
-        </Row>
+        <>
+          <Row data-testid={id("ula-only")}>
+            <Form.Group as={Col} md={3} className="mb-3">
+              <Form.Label htmlFor={id("permNumber")}>
+                Perm Number <RequiredField />
+              </Form.Label>
+              <Form.Control
+                id={id("permNumber")}
+                data-testid={id("permNumber")}
+                placeholder="e.g. 1234567"
+                isInvalid={Boolean(errors.permNumber)}
+                {...register("permNumber", {
+                  required: true,
+                  pattern: PERM_NUMBER_PATTERN,
+                })}
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.permNumber?.type === "required"
+                  ? "Your perm number is required."
+                  : errors.permNumber &&
+                    "Exactly 7 characters, letters and digits only."}
+              </Form.Control.Feedback>
+              <Form.Text muted>{PERM_NUMBER_HINT}</Form.Text>
+            </Form.Group>
+            <Form.Group as={Col} md={3} className="mb-3">
+              <Form.Label htmlFor={id("previousServiceAsUla")}>
+                Quarters Previously Served as a ULA
+              </Form.Label>
+              <Form.Control
+                id={id("previousServiceAsUla")}
+                data-testid={id("previousServiceAsUla")}
+                type="number"
+                min="0"
+                {...register("previousServiceAsUla")}
+              />
+            </Form.Group>
+            <Form.Group as={Col} md={6} className="mb-3">
+              <Form.Label htmlFor={id("videoLink")}>Video Link</Form.Label>
+              <Form.Control
+                id={id("videoLink")}
+                data-testid={id("videoLink")}
+                placeholder="https://"
+                {...register("videoLink")}
+              />
+              <Form.Text muted data-testid={id("videoLink-note")}>
+                {VIDEO_GUIDANCE}
+              </Form.Text>
+            </Form.Group>
+          </Row>
+
+          <h2 className="h5 mt-3">BS/MS program</h2>
+          <Row data-testid={id("bs-ms")}>
+            <Form.Group as={Col} md={4} className="mb-3">
+              <Form.Label htmlFor={id("bsMsStudent")}>
+                BS/MS student? <RequiredField />
+              </Form.Label>
+              <Form.Select
+                id={id("bsMsStudent")}
+                data-testid={id("bsMsStudent")}
+                isInvalid={Boolean(errors.bsMsStudent)}
+                {...register("bsMsStudent", { required: true })}
+              >
+                {choices(YES_NO_OPTIONS)}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                Please say whether you are a BS/MS student.
+              </Form.Control.Feedback>
+              <Form.Text muted>{BS_MS_QUESTION}</Form.Text>
+            </Form.Group>
+            {asksBsMsFollowUps && (
+              <>
+                <Form.Group as={Col} md={4} className="mb-3">
+                  <Form.Label htmlFor={id("studentStatusNextQuarter")}>
+                    Student status in the quarter you are applying for
+                  </Form.Label>
+                  <Form.Select
+                    id={id("studentStatusNextQuarter")}
+                    data-testid={id("studentStatusNextQuarter")}
+                    {...register("studentStatusNextQuarter")}
+                  >
+                    {choices(STUDENT_STATUS_OPTIONS)}
+                  </Form.Select>
+                  <Form.Text muted>{STUDENT_STATUS_QUESTION}</Form.Text>
+                  {studentStatus === "GRADUATE" && (
+                    <Alert
+                      variant="warning"
+                      className="mt-2 small"
+                      data-testid={id("graduate-warning")}
+                    >
+                      {GRADUATE_WARNING}
+                    </Alert>
+                  )}
+                </Form.Group>
+                <Form.Group as={Col} md={4} className="mb-3">
+                  <Form.Label htmlFor={id("wantsTaEligibility")}>
+                    TA eligibility and the Fall TA training
+                  </Form.Label>
+                  <Form.Select
+                    id={id("wantsTaEligibility")}
+                    data-testid={id("wantsTaEligibility")}
+                    {...register("wantsTaEligibility")}
+                  >
+                    {choices(YES_NO_OPTIONS)}
+                  </Form.Select>
+                  <Form.Text muted>
+                    {TA_ELIGIBILITY_QUESTION} {TA_ELIGIBILITY_NOTE}
+                  </Form.Text>
+                </Form.Group>
+              </>
+            )}
+          </Row>
+
+          <h2 className="h5 mt-3">Prior employment</h2>
+          <p className="text-muted small mb-2">{EMPLOYMENT_INTRO}</p>
+          <Row data-testid={id("employment")}>
+            <Form.Group as={Col} md={4} className="mb-3">
+              <Form.Label htmlFor={id("otherCampusJob")}>
+                Other campus job this quarter? <RequiredField />
+              </Form.Label>
+              <Form.Select
+                id={id("otherCampusJob")}
+                data-testid={id("otherCampusJob")}
+                isInvalid={Boolean(errors.otherCampusJob)}
+                {...register("otherCampusJob", { required: true })}
+              >
+                {choices(OTHER_CAMPUS_JOB_OPTIONS)}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                Please answer this question.
+              </Form.Control.Feedback>
+              <Form.Text muted>{OTHER_CAMPUS_JOB_QUESTION}</Form.Text>
+            </Form.Group>
+            <Form.Group as={Col} md={4} className="mb-3">
+              <Form.Label htmlFor={id("priorUcsbEmployment")}>
+                Prior UCSB employment? <RequiredField />
+              </Form.Label>
+              <Form.Select
+                id={id("priorUcsbEmployment")}
+                data-testid={id("priorUcsbEmployment")}
+                isInvalid={Boolean(errors.priorUcsbEmployment)}
+                {...register("priorUcsbEmployment", { required: true })}
+              >
+                {choices(YES_NO_OPTIONS)}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                Please answer this question.
+              </Form.Control.Feedback>
+              <Form.Text muted>{PRIOR_EMPLOYMENT_QUESTION}</Form.Text>
+              {asksEmployeeId && (
+                <>
+                  <Form.Label htmlFor={id("employeeId")} className="mt-2">
+                    Employee ID number
+                  </Form.Label>
+                  <Form.Control
+                    id={id("employeeId")}
+                    data-testid={id("employeeId")}
+                    {...register("employeeId")}
+                  />
+                  <Form.Text muted>{EMPLOYEE_ID_NOTE}</Form.Text>
+                </>
+              )}
+            </Form.Group>
+            <Form.Group as={Col} md={4} className="mb-3">
+              <Form.Label htmlFor={id("i9Appointment")}>
+                I-9 appointment made or planned?
+              </Form.Label>
+              <Form.Select
+                id={id("i9Appointment")}
+                data-testid={id("i9Appointment")}
+                {...register("i9Appointment")}
+              >
+                {choices(YES_NO_OPTIONS)}
+              </Form.Select>
+              <Form.Text muted>{I9_QUESTION}</Form.Text>
+            </Form.Group>
+          </Row>
+
+          {asksTraining && (
+            <>
+              <h2 className="h5 mt-3">Training for new ULAs</h2>
+              <p className="small mb-2" data-testid={id("training-statement")}>
+                {TRAINING_STATEMENT}
+              </p>
+              <Row data-testid={id("training")}>
+                <Form.Group as={Col} md={6} className="mb-3">
+                  <Form.Label htmlFor={id("trainingCommitment")}>
+                    Your commitment <RequiredField />
+                  </Form.Label>
+                  <Form.Select
+                    id={id("trainingCommitment")}
+                    data-testid={id("trainingCommitment")}
+                    isInvalid={Boolean(errors.trainingCommitment)}
+                    {...register("trainingCommitment", {
+                      validate: (value) => !asksTraining || value !== "",
+                    })}
+                  >
+                    {choices(TRAINING_COMMITMENT_OPTIONS)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    As a first-time ULA applicant, please answer this question.
+                  </Form.Control.Feedback>
+                </Form.Group>
+                {asksTrainingExplanation && (
+                  <Form.Group as={Col} md={6} className="mb-3">
+                    <Form.Label htmlFor={id("trainingCommitmentExplanation")}>
+                      Please explain
+                    </Form.Label>
+                    <Form.Control
+                      id={id("trainingCommitmentExplanation")}
+                      data-testid={id("trainingCommitmentExplanation")}
+                      as="textarea"
+                      rows={2}
+                      {...register("trainingCommitmentExplanation")}
+                    />
+                    <Form.Text muted>{TRAINING_EXPLANATION_PROMPT}</Form.Text>
+                  </Form.Group>
+                )}
+              </Row>
+            </>
+          )}
+        </>
       )}
 
       <PriorCourseworkSection
@@ -696,6 +989,14 @@ export default function ApplicationForm({
       </Form.Group>
 
       <h2 className="h5 mt-3">Courses and availability</h2>
+      {!isTa && (
+        <p
+          className="text-muted small mb-2"
+          data-testid={id("course-preferences-guidance")}
+        >
+          {COURSE_PREFERENCES_GUIDANCE}
+        </p>
+      )}
       <Row>
         <Form.Group as={Col} md={6} className="mb-3">
           <Form.Label htmlFor={id("firstChoiceCourse")}>

@@ -12,6 +12,20 @@ data, and is safe to keep in the repository.
 
 The real exports are FERPA-protected. Never commit them. Only the scripts' output is committed.
 
+# The ULA lists: `sample-ula-topics.csv` and `sample-ula-interests.csv`
+
+The F26 ULA application form rated applicants' familiarity with a fixed set of platforms,
+languages and data-science topics, and their interest in four activities. In this app those are the
+admin-maintained **Topics List for ULAs** and **Interests List for ULAs** (Admin > ULA App
+Settings). These two files are those lists in the format the settings pages' CSV upload accepts
+(one `name` column with a header row): uploading `sample-ula-topics.csv` to the topics list and
+`sample-ula-interests.csv` to the interests list restores the items the F26 form asked about.
+
+The topics are asked of every ULA applicant; the form's four data-science topics (Regression,
+Interpreting correlation coefficients, Classification, Clustering) are no longer limited to 5A/5B
+applicants, since those topics are becoming a bigger part of the curriculum. The names are the
+short forms (`CSIL`, `Unix/Linux command line`) rather than the form's longer labels.
+
 # The TA export: `obfuscate-legacy-ta-app-data.py`
 
 ## Usage

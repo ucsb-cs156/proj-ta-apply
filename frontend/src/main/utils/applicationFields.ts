@@ -1,4 +1,5 @@
 import type { PriorCourse } from "main/utils/priorCoursework";
+import { selectToBoolean } from "main/utils/ulaQuestions";
 
 export type CourseInterestValue =
   "ENTHUSIASTIC" | "WOULD_CONSIDER" | "NOT_INTERESTED";
@@ -110,6 +111,18 @@ export type ApplicationFormFields = {
   classLevel: string;
   videoLink: string;
   previousServiceAsUla: string;
+  // ---- ULA only, from the Google Form (issue #72); the yes/no ones hold "true", "false" or "" ----
+  permNumber: string;
+  bsMsStudent: string;
+  studentStatusNextQuarter: string;
+  wantsTaEligibility: string;
+  otherCampusJob: string;
+  priorUcsbEmployment: string;
+  employeeId: string;
+  i9Appointment: string;
+  trainingCommitment: string;
+  trainingCommitmentExplanation: string;
+  changingMajor: string;
   /** The notice version the applicant ticked the box for; null when no notice is shown. */
   noticeVersionId: number | null;
 };
@@ -124,6 +137,14 @@ export type ApplicationPayload = Omit<
   | "residencyStatus"
   | "languageExam"
   | "classLevel"
+  | "bsMsStudent"
+  | "studentStatusNextQuarter"
+  | "wantsTaEligibility"
+  | "otherCampusJob"
+  | "priorUcsbEmployment"
+  | "i9Appointment"
+  | "trainingCommitment"
+  | "changingMajor"
 > & {
   gpaMajor: number | null;
   gpaOverall: number | null;
@@ -132,6 +153,14 @@ export type ApplicationPayload = Omit<
   residencyStatus: string | null;
   languageExam: string | null;
   classLevel: string | null;
+  bsMsStudent: boolean | null;
+  studentStatusNextQuarter: string | null;
+  wantsTaEligibility: boolean | null;
+  otherCampusJob: string | null;
+  priorUcsbEmployment: boolean | null;
+  i9Appointment: boolean | null;
+  trainingCommitment: string | null;
+  changingMajor: boolean | null;
 };
 
 /** An empty answer is no answer, not zero. */
@@ -176,5 +205,13 @@ export function toPayload(data: ApplicationFormFields): ApplicationPayload {
     residencyStatus: orNull(data.residencyStatus),
     languageExam: orNull(data.languageExam),
     classLevel: orNull(data.classLevel),
+    bsMsStudent: selectToBoolean(data.bsMsStudent),
+    studentStatusNextQuarter: orNull(data.studentStatusNextQuarter),
+    wantsTaEligibility: selectToBoolean(data.wantsTaEligibility),
+    otherCampusJob: orNull(data.otherCampusJob),
+    priorUcsbEmployment: selectToBoolean(data.priorUcsbEmployment),
+    i9Appointment: selectToBoolean(data.i9Appointment),
+    trainingCommitment: orNull(data.trainingCommitment),
+    changingMajor: selectToBoolean(data.changingMajor),
   };
 }

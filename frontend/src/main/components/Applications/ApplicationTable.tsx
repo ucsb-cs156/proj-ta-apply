@@ -46,6 +46,18 @@ export type Application = {
   classLevel: string | null;
   videoLink: string | null;
   previousServiceAsUla: number | null;
+  /** ULA only (issue #72); all null on a TA application. */
+  permNumber: string | null;
+  bsMsStudent: boolean | null;
+  studentStatusNextQuarter: string | null;
+  wantsTaEligibility: boolean | null;
+  otherCampusJob: string | null;
+  priorUcsbEmployment: boolean | null;
+  employeeId: string | null;
+  i9Appointment: boolean | null;
+  trainingCommitment: string | null;
+  trainingCommitmentExplanation: string | null;
+  changingMajor: boolean | null;
   /** When the application was first submitted, as an ISO date-time; null for rows older than it. */
   submittedAt: string | null;
   /** An admin's free-text notes; null until an admin writes some. */

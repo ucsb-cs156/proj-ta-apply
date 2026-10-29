@@ -9,8 +9,11 @@ import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
+import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
+import edu.ucsb.cs.taapply.enums.StudentStatus;
+import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import java.io.StringReader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -135,9 +138,36 @@ public class ApplicationCsvServiceTests {
         .classLevel(ClassLevel.PHD)
         .videoLink("https://example.org/video")
         .previousServiceAsUla(2)
+        .permNumber("A1B2C3D")
+        .bsMsStudent(true)
+        .studentStatusNextQuarter(StudentStatus.UNDERGRADUATE)
+        .wantsTaEligibility(true)
+        .otherCampusJob(OtherCampusJob.NOT_SURE)
+        .priorUcsbEmployment(true)
+        .employeeId("1234567")
+        .i9Appointment(false)
+        .trainingCommitment(TrainingCommitment.AGREE)
+        .trainingCommitmentExplanation(null)
+        .changingMajor(false)
         .noticeVersionId(40L)
         .build();
   }
+
+  private static final List<String> ULA_ONLY =
+      List.of(
+          "previousServiceAsUla",
+          "videoLink",
+          "permNumber",
+          "bsMsStudent",
+          "studentStatusNextQuarter",
+          "wantsTaEligibility",
+          "otherCampusJob",
+          "priorUcsbEmployment",
+          "employeeId",
+          "i9Appointment",
+          "trainingCommitment",
+          "trainingCommitmentExplanation",
+          "changingMajor");
 
   @Test
   public void a_ta_file_has_the_ta_columns_in_order_and_one_row_per_application() throws Exception {
@@ -195,8 +225,7 @@ public class ApplicationCsvServiceTests {
   public void a_ula_file_has_the_ula_columns_and_the_interests() throws Exception {
     List<String[]> rows = rows(service.write(RecruitmentType.ULA, List.of(full())));
 
-    List<String> expectedHeaders =
-        headers(COMMON_BEFORE, List.of("previousServiceAsUla", "videoLink"), COMMON_AFTER);
+    List<String> expectedHeaders = headers(COMMON_BEFORE, ULA_ONLY, COMMON_AFTER);
     expectedHeaders = new ArrayList<>(expectedHeaders);
     expectedHeaders.add("interests");
     assertEquals(expectedHeaders, List.of(rows.get(0)));
@@ -204,6 +233,21 @@ public class ApplicationCsvServiceTests {
     String[] row = rows.get(1);
     assertEquals("2", row[13]);
     assertEquals("https://example.org/video", row[14]);
+    // The Google Form's questions, in the order the form asked them
+    assertEquals(
+        List.of(
+            "A1B2C3D",
+            "true",
+            "UNDERGRADUATE",
+            "true",
+            "NOT_SURE",
+            "true",
+            "1234567",
+            "false",
+            "AGREE",
+            "",
+            "false"),
+        List.of(row).subList(15, 26));
     assertEquals("Grading:1,Tutoring:5", row[row.length - 1]);
     // And none of the TA-only answers leak in.
     assertEquals(-1, List.of(rows.get(0)).indexOf("classLevel"));
@@ -239,6 +283,7 @@ public class ApplicationCsvServiceTests {
     bare.setInterests(null);
 
     List<String[]> rows = rows(service.write(RecruitmentType.ULA, List.of(bare)));
+    String[] headers = rows.get(0);
     String[] row = rows.get(1);
 
     assertEquals("3", row[0]);
@@ -246,11 +291,18 @@ public class ApplicationCsvServiceTests {
     assertEquals("x@ucsb.edu", row[2]);
     assertEquals("PENDING", row[3]); // the builder default
     assertEquals("false", row[4]);
+    // The four availability answers are primitive booleans, so they read false rather than blank.
+    List<String> primitiveBooleans =
+        List.of(
+            "availableForLecturesFirstChoice",
+            "availableForDiscussionFirstChoice",
+            "availableForLecturesSecondChoice",
+            "availableForDiscussionSecondChoice");
     for (int i = 5; i < row.length; i++) {
-      if (i == 20 || i == 21 || i == 23 || i == 24) {
-        assertEquals("false", row[i], "column " + i); // the availability booleans
+      if (primitiveBooleans.contains(headers[i])) {
+        assertEquals("false", row[i], "column " + headers[i]);
       } else {
-        assertEquals("", row[i], "column " + i);
+        assertEquals("", row[i], "column " + headers[i]);
       }
     }
     assertEquals(-1, String.join("|", row).indexOf("null"));

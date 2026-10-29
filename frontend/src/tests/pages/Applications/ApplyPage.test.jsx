@@ -56,6 +56,23 @@ async function addCourse(prefix, courseNumber) {
   );
 }
 
+/** The ULA form's own required questions (issue #72). */
+async function fillUlaRequired() {
+  await userEvent.type(screen.getByTestId("ApplyPage-permNumber"), "1234567");
+  await userEvent.selectOptions(
+    screen.getByTestId("ApplyPage-bsMsStudent"),
+    "false",
+  );
+  await userEvent.selectOptions(
+    screen.getByTestId("ApplyPage-otherCampusJob"),
+    "NO",
+  );
+  await userEvent.selectOptions(
+    screen.getByTestId("ApplyPage-priorUcsbEmployment"),
+    "false",
+  );
+}
+
 describe("ApplyPage tests", () => {
   beforeEach(() => {
     mockToast.mockClear();
@@ -117,6 +134,7 @@ describe("ApplyPage tests", () => {
 
     // Unticked: refused in the browser, nothing sent.
     await addCourse("ApplyPage", "CMPSC 16");
+    await fillUlaRequired();
     await userEvent.click(screen.getByTestId("ApplyPage-submit"));
     await waitFor(() => expect(box).toHaveClass("is-invalid"));
     expect(axiosMock.history.post.length).toBe(0);
@@ -278,6 +296,7 @@ describe("ApplyPage tests", () => {
       "CMPSC   156",
     );
     await addCourse("ApplyPage", "CMPSC 16");
+    await fillUlaRequired();
     await userEvent.click(screen.getByTestId("ApplyPage-submit"));
 
     await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
@@ -337,6 +356,7 @@ describe("ApplyPage tests", () => {
       "CMPSC   156",
     );
     await addCourse("ApplyPage", "CMPSC 16");
+    await fillUlaRequired();
     await userEvent.click(screen.getByTestId("ApplyPage-submit"));
 
     await waitFor(() => expect(axiosMock.history.post.length).toBe(1));

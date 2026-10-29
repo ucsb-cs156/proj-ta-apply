@@ -137,6 +137,11 @@ Some fields are common to both TA and ULA applications, others are specific, as 
 | comments | | | 
 | video_link | | * |
 | previous_service_as_ula (number of times) | | * |
+| perm_number (7 letters or digits, stored upper case; required) | | * |
+| bs_ms_student (yes/no), and if yes: student_status_next_quarter (undergraduate/graduate) and wants_ta_eligibility (yes/no) | | * |
+| other_campus_job (yes/no/not sure), prior_ucsb_employment (yes/no) with employee_id, i9_appointment (yes/no) | | * |
+| training_commitment (agree/unsure/cannot) with explanation, for first-time applicants | | * |
+| changing_major (yes/no) | | * |
 | first_choice_course | | |
 | second_choice_course | | |
 | available_for_lectures_first_choice_course | | |
@@ -433,3 +438,30 @@ form (issue #65).
 * The pre-fill of a new application (`GET /api/applications/prefill`) now picks the applicant's
   application for the most recent recruitment quarter rather than the most recently inserted row,
   since an imported application is newer as a row but older as an application.
+
+# Twentieth Iteration
+
+The ULA application asks everything the ULA Google Form asked (issue #72).
+
+* **Perm number**, required of a ULA applicant: exactly 7 characters, letters and digits only,
+  stored upper case whatever case was typed. An admin editing an application is held only to the
+  format.
+* **BS/MS student?**, required. When yes, two more questions appear: the applicant's **student
+  status in the quarter applied for** (undergraduate or graduate; choosing graduate shows a warning
+  that ULA positions are funded for undergraduates only and that they are strongly encouraged to
+  apply to be a TA instead) and whether they **want TA eligibility and will take the Fall TA
+  training**, with the note that they are not eligible for TA positions until they do.
+* **Prior employment**: **another campus job this quarter** (yes, no, not sure yet; required),
+  **prior UCSB employment** (required) with the **employee ID** when yes, and whether they have
+  made or will make an **I-9 appointment**. None of these affects the decision; they speed up the
+  paperwork.
+* For a first-time applicant (previous service 0), the **training commitment** statement with
+  I AGREE / I am UNSURE / I CANNOT, required, and an explanation box for the latter two.
+* **Changing major?** under the major, and the Google Form's guidance texts: the video
+  instructions and the returning-LA exception, the training requirement, the course-preference
+  tiers and the B-or-better rule, the "3-Not Applicable" meaning, the employee-ID caution and the
+  graduation-date eligibility note.
+* The new answers are fields of the application (null on a TA application), appear in the audit
+  trail, on the admin's view, in the CSV download and in the pre-fill of the next application.
+* **Importing prior ULA data** (issue #70): the Google Form's single `GPA` maps to **Overall GPA**
+  (`gpaOverall`), not GPA in Major.
