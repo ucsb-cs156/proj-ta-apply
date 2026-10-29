@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
       description =
           &quot;The most recently saved version for TA or ULA. An empty list means no notice has been&quot;
               + &quot; written yet, in which case the form shows none and asks for no agreement.&quot;)
-  @PreAuthorize(&quot;hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;/notices/current&quot;)
   public List&lt;NoticeVersion&gt; current(@Parameter(name = &quot;type&quot;) @RequestParam RecruitmentType type) {
 <span class="fc" id="L45">    return noticeVersionRepository.findFirstByTypeOrderByIdDesc(type).stream().toList();</span>
@@ -48,7 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
   @Operation(
       summary = &quot;One saved version by id&quot;,
       description = &quot;So an application can show exactly the text its applicant agreed to.&quot;)
-  @PreAuthorize(&quot;hasAnyRole('ROLE_GRAD_STUDENT','ROLE_UNDERGRAD','ROLE_ADMIN')&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;/notices&quot;)
   public NoticeVersion byId(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
 <span class="fc" id="L54">    return noticeVersionRepository</span>
