@@ -269,7 +269,8 @@ row, "as if" each student had entered it, so their next application can be pre-f
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
-<div class="block">What an upload did; <code>problems</code> names each skipped row and why.</div>
+<div class="block">What an upload did; <code>problems</code> names each skipped row and why, and <code>addedTopics</code>
+the knowledge topics that were not on the TA topics list and were added to it.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/config/MongoConfig.html" title="class in edu.ucsb.cs.taapply.config">MongoConfig</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
@@ -309,91 +310,101 @@ application form.</div>
 <div class="block">The `OpenAPIConfig` class is annotated with OpenAPI definitions including information about the
 API and server configuration.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/jobs/PopulateCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateCoursesJob</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="edu/ucsb/cs/taapply/enums/OtherCampusJob.html" title="enum class in edu.ucsb.cs.taapply.enums">OtherCampusJob</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
+<div class="block">Whether a ULA applicant will hold another UC job in the same quarter; asked so the hiring
+paperwork can be planned, never used to decide the application.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/jobs/PopulateCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateCoursesJob</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Walks a range of quarters, asking the UCSB API which courses in the configured subject area were
 offered at the given level, and upserts them into the courses table.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/jobs/PopulateCoursesJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateCoursesJobFactory</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/jobs/PopulateCoursesJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateCoursesJobFactory</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Builds <a href="edu/ucsb/cs/taapply/jobs/PopulateCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs"><code>PopulateCoursesJob</code></a> instances with their collaborators wired in, so the controller
 only has to supply the quarter range and level.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateRecruitmentCoursesJob</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateRecruitmentCoursesJob</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Fills a recruitment's course list: every primary section, of every course flagged for this
 recruitment's type, that is actually offered in its quarter.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateRecruitmentCoursesJobFactory</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateRecruitmentCoursesJobFactory</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Wires collaborators into <a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs"><code>PopulateRecruitmentCoursesJob</code></a>, as PopulateCoursesJobFactory
 does.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">One course an applicant has taken, listed on their application as relevant background.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/Quarter.html" title="class in edu.ucsb.cs.taapply.models">Quarter</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/Quarter.html" title="class in edu.ucsb.cs.taapply.models">Quarter</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A UCSB quarter in YYYYQ format, where Q is 1=Winter, 2=Spring, 3=Summer, 4=Fall.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A hiring round for one quarter and one type of position.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">One <em>primary section</em> of one course in one recruitment, with the offering details for that
 quarter as reported by the UCSB API.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/RecruitmentCourseRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentCourseRepository</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/RecruitmentCourseRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentCourseRepository</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">The course list for one recruitment.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentRepository</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentRepository</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Admin management of recruitments.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="edu/ucsb/cs/taapply/enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="edu/ucsb/cs/taapply/enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
 <div class="block">Whether a recruitment is for TA positions (grad students) or ULA positions (undergrads).</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ResidencyStatus</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ResidencyStatus</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
 <div class="block">Asked of TA applicants only; it determines whether a language exam applies.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/RoleAssignmentService.html" title="class in edu.ucsb.cs.taapply.services">RoleAssignmentService</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/RoleAssignmentService.html" title="class in edu.ucsb.cs.taapply.services">RoleAssignmentService</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">The single place that decides which roles an email address holds.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Bulk upload of email addresses into one of the role tables, from a CSV file.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">Summary of what an upload did, so the admin can see which rows did not take effect.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/interceptors/RoleUpdateInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">RoleUpdateInterceptor</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/interceptors/RoleUpdateInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">RoleUpdateInterceptor</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Recomputes a user's roles on each request, so a role added or removed in the database takes
 effect without requiring re-login.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/startup/ScaffoldApplicationRunner.html" title="class in edu.ucsb.cs.taapply.startup">ScaffoldApplicationRunner</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/startup/ScaffoldStartup.html" title="class in edu.ucsb.cs.taapply.startup">ScaffoldStartup</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/startup/ScaffoldApplicationRunner.html" title="class in edu.ucsb.cs.taapply.startup">ScaffoldApplicationRunner</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/startup/ScaffoldStartup.html" title="class in edu.ucsb.cs.taapply.startup">ScaffoldStartup</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Seeds the admins table from ADMIN_EMAILS on every startup, so that users listed there get
 ROLE_ADMIN on login without first needing to be added manually through the Admins page.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/config/SecurityConfig.html" title="class in edu.ucsb.cs.taapply.config">SecurityConfig</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/utilities/Sleep.html" title="class in edu.ucsb.cs.taapply.utilities">Sleep</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/config/SecurityConfig.html" title="class in edu.ucsb.cs.taapply.config">SecurityConfig</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/utilities/Sleep.html" title="class in edu.ucsb.cs.taapply.utilities">Sleep</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="edu/ucsb/cs/taapply/enums/StudentStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">StudentStatus</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
+<div class="block">Whether a BS/MS applicant will be an undergraduate or a graduate student in the quarter applied
+for; ULA positions are funded for undergraduates only.</div>
+</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/model/SystemInfo.html" title="class in edu.ucsb.cs.taapply.model">SystemInfo</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/SystemInfoController.html" title="class in edu.ucsb.cs.taapply.controller">SystemInfoController</a></div>
@@ -418,83 +429,87 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/jobs/TestJob.html" title="class in edu.ucsb.cs.taapply.jobs">TestJob</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbApiQuarter.html" title="class in edu.ucsb.cs.taapply.models">UcsbApiQuarter</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="edu/ucsb/cs/taapply/enums/TrainingCommitment.html" title="enum class in edu.ucsb.cs.taapply.enums">TrainingCommitment</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
+<div class="block">A first-time ULA applicant's answer to the mandatory training commitment statement.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbApiQuarter.html" title="class in edu.ucsb.cs.taapply.models">UcsbApiQuarter</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">The one field we need from the UCSB quarter calendar API's "current quarter" endpoint.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCourse.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourse</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCourse.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourse</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">The only two fields we take from the UCSB curriculum API's class search: the course number and
 its title.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A course as returned with its sections, when the API is asked for class sections.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCoursePage.html" title="class in edu.ucsb.cs.taapply.models">UcsbCoursePage</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCoursePage.html" title="class in edu.ucsb.cs.taapply.models">UcsbCoursePage</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">One page of results from the UCSB curriculum API's class search.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html" title="class in edu.ucsb.cs.taapply.services">UCSBCurriculumService</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html" title="class in edu.ucsb.cs.taapply.services">UCSBCurriculumService</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Wraps the UCSB Academic Curriculum API, narrowed to what iteration 2 needs: the distinct course
 numbers and titles offered in a given subject area, quarter and level.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbInstructor.html" title="class in edu.ucsb.cs.taapply.models">UcsbInstructor</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbInstructor.html" title="class in edu.ucsb.cs.taapply.models">UcsbInstructor</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">An instructor of record for a section.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbOfferingPage.html" title="class in edu.ucsb.cs.taapply.models">UcsbOfferingPage</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbOfferingPage.html" title="class in edu.ucsb.cs.taapply.models">UcsbOfferingPage</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">One page of the class search when sections are included.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Derives the last quarter the admin Courses dropdowns should offer, from the quarter UCSB says it
 currently is.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">One section of a course offering.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbTimeLocation.html" title="class in edu.ucsb.cs.taapply.models">UcsbTimeLocation</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbTimeLocation.html" title="class in edu.ucsb.cs.taapply.models">UcsbTimeLocation</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">When and where a section meets.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/UlaInterest.html" title="class in edu.ucsb.cs.taapply.entity">UlaInterest</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/UlaInterest.html" title="class in edu.ucsb.cs.taapply.entity">UlaInterest</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">An area a ULA applicant may say how interested they are in (Admin &gt; ULA App Settings).</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/UlaInterestRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UlaInterestRepository</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/UlaMajor.html" title="class in edu.ucsb.cs.taapply.entity">UlaMajor</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/UlaInterestRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UlaInterestRepository</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/UlaMajor.html" title="class in edu.ucsb.cs.taapply.entity">UlaMajor</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A major a ULA applicant may choose from (Admin &gt; ULA App Settings).</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/UlaMajorRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UlaMajorRepository</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/UlaTopic.html" title="class in edu.ucsb.cs.taapply.entity">UlaTopic</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/UlaMajorRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UlaMajorRepository</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/UlaTopic.html" title="class in edu.ucsb.cs.taapply.entity">UlaTopic</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A topic a ULA applicant may claim knowledge of (Admin &gt; ULA App Settings).</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/UlaTopicRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UlaTopicRepository</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/User.html" title="class in edu.ucsb.cs.taapply.entity">User</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/UserInfoController.html" title="class in edu.ucsb.cs.taapply.controller">UserInfoController</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/UserRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UserRepository</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/UlaTopicRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UlaTopicRepository</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/config/WebConfig.html" title="class in edu.ucsb.cs.taapply.config">WebConfig</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/User.html" title="class in edu.ucsb.cs.taapply.entity">User</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/startup/WiremockApplicationRunner.html" title="class in edu.ucsb.cs.taapply.startup">WiremockApplicationRunner</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/UserInfoController.html" title="class in edu.ucsb.cs.taapply.controller">UserInfoController</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/wiremock/WiremockService.html" title="class in edu.ucsb.cs.taapply.services.wiremock">WiremockService</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/wiremock/WiremockServiceDummy.html" title="class in edu.ucsb.cs.taapply.services.wiremock">WiremockServiceDummy</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/UserRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UserRepository</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/config/WebConfig.html" title="class in edu.ucsb.cs.taapply.config">WebConfig</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/wiremock/WiremockServiceImpl.html" title="class in edu.ucsb.cs.taapply.services.wiremock">WiremockServiceImpl</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/startup/WiremockApplicationRunner.html" title="class in edu.ucsb.cs.taapply.startup">WiremockApplicationRunner</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/wiremock/WiremockService.html" title="class in edu.ucsb.cs.taapply.services.wiremock">WiremockService</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/wiremock/WiremockServiceDummy.html" title="class in edu.ucsb.cs.taapply.services.wiremock">WiremockServiceDummy</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/wiremock/WiremockServiceImpl.html" title="class in edu.ucsb.cs.taapply.services.wiremock">WiremockServiceImpl</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
 </div>
 </div>
 </div>
