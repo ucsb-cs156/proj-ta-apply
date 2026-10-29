@@ -24,6 +24,7 @@ WithTaRecruitments.parameters = {
           alreadyPresent: 0,
           skipped: 1,
           problems: ["row 4: no usable email address"],
+          addedTopics: ["Python", "Unix/Linux"],
         }),
       ),
     ],
