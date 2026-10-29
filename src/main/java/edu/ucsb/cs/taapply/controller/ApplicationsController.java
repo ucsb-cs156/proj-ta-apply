@@ -469,12 +469,21 @@ public class ApplicationsController extends ApiController {
     application.setComments(fields.comments());
     application.setFirstChoiceCourse(fields.firstChoiceCourse());
     application.setSecondChoiceCourse(fields.secondChoiceCourse());
-    application.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());
-    application.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());
-    application.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());
-    application.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());
-    application.setAvailabilityCommentsFirstChoice(fields.availabilityCommentsFirstChoice());
-    application.setAvailabilityCommentsSecondChoice(fields.availabilityCommentsSecondChoice());
+    // Only the ULA form asks about availability (issue #76); a TA application keeps none, even
+    // when a pre-filled earlier answer comes along with the request.
+    boolean asksAvailability = type == RecruitmentType.ULA;
+    application.setAvailableForLecturesFirstChoice(
+        asksAvailability && fields.availableForLecturesFirstChoice());
+    application.setAvailableForLecturesSecondChoice(
+        asksAvailability && fields.availableForLecturesSecondChoice());
+    application.setAvailableForDiscussionFirstChoice(
+        asksAvailability && fields.availableForDiscussionFirstChoice());
+    application.setAvailableForDiscussionSecondChoice(
+        asksAvailability && fields.availableForDiscussionSecondChoice());
+    application.setAvailabilityCommentsFirstChoice(
+        asksAvailability ? fields.availabilityCommentsFirstChoice() : null);
+    application.setAvailabilityCommentsSecondChoice(
+        asksAvailability ? fields.availabilityCommentsSecondChoice() : null);
     application.setCourseInterests(courseInterestsFrom(fields));
     application.setResidencyStatus(fields.residencyStatus());
     application.setLanguageExam(fields.languageExam());

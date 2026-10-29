@@ -695,7 +695,9 @@ export default function ApplicationForm({
         />
       </Form.Group>
 
-      <h2 className="h5 mt-3">Courses and availability</h2>
+      <h2 className="h5 mt-3">
+        {isTa ? "Courses" : "Courses and availability"}
+      </h2>
       <Row>
         <Form.Group as={Col} md={6} className="mb-3">
           <Form.Label htmlFor={id("firstChoiceCourse")}>
@@ -713,41 +715,45 @@ export default function ApplicationForm({
           <Form.Control.Feedback type="invalid">
             {errors.firstChoiceCourse && "A first choice course is required."}
           </Form.Control.Feedback>
-          {recruitmentId !== undefined && firstChoice !== "" && (
-            <CourseSectionsCard
-              recruitmentId={recruitmentId}
-              courseId={firstChoice}
-              testIdPrefix={id("firstChoiceSections")}
-            />
+          {!isTa && (
+            <>
+              {recruitmentId !== undefined && firstChoice !== "" && (
+                <CourseSectionsCard
+                  recruitmentId={recruitmentId}
+                  courseId={firstChoice}
+                  testIdPrefix={id("firstChoiceSections")}
+                />
+              )}
+              <Form.Check
+                className="mt-2"
+                type="checkbox"
+                id={id("availableForLecturesFirstChoice")}
+                data-testid={id("availableForLecturesFirstChoice")}
+                label="Available for at least one lecture"
+                {...register("availableForLecturesFirstChoice")}
+              />
+              <Form.Check
+                type="checkbox"
+                id={id("availableForDiscussionFirstChoice")}
+                data-testid={id("availableForDiscussionFirstChoice")}
+                label="Available for at least one discussion section"
+                {...register("availableForDiscussionFirstChoice")}
+              />
+              <Form.Label
+                className="mt-2 mb-1"
+                htmlFor={id("availabilityCommentsFirstChoice")}
+              >
+                1st Choice Availability Comments
+              </Form.Label>
+              <Form.Control
+                id={id("availabilityCommentsFirstChoice")}
+                data-testid={id("availabilityCommentsFirstChoice")}
+                as="textarea"
+                rows={2}
+                {...register("availabilityCommentsFirstChoice")}
+              />
+            </>
           )}
-          <Form.Check
-            className="mt-2"
-            type="checkbox"
-            id={id("availableForLecturesFirstChoice")}
-            data-testid={id("availableForLecturesFirstChoice")}
-            label="Available for at least one lecture"
-            {...register("availableForLecturesFirstChoice")}
-          />
-          <Form.Check
-            type="checkbox"
-            id={id("availableForDiscussionFirstChoice")}
-            data-testid={id("availableForDiscussionFirstChoice")}
-            label="Available for at least one discussion section"
-            {...register("availableForDiscussionFirstChoice")}
-          />
-          <Form.Label
-            className="mt-2 mb-1"
-            htmlFor={id("availabilityCommentsFirstChoice")}
-          >
-            1st Choice Availability Comments
-          </Form.Label>
-          <Form.Control
-            id={id("availabilityCommentsFirstChoice")}
-            data-testid={id("availabilityCommentsFirstChoice")}
-            as="textarea"
-            rows={2}
-            {...register("availabilityCommentsFirstChoice")}
-          />
         </Form.Group>
 
         <Form.Group as={Col} md={6} className="mb-3">
@@ -762,41 +768,45 @@ export default function ApplicationForm({
           >
             {courseOptions(true, initialSecondChoice)}
           </Form.Select>
-          {recruitmentId !== undefined && secondChoice !== "" && (
-            <CourseSectionsCard
-              recruitmentId={recruitmentId}
-              courseId={secondChoice}
-              testIdPrefix={id("secondChoiceSections")}
-            />
+          {!isTa && (
+            <>
+              {recruitmentId !== undefined && secondChoice !== "" && (
+                <CourseSectionsCard
+                  recruitmentId={recruitmentId}
+                  courseId={secondChoice}
+                  testIdPrefix={id("secondChoiceSections")}
+                />
+              )}
+              <Form.Check
+                className="mt-2"
+                type="checkbox"
+                id={id("availableForLecturesSecondChoice")}
+                data-testid={id("availableForLecturesSecondChoice")}
+                label="Available for at least one lecture"
+                {...register("availableForLecturesSecondChoice")}
+              />
+              <Form.Check
+                type="checkbox"
+                id={id("availableForDiscussionSecondChoice")}
+                data-testid={id("availableForDiscussionSecondChoice")}
+                label="Available for at least one discussion section"
+                {...register("availableForDiscussionSecondChoice")}
+              />
+              <Form.Label
+                className="mt-2 mb-1"
+                htmlFor={id("availabilityCommentsSecondChoice")}
+              >
+                2nd Choice Availability Comments
+              </Form.Label>
+              <Form.Control
+                id={id("availabilityCommentsSecondChoice")}
+                data-testid={id("availabilityCommentsSecondChoice")}
+                as="textarea"
+                rows={2}
+                {...register("availabilityCommentsSecondChoice")}
+              />
+            </>
           )}
-          <Form.Check
-            className="mt-2"
-            type="checkbox"
-            id={id("availableForLecturesSecondChoice")}
-            data-testid={id("availableForLecturesSecondChoice")}
-            label="Available for at least one lecture"
-            {...register("availableForLecturesSecondChoice")}
-          />
-          <Form.Check
-            type="checkbox"
-            id={id("availableForDiscussionSecondChoice")}
-            data-testid={id("availableForDiscussionSecondChoice")}
-            label="Available for at least one discussion section"
-            {...register("availableForDiscussionSecondChoice")}
-          />
-          <Form.Label
-            className="mt-2 mb-1"
-            htmlFor={id("availabilityCommentsSecondChoice")}
-          >
-            2nd Choice Availability Comments
-          </Form.Label>
-          <Form.Control
-            id={id("availabilityCommentsSecondChoice")}
-            data-testid={id("availabilityCommentsSecondChoice")}
-            as="textarea"
-            rows={2}
-            {...register("availabilityCommentsSecondChoice")}
-          />
         </Form.Group>
       </Row>
 

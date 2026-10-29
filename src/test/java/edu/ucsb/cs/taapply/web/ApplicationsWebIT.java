@@ -174,8 +174,6 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplyPage-major").selectOption("Computer Science");
     page.getByTestId("ApplyPage-topic-Java-4").check();
     page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
-    page.getByTestId("ApplyPage-availableForLecturesFirstChoice").check();
-    page.getByTestId("ApplyPage-availabilityCommentsFirstChoice").fill("Free after 2pm.");
     page.getByTestId("ApplyPage-courseInterest-CMPSC-130A-ENTHUSIASTIC").check();
 
     // A TA application needs three prior courses; the third is taken elsewhere.
@@ -223,22 +221,11 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-130A-NOT_INTERESTED")).isChecked();
     assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-156-NOT_INTERESTED")).isChecked();
 
-    // Choosing a course brings up when it meets, looked up live, between the dropdown and the
-    // availability questions; it can be folded away.
-    assertThat(page.getByTestId("ApplyPage-firstChoiceSections")).not().isVisible();
+    // A TA form asks about courses but not availability, and looks up no meeting times (#76).
     page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
-    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-title"))
-        .containsText("ADV APP PROGRAM");
-    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type"))
-        .containsText("Lecture");
-    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-time"))
-        .containsText("14:00 - 15:15");
-    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-2-section"))
-        .containsText("0102");
-    page.getByTestId("ApplyPage-firstChoiceSections-toggle").click();
-    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type")).not().isVisible();
-    page.getByTestId("ApplyPage-firstChoiceSections-toggle").click();
-    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type")).isVisible();
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections")).not().isVisible();
+    assertThat(page.getByTestId("ApplyPage-availableForLecturesFirstChoice")).not().isVisible();
+    assertThat(page.getByTestId("ApplyPage-availabilityCommentsFirstChoice")).not().isVisible();
 
     fillAndSubmit();
 
@@ -267,11 +254,6 @@ public class ApplicationsWebIT extends WebTestCase {
         .containsText("1st choice");
     assertThat(page.getByTestId("ApplicationPage-courseInterest-CMPSC-130A-ENTHUSIASTIC"))
         .isChecked();
-    assertThat(page.getByTestId("ApplicationPage-availabilityCommentsFirstChoice"))
-        .hasValue("Free after 2pm.");
-    // The stored choice's times come up again while editing.
-    assertThat(page.getByTestId("ApplicationPage-firstChoiceSections-row-0-type"))
-        .containsText("Lecture");
 
     page.getByTestId("ApplicationPage-lastName").fill("Gaucho-Smith");
     page.getByTestId("ApplicationPage-submit").click();
@@ -321,7 +303,25 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplyPage-topic-JavaScript-2").check();
     page.getByTestId("ApplyPage-interest-Tutoring-5").check();
     page.getByTestId("ApplyPage-interest-Grading-1").check();
+
+    // Choosing a course brings up when it meets, looked up live, between the dropdown and the
+    // availability questions; it can be folded away. Only the ULA form asks about availability.
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections")).not().isVisible();
     page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-title"))
+        .containsText("ADV APP PROGRAM");
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type"))
+        .containsText("Lecture");
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-time"))
+        .containsText("14:00 - 15:15");
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-2-section"))
+        .containsText("0102");
+    page.getByTestId("ApplyPage-firstChoiceSections-toggle").click();
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type")).not().isVisible();
+    page.getByTestId("ApplyPage-firstChoiceSections-toggle").click();
+    assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type")).isVisible();
+    page.getByTestId("ApplyPage-availableForLecturesFirstChoice").check();
+    page.getByTestId("ApplyPage-availabilityCommentsFirstChoice").fill("Free after 2pm.");
     addCourse("ApplyPage", "CMPSC 16");
     page.getByTestId("ApplyPage-notice-agree").check();
     page.getByTestId("ApplyPage-submit").click();
@@ -333,6 +333,12 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-topic-JavaScript-2")).isChecked();
     assertThat(page.getByTestId("ApplicationPage-interest-Tutoring-5")).isChecked();
     assertThat(page.getByTestId("ApplicationPage-interest-Grading-1")).isChecked();
+    assertThat(page.getByTestId("ApplicationPage-availableForLecturesFirstChoice")).isChecked();
+    assertThat(page.getByTestId("ApplicationPage-availabilityCommentsFirstChoice"))
+        .hasValue("Free after 2pm.");
+    // The stored choice's times come up again while editing.
+    assertThat(page.getByTestId("ApplicationPage-firstChoiceSections-row-0-type"))
+        .containsText("Lecture");
   }
 
   @Test
@@ -361,8 +367,11 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-summary-Major")).containsText("Computer Science");
     assertThat(page.getByTestId("ApplicationPage-summary-Other Courses of Interest"))
         .containsText("CMPSC   130A  Enthusiastic");
+    assertThat(page.getByTestId("ApplicationPage-summary-First Choice Course"))
+        .containsText("CMPSC   156");
+    // A TA summary has no availability rows (#76).
     assertThat(page.getByTestId("ApplicationPage-summary-First Choice Availability Comments"))
-        .containsText("Free after 2pm.");
+        .hasCount(0);
 
     page.getByTestId("ApplicationPage-postApplicationComments").fill("Finished CS 290A since.");
     page.getByTestId("ApplicationPage-submit").click();

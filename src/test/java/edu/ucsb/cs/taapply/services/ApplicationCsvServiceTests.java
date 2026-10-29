@@ -39,19 +39,26 @@ public class ApplicationCsvServiceTests {
           "yearInProgram",
           "graduationDate");
 
-  private static final List<String> COMMON_AFTER =
+  private static final List<String> CHOICES =
       List.of(
           "priorCoursework",
           "topicProficiencies",
           "prevExperience",
           "firstChoiceCourse",
-          "secondChoiceCourse",
+          "secondChoiceCourse");
+
+  /** Only the ULA form asks about availability (#76), so only a ULA file has these. */
+  private static final List<String> AVAILABILITY =
+      List.of(
           "availableForLecturesFirstChoice",
           "availableForDiscussionFirstChoice",
           "availabilityCommentsFirstChoice",
           "availableForLecturesSecondChoice",
           "availableForDiscussionSecondChoice",
-          "availabilityCommentsSecondChoice",
+          "availabilityCommentsSecondChoice");
+
+  private static final List<String> COMMON_AFTER =
+      List.of(
           "courseInterests",
           "comments",
           "postApplicationComments",
@@ -148,6 +155,7 @@ public class ApplicationCsvServiceTests {
         headers(
             COMMON_BEFORE,
             List.of("classLevel", "residencyStatus", "languageExam", "languageExamDatePassed"),
+            CHOICES,
             COMMON_AFTER),
         List.of(rows.get(0)));
     assertEquals(
@@ -176,12 +184,6 @@ public class ApplicationCsvServiceTests {
             "TA for CS 24",
             "CMPSC   156",
             "CMPSC   130A",
-            "true",
-            "true",
-            "Free T R afternoons",
-            "false",
-            "false",
-            "Any section but Friday",
             "CMPSC     8:ENTHUSIASTIC,CMPSC    16:WOULD_CONSIDER",
             "Happy to help, \"either\" one",
             "Still keen",
@@ -196,7 +198,12 @@ public class ApplicationCsvServiceTests {
     List<String[]> rows = rows(service.write(RecruitmentType.ULA, List.of(full())));
 
     List<String> expectedHeaders =
-        headers(COMMON_BEFORE, List.of("previousServiceAsUla", "videoLink"), COMMON_AFTER);
+        headers(
+            COMMON_BEFORE,
+            List.of("previousServiceAsUla", "videoLink"),
+            CHOICES,
+            AVAILABILITY,
+            COMMON_AFTER);
     expectedHeaders = new ArrayList<>(expectedHeaders);
     expectedHeaders.add("interests");
     assertEquals(expectedHeaders, List.of(rows.get(0)));
@@ -272,5 +279,25 @@ public class ApplicationCsvServiceTests {
         ",CS 31,,,",
         ApplicationCsvService.courses(
             List.of(PriorCoursework.builder().ucsbCourse(false).courseNumber("CS 31").build())));
+  }
+
+  /** The availability columns are a ULA file's, between the choices and the course interests. */
+  @Test
+  public void a_ta_file_has_no_availability_columns_and_a_ula_file_has_them_filled()
+      throws Exception {
+    List<String> taHeaders =
+        List.of(rows(service.write(RecruitmentType.TA, List.of(full()))).get(0));
+    for (String column : AVAILABILITY) {
+      assertEquals(-1, taHeaders.indexOf(column), column);
+    }
+    assertEquals(taHeaders.indexOf("secondChoiceCourse") + 1, taHeaders.indexOf("courseInterests"));
+
+    List<String[]> ula = rows(service.write(RecruitmentType.ULA, List.of(full())));
+    List<String> ulaHeaders = List.of(ula.get(0));
+    int first = ulaHeaders.indexOf("availableForLecturesFirstChoice");
+    assertEquals(ulaHeaders.indexOf("secondChoiceCourse") + 1, first);
+    assertEquals(
+        List.of("true", "true", "Free T R afternoons", "false", "false", "Any section but Friday"),
+        List.of(ula.get(1)).subList(first, first + 6));
   }
 }

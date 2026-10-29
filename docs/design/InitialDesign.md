@@ -433,3 +433,13 @@ form (issue #65).
 * The pre-fill of a new application (`GET /api/applications/prefill`) now picks the applicant's
   application for the most recent recruitment quarter rather than the most recently inserted row,
   since an imported application is newer as a row but older as an application.
+
+# Twenty-third Iteration
+
+Availability is a ULA question (issue #76). The TA application form keeps its first and second
+choice course and the other-courses interest table, but no longer shows the **Lecture and Section
+Times** card under a chosen course, nor **Available for at least one lecture**, **Available for at
+least one discussion section** or the availability comments for either choice; the ULA form keeps
+all of them. A TA application stores none of those answers, whatever the client sends (so a
+pre-filled earlier answer cannot linger), the admin's view and the TA CSV leave the rows and columns
+out, and a TA application's audit trail never records them. Existing stored values are not deleted.

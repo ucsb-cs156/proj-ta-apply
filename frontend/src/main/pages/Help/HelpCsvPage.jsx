@@ -171,12 +171,14 @@ export default function HelpCsvPage() {
           The columns differ by recruitment type: a TA file has{" "}
           <code>classLevel</code>, <code>residencyStatus</code>,{" "}
           <code>languageExam</code> and <code>languageExamDatePassed</code>; a
-          ULA file has <code>previousServiceAsUla</code>, <code>videoLink</code>{" "}
-          and, last, <code>interests</code>. Answers that are lists are folded
-          into one column each: <code>priorCoursework</code> holds each
-          course&apos;s school (<code>UCSB</code> or the other school&apos;s
-          name), number, title, term and grade separated by commas, with the
-          courses separated by semicolons, for example{" "}
+          ULA file has <code>previousServiceAsUla</code>, <code>videoLink</code>
+          , the six lecture and section availability columns (only the ULA form
+          asks about availability) and, last, <code>interests</code>. Answers
+          that are lists are folded into one column each:{" "}
+          <code>priorCoursework</code> holds each course&apos;s school (
+          <code>UCSB</code> or the other school&apos;s name), number, title,
+          term and grade separated by commas, with the courses separated by
+          semicolons, for example{" "}
           <code>
             UCSB,CMPSC 130A,Data Structures,F25,A;De Anza College,CIS 22A,Intro
             to C,Fall 2023,

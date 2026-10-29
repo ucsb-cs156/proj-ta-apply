@@ -70,6 +70,16 @@ public class ApplicationAuditService {
     FIELDS.put("noticeVersionId", Application::getNoticeVersionId);
   }
 
+  /** Asked on the ULA form only (issue #76), so a TA application's audit trail leaves them out. */
+  static final Set<String> ULA_AVAILABILITY_FIELDS =
+      Set.of(
+          "availableForLecturesFirstChoice",
+          "availableForLecturesSecondChoice",
+          "availableForDiscussionFirstChoice",
+          "availableForDiscussionSecondChoice",
+          "availabilityCommentsFirstChoice",
+          "availabilityCommentsSecondChoice");
+
   /** The answers as strings: a plain field's value, or a join table's rows as JSON. */
   public record Snapshot(Map<String, String> fields, Map<String, Set<String>> rows) {}
 
@@ -100,6 +110,9 @@ public class ApplicationAuditService {
         .fields()
         .forEach(
             (name, old) -> {
+              if (type == RecruitmentType.TA && ULA_AVAILABILITY_FIELDS.contains(name)) {
+                return;
+              }
               String current = now.fields().get(name);
               if (!Objects.equals(old, current)) {
                 changes.add(row(taId, ulaId, name, old, current));
