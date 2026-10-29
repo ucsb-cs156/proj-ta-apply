@@ -297,6 +297,63 @@ describe("ApplicationForm tests", () => {
     }
   });
 
+  /** Issue #94: the ULA form explains untaken courses and what the comment box is for. */
+  test("a ULA form warns about courses not yet taken and explains the comment box", () => {
+    renderForm({ type: "ULA" });
+
+    const warning = screen.getByTestId(
+      "ApplicationForm-courseInterests-untaken",
+    );
+    expect(warning).toHaveTextContent(
+      "If there is a course you have not taken yet, please select Not Applicable/Not Interested unless you have other experience or course work that prepares you to ULA for that course. In that case, please add comments in the free text comment field at the end of the application explaining the experience you have that prepares you to be able to serve as a ULA for that course.",
+    );
+    expect(warning.querySelector("strong")).toHaveTextContent(
+      /^If there is a course you have not taken yet.*prepares you to ULA for that course$/,
+    );
+    expect(warning.querySelector("strong em")).toHaveTextContent("unless");
+    // Right under the existing guidance, inside the course interests group.
+    const guidance = screen.getByText(
+      /Your first and second choices are marked below/,
+    );
+    expect(guidance.nextElementSibling).toBe(warning);
+    expect(
+      screen.getByTestId("ApplicationForm-courseInterests"),
+    ).toContainElement(warning);
+
+    const label = screen.getByText(
+      "Anything Else that you would like us to know?",
+    );
+    expect(label).toHaveClass("fw-bold");
+    expect(label).toHaveAttribute("for", "ApplicationForm-comments");
+    expect(
+      screen.getByLabelText("Anything Else that you would like us to know?"),
+    ).toBe(screen.getByTestId("ApplicationForm-comments"));
+    const help = screen.getByTestId("ApplicationForm-comments-help");
+    expect(help).toHaveTextContent(
+      "In this space, you can share anything that you'd like us to know. For example, if you have applied for a course that you have never taken, this is where you can share the experience or other course work that prepares you to be a ULA for that course. If there is a particular reason that you'd like to serve as a ULA in general, and/or for a specific course, this is where you can let us know that.",
+    );
+    expect(help).toHaveClass("text-muted", "small");
+    expect(label.nextElementSibling).toBe(help);
+    expect(help.nextElementSibling).toBe(
+      screen.getByTestId("ApplicationForm-comments"),
+    );
+    expect(screen.queryByText("Anything Else")).toBeNull();
+  });
+
+  test("a TA form keeps the plain Anything Else label and neither explanation", () => {
+    renderForm();
+    expect(
+      screen.queryByTestId("ApplicationForm-courseInterests-untaken"),
+    ).toBeNull();
+    expect(screen.queryByTestId("ApplicationForm-comments-help")).toBeNull();
+    const label = screen.getByText("Anything Else");
+    expect(label).not.toHaveClass("fw-bold");
+    expect(label).toHaveAttribute("for", "ApplicationForm-comments");
+    expect(
+      screen.queryByText("Anything Else that you would like us to know?"),
+    ).toBeNull();
+  });
+
   test("a ULA application asks the ULA-only questions and not the TA ones", () => {
     renderForm({ type: "ULA" });
 

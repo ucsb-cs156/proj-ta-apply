@@ -528,3 +528,13 @@ ULA application (the applicant's POST and PUT and the admin's test application).
 them optional, and an admin's edit of an existing application is not held to them, as with the
 other ULA questions. Since the count of quarters served decides whether the training commitment is
 asked, every first-time applicant now sees that question.
+
+# Twenty-ninth Iteration
+
+The ULA application form explains two things it did not before (issue #94). Under the guidance
+on the other-courses table, a paragraph asks applicants to leave a course they have not taken at
+Not Applicable / Not Interested unless other experience or course work prepares them to ULA for
+it, and to explain that experience in the comment box. The comment box's label is now **Anything
+Else that you would like us to know?** with a note on what to put there (experience for a course
+never taken, or a reason for wanting to ULA in general or for a specific course). The TA form is
+unchanged.

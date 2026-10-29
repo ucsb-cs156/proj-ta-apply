@@ -1161,6 +1161,18 @@ export default function ApplicationForm({
           course, say how interested you would be. The default is Not Applicable
           / Not Interested.
         </p>
+        {!isTa && (
+          <p className="small mb-2" data-testid={id("courseInterests-untaken")}>
+            <strong>
+              If there is a course you have not taken yet, please select Not
+              Applicable/Not Interested <em>unless</em> you have other
+              experience or course work that prepares you to ULA for that course
+            </strong>
+            . In that case, please add comments in the free text comment field
+            at the end of the application explaining the experience you have
+            that prepares you to be able to serve as a ULA for that course.
+          </p>
+        )}
         {courseList.length === 0 ? (
           <p
             className="text-muted small"
@@ -1227,7 +1239,27 @@ export default function ApplicationForm({
       </Form.Group>
 
       <Form.Group className="mb-3">
-        <Form.Label htmlFor={id("comments")}>Anything Else</Form.Label>
+        {isTa ? (
+          <Form.Label htmlFor={id("comments")}>Anything Else</Form.Label>
+        ) : (
+          <>
+            <Form.Label htmlFor={id("comments")} className="fw-bold">
+              Anything Else that you would like us to know?
+            </Form.Label>
+            <p
+              className="text-muted small mb-2"
+              data-testid={id("comments-help")}
+            >
+              In this space, you can share anything that you&apos;d like us to
+              know. For example, if you have applied for a course that you have
+              never taken, this is where you can share the experience or other
+              course work that prepares you to be a ULA for that course. If
+              there is a particular reason that you&apos;d like to serve as a
+              ULA in general, and/or for a specific course, this is where you
+              can let us know that.
+            </p>
+          </>
+        )}
         <Form.Control
           id={id("comments")}
           data-testid={id("comments")}
