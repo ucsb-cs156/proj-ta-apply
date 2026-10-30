@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicantRecruitmentsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">ApplicantRecruitmentsController.java</span></div><h1>ApplicantRecruitmentsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.entity.TaMajor;
+import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.entity.UlaInterest;
+import edu.ucsb.cs.taapply.entity.UlaMajor;
+import edu.ucsb.cs.taapply.entity.UlaTopic;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.models.CourseSections;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.repository.TaMajorRepository;
+import edu.ucsb.cs.taapply.repository.TaTopicRepository;
+import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
+import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
+import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
+import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * What an applicant needs to know about recruitments: whether they can apply now, when a past one
+ * ran, and when an upcoming one is expected to open.
+ *
+ * &lt;p&gt;Any signed-in user may apply to any recruitment, TA or ULA, so nothing here is filtered by who
+ * is asking; each recruitment carries its type for the page to show.
+ */
+@Tag(name = &quot;ApplicantRecruitments&quot;)
+@RequestMapping(&quot;/api/recruitments&quot;)
+@RestController
+<span class="fc" id="L53">@Slf4j</span>
+<span class="fc" id="L54">public class ApplicantRecruitmentsController extends ApiController {</span>
+
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired ApplicationAccessService applicationAccessService;
+  @Autowired UCSBCurriculumService ucsbCurriculumService;
+  @Autowired TaMajorRepository taMajorRepository;
+  @Autowired TaTopicRepository taTopicRepository;
+  @Autowired UlaMajorRepository ulaMajorRepository;
+  @Autowired UlaTopicRepository ulaTopicRepository;
+  @Autowired UlaInterestRepository ulaInterestRepository;
+
+  /**
+   * The admin-maintained lists the application form for one recruitment offers. The interests are a
+   * ULA question only, so a TA recruitment's list is empty.
+   */
+<span class="fc" id="L70">  public static record ApplicationOptions(</span>
+      List&lt;String&gt; majors, List&lt;String&gt; topics, List&lt;String&gt; interests) {}
+
+  /** Every recruitment, most recent quarter first, TA before ULA within a quarter. */
+  private List&lt;Recruitment&gt; all() {
+<span class="fc" id="L75">    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();</span>
+  }
+
+  @Operation(
+      summary = &quot;Open recruitments, of either type&quot;,
+      description = &quot;Each carries its type, so the page can say which positions it is for.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/open&quot;)
+  public List&lt;Recruitment&gt; openRecruitments() {
+<span class="fc" id="L84">    return all().stream().filter(applicationAccessService::acceptingApplications).toList();</span>
+  }
+
+  @Operation(
+      summary = &quot;Recruitments created but not yet opened&quot;,
+      description = &quot;So the home page can show when applications are expected to open.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/upcoming&quot;)
+  public List&lt;Recruitment&gt; upcomingRecruitments() {
+    // Never opened is the whole test: actualOpeningDate is stamped the first time a recruitment
+    // opens and never cleared, so a null one has not opened yet and is necessarily still closed.
+<span class="fc bfc" id="L95" title="All 2 branches covered.">    return all().stream().filter(r -&gt; r.getActualOpeningDate() == null).toList();</span>
+  }
+
+  @Operation(
+      summary = &quot;The most recently closed recruitment of each type&quot;,
+      description = &quot;So the home page can say when the last TA round and the last ULA round ran.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/recentlyClosed&quot;)
+  public List&lt;Recruitment&gt; recentlyClosed() {
+    // Both conditions matter: a reopened recruitment keeps the closing date of its earlier round,
+    // so having closed once is not enough; it has to be closed now.
+    // Already sorted most recent quarter first, so the first match of each type is the one to show.
+<span class="fc" id="L107">    Set&lt;RecruitmentType&gt; seen = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L108">    return all().stream()</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        .filter(r -&gt; r.getApplicationStatus() == ApplicationStatus.CLOSED)</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">        .filter(r -&gt; r.getActualClosingDate() != null)</span>
+<span class="fc" id="L111">        .filter(r -&gt; seen.add(r.getType()))</span>
+<span class="fc" id="L112">        .toList();</span>
+  }
+
+  @Operation(
+      summary = &quot;Every recruitment, past or present&quot;,
+      description =
+          &quot;So a listing of a user's own applications can name the quarter and dates behind each&quot;
+              + &quot; one.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/applicable&quot;)
+  public List&lt;Recruitment&gt; applicableRecruitments() {
+<span class="fc" id="L123">    return all();</span>
+  }
+
+  @Operation(
+      summary = &quot;The course numbers an applicant may choose from&quot;,
+      description =
+          &quot;Distinct and sorted, since a course with two lectures appears twice in the recruitment.&quot;
+              + &quot; Rows an admin removed, rows the last Populate found stale (issue #122) and&quot;
+              + &quot; cancelled lectures (issue #123) are left out; a course is offered while any of&quot;
+              + &quot; its lectures is. Empty for a recruitment that does not exist.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/courses&quot;)
+  public List&lt;String&gt; courseChoices(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
+
+<span class="fc bfc" id="L138" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
+<span class="fc" id="L139">      return List.of();</span>
+    }
+
+<span class="fc" id="L142">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc" id="L143">        .filter(RecruitmentCourse::isOnOffer)</span>
+<span class="fc" id="L144">        .map(c -&gt; c.getCourseId())</span>
+<span class="fc" id="L145">        .distinct()</span>
+<span class="fc" id="L146">        .sorted()</span>
+<span class="fc" id="L147">        .toList();</span>
+  }
+
+  @Operation(
+      summary = &quot;Who teaches each course an applicant may choose from&quot;,
+      description =
+          &quot;Padded course id to the instructors of its lectures in the recruitment, joined with&quot;
+              + &quot; commas, so the form can show the name after the course number (issue #121). A&quot;
+              + &quot; course with no instructor on record is left out; an unknown recruitment gives an&quot;
+              + &quot; empty map.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/instructors&quot;)
+  public Map&lt;String, String&gt; courseInstructors(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
+
+<span class="fc bfc" id="L162" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
+<span class="fc" id="L163">      return Map.of();</span>
+    }
+<span class="fc" id="L165">    return instructorsByCourse(recruitmentCourseRepository.findByRecruitmentId(recruitmentId));</span>
+  }
+
+  /**
+   * The instructors of each course's lectures, distinct and sorted, from the rows on offer. Sorted
+   * by course too, so the JSON is stable.
+   */
+  static Map&lt;String, String&gt; instructorsByCourse(List&lt;RecruitmentCourse&gt; rows) {
+<span class="fc" id="L173">    Map&lt;String, TreeSet&lt;String&gt;&gt; names = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">      String instructor = row.getInstructor() == null ? &quot;&quot; : row.getInstructor().strip();</span>
+<span class="fc bfc" id="L176" title="All 4 branches covered.">      if (row.isRemoved() || instructor.isEmpty()) {</span>
+<span class="fc" id="L177">        continue;</span>
+      }
+<span class="fc" id="L179">      names.computeIfAbsent(row.getCourseId(), k -&gt; new TreeSet&lt;&gt;()).add(instructor);</span>
+<span class="fc" id="L180">    }</span>
+<span class="fc" id="L181">    Map&lt;String, String&gt; result = new TreeMap&lt;&gt;();</span>
+<span class="fc" id="L182">    names.forEach((courseId, set) -&gt; result.put(courseId, String.join(&quot;, &quot;, set)));</span>
+<span class="fc" id="L183">    return result;</span>
+  }
+
+  @Operation(
+      summary = &quot;When a course's lectures and sections meet&quot;,
+      description =
+          &quot;Looked up live from the UCSB API via the enroll code of the course's lecture in the&quot;
+              + &quot; recruitment, so an applicant choosing the course can see whether they are free.&quot;
+              + &quot; 404 for a recruitment that does not exist. A course the recruitment does not list&quot;
+              + &quot; comes back with no meetings rather than an error.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/sections&quot;)
+  public CourseSections courseSections(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
+      @Parameter(name = &quot;courseId&quot;, description = &quot;Padded course id, e.g. \&quot;CMPSC   156\&quot;&quot;)
+          @RequestParam
+          String courseId)
+      throws Exception {
+
+<span class="fc" id="L202">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L204">            .findById(recruitmentId)</span>
+<span class="fc" id="L205">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+
+    // Any one lecture's enroll code finds the whole offering, every section included, so the
+    // lowest is as good as any and keeps the request the same from one call to the next.
+<span class="fc" id="L209">    Optional&lt;String&gt; enrollCode =</span>
+<span class="fc" id="L210">        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc bfc" id="L211" title="All 4 branches covered.">            .filter(c -&gt; c.isOnOffer() &amp;&amp; courseId.equals(c.getCourseId()))</span>
+<span class="fc" id="L212">            .map(RecruitmentCourse::getEnrollCode)</span>
+<span class="fc" id="L213">            .sorted()</span>
+<span class="fc" id="L214">            .findFirst();</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">    if (enrollCode.isEmpty()) {</span>
+<span class="fc" id="L216">      return CourseSections.none(courseId, recruitment.getQuarter());</span>
+    }
+
+<span class="fc" id="L219">    return CourseSections.from(</span>
+        courseId,
+<span class="fc" id="L221">        recruitment.getQuarter(),</span>
+<span class="fc" id="L222">        ucsbCurriculumService.getOffering(recruitment.getQuarter(), enrollCode.get()));</span>
+  }
+
+  private static List&lt;String&gt; sorted(Stream&lt;String&gt; names) {
+<span class="fc" id="L226">    return names.sorted(String.CASE_INSENSITIVE_ORDER).toList();</span>
+  }
+
+  @Operation(
+      summary = &quot;The majors and topics lists the application form for a recruitment offers&quot;,
+      description =
+          &quot;The TA lists for a TA recruitment, the ULA lists for a ULA one, each sorted. Only a ULA&quot;
+              + &quot; recruitment has interests. 404 for an unknown recruitment.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/options&quot;)
+  public ApplicationOptions applicationOptions(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
+<span class="fc" id="L238">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L240">            .findById(recruitmentId)</span>
+<span class="fc" id="L241">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+
+<span class="fc bfc" id="L243" title="All 2 branches covered.">    if (recruitment.getType() == RecruitmentType.TA) {</span>
+<span class="fc" id="L244">      return new ApplicationOptions(</span>
+<span class="fc" id="L245">          sorted(</span>
+<span class="fc" id="L246">              StreamSupport.stream(taMajorRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L247">                  .map(TaMajor::getName)),</span>
+<span class="fc" id="L248">          sorted(</span>
+<span class="fc" id="L249">              StreamSupport.stream(taTopicRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L250">                  .map(TaTopic::getName)),</span>
+<span class="fc" id="L251">          List.of());</span>
+    }
+<span class="fc" id="L253">    return new ApplicationOptions(</span>
+<span class="fc" id="L254">        sorted(</span>
+<span class="fc" id="L255">            StreamSupport.stream(ulaMajorRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L256">                .map(UlaMajor::getName)),</span>
+<span class="fc" id="L257">        sorted(</span>
+<span class="fc" id="L258">            StreamSupport.stream(ulaTopicRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L259">                .map(UlaTopic::getName)),</span>
+<span class="fc" id="L260">        sorted(</span>
+<span class="fc" id="L261">            StreamSupport.stream(ulaInterestRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L262">                .map(UlaInterest::getName)));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
