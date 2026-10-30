@@ -93,7 +93,9 @@ loadScripts(document, 'script');</script>
 @RestController
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">AuditTrailController</span>
 <span class="extends-implements">extends <a href="ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></span></div>
-<div class="block">The audit trail, read-only: every change an admin made to a student's application.</div>
+<div class="block">The audit trail of <em>individual applications</em>, read-only: every change an admin made to a
+student's application. Changes to recruitments themselves (creation, deletion, status, dates) are
+served by <a href="RecruitmentAuditTrailController.html" title="class in edu.ucsb.cs.taapply.controller"><code>RecruitmentAuditTrailController</code></a>.</div>
 </div>
 </section>
 <section class="summary">

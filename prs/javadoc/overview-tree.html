@@ -88,6 +88,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorsCSVController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/JobsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">JobsController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">NoticesController</a></li>
+<li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentAuditTrailController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">RecruitmentAuditTrailController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/UserInfoController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">UserInfoController</a></li>
@@ -139,6 +140,8 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></li>
 <li class="circle">edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/Quarter.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.models">Quarter</a></li>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/Recruitment.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></li>
+<li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService</a></li>
+<li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/RecruitmentAuditTrail.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></li>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></li>
 <li class="circle">edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.jobs">RecruitmentCoursesRefreshScheduler</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleAssignmentService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">RoleAssignmentService</a></li>
@@ -238,6 +241,7 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/NoticeVersionRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">NoticeVersionRepository</a></li>
+<li class="circle">edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentAuditTrailRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentAuditTrailRepository</a> (also extends org.springframework.data.repository.PagingAndSortingRepository&lt;T,<wbr>ID&gt;)</li>
 <li class="circle">edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentCourseRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentCourseRepository</a></li>
 <li class="circle">edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentRepository</a></li>
 <li class="circle">edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/TaMajorRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">TaMajorRepository</a></li>
@@ -259,6 +263,7 @@ loadScripts(document, 'script');</script>
 </li>
 </ul>
 </li>
+<li class="circle">edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentAuditTrailRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentAuditTrailRepository</a> (also extends org.springframework.data.repository.CrudRepository&lt;T,<wbr>ID&gt;)</li>
 </ul>
 </li>
 </ul>
@@ -312,6 +317,8 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyUlaApplicationCsvService.ImportResult.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService.ImportResult</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/NameListCsvService.UploadResult.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">NameListCsvService.UploadResult</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.NoticeContent.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">NoticesController.NoticeContent</a></li>
+<li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.Snapshot.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a></li>
+<li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.UploadResult.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></li>
 </ul>
 </li>
