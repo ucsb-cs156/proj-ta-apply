@@ -1,0 +1,36 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "023-add-stale-to-recruitment-courses",
+        "author": "pc",
+        "comment": "Set by Populate on rows it no longer finds in the UCSB API or whose course is no longer flagged (issue #122).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "recruitment_courses", "columnName": "stale" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitment_courses",
+              "columns": [
+                {
+                  "column": {
+                    "name": "stale",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

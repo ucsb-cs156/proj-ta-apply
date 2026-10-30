@@ -127,7 +127,8 @@ public class ApplicantRecruitmentsController extends ApiController {
       summary = "The course numbers an applicant may choose from",
       description =
           "Distinct and sorted, since a course with two lectures appears twice in the recruitment."
-              + " Empty for a recruitment that does not exist.")
+              + " Rows an admin removed, and rows the last Populate found stale (issue #122), are"
+              + " left out. Empty for a recruitment that does not exist.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/courses")
   public List<String> courseChoices(
@@ -138,7 +139,7 @@ public class ApplicantRecruitmentsController extends ApiController {
     }
 
     return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
-        .filter(c -> !c.isRemoved())
+        .filter(RecruitmentCourse::isOnOffer)
         .map(c -> c.getCourseId())
         .distinct()
         .sorted()
@@ -206,7 +207,7 @@ public class ApplicantRecruitmentsController extends ApiController {
     // lowest is as good as any and keeps the request the same from one call to the next.
     Optional<String> enrollCode =
         recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
-            .filter(c -> !c.isRemoved() && courseId.equals(c.getCourseId()))
+            .filter(c -> c.isOnOffer() && courseId.equals(c.getCourseId()))
             .map(RecruitmentCourse::getEnrollCode)
             .sorted()
             .findFirst();

@@ -14,6 +14,7 @@ import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobContextConsumer;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +37,9 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>A row the admin removed stays removed. Re-running must not undo that decision.
  *   <li>Which courses are eligible follows the recruitment type: TA reads {@code needsTa}, ULA
  *       reads {@code needsUla}.
+ *   <li>A row the run did not find (its section gone from the API, or its course no longer flagged)
+ *       is marked {@code stale}, and a row it did find is un-staled (issue #122). An empty API
+ *       response changes no flags, so a bad fetch cannot mark everything stale at once.
  * </ul>
  */
 @Builder
@@ -63,7 +67,13 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
             type, quarter, wanted.size(), type));
 
     if (wanted.isEmpty()) {
-      ctx.log("No courses are flagged for this type; nothing to do.");
+      // Nothing to fetch, but the rows on file are all of courses no longer flagged (#122).
+      ctx.log("No courses are flagged for this type; nothing to fetch.");
+      int markedStale = markStale(ctx, Set.of());
+      ctx.log(
+          String.format(
+              "Finished: 0 added, 0 updated, 0 left removed, %d marked stale, 0 un-staled",
+              markedStale));
       return;
     }
 
@@ -82,6 +92,9 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
     int added = 0;
     int updated = 0;
     int skippedRemoved = 0;
+    int unstaled = 0;
+    // The enroll codes this run found, for the reconciliation afterwards.
+    Set<String> seen = new HashSet<>();
 
     for (UcsbCourseOffering offering : offerings) {
       ctx.checkCancellation();
@@ -104,6 +117,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
             recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(
                 recruitment.getId(), section.getEnrollCode());
 
+        seen.add(section.getEnrollCode());
         if (existing.isPresent() && existing.get().isRemoved()) {
           // The admin took this one out on purpose; leave it out.
           skippedRemoved++;
@@ -124,6 +138,11 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
         row.setMaxEnroll(section.getMaxEnroll());
         row.setStatus(statusOf(section));
         row.setSummerSession(section.getSession());
+        // Found this run, so whatever an earlier run concluded, it is current (issue #122).
+        if (row.isStale()) {
+          unstaled++;
+        }
+        row.setStale(false);
         recruitmentCourseRepository.save(row);
 
         if (existing.isPresent()) {
@@ -135,9 +154,43 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
       }
     }
 
+    int markedStale = 0;
+    if (offerings.isEmpty()) {
+      // A guard, not a judgement: an empty answer is far more likely a bad fetch than a quarter
+      // with no classes, and must not mark every row stale.
+      ctx.log("No offerings returned; leaving the stale flags as they are.");
+    } else {
+      markedStale = markStale(ctx, seen);
+    }
+
     ctx.log(
         String.format(
-            "Finished: %d added, %d updated, %d left removed", added, updated, skippedRemoved));
+            "Finished: %d added, %d updated, %d left removed, %d marked stale, %d un-staled",
+            added, updated, skippedRemoved, markedStale, unstaled));
+  }
+
+  /**
+   * Marks stale every row of this recruitment, removed ones aside, whose enroll code this run did
+   * not find, and returns how many it marked. The rows it did find were un-staled by the upsert. A
+   * row whose course is no longer flagged is never found, since only flagged courses are looked at,
+   * so that case needs no rule of its own.
+   */
+  private int markStale(JobContext ctx, Set<String> seen) {
+    int markedStale = 0;
+    for (RecruitmentCourse row :
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId())) {
+      if (row.isRemoved() || row.isStale() || seen.contains(row.getEnrollCode())) {
+        continue;
+      }
+      row.setStale(true);
+      recruitmentCourseRepository.save(row);
+      markedStale++;
+      ctx.log(
+          String.format(
+              "  %s section %s is no longer offered or flagged; marked stale",
+              row.getCourseId(), row.getSection()));
+    }
+    return markedStale;
   }
 
   /** Course ids flagged for this recruitment's type. */

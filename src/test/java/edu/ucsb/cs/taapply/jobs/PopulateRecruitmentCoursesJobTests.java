@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.jobs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -160,6 +161,206 @@ public class PopulateRecruitmentCoursesJobTests {
     verify(ucsbCurriculumService, never()).getOfferings(any(), any());
     verify(recruitmentCourseRepository, never()).save(any());
     assertTrue(jobStarted.getLog().contains("No courses are flagged"));
+    assertTrue(
+        jobStarted
+            .getLog()
+            .contains("Finished: 0 added, 0 updated, 0 left removed, 0 marked stale, 0 un-staled"),
+        jobStarted.getLog());
+  }
+
+  /** Issue #122: with nothing flagged, every row on file is of an unflagged course, so stale. */
+  @Test
+  public void with_no_course_flagged_the_rows_on_file_are_marked_stale_without_an_api_call()
+      throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", false, false)));
+    RecruitmentCourse row = existingRow(1L, "CMPSC   156", "07492", false, false);
+    RecruitmentCourse removed = existingRow(2L, "CMPSC   156", "07500", true, false);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(row, removed));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    verify(ucsbCurriculumService, never()).getOfferings(any(), any());
+    assertTrue(row.isStale());
+    assertFalse(removed.isStale(), "a removed row is the admin's business and is left alone");
+    verify(recruitmentCourseRepository, times(1)).save(row);
+    verify(recruitmentCourseRepository, never()).save(removed);
+    assertTrue(jobStarted.getLog().contains("1 marked stale, 0 un-staled"), jobStarted.getLog());
+  }
+
+  // ---- reconciliation (issue #122) ----
+
+  private static RecruitmentCourse existingRow(
+      long id, String courseId, String enrollCode, boolean removed, boolean stale) {
+    return RecruitmentCourse.builder()
+        .id(id)
+        .recruitmentId(7L)
+        .courseId(courseId)
+        .enrollCode(enrollCode)
+        .section("0100")
+        .removed(removed)
+        .stale(stale)
+        .build();
+  }
+
+  /** A lecture that vanished from the API is marked stale; one that is still there is not. */
+  @Test
+  public void a_row_whose_section_is_no_longer_in_the_api_is_marked_stale() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(List.of(offering("CMPSC   156  ", section("07492", "0100", "CONRAD P"))));
+    RecruitmentCourse kept = existingRow(1L, "CMPSC   156", "07492", false, false);
+    RecruitmentCourse gone = existingRow(2L, "CMPSC   156", "07500", false, false);
+    when(recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(7L, "07492"))
+        .thenReturn(Optional.of(kept));
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(kept, gone));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    assertFalse(kept.isStale());
+    assertTrue(gone.isStale());
+    verify(recruitmentCourseRepository, times(1)).save(gone);
+    assertTrue(
+        jobStarted.getLog().contains("CMPSC   156 section 0100 is no longer offered or flagged"),
+        jobStarted.getLog());
+    assertTrue(
+        jobStarted
+            .getLog()
+            .contains("Finished: 0 added, 1 updated, 0 left removed, 1 marked stale, 0 un-staled"),
+        jobStarted.getLog());
+  }
+
+  /** A section that comes back is restored without anyone touching it. */
+  @Test
+  public void a_stale_row_found_again_is_un_staled() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(List.of(offering("CMPSC   156  ", section("07492", "0100", "CONRAD P"))));
+    RecruitmentCourse back = existingRow(1L, "CMPSC   156", "07492", false, true);
+    when(recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(7L, "07492"))
+        .thenReturn(Optional.of(back));
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(back));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    assertFalse(back.isStale());
+    // Saved once by the upsert, which clears the flag and counts it; the reconciliation leaves it.
+    verify(recruitmentCourseRepository, times(1)).save(back);
+    assertTrue(jobStarted.getLog().contains("0 marked stale, 1 un-staled"), jobStarted.getLog());
+  }
+
+  /**
+   * Un-staling counts when the reconciliation itself clears a flag: a seen but removed row stays.
+   */
+  @Test
+  public void a_stale_row_whose_course_is_flagged_again_but_which_the_upsert_skipped_is_counted()
+      throws Exception {
+    // The row is removed, so the upsert skips it, and the reconciliation leaves it alone too.
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(List.of(offering("CMPSC   156  ", section("07492", "0100", "CONRAD P"))));
+    RecruitmentCourse removedStale = existingRow(1L, "CMPSC   156", "07492", true, true);
+    when(recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(7L, "07492"))
+        .thenReturn(Optional.of(removedStale));
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(removedStale));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    assertTrue(removedStale.isStale());
+    verify(recruitmentCourseRepository, never()).save(any());
+    assertTrue(
+        jobStarted
+            .getLog()
+            .contains("Finished: 0 added, 0 updated, 1 left removed, 0 marked stale, 0 un-staled"),
+        jobStarted.getLog());
+  }
+
+  /** Unflagging a course makes its rows stale on the next run, while a flagged one's stay. */
+  @Test
+  public void rows_of_a_course_no_longer_flagged_are_marked_stale() throws Exception {
+    when(courseRepository.findAll())
+        .thenReturn(
+            List.of(course("CMPSC   156", true, false), course("CMPSC     8", false, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(
+            List.of(
+                offering("CMPSC   156  ", section("07492", "0100", "CONRAD P")),
+                offering("CMPSC     8  ", section("07100", "0100", "GAUCHO C"))));
+    RecruitmentCourse stillWanted = existingRow(1L, "CMPSC   156", "07492", false, false);
+    RecruitmentCourse unflagged = existingRow(2L, "CMPSC     8", "07100", false, false);
+    when(recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(7L, "07492"))
+        .thenReturn(Optional.of(stillWanted));
+    when(recruitmentCourseRepository.findByRecruitmentId(7L))
+        .thenReturn(List.of(stillWanted, unflagged));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    assertFalse(stillWanted.isStale());
+    assertTrue(unflagged.isStale());
+    assertTrue(jobStarted.getLog().contains("1 marked stale, 0 un-staled"), jobStarted.getLog());
+  }
+
+  /** A row already stale and still missing is left as it is, not saved again. */
+  @Test
+  public void a_row_already_stale_and_still_missing_is_not_saved_again() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(List.of(offering("CMPSC   156  ", section("07492", "0100", "CONRAD P"))));
+    RecruitmentCourse kept = existingRow(1L, "CMPSC   156", "07492", false, false);
+    RecruitmentCourse stillGone = existingRow(2L, "CMPSC   156", "07500", false, true);
+    when(recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(7L, "07492"))
+        .thenReturn(Optional.of(kept));
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(kept, stillGone));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    assertTrue(stillGone.isStale());
+    verify(recruitmentCourseRepository, never()).save(stillGone);
+    assertTrue(jobStarted.getLog().contains("0 marked stale, 0 un-staled"), jobStarted.getLog());
+  }
+
+  /** The guard: an empty answer from the API must not mark everything stale. */
+  @Test
+  public void an_empty_offerings_response_changes_no_stale_flags() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261")).thenReturn(List.of());
+    RecruitmentCourse fresh = existingRow(1L, "CMPSC   156", "07492", false, false);
+    RecruitmentCourse stale = existingRow(2L, "CMPSC   156", "07500", false, true);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(fresh, stale));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    assertFalse(fresh.isStale());
+    assertTrue(stale.isStale());
+    verify(recruitmentCourseRepository, never()).save(any());
+    assertTrue(jobStarted.getLog().contains("No offerings returned"), jobStarted.getLog());
+    assertTrue(
+        jobStarted
+            .getLog()
+            .contains("Finished: 0 added, 0 updated, 0 left removed, 0 marked stale, 0 un-staled"),
+        jobStarted.getLog());
+  }
+
+  /** A failing fetch throws before any reconciliation, so no flag changes either. */
+  @Test
+  public void a_failing_fetch_changes_no_stale_flags() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenThrow(new RuntimeException("API down"));
+    RecruitmentCourse fresh = existingRow(1L, "CMPSC   156", "07492", false, false);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(fresh));
+
+    assertThrows(RuntimeException.class, () -> job(RecruitmentType.TA).accept(ctx));
+
+    assertFalse(fresh.isStale());
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  @Test
+  public void isOnOffer_means_neither_removed_nor_stale() {
+    assertTrue(existingRow(1L, "CMPSC   156", "07492", false, false).isOnOffer());
+    assertFalse(existingRow(1L, "CMPSC   156", "07492", true, false).isOnOffer());
+    assertFalse(existingRow(1L, "CMPSC   156", "07492", false, true).isOnOffer());
+    assertFalse(existingRow(1L, "CMPSC   156", "07492", true, true).isOnOffer());
   }
 
   // ---- primaries ----
