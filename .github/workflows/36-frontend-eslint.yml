@@ -11,3 +11,5 @@ on:
 jobs:
   call-frontend-eslint:
     uses: ucsb-cs156/workflows/.github/workflows/36-frontend-eslint.yml@main
+    with:
+      enable_typescript: true
