@@ -5,6 +5,7 @@ import com.opencsv.exceptions.CsvException;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.TaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
@@ -57,8 +58,8 @@ import org.springframework.web.util.HtmlUtils;
  * reported rather than failing the rest.
  */
 @Service
-<span class="fc" id="L60">@Slf4j</span>
-<span class="fc" id="L61">public class LegacyApplicationCsvService {</span>
+<span class="fc" id="L61">@Slf4j</span>
+<span class="fc" id="L62">public class LegacyApplicationCsvService {</span>
 
   @Autowired private ApplicationRepository applicationRepository;
   @Autowired private RecruitmentCourseRepository recruitmentCourseRepository;
@@ -69,7 +70,7 @@ import org.springframework.web.util.HtmlUtils;
    * What an upload did; {@code problems} names each skipped row and why, and {@code addedTopics}
    * the knowledge topics that were not on the TA topics list and were added to it.
    */
-<span class="fc" id="L72">  public static record ImportResult(</span>
+<span class="fc" id="L73">  public static record ImportResult(</span>
       int inserted,
       int alreadyPresent,
       int skipped,
@@ -77,14 +78,14 @@ import org.springframework.web.util.HtmlUtils;
       List&lt;String&gt; addedTopics) {}
 
   /** The columns a legacy export must have for a row to be imported at all. */
-<span class="fc" id="L80">  public static final List&lt;String&gt; REQUIRED_COLUMNS = List.of(&quot;email&quot;, &quot;first_name&quot;, &quot;last_name&quot;);</span>
+<span class="fc" id="L81">  public static final List&lt;String&gt; REQUIRED_COLUMNS = List.of(&quot;email&quot;, &quot;first_name&quot;, &quot;last_name&quot;);</span>
 
   static final String COURSE_PREFIX = &quot;CMPSC &quot;;
 
   // ---- the quarter the admin names ------------------------------------------------------------
 
-<span class="fc" id="L86">  private static final Map&lt;Character, Character&gt; QUARTER_LETTERS =</span>
-<span class="fc" id="L87">      Map.of('W', '1', 'S', '2', 'M', '3', 'F', '4');</span>
+<span class="fc" id="L87">  private static final Map&lt;Character, Character&gt; QUARTER_LETTERS =</span>
+<span class="fc" id="L88">      Map.of('W', '1', 'S', '2', 'M', '3', 'F', '4');</span>
 
   /**
    * A quarter as an admin writes it, QYY such as W26, or already YYYYQ such as 20261, to YYYYQ.
@@ -92,15 +93,15 @@ import org.springframework.web.util.HtmlUtils;
    * @throws IllegalArgumentException for anything else
    */
   public static String toYyyyq(String quarter) {
-<span class="fc bfc" id="L95" title="All 2 branches covered.">    String q = quarter == null ? &quot;&quot; : quarter.strip().toUpperCase(Locale.ROOT);</span>
-<span class="fc bfc" id="L96" title="All 2 branches covered.">    if (q.matches(&quot;\\d{4}[1-4]&quot;)) {</span>
-<span class="fc" id="L97">      return q;</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">    String q = quarter == null ? &quot;&quot; : quarter.strip().toUpperCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">    if (q.matches(&quot;\\d{4}[1-4]&quot;)) {</span>
+<span class="fc" id="L98">      return q;</span>
     }
-<span class="fc bfc" id="L99" title="All 2 branches covered.">    if (q.matches(&quot;[WSMF]\\d{2}&quot;)) {</span>
-<span class="fc" id="L100">      return &quot;20&quot; + q.substring(1) + QUARTER_LETTERS.get(q.charAt(0));</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">    if (q.matches(&quot;[WSMF]\\d{2}&quot;)) {</span>
+<span class="fc" id="L101">      return &quot;20&quot; + q.substring(1) + QUARTER_LETTERS.get(q.charAt(0));</span>
     }
-<span class="fc" id="L102">    throw new IllegalArgumentException(</span>
-<span class="fc" id="L103">        &quot;Quarter should be like W26, S26, M26 or F26 (or 20261), not '%s'&quot;.formatted(quarter));</span>
+<span class="fc" id="L103">    throw new IllegalArgumentException(</span>
+<span class="fc" id="L104">        &quot;Quarter should be like W26, S26, M26 or F26 (or 20261), not '%s'&quot;.formatted(quarter));</span>
   }
 
   // ---- the upload -----------------------------------------------------------------------------
@@ -113,114 +114,115 @@ import org.springframework.web.util.HtmlUtils;
    */
   public ImportResult upload(MultipartFile file, Recruitment recruitment)
       throws IOException, CsvException {
-<span class="fc bfc" id="L116" title="All 2 branches covered.">    if (recruitment.getType() != RecruitmentType.TA) {</span>
-<span class="fc" id="L117">      throw new ResponseStatusException(</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">    if (recruitment.getType() != RecruitmentType.TA) {</span>
+<span class="fc" id="L118">      throw new ResponseStatusException(</span>
           HttpStatus.BAD_REQUEST,
           &quot;Legacy TA applications can only be imported into a TA recruitment&quot;);
     }
-<span class="fc" id="L121">    Set&lt;String&gt; courseIds = new TreeSet&lt;&gt;();</span>
-<span class="fc" id="L122">    recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
-<span class="fc bfc" id="L123" title="All 2 branches covered.">        .filter(c -&gt; !c.isRemoved())</span>
-<span class="fc" id="L124">        .forEach(c -&gt; courseIds.add(c.getCourseId()));</span>
-<span class="fc" id="L125">    List&lt;String&gt; topics =</span>
-<span class="fc" id="L126">        StreamSupport.stream(taTopicRepository.findAll().spliterator(), false)</span>
-<span class="fc" id="L127">            .map(t -&gt; t.getName())</span>
-<span class="fc" id="L128">            .toList();</span>
-<span class="fc" id="L129">    List&lt;String&gt; majors =</span>
-<span class="fc" id="L130">        StreamSupport.stream(taMajorRepository.findAll().spliterator(), false)</span>
-<span class="fc" id="L131">            .map(m -&gt; m.getName())</span>
-<span class="fc" id="L132">            .toList();</span>
+<span class="fc" id="L122">    Set&lt;String&gt; courseIds = new TreeSet&lt;&gt;();</span>
+    // The courses an applicant would be offered: not removed, stale or cancelled (#122, #123).
+<span class="fc" id="L124">    recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
+<span class="fc" id="L125">        .filter(RecruitmentCourse::isOnOffer)</span>
+<span class="fc" id="L126">        .forEach(c -&gt; courseIds.add(c.getCourseId()));</span>
+<span class="fc" id="L127">    List&lt;String&gt; topics =</span>
+<span class="fc" id="L128">        StreamSupport.stream(taTopicRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L129">            .map(t -&gt; t.getName())</span>
+<span class="fc" id="L130">            .toList();</span>
+<span class="fc" id="L131">    List&lt;String&gt; majors =</span>
+<span class="fc" id="L132">        StreamSupport.stream(taMajorRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L133">            .map(m -&gt; m.getName())</span>
+<span class="fc" id="L134">            .toList();</span>
 
-<span class="fc" id="L134">    int inserted = 0;</span>
-<span class="fc" id="L135">    int alreadyPresent = 0;</span>
-<span class="fc" id="L136">    List&lt;String&gt; problems = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L136">    int inserted = 0;</span>
+<span class="fc" id="L137">    int alreadyPresent = 0;</span>
+<span class="fc" id="L138">    List&lt;String&gt; problems = new ArrayList&lt;&gt;();</span>
     // A knowledge topic the TA topics list does not have is added to it, so the form shows the
     // imported rating rather than keeping it under a name no one can see.
-<span class="fc" id="L139">    Set&lt;String&gt; knownTopics = new TreeSet&lt;&gt;(topics);</span>
-<span class="fc" id="L140">    List&lt;String&gt; addedTopics = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L141">    Set&lt;String&gt; knownTopics = new TreeSet&lt;&gt;(topics);</span>
+<span class="fc" id="L142">    List&lt;String&gt; addedTopics = new ArrayList&lt;&gt;();</span>
 
-<span class="fc" id="L142">    try (InputStream inputStream = new BufferedInputStream(file.getInputStream());</span>
-<span class="fc" id="L143">        InputStreamReader reader = new InputStreamReader(inputStream);</span>
-<span class="fc" id="L144">        CSVReader csvReader = new CSVReader(reader)) {</span>
+<span class="fc" id="L144">    try (InputStream inputStream = new BufferedInputStream(file.getInputStream());</span>
+<span class="fc" id="L145">        InputStreamReader reader = new InputStreamReader(inputStream);</span>
+<span class="fc" id="L146">        CSVReader csvReader = new CSVReader(reader)) {</span>
 
-<span class="fc" id="L146">      String[] headers = csvReader.readNext();</span>
-<span class="fc bfc" id="L147" title="All 2 branches covered.">      if (headers == null) {</span>
-<span class="fc" id="L148">        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;CSV file is empty&quot;);</span>
+<span class="fc" id="L148">      String[] headers = csvReader.readNext();</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">      if (headers == null) {</span>
+<span class="fc" id="L150">        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;CSV file is empty&quot;);</span>
       }
-<span class="fc" id="L150">      Map&lt;String, Integer&gt; columns = columnIndexes(headers);</span>
+<span class="fc" id="L152">      Map&lt;String, Integer&gt; columns = columnIndexes(headers);</span>
 
       String[] cells;
-<span class="fc" id="L153">      int rowNumber = 1;</span>
-<span class="fc bfc" id="L154" title="All 2 branches covered.">      while ((cells = csvReader.readNext()) != null) {</span>
-<span class="fc" id="L155">        rowNumber++;</span>
-<span class="fc" id="L156">        Map&lt;String, String&gt; row = rowMap(columns, cells);</span>
-<span class="fc bfc" id="L157" title="All 2 branches covered.">        if (row.values().stream().allMatch(String::isBlank)) {</span>
-<span class="fc" id="L158">          continue;</span>
+<span class="fc" id="L155">      int rowNumber = 1;</span>
+<span class="fc bfc" id="L156" title="All 2 branches covered.">      while ((cells = csvReader.readNext()) != null) {</span>
+<span class="fc" id="L157">        rowNumber++;</span>
+<span class="fc" id="L158">        Map&lt;String, String&gt; row = rowMap(columns, cells);</span>
+<span class="fc bfc" id="L159" title="All 2 branches covered.">        if (row.values().stream().allMatch(String::isBlank)) {</span>
+<span class="fc" id="L160">          continue;</span>
         }
-<span class="fc" id="L160">        String email = email(row);</span>
-<span class="fc bfc" id="L161" title="All 2 branches covered.">        if (email == null) {</span>
-<span class="fc" id="L162">          problems.add(&quot;row %d: no usable email address&quot;.formatted(rowNumber));</span>
-<span class="fc" id="L163">          continue;</span>
+<span class="fc" id="L162">        String email = email(row);</span>
+<span class="fc bfc" id="L163" title="All 2 branches covered.">        if (email == null) {</span>
+<span class="fc" id="L164">          problems.add(&quot;row %d: no usable email address&quot;.formatted(rowNumber));</span>
+<span class="fc" id="L165">          continue;</span>
         }
-<span class="fc bfc" id="L165" title="All 2 branches covered.">        if (applicationRepository.existsByEmailAndRecruitmentId(email, recruitment.getId())) {</span>
-<span class="fc" id="L166">          alreadyPresent++;</span>
-<span class="fc" id="L167">          continue;</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        if (applicationRepository.existsByEmailAndRecruitmentId(email, recruitment.getId())) {</span>
+<span class="fc" id="L168">          alreadyPresent++;</span>
+<span class="fc" id="L169">          continue;</span>
         }
-<span class="fc" id="L169">        Application application = map(row, email, recruitment, courseIds, topics, majors);</span>
-<span class="fc bfc" id="L170" title="All 2 branches covered.">        for (String topic : application.getTopicProficiencies().keySet()) {</span>
-<span class="fc bfc" id="L171" title="All 2 branches covered.">          if (knownTopics.add(topic)) {</span>
-<span class="fc" id="L172">            taTopicRepository.save(TaTopic.builder().name(topic).build());</span>
-<span class="fc" id="L173">            addedTopics.add(topic);</span>
+<span class="fc" id="L171">        Application application = map(row, email, recruitment, courseIds, topics, majors);</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">        for (String topic : application.getTopicProficiencies().keySet()) {</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">          if (knownTopics.add(topic)) {</span>
+<span class="fc" id="L174">            taTopicRepository.save(TaTopic.builder().name(topic).build());</span>
+<span class="fc" id="L175">            addedTopics.add(topic);</span>
           }
-<span class="fc" id="L175">        }</span>
-<span class="fc" id="L176">        applicationRepository.save(application);</span>
-<span class="fc" id="L177">        inserted++;</span>
-<span class="fc" id="L178">      }</span>
+<span class="fc" id="L177">        }</span>
+<span class="fc" id="L178">        applicationRepository.save(application);</span>
+<span class="fc" id="L179">        inserted++;</span>
+<span class="fc" id="L180">      }</span>
     }
 
-<span class="fc" id="L181">    log.info(</span>
+<span class="fc" id="L183">    log.info(</span>
         &quot;Legacy application CSV upload into recruitment {}: inserted={} alreadyPresent={} skipped={}&quot;
             + &quot; addedTopics={}&quot;,
-<span class="fc" id="L184">        recruitment.getId(),</span>
-<span class="fc" id="L185">        inserted,</span>
-<span class="fc" id="L186">        alreadyPresent,</span>
-<span class="fc" id="L187">        problems.size(),</span>
+<span class="fc" id="L186">        recruitment.getId(),</span>
+<span class="fc" id="L187">        inserted,</span>
+<span class="fc" id="L188">        alreadyPresent,</span>
+<span class="fc" id="L189">        problems.size(),</span>
         addedTopics);
-<span class="fc" id="L189">    return new ImportResult(inserted, alreadyPresent, problems.size(), problems, addedTopics);</span>
+<span class="fc" id="L191">    return new ImportResult(inserted, alreadyPresent, problems.size(), problems, addedTopics);</span>
   }
 
   /** Column name (lower case, trimmed) to position; 400 if a required column is missing. */
   static Map&lt;String, Integer&gt; columnIndexes(String[] headers) {
-<span class="fc" id="L194">    Map&lt;String, Integer&gt; columns = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L195" title="All 2 branches covered.">    for (int i = 0; i &lt; headers.length; i++) {</span>
-<span class="fc" id="L196">      String name = headers[i].strip().toLowerCase(Locale.ROOT);</span>
-<span class="fc bfc" id="L197" title="All 2 branches covered.">      if (!name.isEmpty()) {</span>
-<span class="fc" id="L198">        columns.putIfAbsent(name, i);</span>
+<span class="fc" id="L196">    Map&lt;String, Integer&gt; columns = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">    for (int i = 0; i &lt; headers.length; i++) {</span>
+<span class="fc" id="L198">      String name = headers[i].strip().toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L199" title="All 2 branches covered.">      if (!name.isEmpty()) {</span>
+<span class="fc" id="L200">        columns.putIfAbsent(name, i);</span>
       }
     }
-<span class="fc bfc" id="L201" title="All 2 branches covered.">    List&lt;String&gt; missing = REQUIRED_COLUMNS.stream().filter(c -&gt; !columns.containsKey(c)).toList();</span>
-<span class="fc bfc" id="L202" title="All 2 branches covered.">    if (!missing.isEmpty()) {</span>
-<span class="fc" id="L203">      throw new ResponseStatusException(</span>
-<span class="fc" id="L204">          HttpStatus.BAD_REQUEST, &quot;CSV file is missing the column(s) %s&quot;.formatted(missing));</span>
+<span class="fc bfc" id="L203" title="All 2 branches covered.">    List&lt;String&gt; missing = REQUIRED_COLUMNS.stream().filter(c -&gt; !columns.containsKey(c)).toList();</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">    if (!missing.isEmpty()) {</span>
+<span class="fc" id="L205">      throw new ResponseStatusException(</span>
+<span class="fc" id="L206">          HttpStatus.BAD_REQUEST, &quot;CSV file is missing the column(s) %s&quot;.formatted(missing));</span>
     }
-<span class="fc" id="L206">    return columns;</span>
+<span class="fc" id="L208">    return columns;</span>
   }
 
   /** The row as column name to trimmed value; a short row reads as blank in its missing cells. */
   static Map&lt;String, String&gt; rowMap(Map&lt;String, Integer&gt; columns, String[] cells) {
-<span class="fc" id="L211">    Map&lt;String, String&gt; row = new HashMap&lt;&gt;();</span>
-<span class="fc" id="L212">    columns.forEach(</span>
-<span class="fc bfc" id="L213" title="All 2 branches covered.">        (name, index) -&gt; row.put(name, index &lt; cells.length ? cells[index].strip() : &quot;&quot;));</span>
-<span class="fc" id="L214">    return row;</span>
+<span class="fc" id="L213">    Map&lt;String, String&gt; row = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L214">    columns.forEach(</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">        (name, index) -&gt; row.put(name, index &lt; cells.length ? cells[index].strip() : &quot;&quot;));</span>
+<span class="fc" id="L216">    return row;</span>
   }
 
   /** The row's email in canonical form, or null when there is nothing usable. */
   static String email(Map&lt;String, String&gt; row) {
-<span class="fc" id="L219">    String raw = row.getOrDefault(&quot;email&quot;, &quot;&quot;);</span>
-<span class="fc bfc" id="L220" title="All 4 branches covered.">    if (raw.isBlank() || !raw.contains(&quot;@&quot;)) {</span>
-<span class="fc" id="L221">      return null;</span>
+<span class="fc" id="L221">    String raw = row.getOrDefault(&quot;email&quot;, &quot;&quot;);</span>
+<span class="fc bfc" id="L222" title="All 4 branches covered.">    if (raw.isBlank() || !raw.contains(&quot;@&quot;)) {</span>
+<span class="fc" id="L223">      return null;</span>
     }
-<span class="fc" id="L223">    return CanonicalFormConverter.convertToValidEmail(raw).strip();</span>
+<span class="fc" id="L225">    return CanonicalFormConverter.convertToValidEmail(raw).strip();</span>
   }
 
   // ---- one row to one application ---------------------------------------------------------------
@@ -240,66 +242,66 @@ import org.springframework.web.util.HtmlUtils;
       Set&lt;String&gt; courseIds,
       Collection&lt;String&gt; topics,
       Collection&lt;String&gt; majors) {
-<span class="fc" id="L243">    List&lt;String&gt; unmatchedCourses = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L245">    List&lt;String&gt; unmatchedCourses = new ArrayList&lt;&gt;();</span>
     Application application =
-<span class="fc" id="L245">        Application.builder()</span>
-<span class="fc" id="L246">            .recruitmentId(recruitment.getId())</span>
-<span class="fc" id="L247">            .email(email)</span>
-<span class="fc" id="L248">            .status(ApplicationReviewStatus.PENDING)</span>
-<span class="fc" id="L249">            .firstName(text(row, &quot;first_name&quot;))</span>
-<span class="fc" id="L250">            .middleName(text(row, &quot;middle_name&quot;))</span>
-<span class="fc" id="L251">            .lastName(text(row, &quot;last_name&quot;))</span>
-<span class="fc" id="L252">            .major(major(row.get(&quot;major&quot;), majors))</span>
-<span class="fc" id="L253">            .gpaMajor(gpa(row.get(&quot;gpa_major&quot;)))</span>
-<span class="fc" id="L254">            .gpaOverall(gpa(row.get(&quot;gpa_overall&quot;)))</span>
-<span class="fc" id="L255">            .yearInProgram(textOrNullForZero(row.get(&quot;year_in_program&quot;)))</span>
-<span class="fc" id="L256">            .graduationDate(textOrNullForZero(row.get(&quot;graduation_date&quot;)))</span>
-<span class="fc" id="L257">            .residencyStatus(residency(row.get(&quot;residency_status&quot;)))</span>
-<span class="fc" id="L258">            .languageExam(languageExam(row.get(&quot;language_exam&quot;)))</span>
-<span class="fc" id="L259">            .languageExamDatePassed(textOrNullForZero(row.get(&quot;language_exam_date_passed&quot;)))</span>
-<span class="fc" id="L260">            .classLevel(classLevel(row.get(&quot;class_level&quot;)))</span>
-<span class="fc" id="L261">            .prevExperience(prevExperience(row.get(&quot;prev_experience&quot;)))</span>
-<span class="fc" id="L262">            .topicProficiencies(knowledge(row.get(&quot;knowledge&quot;), topics))</span>
-<span class="fc" id="L263">            .courseInterests(</span>
-<span class="fc" id="L264">                desiredCourses(</span>
-<span class="fc" id="L265">                    row.get(&quot;desired_courses_upper&quot;),</span>
-<span class="fc" id="L266">                    row.get(&quot;desired_courses_lower&quot;),</span>
+<span class="fc" id="L247">        Application.builder()</span>
+<span class="fc" id="L248">            .recruitmentId(recruitment.getId())</span>
+<span class="fc" id="L249">            .email(email)</span>
+<span class="fc" id="L250">            .status(ApplicationReviewStatus.PENDING)</span>
+<span class="fc" id="L251">            .firstName(text(row, &quot;first_name&quot;))</span>
+<span class="fc" id="L252">            .middleName(text(row, &quot;middle_name&quot;))</span>
+<span class="fc" id="L253">            .lastName(text(row, &quot;last_name&quot;))</span>
+<span class="fc" id="L254">            .major(major(row.get(&quot;major&quot;), majors))</span>
+<span class="fc" id="L255">            .gpaMajor(gpa(row.get(&quot;gpa_major&quot;)))</span>
+<span class="fc" id="L256">            .gpaOverall(gpa(row.get(&quot;gpa_overall&quot;)))</span>
+<span class="fc" id="L257">            .yearInProgram(textOrNullForZero(row.get(&quot;year_in_program&quot;)))</span>
+<span class="fc" id="L258">            .graduationDate(textOrNullForZero(row.get(&quot;graduation_date&quot;)))</span>
+<span class="fc" id="L259">            .residencyStatus(residency(row.get(&quot;residency_status&quot;)))</span>
+<span class="fc" id="L260">            .languageExam(languageExam(row.get(&quot;language_exam&quot;)))</span>
+<span class="fc" id="L261">            .languageExamDatePassed(textOrNullForZero(row.get(&quot;language_exam_date_passed&quot;)))</span>
+<span class="fc" id="L262">            .classLevel(classLevel(row.get(&quot;class_level&quot;)))</span>
+<span class="fc" id="L263">            .prevExperience(prevExperience(row.get(&quot;prev_experience&quot;)))</span>
+<span class="fc" id="L264">            .topicProficiencies(knowledge(row.get(&quot;knowledge&quot;), topics))</span>
+<span class="fc" id="L265">            .courseInterests(</span>
+<span class="fc" id="L266">                desiredCourses(</span>
+<span class="fc" id="L267">                    row.get(&quot;desired_courses_upper&quot;),</span>
+<span class="fc" id="L268">                    row.get(&quot;desired_courses_lower&quot;),</span>
                     courseIds,
                     unmatchedCourses))
-<span class="fc" id="L269">            .adminComments(adminComments(row))</span>
-<span class="fc" id="L270">            .build();</span>
-<span class="fc" id="L271">    application.getPriorCoursework().addAll(priorCoursework(row));</span>
-<span class="fc" id="L272">    application.setComments(comments(row, unmatchedCourses));</span>
-<span class="fc" id="L273">    return application;</span>
+<span class="fc" id="L271">            .adminComments(adminComments(row))</span>
+<span class="fc" id="L272">            .build();</span>
+<span class="fc" id="L273">    application.getPriorCoursework().addAll(priorCoursework(row));</span>
+<span class="fc" id="L274">    application.setComments(comments(row, unmatchedCourses));</span>
+<span class="fc" id="L275">    return application;</span>
   }
 
   // ---- field by field -------------------------------------------------------------------------
 
   private static String text(Map&lt;String, String&gt; row, String column) {
-<span class="fc" id="L279">    return blankToNull(row.get(column));</span>
+<span class="fc" id="L281">    return blankToNull(row.get(column));</span>
   }
 
   static String blankToNull(String value) {
-<span class="fc bfc" id="L283" title="All 4 branches covered.">    return value == null || value.isBlank() ? null : value.strip();</span>
+<span class="fc bfc" id="L285" title="All 4 branches covered.">    return value == null || value.isBlank() ? null : value.strip();</span>
   }
 
   /** The legacy form stored &quot;0&quot; for an unanswered year or date; that is no answer. */
   static String textOrNullForZero(String value) {
-<span class="fc" id="L288">    String text = blankToNull(value);</span>
-<span class="fc bfc" id="L289" title="All 2 branches covered.">    return &quot;0&quot;.equals(text) ? null : text;</span>
+<span class="fc" id="L290">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">    return &quot;0&quot;.equals(text) ? null : text;</span>
   }
 
   /** A GPA as a number; blank, unparseable or zero (the legacy &quot;not given&quot;) is no answer. */
   static Double gpa(String value) {
-<span class="fc" id="L294">    String text = blankToNull(value);</span>
-<span class="fc bfc" id="L295" title="All 2 branches covered.">    if (text == null) {</span>
-<span class="fc" id="L296">      return null;</span>
+<span class="fc" id="L296">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L297" title="All 2 branches covered.">    if (text == null) {</span>
+<span class="fc" id="L298">      return null;</span>
     }
     try {
-<span class="fc" id="L299">      double gpa = Double.parseDouble(text);</span>
-<span class="fc bfc" id="L300" title="All 2 branches covered.">      return gpa == 0 ? null : gpa;</span>
-<span class="fc" id="L301">    } catch (NumberFormatException e) {</span>
-<span class="fc" id="L302">      return null;</span>
+<span class="fc" id="L301">      double gpa = Double.parseDouble(text);</span>
+<span class="fc bfc" id="L302" title="All 2 branches covered.">      return gpa == 0 ? null : gpa;</span>
+<span class="fc" id="L303">    } catch (NumberFormatException e) {</span>
+<span class="fc" id="L304">      return null;</span>
     }
   }
 
@@ -308,109 +310,109 @@ import org.springframework.web.util.HtmlUtils;
    * form shows it under &quot;Other&quot;. The legacy form's &quot;CS&quot; means Computer Science.
    */
   static String major(String value, Collection&lt;String&gt; majors) {
-<span class="fc" id="L311">    String text = blankToNull(value);</span>
-<span class="fc bfc" id="L312" title="All 2 branches covered.">    if (text == null) {</span>
-<span class="fc" id="L313">      return null;</span>
+<span class="fc" id="L313">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L314" title="All 2 branches covered.">    if (text == null) {</span>
+<span class="fc" id="L315">      return null;</span>
     }
-<span class="fc bfc" id="L315" title="All 2 branches covered.">    String wanted = text.equalsIgnoreCase(&quot;CS&quot;) ? &quot;Computer Science&quot; : text;</span>
-<span class="fc bfc" id="L316" title="All 2 branches covered.">    for (String major : majors) {</span>
-<span class="fc bfc" id="L317" title="All 2 branches covered.">      if (major.equalsIgnoreCase(wanted)) {</span>
-<span class="fc" id="L318">        return major;</span>
+<span class="fc bfc" id="L317" title="All 2 branches covered.">    String wanted = text.equalsIgnoreCase(&quot;CS&quot;) ? &quot;Computer Science&quot; : text;</span>
+<span class="fc bfc" id="L318" title="All 2 branches covered.">    for (String major : majors) {</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">      if (major.equalsIgnoreCase(wanted)) {</span>
+<span class="fc" id="L320">        return major;</span>
       }
-<span class="fc" id="L320">    }</span>
-<span class="fc bfc" id="L321" title="All 2 branches covered.">    for (String major : majors) {</span>
-<span class="fc bfc" id="L322" title="All 2 branches covered.">      if (major.toLowerCase(Locale.ROOT).contains(wanted.toLowerCase(Locale.ROOT))) {</span>
-<span class="fc" id="L323">        return major;</span>
+<span class="fc" id="L322">    }</span>
+<span class="fc bfc" id="L323" title="All 2 branches covered.">    for (String major : majors) {</span>
+<span class="fc bfc" id="L324" title="All 2 branches covered.">      if (major.toLowerCase(Locale.ROOT).contains(wanted.toLowerCase(Locale.ROOT))) {</span>
+<span class="fc" id="L325">        return major;</span>
       }
-<span class="fc" id="L325">    }</span>
-<span class="fc" id="L326">    return wanted;</span>
+<span class="fc" id="L327">    }</span>
+<span class="fc" id="L328">    return wanted;</span>
   }
 
   /** &quot;U.S. Citizen&quot;, &quot;U.S. Resident&quot;, &quot;F1 (Student) Visa&quot;, &quot;J1 ...&quot; or anything else. */
   static ResidencyStatus residency(String value) {
-<span class="fc" id="L331">    String text = blankToNull(value);</span>
-<span class="fc bfc" id="L332" title="All 2 branches covered.">    if (text == null) {</span>
-<span class="fc" id="L333">      return null;</span>
+<span class="fc" id="L333">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L334" title="All 2 branches covered.">    if (text == null) {</span>
+<span class="fc" id="L335">      return null;</span>
     }
-<span class="fc" id="L335">    String lower = text.toLowerCase(Locale.ROOT);</span>
-<span class="fc bfc" id="L336" title="All 2 branches covered.">    if (lower.contains(&quot;citizen&quot;)) {</span>
-<span class="fc" id="L337">      return ResidencyStatus.US_CITIZEN;</span>
+<span class="fc" id="L337">    String lower = text.toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L338" title="All 2 branches covered.">    if (lower.contains(&quot;citizen&quot;)) {</span>
+<span class="fc" id="L339">      return ResidencyStatus.US_CITIZEN;</span>
     }
-<span class="fc bfc" id="L339" title="All 2 branches covered.">    if (lower.contains(&quot;resident&quot;)) {</span>
-<span class="fc" id="L340">      return ResidencyStatus.US_RESIDENT;</span>
+<span class="fc bfc" id="L341" title="All 2 branches covered.">    if (lower.contains(&quot;resident&quot;)) {</span>
+<span class="fc" id="L342">      return ResidencyStatus.US_RESIDENT;</span>
     }
-<span class="fc bfc" id="L342" title="All 4 branches covered.">    if (lower.contains(&quot;f1&quot;) || lower.contains(&quot;f-1&quot;)) {</span>
-<span class="fc" id="L343">      return ResidencyStatus.F1_STUDENT_VISA;</span>
+<span class="fc bfc" id="L344" title="All 4 branches covered.">    if (lower.contains(&quot;f1&quot;) || lower.contains(&quot;f-1&quot;)) {</span>
+<span class="fc" id="L345">      return ResidencyStatus.F1_STUDENT_VISA;</span>
     }
-<span class="fc bfc" id="L345" title="All 4 branches covered.">    if (lower.contains(&quot;j1&quot;) || lower.contains(&quot;j-1&quot;)) {</span>
-<span class="fc" id="L346">      return ResidencyStatus.J1_STUDENT_VISA;</span>
+<span class="fc bfc" id="L347" title="All 4 branches covered.">    if (lower.contains(&quot;j1&quot;) || lower.contains(&quot;j-1&quot;)) {</span>
+<span class="fc" id="L348">      return ResidencyStatus.J1_STUDENT_VISA;</span>
     }
-<span class="fc" id="L348">    return ResidencyStatus.OTHER;</span>
+<span class="fc" id="L350">    return ResidencyStatus.OTHER;</span>
   }
 
   /** The legacy form's own four answers, matched by their distinctive words. */
   static LanguageExamStatus languageExam(String value) {
-<span class="fc" id="L353">    String text = blankToNull(value);</span>
-<span class="fc bfc" id="L354" title="All 2 branches covered.">    if (text == null) {</span>
-<span class="fc" id="L355">      return null;</span>
+<span class="fc" id="L355">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L356" title="All 2 branches covered.">    if (text == null) {</span>
+<span class="fc" id="L357">      return null;</span>
     }
-<span class="fc" id="L357">    String lower = text.toLowerCase(Locale.ROOT);</span>
-<span class="fc bfc" id="L358" title="All 2 branches covered.">    if (lower.contains(&quot;exempt&quot;)) {</span>
-<span class="fc" id="L359">      return LanguageExamStatus.EXEMPT_US_CITIZEN;</span>
+<span class="fc" id="L359">    String lower = text.toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L360" title="All 2 branches covered.">    if (lower.contains(&quot;exempt&quot;)) {</span>
+<span class="fc" id="L361">      return LanguageExamStatus.EXEMPT_US_CITIZEN;</span>
     }
-<span class="fc bfc" id="L361" title="All 2 branches covered.">    if (lower.contains(&quot;not&quot;)) {</span>
-<span class="fc" id="L362">      return LanguageExamStatus.NOT_PASSED;</span>
+<span class="fc bfc" id="L363" title="All 2 branches covered.">    if (lower.contains(&quot;not&quot;)) {</span>
+<span class="fc" id="L364">      return LanguageExamStatus.NOT_PASSED;</span>
     }
-<span class="fc bfc" id="L364" title="All 4 branches covered.">    if (lower.contains(&quot;perm&quot;) || lower.contains(&quot;resident&quot;)) {</span>
-<span class="fc" id="L365">      return LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT;</span>
+<span class="fc bfc" id="L366" title="All 4 branches covered.">    if (lower.contains(&quot;perm&quot;) || lower.contains(&quot;resident&quot;)) {</span>
+<span class="fc" id="L367">      return LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT;</span>
     }
-<span class="fc bfc" id="L367" title="All 2 branches covered.">    if (lower.contains(&quot;pass&quot;)) {</span>
-<span class="fc" id="L368">      return LanguageExamStatus.PASSED_F1_OR_J1_VISA;</span>
+<span class="fc bfc" id="L369" title="All 2 branches covered.">    if (lower.contains(&quot;pass&quot;)) {</span>
+<span class="fc" id="L370">      return LanguageExamStatus.PASSED_F1_OR_J1_VISA;</span>
     }
-<span class="fc" id="L370">    return null;</span>
+<span class="fc" id="L372">    return null;</span>
   }
 
   static ClassLevel classLevel(String value) {
-<span class="fc" id="L374">    String text = blankToNull(value);</span>
-<span class="fc bfc" id="L375" title="All 2 branches covered.">    if (text == null) {</span>
-<span class="fc" id="L376">      return null;</span>
+<span class="fc" id="L376">    String text = blankToNull(value);</span>
+<span class="fc bfc" id="L377" title="All 2 branches covered.">    if (text == null) {</span>
+<span class="fc" id="L378">      return null;</span>
     }
-<span class="fc" id="L378">    String lower = text.toLowerCase(Locale.ROOT);</span>
-<span class="fc bfc" id="L379" title="All 2 branches covered.">    if (lower.contains(&quot;ph&quot;)) {</span>
-<span class="fc" id="L380">      return ClassLevel.PHD;</span>
+<span class="fc" id="L380">    String lower = text.toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L381" title="All 2 branches covered.">    if (lower.contains(&quot;ph&quot;)) {</span>
+<span class="fc" id="L382">      return ClassLevel.PHD;</span>
     }
-<span class="fc bfc" id="L382" title="All 4 branches covered.">    if (lower.contains(&quot;ms&quot;) || lower.contains(&quot;master&quot;)) {</span>
-<span class="fc" id="L383">      return ClassLevel.MS;</span>
+<span class="fc bfc" id="L384" title="All 4 branches covered.">    if (lower.contains(&quot;ms&quot;) || lower.contains(&quot;master&quot;)) {</span>
+<span class="fc" id="L385">      return ClassLevel.MS;</span>
     }
-<span class="fc" id="L385">    return null;</span>
+<span class="fc" id="L387">    return null;</span>
   }
 
   /** The entries of a legacy list cell: comma-separated, each colon-separated into fields. */
   static List&lt;String[]&gt; entries(String cell, int fields) {
-<span class="fc" id="L390">    List&lt;String[]&gt; parsed = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L392">    List&lt;String[]&gt; parsed = new ArrayList&lt;&gt;();</span>
     // A blank entry splits into one field, so it fails the field count like any other odd entry.
-<span class="fc bfc" id="L392" title="All 4 branches covered.">    for (String entry : cell == null ? new String[0] : cell.split(&quot;,&quot;)) {</span>
-<span class="fc" id="L393">      String[] parts = entry.split(&quot;:&quot;, -1);</span>
-<span class="fc bfc" id="L394" title="All 2 branches covered.">      if (parts.length != fields) {</span>
-<span class="fc" id="L395">        continue;</span>
+<span class="fc bfc" id="L394" title="All 4 branches covered.">    for (String entry : cell == null ? new String[0] : cell.split(&quot;,&quot;)) {</span>
+<span class="fc" id="L395">      String[] parts = entry.split(&quot;:&quot;, -1);</span>
+<span class="fc bfc" id="L396" title="All 2 branches covered.">      if (parts.length != fields) {</span>
+<span class="fc" id="L397">        continue;</span>
       }
-<span class="fc" id="L397">      String[] clean = new String[fields];</span>
-<span class="fc bfc" id="L398" title="All 2 branches covered.">      for (int i = 0; i &lt; fields; i++) {</span>
-<span class="fc" id="L399">        clean[i] = HtmlUtils.htmlUnescape(parts[i]).strip();</span>
+<span class="fc" id="L399">      String[] clean = new String[fields];</span>
+<span class="fc bfc" id="L400" title="All 2 branches covered.">      for (int i = 0; i &lt; fields; i++) {</span>
+<span class="fc" id="L401">        clean[i] = HtmlUtils.htmlUnescape(parts[i]).strip();</span>
       }
-<span class="fc" id="L401">      parsed.add(clean);</span>
+<span class="fc" id="L403">      parsed.add(clean);</span>
     }
-<span class="fc" id="L403">    return parsed;</span>
+<span class="fc" id="L405">    return parsed;</span>
   }
 
   /** &quot;130A&quot; becomes &quot;CMPSC 130A&quot;; a value that already names a department is left alone. */
   static String courseNumber(String legacy) {
-<span class="fc" id="L408">    String text = legacy.strip();</span>
-<span class="fc bfc" id="L409" title="All 2 branches covered.">    return text.matches(&quot;\\d+[A-Z]*(/[A-Z]+)?&quot;) ? COURSE_PREFIX + text : text;</span>
+<span class="fc" id="L410">    String text = legacy.strip();</span>
+<span class="fc bfc" id="L411" title="All 2 branches covered.">    return text.matches(&quot;\\d+[A-Z]*(/[A-Z]+)?&quot;) ? COURSE_PREFIX + text : text;</span>
   }
 
-<span class="fc" id="L412">  private static final Pattern COURSE_CODE_290 =</span>
-<span class="fc" id="L413">      Pattern.compile(&quot;(?:CMPSC|CS)?\\s*(29\\d[A-Z]?)\\b&quot;, Pattern.CASE_INSENSITIVE);</span>
+<span class="fc" id="L414">  private static final Pattern COURSE_CODE_290 =</span>
+<span class="fc" id="L415">      Pattern.compile(&quot;(?:CMPSC|CS)?\\s*(29\\d[A-Z]?)\\b&quot;, Pattern.CASE_INSENSITIVE);</span>
 
   /**
    * The three legacy coursework cells as rows of the new table: UCSB courses ({@code
@@ -418,73 +420,73 @@ import org.springframework.web.util.HtmlUtils;
    * 290-level seminars ({@code description:instructor:grade}), in that order.
    */
   static List&lt;PriorCoursework&gt; priorCoursework(Map&lt;String, String&gt; row) {
-<span class="fc" id="L421">    List&lt;PriorCoursework&gt; courses = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L422" title="All 2 branches covered.">    for (String[] e : entries(row.get(&quot;coursework_ucsb&quot;), 2)) {</span>
-<span class="fc bfc" id="L423" title="All 2 branches covered.">      if (e[0].isEmpty()) {</span>
-<span class="fc" id="L424">        continue;</span>
+<span class="fc" id="L423">    List&lt;PriorCoursework&gt; courses = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L424" title="All 2 branches covered.">    for (String[] e : entries(row.get(&quot;coursework_ucsb&quot;), 2)) {</span>
+<span class="fc bfc" id="L425" title="All 2 branches covered.">      if (e[0].isEmpty()) {</span>
+<span class="fc" id="L426">        continue;</span>
       }
-<span class="fc" id="L426">      courses.add(</span>
-<span class="fc" id="L427">          PriorCoursework.builder()</span>
-<span class="fc" id="L428">              .ucsbCourse(true)</span>
-<span class="fc" id="L429">              .courseNumber(courseNumber(e[0]))</span>
-<span class="fc" id="L430">              .grade(blankToNull(e[1]))</span>
-<span class="fc" id="L431">              .build());</span>
-<span class="fc" id="L432">    }</span>
-<span class="fc bfc" id="L433" title="All 2 branches covered.">    for (String[] e : entries(row.get(&quot;coursework_other&quot;), 3)) {</span>
-<span class="fc bfc" id="L434" title="All 4 branches covered.">      if (e[0].isEmpty() &amp;&amp; e[2].isEmpty()) {</span>
-<span class="fc" id="L435">        continue;</span>
+<span class="fc" id="L428">      courses.add(</span>
+<span class="fc" id="L429">          PriorCoursework.builder()</span>
+<span class="fc" id="L430">              .ucsbCourse(true)</span>
+<span class="fc" id="L431">              .courseNumber(courseNumber(e[0]))</span>
+<span class="fc" id="L432">              .grade(blankToNull(e[1]))</span>
+<span class="fc" id="L433">              .build());</span>
+<span class="fc" id="L434">    }</span>
+<span class="fc bfc" id="L435" title="All 2 branches covered.">    for (String[] e : entries(row.get(&quot;coursework_other&quot;), 3)) {</span>
+<span class="fc bfc" id="L436" title="All 4 branches covered.">      if (e[0].isEmpty() &amp;&amp; e[2].isEmpty()) {</span>
+<span class="fc" id="L437">        continue;</span>
       }
       // The legacy form asked which UCSB course it was equivalent to, not for a course number.
-<span class="fc bfc" id="L438" title="All 2 branches covered.">      String number = e[2].isEmpty() ? e[0] : &quot;%s (equivalent)&quot;.formatted(courseNumber(e[2]));</span>
-<span class="fc" id="L439">      courses.add(</span>
-<span class="fc" id="L440">          PriorCoursework.builder()</span>
-<span class="fc" id="L441">              .ucsbCourse(false)</span>
-<span class="fc bfc" id="L442" title="All 2 branches covered.">              .otherSchool(e[1].isEmpty() ? &quot;(school not given)&quot; : e[1])</span>
-<span class="fc" id="L443">              .courseNumber(number)</span>
-<span class="fc" id="L444">              .courseTitle(blankToNull(e[0]))</span>
-<span class="fc" id="L445">              .build());</span>
-<span class="fc" id="L446">    }</span>
-<span class="fc bfc" id="L447" title="All 2 branches covered.">    for (String[] e : entries(row.get(&quot;coursework_290&quot;), 3)) {</span>
-<span class="fc bfc" id="L448" title="All 2 branches covered.">      if (e[0].isEmpty()) {</span>
-<span class="fc" id="L449">        continue;</span>
+<span class="fc bfc" id="L440" title="All 2 branches covered.">      String number = e[2].isEmpty() ? e[0] : &quot;%s (equivalent)&quot;.formatted(courseNumber(e[2]));</span>
+<span class="fc" id="L441">      courses.add(</span>
+<span class="fc" id="L442">          PriorCoursework.builder()</span>
+<span class="fc" id="L443">              .ucsbCourse(false)</span>
+<span class="fc bfc" id="L444" title="All 2 branches covered.">              .otherSchool(e[1].isEmpty() ? &quot;(school not given)&quot; : e[1])</span>
+<span class="fc" id="L445">              .courseNumber(number)</span>
+<span class="fc" id="L446">              .courseTitle(blankToNull(e[0]))</span>
+<span class="fc" id="L447">              .build());</span>
+<span class="fc" id="L448">    }</span>
+<span class="fc bfc" id="L449" title="All 2 branches covered.">    for (String[] e : entries(row.get(&quot;coursework_290&quot;), 3)) {</span>
+<span class="fc bfc" id="L450" title="All 2 branches covered.">      if (e[0].isEmpty()) {</span>
+<span class="fc" id="L451">        continue;</span>
       }
-<span class="fc" id="L451">      Matcher code = COURSE_CODE_290.matcher(e[0]);</span>
-<span class="fc" id="L452">      boolean coded = code.find();</span>
+<span class="fc" id="L453">      Matcher code = COURSE_CODE_290.matcher(e[0]);</span>
+<span class="fc" id="L454">      boolean coded = code.find();</span>
       String number =
-<span class="fc bfc" id="L454" title="All 2 branches covered.">          coded ? COURSE_PREFIX + code.group(1).toUpperCase(Locale.ROOT) : &quot;CMPSC 290-level&quot;;</span>
-<span class="fc bfc" id="L455" title="All 2 branches covered.">      String title = coded ? e[0].substring(0, code.start()) + e[0].substring(code.end()) : e[0];</span>
-<span class="fc" id="L456">      title = title.replaceAll(&quot;^[\\s\\-:;,]+&quot;, &quot;&quot;).strip();</span>
-<span class="fc bfc" id="L457" title="All 2 branches covered.">      if (!e[1].isEmpty()) {</span>
-<span class="fc bfc" id="L458" title="All 2 branches covered.">        title = (title.isEmpty() ? &quot;&quot; : title + &quot; &quot;) + &quot;(%s)&quot;.formatted(e[1]);</span>
+<span class="fc bfc" id="L456" title="All 2 branches covered.">          coded ? COURSE_PREFIX + code.group(1).toUpperCase(Locale.ROOT) : &quot;CMPSC 290-level&quot;;</span>
+<span class="fc bfc" id="L457" title="All 2 branches covered.">      String title = coded ? e[0].substring(0, code.start()) + e[0].substring(code.end()) : e[0];</span>
+<span class="fc" id="L458">      title = title.replaceAll(&quot;^[\\s\\-:;,]+&quot;, &quot;&quot;).strip();</span>
+<span class="fc bfc" id="L459" title="All 2 branches covered.">      if (!e[1].isEmpty()) {</span>
+<span class="fc bfc" id="L460" title="All 2 branches covered.">        title = (title.isEmpty() ? &quot;&quot; : title + &quot; &quot;) + &quot;(%s)&quot;.formatted(e[1]);</span>
       }
-<span class="fc" id="L460">      courses.add(</span>
-<span class="fc" id="L461">          PriorCoursework.builder()</span>
-<span class="fc" id="L462">              .ucsbCourse(true)</span>
-<span class="fc" id="L463">              .courseNumber(number)</span>
-<span class="fc" id="L464">              .courseTitle(blankToNull(title))</span>
-<span class="fc" id="L465">              .grade(blankToNull(e[2]))</span>
-<span class="fc" id="L466">              .build());</span>
-<span class="fc" id="L467">    }</span>
-<span class="fc" id="L468">    return courses;</span>
+<span class="fc" id="L462">      courses.add(</span>
+<span class="fc" id="L463">          PriorCoursework.builder()</span>
+<span class="fc" id="L464">              .ucsbCourse(true)</span>
+<span class="fc" id="L465">              .courseNumber(number)</span>
+<span class="fc" id="L466">              .courseTitle(blankToNull(title))</span>
+<span class="fc" id="L467">              .grade(blankToNull(e[2]))</span>
+<span class="fc" id="L468">              .build());</span>
+<span class="fc" id="L469">    }</span>
+<span class="fc" id="L470">    return courses;</span>
   }
 
   /** &quot;130A:TA:Fall 2024&quot; entries as lines of text, one per course. */
   static String prevExperience(String cell) {
-<span class="fc" id="L473">    List&lt;String&gt; lines = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L474" title="All 2 branches covered.">    for (String[] e : entries(cell, 3)) {</span>
-<span class="fc bfc" id="L475" title="All 2 branches covered.">      if (e[0].isEmpty()) {</span>
-<span class="fc" id="L476">        continue;</span>
+<span class="fc" id="L475">    List&lt;String&gt; lines = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L476" title="All 2 branches covered.">    for (String[] e : entries(cell, 3)) {</span>
+<span class="fc bfc" id="L477" title="All 2 branches covered.">      if (e[0].isEmpty()) {</span>
+<span class="fc" id="L478">        continue;</span>
       }
-<span class="fc" id="L478">      String line = courseNumber(e[0]);</span>
-<span class="fc bfc" id="L479" title="All 2 branches covered.">      if (!e[1].isEmpty()) {</span>
-<span class="fc" id="L480">        line += &quot;: &quot; + e[1];</span>
+<span class="fc" id="L480">      String line = courseNumber(e[0]);</span>
+<span class="fc bfc" id="L481" title="All 2 branches covered.">      if (!e[1].isEmpty()) {</span>
+<span class="fc" id="L482">        line += &quot;: &quot; + e[1];</span>
       }
-<span class="fc bfc" id="L482" title="All 2 branches covered.">      if (!e[2].isEmpty()) {</span>
-<span class="fc" id="L483">        line += &quot;, &quot; + e[2];</span>
+<span class="fc bfc" id="L484" title="All 2 branches covered.">      if (!e[2].isEmpty()) {</span>
+<span class="fc" id="L485">        line += &quot;, &quot; + e[2];</span>
       }
-<span class="fc" id="L485">      lines.add(line);</span>
-<span class="fc" id="L486">    }</span>
-<span class="fc bfc" id="L487" title="All 2 branches covered.">    return lines.isEmpty() ? null : String.join(&quot;\n&quot;, lines);</span>
+<span class="fc" id="L487">      lines.add(line);</span>
+<span class="fc" id="L488">    }</span>
+<span class="fc bfc" id="L489" title="All 2 branches covered.">    return lines.isEmpty() ? null : String.join(&quot;\n&quot;, lines);</span>
   }
 
   /**
@@ -493,12 +495,12 @@ import org.springframework.web.util.HtmlUtils;
    * and &quot;C++&quot; and &quot;C#&quot; stay three topics.
    */
   static String key(String name) {
-<span class="fc" id="L496">    return name.toLowerCase(Locale.ROOT).replaceAll(&quot;[\\s/\\-_.,()&amp;:;']&quot;, &quot;&quot;);</span>
+<span class="fc" id="L498">    return name.toLowerCase(Locale.ROOT).replaceAll(&quot;[\\s/\\-_.,()&amp;:;']&quot;, &quot;&quot;);</span>
   }
 
   /** &quot;TeachingBasicsToBeginners&quot; to &quot;Teaching Basics To Beginners&quot;; &quot;C++&quot; stays &quot;C++&quot;. */
   static String prettify(String legacyTopic) {
-<span class="fc" id="L501">    return legacyTopic.replaceAll(&quot;(?&lt;=[a-z])(?=[A-Z])&quot;, &quot; &quot;);</span>
+<span class="fc" id="L503">    return legacyTopic.replaceAll(&quot;(?&lt;=[a-z])(?=[A-Z])&quot;, &quot; &quot;);</span>
   }
 
   /**
@@ -506,30 +508,30 @@ import org.springframework.web.util.HtmlUtils;
    * named as the TA topics list spells them when a topic matches, else as the legacy name reads.
    */
   static Map&lt;String, Integer&gt; knowledge(String cell, Collection&lt;String&gt; topics) {
-<span class="fc" id="L509">    Map&lt;String, String&gt; byKey = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L510" title="All 2 branches covered.">    for (String topic : topics) {</span>
-<span class="fc" id="L511">      byKey.putIfAbsent(key(topic), topic);</span>
-<span class="fc" id="L512">    }</span>
-<span class="fc" id="L513">    Map&lt;String, Integer&gt; ratings = new TreeMap&lt;&gt;();</span>
-<span class="fc bfc" id="L514" title="All 2 branches covered.">    for (String[] e : entries(cell, 2)) {</span>
+<span class="fc" id="L511">    Map&lt;String, String&gt; byKey = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L512" title="All 2 branches covered.">    for (String topic : topics) {</span>
+<span class="fc" id="L513">      byKey.putIfAbsent(key(topic), topic);</span>
+<span class="fc" id="L514">    }</span>
+<span class="fc" id="L515">    Map&lt;String, Integer&gt; ratings = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L516" title="All 2 branches covered.">    for (String[] e : entries(cell, 2)) {</span>
       int level;
       try {
-<span class="fc" id="L517">        level = Integer.parseInt(e[1]);</span>
-<span class="fc" id="L518">      } catch (NumberFormatException ex) {</span>
-<span class="fc" id="L519">        continue;</span>
-<span class="fc" id="L520">      }</span>
-<span class="fc bfc" id="L521" title="All 6 branches covered.">      if (e[0].isEmpty() || level &lt; 1 || level &gt; 5) {</span>
-<span class="fc" id="L522">        continue;</span>
+<span class="fc" id="L519">        level = Integer.parseInt(e[1]);</span>
+<span class="fc" id="L520">      } catch (NumberFormatException ex) {</span>
+<span class="fc" id="L521">        continue;</span>
+<span class="fc" id="L522">      }</span>
+<span class="fc bfc" id="L523" title="All 6 branches covered.">      if (e[0].isEmpty() || level &lt; 1 || level &gt; 5) {</span>
+<span class="fc" id="L524">        continue;</span>
       }
-<span class="fc" id="L524">      ratings.put(byKey.getOrDefault(key(e[0]), prettify(e[0])), level);</span>
-<span class="fc" id="L525">    }</span>
-<span class="fc" id="L526">    return ratings;</span>
+<span class="fc" id="L526">      ratings.put(byKey.getOrDefault(key(e[0]), prettify(e[0])), level);</span>
+<span class="fc" id="L527">    }</span>
+<span class="fc" id="L528">    return ratings;</span>
   }
 
   /** The number part of a padded course id: &quot;CMPSC 156&quot; gives &quot;156&quot;. */
   static String numberOf(String courseId) {
-<span class="fc" id="L531">    String[] parts = courseId.strip().split(&quot;\\s+&quot;);</span>
-<span class="fc" id="L532">    return parts[parts.length - 1];</span>
+<span class="fc" id="L533">    String[] parts = courseId.strip().split(&quot;\\s+&quot;);</span>
+<span class="fc" id="L534">    return parts[parts.length - 1];</span>
   }
 
   /**
@@ -539,29 +541,29 @@ import org.springframework.web.util.HtmlUtils;
    */
   static Map&lt;String, CourseInterest&gt; desiredCourses(
       String upper, String lower, Set&lt;String&gt; courseIds, List&lt;String&gt; unmatched) {
-<span class="fc" id="L542">    Map&lt;String, String&gt; byNumber = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L543" title="All 2 branches covered.">    for (String courseId : courseIds) {</span>
-<span class="fc" id="L544">      byNumber.putIfAbsent(numberOf(courseId).toUpperCase(Locale.ROOT), courseId);</span>
-<span class="fc" id="L545">    }</span>
-<span class="fc" id="L546">    Map&lt;String, CourseInterest&gt; interests = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L547" title="All 2 branches covered.">    for (String cell : new String[] {upper, lower}) {</span>
-<span class="fc bfc" id="L548" title="All 2 branches covered.">      if (cell == null) {</span>
-<span class="fc" id="L549">        continue;</span>
+<span class="fc" id="L544">    Map&lt;String, String&gt; byNumber = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L545" title="All 2 branches covered.">    for (String courseId : courseIds) {</span>
+<span class="fc" id="L546">      byNumber.putIfAbsent(numberOf(courseId).toUpperCase(Locale.ROOT), courseId);</span>
+<span class="fc" id="L547">    }</span>
+<span class="fc" id="L548">    Map&lt;String, CourseInterest&gt; interests = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L549" title="All 2 branches covered.">    for (String cell : new String[] {upper, lower}) {</span>
+<span class="fc bfc" id="L550" title="All 2 branches covered.">      if (cell == null) {</span>
+<span class="fc" id="L551">        continue;</span>
       }
-<span class="fc bfc" id="L551" title="All 2 branches covered.">      for (String number : cell.split(&quot;,&quot;)) {</span>
-<span class="fc" id="L552">        String wanted = number.strip().toUpperCase(Locale.ROOT);</span>
-<span class="fc bfc" id="L553" title="All 2 branches covered.">        if (wanted.isEmpty()) {</span>
-<span class="fc" id="L554">          continue;</span>
+<span class="fc bfc" id="L553" title="All 2 branches covered.">      for (String number : cell.split(&quot;,&quot;)) {</span>
+<span class="fc" id="L554">        String wanted = number.strip().toUpperCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L555" title="All 2 branches covered.">        if (wanted.isEmpty()) {</span>
+<span class="fc" id="L556">          continue;</span>
         }
-<span class="fc" id="L556">        String courseId = byNumber.get(wanted);</span>
-<span class="fc bfc" id="L557" title="All 2 branches covered.">        if (courseId != null) {</span>
-<span class="fc" id="L558">          interests.put(courseId, CourseInterest.ENTHUSIASTIC);</span>
-<span class="fc bfc" id="L559" title="All 2 branches covered.">        } else if (!unmatched.contains(courseNumber(wanted))) {</span>
-<span class="fc" id="L560">          unmatched.add(courseNumber(wanted));</span>
+<span class="fc" id="L558">        String courseId = byNumber.get(wanted);</span>
+<span class="fc bfc" id="L559" title="All 2 branches covered.">        if (courseId != null) {</span>
+<span class="fc" id="L560">          interests.put(courseId, CourseInterest.ENTHUSIASTIC);</span>
+<span class="fc bfc" id="L561" title="All 2 branches covered.">        } else if (!unmatched.contains(courseNumber(wanted))) {</span>
+<span class="fc" id="L562">          unmatched.add(courseNumber(wanted));</span>
         }
       }
     }
-<span class="fc" id="L564">    return interests;</span>
+<span class="fc" id="L566">    return interests;</span>
   }
 
   /**
@@ -569,49 +571,49 @@ import org.springframework.web.util.HtmlUtils;
    * for, so nothing they said is lost and they can edit it next time.
    */
   static String comments(Map&lt;String, String&gt; row, List&lt;String&gt; unmatchedCourses) {
-<span class="fc" id="L572">    List&lt;String&gt; lines = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L573">    String own = blankToNull(row.get(&quot;comments_applicant&quot;));</span>
-<span class="fc bfc" id="L574" title="All 2 branches covered.">    if (own != null) {</span>
-<span class="fc" id="L575">      lines.add(HtmlUtils.htmlUnescape(own));</span>
+<span class="fc" id="L574">    List&lt;String&gt; lines = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L575">    String own = blankToNull(row.get(&quot;comments_applicant&quot;));</span>
+<span class="fc bfc" id="L576" title="All 2 branches covered.">    if (own != null) {</span>
+<span class="fc" id="L577">      lines.add(HtmlUtils.htmlUnescape(own));</span>
     }
-<span class="fc" id="L577">    String job = blankToNull(row.get(&quot;preferred_job&quot;));</span>
-<span class="fc bfc" id="L578" title="All 2 branches covered.">    if (job != null) {</span>
-<span class="fc" id="L579">      lines.add(&quot;Preferred job: &quot; + job);</span>
+<span class="fc" id="L579">    String job = blankToNull(row.get(&quot;preferred_job&quot;));</span>
+<span class="fc bfc" id="L580" title="All 2 branches covered.">    if (job != null) {</span>
+<span class="fc" id="L581">      lines.add(&quot;Preferred job: &quot; + job);</span>
     }
-<span class="fc" id="L581">    String hours = textOrNullForZero(row.get(&quot;preferred_hours&quot;));</span>
-<span class="fc bfc" id="L582" title="All 2 branches covered.">    if (hours != null) {</span>
-<span class="fc" id="L583">      lines.add(&quot;Preferred hours per week: &quot; + hours);</span>
+<span class="fc" id="L583">    String hours = textOrNullForZero(row.get(&quot;preferred_hours&quot;));</span>
+<span class="fc bfc" id="L584" title="All 2 branches covered.">    if (hours != null) {</span>
+<span class="fc" id="L585">      lines.add(&quot;Preferred hours per week: &quot; + hours);</span>
     }
-<span class="fc bfc" id="L585" title="All 2 branches covered.">    if (!unmatchedCourses.isEmpty()) {</span>
-<span class="fc" id="L586">      lines.add(&quot;Also interested in: &quot; + String.join(&quot;, &quot;, unmatchedCourses));</span>
+<span class="fc bfc" id="L587" title="All 2 branches covered.">    if (!unmatchedCourses.isEmpty()) {</span>
+<span class="fc" id="L588">      lines.add(&quot;Also interested in: &quot; + String.join(&quot;, &quot;, unmatchedCourses));</span>
     }
-<span class="fc bfc" id="L588" title="All 2 branches covered.">    return lines.isEmpty() ? null : String.join(&quot;\n&quot;, lines);</span>
+<span class="fc bfc" id="L590" title="All 2 branches covered.">    return lines.isEmpty() ? null : String.join(&quot;\n&quot;, lines);</span>
   }
 
   /** Where the row came from and the export's bookkeeping (not must_hire), for admins only. */
   static String adminComments(Map&lt;String, String&gt; row) {
-<span class="fc" id="L593">    List&lt;String&gt; parts = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L594">    parts.add(&quot;Imported from the legacy TA application&quot;);</span>
-<span class="fc" id="L595">    String quarter = blankToNull(row.get(&quot;application_quarter&quot;));</span>
-<span class="fc bfc" id="L596" title="All 2 branches covered.">    if (quarter != null) {</span>
-<span class="fc" id="L597">      parts.add(&quot;legacy quarter &quot; + quarter);</span>
+<span class="fc" id="L595">    List&lt;String&gt; parts = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L596">    parts.add(&quot;Imported from the legacy TA application&quot;);</span>
+<span class="fc" id="L597">    String quarter = blankToNull(row.get(&quot;application_quarter&quot;));</span>
+<span class="fc bfc" id="L598" title="All 2 branches covered.">    if (quarter != null) {</span>
+<span class="fc" id="L599">      parts.add(&quot;legacy quarter &quot; + quarter);</span>
     }
-<span class="fc" id="L599">    String submitted = blankToNull(row.get(&quot;date_submitted&quot;));</span>
-<span class="fc bfc" id="L600" title="All 2 branches covered.">    if (submitted != null) {</span>
-<span class="fc" id="L601">      parts.add(&quot;submitted &quot; + submitted);</span>
+<span class="fc" id="L601">    String submitted = blankToNull(row.get(&quot;date_submitted&quot;));</span>
+<span class="fc bfc" id="L602" title="All 2 branches covered.">    if (submitted != null) {</span>
+<span class="fc" id="L603">      parts.add(&quot;submitted &quot; + submitted);</span>
     }
-<span class="fc" id="L603">    String modified = blankToNull(row.get(&quot;date_modified&quot;));</span>
-<span class="fc bfc" id="L604" title="All 2 branches covered.">    if (modified != null) {</span>
-<span class="fc" id="L605">      parts.add(&quot;last modified &quot; + modified);</span>
+<span class="fc" id="L605">    String modified = blankToNull(row.get(&quot;date_modified&quot;));</span>
+<span class="fc bfc" id="L606" title="All 2 branches covered.">    if (modified != null) {</span>
+<span class="fc" id="L607">      parts.add(&quot;last modified &quot; + modified);</span>
     }
     // The export's must_hire column is deliberately left out: it was not used in recent
     // recruitments, so it reads &quot;no&quot; even for a must-hire, which would mislead (issue #74).
-<span class="fc" id="L609">    String text = String.join(&quot;; &quot;, parts) + &quot;.&quot;;</span>
-<span class="fc" id="L610">    String reviewer = blankToNull(row.get(&quot;comments_reviewer&quot;));</span>
-<span class="fc bfc" id="L611" title="All 2 branches covered.">    if (reviewer != null) {</span>
-<span class="fc" id="L612">      text += &quot;\nReviewer comments: &quot; + HtmlUtils.htmlUnescape(reviewer);</span>
+<span class="fc" id="L611">    String text = String.join(&quot;; &quot;, parts) + &quot;.&quot;;</span>
+<span class="fc" id="L612">    String reviewer = blankToNull(row.get(&quot;comments_reviewer&quot;));</span>
+<span class="fc bfc" id="L613" title="All 2 branches covered.">    if (reviewer != null) {</span>
+<span class="fc" id="L614">      text += &quot;\nReviewer comments: &quot; + HtmlUtils.htmlUnescape(reviewer);</span>
     }
-<span class="fc" id="L614">    return text;</span>
+<span class="fc" id="L616">    return text;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
