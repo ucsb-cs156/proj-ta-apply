@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
@@ -2549,5 +2555,186 @@ describe("ApplicationForm tests", () => {
         .getByText(/required/i, { selector: "p *" })
         .compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  // ---- what is missing, beside the submit button (issue #97) ----
+
+  describe("the list of what is missing", () => {
+    /** The labels in the list, in order. */
+    const listed = () =>
+      within(screen.getByTestId("ApplicationForm-missing"))
+        .getAllByRole("button")
+        .map((button) => button.textContent);
+
+    beforeEach(() => {
+      // jsdom has no layout, so no scrollIntoView; the form's call is observed instead.
+      Element.prototype.scrollIntoView = vi.fn();
+    });
+
+    test("nothing is listed before a submit attempt", () => {
+      renderForm({ notice: noticesFixtures.taV2 });
+
+      expect(screen.queryByTestId("ApplicationForm-missing")).toBeNull();
+    });
+
+    test("an empty TA form lists everything required, in page order", async () => {
+      renderForm({ notice: noticesFixtures.taV2 });
+
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+      await screen.findByTestId("ApplicationForm-missing");
+      expect(
+        screen.getByTestId("ApplicationForm-missing-message"),
+      ).toHaveTextContent("Some data on the page is missing:");
+      expect(listed()).toEqual([
+        "Notices, Terms and Conditions",
+        "First Name",
+        "Last Name",
+        "Major",
+        "Prior Coursework",
+        "First Choice Course",
+      ]);
+      // Beside the button, not under the fields.
+      expect(
+        screen.getByTestId("ApplicationForm-submit").parentElement,
+      ).toContainElement(screen.getByTestId("ApplicationForm-missing"));
+    });
+
+    test("each entry scrolls to its control and focuses it", async () => {
+      renderForm({ notice: noticesFixtures.taV2 });
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      await screen.findByTestId("ApplicationForm-missing");
+
+      await userEvent.click(
+        screen.getByTestId("ApplicationForm-missing-major"),
+      );
+      const scrolled = Element.prototype.scrollIntoView;
+      expect(scrolled).toHaveBeenCalledTimes(1);
+      expect(scrolled.mock.instances[0]).toBe(
+        screen.getByTestId("ApplicationForm-major"),
+      );
+      expect(scrolled).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "center",
+      });
+      expect(screen.getByTestId("ApplicationForm-major")).toHaveFocus();
+
+      await userEvent.click(
+        screen.getByTestId("ApplicationForm-missing-notice-agree"),
+      );
+      expect(screen.getByTestId("ApplicationForm-notice-agree")).toHaveFocus();
+
+      await userEvent.click(
+        screen.getByTestId("ApplicationForm-missing-coursework-add-button"),
+      );
+      expect(
+        screen.getByTestId("ApplicationForm-coursework-add-button"),
+      ).toHaveFocus();
+
+      await userEvent.click(
+        screen.getByTestId("ApplicationForm-missing-firstChoiceCourse"),
+      );
+      expect(
+        screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      ).toHaveFocus();
+      expect(scrolled).toHaveBeenCalledTimes(4);
+    });
+
+    test("entries drop off as fields are filled in, and the list goes with the last", async () => {
+      renderForm({ initialContents: threeCourses });
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      await screen.findByTestId("ApplicationForm-missing");
+      expect(listed()).toEqual([
+        "First Name",
+        "Last Name",
+        "Major",
+        "First Choice Course",
+      ]);
+
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-firstName"),
+        "Ada",
+      );
+      await waitFor(() =>
+        expect(listed()).toEqual(["Last Name", "Major", "First Choice Course"]),
+      );
+
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-major"),
+        "Statistics",
+      );
+      await waitFor(() =>
+        expect(listed()).toEqual(["Last Name", "First Choice Course"]),
+      );
+
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-lastName"),
+        "Lovelace",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+        "CMPSC   156",
+      );
+      await waitFor(() =>
+        expect(screen.queryByTestId("ApplicationForm-missing")).toBeNull(),
+      );
+    });
+
+    test("with Other chosen, the Major entry points at the text box", async () => {
+      renderForm();
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-major"),
+        "Other",
+      );
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+      await userEvent.click(
+        await screen.findByTestId("ApplicationForm-missing-otherMajor"),
+      );
+      expect(screen.getByTestId("ApplicationForm-otherMajor")).toHaveFocus();
+      expect(screen.queryByTestId("ApplicationForm-missing-major")).toBeNull();
+    });
+
+    test("a ULA form lists its own required answers, including training for a first-timer", async () => {
+      renderForm({ type: "ULA" });
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-previousServiceAsUla"),
+        "0",
+      );
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+      await screen.findByTestId("ApplicationForm-missing");
+      expect(listed()).toEqual([
+        "First Name",
+        "Last Name",
+        "Major",
+        "GPA in Major",
+        "Overall GPA",
+        "Year in Program",
+        "Expected Graduation",
+        "Perm Number",
+        "BS/MS student?",
+        "Other campus job this quarter?",
+        "Prior UCSB employment?",
+        "Training commitment",
+        "Prior Coursework",
+        "First Choice Course",
+      ]);
+      await userEvent.click(
+        screen.getByTestId("ApplicationForm-missing-trainingCommitment"),
+      );
+      expect(
+        screen.getByTestId("ApplicationForm-trainingCommitment"),
+      ).toHaveFocus();
+    });
+
+    test("a blank previous-service answer is listed, and no training question with it", async () => {
+      renderForm({ type: "ULA" });
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+      await screen.findByTestId("ApplicationForm-missing");
+      expect(listed()).toContain("Quarters Previously Served as a ULA");
+      expect(listed()).not.toContain("Training commitment");
+    });
   });
 });
