@@ -127,8 +127,9 @@ public class ApplicantRecruitmentsController extends ApiController {
       summary = "The course numbers an applicant may choose from",
       description =
           "Distinct and sorted, since a course with two lectures appears twice in the recruitment."
-              + " Rows an admin removed, and rows the last Populate found stale (issue #122), are"
-              + " left out. Empty for a recruitment that does not exist.")
+              + " Rows an admin removed, rows the last Populate found stale (issue #122) and"
+              + " cancelled lectures (issue #123) are left out; a course is offered while any of"
+              + " its lectures is. Empty for a recruitment that does not exist.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/courses")
   public List<String> courseChoices(

@@ -5,6 +5,7 @@ import com.opencsv.exceptions.CsvException;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.TaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
@@ -119,8 +120,9 @@ public class LegacyApplicationCsvService {
           "Legacy TA applications can only be imported into a TA recruitment");
     }
     Set<String> courseIds = new TreeSet<>();
+    // The courses an applicant would be offered: not removed, stale or cancelled (#122, #123).
     recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()
-        .filter(c -> !c.isRemoved())
+        .filter(RecruitmentCourse::isOnOffer)
         .forEach(c -> courseIds.add(c.getCourseId()));
     List<String> topics =
         StreamSupport.stream(taTopicRepository.findAll().spliterator(), false)

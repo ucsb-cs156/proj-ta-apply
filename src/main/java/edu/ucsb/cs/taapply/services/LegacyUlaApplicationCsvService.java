@@ -9,6 +9,7 @@ import com.opencsv.exceptions.CsvException;
 import edu.ucsb.cs.taapply.controller.ApplicationsController;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.UlaInterest;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
@@ -145,8 +146,9 @@ public class LegacyUlaApplicationCsvService {
           "The ULA form's responses can only be imported into a ULA recruitment");
     }
     Set<String> courseIds = new TreeSet<>();
+    // The courses an applicant would be offered: not removed, stale or cancelled (#122, #123).
     recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()
-        .filter(c -> !c.isRemoved())
+        .filter(RecruitmentCourse::isOnOffer)
         .forEach(c -> courseIds.add(c.getCourseId()));
     List<String> majors = names(ulaMajorRepository.findAll(), m -> m.getName());
     Set<String> knownTopics = new TreeSet<>(names(ulaTopicRepository.findAll(), t -> t.getName()));

@@ -86,9 +86,16 @@ public class RecruitmentCourse {
    */
   @Builder.Default private boolean stale = false;
 
-  /** Whether applicants should see this row: neither removed by an admin nor stale. */
+  /** The status the UCSB API reports for a section that has been cancelled. */
+  public static final String CANCELLED = "cancelled";
+
+  /**
+   * Whether applicants should see this row: not removed by an admin, not stale, and not cancelled
+   * (issue #123). Cancellation is judged when reading rather than by flagging the row, so a
+   * cancellation the schedule later reverses takes effect at the next Populate with nobody's help.
+   */
   @JsonIgnore
   public boolean isOnOffer() {
-    return !removed && !stale;
+    return !removed && !stale && !CANCELLED.equals(status);
   }
 }
