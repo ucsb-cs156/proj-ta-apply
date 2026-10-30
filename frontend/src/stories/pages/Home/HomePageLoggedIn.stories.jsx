@@ -6,27 +6,23 @@ import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
-const [upcomingTa, openUla, closedTa] = recruitmentsFixtures.threeRecruitments;
+// S26 TA not yet opened; W26 ULA open; W26 TA closed on 2026-02-01.
+const three = recruitmentsFixtures.threeRecruitments;
 
 const handlers = (user, backend = {}) => [
   http.get("/api/currentUser", () => HttpResponse.json(user)),
   http.get("/api/systemInfo", () =>
     HttpResponse.json(systemInfoFixtures.showingNeither),
   ),
-  http.get("/api/recruitments/open", () =>
-    HttpResponse.json(backend.open ?? []),
-  ),
-  http.get("/api/recruitments/upcoming", () =>
-    HttpResponse.json(backend.upcoming ?? []),
-  ),
-  http.get("/api/recruitments/recentlyClosed", () =>
-    HttpResponse.json(backend.recentlyClosed ?? []),
-  ),
+  http.get("/api/admin/recruitments/all", () => HttpResponse.json(three)),
   http.get("/api/recruitments/applicable", () =>
-    HttpResponse.json(backend.applicable ?? []),
+    HttpResponse.json(backend.recruitments ?? []),
   ),
   http.get("/api/applications/mine", () =>
     HttpResponse.json(backend.applications ?? []),
+  ),
+  http.put("/api/applications/cancel", () =>
+    HttpResponse.json(applicationsFixtures.oneCancelledApplication),
   ),
 ];
 
@@ -37,34 +33,44 @@ export default {
 
 const Template = () => <HomePageLoggedIn />;
 
+/** Nothing upcoming, open or recently closed. */
 export const NothingOpen = Template.bind({});
 NothingOpen.parameters = {
   msw: { handlers: handlers(apiCurrentUserFixtures.userOnly) },
 };
 
-export const ApplicationsOpen = Template.bind({});
-ApplicationsOpen.parameters = {
+/** All three parts: an upcoming recruitment, cards to apply to, and (if old enough) past ones. */
+export const Student = Template.bind({});
+Student.parameters = {
   msw: {
     handlers: handlers(apiCurrentUserFixtures.userOnly, {
-      open: [openUla, { ...upcomingTa, id: 9 }],
+      recruitments: three,
     }),
   },
 };
 
-export const WithAnApplication = Template.bind({});
-WithAnApplication.parameters = {
+/** Applied to both current recruitments: View/Edit, View/Comment and Cancel buttons. */
+export const StudentWithApplications = Template.bind({});
+StudentWithApplications.parameters = {
   msw: {
     handlers: handlers(apiCurrentUserFixtures.userOnly, {
-      upcoming: [upcomingTa],
-      recentlyClosed: [closedTa],
-      applications: [applicationsFixtures.oneTaApplication],
-      applicable: recruitmentsFixtures.threeRecruitments,
+      recruitments: three,
+      applications: applicationsFixtures.twoApplications,
     }),
   },
 };
 
-/** An admin is not an applicant, so no dashboard at all. */
+/** An admin gets the Admin section with the recruitments table, and is a student too. */
 export const Admin = Template.bind({});
 Admin.parameters = {
-  msw: { handlers: handlers(apiCurrentUserFixtures.adminUser) },
+  msw: {
+    handlers: handlers(apiCurrentUserFixtures.adminUser, {
+      recruitments: three,
+    }),
+  },
+};
+
+export const Instructor = Template.bind({});
+Instructor.parameters = {
+  msw: { handlers: handlers(apiCurrentUserFixtures.instructorUser) },
 };

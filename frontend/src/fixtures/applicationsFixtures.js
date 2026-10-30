@@ -79,6 +79,8 @@ const applicationsFixtures = {
     trainingCommitmentExplanation: null,
     changingMajor: null,
     noticeVersionId: 1,
+    cancellationReason: null,
+    cancelledAt: null,
   },
 
   oneUlaApplication: {
@@ -140,6 +142,8 @@ const applicationsFixtures = {
     trainingCommitmentExplanation: null,
     changingMajor: false,
     noticeVersionId: 3,
+    cancellationReason: null,
+    cancelledAt: null,
   },
 };
 
@@ -165,5 +169,14 @@ applicationsFixtures.threeApplicationsIncludingATest = [
   ...applicationsFixtures.twoApplications,
   applicationsFixtures.oneTestApplication,
 ];
+
+/** Issue #107: the ULA application, cancelled by the applicant. */
+applicationsFixtures.oneCancelledApplication = {
+  ...applicationsFixtures.oneUlaApplication,
+  id: 4,
+  status: "CANCELLED",
+  cancellationReason: "Found other employment",
+  cancelledAt: "2026-02-03T04:05:00",
+};
 
 export default applicationsFixtures;

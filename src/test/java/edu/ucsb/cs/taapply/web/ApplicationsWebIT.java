@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.web;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
@@ -206,7 +207,9 @@ public class ApplicationsWebIT extends WebTestCase {
     setupRegularUser();
     goTo("/");
 
-    Locator applyLink = page.getByTestId("HomePageLoggedIn-dashboard-apply-" + recruitment.getId());
+    String card = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    assertThat(page.getByTestId(card + "applied")).containsText("No application submitted yet");
+    Locator applyLink = page.getByTestId(card + "apply");
     assertThat(applyLink).isVisible();
     applyLink.click();
 
@@ -232,15 +235,14 @@ public class ApplicationsWebIT extends WebTestCase {
 
     fillAndSubmit();
 
-    // Back on the home page, listed as pending, with the link now saying they have applied.
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-status"))
-        .containsText("PENDING");
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-applied-" + recruitment.getId()))
-        .isVisible();
+    // Back on the home page, the card now says they have applied and offers the application.
+    assertThat(page.getByTestId(card + "applied")).containsText("Application on File");
     assertThat(applyLink).not().isVisible();
+    assertThat(page.getByTestId(card + "cancel")).containsText("Cancel my Application");
 
     // And it opens for editing, with the answers that were given.
-    page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-action-edit").click();
+    assertThat(page.getByTestId(card + "view")).containsText("View/Edit my Application");
+    page.getByTestId(card + "view").click();
     assertThat(page.getByTestId("ApplicationPage-status")).containsText("PENDING");
     assertThat(page.getByTestId("ApplicationPage-firstName")).hasValue("Chris");
     assertThat(page.getByTestId("ApplicationPage-major")).hasValue("Computer Science");
@@ -274,12 +276,11 @@ public class ApplicationsWebIT extends WebTestCase {
     setupRegularUser();
     goTo("/");
 
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-open-" + ta.getId()))
-        .containsText("Applications for TA positions");
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-open-" + ula.getId()))
-        .containsText("Applications for ULA positions");
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-apply-" + ta.getId())).isVisible();
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-apply-" + ula.getId())).isVisible();
+    String cards = "HomePageLoggedIn-dashboard-current-card-";
+    assertThat(page.getByTestId(cards + ta.getId() + "-type")).containsText("TA");
+    assertThat(page.getByTestId(cards + ula.getId() + "-type")).containsText("ULA");
+    assertThat(page.getByTestId(cards + ta.getId() + "-apply")).isVisible();
+    assertThat(page.getByTestId(cards + ula.getId() + "-apply")).isVisible();
   }
 
   /** The ULA form rates topics on three levels and adds an Interests table rated 1 to 5. */
@@ -367,9 +368,9 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplyPage-submit").click();
 
     // Listed on the home page, and the answers come back when it is opened for editing.
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-type"))
-        .containsText("ULA");
-    page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-action-edit").click();
+    String ulaCard = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    assertThat(page.getByTestId(ulaCard + "applied")).containsText("Application on File");
+    page.getByTestId(ulaCard + "view").click();
     assertThat(page.getByTestId("ApplicationPage-topic-JavaScript-2")).isChecked();
     assertThat(page.getByTestId("ApplicationPage-interest-Tutoring-5")).isChecked();
     assertThat(page.getByTestId("ApplicationPage-interest-Grading-1")).isChecked();
@@ -400,11 +401,8 @@ public class ApplicationsWebIT extends WebTestCase {
     goTo("/apply/" + recruitment.getId());
     fillAndSubmit();
 
-    String row = "HomePageLoggedIn-dashboard-applications-cell-row-0-col-";
-    assertThat(page.getByTestId(row + "status")).containsText("PENDING");
-    // An applicant is not shown the Test column.
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-applications-header-testApplication"))
-        .hasCount(0);
+    String card = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    assertThat(page.getByTestId(card + "applied")).containsText("Application on File");
     Long applicationId = applicationRepository.findAll().iterator().next().getId();
 
     // Move the deadline into the past, which is what an admin editing the recruitment would do.
@@ -413,7 +411,7 @@ public class ApplicationsWebIT extends WebTestCase {
     recruitmentRepository.save(stored);
 
     page.reload();
-    page.getByTestId(row + "action-edit").click();
+    page.getByTestId(card + "view").click();
 
     // The whole form is still offered, and the comments box with it.
     assertThat(page.getByTestId("ApplicationPage-late-note")).isVisible();
@@ -433,20 +431,74 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-comments-postApplicationComments"))
         .hasValue("Finished CS 290A since.");
 
-    // Once the admin closes applications, editing is over: the button is disabled and says when.
+    // Once the admin closes applications, editing is over; for six months the comments stay live.
     stored.setApplicationStatus(ApplicationStatus.CLOSED);
     stored.setActualClosingDate(LocalDate.now());
     recruitmentRepository.save(stored);
 
     goTo("/");
-    assertThat(page.getByTestId(row + "action-edit")).isDisabled();
-    page.getByTestId(row + "action-edit-wrapper").hover();
-    assertThat(page.locator("[role=tooltip]"))
-        .containsText("Applications were closed on " + LocalDate.now() + ".");
-    page.getByTestId(row + "action-view").click();
+    assertThat(page.getByTestId(card + "applicationStatus")).containsText("CLOSED");
+    assertThat(page.getByTestId(card + "view")).containsText("View/Comment on My Application");
+    page.getByTestId(card + "view").click();
+    assertThat(page.getByTestId("ApplicationPage-comments-only")).isVisible();
+    assertThat(page.getByTestId("ApplicationPage-firstName")).not().isVisible();
+    assertThat(page.getByTestId("ApplicationPage-comments-postApplicationComments"))
+        .hasValue("Finished CS 290A since.");
+    page.getByTestId("ApplicationPage-comments-postApplicationComments").fill("And CS 290B too.");
+    page.getByTestId("ApplicationPage-comments-submit").click();
+    assertThat(page.getByText("Your comments have been saved.")).isVisible();
+
+    // Closed more than six months ago, it is a past recruitment: read only, no comment box.
+    stored.setActualClosingDate(LocalDate.now().minusMonths(7));
+    recruitmentRepository.save(stored);
+    goTo("/");
+    assertThat(page.getByTestId(card + "card")).hasCount(0);
+    page.getByTestId("HomePageLoggedIn-dashboard-past-cell-row-0-col-view-link").click();
     assertThat(page.getByTestId("ApplicationPage-view-only")).isVisible();
-    assertThat(page.getByTestId("ApplicationPage-saved-comments"))
-        .containsText("Finished CS 290A since.");
+    assertThat(page.getByTestId("ApplicationPage-comments-postApplicationComments")).hasCount(0);
+    assertThat(page.getByTestId("ApplicationPage-saved-comments")).containsText("And CS 290B too.");
+  }
+
+  /** Issue #107: an applicant cancels their application through the two-step confirmation. */
+  @Test
+  public void an_applicant_can_cancel_their_application_with_a_reason() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    fillAndSubmit();
+
+    String card = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    String modal = "HomePageLoggedIn-dashboard-cancel-";
+    page.getByTestId(card + "cancel").click();
+    assertThat(page.getByTestId(modal + "step1-body")).containsText("Are you sure?");
+    // Backing out changes nothing.
+    page.getByTestId(modal + "step1-no").click();
+    assertThat(page.getByTestId(modal + "step1")).not().isVisible();
+    assertThat(page.getByTestId(card + "applied")).containsText("Application on File");
+
+    page.getByTestId(card + "cancel").click();
+    page.getByTestId(modal + "step1-yes").click();
+    assertThat(page.getByTestId(modal + "step2-body")).containsText("not cancelled yet");
+    assertThat(page.getByTestId(modal + "step2-yes")).isDisabled();
+    page.getByTestId(modal + "reason").fill("Found other employment");
+    page.getByTestId(modal + "step2-yes").click();
+
+    assertThat(page.getByText("Your application has been cancelled.")).isVisible();
+    assertThat(page.getByTestId(card + "applied")).containsText("Application cancelled");
+    assertThat(page.getByTestId(card + "cancel")).hasCount(0);
+    assertThat(page.getByTestId(card + "apply")).hasCount(0);
+
+    // The application is final: read only, with the reason on record.
+    page.getByTestId(card + "view").click();
+    assertThat(page.getByTestId("ApplicationPage-status")).containsText("CANCELLED");
+    assertThat(page.getByTestId("ApplicationPage-view-only")).containsText("You cancelled");
+    assertThat(page.getByTestId("ApplicationPage-summary-Cancelled"))
+        .containsText("Found other employment");
+
+    Application stored = applicationRepository.findAll().iterator().next();
+    assertEquals("Found other employment", stored.getCancellationReason());
   }
 
   /** An admin reviews the applications to a recruitment and leaves comments on one (issue #49). */

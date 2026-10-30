@@ -19,6 +19,8 @@ import edu.ucsb.cs.taapply.services.ApplicationAccessService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -298,6 +300,7 @@ public class ApplicationsController extends ApiController {
       @Parameter(name = "id") @RequestParam Long id, @RequestBody ApplicationFields fields) {
 
     Application application = mine(id);
+    requireNotCancelled(application);
     Recruitment recruitment = recruitmentFor(application);
     if (!applicationAccessService.editable(recruitment)) {
       throw new ForbiddenException(
@@ -316,7 +319,8 @@ public class ApplicationsController extends ApiController {
       summary = "Update post-application comments",
       description =
           "Kept apart from the rest of the application as the place for what has changed since"
-              + " applying. Refused once the recruitment closes.")
+              + " applying. Allowed while the recruitment is open and for six months after it"
+              + " closes (issue #107).")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("/comments")
   public Application updateComments(
@@ -324,13 +328,48 @@ public class ApplicationsController extends ApiController {
       @Parameter(name = "postApplicationComments") @RequestParam String postApplicationComments) {
 
     Application application = mine(id);
-    if (!applicationAccessService.commentable(recruitmentFor(application))) {
-      throw new ForbiddenException("This recruitment is closed");
+    requireNotCancelled(application);
+    if (!applicationAccessService.commentable(recruitmentFor(application), LocalDate.now())) {
+      throw new ForbiddenException("This recruitment closed more than six months ago");
     }
 
     application.setPostApplicationComments(postApplicationComments);
     applicationRepository.save(application);
     return forApplicant(application);
+  }
+
+  @Operation(
+      summary = "Cancel an application",
+      description =
+          "Marks the applicant's own application CANCELLED with the reason they gave (issue #107)."
+              + " Final: a cancelled application cannot be edited, commented on or un-cancelled,"
+              + " and the applicant cannot apply to that recruitment again.")
+  @PreAuthorize("hasRole('ROLE_USER')")
+  @PutMapping("/cancel")
+  public Application cancelApplication(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "reason") @RequestParam String reason) {
+
+    Application application = mine(id);
+    requireNotCancelled(application);
+    String why = blankToNull(reason);
+    if (why == null) {
+      throw new IllegalArgumentException(
+          "Please give a brief reason for cancelling your application");
+    }
+
+    application.setStatus(ApplicationReviewStatus.CANCELLED);
+    application.setCancellationReason(why);
+    application.setCancelledAt(LocalDateTime.now());
+    applicationRepository.save(application);
+    return forApplicant(application);
+  }
+
+  /** A cancelled application is final: nothing about it may change. */
+  private static void requireNotCancelled(Application application) {
+    if (application.getStatus() == ApplicationReviewStatus.CANCELLED) {
+      throw new ForbiddenException("This application was cancelled");
+    }
   }
 
   /**

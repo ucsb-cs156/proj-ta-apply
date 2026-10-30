@@ -117,6 +117,8 @@ describe("ApplicationPage tests", () => {
   });
 
   test("a closed application's summary shows the agreed notice read-only", async () => {
+    // Closed on 2026-02-01: more than six months before this (issue #107).
+    vi.setSystemTime(new Date(2026, 9, 1, 12, 0, 0));
     vi.setSystemTime(new Date(2026, 5, 1, 12, 0, 0));
     axiosMock
       .onGet("/api/recruitments/applicable")
@@ -296,9 +298,85 @@ describe("ApplicationPage tests", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/");
   });
 
+  // ---- comments only: closed within the last six months (issue #107) ----
+
+  test("for six months after closing only the comments form is offered", async () => {
+    // The closed TA (id 1) closed on 2026-02-01; the clock is 2026-01-10.
+    axiosMock
+      .onGet("/api/applications")
+      .reply(200, { ...application, recruitmentId: 1 });
+    renderPage(1);
+
+    expect(
+      await screen.findByTestId("ApplicationPage-comments-only"),
+    ).toHaveTextContent(
+      "Applications are closed, so this application can no longer be edited. You can still add comments below for six months after the closing date.",
+    );
+    expect(
+      screen.getByTestId("ApplicationPage-comments-postApplicationComments"),
+    ).toHaveValue("I have since finished CS 130A.");
+    // The rest is shown back, but not as a form.
+    expect(screen.queryByTestId("ApplicationPage-firstName")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-late")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-view-only")).toBeNull();
+    expect(
+      screen.getByTestId("ApplicationPage-summary-Major"),
+    ).toHaveTextContent("Computer Science");
+  });
+
+  test("saving comments on a recently closed application sends a PUT", async () => {
+    axiosMock
+      .onGet("/api/applications")
+      .reply(200, { ...application, recruitmentId: 1 });
+    axiosMock.onPut("/api/applications/comments").reply(200, application);
+    renderPage(1);
+
+    const box = await screen.findByTestId(
+      "ApplicationPage-comments-postApplicationComments",
+    );
+    await userEvent.clear(box);
+    await userEvent.type(box, "Graduated early.");
+    await userEvent.click(
+      screen.getByTestId("ApplicationPage-comments-submit"),
+    );
+
+    await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
+    expect(axiosMock.history.put[0].params).toEqual({
+      id: "1",
+      postApplicationComments: "Graduated early.",
+    });
+  });
+
+  // ---- cancelled (issue #107) ----
+
+  test("a cancelled application is read only whatever its recruitment is doing", async () => {
+    axiosMock
+      .onGet("/api/applications")
+      .reply(200, applicationsFixtures.oneCancelledApplication);
+    renderPage(4);
+
+    expect(
+      await screen.findByTestId("ApplicationPage-view-only"),
+    ).toHaveTextContent(
+      "You cancelled this application, so it can no longer be changed.",
+    );
+    expect(screen.getByTestId("ApplicationPage-status")).toHaveTextContent(
+      "Status: CANCELLED",
+    );
+    expect(screen.queryByTestId("ApplicationPage-firstName")).toBeNull();
+    expect(
+      screen.queryByTestId("ApplicationPage-comments-postApplicationComments"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("ApplicationPage-summary-Cancelled"),
+    ).toHaveTextContent("Found other employment");
+  });
+
   // ---- view only ----
 
   test("a closed recruitment leaves nothing to change", async () => {
+    // Closed on 2026-02-01: more than six months before this (issue #107).
+    vi.setSystemTime(new Date(2026, 9, 1, 12, 0, 0));
     axiosMock.onGet("/api/applications").reply(200, {
       ...applicationsFixtures.oneTaApplication,
       recruitmentId: 1,
@@ -320,6 +398,8 @@ describe("ApplicationPage tests", () => {
   });
 
   test("a closed application shows any comments that were saved", async () => {
+    // Closed on 2026-02-01: more than six months before this (issue #107).
+    vi.setSystemTime(new Date(2026, 9, 1, 12, 0, 0));
     axiosMock
       .onGet("/api/applications")
       .reply(200, { ...application, recruitmentId: 1 });
@@ -332,6 +412,8 @@ describe("ApplicationPage tests", () => {
   });
 
   test("a closed application with no comments shows none", async () => {
+    // Closed on 2026-02-01: more than six months before this (issue #107).
+    vi.setSystemTime(new Date(2026, 9, 1, 12, 0, 0));
     axiosMock.onGet("/api/applications").reply(200, {
       ...application,
       recruitmentId: 1,

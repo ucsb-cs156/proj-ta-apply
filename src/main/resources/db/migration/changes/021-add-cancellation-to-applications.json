@@ -1,0 +1,30 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "021-add-cancellation-to-applications",
+        "author": "pc",
+        "comment": "An applicant may cancel their application, giving a reason (issue #107).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "applications", "columnName": "cancellation_reason" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [
+                { "column": { "name": "cancellation_reason", "type": "VARCHAR(4000)" } },
+                { "column": { "name": "cancelled_at", "type": "TIMESTAMP" } }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

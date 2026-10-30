@@ -1,11 +1,13 @@
 package edu.ucsb.cs.taapply.enums;
 
 /**
- * Where an application stands. Everything is {@code PENDING} in iteration 4: reviewing and hiring
- * are a later increment, and nothing yet moves an application off this value.
+ * Where an application stands. Reviewing and hiring move it from {@code PENDING} to {@code HIRED}
+ * or {@code NOT_HIRED}; the applicant themself may move it to {@code CANCELLED} (issue #107), which
+ * is final.
  */
 public enum ApplicationReviewStatus {
   PENDING,
   HIRED,
-  NOT_HIRED
+  NOT_HIRED,
+  CANCELLED
 }

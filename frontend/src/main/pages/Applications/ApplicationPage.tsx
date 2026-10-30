@@ -137,7 +137,9 @@ export default function ApplicationPage(): React.JSX.Element {
     ["/api/applications", "/api/applications/mine"],
   );
 
-  const phase = phaseOf(recruitment);
+  // A cancelled application is final, whatever its recruitment is doing (issue #107).
+  const phase =
+    application?.status === "CANCELLED" ? "VIEW_ONLY" : phaseOf(recruitment);
 
   return (
     <BasicLayout>
@@ -194,11 +196,34 @@ export default function ApplicationPage(): React.JSX.Element {
               </div>
             )}
 
+            {/* Closed within the last six months: the comments stay live (issue #107). */}
+            {phase === "COMMENTS_ONLY" && (
+              <>
+                <p data-testid="ApplicationPage-comments-only">
+                  Applications are closed, so this application can no longer be
+                  edited. You can still add comments below for six months after
+                  the closing date.
+                </p>
+                <PostApplicationCommentsForm
+                  initialContents={application.postApplicationComments}
+                  submitAction={(data) => commentsMutation.mutate(data)}
+                  testIdPrefix="ApplicationPage-comments"
+                />
+                <ApplicationSummary
+                  application={application}
+                  type={recruitment?.type ?? "TA"}
+                  notice={agreedNotice}
+                  testIdPrefix="ApplicationPage-summary"
+                />
+              </>
+            )}
+
             {phase === "VIEW_ONLY" && (
               <>
                 <p data-testid="ApplicationPage-view-only">
-                  This recruitment is closed, so your application can no longer
-                  be changed.
+                  {application.status === "CANCELLED"
+                    ? "You cancelled this application, so it can no longer be changed."
+                    : "This recruitment is closed, so your application can no longer be changed."}
                 </p>
                 {application.postApplicationComments && (
                   <p data-testid="ApplicationPage-saved-comments">

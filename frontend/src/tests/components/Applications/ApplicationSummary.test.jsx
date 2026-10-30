@@ -603,4 +603,36 @@ describe("ApplicationSummary tests", () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
+
+  /** Issue #107: a cancelled application says so first, with when and why. */
+  test("a cancelled application leads with the cancellation", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneCancelledApplication}
+        type="ULA"
+      />,
+    );
+
+    const row = screen.getByTestId("ApplicationSummary-Cancelled");
+    expect(row).toHaveTextContent("Found other employment");
+    expect(row).toHaveTextContent(
+      new Date("2026-02-03T04:05:00").toLocaleString(),
+    );
+    // It comes before everything else.
+    expect(
+      row.compareDocumentPosition(
+        screen.getByTestId("ApplicationSummary-Name"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("an application that was not cancelled has no such row", () => {
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneUlaApplication}
+        type="ULA"
+      />,
+    );
+    expect(screen.queryByTestId("ApplicationSummary-Cancelled")).toBeNull();
+  });
 });
