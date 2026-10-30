@@ -68,7 +68,9 @@ public class HomePageWebIT extends WebTestCase {
     assertThat(page.getByTestId("HomePageLoggedIn-admin")).isVisible();
     assertThat(page.getByTestId("HomePageLoggedIn-admin")).containsText("Admin");
     // The recruitments table, empty here: just its headings.
-    assertThat(page.getByTestId("HomePageLoggedIn-admin-recruitments")).isVisible();
+    // Issue #141: the whole recruitments dashboard, create button and all.
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-heading")).hasText("Recruitments");
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-create-button")).isVisible();
     assertThat(page.getByTestId("HomePageLoggedIn-student")).isVisible();
     assertThat(page.getByTestId("HomePageLoggedIn-student").locator("h2")).hasText("Student");
     assertThat(page.getByTestId("HomePageLoggedIn-instructor")).not().isVisible();

@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router";
 import RecruitmentApplicationsPage from "main/pages/Admin/RecruitmentApplicationsPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -16,6 +17,9 @@ const common = [
   ),
   http.get("/api/admin/recruitments/all", () =>
     HttpResponse.json(recruitmentsFixtures.threeRecruitments),
+  ),
+  http.get("/api/admin/recruitmentaudittrail/all", () =>
+    HttpResponse.json(recruitmentAuditTrailFixtures.onePage),
   ),
 ];
 

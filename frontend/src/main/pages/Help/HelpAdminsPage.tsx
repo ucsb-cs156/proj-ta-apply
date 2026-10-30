@@ -33,8 +33,9 @@ export default function HelpAdminsPage(): React.JSX.Element {
           The flow of a recruitment
         </h2>
         <p>
-          Everything on the Admin menu serves one cycle, repeated each quarter
-          for TAs and again for ULAs:
+          Everything on the Admin menu, and the Recruitments section of your
+          home page, serves one cycle, repeated each quarter for TAs and again
+          for ULAs:
         </p>
         <ol data-testid="HelpAdminsPage-flow">
           <li>
@@ -45,11 +46,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <strong>ULA App Settings</strong>.
           </li>
           <li>
-            <strong>Each quarter:</strong> on <strong>Recruitments</strong>,
-            create a recruitment for the quarter and type. Its course list is
-            filled automatically from the quarter&apos;s schedule; check it with{" "}
-            <em>Courses</em>, try the form with <em>Test Application</em>, then{" "}
-            <em>Open Applications</em>.
+            <strong>Each quarter:</strong> under <strong>Recruitments</strong>{" "}
+            on your home page, create a recruitment for the quarter and type.
+            Its course list is filled automatically from the quarter&apos;s
+            schedule; check it with <em>Courses</em>, try the form with{" "}
+            <em>Test Application</em>, then <em>Open Applications</em>.
           </li>
           <li>
             <strong>While open:</strong> applicants apply and edit until the
@@ -66,7 +67,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
         </ol>
 
         <h2 className="my-3 h4" id="menu">
-          The Admin and Developer menus
+          The Admin and Developer menus, and the home page
         </h2>
         <Table striped bordered size="sm" data-testid="HelpAdminsPage-menu">
           <thead>
@@ -157,14 +158,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Recruitments
         </h2>
         <p>
-          <Link to="/admin/recruitments">Recruitments</Link> is where each
-          hiring round is run. <em>Create New Recruitment</em> asks for a
-          quarter, a type (TA or ULA), a tentative opening date and a primary
-          consideration date; only one recruitment of each type may exist per
-          quarter. Creating one launches the job that fills its course list, so
-          the list is there without a second step. Each recruitment is a card,
-          newest quarter first, showing its status, dates and how many
-          applications it has, with these buttons:
+          <strong>Recruitments</strong>, on <Link to="/">your home page</Link>,
+          is where each hiring round is run (issue #141 moved it there from the
+          Admin menu). <em>Create New Recruitment</em> asks for a quarter, a
+          type (TA or ULA), a tentative opening date and a primary consideration
+          date; only one recruitment of each type may exist per quarter.
+          Creating one launches the job that fills its course list, so the list
+          is there without a second step. Each recruitment is a card, newest
+          quarter first, showing its status, dates and how many applications it
+          has, with these buttons:
         </p>
         <ul data-testid="HelpAdminsPage-recruitment-buttons">
           <li>

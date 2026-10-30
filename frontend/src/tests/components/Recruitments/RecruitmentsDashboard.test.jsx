@@ -6,7 +6,7 @@ import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 import { vi } from "vitest";
 
-import RecruitmentsIndexPage from "main/pages/Admin/RecruitmentsIndexPage";
+import RecruitmentsDashboard from "main/components/Recruitments/RecruitmentsDashboard";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
@@ -21,17 +21,17 @@ vi.mock("react-toastify", async (importOriginal) => {
 
 const axiosMock = new AxiosMockAdapter(axios);
 
-function renderPage() {
+function renderDashboard() {
   return render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
-        <RecruitmentsIndexPage />
+        <RecruitmentsDashboard />
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
-describe("RecruitmentsIndexPage tests", () => {
+describe("RecruitmentsDashboard tests", () => {
   beforeEach(() => {
     localStorage.clear();
     mockToast.mockClear();
@@ -56,11 +56,15 @@ describe("RecruitmentsIndexPage tests", () => {
   });
 
   test("renders the heading, the explanation and the recruitments with their counts", async () => {
-    renderPage();
+    renderDashboard();
 
-    expect(await screen.findByText("Recruitments")).toBeInTheDocument();
+    // Issue #141: an h3, since it sits under the home page's Admin h2.
+    const heading = await screen.findByTestId("RecruitmentsDashboard-heading");
+    expect(heading).toHaveTextContent("Recruitments");
+    expect(heading.tagName).toBe("H3");
+    expect(heading).toHaveClass("h4");
     // Issue #108: the new explanation, in three paragraphs.
-    const intro = screen.getByTestId("RecruitmentsIndexPage-intro");
+    const intro = screen.getByTestId("RecruitmentsDashboard-intro");
     expect(
       Array.from(intro.querySelectorAll("p")).map((p) => p.textContent),
     ).toEqual([
@@ -69,28 +73,47 @@ describe("RecruitmentsIndexPage tests", () => {
       "Recruitments are automatically populated with the undergraduate courses offered in the specified quarter; the list of courses can then be manually adjusted using the Courses button.",
     ]);
     expect(
-      await screen.findByTestId("RecruitmentsIndexPage-card-0-quarter"),
+      await screen.findByTestId("RecruitmentsDashboard-card-0-quarter"),
     ).toHaveTextContent("S26");
     // Card 1 is W26 TA, id 1, with 15 applications.
     await waitFor(() =>
       expect(
-        screen.getByTestId("RecruitmentsIndexPage-card-1-applications"),
+        screen.getByTestId("RecruitmentsDashboard-card-1-applications"),
       ).toHaveTextContent("15 applications"),
     );
     // The form is behind a button, not on the page.
     expect(screen.queryByTestId("RecruitmentForm-submit")).toBeNull();
     expect(
-      screen.getByTestId("RecruitmentsIndexPage-create-button"),
+      screen.getByTestId("RecruitmentsDashboard-create-button"),
     ).toHaveTextContent("Create New Recruitment");
   });
 
-  test("creating a recruitment posts the form from its modal, toasts and closes it", async () => {
-    renderPage();
-    await userEvent.click(
-      await screen.findByTestId("RecruitmentsIndexPage-create-button"),
+  test("the test id prefix names every part", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <RecruitmentsDashboard testIdPrefix="Home-admin" />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
     expect(
-      await screen.findByTestId("RecruitmentsIndexPage-create-modal"),
+      await screen.findByTestId("Home-admin-dashboard"),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("Home-admin-heading")).toBeInTheDocument();
+    expect(screen.getByTestId("Home-admin-intro")).toBeInTheDocument();
+    expect(screen.getByTestId("Home-admin-create-button")).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("Home-admin-card-0-quarter"),
+    ).toHaveTextContent("S26");
+  });
+
+  test("creating a recruitment posts the form from its modal, toasts and closes it", async () => {
+    renderDashboard();
+    await userEvent.click(
+      await screen.findByTestId("RecruitmentsDashboard-create-button"),
+    );
+    expect(
+      await screen.findByTestId("RecruitmentsDashboard-create-modal"),
     ).toHaveTextContent("Create New Recruitment");
     await screen.findByTestId("RecruitmentForm-submit");
 
@@ -119,18 +142,18 @@ describe("RecruitmentsIndexPage tests", () => {
     expect(mockToast.mock.calls[0][0]).toMatch(/Recruitment created/);
     await waitFor(() =>
       expect(
-        screen.queryByTestId("RecruitmentsIndexPage-create-modal"),
+        screen.queryByTestId("RecruitmentsDashboard-create-modal"),
       ).toBeNull(),
     );
   });
 
   test("the create modal is centred and its close button dismisses it", async () => {
-    renderPage();
+    renderDashboard();
     await userEvent.click(
-      await screen.findByTestId("RecruitmentsIndexPage-create-button"),
+      await screen.findByTestId("RecruitmentsDashboard-create-button"),
     );
     const modal = await screen.findByTestId(
-      "RecruitmentsIndexPage-create-modal",
+      "RecruitmentsDashboard-create-modal",
     );
     // The only dialog open at this point is the create modal's.
     expect(document.querySelector(".modal-dialog")).toHaveClass(
@@ -141,31 +164,31 @@ describe("RecruitmentsIndexPage tests", () => {
 
     await waitFor(() =>
       expect(
-        screen.queryByTestId("RecruitmentsIndexPage-create-modal"),
+        screen.queryByTestId("RecruitmentsDashboard-create-modal"),
       ).toBeNull(),
     );
     expect(axiosMock.history.post.length).toBe(0);
   });
 
   test("Cancel closes the create modal without posting", async () => {
-    renderPage();
+    renderDashboard();
     await userEvent.click(
-      await screen.findByTestId("RecruitmentsIndexPage-create-button"),
+      await screen.findByTestId("RecruitmentsDashboard-create-button"),
     );
     await userEvent.click(await screen.findByTestId("RecruitmentForm-cancel"));
 
     await waitFor(() =>
       expect(
-        screen.queryByTestId("RecruitmentsIndexPage-create-modal"),
+        screen.queryByTestId("RecruitmentsDashboard-create-modal"),
       ).toBeNull(),
     );
     expect(axiosMock.history.post.length).toBe(0);
   });
 
   test("the form will not submit without the required dates", async () => {
-    renderPage();
+    renderDashboard();
     await userEvent.click(
-      await screen.findByTestId("RecruitmentsIndexPage-create-button"),
+      await screen.findByTestId("RecruitmentsDashboard-create-button"),
     );
     await screen.findByTestId("RecruitmentForm-submit");
 
@@ -178,11 +201,11 @@ describe("RecruitmentsIndexPage tests", () => {
   });
 
   test("Delete asks for confirmation and deletes nothing yet", async () => {
-    renderPage();
-    await screen.findByTestId("RecruitmentsIndexPage-card-0-delete-button");
+    renderDashboard();
+    await screen.findByTestId("RecruitmentsDashboard-card-0-delete-button");
 
     await userEvent.click(
-      screen.getByTestId("RecruitmentsIndexPage-card-0-delete-button"),
+      screen.getByTestId("RecruitmentsDashboard-card-0-delete-button"),
     );
 
     expect(
@@ -202,15 +225,15 @@ describe("RecruitmentsIndexPage tests", () => {
   });
 
   test("the delete warning names how many applications are on file", async () => {
-    renderPage();
+    renderDashboard();
     // Card 1 is W26 TA, id 1, with 15 applications; card 2 is W26 ULA, id 2, with 1.
     await waitFor(() =>
       expect(
-        screen.getByTestId("RecruitmentsIndexPage-card-1-applications"),
+        screen.getByTestId("RecruitmentsDashboard-card-1-applications"),
       ).toHaveTextContent("15 applications"),
     );
     await userEvent.click(
-      screen.getByTestId("RecruitmentsIndexPage-card-1-delete-button"),
+      screen.getByTestId("RecruitmentsDashboard-card-1-delete-button"),
     );
     expect(
       await screen.findByTestId("RecruitmentDeleteModal-body"),
@@ -221,7 +244,7 @@ describe("RecruitmentsIndexPage tests", () => {
     );
 
     await userEvent.click(
-      screen.getByTestId("RecruitmentsIndexPage-card-2-delete-button"),
+      screen.getByTestId("RecruitmentsDashboard-card-2-delete-button"),
     );
     expect(
       await screen.findByTestId("RecruitmentDeleteModal-body"),
@@ -229,11 +252,11 @@ describe("RecruitmentsIndexPage tests", () => {
   });
 
   test("confirming the modal deletes that recruitment", async () => {
-    renderPage();
-    await screen.findByTestId("RecruitmentsIndexPage-card-1-delete-button");
+    renderDashboard();
+    await screen.findByTestId("RecruitmentsDashboard-card-1-delete-button");
 
     await userEvent.click(
-      screen.getByTestId("RecruitmentsIndexPage-card-1-delete-button"),
+      screen.getByTestId("RecruitmentsDashboard-card-1-delete-button"),
     );
     await userEvent.click(
       await screen.findByTestId("RecruitmentDeleteModal-confirm"),
@@ -245,11 +268,11 @@ describe("RecruitmentsIndexPage tests", () => {
   });
 
   test("cancelling the modal deletes nothing", async () => {
-    renderPage();
-    await screen.findByTestId("RecruitmentsIndexPage-card-0-delete-button");
+    renderDashboard();
+    await screen.findByTestId("RecruitmentsDashboard-card-0-delete-button");
 
     await userEvent.click(
-      screen.getByTestId("RecruitmentsIndexPage-card-0-delete-button"),
+      screen.getByTestId("RecruitmentsDashboard-card-0-delete-button"),
     );
     await userEvent.click(
       await screen.findByTestId("RecruitmentDeleteModal-cancel"),
@@ -269,9 +292,9 @@ describe("RecruitmentsIndexPage tests", () => {
       sourceRepo: "",
     });
 
-    renderPage();
+    renderDashboard();
     await userEvent.click(
-      await screen.findByTestId("RecruitmentsIndexPage-create-button"),
+      await screen.findByTestId("RecruitmentsDashboard-create-button"),
     );
 
     expect(

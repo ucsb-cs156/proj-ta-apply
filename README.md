@@ -49,6 +49,19 @@ The app is available at <http://localhost:8080>. Use port **8080** (not 3000) so
 mvn test
 ```
 
+### Frontend type check
+
+```bash
+cd frontend
+npx tsc -b
+```
+
+This is the type check `npm run build` performs. A plain `npx tsc --noEmit` is a no-op here:
+`frontend/tsconfig.json` is a solution-style file whose `files` list is empty, so it checks
+nothing and always exits 0. In CI the same `tsc -b` runs as a fail-fast step right after
+`npm ci` in the frontend coverage, mutation-testing and eslint workflows, turned on by the
+`enable_typescript: true` input those workflows are called with.
+
 ### Integration tests (Playwright + WireMock)
 
 Integration tests start a real Spring Boot server on port 8080, mock Google OAuth via WireMock

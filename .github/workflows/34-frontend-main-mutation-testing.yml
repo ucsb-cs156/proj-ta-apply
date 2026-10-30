@@ -12,5 +12,7 @@ on:
 jobs:
   call-frontend-main-mutation-testing:
     uses: ucsb-cs156/workflows/.github/workflows/34-frontend-main-mutation-testing.yml@main
+    with:
+      enable_typescript: true
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
