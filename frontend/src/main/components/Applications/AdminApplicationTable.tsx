@@ -5,6 +5,7 @@ import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import {
   adminApplicationEditPath,
+  adminApplicationPath,
   submittedText,
 } from "main/utils/adminApplications";
 
@@ -22,9 +23,21 @@ const show = (value: unknown): string =>
   value === null || value === undefined ? "" : String(value);
 
 /**
+ * A heading on two lines, so the column is no wider than its dates (issue #109). The space before
+ * the break keeps the heading's text ("Expected Graduation") whole for screen readers and tests.
+ */
+const stacked = (top: string, bottom: string): React.JSX.Element => (
+  <>
+    {top} <br />
+    {bottom}
+  </>
+);
+
+/**
  * An admin's overview of the applications to one recruitment: a few columns per application, with
- * the id linking to the full read-only application. Test applications an admin entered are listed
- * too, marked as such, so the admin can tell them from the real ones.
+ * the id and a View button linking to the full read-only application and an Edit button to the
+ * admin's edit form. Test applications an admin entered are listed too, marked as such, so the
+ * admin can tell them from the real ones.
  */
 export default function AdminApplicationTable({
   applications,
@@ -45,7 +58,7 @@ export default function AdminApplicationTable({
           meta: shrinkToContent,
         }
       : {
-          header: "Expected Graduation",
+          header: stacked("Expected", "Graduation"),
           id: "graduationDate",
           accessorFn: (application: Application) =>
             show(application.graduationDate),
@@ -63,7 +76,7 @@ export default function AdminApplicationTable({
         return (
           <>
             <Link
-              to={`/admin/applications/${application.id}`}
+              to={adminApplicationPath(application.id)}
               data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-id-link`}
             >
               {application.id}
@@ -102,19 +115,28 @@ export default function AdminApplicationTable({
       accessorFn: (application: Application) => show(application.major),
     },
     typeColumn,
+    // The email, in place of the two course choices (issue #109): the choices are on the
+    // application itself, while the email is how an admin finds or contacts the applicant.
     {
-      header: "First Choice",
-      id: "firstChoiceCourse",
-      accessorFn: (application: Application) =>
-        show(application.firstChoiceCourse),
+      header: "Email",
+      id: "email",
+      accessorFn: (application: Application) => show(application.email),
       meta: shrinkToContent,
     },
     {
-      header: "Second Choice",
-      id: "secondChoiceCourse",
-      accessorFn: (application: Application) =>
-        show(application.secondChoiceCourse),
+      header: "View",
+      id: "view",
+      enableSorting: false,
       meta: shrinkToContent,
+      cell: ({ cell }: { cell: Cell<Application, unknown> }) => (
+        <Link
+          className="btn btn-outline-primary btn-sm"
+          to={adminApplicationPath(cell.row.original.id)}
+          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-view-button`}
+        >
+          View
+        </Link>
+      ),
     },
     {
       header: "Edit",

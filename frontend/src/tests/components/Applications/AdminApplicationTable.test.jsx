@@ -30,10 +30,25 @@ describe("AdminApplicationTable tests", () => {
       "Name",
       "Major",
       "Level",
-      "First Choice",
-      "Second Choice",
+      "Email",
+      "View",
       "Edit",
     ]);
+    // Issue #109: the two course choices gave way to the email.
+    expect(screen.queryByText("First Choice")).toBeNull();
+    expect(screen.queryByText("Second Choice")).toBeNull();
+  });
+
+  /** Issue #109: a read-only view beside the edit form. */
+  test("each row has a View button leading to the admin's read-only view", () => {
+    renderTable();
+
+    const button = screen.getByTestId(
+      "AdminApplicationTable-cell-row-0-col-view-button",
+    );
+    expect(button).toHaveTextContent("View");
+    expect(button).toHaveAttribute("href", `/admin/applications/${ta.id}`);
+    expect(button).toHaveClass("btn", "btn-outline-primary", "btn-sm");
   });
 
   test("each row has an Edit button leading to the admin's edit form", () => {
@@ -58,13 +73,19 @@ describe("AdminApplicationTable tests", () => {
       "Name",
       "Major",
       "Expected Graduation",
-      "First Choice",
-      "Second Choice",
+      "Email",
+      "View",
       "Edit",
     ]);
     expect(
       screen.getByTestId("AdminApplicationTable-cell-row-0-col-graduationDate"),
     ).toHaveTextContent(ula.graduationDate);
+    // Issue #109: the heading is stacked on two lines so the column stays narrow.
+    const heading = screen
+      .getAllByRole("columnheader")
+      .find((th) => th.textContent === "Expected Graduation");
+    expect(heading.querySelector("br")).not.toBeNull();
+    expect(heading.innerHTML).toContain("Expected <br>Graduation");
   });
 
   test("the id links to the admin's view of that application", () => {
@@ -81,7 +102,7 @@ describe("AdminApplicationTable tests", () => {
     ).toBeNull();
   });
 
-  test("shows the submission time, full name, major, level and the two choices", () => {
+  test("shows the submission time, full name, major, level and email", () => {
     renderTable({
       applications: [{ ...ta, middleName: "M", classLevel: "PHD" }],
     });
@@ -98,17 +119,9 @@ describe("AdminApplicationTable tests", () => {
     expect(
       screen.getByTestId("AdminApplicationTable-cell-row-0-col-classLevel"),
     ).toHaveTextContent("PhD");
-    // The padded course ids are kept as stored, so compare the raw text.
     expect(
-      screen.getByTestId(
-        "AdminApplicationTable-cell-row-0-col-firstChoiceCourse",
-      ).textContent,
-    ).toBe(ta.firstChoiceCourse);
-    expect(
-      screen.getByTestId(
-        "AdminApplicationTable-cell-row-0-col-secondChoiceCourse",
-      ).textContent,
-    ).toBe(ta.secondChoiceCourse);
+      screen.getByTestId("AdminApplicationTable-cell-row-0-col-email"),
+    ).toHaveTextContent(ta.email);
   });
 
   test("MS is spelled out and an unknown or missing level is blank", () => {
@@ -140,8 +153,7 @@ describe("AdminApplicationTable tests", () => {
           ...ta,
           middleName: null,
           major: null,
-          firstChoiceCourse: null,
-          secondChoiceCourse: null,
+          email: null,
           submittedAt: null,
         },
         // An answer that was never sent at all reads the same as a null one.
@@ -167,14 +179,8 @@ describe("AdminApplicationTable tests", () => {
         .textContent,
     ).toBe("");
     expect(
-      screen.getByTestId(
-        "AdminApplicationTable-cell-row-0-col-firstChoiceCourse",
-      ).textContent,
-    ).toBe("");
-    expect(
-      screen.getByTestId(
-        "AdminApplicationTable-cell-row-0-col-secondChoiceCourse",
-      ).textContent,
+      screen.getByTestId("AdminApplicationTable-cell-row-0-col-email")
+        .textContent,
     ).toBe("");
     expect(
       screen.getByTestId("AdminApplicationTable-cell-row-0-col-submittedAt")
