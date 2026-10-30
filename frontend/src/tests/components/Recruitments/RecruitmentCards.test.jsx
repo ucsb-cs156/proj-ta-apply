@@ -15,8 +15,8 @@ import { vi } from "vitest";
 import RecruitmentCards, {
   DELETE_TOOLTIP,
   TEST_APPLICATION_TOOLTIP,
-  applicationsText,
 } from "main/components/Recruitments/RecruitmentCards";
+import { applicationsText } from "main/utils/adminApplications";
 import { SORT_KEYS, sortRecruitments } from "main/utils/recruitmentSort";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 

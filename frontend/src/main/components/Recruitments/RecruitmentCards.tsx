@@ -9,6 +9,7 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router";
 import { TrashIcon } from "main/components/Common/Icons";
+import { applicationsText } from "main/utils/adminApplications";
 import { useBackendMutation } from "main/utils/useBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
@@ -25,10 +26,6 @@ export const TEST_APPLICATION_TOOLTIP =
 
 /** On the trash icon of each card (issue #108). */
 export const DELETE_TOOLTIP = "Delete this Recruitment";
-
-/** "15 applications", for the card header. */
-export const applicationsText = (count: number): string =>
-  `${count} ${count === 1 ? "application" : "applications"}`;
 
 type RecruitmentCardsProps = {
   recruitments: Recruitment[];
