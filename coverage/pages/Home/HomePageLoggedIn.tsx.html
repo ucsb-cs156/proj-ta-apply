@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">78.57% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>9/12</span>
+                <span class='fraction'>11/14</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -166,25 +166,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -193,8 +180,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -208,6 +200,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -252,7 +252,8 @@ import { useBackend } from "main/utils/useBackend";
 &nbsp;
 /**
  * The home page, in a section per role (issue #107): Admin (the recruitments table) for an admin,
- * Instructor for an instructor, and Student for everyone, since any signed-in user may apply.
+ * Instructor for an instructor, and Student for everyone, since any signed-in user may apply. No
+ * page title or greeting (issue #118): the navbar already says where you are and who you are.
  */
 export default function HomePageLoggedIn(): React.JSX.Element {
   const currentUser = useCurrentUser();
@@ -291,14 +292,13 @@ export default function HomePageLoggedIn(): React.JSX.Element {
     options,
   );
 &nbsp;
+  // The Student heading only earns its place when there is another section to tell it from
+  // (issue #118); a plain student's page is the student section and nothing else.
+  const otherSections = isAdmin || isInstructor;
+&nbsp;
   return (
     &lt;BasicLayout&gt;
       &lt;div className="pt-2"&gt;
-        &lt;h1&gt;TA Apply&lt;/h1&gt;
-        &lt;p data-testid="HomePageLoggedIn-greeting"&gt;
-          Welcome, {currentUser.root?.user?.givenName ?? "Gaucho"}.
-        &lt;/p&gt;
-&nbsp;
         {isAdmin &amp;&amp; (
           &lt;section className="mb-4" data-testid="HomePageLoggedIn-admin"&gt;
             &lt;h2&gt;Admin&lt;/h2&gt;
@@ -319,7 +319,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
         )}
 &nbsp;
         &lt;section data-testid="HomePageLoggedIn-student"&gt;
-          &lt;h2&gt;Student&lt;/h2&gt;
+          {otherSections &amp;&amp; &lt;h2&gt;Student&lt;/h2&gt;}
           &lt;StudentDashboard
             recruitments={recruitments ?? <span class="branch-1 cbranch-no" title="branch not covered" >[]}</span>
             applications={applications ?? <span class="branch-1 cbranch-no" title="branch not covered" >[]}</span>
@@ -337,7 +337,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-30T04:52:29.146Z
+                at 2026-10-30T15:47:29.018Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
