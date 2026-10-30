@@ -5,6 +5,9 @@ import RecruitmentTable, {
   type Recruitment,
 } from "main/components/Recruitments/RecruitmentTable";
 import StudentDashboard from "main/components/Student/StudentDashboard";
+import InstructorRecruitmentCards, {
+  type InstructorRecruitment,
+} from "main/components/Instructor/InstructorRecruitmentCards";
 import { useBackend } from "main/utils/useBackend";
 
 /**
@@ -25,6 +28,23 @@ export default function HomePageLoggedIn(): React.JSX.Element {
     false,
     // Stryker disable next-line all : the guard only avoids a request the backend would refuse
     { enabled: isAdmin },
+  );
+
+  // The instructor's recruitments are looked up by email (issue #127); only an instructor asks.
+  // Stryker disable next-line all : a logged-out user is never an instructor, so the fallback is dead
+  const email = currentUser.loggedIn ? currentUser.root.user.email : "";
+  const { data: instructorRecruitments } = useBackend<InstructorRecruitment[]>(
+    ["/api/instructor/recruitments", email],
+    {
+      method: "GET",
+      url: "/api/instructor/recruitments",
+      params: { email },
+    },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    false,
+    // Stryker disable next-line all : the guard only avoids a request the backend would refuse
+    { enabled: isInstructor },
   );
 
   // Everyone signed in is a student as far as applying goes; nothing is asked until the user has
@@ -69,9 +89,19 @@ export default function HomePageLoggedIn(): React.JSX.Element {
         {isInstructor && (
           <section className="mb-4" data-testid="HomePageLoggedIn-instructor">
             <h2>Instructor</h2>
-            <p data-testid="HomePageLoggedIn-instructor-soon">
-              Instructor Functions Coming Soon
-            </p>
+            <h3 className="h5 mt-3">Recruitments for Courses You Teach</h3>
+            {(instructorRecruitments ?? []).length === 0 ? (
+              <p data-testid="HomePageLoggedIn-instructor-none">
+                No recruitment includes a course you are listed as teaching.
+                Courses are matched by the catalog name an admin has assigned to
+                you.
+              </p>
+            ) : (
+              <InstructorRecruitmentCards
+                recruitments={instructorRecruitments ?? []}
+                testIdPrefix="HomePageLoggedIn-instructor-recruitments"
+              />
+            )}
           </section>
         )}
 

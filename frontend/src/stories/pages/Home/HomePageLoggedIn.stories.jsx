@@ -3,6 +3,7 @@ import { HttpResponse, http } from "msw";
 import HomePageLoggedIn from "main/pages/Home/HomePageLoggedIn";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -20,6 +21,9 @@ const handlers = (user, backend = {}) => [
   ),
   http.get("/api/applications/mine", () =>
     HttpResponse.json(backend.applications ?? []),
+  ),
+  http.get("/api/instructor/recruitments", () =>
+    HttpResponse.json(backend.instructorRecruitments ?? []),
   ),
   http.put("/api/applications/cancel", () =>
     HttpResponse.json(applicationsFixtures.oneCancelledApplication),
@@ -70,7 +74,19 @@ Admin.parameters = {
   },
 };
 
+/** An instructor with no catalog name yet, or no courses in any recruitment. */
 export const Instructor = Template.bind({});
 Instructor.parameters = {
   msw: { handlers: handlers(apiCurrentUserFixtures.instructorUser) },
+};
+
+/** An instructor whose courses are in two recruitments: a card each, with nested accordions. */
+export const InstructorWithCourses = Template.bind({});
+InstructorWithCourses.parameters = {
+  msw: {
+    handlers: handlers(apiCurrentUserFixtures.instructorUser, {
+      recruitments: three,
+      instructorRecruitments: instructorRecruitmentsFixtures.twoRecruitments,
+    }),
+  },
 };
