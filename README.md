@@ -49,6 +49,18 @@ The app is available at <http://localhost:8080>. Use port **8080** (not 3000) so
 mvn test
 ```
 
+### Frontend type check
+
+```bash
+cd frontend
+npm run typecheck
+```
+
+This runs `tsc -b`, the same type check `npm run build` performs. Note that a plain
+`npx tsc --noEmit` is a no-op here: `frontend/tsconfig.json` is a solution-style file whose
+`files` list is empty, so it checks nothing and always exits 0. CI runs this check as
+`37-frontend-typecheck` on every pull request that touches `frontend/`.
+
 ### Integration tests (Playwright + WireMock)
 
 Integration tests start a real Spring Boot server on port 8080, mock Google OAuth via WireMock
