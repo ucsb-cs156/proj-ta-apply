@@ -2,7 +2,6 @@ package edu.ucsb.cs.taapply.services;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
-import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,8 +9,8 @@ import org.springframework.stereotype.Service;
  *
  * <p>Kept in one place because the same questions are asked by several endpoints and by the
  * frontend, and because getting them wrong is the worst failure this iteration could ship: an
- * applicant editing after the deadline. Any signed-in user may apply to any recruitment, TA or ULA,
- * so there is no rule here about who applies to what.
+ * applicant editing after applications have closed. Any signed-in user may apply to any
+ * recruitment, TA or ULA, so there is no rule here about who applies to what.
  */
 @Service
 public class ApplicationAccessService {
@@ -22,21 +21,18 @@ public class ApplicationAccessService {
   }
 
   /**
-   * Whether the whole application may still be edited: the recruitment is open and the primary
-   * consideration date has not passed. On the date itself editing is still allowed; it closes the
-   * day after.
+   * Whether the whole application may still be edited: for as long as the admin keeps applications
+   * open (issue #98). The primary consideration date is a promise about review, not a deadline for
+   * changes, so it plays no part here.
    */
-  public boolean editable(Recruitment recruitment, LocalDate today) {
-    if (!acceptingApplications(recruitment)) {
-      return false;
-    }
-    LocalDate deadline = recruitment.getPrimaryConsiderationDate();
-    return deadline == null || !today.isAfter(deadline);
+  public boolean editable(Recruitment recruitment) {
+    return acceptingApplications(recruitment);
   }
 
   /**
-   * Whether post-application comments may still be changed. They outlive the deadline, which is the
-   * point of keeping them separate, but not the recruitment closing.
+   * Whether post-application comments may still be changed. The same rule as editing: until the
+   * recruitment closes. They stay a separate field because reviewers read them as "what changed
+   * since you applied".
    */
   public boolean commentable(Recruitment recruitment) {
     return acceptingApplications(recruitment);

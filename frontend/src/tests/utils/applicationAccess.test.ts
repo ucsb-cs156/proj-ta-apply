@@ -1,5 +1,10 @@
 import { describe, test, expect, vi } from "vitest";
-import { phaseOf, todayIso } from "main/utils/applicationAccess";
+import {
+  closedExplanation,
+  isEditable,
+  phaseOf,
+  todayIso,
+} from "main/utils/applicationAccess";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 
 const recruitment = (
@@ -30,10 +35,31 @@ describe("applicationAccess", () => {
     );
   });
 
-  test("after the deadline only comments remain", () => {
+  /** Issue #98: past the deadline the application is late, but still editable. */
+  test("after the deadline the phase is late", () => {
     expect(phaseOf(recruitment("OPEN", "2026-01-20"), "2026-01-21")).toBe(
-      "COMMENTS_ONLY",
+      "LATE",
     );
+  });
+
+  test("both open phases are editable; view only is not", () => {
+    expect(isEditable("EDITABLE")).toBe(true);
+    expect(isEditable("LATE")).toBe(true);
+    expect(isEditable("VIEW_ONLY")).toBe(false);
+  });
+
+  test("the closed explanation names the closing date when there is one", () => {
+    expect(
+      closedExplanation({
+        ...recruitment("CLOSED", "2026-01-20"),
+        actualClosingDate: "2026-02-01",
+      }),
+    ).toBe("Applications were closed on 2026-02-01.");
+    expect(closedExplanation(recruitment("CLOSED", "2026-01-20"))).toBe(
+      "Applications are closed.",
+    );
+    expect(closedExplanation(undefined)).toBe("Applications are closed.");
+    expect(closedExplanation(null)).toBe("Applications are closed.");
   });
 
   test("a closed recruitment is view only, deadline or not", () => {
@@ -69,7 +95,7 @@ describe("applicationAccess", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 0, 5, 12, 0, 0));
     expect(phaseOf(recruitment("OPEN", "2026-01-20"))).toBe("EDITABLE");
-    expect(phaseOf(recruitment("OPEN", "2026-01-01"))).toBe("COMMENTS_ONLY");
+    expect(phaseOf(recruitment("OPEN", "2026-01-01"))).toBe("LATE");
     vi.useRealTimers();
   });
 });

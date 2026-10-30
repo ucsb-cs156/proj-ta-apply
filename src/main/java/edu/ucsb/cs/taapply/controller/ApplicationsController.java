@@ -19,7 +19,6 @@ import edu.ucsb.cs.taapply.services.ApplicationAccessService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -291,8 +290,8 @@ public class ApplicationsController extends ApiController {
   @Operation(
       summary = "Edit an application",
       description =
-          "Allowed while the recruitment is open and the primary consideration date has not passed."
-              + " After that only post-application comments may change.")
+          "Allowed for as long as the recruitment is open, whatever the primary consideration"
+              + " date; refused once applications are closed.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("")
   public Application updateApplication(
@@ -300,10 +299,9 @@ public class ApplicationsController extends ApiController {
 
     Application application = mine(id);
     Recruitment recruitment = recruitmentFor(application);
-    if (!applicationAccessService.editable(recruitment, LocalDate.now())) {
+    if (!applicationAccessService.editable(recruitment)) {
       throw new ForbiddenException(
-          "This application can no longer be edited; you may still update your post application"
-              + " comments");
+          "This application can no longer be edited; applications are closed");
     }
     requireAgreement(recruitment.getType(), fields);
     requireCoursework(recruitment.getType(), fields);
@@ -317,8 +315,8 @@ public class ApplicationsController extends ApiController {
   @Operation(
       summary = "Update post-application comments",
       description =
-          "Separate from the rest of the application because it outlives the primary consideration"
-              + " date. Refused once the recruitment closes.")
+          "Kept apart from the rest of the application as the place for what has changed since"
+              + " applying. Refused once the recruitment closes.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("/comments")
   public Application updateComments(

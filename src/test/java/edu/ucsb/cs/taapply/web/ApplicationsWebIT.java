@@ -237,7 +237,7 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(applyLink).not().isVisible();
 
     // And it opens for editing, with the answers that were given.
-    page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-action-link").click();
+    page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-action-edit").click();
     assertThat(page.getByTestId("ApplicationPage-status")).containsText("PENDING");
     assertThat(page.getByTestId("ApplicationPage-firstName")).hasValue("Chris");
     assertThat(page.getByTestId("ApplicationPage-major")).hasValue("Computer Science");
@@ -363,7 +363,7 @@ public class ApplicationsWebIT extends WebTestCase {
     // Listed on the home page, and the answers come back when it is opened for editing.
     assertThat(page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-type"))
         .containsText("ULA");
-    page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-action-link").click();
+    page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-action-edit").click();
     assertThat(page.getByTestId("ApplicationPage-topic-JavaScript-2")).isChecked();
     assertThat(page.getByTestId("ApplicationPage-interest-Tutoring-5")).isChecked();
     assertThat(page.getByTestId("ApplicationPage-interest-Grading-1")).isChecked();
@@ -384,8 +384,9 @@ public class ApplicationsWebIT extends WebTestCase {
         .containsText("Lecture");
   }
 
+  /** Issue #98: past the deadline the application stays editable until the admin closes it. */
   @Test
-  public void past_the_deadline_only_the_comments_can_be_changed() throws Exception {
+  public void past_the_deadline_the_application_is_still_editable_until_closed() throws Exception {
     Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
     seedTaLists();
 
@@ -393,8 +394,12 @@ public class ApplicationsWebIT extends WebTestCase {
     goTo("/apply/" + recruitment.getId());
     fillAndSubmit();
 
-    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-status"))
-        .containsText("PENDING");
+    String row = "HomePageLoggedIn-dashboard-applications-cell-row-0-col-";
+    assertThat(page.getByTestId(row + "status")).containsText("PENDING");
+    // An applicant is not shown the Test column.
+    assertThat(page.getByTestId("HomePageLoggedIn-dashboard-applications-header-testApplication"))
+        .hasCount(0);
+    Long applicationId = applicationRepository.findAll().iterator().next().getId();
 
     // Move the deadline into the past, which is what an admin editing the recruitment would do.
     Recruitment stored = recruitmentRepository.findById(recruitment.getId()).orElseThrow();
@@ -402,26 +407,40 @@ public class ApplicationsWebIT extends WebTestCase {
     recruitmentRepository.save(stored);
 
     page.reload();
-    page.getByTestId("HomePageLoggedIn-dashboard-applications-cell-row-0-col-action-link").click();
+    page.getByTestId(row + "action-edit").click();
 
-    assertThat(page.getByTestId("ApplicationPage-comments-only")).isVisible();
-    assertThat(page.getByTestId("ApplicationPage-firstName")).not().isVisible();
-    // The answers are still shown back, just not as a form.
-    assertThat(page.getByTestId("ApplicationPage-summary-Major")).containsText("Computer Science");
-    assertThat(page.getByTestId("ApplicationPage-summary-Other Courses of Interest"))
-        .containsText("CMPSC   130A  Enthusiastic");
-    assertThat(page.getByTestId("ApplicationPage-summary-First Choice Course"))
-        .containsText("CMPSC   156");
-    // A TA summary has no availability rows (#76).
-    assertThat(page.getByTestId("ApplicationPage-summary-First Choice Availability Comments"))
-        .hasCount(0);
-
-    page.getByTestId("ApplicationPage-postApplicationComments").fill("Finished CS 290A since.");
+    // The whole form is still offered, and the comments box with it.
+    assertThat(page.getByTestId("ApplicationPage-late-note")).isVisible();
+    assertThat(page.getByTestId("ApplicationPage-firstName")).hasValue("Chris");
+    page.getByTestId("ApplicationPage-firstName").fill("Christina");
     page.getByTestId("ApplicationPage-submit").click();
+    assertThat(page.getByText("Your application has been updated.")).isVisible();
 
-    page.reload();
-    assertThat(page.getByTestId("ApplicationPage-postApplicationComments"))
+    page.getByTestId("ApplicationPage-comments-postApplicationComments")
+        .fill("Finished CS 290A since.");
+    page.getByTestId("ApplicationPage-comments-submit").click();
+    assertThat(page.getByText("Your comments have been saved.")).isVisible();
+
+    // Both changes stuck.
+    goTo("/applications/" + applicationId);
+    assertThat(page.getByTestId("ApplicationPage-firstName")).hasValue("Christina");
+    assertThat(page.getByTestId("ApplicationPage-comments-postApplicationComments"))
         .hasValue("Finished CS 290A since.");
+
+    // Once the admin closes applications, editing is over: the button is disabled and says when.
+    stored.setApplicationStatus(ApplicationStatus.CLOSED);
+    stored.setActualClosingDate(LocalDate.now());
+    recruitmentRepository.save(stored);
+
+    goTo("/");
+    assertThat(page.getByTestId(row + "action-edit")).isDisabled();
+    page.getByTestId(row + "action-edit-wrapper").hover();
+    assertThat(page.locator("[role=tooltip]"))
+        .containsText("Applications were closed on " + LocalDate.now() + ".");
+    page.getByTestId(row + "action-view").click();
+    assertThat(page.getByTestId("ApplicationPage-view-only")).isVisible();
+    assertThat(page.getByTestId("ApplicationPage-saved-comments"))
+        .containsText("Finished CS 290A since.");
   }
 
   /** An admin reviews the applications to a recruitment and leaves comments on one (issue #49). */

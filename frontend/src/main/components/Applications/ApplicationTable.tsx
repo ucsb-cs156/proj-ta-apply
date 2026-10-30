@@ -1,7 +1,12 @@
 import OurTable from "main/components/Common/OurTable";
+import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Link } from "react-router";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
-import { phaseOf } from "main/utils/applicationAccess";
+import {
+  closedExplanation,
+  isEditable,
+  phaseOf,
+} from "main/utils/applicationAccess";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import type { Cell } from "@tanstack/react-table";
 import type { PriorCourse } from "main/utils/priorCoursework";
@@ -70,19 +75,18 @@ type ApplicationTableProps = {
   applications: Application[];
   /** Every recruitment the user could have applied to, so each row can name its quarter. */
   recruitments: Recruitment[];
+  /**
+   * Whether to show the Test column. Only an admin's own list can hold a test application, so an
+   * ordinary applicant is not shown the column (issue #98).
+   */
+  showTestColumn?: boolean;
   testIdPrefix?: string;
-};
-
-/** What the applicant may still do, which is the useful thing to show next to a status. */
-const actionLabels = {
-  EDITABLE: "Edit",
-  COMMENTS_ONLY: "Add comments",
-  VIEW_ONLY: "View",
 };
 
 export default function ApplicationTable({
   applications,
   recruitments,
+  showTestColumn = false,
   testIdPrefix = "ApplicationTable",
 }: ApplicationTableProps): React.JSX.Element {
   const byId = new Map(
@@ -113,14 +117,18 @@ export default function ApplicationTable({
       meta: shrinkToContent,
     },
     { header: "Status", accessorKey: "status", meta: shrinkToContent },
-    {
-      header: "Test",
-      accessorKey: "testApplication",
-      meta: shrinkToContent,
-      // Shown as the words true/false: a boolean renders as nothing at all.
-      cell: ({ cell }: { cell: Cell<Application, unknown> }) =>
-        String(Boolean(cell.row.original.testApplication)),
-    },
+    ...(showTestColumn
+      ? [
+          {
+            header: "Test",
+            accessorKey: "testApplication",
+            meta: shrinkToContent,
+            // Shown as the words true/false: a boolean renders as nothing at all.
+            cell: ({ cell }: { cell: Cell<Application, unknown> }) =>
+              String(Boolean(cell.row.original.testApplication)),
+          },
+        ]
+      : []),
     {
       header: "First Choice",
       accessorKey: "firstChoiceCourse",
@@ -147,14 +155,52 @@ export default function ApplicationTable({
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<Application, unknown> }) => {
         const application = cell.row.original;
-        const phase = phaseOf(byId.get(application.recruitmentId));
+        const recruitment = byId.get(application.recruitmentId);
+        const to = `/applications/${application.id}`;
+        const cellId = `${testIdPrefix}-cell-row-${cell.row.index}-col-action`;
+        // Edit for as long as applications are open (issue #98); once they are closed the button
+        // stays, disabled, and says when they closed, with a View link beside it.
+        if (isEditable(phaseOf(recruitment))) {
+          return (
+            <Link
+              to={to}
+              className="btn btn-primary btn-sm"
+              data-testid={`${cellId}-edit`}
+            >
+              Edit
+            </Link>
+          );
+        }
         return (
-          <Link
-            to={`/applications/${application.id}`}
-            data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-action-link`}
-          >
-            {actionLabels[phase]}
-          </Link>
+          <>
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip id={`${cellId}-tooltip`}>
+                  {closedExplanation(recruitment)}
+                </Tooltip>
+              }
+            >
+              {/* A disabled button gets no mouse events, so the wrapper carries the tooltip. */}
+              <span
+                className="d-inline-block me-2"
+                tabIndex={0}
+                data-testid={`${cellId}-edit-wrapper`}
+              >
+                <Button
+                  size="sm"
+                  disabled
+                  style={{ pointerEvents: "none" }}
+                  data-testid={`${cellId}-edit`}
+                >
+                  Edit
+                </Button>
+              </span>
+            </OverlayTrigger>
+            <Link to={to} data-testid={`${cellId}-view`}>
+              View
+            </Link>
+          </>
         );
       },
     },
