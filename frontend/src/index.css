@@ -45,6 +45,17 @@ body {
   font-size: 0.875em;
 }
 
+/* Every radio button in the app gets this border colour (issue #137). Bootstrap's default is a
+   25% black that is hard to see on the cream background; change this one value to make radios
+   darker or lighter everywhere. A checked radio keeps Bootstrap's blue. */
+:root {
+  --radio-border-color: #6c757d;
+}
+
+.form-check-input[type="radio"] {
+  border-color: var(--radio-border-color);
+}
+
 #root {
   width: 100%;
   min-height: 100svh;
