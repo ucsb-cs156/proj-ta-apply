@@ -73,8 +73,19 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
     },
     emptyAuditPage,
   );
-  // Stryker disable next-line OptionalChaining : useBackend always hands back the initial page
+  // useBackend always hands back the initial page, so the guards below never fire; the Previous
+  // button is disabled on the first page, so its clamp is never exercised either.
+  // Stryker disable next-line all
   const auditTotalPages = auditTrail?.totalPages ?? 0;
+  // Stryker disable next-line all
+  const auditPageNumber = auditTrail?.number ?? 0;
+  // Stryker disable next-line all
+  const auditTotal = auditTrail?.totalElements ?? 0;
+  // Stryker disable next-line all
+  const auditRows = auditTrail?.content ?? [];
+  const previousAuditPage = () =>
+    // Stryker disable next-line all
+    setAuditPage((previousPage) => Math.max(previousPage - 1, 0));
 
   return (
     <BasicLayout>
@@ -128,17 +139,14 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
           <div className="d-flex align-items-center gap-2">
             <Button
               variant="secondary"
-              onClick={() =>
-                setAuditPage((previousPage) => Math.max(previousPage - 1, 0))
-              }
+              onClick={previousAuditPage}
               disabled={auditPage === 0}
               data-testid="RecruitmentApplicationsPage-audit-previous"
             >
               Previous
             </Button>
             <span data-testid="RecruitmentApplicationsPage-audit-page-indicator">
-              Page {(auditTrail?.number ?? 0) + 1} of{" "}
-              {Math.max(auditTotalPages, 1)}
+              Page {auditPageNumber + 1} of {Math.max(auditTotalPages, 1)}
             </span>
             <Button
               variant="secondary"
@@ -151,12 +159,10 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
           </div>
         </div>
         <p data-testid="RecruitmentApplicationsPage-audit-total">
-          {/* Stryker disable next-line OptionalChaining : as above */}
-          {auditTrail?.totalElements ?? 0} changes recorded.
+          {auditTotal} changes recorded.
         </p>
         <RecruitmentAuditTrailTable
-          // Stryker disable next-line all : as above; the fallback is never rendered
-          rows={auditTrail?.content ?? []}
+          rows={auditRows}
           testIdPrefix="RecruitmentApplicationsPage-audit"
         />
       </div>
