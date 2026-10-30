@@ -30,6 +30,24 @@ describe("RoleEmailCsvUploadForm tests", () => {
     expect(screen.getByText(/column named/)).toBeInTheDocument();
   });
 
+  /** Issue #87: the same compact layout as the other CSV uploads. */
+  test("the file picker and the Upload button share a natural-width input group", () => {
+    renderForm();
+    const input = screen.getByTestId("InstructorCSVUploadForm-upload");
+    const group = input.parentElement;
+    expect(group).toHaveClass(
+      "input-group",
+      "input-group-sm",
+      "has-validation",
+      "d-inline-flex",
+      "w-auto",
+    );
+    const button = screen.getByTestId("InstructorCSVUploadForm-submit");
+    expect(button.parentElement).toBe(group);
+    expect(button).toHaveClass("btn-outline-primary");
+    expect(button).not.toHaveClass("mt-3");
+  });
+
   test("the file input only accepts .csv", () => {
     renderForm();
     expect(

@@ -541,6 +541,15 @@ courses in CMPSC that have been offered in the quarters you have populated this 
 
 
 
+# Twenty-seventh Iteration
+
+The three CSV upload widgets share one compact layout (issue #87). The topic and interest lists on
+**TA App Settings** and **ULA App Settings** (`NameListCard`), the legacy application import on those
+pages (`LegacyApplicationsUploadCard`) and the bulk email upload on **Admin > Instructors**
+(`RoleEmailCsvUploadForm`) each put the file picker and its button side by side in a small
+`InputGroup` that takes its natural width (`d-inline-flex w-auto`), so the button sits right after
+the file name instead of at the far edge of the page or on the next line.
+
 # Twenty-eighth Iteration
 
 **Admin > Recruitments** shows cards instead of its thirteen-column table (issue #86), which
@@ -552,4 +561,3 @@ applications, Courses, Test Application, Download CSV, Review Applications, Dele
 wrapping on a narrow screen. The sorting is done in the component. `RecruitmentTable` keeps only
 its seven field columns, for the read-only repeat of a recruitment at the top of its applications
 page; the Playwright flows address the cards by position (`RecruitmentsIndexPage-card-0-...`).
-
