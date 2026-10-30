@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "react-bootstrap";
 import Modal from "react-bootstrap/Modal";
-import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import RecruitmentCards from "main/components/Recruitments/RecruitmentCards";
 import RecruitmentDeleteModal from "main/components/Recruitments/RecruitmentDeleteModal";
@@ -13,7 +12,19 @@ import { useSystemInfo } from "main/utils/systemInfo";
 import { quarterRange } from "main/utils/quarterUtilities";
 import { toast } from "react-toastify";
 
-export default function RecruitmentsIndexPage(): React.JSX.Element {
+type RecruitmentsDashboardProps = {
+  testIdPrefix?: string;
+};
+
+/**
+ * An admin's recruitments, in full: the explanation, the Create New Recruitment button and its
+ * modal, a card per recruitment with its buttons, and the delete confirmation. This was the
+ * Admin > Recruitments page until issue #141 put it on the admin's home page, where it was always
+ * meant to be; it is a component so the home page can carry it whole.
+ */
+export default function RecruitmentsDashboard({
+  testIdPrefix = "RecruitmentsDashboard",
+}: RecruitmentsDashboardProps): React.JSX.Element {
   const { data: systemInfo } = useSystemInfo();
 
   // Stryker disable OptionalChaining
@@ -76,68 +87,68 @@ export default function RecruitmentsIndexPage(): React.JSX.Element {
   );
 
   return (
-    <BasicLayout>
-      <div className="pt-2">
-        <h1>Recruitments</h1>
-        <div data-testid="RecruitmentsIndexPage-intro">
-          <p>
-            Applications for new recruitments do not automatically open and
-            close on the tentative dates listed; the admin must manually open
-            and close the recruitments by clicking the Open or Close button.
-          </p>
-          <p>
-            Only one recruitment of each type (TA or ULA) may be created for a
-            given quarter.
-          </p>
-          <p>
-            Recruitments are automatically populated with the undergraduate
-            courses offered in the specified quarter; the list of courses can
-            then be manually adjusted using the Courses button.
-          </p>
-        </div>
-
-        <Button
-          variant="success"
-          className="mb-3"
-          onClick={() => setCreating(true)}
-          data-testid="RecruitmentsIndexPage-create-button"
-        >
-          Create New Recruitment
-        </Button>
-
-        {/* Mounted only while open, so each opening starts with a blank form. */}
-        {creating && (
-          <Modal
-            show
-            onHide={() => setCreating(false)}
-            centered={true}
-            data-testid="RecruitmentsIndexPage-create-modal"
-          >
-            <Modal.Header closeButton>Create New Recruitment</Modal.Header>
-            <RecruitmentForm
-              quarters={quarters}
-              submitAction={(data) => createMutation.mutate(data)}
-              onCancel={() => setCreating(false)}
-            />
-          </Modal>
-        )}
-
-        <RecruitmentCards
-          recruitments={recruitments ?? []}
-          applicationCounts={counts}
-          onDeleteRequested={setPendingDelete}
-          testIdPrefix="RecruitmentsIndexPage"
-        />
-
-        <RecruitmentDeleteModal
-          recruitment={pendingDelete}
-          applicationCount={
-            pendingDelete === null ? 0 : (counts[pendingDelete.id] ?? 0)
-          }
-          onConfirm={() => deleteMutation.mutate(pendingDelete as Recruitment)}
-          onCancel={() => setPendingDelete(null)}
-        />
+    <div data-testid={`${testIdPrefix}-dashboard`}>
+      <h3 className="h4" data-testid={`${testIdPrefix}-heading`}>
+        Recruitments
+      </h3>
+      <div data-testid={`${testIdPrefix}-intro`}>
+        <p>
+          Applications for new recruitments do not automatically open and close
+          on the tentative dates listed; the admin must manually open and close
+          the recruitments by clicking the Open or Close button.
+        </p>
+        <p>
+          Only one recruitment of each type (TA or ULA) may be created for a
+          given quarter.
+        </p>
+        <p>
+          Recruitments are automatically populated with the undergraduate
+          courses offered in the specified quarter; the list of courses can then
+          be manually adjusted using the Courses button.
+        </p>
       </div>
-    </BasicLayout>
+
+      <Button
+        variant="success"
+        className="mb-3"
+        onClick={() => setCreating(true)}
+        data-testid={`${testIdPrefix}-create-button`}
+      >
+        Create New Recruitment
+      </Button>
+
+      {/* Mounted only while open, so each opening starts with a blank form. */}
+      {creating && (
+        <Modal
+          show
+          onHide={() => setCreating(false)}
+          centered={true}
+          data-testid={`${testIdPrefix}-create-modal`}
+        >
+          <Modal.Header closeButton>Create New Recruitment</Modal.Header>
+          <RecruitmentForm
+            quarters={quarters}
+            submitAction={(data) => createMutation.mutate(data)}
+            onCancel={() => setCreating(false)}
+          />
+        </Modal>
+      )}
+
+      <RecruitmentCards
+        recruitments={recruitments ?? []}
+        applicationCounts={counts}
+        onDeleteRequested={setPendingDelete}
+        testIdPrefix={testIdPrefix}
+      />
+
+      <RecruitmentDeleteModal
+        recruitment={pendingDelete}
+        applicationCount={
+          pendingDelete === null ? 0 : (counts[pendingDelete.id] ?? 0)
+        }
+        onConfirm={() => deleteMutation.mutate(pendingDelete as Recruitment)}
+        onCancel={() => setPendingDelete(null)}
+      />
+    </div>
   );
 }

@@ -29,6 +29,9 @@ function renderHome(currentUserFixture, backend = {}) {
     .onGet("/api/admin/recruitments/all")
     .reply(200, backend.adminRecruitments ?? []);
   axiosMock
+    .onGet("/api/admin/recruitments/applicationCounts")
+    .reply(200, backend.applicationCounts ?? {});
+  axiosMock
     .onGet("/api/recruitments/applicable")
     .reply(200, backend.recruitments ?? []);
   axiosMock
@@ -90,9 +93,10 @@ describe("HomePageLoggedIn tests", () => {
     ).toHaveLength(0);
   });
 
-  test("an admin gets the Admin section with the recruitments table, then Student", async () => {
+  test("an admin gets the Admin section with the whole recruitments dashboard, then Student", async () => {
     renderHome(apiCurrentUserFixtures.adminUser, {
       adminRecruitments: recruitmentsFixtures.threeRecruitments,
+      applicationCounts: { 1: 15, 2: 1, 3: 0 },
     });
 
     expect(
@@ -102,16 +106,37 @@ describe("HomePageLoggedIn tests", () => {
       screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
     ).toEqual(["Admin", "Student"]);
     expect(screen.queryByTestId("HomePageLoggedIn-instructor")).toBeNull();
+    // Issue #141: exactly what the Admin > Recruitments page used to show.
     expect(
-      await screen.findByTestId(
-        "HomePageLoggedIn-admin-recruitments-cell-row-0-col-quarter",
-      ),
+      screen.getByTestId("HomePageLoggedIn-admin-dashboard"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("HomePageLoggedIn-admin-heading"),
+    ).toHaveTextContent("Recruitments");
+    expect(screen.getByTestId("HomePageLoggedIn-admin-heading").tagName).toBe(
+      "H3",
+    );
+    expect(
+      screen.getByTestId("HomePageLoggedIn-admin-intro").querySelectorAll("p"),
+    ).toHaveLength(3);
+    expect(
+      screen.getByTestId("HomePageLoggedIn-admin-create-button"),
+    ).toHaveTextContent("Create New Recruitment");
+    expect(
+      await screen.findByTestId("HomePageLoggedIn-admin-card-0-quarter"),
     ).toHaveTextContent("S26");
+    // Cards run newest quarter first, TA before ULA: card 1 is W26 TA, closed 2026-02-01.
     expect(
-      screen.getByTestId(
-        "HomePageLoggedIn-admin-recruitments-cell-row-2-col-actualClosingDate",
-      ),
+      screen.getByTestId("HomePageLoggedIn-admin-card-1-actualClosingDate"),
     ).toHaveTextContent("2026-02-01");
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("HomePageLoggedIn-admin-card-1-applications"),
+      ).toHaveTextContent("15 applications"),
+    );
+    expect(
+      screen.getByTestId("HomePageLoggedIn-admin-card-0-review-button"),
+    ).toHaveAttribute("href", "/admin/recruitments/3/applications");
     // Admins are students too, as far as applying goes.
     expect(screen.getByTestId("HomePageLoggedIn-student")).toBeInTheDocument();
   });

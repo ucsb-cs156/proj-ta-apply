@@ -124,7 +124,6 @@ describe("AppNavbar tests", () => {
       "Admins",
       "Instructors",
       "Courses",
-      "Recruitments",
       "TA App Settings",
       "ULA App Settings",
       "Legacy TA Application",
@@ -136,6 +135,8 @@ describe("AppNavbar tests", () => {
         expect(screen.getByText(item)).toBeInTheDocument();
       });
     });
+    // Issue #141: the recruitments live on the admin's home page, so there is no menu item.
+    expect(screen.queryByText("Recruitments")).toBeNull();
   });
 
   test("renders Help menu with only the About page when not logged in", async () => {

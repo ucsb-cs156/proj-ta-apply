@@ -1,6 +1,6 @@
 import React from "react";
 import { HttpResponse, http } from "msw";
-import RecruitmentsIndexPage from "main/pages/Admin/RecruitmentsIndexPage";
+import RecruitmentsDashboard from "main/components/Recruitments/RecruitmentsDashboard";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
@@ -23,8 +23,8 @@ const baseHandlers = [
 ];
 
 export default {
-  title: "pages/Admin/RecruitmentsIndexPage",
-  component: RecruitmentsIndexPage,
+  title: "components/Recruitments/RecruitmentsDashboard",
+  component: RecruitmentsDashboard,
   parameters: {
     msw: {
       handlers: [
@@ -37,7 +37,7 @@ export default {
   },
 };
 
-const Template = () => <RecruitmentsIndexPage />;
+const Template = () => <RecruitmentsDashboard />;
 
 export const Default = Template.bind({});
 

@@ -16,6 +16,14 @@ const handlers = (user, backend = {}) => [
     HttpResponse.json(systemInfoFixtures.showingNeither),
   ),
   http.get("/api/admin/recruitments/all", () => HttpResponse.json(three)),
+  http.get("/api/admin/recruitments/applicationCounts", () =>
+    HttpResponse.json({ 1: 15, 2: 1, 3: 0 }),
+  ),
+  http.post("/api/admin/recruitments/post", () => HttpResponse.json({ id: 4 })),
+  http.put("/api/admin/recruitments/status", () => HttpResponse.json({})),
+  http.delete("/api/admin/recruitments/delete", () =>
+    HttpResponse.json({ message: "deleted" }),
+  ),
   http.get("/api/recruitments/applicable", () =>
     HttpResponse.json(backend.recruitments ?? []),
   ),
@@ -64,7 +72,7 @@ StudentWithApplications.parameters = {
   },
 };
 
-/** An admin gets the Admin section with the recruitments table, and is a student too. */
+/** An admin gets the Admin section with the whole recruitments dashboard, and is a student too. */
 export const Admin = Template.bind({});
 Admin.parameters = {
   msw: {
