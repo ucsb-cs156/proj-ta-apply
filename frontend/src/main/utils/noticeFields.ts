@@ -1,4 +1,8 @@
 import { fromFormat } from "main/utils/quarterUtilities";
+import {
+  QUARTER_DATE_FIELDS,
+  type UcsbApiQuarter,
+} from "main/utils/quarterCalendar";
 
 /**
  * Issue #150: "mail merge" fields in the Notices, Terms and Conditions text. An admin writes
@@ -7,14 +11,55 @@ import { fromFormat } from "main/utils/quarterUtilities";
  * editor's preview, say), is left exactly as written.
  */
 
-/** What a notice can be filled in with: the recruitment's quarter (YYYYQ) and deadline (ISO). */
+/**
+ * What a notice can be filled in with: the recruitment's quarter (YYYYQ) and deadline (ISO), and
+ * (issue #153) the quarter calendar's row for that quarter, when it is on file.
+ */
 export type NoticeFillIn = {
   quarter?: string | null;
   primaryConsiderationDate?: string | null;
+  calendar?: UcsbApiQuarter | null;
 };
 
-/** The fields, as written between `${` and `}`. */
+/** The recruitment's own fields, as written between `${` and `}`. */
 export const NOTICE_FIELDS = ["quarter", "primaryConsiderationDate"] as const;
+
+/** The quarter calendar's name fields a notice can carry (issue #153), with what each holds. */
+export const QUARTER_NAME_FIELDS: {
+  key: keyof UcsbApiQuarter;
+  label: string;
+}[] = [
+  { key: "qyy", label: "The quarter in short form, e.g. F21" },
+  {
+    key: "name",
+    label: "The quarter's name as UCSB writes it, e.g. FALL 2021",
+  },
+  { key: "category", label: "The season, e.g. FALL" },
+  { key: "academicYear", label: "The academic year, e.g. 2021-2022" },
+];
+
+/** Every calendar field a notice can carry: the names, then the dates in the cards' order. */
+export const QUARTER_NOTICE_FIELDS: {
+  key: keyof UcsbApiQuarter;
+  label: string;
+}[] = [
+  ...QUARTER_NAME_FIELDS,
+  ...QUARTER_DATE_FIELDS.map((field) => ({
+    key: field.key,
+    label: field.label,
+  })),
+];
+
+/** "2021-05-10T09:00:00" as "May 10, 2021 at 9:00 AM" for a pass, or "May 10, 2021" otherwise. */
+export const longDateTime = (iso: string, withTime: boolean): string => {
+  const [date, time] = iso.split("T");
+  const dateText = longDate(date);
+  if (!withTime || !time) return dateText;
+  const [hours, minutes] = time.split(":").map(Number);
+  const suffix = hours < 12 ? "AM" : "PM";
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${dateText} at ${hour12}:${String(minutes).padStart(2, "0")} ${suffix}`;
+};
 
 /** "20261" as "Winter 2026". */
 export const quarterName = (yyyyq: string): string => {
@@ -48,12 +93,50 @@ export function fillNoticeFields(
       longDate(fillIn.primaryConsiderationDate),
     );
   }
+  const calendar = fillIn.calendar;
+  if (calendar) {
+    for (const { key } of QUARTER_NAME_FIELDS) {
+      const value = calendar[key];
+      if (value) filled = filled.replaceAll("${" + key + "}", String(value));
+    }
+    for (const { key, withTime } of QUARTER_DATE_FIELDS) {
+      const value = calendar[key];
+      if (value) {
+        filled = filled.replaceAll(
+          "${" + key + "}",
+          longDateTime(String(value), withTime === true),
+        );
+      }
+    }
+  }
   return filled;
 }
 
 /** The one-line explanation beside the editor. */
 export const NOTICE_FIELDS_HINT =
-  "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place. The preview shows them as written.";
+  "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place; the various dates of that quarter, such as ${firstDayOfClasses}, can be inserted the same way. The preview shows them as written.";
+
+/** A sample quarter for the help page, so each calendar field can be shown with a value. */
+export const SAMPLE_CALENDAR: UcsbApiQuarter = {
+  quarter: "20214",
+  qyy: "F21",
+  name: "FALL 2021",
+  category: "FALL",
+  academicYear: "2021-2022",
+  firstDayOfClasses: "2021-10-01T00:00:00",
+  lastDayOfClasses: "2021-12-10T00:00:00",
+  firstDayOfFinals: "2021-12-11T00:00:00",
+  lastDayOfFinals: "2021-12-17T00:00:00",
+  firstDayOfQuarter: "2021-09-26T00:00:00",
+  lastDayOfSchedule: "2022-01-01T00:00:00",
+  pass1Begin: "2021-05-10T09:00:00",
+  pass2Begin: "2021-05-24T09:00:00",
+  pass3Begin: "2021-06-07T09:00:00",
+  feeDeadline: "2021-09-13T00:00:00",
+  lastDayToAddUnderGrad: "2021-10-18T00:00:00",
+  lastDayToAddGrad: "2021-10-18T00:00:00",
+  lastDayThirdWeek: "2021-10-19T00:00:00",
+};
 
 /** The two examples from issue #150, for the help page. */
 export const NOTICE_FIELD_EXAMPLES = [

@@ -107,10 +107,7 @@ export default function NoticeEditorCard({
         </p>
         <p className="text-muted small" data-testid={id("fields-hint")}>
           {NOTICE_FIELDS_HINT}{" "}
-          <Link to="/help/admins#notice-fields">
-            More about these fields and examples
-          </Link>
-          .
+          <Link to="/help/notice-fields">All the fields, with examples</Link>.
         </p>
         <Row>
           <Col md={6} data-testid={id("editor")}>

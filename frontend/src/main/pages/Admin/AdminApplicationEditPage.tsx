@@ -4,6 +4,7 @@ import { Button } from "react-bootstrap";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useNoticeFillIn } from "main/utils/useNoticeFillIn";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
@@ -41,6 +42,7 @@ export default function AdminApplicationEditPage(): React.JSX.Element {
   const recruitment = (recruitments ?? []).find(
     (r) => r.id === application?.recruitmentId,
   );
+  const noticeFillIn = useNoticeFillIn(recruitment);
 
   const { data: courses } = useBackend<string[]>(
     ["/api/recruitments/courses", application?.recruitmentId],
@@ -149,15 +151,7 @@ export default function AdminApplicationEditPage(): React.JSX.Element {
               topics={options?.topics ?? []}
               interests={options?.interests ?? []}
               notice={notice}
-              noticeFillIn={
-                recruitment
-                  ? {
-                      quarter: recruitment.quarter,
-                      primaryConsiderationDate:
-                        recruitment.primaryConsiderationDate,
-                    }
-                  : null
-              }
+              noticeFillIn={noticeFillIn}
               initialContents={application}
               submitAction={(payload) => saveMutation.mutate(payload)}
               buttonLabel="Save Changes"

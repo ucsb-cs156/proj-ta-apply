@@ -15,6 +15,7 @@ import HelpTaApplicantsPage from "main/pages/Help/HelpTaApplicantsPage";
 import HelpUlaApplicantsPage from "main/pages/Help/HelpUlaApplicantsPage";
 import HelpInstructorsPage from "main/pages/Help/HelpInstructorsPage";
 import HelpAdminsPage from "main/pages/Help/HelpAdminsPage";
+import HelpNoticeFieldsPage from "main/pages/Help/HelpNoticeFieldsPage";
 import HelpCsvPage from "main/pages/Help/HelpCsvPage";
 import SignInPage from "main/pages/Auth/SignInPage";
 import SignInSuccessPage from "main/pages/Auth/SignInSuccessPage";
@@ -77,6 +78,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<HelpAdminsPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/help/notice-fields"
+          element={
+            <ProtectedPage
+              component={<HelpNoticeFieldsPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

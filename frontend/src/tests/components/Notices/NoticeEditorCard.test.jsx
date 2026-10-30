@@ -124,13 +124,11 @@ describe("NoticeEditorCard tests", () => {
     renderCard();
     const hint = await screen.findByTestId("Card-fields-hint");
     expect(hint).toHaveTextContent(
-      "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place. The preview shows them as written. More about these fields and examples.",
+      "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place; the various dates of that quarter, such as ${firstDayOfClasses}, can be inserted the same way. The preview shows them as written. All the fields, with examples.",
     );
     expect(
-      within(hint).getByRole("link", {
-        name: "More about these fields and examples",
-      }),
-    ).toHaveAttribute("href", "/help/admins#notice-fields");
+      within(hint).getByRole("link", { name: "All the fields, with examples" }),
+    ).toHaveAttribute("href", "/help/notice-fields");
   });
 
   test("the preview renders GitHub-flavoured Markdown", async () => {

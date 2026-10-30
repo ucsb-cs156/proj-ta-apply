@@ -85,6 +85,7 @@ public class ApplicationsWebIT extends WebTestCase {
   @Autowired UlaTopicRepository ulaTopicRepository;
   @Autowired UlaInterestRepository ulaInterestRepository;
   @Autowired NoticeVersionRepository noticeVersionRepository;
+  @Autowired edu.ucsb.cs.taapply.repository.UCSBAPIQuarterRepository ucsbApiQuarterRepository;
   @Autowired ApplicationRepository applicationRepository;
   @Autowired CourseRepository courseRepository;
 
@@ -96,7 +97,7 @@ public class ApplicationsWebIT extends WebTestCase {
             // Issue #150: the two fields, filled in from the recruitment when shown.
             .content(
                 "# TA Terms\n\nBe available for the **whole** quarter.\n\nApply for ${quarter}"
-                    + " by ${primaryConsiderationDate}.")
+                    + " by ${primaryConsiderationDate}. Classes begin ${firstDayOfClasses}.")
             .createdAt(LocalDateTime.of(2026, 1, 2, 3, 4))
             .build());
   }
@@ -134,6 +135,14 @@ public class ApplicationsWebIT extends WebTestCase {
    */
   private Recruitment seedRecruitment(RecruitmentType type, LocalDate primaryConsiderationDate) {
     stubSectionTimes();
+    // Issue #153: the quarter calendar's row for the recruitment's quarter.
+    ucsbApiQuarterRepository.save(
+        edu.ucsb.cs.taapply.entity.UCSBAPIQuarter.builder()
+            .quarter("20214")
+            .qyy("F21")
+            .name("FALL 2021")
+            .firstDayOfClasses(LocalDateTime.of(2021, 10, 1, 0, 0))
+            .build());
     Recruitment recruitment =
         recruitmentRepository.save(
             Recruitment.builder()
@@ -197,6 +206,9 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-notice-content").locator("h1")).containsText("TA Terms");
     // Issue #150: the fields read as the recruitment's quarter and deadline, not as written.
     assertThat(page.getByTestId("ApplyPage-notice-content")).containsText("Apply for Fall 2021 by");
+    // Issue #153: a quarter calendar field, from the row the admin's Quarters page keeps on file.
+    assertThat(page.getByTestId("ApplyPage-notice-content"))
+        .containsText("Classes begin October 1, 2021.");
     assertThat(page.getByTestId("ApplyPage-notice-content")).not().containsText("${");
     page.getByTestId("ApplyPage-submit").click();
     assertThat(page.getByTestId("ApplyPage-notice-agree"))
