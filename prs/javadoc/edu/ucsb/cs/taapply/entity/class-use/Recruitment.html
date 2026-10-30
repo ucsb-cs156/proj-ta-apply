@@ -168,9 +168,11 @@ loadScripts(document, 'script');</script>
 <div class="block">Applications may only be created against an open recruitment.</div>
 </div>
 <div class="col-first odd-row-color"><code>boolean</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#commentable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">commentable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#commentable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">commentable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
 <div class="col-last odd-row-color">
-<div class="block">Whether post-application comments may still be changed.</div>
+<div class="block">Whether post-application comments may still be changed: while the recruitment is open, and for
+six months after it closes (issue #107), as the place for what has changed since applying.</div>
 </div>
 <div class="col-first even-row-color"><code>boolean</code></div>
 <div class="col-second even-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#editable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">editable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
@@ -178,16 +180,23 @@ loadScripts(document, 'script');</script>
 <div class="block">Whether the whole application may still be edited: for as long as the admin keeps applications
 open (issue #98).</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="../../services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">LegacyApplicationCsvService.</span><code><a href="../../services/LegacyApplicationCsvService.html#upload(org.springframework.web.multipart.MultipartFile,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
- <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-first odd-row-color"><code>boolean</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#recentlyClosed(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">recentlyClosed</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
 <div class="col-last odd-row-color">
-<div class="block">Reads the file and saves one application per row into the recruitment.</div>
+<div class="block">Whether a closed recruitment closed recently: within the last <a href="../../services/ApplicationAccessService.html#RECENT_MONTHS"><code>ApplicationAccessService.RECENT_MONTHS</code></a>, counting
+the day six months on as still recent.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="../../services/LegacyUlaApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService.ImportResult</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">LegacyUlaApplicationCsvService.</span><code><a href="../../services/LegacyUlaApplicationCsvService.html#upload(org.springframework.web.multipart.MultipartFile,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
+<div class="col-first even-row-color"><code><a href="../../services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">LegacyApplicationCsvService.</span><code><a href="../../services/LegacyApplicationCsvService.html#upload(org.springframework.web.multipart.MultipartFile,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
  <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
 <div class="col-last even-row-color">
+<div class="block">Reads the file and saves one application per row into the recruitment.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="../../services/LegacyUlaApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService.ImportResult</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">LegacyUlaApplicationCsvService.</span><code><a href="../../services/LegacyUlaApplicationCsvService.html#upload(org.springframework.web.multipart.MultipartFile,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
+ <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">Reads the sheet and saves one application per row into the recruitment.</div>
 </div>
 </div>

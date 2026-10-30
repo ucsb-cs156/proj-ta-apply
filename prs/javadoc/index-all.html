@@ -339,6 +339,10 @@ it held before and what it holds now (Admin &gt; Audit Trail).</div>
 </dl>
 <h2 class="title" id="I:C">C</h2>
 <dl class="index">
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#cancelApplication(java.lang.Long,java.lang.String)" class="member-name-link">cancelApplication(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html#CANCELLED" class="member-name-link">CANCELLED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/TrainingCommitment.html#CANNOT" class="member-name-link">CANNOT</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/TrainingCommitment.html" title="enum class in edu.ucsb.cs.taapply.enums">TrainingCommitment</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.utilities">CanonicalFormConverter</a> - Class in <a href="edu/ucsb/cs/taapply/utilities/package-summary.html">edu.ucsb.cs.taapply.utilities</a></dt>
@@ -363,9 +367,10 @@ it held before and what it holds now (Admin &gt; Audit Trail).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationStatus.html#CLOSED" class="member-name-link">CLOSED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#commentable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">commentable(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAccessService</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#commentable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">commentable(Recruitment, LocalDate)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAccessService</a></dt>
 <dd>
-<div class="block">Whether post-application comments may still be changed.</div>
+<div class="block">Whether post-application comments may still be changed: while the recruitment is open, and for
+six months after it closes (issue #107), as the place for what has changed since applying.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#comments()" class="member-name-link">comments()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
@@ -1491,8 +1496,17 @@ does.</div>
 <dd>
 <div class="block">The distinct, trimmed, non-blank names in the file, in file order.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#RECENT_MONTHS" class="member-name-link">RECENT_MONTHS</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAccessService</a></dt>
+<dd>
+<div class="block">How long after closing a recruitment still counts as recent, for comments (issue #107).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html#recentlyClosed()" class="member-name-link">recentlyClosed()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#recentlyClosed(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">recentlyClosed(Recruitment, LocalDate)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAccessService</a></dt>
+<dd>
+<div class="block">Whether a closed recruitment closed recently: within the last <a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#RECENT_MONTHS"><code>ApplicationAccessService.RECENT_MONTHS</code></a>, counting
+the day six months on as still recent.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">record(ApplicationAuditService.Snapshot, Application, RecruitmentType)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService</a></dt>
 <dd>
 <div class="block">Records every difference between the snapshot taken before the edit and the application as it

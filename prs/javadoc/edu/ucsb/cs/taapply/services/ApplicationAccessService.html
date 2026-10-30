@@ -54,8 +54,14 @@ loadScripts(document, 'script');</script>
 <div class="toc-header">Contents&nbsp;<input type="text" class="filter-input" disabled placeholder="Filter contents (type .)" aria-label="Filter table of contents" autocomplete="off" spellcheck="false"><input type="reset" class="reset-filter" disabled tabindex="-1" value="Reset"></div>
 <ol class="toc-list" tabindex="-1">
 <li><a href="#" tabindex="0">Description</a></li>
+<li><a href="#field-summary" tabindex="0">Field Summary</a></li>
 <li><a href="#constructor-summary" tabindex="0">Constructor Summary</a></li>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
+<li><a href="#field-detail" tabindex="0">Field Details</a>
+<ol class="toc-list">
+<li><a href="#RECENT_MONTHS" tabindex="0">RECENT_MONTHS</a></li>
+</ol>
+</li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E()" tabindex="0">ApplicationAccessService()</a></li>
@@ -65,7 +71,8 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#acceptingApplications(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">acceptingApplications(Recruitment)</a></li>
 <li><a href="#editable(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">editable(Recruitment)</a></li>
-<li><a href="#commentable(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">commentable(Recruitment)</a></li>
+<li><a href="#recentlyClosed(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" tabindex="0">recentlyClosed(Recruitment, LocalDate)</a></li>
+<li><a href="#commentable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" tabindex="0">commentable(Recruitment, LocalDate)</a></li>
 </ol>
 </li>
 </ol>
@@ -94,6 +101,23 @@ recruitment, TA or ULA, so there is no rule here about who applies to what.</div
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- =========== FIELD SUMMARY =========== -->
+<li>
+<section class="field-summary" id="field-summary">
+<h2>Field Summary</h2>
+<div class="caption"><span>Fields</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Field</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static final int</code></div>
+<div class="col-second even-row-color"><code><a href="#RECENT_MONTHS" class="member-name-link">RECENT_MONTHS</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">How long after closing a recruitment still counts as recent, for comments (issue #107).</div>
+</div>
+</div>
+</section>
+</li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 <li>
 <section class="constructor-summary" id="constructor-summary">
@@ -124,15 +148,24 @@ recruitment, TA or ULA, so there is no rule here about who applies to what.</div
 <div class="block">Applications may only be created against an open recruitment.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#commentable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">commentable</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#commentable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">commentable</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Whether post-application comments may still be changed.</div>
+<div class="block">Whether post-application comments may still be changed: while the recruitment is open, and for
+six months after it closes (issue #107), as the place for what has changed since applying.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#editable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">editable</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Whether the whole application may still be edited: for as long as the admin keeps applications
 open (issue #98).</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#recentlyClosed(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">recentlyClosed</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether a closed recruitment closed recently: within the last <a href="#RECENT_MONTHS"><code>RECENT_MONTHS</code></a>, counting
+the day six months on as still recent.</div>
 </div>
 </div>
 </div>
@@ -146,6 +179,31 @@ open (issue #98).</div>
 </section>
 <section class="details">
 <ul class="details-list">
+<!-- ============ FIELD DETAIL =========== -->
+<li>
+<section class="field-details" id="field-detail">
+<h2>Field Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="RECENT_MONTHS">
+<h3>RECENT_MONTHS</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">RECENT_MONTHS</span></div>
+<div class="block">How long after closing a recruitment still counts as recent, for comments (issue #107).</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.ApplicationAccessService.RECENT_MONTHS">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+</ul>
+</section>
+</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
@@ -188,13 +246,25 @@ changes, so it plays no part here.</div>
 </section>
 </li>
 <li>
-<section class="detail" id="commentable(edu.ucsb.cs.taapply.entity.Recruitment)">
+<section class="detail" id="recentlyClosed(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)">
+<h3>recentlyClosed</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">recentlyClosed</span><wbr><span class="parameters">(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</span></div>
+<div class="block">Whether a closed recruitment closed recently: within the last <a href="#RECENT_MONTHS"><code>RECENT_MONTHS</code></a>, counting
+the day six months on as still recent. A recruitment that is open, or that has no recorded
+closing date, is not "recently closed".</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="commentable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)">
 <h3>commentable</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">commentable</span><wbr><span class="parameters">(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</span></div>
-<div class="block">Whether post-application comments may still be changed. The same rule as editing: until the
-recruitment closes. They stay a separate field because reviewers read them as "what changed
-since you applied".</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">commentable</span><wbr><span class="parameters">(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</span></div>
+<div class="block">Whether post-application comments may still be changed: while the recruitment is open, and for
+six months after it closes (issue #107), as the place for what has changed since applying.</div>
 </div>
 </section>
 </li>
