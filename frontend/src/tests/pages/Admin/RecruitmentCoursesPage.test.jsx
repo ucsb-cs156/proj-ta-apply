@@ -90,8 +90,7 @@ describe("RecruitmentCoursesPage tests", () => {
     );
   });
 
-  test("says so when the list has never been refreshed, or the recruitment is unknown", async () => {
-    // Another recruitment's stamp must not be taken for this one's.
+  test("another recruitment's stamp is not taken for this one's", async () => {
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
       {
         ...recruitmentsFixtures.threeRecruitments[0],
@@ -105,6 +104,7 @@ describe("RecruitmentCoursesPage tests", () => {
       },
     ]);
     renderPage();
+
     await waitFor(() =>
       expect(
         axiosMock.history.get.some(
@@ -112,13 +112,14 @@ describe("RecruitmentCoursesPage tests", () => {
         ),
       ).toBe(true),
     );
-    expect(
-      await screen.findByTestId("RecruitmentCoursesPage-last-refreshed"),
-    ).toHaveTextContent("Not yet refreshed from the UCSB schedule.");
-    expect(
-      screen.getByTestId("RecruitmentCoursesPage-last-refreshed"),
-    ).not.toHaveTextContent("Last refreshed");
+    const line = await screen.findByTestId(
+      "RecruitmentCoursesPage-last-refreshed",
+    );
+    expect(line).toHaveTextContent("Not yet refreshed from the UCSB schedule.");
+    expect(line).not.toHaveTextContent("Last refreshed");
+  });
 
+  test("says so when the recruitment is unknown", async () => {
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
     renderPage();
 
