@@ -166,28 +166,6 @@ logged in: until then both names are null.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApiController.html#%3Cinit%3E()" class="member-name-link">ApiController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/services/ApiRetryHelper.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">ApiRetryHelper</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
-<dd>
-<div class="block">Wraps calls to an external REST API with three defenses:
-
-
-  <b>Pacing:</b> consecutive calls are kept at least <code>paceMs</code> apart, to stay under rate
-      limits in the first place.</div>
-</dd>
-<dt><a href="edu/ucsb/cs/taapply/services/ApiRetryHelper.html#%3Cinit%3E(java.lang.String,java.lang.String,long,int,long)" class="member-name-link">ApiRetryHelper(String, String, long, int, long)</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApiRetryHelper.html" title="class in edu.ucsb.cs.taapply.services">ApiRetryHelper</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/services/ApiRetryHelper.html#%3Cinit%3E(java.lang.String,java.lang.String,long,int,long,boolean)" class="member-name-link">ApiRetryHelper(String, String, long, int, long, boolean)</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApiRetryHelper.html" title="class in edu.ucsb.cs.taapply.services">ApiRetryHelper</a></dt>
-<dd>
-<div class="block">Like the five-arg constructor, but with <code>treatAnyForbiddenAsRateLimit</code> set: pass <code>
-true</code> when the provider is known to return bare 403s as an anti-bot measure instead of a proper
-429 (e.g.</div>
-</dd>
-<dt><a href="edu/ucsb/cs/taapply/services/ApiRetryHelper.ApiUnavailableException.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">ApiRetryHelper.ApiUnavailableException</a> - Exception Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
-<dd>
-<div class="block">Thrown when the API is still failing after all retries; carries a clean one-line message.</div>
-</dd>
-<dt><a href="edu/ucsb/cs/taapply/services/ApiRetryHelper.ApiUnavailableException.html#%3Cinit%3E(java.lang.String)" class="member-name-link">ApiUnavailableException(String)</a> - Constructor for exception class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApiRetryHelper.ApiUnavailableException.html" title="class in edu.ucsb.cs.taapply.services">ApiRetryHelper.ApiUnavailableException</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html#applicableRecruitments()" class="member-name-link">applicableRecruitments()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
@@ -714,10 +692,6 @@ both Summer and Fall are reachable.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.UploadResult.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
-</dd>
-<dt><a href="edu/ucsb/cs/taapply/services/ApiRetryHelper.html#execute(java.lang.String,java.util.function.Supplier)" class="member-name-link">execute(String, Supplier)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApiRetryHelper.html" title="class in edu.ucsb.cs.taapply.services">ApiRetryHelper</a></dt>
-<dd>
-<div class="block">Runs <code>call</code>, pacing it relative to the previous call and retrying per the class contract.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/LanguageExamStatus.html#EXEMPT_US_CITIZEN" class="member-name-link">EXEMPT_US_CITIZEN</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/LanguageExamStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></dt>
 <dd>&nbsp;</dd>
