@@ -118,6 +118,20 @@ describe("ApplyPage tests", () => {
   });
 
   /** The notice shown is the current one for the recruitment's type, and must be agreed to. */
+  /** Issue #150: the notice's fields are filled from the recruitment being applied to. */
+  test("fills the notice's quarter and date fields from the recruitment", async () => {
+    axiosMock.onGet("/api/notices/current").reply(200, [
+      {
+        ...noticesFixtures.ulaV1,
+        content: "Apply for ${quarter} by ${primaryConsiderationDate}.",
+      },
+    ]);
+    renderPage();
+    expect(
+      await screen.findByTestId("ApplyPage-notice-content"),
+    ).toHaveTextContent("Apply for Winter 2026 by January 20, 2026.");
+  });
+
   test("shows the current notice for the recruitment's type and sends the agreed version", async () => {
     axiosMock.onGet("/api/notices/current").reply(200, [noticesFixtures.ulaV1]);
     axiosMock

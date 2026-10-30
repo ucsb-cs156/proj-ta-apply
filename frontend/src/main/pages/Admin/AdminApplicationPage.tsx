@@ -128,6 +128,15 @@ export default function AdminApplicationPage(): React.JSX.Element {
               application={application}
               type={recruitment?.type ?? "TA"}
               notice={notice}
+              noticeFillIn={
+                recruitment
+                  ? {
+                      quarter: recruitment.quarter,
+                      primaryConsiderationDate:
+                        recruitment.primaryConsiderationDate,
+                    }
+                  : null
+              }
               testIdPrefix="AdminApplicationPage-summary"
             />
 

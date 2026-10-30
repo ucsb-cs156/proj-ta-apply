@@ -145,6 +145,15 @@ export default function ApplyPage(): React.JSX.Element {
             topics={options?.topics ?? []}
             interests={options?.interests ?? []}
             notice={(notices ?? [])[0] ?? null}
+            noticeFillIn={
+              recruitment
+                ? {
+                    quarter: recruitment.quarter,
+                    primaryConsiderationDate:
+                      recruitment.primaryConsiderationDate,
+                  }
+                : null
+            }
             initialContents={(prefill ?? [])[0]}
             defaultNames={{
               firstName: currentUser.root?.user?.givenName,

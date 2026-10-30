@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import axios from "axios";
@@ -38,7 +39,9 @@ function renderCard(type = "TA") {
   const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
   render(
     <QueryClientProvider client={queryClient}>
-      <NoticeEditorCard type={type} testIdPrefix="Card" />
+      <MemoryRouter>
+        <NoticeEditorCard type={type} testIdPrefix="Card" />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
   return invalidateQueriesSpy;
@@ -114,6 +117,20 @@ describe("NoticeEditorCard tests", () => {
       ],
       minHeight: "200px",
     });
+  });
+
+  /** Issue #150: the fields are explained beside the editor, with a link to the help page. */
+  test("explains the two fields beside the editor and links to the help page", async () => {
+    renderCard();
+    const hint = await screen.findByTestId("Card-fields-hint");
+    expect(hint).toHaveTextContent(
+      "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place. The preview shows them as written. More about these fields and examples.",
+    );
+    expect(
+      within(hint).getByRole("link", {
+        name: "More about these fields and examples",
+      }),
+    ).toHaveAttribute("href", "/help/admins#notice-fields");
   });
 
   test("the preview renders GitHub-flavoured Markdown", async () => {
@@ -286,7 +303,9 @@ describe("NoticeEditorCard tests", () => {
   test("uses NoticeEditorCard as the default test id prefix", async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <NoticeEditorCard type="TA" />
+        <MemoryRouter>
+          <NoticeEditorCard type="TA" />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
     expect(

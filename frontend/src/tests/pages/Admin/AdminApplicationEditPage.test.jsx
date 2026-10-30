@@ -82,6 +82,22 @@ describe("AdminApplicationEditPage tests", () => {
     axiosMock.onPut("/api/admin/applications").reply(200, ula);
   });
 
+  /** Issue #150: the edit form fills the notice's fields from the recruitment. */
+  test("fills the notice's quarter and date fields from the recruitment", async () => {
+    axiosMock.onGet("/api/notices").reply(200, {
+      ...noticesFixtures.ulaV1,
+      content: "Apply for ${quarter} by ${primaryConsiderationDate}.",
+    });
+    renderPage();
+    const content = await screen.findByTestId(
+      "AdminApplicationEditPage-notice-content",
+    );
+    expect(content).toHaveTextContent(
+      /Apply for (Winter|Spring) 2026 by (January 20|April 15), 2026\./,
+    );
+    expect(content).not.toHaveTextContent("${quarter}");
+  });
+
   test("opens the applicant's form, filled in, for the application's recruitment", async () => {
     renderPage();
 

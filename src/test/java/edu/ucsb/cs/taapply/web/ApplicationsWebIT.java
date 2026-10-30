@@ -93,7 +93,10 @@ public class ApplicationsWebIT extends WebTestCase {
     return noticeVersionRepository.save(
         NoticeVersion.builder()
             .type(RecruitmentType.TA)
-            .content("# TA Terms\n\nBe available for the **whole** quarter.")
+            // Issue #150: the two fields, filled in from the recruitment when shown.
+            .content(
+                "# TA Terms\n\nBe available for the **whole** quarter.\n\nApply for ${quarter}"
+                    + " by ${primaryConsiderationDate}.")
             .createdAt(LocalDateTime.of(2026, 1, 2, 3, 4))
             .build());
   }
@@ -192,6 +195,9 @@ public class ApplicationsWebIT extends WebTestCase {
 
     // The notice is shown, rendered from Markdown, and the submit is refused until agreed.
     assertThat(page.getByTestId("ApplyPage-notice-content").locator("h1")).containsText("TA Terms");
+    // Issue #150: the fields read as the recruitment's quarter and deadline, not as written.
+    assertThat(page.getByTestId("ApplyPage-notice-content")).containsText("Apply for Fall 2021 by");
+    assertThat(page.getByTestId("ApplyPage-notice-content")).not().containsText("${");
     page.getByTestId("ApplyPage-submit").click();
     assertThat(page.getByTestId("ApplyPage-notice-agree"))
         .hasClass(java.util.regex.Pattern.compile("is-invalid"));

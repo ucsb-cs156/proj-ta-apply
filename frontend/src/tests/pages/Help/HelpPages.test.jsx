@@ -8,6 +8,7 @@ import HelpTaApplicantsPage from "main/pages/Help/HelpTaApplicantsPage";
 import HelpUlaApplicantsPage from "main/pages/Help/HelpUlaApplicantsPage";
 import HelpInstructorsPage from "main/pages/Help/HelpInstructorsPage";
 import HelpAdminsPage from "main/pages/Help/HelpAdminsPage";
+import { NOTICE_FIELD_EXAMPLES } from "main/utils/noticeFields";
 import {
   ADMIN_MENU_ENTRIES,
   VIDEO_INSTRUCTIONS_URL,
@@ -156,6 +157,26 @@ describe("Help pages (issue #140)", () => {
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
     expect(screen.getByText(/ADMIN_EMAILS/)).toBeInTheDocument();
+    // Issue #150: the notices fields, documented under TA App Settings with the issue's examples.
+    const fieldsHeading = document.getElementById("notice-fields");
+    expect(fieldsHeading.tagName).toBe("H3");
+    expect(fieldsHeading).toHaveTextContent("Fields in the notices text");
+    expect(
+      screen.getByTestId("HelpAdminsPage-notice-fields"),
+    ).toHaveTextContent(
+      "${quarter} becomes the quarter, written out (for example Winter 2026), and ${primaryConsiderationDate} becomes the primary consideration date (for example January 20, 2026)",
+    );
+    expect(
+      [
+        ...screen
+          .getByTestId("HelpAdminsPage-notice-field-examples")
+          .querySelectorAll("li"),
+      ].map((li) => li.textContent),
+    ).toEqual(NOTICE_FIELD_EXAMPLES);
+    expect(screen.getByRole("link", { name: "fields" })).toHaveAttribute(
+      "href",
+      "#notice-fields",
+    );
     expect(
       screen.getByRole("link", { name: "CSV Upload/Download Formats" }),
     ).toHaveAttribute("href", "/help/csv");

@@ -134,6 +134,35 @@ describe("NoticeAgreement tests", () => {
     expect(box).toBeDisabled();
   });
 
+  /** Issue #150: the fields are filled from the recruitment; without one, shown as written. */
+  test("fills ${quarter} and ${primaryConsiderationDate} from fillIn, else shows them as written", () => {
+    const notice = {
+      ...noticesFixtures.taV2,
+      content:
+        "Apply for **${quarter}** by ${primaryConsiderationDate}. Not ${other}.",
+    };
+    const { rerender } = render(
+      <NoticeAgreement
+        notice={notice}
+        agreed={false}
+        onChange={() => {}}
+        fillIn={{ quarter: "20261", primaryConsiderationDate: "2026-01-20" }}
+      />,
+    );
+    const content = screen.getByTestId("NoticeAgreement-content");
+    expect(content).toHaveTextContent(
+      "Apply for Winter 2026 by January 20, 2026. Not ${other}.",
+    );
+    expect(content.querySelector("strong")).toHaveTextContent("Winter 2026");
+
+    rerender(
+      <NoticeAgreement notice={notice} agreed={false} onChange={() => {}} />,
+    );
+    expect(screen.getByTestId("NoticeAgreement-content")).toHaveTextContent(
+      "Apply for ${quarter} by ${primaryConsiderationDate}. Not ${other}.",
+    );
+  });
+
   test("uses NoticeAgreement as the default test id prefix", () => {
     render(
       <NoticeAgreement
