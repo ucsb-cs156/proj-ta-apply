@@ -153,15 +153,17 @@ public class UcsbQuarterService {
   public QuarterRefresh refreshThroughEnd() throws Exception {
 <span class="fc" id="L154">    String current = getCurrentQuarterYYYYQ();</span>
 <span class="fc" id="L155">    String end = endQuarterFor(current);</span>
-<span class="fc" id="L156">    String start =</span>
-        ucsbApiQuarterRepository
-<span class="fc" id="L158">            .findTopByOrderByQuarterDesc()</span>
-<span class="fc" id="L159">            .map(UCSBAPIQuarter::getQuarter)</span>
-<span class="fc" id="L160">            .orElse(current);</span>
-<span class="fc bfc" id="L161" title="All 2 branches covered.">    if (Quarter.yyyyqToInt(start) &gt; Quarter.yyyyqToInt(end)) {</span>
-<span class="fc" id="L162">      start = end;</span>
-    }
-<span class="fc" id="L164">    return new QuarterRefresh(start, end, loadQuarters(start, end));</span>
+<span class="fc" id="L156">    int endValue = Quarter.yyyyqToInt(end);</span>
+    // Never past the end: a file already beyond it refreshes just the end quarter.
+<span class="fc" id="L158">    int startValue =</span>
+<span class="fc" id="L159">        Math.min(</span>
+            ucsbApiQuarterRepository
+<span class="fc" id="L161">                .findTopByOrderByQuarterDesc()</span>
+<span class="fc" id="L162">                .map(latest -&gt; Quarter.yyyyqToInt(latest.getQuarter()))</span>
+<span class="fc" id="L163">                .orElse(Quarter.yyyyqToInt(current)),</span>
+            endValue);
+<span class="fc" id="L165">    String start = new Quarter(startValue).getYYYYQ();</span>
+<span class="fc" id="L166">    return new QuarterRefresh(start, end, loadQuarters(start, end));</span>
   }
 
   /**
@@ -170,25 +172,25 @@ public class UcsbQuarterService {
    * times a year.
    */
   public String getCurrentQuarterYYYYQ() throws Exception {
-<span class="fc bfc" id="L173" title="All 2 branches covered.">    if (cachedCurrentQuarter != null</span>
-<span class="fc bfc" id="L174" title="All 2 branches covered.">        &amp;&amp; Instant.now().isBefore(cacheTime.plus(CACHE_DURATION_HOURS, ChronoUnit.HOURS))) {</span>
-<span class="fc" id="L175">      return cachedCurrentQuarter;</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">    if (cachedCurrentQuarter != null</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">        &amp;&amp; Instant.now().isBefore(cacheTime.plus(CACHE_DURATION_HOURS, ChronoUnit.HOURS))) {</span>
+<span class="fc" id="L177">      return cachedCurrentQuarter;</span>
     }
 
-<span class="fc" id="L178">    String url = urlForCurrentQuarter();</span>
-<span class="fc" id="L179">    log.info(&quot;url={}&quot;, url);</span>
+<span class="fc" id="L180">    String url = urlForCurrentQuarter();</span>
+<span class="fc" id="L181">    log.info(&quot;url={}&quot;, url);</span>
 
-<span class="fc" id="L181">    ResponseEntity&lt;String&gt; re =</span>
-<span class="fc" id="L182">        restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);</span>
-<span class="fc" id="L183">    UcsbApiQuarter quarter = objectMapper.readValue(re.getBody(), UcsbApiQuarter.class);</span>
+<span class="fc" id="L183">    ResponseEntity&lt;String&gt; re =</span>
+<span class="fc" id="L184">        restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);</span>
+<span class="fc" id="L185">    UcsbApiQuarter quarter = objectMapper.readValue(re.getBody(), UcsbApiQuarter.class);</span>
 
-<span class="fc bfc" id="L185" title="All 4 branches covered.">    if (quarter == null || quarter.getQuarter() == null) {</span>
-<span class="fc" id="L186">      throw new IllegalStateException(&quot;UCSB API returned no current quarter&quot;);</span>
+<span class="fc bfc" id="L187" title="All 4 branches covered.">    if (quarter == null || quarter.getQuarter() == null) {</span>
+<span class="fc" id="L188">      throw new IllegalStateException(&quot;UCSB API returned no current quarter&quot;);</span>
     }
 
-<span class="fc" id="L189">    cachedCurrentQuarter = quarter.getQuarter();</span>
-<span class="fc" id="L190">    cacheTime = Instant.now();</span>
-<span class="fc" id="L191">    return cachedCurrentQuarter;</span>
+<span class="fc" id="L191">    cachedCurrentQuarter = quarter.getQuarter();</span>
+<span class="fc" id="L192">    cacheTime = Instant.now();</span>
+<span class="fc" id="L193">    return cachedCurrentQuarter;</span>
   }
 
   /**
@@ -198,12 +200,12 @@ public class UcsbQuarterService {
    * @throws IllegalArgumentException if currentQuarterYYYYQ is not a valid YYYYQ value
    */
   public static String endQuarterFor(String currentQuarterYYYYQ) {
-<span class="fc" id="L201">    Quarter endQuarter = new Quarter(Quarter.yyyyqToInt(currentQuarterYYYYQ));</span>
-<span class="fc bfc" id="L202" title="All 2 branches covered.">    int quartersToAdd = (endQuarter.getValue() % 10 == SPRING) ? 2 : 1;</span>
-<span class="fc bfc" id="L203" title="All 2 branches covered.">    for (int i = 0; i &lt; quartersToAdd; i++) {</span>
-<span class="fc" id="L204">      endQuarter.increment();</span>
+<span class="fc" id="L203">    Quarter endQuarter = new Quarter(Quarter.yyyyqToInt(currentQuarterYYYYQ));</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">    int quartersToAdd = (endQuarter.getValue() % 10 == SPRING) ? 2 : 1;</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">    for (int i = 0; i &lt; quartersToAdd; i++) {</span>
+<span class="fc" id="L206">      endQuarter.increment();</span>
     }
-<span class="fc" id="L206">    return endQuarter.getYYYYQ();</span>
+<span class="fc" id="L208">    return endQuarter.getYYYYQ();</span>
   }
 
   /**
@@ -213,10 +215,10 @@ public class UcsbQuarterService {
    */
   public String getEndQtrYYYYQ() {
     try {
-<span class="fc" id="L216">      return endQuarterFor(getCurrentQuarterYYYYQ());</span>
-<span class="fc" id="L217">    } catch (Exception e) {</span>
-<span class="fc" id="L218">      log.error(&quot;Could not derive end quarter from the UCSB API; using {}&quot;, endQtrFallback, e);</span>
-<span class="fc" id="L219">      return endQtrFallback;</span>
+<span class="fc" id="L218">      return endQuarterFor(getCurrentQuarterYYYYQ());</span>
+<span class="fc" id="L219">    } catch (Exception e) {</span>
+<span class="fc" id="L220">      log.error(&quot;Could not derive end quarter from the UCSB API; using {}&quot;, endQtrFallback, e);</span>
+<span class="fc" id="L221">      return endQtrFallback;</span>
     }
   }
 }
