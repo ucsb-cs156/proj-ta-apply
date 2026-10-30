@@ -108,6 +108,106 @@ describe("RecruitmentCoursesPage tests", () => {
     expect(button).toHaveTextContent("Unremove");
   });
 
+  // ---- add by enroll code (issue #125) ----
+
+  test("adding by enroll code posts the code, toasts what was added and clears the box", async () => {
+    axiosMock
+      .onPost("/api/recruitmentcourses/post")
+      .reply(200, recruitmentCoursesFixtures.oneManual);
+    renderPage();
+
+    const add = await screen.findByTestId("RecruitmentCoursesPage-add");
+    expect(add).toBeDisabled();
+    const box = screen.getByTestId("RecruitmentCoursesPage-enrollCode");
+    expect(box.style.width).toBe("7em");
+    expect(box).toHaveAttribute("placeholder", "e.g. 07492");
+    // Blank-looking input is still nothing to send.
+    await userEvent.type(box, "   ");
+    expect(add).toBeDisabled();
+    await userEvent.clear(box);
+    expect(screen.getByLabelText("Add by enroll code")).toBe(
+      screen.getByTestId("RecruitmentCoursesPage-enrollCode"),
+    );
+    await userEvent.type(
+      screen.getByTestId("RecruitmentCoursesPage-enrollCode"),
+      " 07600 ",
+    );
+    expect(add).toBeEnabled();
+    await userEvent.click(add);
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.post.filter(
+          (r) => r.url === "/api/recruitmentcourses/post",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.post.find(
+        (r) => r.url === "/api/recruitmentcourses/post",
+      ).params,
+    ).toEqual({ recruitmentId: "7", enrollCode: "07600" });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Added CMPSC   165A section 0100 (07600).",
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("RecruitmentCoursesPage-enrollCode"),
+      ).toHaveValue(""),
+    );
+    // The list is re-fetched.
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/recruitmentcourses/all",
+        ).length,
+      ).toBeGreaterThanOrEqual(2),
+    );
+  });
+
+  test("a refused enroll code shows the backend's reason and keeps the box", async () => {
+    axiosMock.onPost("/api/recruitmentcourses/post").reply(400, {
+      message: "Enroll code 07500 is section 0101, a discussion or lab",
+    });
+    renderPage();
+
+    await userEvent.type(
+      await screen.findByTestId("RecruitmentCoursesPage-enrollCode"),
+      "07500",
+    );
+    await userEvent.click(screen.getByTestId("RecruitmentCoursesPage-add"));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Enroll code 07500 is section 0101, a discussion or lab",
+      ),
+    );
+    expect(screen.getByTestId("RecruitmentCoursesPage-enrollCode")).toHaveValue(
+      "07500",
+    );
+  });
+
+  test("a section without a number is still announced", async () => {
+    axiosMock
+      .onPost("/api/recruitmentcourses/post")
+      .reply(200, { ...recruitmentCoursesFixtures.oneManual, section: null });
+    renderPage();
+
+    await userEvent.type(
+      await screen.findByTestId("RecruitmentCoursesPage-enrollCode"),
+      "07600",
+    );
+    await userEvent.click(screen.getByTestId("RecruitmentCoursesPage-add"));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Added CMPSC   165A section  (07600).",
+      ),
+    );
+  });
+
   test("Populate launches the job and points at the Jobs page", async () => {
     renderPage();
     await screen.findByTestId("RecruitmentCoursesPage-populate");

@@ -177,6 +177,24 @@ describe("RecruitmentCourseTable tests", () => {
     ).toHaveTextContent("Remove");
   });
 
+  /** Issue #125: a row added by hand says so beside its number. */
+  test("a manually added row carries a manual badge after the course number", () => {
+    renderTable([notRemoved[0], recruitmentCoursesFixtures.oneManual]);
+
+    const badge = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-1-manual",
+    );
+    expect(badge).toHaveTextContent("manual");
+    expect(badge).toHaveClass("badge", "bg-info", "text-dark", "ms-2");
+    expect(badge).toHaveAttribute("title", "Added by an admin by enroll code");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-1-col-courseId"),
+    ).toContainElement(badge);
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-cell-row-0-manual"),
+    ).toBeNull();
+  });
+
   test("a row without the stale flag at all is treated as fresh", () => {
     const { stale: _omitted, ...legacy } = notRemoved[0];
     renderTable([legacy]);
