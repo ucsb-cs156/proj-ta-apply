@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.jobs;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class PopulateRecruitmentCoursesJobFactory {
   @Autowired private UCSBCurriculumService ucsbCurriculumService;
   @Autowired private CourseRepository courseRepository;
   @Autowired private RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired private RecruitmentRepository recruitmentRepository;
   @Autowired private JobRateLimit jobRateLimit;
 
   @Value("${app.subjectArea:CMPSC}")
@@ -33,6 +35,7 @@ public class PopulateRecruitmentCoursesJobFactory {
         .ucsbCurriculumService(ucsbCurriculumService)
         .courseRepository(courseRepository)
         .recruitmentCourseRepository(recruitmentCourseRepository)
+        .recruitmentRepository(recruitmentRepository)
         .jobRateLimit(jobRateLimit)
         .build();
   }

@@ -8,6 +8,7 @@ import { vi } from "vitest";
 
 import RecruitmentCoursesPage from "main/pages/Admin/RecruitmentCoursesPage";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
+import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -54,6 +55,14 @@ describe("RecruitmentCoursesPage tests", () => {
     axiosMock
       .onPost("/api/jobs/launch/populateRecruitmentCourses")
       .reply(200, { id: 1 });
+    // Recruitment 7, refreshed once (issue #124).
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+      {
+        ...recruitmentsFixtures.threeRecruitments[1],
+        id: 7,
+        lastPopulatedAt: "2026-02-01T03:00:00",
+      },
+    ]);
     // Default view hides removed rows; includeRemoved=true reveals them.
     axiosMock
       .onGet("/api/recruitmentcourses/all", {
@@ -65,6 +74,58 @@ describe("RecruitmentCoursesPage tests", () => {
         params: { recruitmentId: "7", includeRemoved: true },
       })
       .reply(200, recruitmentCoursesFixtures.fourCourses);
+  });
+
+  /** Issue #124: how fresh the list is, and that it is refreshed nightly. */
+  test("says when the list was last refreshed", async () => {
+    renderPage();
+
+    // The line is up before the recruitment arrives, so wait for the stamped text.
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("RecruitmentCoursesPage-last-refreshed"),
+      ).toHaveTextContent(
+        `Last refreshed from the UCSB schedule: ${new Date("2026-02-01T03:00:00").toLocaleString()}. Open, upcoming and recently closed recruitments are also refreshed automatically every night.`,
+      ),
+    );
+  });
+
+  test("another recruitment's stamp is not taken for this one's", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+      {
+        ...recruitmentsFixtures.threeRecruitments[0],
+        id: 9,
+        lastPopulatedAt: "2026-05-05T03:00:00",
+      },
+      {
+        ...recruitmentsFixtures.threeRecruitments[1],
+        id: 7,
+        lastPopulatedAt: null,
+      },
+    ]);
+    renderPage();
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.some(
+          (r) => r.url === "/api/admin/recruitments/all",
+        ),
+      ).toBe(true),
+    );
+    const line = await screen.findByTestId(
+      "RecruitmentCoursesPage-last-refreshed",
+    );
+    expect(line).toHaveTextContent("Not yet refreshed from the UCSB schedule.");
+    expect(line).not.toHaveTextContent("Last refreshed");
+  });
+
+  test("says so when the recruitment is unknown", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    renderPage();
+
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-last-refreshed"),
+    ).toHaveTextContent("Not yet refreshed from the UCSB schedule.");
   });
 
   test("lists the recruitment's courses", async () => {

@@ -10,10 +10,12 @@ import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobContextConsumer;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +59,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
   private UCSBCurriculumService ucsbCurriculumService;
   private CourseRepository courseRepository;
   private RecruitmentCourseRepository recruitmentCourseRepository;
+  private RecruitmentRepository recruitmentRepository;
   private JobRateLimit jobRateLimit;
 
   @Override
@@ -78,6 +81,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
           String.format(
               "Finished: 0 added, 0 updated, 0 left removed, %d marked stale, 0 un-staled",
               markedStale));
+      stampRefreshed();
       return;
     }
 
@@ -186,6 +190,13 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
         String.format(
             "Finished: %d added, %d updated, %d left removed, %d marked stale, %d un-staled",
             added, updated, skippedRemoved, markedStale, unstaled));
+    stampRefreshed();
+  }
+
+  /** Records that the list is now as fresh as the API, so the admin page can say so (#124). */
+  private void stampRefreshed() {
+    recruitment.setLastPopulatedAt(LocalDateTime.now());
+    recruitmentRepository.save(recruitment);
   }
 
   /**

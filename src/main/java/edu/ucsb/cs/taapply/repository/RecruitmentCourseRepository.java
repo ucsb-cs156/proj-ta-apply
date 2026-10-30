@@ -18,4 +18,10 @@ public interface RecruitmentCourseRepository extends CrudRepository<RecruitmentC
    * spaces as negligible.
    */
   List<RecruitmentCourse> findByRecruitmentId(Long recruitmentId);
+
+  /**
+   * Every row, in any recruitment, whose instructor of record is the given catalog name (issue
+   * #127). Removed rows are included; callers filter.
+   */
+  List<RecruitmentCourse> findByInstructor(String instructor);
 }

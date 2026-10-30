@@ -9,6 +9,7 @@ const recruitmentsFixtures = {
       primaryConsiderationDate: "2026-04-15",
       actualOpeningDate: null,
       actualClosingDate: null,
+      lastPopulatedAt: null,
     },
     {
       id: 2,
@@ -19,6 +20,7 @@ const recruitmentsFixtures = {
       primaryConsiderationDate: "2026-01-20",
       actualOpeningDate: "2026-01-07",
       actualClosingDate: null,
+      lastPopulatedAt: null,
     },
     {
       // Opened, closed, and re-opened: the original opening date is preserved.
@@ -30,6 +32,7 @@ const recruitmentsFixtures = {
       primaryConsiderationDate: "2026-01-20",
       actualOpeningDate: "2026-01-06",
       actualClosingDate: "2026-02-01",
+      lastPopulatedAt: null,
     },
   ],
 };

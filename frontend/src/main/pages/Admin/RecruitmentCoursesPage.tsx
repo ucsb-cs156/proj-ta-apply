@@ -5,6 +5,8 @@ import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import RecruitmentCourseTable, {
   type RecruitmentCourse,
 } from "main/components/Recruitments/RecruitmentCourseTable";
+import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { apiErrorMessage } from "main/utils/apiError";
 import { toast } from "react-toastify";
@@ -30,6 +32,17 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
     [],
   );
 
+  // For the last-refreshed line (issue #124); every Populate stamps the recruitment.
+  const { data: recruitments } = useBackend<Recruitment[]>(
+    ["/api/admin/recruitments/all"],
+    { method: "GET", url: "/api/admin/recruitments/all" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+  const recruitment = (recruitments ?? []).find(
+    (r) => String(r.id) === String(recruitmentId),
+  );
+
   const populateMutation = useBackendMutation<void, unknown>(
     () => ({
       url: "/api/jobs/launch/populateRecruitmentCourses",
@@ -42,7 +55,11 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           "Populate job started. Watch its progress on the Developer > Jobs page.",
         ),
     },
-    ["/api/recruitmentcourses/all", includeRemoved],
+    [
+      "/api/recruitmentcourses/all",
+      includeRemoved,
+      "/api/admin/recruitments/all",
+    ],
   );
 
   const addMutation = useBackendMutation<string, RecruitmentCourse>(
@@ -80,6 +97,12 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           un-cancels it. A lecture can also be added by hand by its enroll code,
           flagged course or not; Populate keeps refreshing it for as long as the
           schedule lists it.
+        </p>
+
+        <p data-testid="RecruitmentCoursesPage-last-refreshed">
+          {lastRefreshedText(recruitment?.lastPopulatedAt)} Open, upcoming and
+          recently closed recruitments are also refreshed automatically every
+          night.
         </p>
 
         <div className="d-flex align-items-center gap-3 mb-3">
