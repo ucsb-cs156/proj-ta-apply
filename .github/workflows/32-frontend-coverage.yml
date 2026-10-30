@@ -11,5 +11,7 @@ on:
 jobs:
   call-frontend-coverage:
     uses: ucsb-cs156/workflows/.github/workflows/32-frontend-coverage.yml@main
+    with:
+      enable_typescript: true
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -53,13 +53,14 @@ mvn test
 
 ```bash
 cd frontend
-npm run typecheck
+npx tsc -b
 ```
 
-This runs `tsc -b`, the same type check `npm run build` performs. Note that a plain
-`npx tsc --noEmit` is a no-op here: `frontend/tsconfig.json` is a solution-style file whose
-`files` list is empty, so it checks nothing and always exits 0. CI runs this check as
-`37-frontend-typecheck` on every pull request that touches `frontend/`.
+This is the type check `npm run build` performs. A plain `npx tsc --noEmit` is a no-op here:
+`frontend/tsconfig.json` is a solution-style file whose `files` list is empty, so it checks
+nothing and always exits 0. In CI the same `tsc -b` runs as a fail-fast step right after
+`npm ci` in the frontend coverage, mutation-testing and eslint workflows, turned on by the
+`enable_typescript: true` input those workflows are called with.
 
 ### Integration tests (Playwright + WireMock)
 
