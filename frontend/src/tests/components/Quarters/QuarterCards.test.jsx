@@ -25,6 +25,10 @@ describe("QuarterCards tests", () => {
     expect(cell("20214", "category")).toHaveTextContent("FALL");
     expect(cell("20214", "academicYear")).toHaveTextContent("2021-2022");
     expect(cell("20214", "card")).toHaveClass("card", "h-100");
+    // The short and long names read as two words on the header.
+    expect(
+      cell("20214", "card").querySelector(".card-header"),
+    ).toHaveTextContent("F21 FALL 2021");
   });
 
   test("every date is shown, the passes with their time, nulls blank", () => {

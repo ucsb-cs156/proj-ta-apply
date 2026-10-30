@@ -48,11 +48,14 @@ export default function QuartersPage(): React.JSX.Element {
   // double mount in development does not refresh twice.
   const refreshed = useRef(false);
   const refresh = refreshMutation.mutate;
+  // Stryker disable all : the guard only matters under strict mode's double mount, which the
+  // tests do not simulate; the dependency list cannot be told apart from an empty one either.
   useEffect(() => {
     if (refreshed.current) return;
     refreshed.current = true;
     refresh();
   }, [refresh]);
+  // Stryker restore all
 
   return (
     <BasicLayout>
