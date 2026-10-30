@@ -1144,6 +1144,10 @@ have logged in: until then both names are null.</div>
 <dd>
 <div class="block">Returns the value of the <code>invalidEmails</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html#isEligible(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">isEligible(Recruitment, LocalDate)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html" title="class in edu.ucsb.cs.taapply.jobs">RecruitmentCoursesRefreshScheduler</a></dt>
+<dd>
+<div class="block">Whether a recruitment's course list is still worth refreshing today.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#isInAdminEmails()" class="member-name-link">isInAdminEmails()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>isInAdminEmails</code> record component.</div>
@@ -1622,6 +1626,14 @@ quarter as reported by the UCSB API.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#%3Cinit%3E()" class="member-name-link">RecruitmentCoursesController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.jobs">RecruitmentCoursesRefreshScheduler</a> - Class in <a href="edu/ucsb/cs/taapply/jobs/package-summary.html">edu.ucsb.cs.taapply.jobs</a></dt>
+<dd>
+<div class="block">Re-fills the course list of every recruitment that still matters, on a schedule (issue #124), the
+way the Populate button does by hand: one <a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs"><code>PopulateRecruitmentCoursesJob</code></a> per recruitment,
+run through the job service so each shows up on Developer &gt; Jobs with its log.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html#%3Cinit%3E()" class="member-name-link">RecruitmentCoursesRefreshScheduler()</a> - Constructor for class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html" title="class in edu.ucsb.cs.taapply.jobs">RecruitmentCoursesRefreshScheduler</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
@@ -1633,6 +1645,14 @@ quarter as reported by the UCSB API.</div>
 <dt><a href="edu/ucsb/cs/taapply/enums/RecruitmentType.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a> - Enum Class in <a href="edu/ucsb/cs/taapply/enums/package-summary.html">edu.ucsb.cs.taapply.enums</a></dt>
 <dd>
 <div class="block">Whether a recruitment is for TA positions (grad students) or ULA positions (undergrads).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html#refresh()" class="member-name-link">refresh()</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html" title="class in edu.ucsb.cs.taapply.jobs">RecruitmentCoursesRefreshScheduler</a></dt>
+<dd>
+<div class="block">The scheduled entry point: today's eligible recruitments.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html#refresh(java.time.LocalDate)" class="member-name-link">refresh(LocalDate)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html" title="class in edu.ucsb.cs.taapply.jobs">RecruitmentCoursesRefreshScheduler</a></dt>
+<dd>
+<div class="block">Launches one Populate job per recruitment eligible on the given day, pausing between them.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html#REFRESH_AFTER" class="member-name-link">REFRESH_AFTER</a> - Static variable in class edu.ucsb.cs.taapply.interceptors.<a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">LastOnlineInterceptor</a></dt>
 <dd>
@@ -1708,6 +1728,13 @@ effect without requiring re-login.</div>
 ROLE_ADMIN on login without first needing to be added manually through the Admins page.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/startup/ScaffoldStartup.html#%3Cinit%3E()" class="member-name-link">ScaffoldStartup()</a> - Constructor for class edu.ucsb.cs.taapply.startup.<a href="edu/ucsb/cs/taapply/startup/ScaffoldStartup.html" title="class in edu.ucsb.cs.taapply.startup">ScaffoldStartup</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/config/SchedulingConfig.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.config">SchedulingConfig</a> - Class in <a href="edu/ucsb/cs/taapply/config/package-summary.html">edu.ucsb.cs.taapply.config</a></dt>
+<dd>
+<div class="block">Turns on Spring scheduling, and with it the nightly refresh of recruitment course lists (issue
+#124), only when <code>app.recruitmentCourses.refreshEnabled</code> is true.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/config/SchedulingConfig.html#%3Cinit%3E()" class="member-name-link">SchedulingConfig()</a> - Constructor for class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/SchedulingConfig.html" title="class in edu.ucsb.cs.taapply.config">SchedulingConfig</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#secondChoiceCourse()" class="member-name-link">secondChoiceCourse()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
