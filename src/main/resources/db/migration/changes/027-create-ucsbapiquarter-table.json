@@ -1,0 +1,48 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "027-create-ucsbapiquarter-table",
+        "author": "pc",
+        "comment": "The UCSB quarter calendar, one row per quarter, as proj-courses keeps it (issue #151). The pass columns are pass1begin etc.: Hibernate's naming strategy puts no underscore between a digit and a capital.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "ucsbapiquarter" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "ucsbapiquarter",
+              "columns": [
+                {
+                  "column": {
+                    "name": "quarter",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "nullable": false, "primaryKey": true }
+                  }
+                },
+                { "column": { "name": "qyy", "type": "VARCHAR(255)" } },
+                { "column": { "name": "name", "type": "VARCHAR(255)" } },
+                { "column": { "name": "category", "type": "VARCHAR(255)" } },
+                { "column": { "name": "academic_year", "type": "VARCHAR(255)" } },
+                { "column": { "name": "first_day_of_classes", "type": "TIMESTAMP" } },
+                { "column": { "name": "last_day_of_classes", "type": "TIMESTAMP" } },
+                { "column": { "name": "first_day_of_finals", "type": "TIMESTAMP" } },
+                { "column": { "name": "last_day_of_finals", "type": "TIMESTAMP" } },
+                { "column": { "name": "first_day_of_quarter", "type": "TIMESTAMP" } },
+                { "column": { "name": "last_day_of_schedule", "type": "TIMESTAMP" } },
+                { "column": { "name": "pass1begin", "type": "TIMESTAMP" } },
+                { "column": { "name": "pass2begin", "type": "TIMESTAMP" } },
+                { "column": { "name": "pass3begin", "type": "TIMESTAMP" } },
+                { "column": { "name": "fee_deadline", "type": "TIMESTAMP" } },
+                { "column": { "name": "last_day_to_add_under_grad", "type": "TIMESTAMP" } },
+                { "column": { "name": "last_day_to_add_grad", "type": "TIMESTAMP" } },
+                { "column": { "name": "last_day_third_week", "type": "TIMESTAMP" } }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

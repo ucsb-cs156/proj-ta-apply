@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import edu.ucsb.cs.taapply.entity.CatalogName;
 import edu.ucsb.cs.taapply.entity.Course;
+import edu.ucsb.cs.taapply.entity.UCSBAPIQuarter;
 import edu.ucsb.cs.taapply.models.UcsbCourse;
 import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
 import edu.ucsb.cs.taapply.models.UcsbInstructor;
@@ -20,6 +21,7 @@ import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
+import edu.ucsb.cs.taapply.services.UcsbQuarterService;
 import edu.ucsb.cs156.jobs.entities.Job;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
@@ -44,6 +46,7 @@ public class PopulateCoursesJobTests {
   @Mock private UCSBCurriculumService ucsbCurriculumService;
   @Mock private CourseRepository courseRepository;
   @Mock private CatalogNameRepository catalogNameRepository;
+  @Mock private UcsbQuarterService ucsbQuarterService;
   @Mock private JobRateLimit jobRateLimit;
 
   private JobContext ctx;
@@ -64,8 +67,43 @@ public class PopulateCoursesJobTests {
         .ucsbCurriculumService(ucsbCurriculumService)
         .courseRepository(courseRepository)
         .catalogNameRepository(catalogNameRepository)
+        .ucsbQuarterService(ucsbQuarterService)
         .jobRateLimit(jobRateLimit)
         .build();
+  }
+
+  // ---- issue #151: the quarter calendar for the same range ----
+
+  @Test
+  public void saves_the_quarter_calendar_for_the_range_before_the_courses() throws Exception {
+    when(ucsbQuarterService.loadQuarters("20241", "20243"))
+        .thenReturn(
+            List.of(
+                UCSBAPIQuarter.builder().quarter("20241").build(),
+                UCSBAPIQuarter.builder().quarter("20242").build()));
+    when(ucsbCurriculumService.getCourses(any(), any(), any())).thenReturn(List.of());
+
+    job("20241", "20243", "U").accept(ctx);
+
+    verify(ucsbQuarterService, times(1)).loadQuarters("20241", "20243");
+    String log = jobStarted.getLog();
+    assertTrue(log.contains("Saved 2 quarter(s) of the UCSB quarter calendar"), log);
+    assertTrue(
+        log.indexOf("Saved 2 quarter(s)") < log.indexOf("Fetching CMPSC 20241 level U"), log);
+  }
+
+  @Test
+  public void a_failing_quarter_calendar_fetch_is_logged_and_the_courses_still_fetched()
+      throws Exception {
+    when(ucsbQuarterService.loadQuarters(any(), any())).thenThrow(new RuntimeException("API down"));
+    when(ucsbCurriculumService.getCourses(any(), any(), any())).thenReturn(List.of());
+
+    job("20241", "20241", "U").accept(ctx);
+
+    String log = jobStarted.getLog();
+    assertTrue(log.contains("Error fetching the quarter calendar: API down"), log);
+    assertTrue(log.contains("Fetching CMPSC 20241 level U"), log);
+    assertTrue(log.contains("Finished: 0 added, 0 updated"), log);
   }
 
   private static UcsbSection section(String number, String... instructorNames) {

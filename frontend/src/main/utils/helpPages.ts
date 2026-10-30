@@ -84,6 +84,14 @@ export const ADMIN_MENU_ENTRIES: AdminMenuEntry[] = [
       "The course table from the UCSB catalog, and which courses recruit TAs and ULAs.",
   },
   {
+    menu: "Admin",
+    label: "Quarters",
+    path: "/admin/quarters",
+    section: "quarters",
+    summary:
+      "The UCSB quarter calendar on file: the dates of each quarter, kept current from the API.",
+  },
+  {
     menu: "Home page",
     label: "Recruitments",
     path: "/",
