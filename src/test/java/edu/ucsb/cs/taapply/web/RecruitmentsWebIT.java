@@ -94,11 +94,11 @@ public class RecruitmentsWebIT extends WebTestCase {
 
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-quarter");
+    Locator firstRow = page.getByTestId("RecruitmentsIndexPage-card-0-quarter");
     waitFor(firstRow);
     assertThat(firstRow).isVisible();
 
-    page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-courses-button").click();
+    page.getByTestId("RecruitmentsIndexPage-card-0-courses-button").click();
 
     Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     waitFor(firstCourse);
@@ -125,9 +125,9 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-quarter");
+    Locator firstRow = page.getByTestId("RecruitmentsIndexPage-card-0-quarter");
     waitFor(firstRow);
-    page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-courses-button").click();
+    page.getByTestId("RecruitmentsIndexPage-card-0-courses-button").click();
 
     Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     waitFor(firstCourse);
@@ -158,17 +158,15 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator statusButton = page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-status-button");
+    Locator statusButton = page.getByTestId("RecruitmentsIndexPage-card-0-status-button");
     waitFor(statusButton);
 
     assertThat(statusButton).containsText("Open");
     statusButton.click();
 
-    assertThat(page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-status-button"))
+    assertThat(page.getByTestId("RecruitmentsIndexPage-card-0-status-button"))
         .containsText("Close");
-    assertThat(page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-actualOpeningDate"))
-        .not()
-        .isEmpty();
+    assertThat(page.getByTestId("RecruitmentsIndexPage-card-0-actualOpeningDate")).not().isEmpty();
   }
 
   /** The CSV button hands the browser a file named after the recruitment, with the TA columns. */
@@ -179,13 +177,13 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator csvButton = page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-csv-button");
+    Locator csvButton = page.getByTestId("RecruitmentsIndexPage-card-0-csv-button");
     waitFor(csvButton);
     assertThat(csvButton).containsText("CSV");
 
     Download download = page.waitForDownload(csvButton::click);
     String firstLine = java.nio.file.Files.readAllLines(download.path()).get(0);
-    assertThat(page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-type")).containsText("TA");
+    assertThat(page.getByTestId("RecruitmentsIndexPage-card-0-type")).containsText("TA");
     org.junit.jupiter.api.Assertions.assertTrue(
         download.suggestedFilename().matches("applications-\\d+\\.csv"),
         download.suggestedFilename());

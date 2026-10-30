@@ -57,7 +57,7 @@ describe("RecruitmentsIndexPage tests", () => {
 
     expect(await screen.findByText("Recruitments")).toBeInTheDocument();
     expect(
-      await screen.findByTestId("RecruitmentsIndexPage-cell-row-0-col-quarter"),
+      await screen.findByTestId("RecruitmentsIndexPage-card-0-quarter"),
     ).toHaveTextContent("S26");
   });
 
@@ -104,12 +104,10 @@ describe("RecruitmentsIndexPage tests", () => {
 
   test("Delete asks for confirmation and deletes nothing yet", async () => {
     renderPage();
-    await screen.findByTestId(
-      "RecruitmentsIndexPage-cell-row-0-col-delete-button",
-    );
+    await screen.findByTestId("RecruitmentsIndexPage-card-0-delete-button");
 
     await userEvent.click(
-      screen.getByTestId("RecruitmentsIndexPage-cell-row-0-col-delete-button"),
+      screen.getByTestId("RecruitmentsIndexPage-card-0-delete-button"),
     );
 
     expect(
@@ -123,29 +121,26 @@ describe("RecruitmentsIndexPage tests", () => {
 
   test("confirming the modal deletes that recruitment", async () => {
     renderPage();
-    await screen.findByTestId(
-      "RecruitmentsIndexPage-cell-row-1-col-delete-button",
-    );
+    await screen.findByTestId("RecruitmentsIndexPage-card-1-delete-button");
 
     await userEvent.click(
-      screen.getByTestId("RecruitmentsIndexPage-cell-row-1-col-delete-button"),
+      screen.getByTestId("RecruitmentsIndexPage-card-1-delete-button"),
     );
     await userEvent.click(
       await screen.findByTestId("RecruitmentDeleteModal-confirm"),
     );
 
     await waitFor(() => expect(axiosMock.history.delete.length).toBe(1));
-    expect(axiosMock.history.delete[0].params).toEqual({ id: 2 });
+    // The cards are sorted newest quarter first, TA before ULA: card 1 is W26 TA, id 1.
+    expect(axiosMock.history.delete[0].params).toEqual({ id: 1 });
   });
 
   test("cancelling the modal deletes nothing", async () => {
     renderPage();
-    await screen.findByTestId(
-      "RecruitmentsIndexPage-cell-row-0-col-delete-button",
-    );
+    await screen.findByTestId("RecruitmentsIndexPage-card-0-delete-button");
 
     await userEvent.click(
-      screen.getByTestId("RecruitmentsIndexPage-cell-row-0-col-delete-button"),
+      screen.getByTestId("RecruitmentsIndexPage-card-0-delete-button"),
     );
     await userEvent.click(
       await screen.findByTestId("RecruitmentDeleteModal-cancel"),

@@ -46,7 +46,6 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
 
         <RecruitmentTable
           recruitments={recruitment ? [recruitment] : []}
-          readOnly
           testIdPrefix="RecruitmentApplicationsPage-recruitment"
         />
 

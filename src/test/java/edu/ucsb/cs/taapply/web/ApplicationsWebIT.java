@@ -441,7 +441,7 @@ public class ApplicationsWebIT extends WebTestCase {
 
     setupAdminUser();
     goTo("/admin/recruitments");
-    page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-review-button").click();
+    page.getByTestId("RecruitmentsIndexPage-card-0-review-button").click();
 
     // The one recruitment repeated at the top, the count, and the application listed.
     assertThat(page.getByTestId("RecruitmentApplicationsPage-recruitment-cell-row-0-col-type"))
@@ -521,7 +521,7 @@ public class ApplicationsWebIT extends WebTestCase {
     setupAdminUser();
     goTo("/admin/recruitments");
 
-    page.getByTestId("RecruitmentsIndexPage-cell-row-0-col-test-button").click();
+    page.getByTestId("RecruitmentsIndexPage-card-0-test-button").click();
 
     // The warning sits above the form, and the form is the TA one.
     assertThat(page.getByTestId("TestOnlyBanner")).containsText("This is a test only");

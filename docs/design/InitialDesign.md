@@ -540,6 +540,7 @@ courses in CMPSC that have been offered in the quarters you have populated this 
 "the next time the course is offered".
 
 
+
 # Twenty-seventh Iteration
 
 The three CSV upload widgets share one compact layout (issue #87). The topic and interest lists on
@@ -549,3 +550,14 @@ pages (`LegacyApplicationsUploadCard`) and the bulk email upload on **Admin > In
 `InputGroup` that takes its natural width (`d-inline-flex w-auto`), so the button sits right after
 the file name instead of at the far edge of the page or on the next line.
 
+# Twenty-eighth Iteration
+
+**Admin > Recruitments** shows cards instead of its thirteen-column table (issue #86), which
+overflowed a laptop screen. `RecruitmentCards` has a **Sort by** bar (Quarter, Type, Status and
+the four dates; a click sorts ascending by that key, a second click reverses, and the list starts
+newest quarter first as the backend lists them) above one card per recruitment: quarter, type and a
+status badge in the header, the four dates in the body, and the six actions (open/close
+applications, Courses, Test Application, Download CSV, Review Applications, Delete) in the footer,
+wrapping on a narrow screen. The sorting is done in the component. `RecruitmentTable` keeps only
+its seven field columns, for the read-only repeat of a recruitment at the top of its applications
+page; the Playwright flows address the cards by position (`RecruitmentsIndexPage-card-0-...`).

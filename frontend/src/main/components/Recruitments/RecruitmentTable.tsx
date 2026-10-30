@@ -1,7 +1,4 @@
 import OurTable from "main/components/Common/OurTable";
-import { useBackendMutation } from "main/utils/useBackend";
-import { Button } from "react-bootstrap";
-import { Link } from "react-router";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { Cell } from "@tanstack/react-table";
 
@@ -27,39 +24,19 @@ const stacked = (top: string, bottom: string): React.JSX.Element => (
   </>
 );
 
-/** On the Test column's heading and on each of its buttons. */
-export const TEST_APPLICATION_TOOLTIP =
-  "Submit a test application to see what the form looks like to applicants";
-
 type RecruitmentTableProps = {
   recruitments: Recruitment[];
-  /** Not needed when readOnly: the Delete column is not shown then. */
-  onDeleteRequested?: (recruitment: Recruitment) => void;
-  /** Just the fields, without the buttons: for repeating one recruitment at the top of a page. */
-  readOnly?: boolean;
   testIdPrefix?: string;
 };
 
+/**
+ * The fields of one or more recruitments, read-only: for repeating a recruitment at the top of
+ * its applications page. The Admin > Recruitments page itself shows cards (RecruitmentCards).
+ */
 export default function RecruitmentTable({
   recruitments,
-  onDeleteRequested = () => {},
-  readOnly = false,
   testIdPrefix = "RecruitmentTable",
 }: RecruitmentTableProps): React.JSX.Element {
-  const statusMutation = useBackendMutation<Recruitment, unknown>(
-    (recruitment) => ({
-      url: "/api/admin/recruitments/status",
-      method: "PUT",
-      params: {
-        id: recruitment.id,
-        // The button always moves it to the other state.
-        status: recruitment.applicationStatus === "OPEN" ? "CLOSED" : "OPEN",
-      },
-    }),
-    {},
-    ["/api/admin/recruitments/all"],
-  );
-
   const shrinkToContent = {
     style: { width: "1%", whiteSpace: "nowrap" as const },
   };
@@ -101,118 +78,10 @@ export default function RecruitmentTable({
     },
   ];
 
-  const buttonColumns = [
-    {
-      header: "Applications",
-      id: "status",
-      accessorKey: "applicationStatus",
-      meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => {
-        const recruitment = cell.row.original;
-        const open = recruitment.applicationStatus === "OPEN";
-        return (
-          <Button
-            variant={open ? "warning" : "success"}
-            onClick={() => statusMutation.mutate(recruitment)}
-            data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-status-button`}
-          >
-            {open ? "Close" : "Open"}
-          </Button>
-        );
-      },
-    },
-    {
-      header: "Courses",
-      id: "courses",
-      accessorKey: "id",
-      meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => (
-        <Link
-          className="btn btn-primary"
-          to={`/admin/recruitments/${cell.row.original.id}/courses`}
-          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-courses-button`}
-        >
-          Courses
-        </Link>
-      ),
-    },
-    {
-      header: (
-        <span title={TEST_APPLICATION_TOOLTIP}>
-          Test <br />
-          Application
-        </span>
-      ),
-      id: "test",
-      accessorKey: "id",
-      meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => (
-        <Link
-          className="btn btn-secondary"
-          to={`/admin/recruitments/${cell.row.original.id}/test-application`}
-          title={TEST_APPLICATION_TOOLTIP}
-          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-test-button`}
-        >
-          Test
-        </Link>
-      ),
-    },
-    {
-      header: "Download",
-      id: "csv",
-      accessorKey: "id",
-      meta: shrinkToContent,
-      // A plain link, so the browser saves the file itself; the backend names it after the
-      // recruitment and lays the columns out for its type.
-      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => (
-        <a
-          className="btn btn-outline-secondary"
-          href={`/api/admin/applications/csv?recruitmentId=${cell.row.original.id}`}
-          download={`applications-${cell.row.original.id}.csv`}
-          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-csv-button`}
-        >
-          CSV
-        </a>
-      ),
-    },
-    {
-      header: "Review",
-      id: "review",
-      accessorKey: "id",
-      meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => (
-        <Link
-          className="btn btn-info"
-          to={`/admin/recruitments/${cell.row.original.id}/applications`}
-          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-review-button`}
-        >
-          Applications
-        </Link>
-      ),
-    },
-    {
-      header: "Delete",
-      id: "delete",
-      accessorKey: "id",
-      meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => (
-        <Button
-          variant="danger"
-          onClick={() => onDeleteRequested(cell.row.original)}
-          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-delete-button`}
-        >
-          Delete
-        </Button>
-      ),
-    },
-  ];
-
-  const columns = readOnly ? fieldColumns : [...fieldColumns, ...buttonColumns];
-
   return (
     <OurTable
       data={Array.isArray(recruitments) ? recruitments : []}
-      columns={columns}
+      columns={fieldColumns}
       testid={testIdPrefix}
     />
   );

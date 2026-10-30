@@ -1,51 +1,31 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
-import axios from "axios";
-import AxiosMockAdapter from "axios-mock-adapter";
-import { vi } from "vitest";
 
-import RecruitmentTable, {
-  TEST_APPLICATION_TOOLTIP,
-} from "main/components/Recruitments/RecruitmentTable";
+import RecruitmentTable from "main/components/Recruitments/RecruitmentTable";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 
-const axiosMock = new AxiosMockAdapter(axios);
-
-function renderTable(
-  recruitments = recruitmentsFixtures.threeRecruitments,
-  onDeleteRequested = vi.fn(),
-) {
+function renderTable(recruitments = recruitmentsFixtures.threeRecruitments) {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
         <RecruitmentTable
           recruitments={recruitments}
-          onDeleteRequested={onDeleteRequested}
           testIdPrefix="RecruitmentTable"
         />
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  return onDeleteRequested;
 }
 
+/** Read-only since issue #86: the Admin > Recruitments page shows cards instead. */
 describe("RecruitmentTable tests", () => {
-  beforeEach(() => {
-    axiosMock.reset();
-    axiosMock.resetHistory();
-    axiosMock.onPut("/api/admin/recruitments/status").reply(200, {});
-  });
-
-  test("renders the expected headers in order", () => {
+  test("renders the field headers in order, and no buttons or links", () => {
     renderTable();
 
-    // Scoped to the header row: "Courses" and "Delete" also appear as button labels in each row.
     const headers = Array.from(
       document.querySelectorAll('[data-testid="RecruitmentTable"] thead th'),
     ).map((th) => th.textContent.trim());
-
     expect(headers).toEqual([
       "Quarter",
       "Type",
@@ -54,17 +34,13 @@ describe("RecruitmentTable tests", () => {
       "Primary Consideration",
       "Actually Opened",
       "Actually Closed",
-      "Applications",
-      "Courses",
-      "Test Application",
-      "Download",
-      "Review",
-      "Delete",
     ]);
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
   });
 
-  /** Two-line headings keep the date columns, and the Test column, narrow (issue #60). */
-  test("the date headings and the Test Application heading are on two lines", () => {
+  /** Two-line headings keep the date columns narrow (issue #60). */
+  test("the date headings are on two lines", () => {
     renderTable();
 
     for (const column of [
@@ -72,7 +48,6 @@ describe("RecruitmentTable tests", () => {
       "primaryConsiderationDate",
       "actualOpeningDate",
       "actualClosingDate",
-      "test",
     ]) {
       const th = screen.getByTestId(`RecruitmentTable-header-${column}`);
       expect(th.querySelector("br"), column).not.toBeNull();
@@ -95,72 +70,16 @@ describe("RecruitmentTable tests", () => {
     ).toHaveTextContent("Actually Closed");
   });
 
-  test("the Test Application heading explains itself in a tooltip", () => {
+  test("the date columns shrink to their content and the last takes the slack", () => {
     renderTable();
-    const heading = within(
-      screen.getByTestId("RecruitmentTable-header-test"),
-    ).getByTitle(TEST_APPLICATION_TOOLTIP);
-    expect(heading).toHaveTextContent("Test Application");
-    expect(TEST_APPLICATION_TOOLTIP).toBe(
-      "Submit a test application to see what the form looks like to applicants",
-    );
-  });
-
-  test("the CSV button downloads that recruitment's applications from the backend", () => {
-    renderTable();
-    const link = screen.getByTestId(
-      "RecruitmentTable-cell-row-1-col-csv-button",
-    );
-    expect(link).toHaveTextContent("CSV");
-    expect(link).toHaveAttribute(
-      "href",
-      "/api/admin/applications/csv?recruitmentId=2",
-    );
-    expect(link).toHaveAttribute("download", "applications-2.csv");
-  });
-
-  /** For repeating one recruitment at the top of its applications page: fields, no buttons. */
-  test("readOnly shows only the field columns and no buttons", () => {
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
-          <RecruitmentTable
-            recruitments={[recruitmentsFixtures.threeRecruitments[0]]}
-            readOnly
-          />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
-
-    const headers = Array.from(
-      document.querySelectorAll('[data-testid="RecruitmentTable"] thead th'),
-    ).map((th) => th.textContent.trim());
-    expect(headers).toEqual([
-      "Quarter",
-      "Type",
-      "Status",
-      "Tentative Opening",
-      "Primary Consideration",
-      "Actually Opened",
-      "Actually Closed",
-    ]);
-    expect(screen.queryByRole("button")).toBeNull();
-    expect(screen.queryByRole("link")).toBeNull();
     expect(
       screen.getByTestId("RecruitmentTable-cell-row-0-col-quarter"),
-    ).toHaveTextContent("S26");
+    ).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
+    expect(
+      screen.getByTestId("RecruitmentTable-cell-row-0-col-actualClosingDate"),
+    ).toHaveStyle({ width: "100%" });
   });
 
-  test("the Applications button links to that recruitment's review page", () => {
-    renderTable();
-    const link = screen.getByTestId(
-      "RecruitmentTable-cell-row-1-col-review-button",
-    );
-    expect(link).toHaveTextContent("Applications");
-    expect(link).toHaveAttribute("href", "/admin/recruitments/2/applications");
-  });
-
-  /** Stored as YYYYQ so it sorts; shown as QYY because that is how people say it. */
   test("shows the quarter in QYY form", () => {
     renderTable();
     expect(
@@ -169,6 +88,12 @@ describe("RecruitmentTable tests", () => {
     expect(
       screen.getByTestId("RecruitmentTable-cell-row-1-col-quarter"),
     ).toHaveTextContent("W26");
+    expect(
+      screen.getByTestId("RecruitmentTable-cell-row-1-col-type"),
+    ).toHaveTextContent("ULA");
+    expect(
+      screen.getByTestId("RecruitmentTable-cell-row-1-col-applicationStatus"),
+    ).toHaveTextContent("OPEN");
   });
 
   test("shows both actual dates once they are set", () => {
@@ -181,73 +106,19 @@ describe("RecruitmentTable tests", () => {
     ).toHaveTextContent("2026-02-01");
   });
 
-  test("a closed recruitment offers Open, an open one offers Close", () => {
-    renderTable();
-    // row 0 is CLOSED, row 1 is OPEN
+  test("the default test id prefix is RecruitmentTable", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <RecruitmentTable
+            recruitments={[recruitmentsFixtures.threeRecruitments[0]]}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
     expect(
-      screen.getByTestId("RecruitmentTable-cell-row-0-col-status-button"),
-    ).toHaveTextContent("Open");
-    expect(
-      screen.getByTestId("RecruitmentTable-cell-row-1-col-status-button"),
-    ).toHaveTextContent("Close");
-  });
-
-  test("clicking Open asks the backend to open it", async () => {
-    renderTable();
-
-    await userEvent.click(
-      screen.getByTestId("RecruitmentTable-cell-row-0-col-status-button"),
-    );
-
-    await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
-    expect(axiosMock.history.put[0].params).toEqual({ id: 3, status: "OPEN" });
-  });
-
-  test("clicking Close asks the backend to close it", async () => {
-    renderTable();
-
-    await userEvent.click(
-      screen.getByTestId("RecruitmentTable-cell-row-1-col-status-button"),
-    );
-
-    await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
-    expect(axiosMock.history.put[0].params).toEqual({
-      id: 2,
-      status: "CLOSED",
-    });
-  });
-
-  test("the Courses button links to that recruitment's course list", () => {
-    renderTable();
-    expect(
-      screen.getByTestId("RecruitmentTable-cell-row-0-col-courses-button"),
-    ).toHaveAttribute("href", "/admin/recruitments/3/courses");
-  });
-
-  test("the Test button links to that recruitment's preview page, with the tooltip", () => {
-    renderTable();
-    const button = screen.getByTestId(
-      "RecruitmentTable-cell-row-1-col-test-button",
-    );
-    expect(button).toHaveTextContent("Test");
-    expect(button).toHaveAttribute("title", TEST_APPLICATION_TOOLTIP);
-    expect(button).toHaveAttribute(
-      "href",
-      "/admin/recruitments/2/test-application",
-    );
-  });
-
-  /** Delete is confirmed by the page, so the table only reports the request. */
-  test("Delete asks the page rather than deleting directly", async () => {
-    const onDeleteRequested = renderTable();
-
-    await userEvent.click(
-      screen.getByTestId("RecruitmentTable-cell-row-0-col-delete-button"),
-    );
-
-    expect(onDeleteRequested).toHaveBeenCalledTimes(1);
-    expect(onDeleteRequested.mock.calls[0][0].id).toBe(3);
-    expect(axiosMock.history.delete.length).toBe(0);
+      screen.getByTestId("RecruitmentTable-cell-row-0-col-quarter"),
+    ).toHaveTextContent("S26");
   });
 
   test("renders an empty table without crashing", () => {
