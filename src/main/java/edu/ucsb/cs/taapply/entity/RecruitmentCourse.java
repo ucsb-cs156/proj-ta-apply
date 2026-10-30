@@ -1,5 +1,6 @@
 package edu.ucsb.cs.taapply.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -76,4 +77,18 @@ public class RecruitmentCourse {
 
   /** Set when an admin removes the course; excluded from later Populate runs. */
   @Builder.Default private boolean removed = false;
+
+  /**
+   * Set by the last Populate when it did not find this row: its section vanished from the UCSB API,
+   * or its course is no longer flagged for the recruitment's type (issue #122). Cleared again by a
+   * Populate that finds it. Kept apart from {@code removed}, which is the admin's decision and
+   * survives any Populate.
+   */
+  @Builder.Default private boolean stale = false;
+
+  /** Whether applicants should see this row: neither removed by an admin nor stale. */
+  @JsonIgnore
+  public boolean isOnOffer() {
+    return !removed && !stale;
+  }
 }

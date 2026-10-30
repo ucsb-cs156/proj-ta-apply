@@ -288,15 +288,19 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
    */
   @WithMockUser(roles = {"USER"})
   @Test
-  public void course_choices_are_distinct_sorted_and_exclude_removed() throws Exception {
+  public void course_choices_are_distinct_sorted_and_exclude_removed_and_stale() throws Exception {
     when(recruitmentRepository.existsById(1L)).thenReturn(true);
+    // Issue #122: a stale row is as good as removed for an applicant.
+    RecruitmentCourse stale = course(5L, "CMPSC    16", false);
+    stale.setStale(true);
     when(recruitmentCourseRepository.findByRecruitmentId(1L))
         .thenReturn(
             List.of(
                 course(1L, "CMPSC   156", false),
                 course(2L, "CMPSC   156", false),
                 course(3L, "CMPSC     8", false),
-                course(4L, "CMPSC   130A", true)));
+                course(4L, "CMPSC   130A", true),
+                stale));
 
     assertEquals(
         mapper.writeValueAsString(List.of("CMPSC     8", "CMPSC   156")),
@@ -433,7 +437,11 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
     RecruitmentCourse removed = course(1L, "CMPSC   156", true);
     removed.setEnrollCode("07492");
-    when(recruitmentCourseRepository.findByRecruitmentId(1L)).thenReturn(List.of(removed));
+    // Issue #122: a stale lecture is not looked up either.
+    RecruitmentCourse stale = course(2L, "CMPSC   156", false);
+    stale.setEnrollCode("07600");
+    stale.setStale(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(1L)).thenReturn(List.of(removed, stale));
 
     assertEquals(
         mapper.writeValueAsString(CourseSections.none("CMPSC   156", "20262")), sectionsJson(1L));
