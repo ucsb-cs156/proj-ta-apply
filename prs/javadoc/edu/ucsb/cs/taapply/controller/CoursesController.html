@@ -167,7 +167,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="allCourses()">
 <h3>allCourses</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
 @GetMapping("/all")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Course.html" title="class in edu.ucsb.cs.taapply.entity">Course</a>&gt;</span>&nbsp;<span class="element-name">allCourses</span>()</div>
 </div>
