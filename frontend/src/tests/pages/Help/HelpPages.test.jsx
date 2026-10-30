@@ -305,6 +305,22 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByText(/The examples are for FALL 2021\./),
     ).toBeInTheDocument();
+    // The sentences read across the JSX line breaks.
+    const paragraphs = [
+      ...screen.getByTestId("HelpNoticeFieldsPage").querySelectorAll("p"),
+    ].map((p) => p.textContent);
+    expect(paragraphs[0]).toMatch(
+      /text on the TA and ULA App Settings pages can carry fields, written as \$\{name\}, that are filled in/,
+    );
+    expect(paragraphs[0]).toMatch(
+      /Anything else between \$\{ and \} is left exactly as typed, and so is a field whose value is not on file\./,
+    );
+    expect(paragraphs[1]).toMatch(
+      /These come from the Quarters calendar, for the recruitment's quarter\./,
+    );
+    expect(examples[2].querySelector("code")).toHaveTextContent(
+      "Classes begin on ${firstDayOfClasses}; the last day to add a course is ${lastDayToAddUnderGrad}.",
+    );
   });
 
   test("arriving at the admins page with a hash scrolls to that section", async () => {

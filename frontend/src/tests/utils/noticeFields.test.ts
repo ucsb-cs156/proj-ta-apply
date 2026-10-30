@@ -122,6 +122,12 @@ describe("noticeFields (issue #150)", () => {
     expect(fillNoticeFields(text, { quarter: "20214" })).toBe(
       "Fall 2021 ${firstDayOfClasses} ${lastDayThirdWeek} ${quarterX}",
     );
+    // A name field with no value stays as written too, never "null".
+    expect(
+      fillNoticeFields("${category} ${qyy}", {
+        calendar: { ...SAMPLE_CALENDAR, category: null, qyy: "" },
+      }),
+    ).toBe("${category} ${qyy}");
   });
 
   test("the field names, the hint and the issue's two examples", () => {
