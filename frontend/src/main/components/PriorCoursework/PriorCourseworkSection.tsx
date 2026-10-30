@@ -73,6 +73,8 @@ export default function PriorCourseworkSection({
         <Button
           variant="success"
           size="sm"
+          // The id lets the application form's missing-data list scroll here (issue #97).
+          id={id("add-button")}
           data-testid={id("add-button")}
           onClick={() => setEditing(-1)}
         >

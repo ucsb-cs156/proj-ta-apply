@@ -373,6 +373,57 @@ export default function ApplicationForm({
 
   const id = (name: string) => `${testIdPrefix}-${name}`;
 
+  /** One entry of the list of what is missing, beside the submit button (issue #97). */
+  type Missing = { name: string; label: string };
+  const missingField = (
+    name: keyof RegisteredFields,
+    label: string,
+  ): Missing[] => (errors[name] ? [{ name, label }] : []);
+  /**
+   * Everything the form refuses to submit without, in page order, so the list reads top to bottom.
+   * The agreement, the major and the coursework live outside react-hook-form, so they come from the
+   * form's own flags; the rest from its errors, which clear as each field is fixed.
+   */
+  const missing: Missing[] = [
+    ...(agreementMissing
+      ? [{ name: "notice-agree", label: "Notices, Terms and Conditions" }]
+      : []),
+    ...missingField("firstName", "First Name"),
+    ...missingField("lastName", "Last Name"),
+    ...(majorMissing
+      ? [{ name: asksForOtherMajor ? "otherMajor" : "major", label: "Major" }]
+      : []),
+    ...missingField("gpaMajor", "GPA in Major"),
+    ...missingField("gpaOverall", "Overall GPA"),
+    ...missingField("yearInProgram", "Year in Program"),
+    ...missingField("graduationDate", "Expected Graduation"),
+    ...missingField("permNumber", "Perm Number"),
+    ...missingField(
+      "previousServiceAsUla",
+      "Quarters Previously Served as a ULA",
+    ),
+    ...missingField("bsMsStudent", "BS/MS student?"),
+    ...missingField("otherCampusJob", "Other campus job this quarter?"),
+    ...missingField("priorUcsbEmployment", "Prior UCSB employment?"),
+    ...missingField("trainingCommitment", "Training commitment"),
+    ...(tooFewCourses
+      ? [{ name: "coursework-add-button", label: "Prior Coursework" }]
+      : []),
+    ...missingField("firstChoiceCourse", "First Choice Course"),
+  ];
+
+  /** Scrolls the named control into view and gives it focus, so it can be fixed straight away. */
+  const goTo = (name: string) => {
+    const element = document.getElementById(id(name));
+    // Stryker disable next-line all : every listed control is on the page, so the null branch
+    // cannot be reached; the check only guards against a future mismatch between list and page
+    if (!element) return;
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Stryker disable next-line all : jsdom ignores focus options, so preventScroll (which only
+    // stops a second jump after the smooth scroll) cannot be observed in a test
+    element.focus({ preventScroll: true });
+  };
+
   /** A select with a blank first option, for the ULA questions that take one of a few answers. */
   const choices = (options: Option[], blank = "Choose one") => (
     <>
@@ -1269,9 +1320,36 @@ export default function ApplicationForm({
         />
       </Form.Group>
 
-      <Button type="submit" data-testid={id("submit")}>
-        {buttonLabel}
-      </Button>
+      <div className="d-flex align-items-start flex-wrap gap-3">
+        <Button type="submit" data-testid={id("submit")}>
+          {buttonLabel}
+        </Button>
+        {missing.length > 0 && (
+          <div
+            className="text-danger small"
+            role="alert"
+            data-testid={id("missing")}
+          >
+            <span data-testid={id("missing-message")}>
+              Some data on the page is missing:
+            </span>
+            <ul className="mb-0 ps-3">
+              {missing.map((item) => (
+                <li key={item.name}>
+                  <button
+                    type="button"
+                    className="btn btn-link btn-sm p-0 align-baseline text-danger"
+                    data-testid={id(`missing-${item.name}`)}
+                    onClick={() => goTo(item.name)}
+                  >
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </Form>
   );
 }
