@@ -85,7 +85,8 @@ loadScripts(document, 'script');</script>
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">ApplicationAuditService</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Writes the audit trail for an admin's edit of a student's application: one row per field whose
-value changed, with the value before and after as strings.
+value changed, with the value before and after as strings. (Changes to a recruitment itself are
+written by <a href="RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services"><code>RecruitmentAuditService</code></a> to a table of their own.)
 
 <p>The caller takes a <a href="#snapshot(edu.ucsb.cs.taapply.entity.Application)"><code>snapshot(Application)</code></a> before applying the edit and calls <a href="#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)"><code>record(ApplicationAuditService.Snapshot, Application, RecruitmentType)</code></a> with
 it afterwards. A snapshot is the application's answers as strings, keyed by field name: the plain

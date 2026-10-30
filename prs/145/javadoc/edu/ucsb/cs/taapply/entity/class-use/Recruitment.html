@@ -203,6 +203,27 @@ open (issue #98).</div>
 <div class="block">Whether a closed recruitment closed recently: within the last <a href="../../services/ApplicationAccessService.html#RECENT_MONTHS"><code>ApplicationAccessService.RECENT_MONTHS</code></a>, counting
 the day six months on as still recent.</div>
 </div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#recordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordChanges</a><wbr>(<a href="../../services/RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a>&nbsp;before,
+ <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;after)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Records every field whose value differs between the snapshot taken before an edit and the
+recruitment as it is now, one row each, and returns the rows written (empty when nothing
+changed).</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="../RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#recordCreated(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordCreated</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Records that the recruitment was just created, and returns the row written.</div>
+</div>
+<div class="col-first even-row-color"><code><a href="../RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#recordDeleted(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordDeleted</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Records that the recruitment is about to be deleted, and returns the row written.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="../../services/RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#snapshot(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">snapshot</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code><a href="../../services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></code></div>
 <div class="col-second even-row-color"><span class="type-name-label">LegacyApplicationCsvService.</span><code><a href="../../services/LegacyApplicationCsvService.html#upload(org.springframework.web.multipart.MultipartFile,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
  <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>

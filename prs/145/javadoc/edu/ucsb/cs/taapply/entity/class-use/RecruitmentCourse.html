@@ -60,8 +60,10 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.controller">edu.ucsb.cs.taapply.controller</a></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.repository">edu.ucsb.cs.taapply.repository</a></div>
+<div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.jobs">edu.ucsb.cs.taapply.jobs</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.repository">edu.ucsb.cs.taapply.repository</a></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <section class="class-uses">
 <ul class="block-list">
@@ -74,9 +76,13 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code><a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">RecruitmentCoursesController.</span><code><a href="../../controller/RecruitmentCoursesController.html#setRemoved(java.lang.Long,boolean)" class="member-name-link">setRemoved</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- boolean&nbsp;removed)</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">RecruitmentCoursesController.</span><code><a href="../../controller/RecruitmentCoursesController.html#addByEnrollCode(java.lang.Long,java.lang.String)" class="member-name-link">addByEnrollCode</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;enrollCode)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentCoursesController.</span><code><a href="../../controller/RecruitmentCoursesController.html#setRemoved(java.lang.Long,boolean)" class="member-name-link">setRemoved</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ boolean&nbsp;removed)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <div class="caption"><span>Methods in <a href="../../controller/package-summary.html">edu.ucsb.cs.taapply.controller</a> that return types with arguments of type <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span></div>
 <div class="summary-table three-column-summary">
@@ -120,6 +126,26 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>InstructorRecruitment</code> record class.</div>
+</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="edu.ucsb.cs.taapply.jobs">
+<h2>Uses of <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a> in <a href="../../jobs/package-summary.html">edu.ucsb.cs.taapply.jobs</a></h2>
+<div class="caption"><span>Methods in <a href="../../jobs/package-summary.html">edu.ucsb.cs.taapply.jobs</a> with parameters of type <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static void</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">PopulateRecruitmentCoursesJob.</span><code><a href="../../jobs/PopulateRecruitmentCoursesJob.html#applyOffering(edu.ucsb.cs.taapply.entity.RecruitmentCourse,java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.models.UcsbCourseOffering,edu.ucsb.cs.taapply.models.UcsbSection)" class="member-name-link">applyOffering</a><wbr>(<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId,
+ <a href="../../models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a>&nbsp;offering,
+ <a href="../../models/UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a>&nbsp;section)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Copies a lecture's offering details onto a row.</div>
 </div>
 </div>
 </section>
