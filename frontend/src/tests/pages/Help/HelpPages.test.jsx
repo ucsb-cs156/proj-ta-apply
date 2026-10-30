@@ -178,6 +178,15 @@ describe("Help pages (issue #140)", () => {
       "#notice-fields",
     );
     expect(
+      screen.getByTestId("HelpAdminsPage-notice-fields").textContent,
+    ).toMatch(
+      /Anything else between \$\{ and \} is left exactly as typed\. Two examples:$/,
+    );
+    expect(
+      [...screen.getByTestId("HelpAdminsPage-flow").querySelectorAll("li")][1]
+        .textContent,
+    ).toMatch(/under Recruitments on your home page, create a recruitment/);
+    expect(
       screen.getByRole("link", { name: "CSV Upload/Download Formats" }),
     ).toHaveAttribute("href", "/help/csv");
   });
