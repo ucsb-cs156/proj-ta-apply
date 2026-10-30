@@ -1,9 +1,8 @@
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useCurrentUser, hasRole } from "main/utils/currentUser";
 import type { Application } from "main/components/Applications/ApplicationTable";
-import RecruitmentTable, {
-  type Recruitment,
-} from "main/components/Recruitments/RecruitmentTable";
+import RecruitmentsDashboard from "main/components/Recruitments/RecruitmentsDashboard";
+import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import StudentDashboard from "main/components/Student/StudentDashboard";
 import InstructorRecruitmentCards, {
   type InstructorRecruitment,
@@ -11,7 +10,8 @@ import InstructorRecruitmentCards, {
 import { useBackend } from "main/utils/useBackend";
 
 /**
- * The home page, in a section per role (issue #107): Admin (the recruitments table) for an admin,
+ * The home page, in a section per role (issue #107): Admin (the recruitments, whole, as issue #141
+ * asks: the former Admin > Recruitments page, with its create button and cards) for an admin,
  * Instructor for an instructor, and Student for everyone, since any signed-in user may apply. No
  * page title or greeting (issue #118): the navbar already says where you are and who you are.
  */
@@ -20,16 +20,6 @@ export default function HomePageLoggedIn(): React.JSX.Element {
 
   const isAdmin = hasRole(currentUser, "ROLE_ADMIN");
   const isInstructor = hasRole(currentUser, "ROLE_INSTRUCTOR");
-
-  const { data: adminRecruitments } = useBackend<Recruitment[]>(
-    ["/api/admin/recruitments/all"],
-    { method: "GET", url: "/api/admin/recruitments/all" },
-    // Stryker disable next-line all : don't test default value of empty list
-    [],
-    false,
-    // Stryker disable next-line all : the guard only avoids a request the backend would refuse
-    { enabled: isAdmin },
-  );
 
   // The instructor's recruitments are looked up by email (issue #127); only an instructor asks.
   // Stryker disable next-line all : a logged-out user is never an instructor, so the fallback is dead
@@ -79,10 +69,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
         {isAdmin && (
           <section className="mb-4" data-testid="HomePageLoggedIn-admin">
             <h2>Admin</h2>
-            <RecruitmentTable
-              recruitments={adminRecruitments ?? []}
-              testIdPrefix="HomePageLoggedIn-admin-recruitments"
-            />
+            <RecruitmentsDashboard testIdPrefix="HomePageLoggedIn-admin" />
           </section>
         )}
 

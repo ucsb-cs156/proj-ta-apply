@@ -81,7 +81,7 @@ export default function RecruitmentCards({
   );
 
   return (
-    <div data-testid={testIdPrefix}>
+    <div data-testid={`${testIdPrefix}-cards`}>
       <div className="d-flex align-items-center flex-wrap gap-2 mb-3">
         <span id={`${testIdPrefix}-sort-label`}>Sort by</span>
         <ButtonGroup

@@ -49,7 +49,7 @@ describe("helpPages", () => {
       ["Admin", "Admins", "/admin/admins"],
       ["Admin", "Instructors", "/admin/instructors"],
       ["Admin", "Courses", "/admin/courses"],
-      ["Admin", "Recruitments", "/admin/recruitments"],
+      ["Home page", "Recruitments", "/"],
       ["Admin", "TA App Settings", "/admin/settings/ta"],
       ["Admin", "ULA App Settings", "/admin/settings/ula"],
       ["Admin", "Legacy TA Application", "/admin/legacy-ta-application"],

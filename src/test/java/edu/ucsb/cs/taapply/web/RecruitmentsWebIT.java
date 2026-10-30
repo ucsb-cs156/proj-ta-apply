@@ -32,8 +32,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Import(IntegrationConfig.class)
 public class RecruitmentsWebIT extends WebTestCase {
 
+  /** The recruitments are on the admin's home page (issue #141). */
   private void goToRecruitments() {
-    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/admin/recruitments"));
+    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/"));
   }
 
   /** CMPSC 156 with two lectures, and CMPSC 130A which only wants a ULA. */
@@ -104,7 +105,7 @@ public class RecruitmentsWebIT extends WebTestCase {
 
   private void createTaRecruitment() {
     // The form is in a modal behind the Create New Recruitment button (issue #108).
-    page.getByTestId("RecruitmentsIndexPage-create-button").click();
+    page.getByTestId("HomePageLoggedIn-admin-create-button").click();
     page.getByTestId("RecruitmentForm-tentativeOpeningDate").fill("2026-01-05");
     page.getByTestId("RecruitmentForm-primaryConsiderationDate").fill("2026-01-20");
     page.getByTestId("RecruitmentForm-submit").click();
@@ -131,11 +132,11 @@ public class RecruitmentsWebIT extends WebTestCase {
 
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("RecruitmentsIndexPage-card-0-quarter");
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
     waitFor(firstRow);
     assertThat(firstRow).isVisible();
 
-    page.getByTestId("RecruitmentsIndexPage-card-0-courses-button").click();
+    page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 
     Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     waitFor(firstCourse);
@@ -164,9 +165,9 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("RecruitmentsIndexPage-card-0-quarter");
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
     waitFor(firstRow);
-    page.getByTestId("RecruitmentsIndexPage-card-0-courses-button").click();
+    page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 
     Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     waitFor(firstCourse);
@@ -201,9 +202,9 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("RecruitmentsIndexPage-card-0-quarter");
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
     waitFor(firstRow);
-    page.getByTestId("RecruitmentsIndexPage-card-0-courses-button").click();
+    page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 
     Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     waitFor(firstCourse);
@@ -234,19 +235,19 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator statusButton = page.getByTestId("RecruitmentsIndexPage-card-0-status-button");
+    Locator statusButton = page.getByTestId("HomePageLoggedIn-admin-card-0-status-button");
     waitFor(statusButton);
 
     assertThat(statusButton).containsText("Open");
     statusButton.click();
 
-    assertThat(page.getByTestId("RecruitmentsIndexPage-card-0-status-button"))
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-status-button"))
         .containsText("Close");
-    assertThat(page.getByTestId("RecruitmentsIndexPage-card-0-actualOpeningDate")).not().isEmpty();
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-actualOpeningDate")).not().isEmpty();
 
     // Issue #139: the Review Applications page lists the recruitment's own audit trail, newest
     // first: the stamped opening date, the status change, then the creation.
-    page.getByTestId("RecruitmentsIndexPage-card-0-review-button").click();
+    page.getByTestId("HomePageLoggedIn-admin-card-0-review-button").click();
     assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-total"))
         .hasText("3 changes recorded.");
     assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-whatChanged"))
@@ -273,13 +274,13 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator csvButton = page.getByTestId("RecruitmentsIndexPage-card-0-csv-button");
+    Locator csvButton = page.getByTestId("HomePageLoggedIn-admin-card-0-csv-button");
     waitFor(csvButton);
     assertThat(csvButton).containsText("CSV");
 
     Download download = page.waitForDownload(csvButton::click);
     String firstLine = java.nio.file.Files.readAllLines(download.path()).get(0);
-    assertThat(page.getByTestId("RecruitmentsIndexPage-card-0-type")).containsText("TA");
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-type")).containsText("TA");
     org.junit.jupiter.api.Assertions.assertTrue(
         download.suggestedFilename().matches("applications-\\d+\\.csv"),
         download.suggestedFilename());
@@ -288,11 +289,17 @@ public class RecruitmentsWebIT extends WebTestCase {
     org.junit.jupiter.api.Assertions.assertTrue(firstLine.contains("\"classLevel\""), firstLine);
   }
 
+  /** Issue #141: the recruitments live on the admin's home page, and the old page is gone. */
   @Test
-  public void non_admin_is_denied_the_recruitments_page() throws Exception {
+  public void non_admin_sees_no_recruitments_and_the_old_page_is_gone() throws Exception {
     setupRegularUser();
     goToRecruitments();
 
-    assertThat(page.getByText("You do not have access to this page.")).isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-student")).isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-admin")).not().isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-create-button")).not().isVisible();
+
+    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/admin/recruitments"));
+    assertThat(page.getByText("Page Not Found")).isVisible();
   }
 }

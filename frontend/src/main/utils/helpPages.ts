@@ -44,7 +44,7 @@ export const VIDEO_INSTRUCTIONS_TEXT = "Instructions for preparing your video";
 
 /** One option on the Admin or Developer menu, with the section below that explains it. */
 export type AdminMenuEntry = {
-  menu: "Admin" | "Developer";
+  menu: "Admin" | "Developer" | "Home page";
   label: string;
   path: string;
   /** The id of the section on this page. */
@@ -84,9 +84,9 @@ export const ADMIN_MENU_ENTRIES: AdminMenuEntry[] = [
       "The course table from the UCSB catalog, and which courses recruit TAs and ULAs.",
   },
   {
-    menu: "Admin",
+    menu: "Home page",
     label: "Recruitments",
-    path: "/admin/recruitments",
+    path: "/",
     section: "recruitments",
     summary:
       "Create, open, close and delete recruitments; their courses, test form, CSV and applications.",
