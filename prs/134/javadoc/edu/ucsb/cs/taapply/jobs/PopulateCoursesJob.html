@@ -97,6 +97,10 @@ offered at the given level, and upserts them into the courses table.
   <li>Nothing is ever deleted, including courses outside the requested range.
 </ul>
 
+<p>Each quarter is also asked for its offerings with sections, and the instructors of record of
+every primary section are upserted into the catalog names table (issue #120), so an admin can say
+which catalog name each instructor goes by.
+
 <p>A quarter whose API call fails is logged and skipped rather than aborting the run, so one
 transient error does not discard the quarters that already succeeded.</div>
 </div>
