@@ -301,6 +301,12 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-interests")).containsText("1-Not interested");
     assertThat(page.getByTestId("ApplyPage-interests")).containsText("5-Very interested");
 
+    // Issue #140: the instructions for the teaching-demo video, under the video link box.
+    assertThat(page.getByTestId("ApplyPage-videoLink-instructions"))
+        .hasText("Instructions for preparing your video");
+    assertThat(page.getByTestId("ApplyPage-videoLink-instructions"))
+        .hasAttribute("target", "_blank");
+
     page.getByTestId("ApplyPage-firstName").fill("Chris");
     page.getByTestId("ApplyPage-lastName").fill("Gaucho");
     page.getByTestId("ApplyPage-major").selectOption("Computer Science");

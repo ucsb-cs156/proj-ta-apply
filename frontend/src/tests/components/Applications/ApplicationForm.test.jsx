@@ -2185,6 +2185,24 @@ describe("ApplicationForm tests", () => {
       ).toHaveTextContent(
         "For returning ULAs it is optional but strongly encouraged",
       );
+      // Issue #140: the instructions for the video, linked under the note, in a new tab.
+      const instructions = screen.getByTestId(
+        "ApplicationForm-videoLink-instructions",
+      );
+      expect(instructions).toHaveTextContent(
+        "Instructions for preparing your video",
+      );
+      expect(instructions).toHaveAttribute(
+        "href",
+        "https://docs.google.com/document/d/10b4MzotCXZCAkR1p5vTgBB_4gHyrw6a0AusVEKfoXdI/edit?tab=t.0#heading=h.khi2ca2p71ii",
+      );
+      expect(instructions).toHaveAttribute("target", "_blank");
+      expect(instructions).toHaveAttribute("rel", "noreferrer");
+      expect(
+        screen
+          .getByTestId("ApplicationForm-videoLink-note")
+          .compareDocumentPosition(instructions),
+      ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
       expect(
         screen.getByTestId("ApplicationForm-course-preferences-guidance"),
       ).toHaveTextContent("with a B or better");

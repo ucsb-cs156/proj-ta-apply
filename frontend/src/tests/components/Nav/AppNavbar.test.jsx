@@ -157,7 +157,41 @@ describe("AppNavbar tests", () => {
       "href",
       "/help/about",
     );
+    // Issue #140: the applicant pages are for everyone; the rest are by role.
+    expect(screen.getByText("For TA Applicants")).toHaveAttribute(
+      "href",
+      "/help/ta-applicants",
+    );
+    expect(screen.getByText("For ULA Applicants")).toHaveAttribute(
+      "href",
+      "/help/ula-applicants",
+    );
+    expect(screen.queryByText("For Instructors")).toBeNull();
+    expect(screen.queryByText("For Admins")).toBeNull();
     // Issue #99: the CSV formats page is admin-only, so it is not offered to anyone else.
+    expect(screen.queryByText("CSV Upload/Download Formats")).toBeNull();
+    expect(
+      [...document.querySelectorAll(".dropdown-item")].map(
+        (a) => a.textContent,
+      ),
+    ).toEqual(["About TA Apply", "For TA Applicants", "For ULA Applicants"]);
+  });
+
+  test("Help menu offers the instructors page to an instructor, and not the admin pages", async () => {
+    renderNavbar(
+      currentUserFixtures.instructorUser,
+      systemInfoFixtures.showingNeither,
+    );
+    fireEvent.click(screen.getByText("Help"));
+
+    await waitFor(() => {
+      expect(screen.getByText("For Instructors")).toBeInTheDocument();
+    });
+    expect(screen.getByText("For Instructors")).toHaveAttribute(
+      "href",
+      "/help/instructors",
+    );
+    expect(screen.queryByText("For Admins")).toBeNull();
     expect(screen.queryByText("CSV Upload/Download Formats")).toBeNull();
   });
 
@@ -172,6 +206,8 @@ describe("AppNavbar tests", () => {
       expect(screen.getByText("About TA Apply")).toBeInTheDocument();
     });
     expect(screen.queryByText("CSV Upload/Download Formats")).toBeNull();
+    expect(screen.queryByText("For Instructors")).toBeNull();
+    expect(screen.queryByText("For Admins")).toBeNull();
   });
 
   test("Help menu offers the CSV formats page to an admin", async () => {
@@ -188,6 +224,25 @@ describe("AppNavbar tests", () => {
       "href",
       "/help/csv",
     );
+    expect(screen.getByText("For Admins")).toHaveAttribute(
+      "href",
+      "/help/admins",
+    );
+    // An admin who is not an instructor does not get the instructors page.
+    expect(screen.queryByText("For Instructors")).toBeNull();
+    expect(
+      [
+        ...document.querySelectorAll(
+          "#appnavbar-help-dropdown + .dropdown-menu .dropdown-item, [aria-labelledby='appnavbar-help-dropdown'] .dropdown-item",
+        ),
+      ].map((a) => a.textContent),
+    ).toEqual([
+      "About TA Apply",
+      "For TA Applicants",
+      "For ULA Applicants",
+      "For Admins",
+      "CSV Upload/Download Formats",
+    ]);
   });
 
   /** Jobs and Developer Info moved out of Admin into their own menu, still admin-only. */
