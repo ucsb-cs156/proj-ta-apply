@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>ApplicationAccessService.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.services;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.Recruitment;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.enums.ApplicationStatus;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.stereotype.Service;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * The rules about who may apply to what, and when an application may still be changed.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;Kept in one place because the same questions are asked by several endpoints and by the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * frontend, and because getting them wrong is the worst failure this iteration could ship: an</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * applicant editing after applications have closed. Any signed-in user may apply to any</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * recruitment, TA or ULA, so there is no rule here about who applies to what.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>@Service</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>public class ApplicationAccessService {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Applications may only be created against an open recruitment. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public boolean acceptingApplications(Recruitment recruitment) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_20'/>
+20
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_20'>2</a>
+<span>
+1. acceptingApplications : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::acceptingApplications &rarr; KILLED<br/>
+2. acceptingApplications : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return recruitment.getApplicationStatus() == ApplicationStatus.OPEN;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Whether the whole application may still be edited: for as long as the admin keeps applications</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * open (issue #98). The primary consideration date is a promise about review, not a deadline for</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * changes, so it plays no part here.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public boolean editable(Recruitment recruitment) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_29'/>
+29
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_29'>2</a>
+<span>
+1. editable : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::editable &rarr; KILLED<br/>
+2. editable : replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationAccessService::editable &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return acceptingApplications(recruitment);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Whether post-application comments may still be changed. The same rule as editing: until the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * recruitment closes. They stay a separate field because reviewers read them as &#34;what changed</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_35'/>
+35
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_35'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * since you applied&#34;.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public boolean commentable(Recruitment recruitment) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_38'/>
+38
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_38'>2</a>
+<span>
+1. commentable : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::commentable &rarr; KILLED<br/>
+2. commentable : replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationAccessService::commentable &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return acceptingApplications(recruitment);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_20'>20</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_20'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>acceptingApplications<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_closed_recruitment_is_never_editable()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::acceptingApplications &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>acceptingApplications<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_closed_recruitment_is_never_editable()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_29'>29</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_29'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>editable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_closed_recruitment_is_never_editable()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::editable &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>editable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_open_recruitment_is_editable_whatever_the_deadline()]</span></span> replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationAccessService::editable &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6db0f5fb_38'>38</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6db0f5fb_38'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>commentable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:comments_follow_the_same_rule_as_editing()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationAccessService::commentable &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>commentable<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:comments_follow_the_same_rule_as_editing()]</span></span> replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationAccessService::commentable &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:a_closed_recruitment_is_never_editable()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:comments_follow_the_same_rule_as_editing()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:an_open_recruitment_is_editable_whatever_the_deadline()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationAccessServiceTests]/[method:only_an_open_recruitment_accepts_applications()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:an_admin_or_instructor_sees_the_same_recruitments()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:nothing_open_is_an_empty_list()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicantRecruitmentsControllerTests]/[method:a_signed_in_user_sees_every_open_recruitment_of_either_type()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:applying_to_a_closed_recruitment_is_refused()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_second_application_to_the_same_recruitment_is_refused()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:comments_are_refused_once_the_recruitment_is_closed()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:agreeing_to_the_other_forms_notice_is_refused()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:applying_without_agreeing_to_the_notice_is_refused()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_is_refused_once_applications_are_closed()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ta_application_with_fewer_than_three_courses_is_refused()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:agreeing_to_a_notice_version_that_does_not_exist_is_a_404()] (12 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ula_application_with_no_courses_is_refused()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_course_without_a_number_is_refused()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_course_taken_elsewhere_needs_its_school()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_down_to_too_few_courses_is_refused()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_a_ula_application_applies_the_same_rules()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[test-template:a_topic_rating_off_the_scale_is_refused(int)]/[test-template-invocation:#3] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[test-template:a_topic_rating_off_the_scale_is_refused(int)]/[test-template-invocation:#2] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ula_application_needs_the_bs_ms_and_employment_answers()] (12 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[test-template:a_topic_rating_off_the_scale_is_refused(int)]/[test-template-invocation:#1] (13 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[test-template:a_ula_topic_rating_off_its_three_point_scale_is_refused(int)]/[test-template-invocation:#1] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[test-template:a_ula_topic_rating_off_its_three_point_scale_is_refused(int)]/[test-template-invocation:#3] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[test-template:a_ula_topic_rating_off_its_three_point_scale_is_refused(int)]/[test-template-invocation:#2] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[test-template:an_interest_level_off_the_scale_is_refused(int)]/[test-template-invocation:#3] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[test-template:an_interest_level_off_the_scale_is_refused(int)]/[test-template-invocation:#2] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[test-template:an_interest_level_off_the_scale_is_refused(int)]/[test-template-invocation:#1] (13 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ula_application_needs_a_perm_number_of_seven_letters_or_digits()] (27 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_is_still_allowed_past_the_deadline_while_open()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ta_application_drops_any_availability_answers_it_is_sent()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_new_application_s_response_has_no_admin_comments()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_missing_course_interest_map_is_stored_as_empty()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:interests_sent_with_a_ta_application_are_ignored()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ta_application_may_leave_the_academic_answers_blank()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_missing_topic_rating_map_is_stored_as_empty()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:with_no_notice_written_yet_no_agreement_is_needed()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:topic_ratings_of_1_and_5_are_accepted()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:topic_ratings_are_stored_and_unrated_topics_are_skipped()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_can_clear_the_availability_answers()] (10 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_replaces_the_prior_coursework()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_replaces_the_course_interests()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:course_interests_keep_only_the_answers_that_say_something()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:agreeing_to_an_earlier_version_of_the_notice_is_accepted()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_replaces_the_topic_ratings()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_and_commenting_leave_out_the_admin_comments_but_keep_them_stored()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ula_topic_rating_of_3_is_accepted()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_missing_interests_map_is_stored_as_empty()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ula_application_keeps_its_availability_answers()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ula_application_with_one_course_is_accepted()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:prior_courses_are_stored_tidy_and_in_order()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_also_requires_agreement()] (13 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:interest_levels_are_stored_and_unanswered_areas_are_skipped()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ta_application_needs_none_of_the_ula_answers()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ula_application_stores_its_perm_number_upper_case_and_the_other_answers()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:the_training_explanation_is_kept_and_a_blank_one_is_no_answer()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_first_time_ula_applicant_must_answer_the_training_commitment()] (12 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_replaces_the_interest_levels()] (19 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:an_instructor_or_admin_may_apply_as_well()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:an_applicant_can_edit_their_own_application_before_the_deadline()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:the_same_user_may_apply_to_a_ula_recruitment_too()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:comments_can_still_be_updated_after_the_deadline()] (22 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_signed_in_user_can_apply_to_an_open_ula_recruitment()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_signed_in_user_can_apply_to_an_open_ta_recruitment()] (19 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_ula_application_needs_both_gpas_the_year_the_graduation_and_the_service_count()] (30 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>
