@@ -103,43 +103,45 @@ import org.springframework.stereotype.Service;
           new Column(&quot;comments&quot;, Application::getComments),
           new Column(&quot;postApplicationComments&quot;, Application::getPostApplicationComments),
           new Column(&quot;adminComments&quot;, Application::getAdminComments),
-          new Column(&quot;noticeVersionId&quot;, Application::getNoticeVersionId));
+          new Column(&quot;noticeVersionId&quot;, Application::getNoticeVersionId),
+          new Column(&quot;cancellationReason&quot;, Application::getCancellationReason),
+          new Column(&quot;cancelledAt&quot;, Application::getCancelledAt));
 
   /** The ULA interests sit with the other ULA answers, after the topics. */
-<span class="fc" id="L109">  private static final Column INTERESTS = new Column(&quot;interests&quot;, a -&gt; pairs(a.getInterests()));</span>
+<span class="fc" id="L111">  private static final Column INTERESTS = new Column(&quot;interests&quot;, a -&gt; pairs(a.getInterests()));</span>
 
   /** The columns of a file for the given form type, in order. */
   static List&lt;Column&gt; columns(RecruitmentType type) {
-<span class="fc" id="L113">    List&lt;Column&gt; columns = new ArrayList&lt;&gt;(BEFORE_TYPE);</span>
-<span class="fc bfc" id="L114" title="All 2 branches covered.">    columns.addAll(type == RecruitmentType.TA ? TA_ONLY : ULA_ONLY);</span>
-<span class="fc" id="L115">    columns.addAll(CHOICES);</span>
-<span class="fc bfc" id="L116" title="All 2 branches covered.">    if (type == RecruitmentType.ULA) {</span>
-<span class="fc" id="L117">      columns.addAll(AVAILABILITY);</span>
+<span class="fc" id="L115">    List&lt;Column&gt; columns = new ArrayList&lt;&gt;(BEFORE_TYPE);</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">    columns.addAll(type == RecruitmentType.TA ? TA_ONLY : ULA_ONLY);</span>
+<span class="fc" id="L117">    columns.addAll(CHOICES);</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">    if (type == RecruitmentType.ULA) {</span>
+<span class="fc" id="L119">      columns.addAll(AVAILABILITY);</span>
     }
-<span class="fc" id="L119">    columns.addAll(AFTER_TYPE);</span>
-<span class="fc bfc" id="L120" title="All 2 branches covered.">    if (type == RecruitmentType.ULA) {</span>
-<span class="fc" id="L121">      columns.add(INTERESTS);</span>
+<span class="fc" id="L121">    columns.addAll(AFTER_TYPE);</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">    if (type == RecruitmentType.ULA) {</span>
+<span class="fc" id="L123">      columns.add(INTERESTS);</span>
     }
-<span class="fc" id="L123">    return columns;</span>
+<span class="fc" id="L125">    return columns;</span>
   }
 
   /** The document: a header row, then one row per application, every field quoted. */
   public String write(RecruitmentType type, List&lt;Application&gt; applications) {
-<span class="fc" id="L128">    List&lt;Column&gt; columns = columns(type);</span>
-<span class="fc" id="L129">    StringWriter out = new StringWriter();</span>
+<span class="fc" id="L130">    List&lt;Column&gt; columns = columns(type);</span>
+<span class="fc" id="L131">    StringWriter out = new StringWriter();</span>
     // Neither flushed nor closed: CSVWriter writes each row straight through to the StringWriter.
-<span class="fc" id="L131">    CSVWriter writer = new CSVWriter(out);</span>
-<span class="fc" id="L132">    writer.writeNext(columns.stream().map(Column::header).toArray(String[]::new));</span>
-<span class="fc bfc" id="L133" title="All 2 branches covered.">    for (Application application : applications) {</span>
-<span class="fc" id="L134">      writer.writeNext(</span>
-<span class="fc" id="L135">          columns.stream().map(c -&gt; text(c.value().apply(application))).toArray(String[]::new));</span>
-<span class="fc" id="L136">    }</span>
-<span class="fc" id="L137">    return out.toString();</span>
+<span class="fc" id="L133">    CSVWriter writer = new CSVWriter(out);</span>
+<span class="fc" id="L134">    writer.writeNext(columns.stream().map(Column::header).toArray(String[]::new));</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc" id="L136">      writer.writeNext(</span>
+<span class="fc" id="L137">          columns.stream().map(c -&gt; text(c.value().apply(application))).toArray(String[]::new));</span>
+<span class="fc" id="L138">    }</span>
+<span class="fc" id="L139">    return out.toString();</span>
   }
 
   /** Null reads as an empty cell; everything else as its usual string form. */
   static String text(Object value) {
-<span class="fc bfc" id="L142" title="All 2 branches covered.">    return value == null ? &quot;&quot; : String.valueOf(value);</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">    return value == null ? &quot;&quot; : String.valueOf(value);</span>
   }
 
   /**
@@ -147,31 +149,31 @@ import org.springframework.stereotype.Service;
    * number, title, term and grade; the courses separated by semicolons, in the order given.
    */
   static String courses(List&lt;PriorCoursework&gt; courses) {
-<span class="fc bfc" id="L150" title="All 2 branches covered.">    if (courses == null) {</span>
-<span class="fc" id="L151">      return &quot;&quot;;</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">    if (courses == null) {</span>
+<span class="fc" id="L153">      return &quot;&quot;;</span>
     }
-<span class="fc" id="L153">    return courses.stream()</span>
-<span class="fc" id="L154">        .map(</span>
+<span class="fc" id="L155">    return courses.stream()</span>
+<span class="fc" id="L156">        .map(</span>
             c -&gt;
-<span class="fc" id="L156">                String.join(</span>
+<span class="fc" id="L158">                String.join(</span>
                     &quot;,&quot;,
-<span class="fc bfc" id="L158" title="All 2 branches covered.">                    c.isUcsbCourse() ? &quot;UCSB&quot; : text(c.getOtherSchool()),</span>
-<span class="fc" id="L159">                    text(c.getCourseNumber()),</span>
-<span class="fc" id="L160">                    text(c.getCourseTitle()),</span>
-<span class="fc" id="L161">                    text(c.getTerm()),</span>
-<span class="fc" id="L162">                    text(c.getGrade())))</span>
-<span class="fc" id="L163">        .collect(Collectors.joining(&quot;;&quot;));</span>
+<span class="fc bfc" id="L160" title="All 2 branches covered.">                    c.isUcsbCourse() ? &quot;UCSB&quot; : text(c.getOtherSchool()),</span>
+<span class="fc" id="L161">                    text(c.getCourseNumber()),</span>
+<span class="fc" id="L162">                    text(c.getCourseTitle()),</span>
+<span class="fc" id="L163">                    text(c.getTerm()),</span>
+<span class="fc" id="L164">                    text(c.getGrade())))</span>
+<span class="fc" id="L165">        .collect(Collectors.joining(&quot;;&quot;));</span>
   }
 
   /** {@code name:value} pairs separated by commas, in name order, e.g. {@code C++:5,Java:4}. */
   static String pairs(Map&lt;String, ?&gt; values) {
-<span class="fc bfc" id="L168" title="All 2 branches covered.">    if (values == null) {</span>
-<span class="fc" id="L169">      return &quot;&quot;;</span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">    if (values == null) {</span>
+<span class="fc" id="L171">      return &quot;&quot;;</span>
     }
-<span class="fc" id="L171">    return new TreeMap&lt;&gt;(values)</span>
-<span class="fc" id="L172">        .entrySet().stream()</span>
-<span class="fc" id="L173">            .map(e -&gt; e.getKey() + &quot;:&quot; + text(e.getValue()))</span>
-<span class="fc" id="L174">            .collect(Collectors.joining(&quot;,&quot;));</span>
+<span class="fc" id="L173">    return new TreeMap&lt;&gt;(values)</span>
+<span class="fc" id="L174">        .entrySet().stream()</span>
+<span class="fc" id="L175">            .map(e -&gt; e.getKey() + &quot;:&quot; + text(e.getValue()))</span>
+<span class="fc" id="L176">            .collect(Collectors.joining(&quot;,&quot;));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
