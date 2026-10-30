@@ -24,6 +24,12 @@ export default {
         http.get("/api/admin/instructors/get", () =>
           HttpResponse.json(roleEmailFixtures.threeItems),
         ),
+        http.get("/api/admin/instructors/catalogNames", () =>
+          HttpResponse.json(roleEmailFixtures.catalogNames),
+        ),
+        http.put("/api/admin/instructors/catalogName", () =>
+          HttpResponse.json(roleEmailFixtures.threeItems[0]),
+        ),
         http.delete("/api/admin/instructors/delete", () =>
           HttpResponse.json({ message: "Deleted" }),
         ),
@@ -50,6 +56,9 @@ Empty.parameters = {
     handlers: [
       ...baseHandlers,
       http.get("/api/admin/instructors/get", () => HttpResponse.json([])),
+      http.get("/api/admin/instructors/catalogNames", () =>
+        HttpResponse.json([]),
+      ),
     ],
   },
 };

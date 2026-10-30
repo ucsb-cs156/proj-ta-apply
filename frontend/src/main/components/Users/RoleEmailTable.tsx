@@ -2,7 +2,7 @@ import OurTable from "main/components/Common/OurTable";
 
 import { useBackendMutation } from "main/utils/useBackend";
 import { toast } from "react-toastify";
-import { Button } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 
@@ -12,7 +12,12 @@ export type RoleEmail = {
   /** From the users table, so known only once this person has logged in. */
   givenName?: string | null;
   familyName?: string | null;
+  /** Instructors only: how the course catalog spells them, chosen by an admin (issue #120). */
+  catalogName?: string | null;
 };
+
+/** The dropdown's first choice, meaning no catalog name. */
+export const NO_CATALOG_NAME = "(null)";
 
 /** Shown above the Admins and Instructors tables, where the name columns are often blank. */
 export const NAMES_NOTE =
@@ -24,6 +29,10 @@ type RoleEmailTableProps = {
   getEndpoint?: string;
   testIdPrefix?: string;
   customDeleteCallback?: ((cell: Cell<RoleEmail, unknown>) => void) | null;
+  /** Every catalog name on record; with onCatalogNameChange, adds the Catalog Name column. */
+  catalogNames?: string[];
+  /** Called with the email and the chosen name, or null for (null). */
+  onCatalogNameChange?: (email: string, catalogName: string | null) => void;
 };
 
 export default function RoleEmailTable({
@@ -32,6 +41,8 @@ export default function RoleEmailTable({
   getEndpoint = "/api/admin/all",
   testIdPrefix = "RoleEmailTable",
   customDeleteCallback = null, // optional deleteCallback, used in AdminsIndexPage
+  catalogNames = [],
+  onCatalogNameChange,
 }: RoleEmailTableProps): React.JSX.Element {
   const cellToAxiosParamsDelete = (
     cell: Cell<RoleEmail, unknown>,
@@ -61,6 +72,38 @@ export default function RoleEmailTable({
 
   const deleteCallback = customDeleteCallback || defaultDeleteCallback;
 
+  // Only the Instructors page asks for it (issue #120): admins have no catalog name.
+  const catalogNameColumn =
+    onCatalogNameChange === undefined
+      ? []
+      : [
+          {
+            header: "Catalog Name",
+            accessorKey: "catalogName",
+            cell: ({ cell }: { cell: Cell<RoleEmail, unknown> }) => (
+              <Form.Select
+                size="sm"
+                aria-label={`Catalog name for ${cell.row.original.email}`}
+                value={cell.row.original.catalogName ?? ""}
+                onChange={(e) =>
+                  onCatalogNameChange(
+                    cell.row.original.email,
+                    e.target.value === "" ? null : e.target.value,
+                  )
+                }
+                data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-catalogName-select`}
+              >
+                <option value="">{NO_CATALOG_NAME}</option>
+                {catalogNames.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </Form.Select>
+            ),
+          },
+        ];
+
   const columns = [
     {
       header: "Email",
@@ -74,6 +117,7 @@ export default function RoleEmailTable({
       header: "Last Name",
       accessorKey: "familyName",
     },
+    ...catalogNameColumn,
     {
       header: "Delete",
       accessorKey: "isInAdminEmails",

@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.jobs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
@@ -22,6 +23,7 @@ public class PopulateCoursesJobFactoryTests {
 
   @MockitoBean private UCSBCurriculumService ucsbCurriculumService;
   @MockitoBean private CourseRepository courseRepository;
+  @MockitoBean private CatalogNameRepository catalogNameRepository;
   @MockitoBean private JobRateLimit jobRateLimit;
 
   @Test
@@ -35,6 +37,7 @@ public class PopulateCoursesJobFactoryTests {
     assertEquals("ECE", job.getSubjectArea());
     assertSame(ucsbCurriculumService, job.getUcsbCurriculumService());
     assertSame(courseRepository, job.getCourseRepository());
+    assertSame(catalogNameRepository, job.getCatalogNameRepository());
     assertSame(jobRateLimit, job.getJobRateLimit());
   }
 }

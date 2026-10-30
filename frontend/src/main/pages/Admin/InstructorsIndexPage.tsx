@@ -15,12 +15,36 @@ import {
   type UploadResult,
 } from "main/utils/csvUpload";
 
+/** Shown under the names note on the Instructors page (issue #120). */
+export const CATALOG_NAME_NOTE =
+  "Catalog Name is how the course schedule spells the instructor; choose it so their courses can be matched to them. The list is filled in by the Populate job on the Courses page.";
+
 export default function InstructorsIndexPage(): React.JSX.Element {
   const { data: instructors } = useBackend<RoleEmail[]>(
     ["/api/admin/instructors/get"],
     { method: "GET", url: "/api/admin/instructors/get" },
     // Stryker disable next-line all : don't test default value of empty list
     [],
+  );
+
+  const { data: catalogNames } = useBackend<string[]>(
+    ["/api/admin/instructors/catalogNames"],
+    { method: "GET", url: "/api/admin/instructors/catalogNames" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+
+  const catalogNameMutation = useBackendMutation<
+    { email: string; catalogName: string | null },
+    RoleEmail
+  >(
+    ({ email, catalogName }) => ({
+      url: "/api/admin/instructors/catalogName",
+      method: "PUT",
+      params: { email, catalogName: catalogName ?? "" },
+    }),
+    { onSuccess: () => toast("Catalog name saved.") },
+    ["/api/admin/instructors/get"],
   );
 
   const uploadMutation = useBackendMutation<
@@ -55,10 +79,17 @@ export default function InstructorsIndexPage(): React.JSX.Element {
         {createButton()}
         <h1>Instructors</h1>
         <p data-testid="InstructorsIndexPage-names-note">{NAMES_NOTE}</p>
+        <p data-testid="InstructorsIndexPage-catalog-note">
+          {CATALOG_NAME_NOTE}
+        </p>
         <RoleEmailTable
           data={instructors ?? []}
           deleteEndpoint="/api/admin/instructors/delete"
           getEndpoint="/api/admin/instructors/get"
+          catalogNames={catalogNames ?? []}
+          onCatalogNameChange={(email, catalogName) =>
+            catalogNameMutation.mutate({ email, catalogName })
+          }
           testIdPrefix="InstructorsIndexPage"
         />
         <hr />
