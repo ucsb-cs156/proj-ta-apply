@@ -6,6 +6,7 @@ import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
 import edu.ucsb.cs.taapply.models.Quarter;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -33,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RecruitmentsController extends ApiController {
 
   @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired ApplicationRepository applicationRepository;
   @Autowired JobService jobService;
   @Autowired PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
 
@@ -115,8 +119,28 @@ public class RecruitmentsController extends ApiController {
   }
 
   @Operation(
+      summary = "How many applications each recruitment has on file",
+      description =
+          "Recruitment id to the number of real (non-test) applications, for the admin's cards and"
+              + " the warning before deleting one (issue #108). Every recruitment is listed, with 0"
+              + " for one that has none.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @GetMapping("/applicationCounts")
+  public Map<Long, Long> applicationCounts() {
+    Map<Long, Long> counts = new TreeMap<>();
+    for (Recruitment recruitment : recruitmentRepository.findAll()) {
+      counts.put(
+          recruitment.getId(),
+          applicationRepository.countByRecruitmentIdAndTestApplicationFalse(recruitment.getId()));
+    }
+    return counts;
+  }
+
+  @Operation(
       summary = "Delete a recruitment",
-      description = "Its recruitment courses go with it, via the cascading foreign key.")
+      description =
+          "Its recruitment courses and every application to it go with it, via the cascading"
+              + " foreign keys.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @DeleteMapping("/delete")
   public Object deleteRecruitment(@Parameter(name = "id") @RequestParam Long id) {

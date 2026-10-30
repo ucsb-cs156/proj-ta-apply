@@ -12,6 +12,9 @@ const baseHandlers = [
   http.get("/api/systemInfo", () =>
     HttpResponse.json(systemInfoFixtures.showingNeither),
   ),
+  http.get("/api/admin/recruitments/applicationCounts", () =>
+    HttpResponse.json({ 1: 15, 2: 1, 3: 0 }),
+  ),
   http.post("/api/admin/recruitments/post", () => HttpResponse.json({ id: 4 })),
   http.put("/api/admin/recruitments/status", () => HttpResponse.json({})),
   http.delete("/api/admin/recruitments/delete", () =>

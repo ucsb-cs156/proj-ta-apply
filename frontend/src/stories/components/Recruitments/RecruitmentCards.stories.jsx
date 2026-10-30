@@ -20,6 +20,7 @@ const Template = (args) => <RecruitmentCards {...args} />;
 export const ThreeRecruitments = Template.bind({});
 ThreeRecruitments.args = {
   recruitments: recruitmentsFixtures.threeRecruitments,
+  applicationCounts: { 1: 15, 2: 1, 3: 0 },
   onDeleteRequested: (recruitment) =>
     window.alert(`Delete requested for recruitment ${recruitment.id}`),
 };

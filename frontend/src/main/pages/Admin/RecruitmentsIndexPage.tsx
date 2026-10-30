@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Button } from "react-bootstrap";
+import Modal from "react-bootstrap/Modal";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import RecruitmentCards from "main/components/Recruitments/RecruitmentCards";
@@ -28,6 +30,16 @@ export default function RecruitmentsIndexPage(): React.JSX.Element {
     [],
   );
 
+  // How many applications each recruitment has on file, for the cards and the delete warning.
+  const { data: applicationCounts } = useBackend<Record<string, number>>(
+    ["/api/admin/recruitments/applicationCounts"],
+    { method: "GET", url: "/api/admin/recruitments/applicationCounts" },
+    // Stryker disable next-line all : don't test default value of empty map
+    {},
+  );
+  const counts = applicationCounts ?? {};
+
+  const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Recruitment | null>(null);
 
   const createMutation = useBackendMutation<RecruitmentFormFields, Recruitment>(
@@ -37,12 +49,17 @@ export default function RecruitmentsIndexPage(): React.JSX.Element {
       params: data,
     }),
     {
-      onSuccess: () =>
+      onSuccess: () => {
+        setCreating(false);
         toast(
           "Recruitment created. Its course list is being filled; watch the Developer > Jobs page.",
-        ),
+        );
+      },
     },
-    ["/api/admin/recruitments/all"],
+    [
+      "/api/admin/recruitments/all",
+      "/api/admin/recruitments/applicationCounts",
+    ],
   );
 
   const deleteMutation = useBackendMutation<Recruitment, unknown>(
@@ -52,34 +69,71 @@ export default function RecruitmentsIndexPage(): React.JSX.Element {
       params: { id: recruitment.id },
     }),
     { onSuccess: () => setPendingDelete(null) },
-    ["/api/admin/recruitments/all"],
+    [
+      "/api/admin/recruitments/all",
+      "/api/admin/recruitments/applicationCounts",
+    ],
   );
 
   return (
     <BasicLayout>
       <div className="pt-2">
         <h1>Recruitments</h1>
-        <p>
-          One hiring round per quarter and type. Creating one fills its course
-          list from the courses flagged for that type in Admin &gt; Courses.
-          Applications start closed and are opened and closed by hand.
-        </p>
+        <div data-testid="RecruitmentsIndexPage-intro">
+          <p>
+            Applications for new recruitments do not automatically open and
+            close on the tentative dates listed; the admin must manually open
+            and close the recruitments by clicking the Open or Close button.
+          </p>
+          <p>
+            Only one recruitment of each type (TA or ULA) may be created for a
+            given quarter.
+          </p>
+          <p>
+            Recruitments are automatically populated with the undergraduate
+            courses offered in the specified quarter; the list of courses can
+            then be manually adjusted using the Courses button.
+          </p>
+        </div>
 
-        <RecruitmentForm
-          quarters={quarters}
-          submitAction={(data) => createMutation.mutate(data)}
-        />
+        <Button
+          variant="success"
+          className="mb-3"
+          onClick={() => setCreating(true)}
+          data-testid="RecruitmentsIndexPage-create-button"
+        >
+          Create New Recruitment
+        </Button>
 
-        <hr />
+        {/* Mounted only while open, so each opening starts with a blank form. */}
+        {creating && (
+          <Modal
+            show
+            onHide={() => setCreating(false)}
+            centered={true}
+            data-testid="RecruitmentsIndexPage-create-modal"
+          >
+            <Modal.Header closeButton>Create New Recruitment</Modal.Header>
+            <RecruitmentForm
+              quarters={quarters}
+              submitAction={(data) => createMutation.mutate(data)}
+              onCancel={() => setCreating(false)}
+            />
+          </Modal>
+        )}
 
         <RecruitmentCards
           recruitments={recruitments ?? []}
+          applicationCounts={counts}
           onDeleteRequested={setPendingDelete}
           testIdPrefix="RecruitmentsIndexPage"
         />
 
         <RecruitmentDeleteModal
           recruitment={pendingDelete}
+          applicationCount={
+            pendingDelete === null ? 0 : (counts[pendingDelete.id] ?? 0)
+          }
           onConfirm={() => deleteMutation.mutate(pendingDelete as Recruitment)}
           onCancel={() => setPendingDelete(null)}
         />

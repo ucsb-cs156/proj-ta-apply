@@ -14,6 +14,10 @@ export const receivedText = (applications: Application[]): string => {
     : `${base} (plus ${tests} test ${tests === 1 ? "application" : "applications"})`;
 };
 
+/** "15 applications" or "1 application", for a recruitment card's header (issue #108). */
+export const applicationsText = (count: number): string =>
+  `${count} ${count === 1 ? "application" : "applications"}`;
+
 /** The admin's read-only view of one application. */
 export const adminApplicationPath = (id: number | string): string =>
   `/admin/applications/${id}`;

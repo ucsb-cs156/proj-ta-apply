@@ -1,6 +1,15 @@
 import { useState } from "react";
-import { Badge, Button, ButtonGroup, Card } from "react-bootstrap";
+import {
+  Badge,
+  Button,
+  ButtonGroup,
+  Card,
+  OverlayTrigger,
+  Tooltip,
+} from "react-bootstrap";
 import { Link } from "react-router";
+import { TrashIcon } from "main/components/Common/Icons";
+import { applicationsText } from "main/utils/adminApplications";
 import { useBackendMutation } from "main/utils/useBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
@@ -15,19 +24,26 @@ import {
 export const TEST_APPLICATION_TOOLTIP =
   "Submit a test application to see what the form looks like to applicants";
 
+/** On the trash icon of each card (issue #108). */
+export const DELETE_TOOLTIP = "Delete this Recruitment";
+
 type RecruitmentCardsProps = {
   recruitments: Recruitment[];
+  /** Recruitment id to its number of applications on file; a missing id counts as none. */
+  applicationCounts?: Record<string, number>;
   onDeleteRequested?: (recruitment: Recruitment) => void;
   testIdPrefix?: string;
 };
 
 /**
  * One card per recruitment with a Sort by bar above (issue #86): the recruitments table had
- * thirteen columns and overflowed a laptop screen. Each card has the quarter, type and status in
- * its header, the four dates in its body and the six actions in its footer.
+ * thirteen columns and overflowed a laptop screen. Each card has the quarter, type, status and
+ * application count in its header with a trash icon at the right (issue #108), the four dates in
+ * its body and the five actions in its footer.
  */
 export default function RecruitmentCards({
   recruitments,
+  applicationCounts = {},
   onDeleteRequested = () => {},
   testIdPrefix = "RecruitmentCards",
 }: RecruitmentCardsProps): React.JSX.Element {
@@ -119,6 +135,26 @@ export default function RecruitmentCards({
               >
                 {recruitment.applicationStatus}
               </Badge>
+              <span data-testid={id("applications")}>
+                {applicationsText(applicationCounts[recruitment.id] ?? 0)}
+              </span>
+              <OverlayTrigger
+                placement="top"
+                overlay={
+                  <Tooltip id={id("delete-tooltip")}>{DELETE_TOOLTIP}</Tooltip>
+                }
+              >
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  className="ms-auto"
+                  aria-label={DELETE_TOOLTIP}
+                  onClick={() => onDeleteRequested(recruitment)}
+                  data-testid={id("delete-button")}
+                >
+                  <TrashIcon />
+                </Button>
+              </OverlayTrigger>
             </Card.Header>
             <Card.Body>
               <dl className="row mb-0">
@@ -172,14 +208,6 @@ export default function RecruitmentCards({
               >
                 Review Applications
               </Link>
-              <Button
-                variant="danger"
-                className="ms-auto"
-                onClick={() => onDeleteRequested(recruitment)}
-                data-testid={id("delete-button")}
-              >
-                Delete
-              </Button>
             </Card.Footer>
           </Card>
         );

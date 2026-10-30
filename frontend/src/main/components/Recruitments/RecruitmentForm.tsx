@@ -1,4 +1,5 @@
 import { Button, Form } from "react-bootstrap";
+import Modal from "react-bootstrap/Modal";
 import { useForm } from "react-hook-form";
 import SingleQuarterDropdown from "main/components/Quarters/SingleQuarterDropdown";
 import RequiredField from "main/components/Common/RequiredField";
@@ -17,11 +18,18 @@ type Quarter = { yyyyq: string; qyy: string };
 type RecruitmentFormProps = {
   quarters: Quarter[];
   submitAction: (data: RecruitmentFormFields) => void;
+  /** The Cancel button; the form lives in a modal (issue #108), so there is always one. */
+  onCancel: () => void;
 };
 
+/**
+ * The four fields of a new recruitment, laid out as a modal's body and footer: the page wraps it
+ * in the Create New Recruitment modal, and a story or test can show it on its own.
+ */
 export default function RecruitmentForm({
   quarters,
   submitAction,
+  onCancel,
 }: RecruitmentFormProps): React.JSX.Element {
   // Stryker disable all
   const {
@@ -38,19 +46,21 @@ export default function RecruitmentForm({
 
   return (
     <Form onSubmit={handleSubmit((data) => submitAction({ ...data, quarter }))}>
-      <p className="mb-2">
-        <RequiredFieldExplanation />
-      </p>
-      <div className="d-flex gap-3 align-items-start flex-wrap">
-        <SingleQuarterDropdown
-          quarters={quarters}
-          quarter={quarter}
-          setQuarter={setQuarter}
-          controlId={`${testIdPrefix}.Quarter`}
-          label="Quarter"
-        />
+      <Modal.Body>
+        <p className="mb-2">
+          <RequiredFieldExplanation />
+        </p>
+        <div className="mb-3">
+          <SingleQuarterDropdown
+            quarters={quarters}
+            quarter={quarter}
+            setQuarter={setQuarter}
+            controlId={`${testIdPrefix}.Quarter`}
+            label="Quarter"
+          />
+        </div>
 
-        <Form.Group>
+        <Form.Group className="mb-3">
           <Form.Label htmlFor={`${testIdPrefix}-type`}>Type</Form.Label>
           <Form.Select
             id={`${testIdPrefix}-type`}
@@ -62,7 +72,7 @@ export default function RecruitmentForm({
           </Form.Select>
         </Form.Group>
 
-        <Form.Group>
+        <Form.Group className="mb-3">
           <Form.Label htmlFor={`${testIdPrefix}-tentativeOpeningDate`}>
             Tentative Opening Date <RequiredField />
           </Form.Label>
@@ -79,7 +89,7 @@ export default function RecruitmentForm({
           </Form.Control.Feedback>
         </Form.Group>
 
-        <Form.Group>
+        <Form.Group className="mb-3">
           <Form.Label htmlFor={`${testIdPrefix}-primaryConsiderationDate`}>
             Primary Consideration Date <RequiredField />
           </Form.Label>
@@ -95,15 +105,19 @@ export default function RecruitmentForm({
               "A primary consideration date is required."}
           </Form.Control.Feedback>
         </Form.Group>
-
+      </Modal.Body>
+      <Modal.Footer>
         <Button
-          type="submit"
-          className="mt-4"
-          data-testid={`${testIdPrefix}-submit`}
+          variant="secondary"
+          onClick={onCancel}
+          data-testid={`${testIdPrefix}-cancel`}
         >
-          Create
+          Cancel
         </Button>
-      </div>
+        <Button type="submit" data-testid={`${testIdPrefix}-submit`}>
+          Create New Recruitment
+        </Button>
+      </Modal.Footer>
     </Form>
   );
 }

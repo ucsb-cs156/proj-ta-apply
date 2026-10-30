@@ -20,6 +20,7 @@ import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJob;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs156.jobs.services.JobService;
@@ -40,6 +41,7 @@ import org.springframework.test.web.servlet.MvcResult;
 public class RecruitmentsControllerTests extends ControllerTestCase {
 
   @MockitoBean RecruitmentRepository recruitmentRepository;
+  @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean JobService jobService;
   @MockitoBean PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
   @MockitoBean UserRepository userRepository;
@@ -236,6 +238,40 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
   }
 
   // ---- delete ----
+
+  // ---- GET /applicationCounts ----
+
+  @Test
+  public void logged_out_users_cannot_get_application_counts() throws Exception {
+    mockMvc.perform(get("/api/admin/recruitments/applicationCounts")).andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void regular_users_cannot_get_application_counts() throws Exception {
+    mockMvc.perform(get("/api/admin/recruitments/applicationCounts")).andExpect(status().is(403));
+  }
+
+  /** Issue #108: every recruitment is listed, test applications left out, none as 0. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_gets_the_application_count_of_every_recruitment() throws Exception {
+    when(recruitmentRepository.findAll())
+        .thenReturn(
+            List.of(
+                recruitment(2L, "20261", RecruitmentType.ULA),
+                recruitment(1L, "20261", RecruitmentType.TA)));
+    when(applicationRepository.countByRecruitmentIdAndTestApplicationFalse(1L)).thenReturn(15L);
+    when(applicationRepository.countByRecruitmentIdAndTestApplicationFalse(2L)).thenReturn(0L);
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/recruitments/applicationCounts"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals("{\"1\":15,\"2\":0}", response.getResponse().getContentAsString());
+  }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
