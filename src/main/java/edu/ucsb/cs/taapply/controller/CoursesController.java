@@ -28,8 +28,12 @@ public class CoursesController extends ApiController {
 
   @Autowired CourseRepository courseRepository;
 
-  @Operation(summary = "List all courses, ordered by course number")
-  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @Operation(
+      summary = "List all courses, ordered by course number",
+      description =
+          "Open to every signed-in user, not only admins: the application form offers this list"
+              + " for adding several UCSB courses to the prior coursework at once (issue #100).")
+  @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
   @GetMapping("/all")
   public List<Course> allCourses() {
     // Sorted here rather than with an ORDER BY. Course ids keep the API's fixed-width padding so

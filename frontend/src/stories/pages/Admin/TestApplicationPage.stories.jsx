@@ -3,6 +3,7 @@ import { HttpResponse, http } from "msw";
 import TestApplicationPage from "main/pages/Admin/TestApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
+import coursesFixtures from "fixtures/coursesFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
@@ -29,6 +30,10 @@ const common = [
   ),
   http.get("/api/recruitments/sections", () =>
     HttpResponse.json(courseSectionsFixtures.cmpsc156),
+  ),
+  // Add Multiple UCSB CMPSC Courses lists the course table (issue #100).
+  http.get("/api/courses/all", () =>
+    HttpResponse.json(coursesFixtures.threeCourses),
   ),
   http.get("/api/recruitmentcourses/all", () =>
     HttpResponse.json(recruitmentCoursesFixtures.fourCourses),

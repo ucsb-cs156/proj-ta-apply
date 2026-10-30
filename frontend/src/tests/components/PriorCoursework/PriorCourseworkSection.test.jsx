@@ -1,25 +1,45 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import axios from "axios";
+import AxiosMockAdapter from "axios-mock-adapter";
 import { vi } from "vitest";
 
 import PriorCourseworkSection from "main/components/PriorCoursework/PriorCourseworkSection";
 import priorCourseworkFixtures from "fixtures/priorCourseworkFixtures";
+import coursesFixtures from "fixtures/coursesFixtures";
 
-function renderSection({ type = "TA", courses = [], invalid = false } = {}) {
+const axiosMock = new AxiosMockAdapter(axios);
+
+function renderSection({
+  type = "TA",
+  courses = [],
+  invalid = false,
+  subjectArea = undefined,
+} = {}) {
   const onChange = vi.fn();
   render(
-    <PriorCourseworkSection
-      type={type}
-      courses={courses}
-      onChange={onChange}
-      invalid={invalid}
-      testIdPrefix="S"
-    />,
+    // The bulk-add modal fetches the course table, so a query client is needed once it opens.
+    <QueryClientProvider client={new QueryClient()}>
+      <PriorCourseworkSection
+        type={type}
+        courses={courses}
+        onChange={onChange}
+        invalid={invalid}
+        subjectArea={subjectArea}
+        testIdPrefix="S"
+      />
+    </QueryClientProvider>,
   );
   return onChange;
 }
 
 describe("PriorCourseworkSection tests", () => {
+  beforeEach(() => {
+    axiosMock.reset();
+    axiosMock.resetHistory();
+  });
+
   test("a TA applicant is told to list at least three courses", () => {
     renderSection({ type: "TA" });
 
@@ -110,6 +130,68 @@ describe("PriorCourseworkSection tests", () => {
       },
     ]);
     await waitFor(() => expect(screen.queryByTestId("S-modal")).toBeNull());
+  });
+
+  /** Issue #100: several UCSB courses at once, from the course table. */
+  test("Add Multiple UCSB CMPSC Courses opens the bulk modal and the courses ticked are appended", async () => {
+    axiosMock
+      .onGet("/api/courses/all")
+      .reply(200, coursesFixtures.threeCourses);
+    const onChange = renderSection({
+      courses: [priorCourseworkFixtures.ucsbCourse],
+    });
+
+    const button = screen.getByTestId("S-bulk-button");
+    expect(button).toHaveTextContent("Add Multiple UCSB CMPSC Courses");
+    // Not mounted, so the course table is not fetched, until the button is clicked.
+    expect(screen.queryByTestId("S-bulk")).toBeNull();
+    expect(axiosMock.history.get.length).toBe(0);
+
+    await userEvent.click(button);
+    expect(screen.getByTestId("S-bulk")).toBeInTheDocument();
+    await userEvent.click(
+      await screen.findByTestId("S-bulk-row-CMPSC-16-taken"),
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("S-bulk-row-CMPSC-16-grade"),
+      "B+",
+    );
+    await userEvent.click(screen.getByTestId("S-bulk-add"));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual([
+      priorCourseworkFixtures.ucsbCourse,
+      {
+        ucsbCourse: true,
+        otherSchool: null,
+        courseNumber: "CMPSC 16",
+        courseTitle: "Problem Solving with Computers I",
+        term: null,
+        grade: "B+",
+      },
+    ]);
+    await waitFor(() => expect(screen.queryByTestId("S-bulk")).toBeNull());
+  });
+
+  test("the bulk button names the subject area given", () => {
+    renderSection({ subjectArea: "ECE" });
+
+    expect(screen.getByTestId("S-bulk-button")).toHaveTextContent(
+      "Add Multiple UCSB ECE Courses",
+    );
+  });
+
+  test("Cancel in the bulk modal closes it and changes nothing", async () => {
+    axiosMock
+      .onGet("/api/courses/all")
+      .reply(200, coursesFixtures.threeCourses);
+    const onChange = renderSection();
+
+    await userEvent.click(screen.getByTestId("S-bulk-button"));
+    await userEvent.click(await screen.findByTestId("S-bulk-cancel"));
+
+    await waitFor(() => expect(screen.queryByTestId("S-bulk")).toBeNull());
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   test("without the invalid prop, too few courses are not complained about", () => {

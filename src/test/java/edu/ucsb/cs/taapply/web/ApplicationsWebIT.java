@@ -5,6 +5,7 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.Course;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
@@ -16,6 +17,7 @@ import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
@@ -83,6 +85,7 @@ public class ApplicationsWebIT extends WebTestCase {
   @Autowired UlaInterestRepository ulaInterestRepository;
   @Autowired NoticeVersionRepository noticeVersionRepository;
   @Autowired ApplicationRepository applicationRepository;
+  @Autowired CourseRepository courseRepository;
 
   /** The notice every TA applicant must agree to. */
   private NoticeVersion seedTaNotice() {
@@ -527,6 +530,52 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("AuditTrailPage-total")).containsText("4 changes recorded.");
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-app")).containsText("TA ");
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-app-link")).isVisible();
+  }
+
+  /** Issue #100: several UCSB courses can be added to the prior coursework table at once. */
+  @Test
+  public void several_ucsb_courses_can_be_added_to_prior_coursework_at_once() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+    courseRepository.save(
+        Course.builder().courseId("CMPSC    16").title("PROBLEM SOLVING I").build());
+    courseRepository.save(Course.builder().courseId("CMPSC   130A").title("DATA STRUCT").build());
+    courseRepository.save(
+        Course.builder().courseId("CMPSC   156").title("ADV APP PROGRAM").build());
+    // Fall of last year is always among the ten years offered.
+    String lastFall = (LocalDate.now().getYear() - 1) + "4";
+    String lastFallLabel = "F" + String.valueOf(LocalDate.now().getYear() - 1).substring(2);
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+
+    String bulk = "ApplyPage-coursework-bulk-";
+    page.getByTestId("ApplyPage-coursework-bulk-button").click();
+    assertThat(page.getByTestId(bulk + "row-CMPSC-16-title")).containsText("PROBLEM SOLVING I");
+    // Nothing ticked yet, so nothing to add.
+    assertThat(page.getByTestId(bulk + "add")).isDisabled();
+
+    page.getByTestId(bulk + "row-CMPSC-16-taken").check();
+    page.getByTestId(bulk + "row-CMPSC-16-term").selectOption(lastFall);
+    page.getByTestId(bulk + "row-CMPSC-16-grade").selectOption("A");
+    // Choosing a grade ticks the course too.
+    page.getByTestId(bulk + "row-CMPSC-130A-grade").selectOption("IP");
+    assertThat(page.getByTestId(bulk + "row-CMPSC-130A-taken")).isChecked();
+    assertThat(page.getByTestId(bulk + "add")).containsText("Add 2 Courses");
+    page.getByTestId(bulk + "add").click();
+
+    // Both rows are in the table, as UCSB courses, with the title carried over.
+    String table = "ApplyPage-coursework-table-cell-row-";
+    assertThat(page.getByTestId("ApplyPage-coursework-count")).containsText("2 of at least 3");
+    assertThat(page.getByTestId(table + "0-col-school")).containsText("UCSB");
+    assertThat(page.getByTestId(table + "0-col-courseNumber")).containsText("CMPSC 16");
+    assertThat(page.getByTestId(table + "0-col-courseTitle")).containsText("PROBLEM SOLVING I");
+    assertThat(page.getByTestId(table + "0-col-term")).containsText(lastFallLabel);
+    assertThat(page.getByTestId(table + "0-col-grade")).containsText("A");
+    assertThat(page.getByTestId(table + "1-col-courseNumber")).containsText("CMPSC 130A");
+    assertThat(page.getByTestId(table + "1-col-grade")).containsText("IP");
+    assertThat(page.getByTestId(bulk + "button")).isVisible();
+    assertThat(page.getByTestId("ApplyPage-coursework-bulk")).not().isVisible();
   }
 
   /** An admin previews the form from the recruitments table; the result is flagged as a test. */
