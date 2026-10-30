@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PopulateCoursesJob.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.jobs</a> &gt; <span class="el_source">PopulateCoursesJob.java</span></div><h1>PopulateCoursesJob.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.jobs;
 
+import edu.ucsb.cs.taapply.entity.CatalogName;
 import edu.ucsb.cs.taapply.entity.Course;
 import edu.ucsb.cs.taapply.models.Quarter;
 import edu.ucsb.cs.taapply.models.UcsbCourse;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
+import edu.ucsb.cs.taapply.models.UcsbInstructor;
+import edu.ucsb.cs.taapply.models.UcsbSection;
+import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.services.JobContext;
@@ -27,13 +32,17 @@ import lombok.extern.slf4j.Slf4j;
  *   &lt;li&gt;Nothing is ever deleted, including courses outside the requested range.
  * &lt;/ul&gt;
  *
+ * &lt;p&gt;Each quarter is also asked for its offerings with sections, and the instructors of record of
+ * every primary section are upserted into the catalog names table (issue #120), so an admin can say
+ * which catalog name each instructor goes by.
+ *
  * &lt;p&gt;A quarter whose API call fails is logged and skipped rather than aborting the run, so one
  * transient error does not discard the quarters that already succeeded.
  */
 @Builder
 @Getter
 @AllArgsConstructor
-<span class="fc" id="L36">@Slf4j</span>
+<span class="fc" id="L45">@Slf4j</span>
 public class PopulateCoursesJob implements JobContextConsumer {
 
   private String startQuarterYYYYQ;
@@ -42,69 +51,111 @@ public class PopulateCoursesJob implements JobContextConsumer {
   private String subjectArea;
   private UCSBCurriculumService ucsbCurriculumService;
   private CourseRepository courseRepository;
+  private CatalogNameRepository catalogNameRepository;
   private JobRateLimit jobRateLimit;
 
   @Override
   public void accept(JobContext ctx) throws Exception {
-<span class="fc" id="L49">    List&lt;Quarter&gt; quarters = Quarter.quarterList(startQuarterYYYYQ, endQuarterYYYYQ);</span>
+<span class="fc" id="L59">    List&lt;Quarter&gt; quarters = Quarter.quarterList(startQuarterYYYYQ, endQuarterYYYYQ);</span>
 
-<span class="fc" id="L51">    ctx.log(</span>
-<span class="fc" id="L52">        String.format(</span>
+<span class="fc" id="L61">    ctx.log(</span>
+<span class="fc" id="L62">        String.format(</span>
             &quot;Populating %s courses at level %s for %d quarter(s): %s to %s&quot;,
-<span class="fc" id="L54">            subjectArea, level, quarters.size(), startQuarterYYYYQ, endQuarterYYYYQ));</span>
+<span class="fc" id="L64">            subjectArea, level, quarters.size(), startQuarterYYYYQ, endQuarterYYYYQ));</span>
 
-<span class="fc" id="L56">    int added = 0;</span>
-<span class="fc" id="L57">    int updated = 0;</span>
-<span class="fc" id="L58">    int failedQuarters = 0;</span>
+<span class="fc" id="L66">    int added = 0;</span>
+<span class="fc" id="L67">    int updated = 0;</span>
+<span class="fc" id="L68">    int failedQuarters = 0;</span>
+<span class="fc" id="L69">    int namesAdded = 0;</span>
 
-<span class="fc bfc" id="L60" title="All 2 branches covered.">    for (Quarter quarter : quarters) {</span>
-<span class="fc" id="L61">      ctx.checkCancellation();</span>
-<span class="fc" id="L62">      jobRateLimit.sleep();</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">    for (Quarter quarter : quarters) {</span>
+<span class="fc" id="L72">      ctx.checkCancellation();</span>
+<span class="fc" id="L73">      jobRateLimit.sleep();</span>
 
-<span class="fc" id="L64">      String yyyyq = quarter.getYYYYQ();</span>
-<span class="fc" id="L65">      ctx.log(String.format(&quot;Fetching %s %s level %s&quot;, subjectArea, yyyyq, level));</span>
+<span class="fc" id="L75">      String yyyyq = quarter.getYYYYQ();</span>
+<span class="fc" id="L76">      ctx.log(String.format(&quot;Fetching %s %s level %s&quot;, subjectArea, yyyyq, level));</span>
 
       List&lt;UcsbCourse&gt; courses;
       try {
-<span class="fc" id="L69">        courses = ucsbCurriculumService.getCourses(subjectArea, yyyyq, level);</span>
-<span class="fc" id="L70">      } catch (Exception e) {</span>
-<span class="fc" id="L71">        failedQuarters++;</span>
-<span class="fc" id="L72">        ctx.log(String.format(&quot;Error fetching %s: %s&quot;, yyyyq, e.getMessage()));</span>
-<span class="fc" id="L73">        log.error(&quot;Error fetching courses for {}&quot;, yyyyq, e);</span>
-<span class="fc" id="L74">        continue;</span>
-<span class="fc" id="L75">      }</span>
+<span class="fc" id="L80">        courses = ucsbCurriculumService.getCourses(subjectArea, yyyyq, level);</span>
+<span class="fc" id="L81">      } catch (Exception e) {</span>
+<span class="fc" id="L82">        failedQuarters++;</span>
+<span class="fc" id="L83">        ctx.log(String.format(&quot;Error fetching %s: %s&quot;, yyyyq, e.getMessage()));</span>
+<span class="fc" id="L84">        log.error(&quot;Error fetching courses for {}&quot;, yyyyq, e);</span>
+<span class="fc" id="L85">        continue;</span>
+<span class="fc" id="L86">      }</span>
 
-<span class="fc bfc" id="L77" title="All 2 branches covered.">      for (UcsbCourse ucsbCourse : courses) {</span>
-<span class="fc" id="L78">        String courseId = UCSBCurriculumService.normalizeCourseId(ucsbCourse.getCourseId());</span>
-<span class="fc bfc" id="L79" title="All 4 branches covered.">        if (courseId == null || courseId.isEmpty()) {</span>
-<span class="fc" id="L80">          continue;</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">      for (UcsbCourse ucsbCourse : courses) {</span>
+<span class="fc" id="L89">        String courseId = UCSBCurriculumService.normalizeCourseId(ucsbCourse.getCourseId());</span>
+<span class="fc bfc" id="L90" title="All 4 branches covered.">        if (courseId == null || courseId.isEmpty()) {</span>
+<span class="fc" id="L91">          continue;</span>
         }
-<span class="fc" id="L82">        Optional&lt;Course&gt; existing = courseRepository.findByCourseId(courseId);</span>
-<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (existing.isPresent()) {</span>
+<span class="fc" id="L93">        Optional&lt;Course&gt; existing = courseRepository.findByCourseId(courseId);</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (existing.isPresent()) {</span>
           // Refresh the title only. needsTa/needsUla are admin data and must survive re-runs.
-<span class="fc" id="L85">          Course course = existing.get();</span>
-<span class="fc" id="L86">          course.setTitle(ucsbCourse.getTitle());</span>
-<span class="fc" id="L87">          courseRepository.save(course);</span>
-<span class="fc" id="L88">          updated++;</span>
-<span class="fc" id="L89">        } else {</span>
-<span class="fc" id="L90">          courseRepository.save(</span>
-<span class="fc" id="L91">              Course.builder()</span>
-<span class="fc" id="L92">                  .courseId(courseId)</span>
-<span class="fc" id="L93">                  .title(ucsbCourse.getTitle())</span>
-<span class="fc" id="L94">                  .needsTa(false)</span>
-<span class="fc" id="L95">                  .needsUla(false)</span>
-<span class="fc" id="L96">                  .build());</span>
-<span class="fc" id="L97">          added++;</span>
+<span class="fc" id="L96">          Course course = existing.get();</span>
+<span class="fc" id="L97">          course.setTitle(ucsbCourse.getTitle());</span>
+<span class="fc" id="L98">          courseRepository.save(course);</span>
+<span class="fc" id="L99">          updated++;</span>
+<span class="fc" id="L100">        } else {</span>
+<span class="fc" id="L101">          courseRepository.save(</span>
+<span class="fc" id="L102">              Course.builder()</span>
+<span class="fc" id="L103">                  .courseId(courseId)</span>
+<span class="fc" id="L104">                  .title(ucsbCourse.getTitle())</span>
+<span class="fc" id="L105">                  .needsTa(false)</span>
+<span class="fc" id="L106">                  .needsUla(false)</span>
+<span class="fc" id="L107">                  .build());</span>
+<span class="fc" id="L108">          added++;</span>
         }
-<span class="fc" id="L99">      }</span>
+<span class="fc" id="L110">      }</span>
 
-<span class="fc" id="L101">      ctx.log(String.format(&quot;  %s: %d course(s) returned&quot;, yyyyq, courses.size()));</span>
-<span class="fc" id="L102">    }</span>
+<span class="fc" id="L112">      ctx.log(String.format(&quot;  %s: %d course(s) returned&quot;, yyyyq, courses.size()));</span>
 
-<span class="fc" id="L104">    ctx.log(</span>
-<span class="fc" id="L105">        String.format(</span>
-            &quot;Finished: %d added, %d updated, %d quarter(s) failed&quot;,
-<span class="fc" id="L107">            added, updated, failedQuarters));</span>
-<span class="fc" id="L108">  }</span>
+      // A failing offerings fetch costs only this quarter's names, never the courses above.
+      try {
+<span class="fc" id="L116">        int names = upsertCatalogNames(ucsbCurriculumService.getOfferings(subjectArea, yyyyq));</span>
+<span class="fc" id="L117">        namesAdded += names;</span>
+<span class="fc" id="L118">        ctx.log(String.format(&quot;  %s: %d new catalog name(s)&quot;, yyyyq, names));</span>
+<span class="fc" id="L119">      } catch (Exception e) {</span>
+<span class="fc" id="L120">        ctx.log(String.format(&quot;Error fetching instructors for %s: %s&quot;, yyyyq, e.getMessage()));</span>
+<span class="fc" id="L121">        log.error(&quot;Error fetching offerings for {}&quot;, yyyyq, e);</span>
+<span class="fc" id="L122">      }</span>
+<span class="fc" id="L123">    }</span>
+
+<span class="fc" id="L125">    ctx.log(</span>
+<span class="fc" id="L126">        String.format(</span>
+            &quot;Finished: %d added, %d updated, %d catalog name(s) added, %d quarter(s) failed&quot;,
+<span class="fc" id="L128">            added, updated, namesAdded, failedQuarters));</span>
+<span class="fc" id="L129">  }</span>
+
+  /**
+   * Records every instructor of record of a primary (lecture) section as a catalog name, and
+   * returns how many were new. Secondaries are skipped: their TAs are not who the catalog names an
+   * instructor by. Blank names are skipped, and a name already recorded is left alone.
+   */
+  int upsertCatalogNames(List&lt;UcsbCourseOffering&gt; offerings) {
+<span class="fc" id="L137">    int added = 0;</span>
+    for (UcsbCourseOffering offering :
+<span class="fc bfc" id="L139" title="All 4 branches covered.">        offerings == null ? List.&lt;UcsbCourseOffering&gt;of() : offerings) {</span>
+      for (UcsbSection section :
+<span class="fc bfc" id="L141" title="All 4 branches covered.">          offering.getClassSections() == null</span>
+<span class="fc" id="L142">              ? List.&lt;UcsbSection&gt;of()</span>
+<span class="fc" id="L143">              : offering.getClassSections()) {</span>
+<span class="fc bfc" id="L144" title="All 4 branches covered.">        if (!section.isPrimary() || section.getInstructors() == null) {</span>
+<span class="fc" id="L145">          continue;</span>
+        }
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        for (UcsbInstructor instructor : section.getInstructors()) {</span>
+          String name =
+<span class="fc bfc" id="L149" title="All 2 branches covered.">              instructor.getInstructor() == null ? &quot;&quot; : instructor.getInstructor().strip();</span>
+<span class="fc bfc" id="L150" title="All 4 branches covered.">          if (name.isEmpty() || catalogNameRepository.existsById(name)) {</span>
+<span class="fc" id="L151">            continue;</span>
+          }
+<span class="fc" id="L153">          catalogNameRepository.save(CatalogName.builder().name(name).build());</span>
+<span class="fc" id="L154">          added++;</span>
+<span class="fc" id="L155">        }</span>
+<span class="fc" id="L156">      }</span>
+<span class="fc" id="L157">    }</span>
+<span class="fc" id="L158">    return added;</span>
+  }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

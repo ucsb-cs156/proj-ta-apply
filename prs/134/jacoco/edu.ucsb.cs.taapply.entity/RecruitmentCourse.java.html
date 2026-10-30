@@ -93,10 +93,17 @@ public class RecruitmentCourse {
    */
   @Builder.Default private boolean manuallyAdded = false;
 
-  /** Whether applicants should see this row: neither removed by an admin nor stale. */
+  /** The status the UCSB API reports for a section that has been cancelled. */
+  public static final String CANCELLED = &quot;cancelled&quot;;
+
+  /**
+   * Whether applicants should see this row: not removed by an admin, not stale, and not cancelled
+   * (issue #123). Cancellation is judged when reading rather than by flagging the row, so a
+   * cancellation the schedule later reverses takes effect at the next Populate with nobody's help.
+   */
   @JsonIgnore
   public boolean isOnOffer() {
-<span class="fc bfc" id="L99" title="All 4 branches covered.">    return !removed &amp;&amp; !stale;</span>
+<span class="fc bfc" id="L106" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
