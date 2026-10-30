@@ -208,11 +208,69 @@ describe("ApplicationForm tests", () => {
     });
   });
 
+  /** Issue #117: the ULA form's graduation question gets half a row beside Changing major. */
+  test("a ULA form puts Expected Graduation beside Changing major, each half the width", () => {
+    renderForm({ type: "ULA" });
+
+    const row = screen.getByTestId("ApplicationForm-graduation-row");
+    expect(row).toHaveClass("row");
+    const graduation = screen
+      .getByTestId("ApplicationForm-graduationDate")
+      .closest(".col-md-6");
+    const changing = screen
+      .getByTestId("ApplicationForm-changingMajor")
+      .closest(".col-md-6");
+    expect(graduation).not.toBeNull();
+    expect(changing).not.toBeNull();
+    expect(row).toContainElement(graduation);
+    expect(row).toContainElement(changing);
+    // Graduation first, to the left.
+    expect(
+      graduation.compareDocumentPosition(changing) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Its note sits under it, and is no longer in the Academics row.
+    expect(graduation).toContainElement(
+      screen.getByTestId("ApplicationForm-graduationDate-note"),
+    );
+    expect(
+      screen.getByTestId("ApplicationForm-yearInProgram").closest(".row"),
+    ).not.toContainElement(
+      screen.getByTestId("ApplicationForm-graduationDate"),
+    );
+
+    // The previous-service question, renamed, with its explanation underneath.
+    expect(labelNamed("Previous ULA Service?")).toHaveAttribute(
+      "for",
+      "ApplicationForm-previousServiceAsUla",
+    );
+    expect(
+      screen.getByTestId("ApplicationForm-previousServiceAsUla-note"),
+    ).toHaveTextContent(
+      "How many quarters of previous ULA experience do you have?",
+    );
+    expect(screen.queryByText(/Quarters Previously Served/)).toBeNull();
+  });
+
+  test("a TA form keeps Expected Graduation in the Academics row", () => {
+    renderForm({ type: "TA" });
+
+    expect(screen.queryByTestId("ApplicationForm-graduation-row")).toBeNull();
+    const graduation = screen.getByTestId("ApplicationForm-graduationDate");
+    expect(graduation.closest(".col-md-2")).not.toBeNull();
+    expect(
+      screen.getByTestId("ApplicationForm-yearInProgram").closest(".row"),
+    ).toContainElement(graduation);
+    expect(
+      screen.queryByTestId("ApplicationForm-previousServiceAsUla-note"),
+    ).toBeNull();
+  });
+
   test("a ULA application wires its own labels too", () => {
     renderForm({ type: "ULA" });
 
     [
-      ["Quarters Previously Served as a ULA", "previousServiceAsUla"],
+      ["Previous ULA Service?", "previousServiceAsUla"],
       ["Video Link", "videoLink"],
       ["Perm Number", "permNumber"],
       ["BS/MS student?", "bsMsStudent"],
@@ -2517,7 +2575,7 @@ describe("ApplicationForm tests", () => {
       "Overall GPA",
       "Year in Program",
       "Expected Graduation",
-      "Quarters Previously Served as a ULA",
+      "Previous ULA Service?",
     ]) {
       expect(labelNamed(label).textContent).toMatch(/\*\s*$/);
     }
@@ -2820,7 +2878,7 @@ describe("ApplicationForm tests", () => {
       await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
 
       await screen.findByTestId("ApplicationForm-missing");
-      expect(listed()).toContain("Quarters Previously Served as a ULA");
+      expect(listed()).toContain("Previous ULA Service?");
       expect(listed()).not.toContain("Training commitment");
     });
   });
