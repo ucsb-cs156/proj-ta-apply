@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationCsvService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">ApplicationCsvService.java</span></div><h1>ApplicationCsvService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import com.opencsv.CSVWriter;
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
+
+/**
+ * The applications to one recruitment as a CSV document, one row per application, for an admin to
+ * open in a spreadsheet.
+ *
+ * &lt;p&gt;Every answer is a column. The one-to-many answers are folded into a single column each: the
+ * prior courses as the course fields separated by commas and the courses by semicolons; the topic
+ * ratings, interests and course interests as {@code name:value} pairs separated by commas (e.g.
+ * {@code C++:5,Java:4}), in name order. The columns differ by form type: a TA file has the
+ * residency, language exam and class level columns, a ULA file the video link, previous service,
+ * availability and interests columns.
+ */
+@Service
+<span class="fc" id="L28">public class ApplicationCsvService {</span>
+
+  /** One column: its header and how to read it off an application. */
+<span class="fc" id="L31">  private record Column(String header, Function&lt;Application, Object&gt; value) {}</span>
+
+<span class="fc" id="L33">  private static final List&lt;Column&gt; BEFORE_TYPE =</span>
+<span class="fc" id="L34">      List.of(</span>
+          new Column(&quot;id&quot;, Application::getId),
+          new Column(&quot;submittedAt&quot;, Application::getSubmittedAt),
+          new Column(&quot;email&quot;, Application::getEmail),
+          new Column(&quot;status&quot;, Application::getStatus),
+          new Column(&quot;testApplication&quot;, Application::isTestApplication),
+          new Column(&quot;firstName&quot;, Application::getFirstName),
+          new Column(&quot;middleName&quot;, Application::getMiddleName),
+          new Column(&quot;lastName&quot;, Application::getLastName),
+          new Column(&quot;major&quot;, Application::getMajor),
+          new Column(&quot;gpaMajor&quot;, Application::getGpaMajor),
+          new Column(&quot;gpaOverall&quot;, Application::getGpaOverall),
+          new Column(&quot;yearInProgram&quot;, Application::getYearInProgram),
+          new Column(&quot;graduationDate&quot;, Application::getGraduationDate));
+
+<span class="fc" id="L49">  private static final List&lt;Column&gt; TA_ONLY =</span>
+<span class="fc" id="L50">      List.of(</span>
+          new Column(&quot;classLevel&quot;, Application::getClassLevel),
+          new Column(&quot;residencyStatus&quot;, Application::getResidencyStatus),
+          new Column(&quot;languageExam&quot;, Application::getLanguageExam),
+          new Column(&quot;languageExamDatePassed&quot;, Application::getLanguageExamDatePassed));
+
+<span class="fc" id="L56">  private static final List&lt;Column&gt; ULA_ONLY =</span>
+<span class="fc" id="L57">      List.of(</span>
+          new Column(&quot;previousServiceAsUla&quot;, Application::getPreviousServiceAsUla),
+          new Column(&quot;videoLink&quot;, Application::getVideoLink),
+          new Column(&quot;permNumber&quot;, Application::getPermNumber),
+          new Column(&quot;bsMsStudent&quot;, Application::getBsMsStudent),
+          new Column(&quot;studentStatusNextQuarter&quot;, Application::getStudentStatusNextQuarter),
+          new Column(&quot;wantsTaEligibility&quot;, Application::getWantsTaEligibility),
+          new Column(&quot;otherCampusJob&quot;, Application::getOtherCampusJob),
+          new Column(&quot;priorUcsbEmployment&quot;, Application::getPriorUcsbEmployment),
+          new Column(&quot;employeeId&quot;, Application::getEmployeeId),
+          new Column(&quot;i9Appointment&quot;, Application::getI9Appointment),
+          new Column(&quot;trainingCommitment&quot;, Application::getTrainingCommitment),
+          new Column(
+              &quot;trainingCommitmentExplanation&quot;, Application::getTrainingCommitmentExplanation),
+          new Column(&quot;changingMajor&quot;, Application::getChangingMajor));
+
+<span class="fc" id="L73">  private static final List&lt;Column&gt; CHOICES =</span>
+<span class="fc" id="L74">      List.of(</span>
+<span class="fc" id="L75">          new Column(&quot;priorCoursework&quot;, a -&gt; courses(a.getPriorCoursework())),</span>
+<span class="fc" id="L76">          new Column(&quot;topicProficiencies&quot;, a -&gt; pairs(a.getTopicProficiencies())),</span>
+          new Column(&quot;prevExperience&quot;, Application::getPrevExperience),
+          new Column(&quot;firstChoiceCourse&quot;, Application::getFirstChoiceCourse),
+          new Column(&quot;secondChoiceCourse&quot;, Application::getSecondChoiceCourse));
+
+  /** Only the ULA form asks about availability (issue #76), so only a ULA file has the columns. */
+<span class="fc" id="L82">  private static final List&lt;Column&gt; AVAILABILITY =</span>
+<span class="fc" id="L83">      List.of(</span>
+          new Column(
+              &quot;availableForLecturesFirstChoice&quot;, Application::isAvailableForLecturesFirstChoice),
+          new Column(
+              &quot;availableForDiscussionFirstChoice&quot;,
+              Application::isAvailableForDiscussionFirstChoice),
+          new Column(
+              &quot;availabilityCommentsFirstChoice&quot;, Application::getAvailabilityCommentsFirstChoice),
+          new Column(
+              &quot;availableForLecturesSecondChoice&quot;, Application::isAvailableForLecturesSecondChoice),
+          new Column(
+              &quot;availableForDiscussionSecondChoice&quot;,
+              Application::isAvailableForDiscussionSecondChoice),
+          new Column(
+              &quot;availabilityCommentsSecondChoice&quot;,
+              Application::getAvailabilityCommentsSecondChoice));
+
+<span class="fc" id="L100">  private static final List&lt;Column&gt; AFTER_TYPE =</span>
+<span class="fc" id="L101">      List.of(</span>
+<span class="fc" id="L102">          new Column(&quot;courseInterests&quot;, a -&gt; pairs(a.getCourseInterests())),</span>
+          new Column(&quot;comments&quot;, Application::getComments),
+          new Column(&quot;postApplicationComments&quot;, Application::getPostApplicationComments),
+          new Column(&quot;adminComments&quot;, Application::getAdminComments),
+          new Column(&quot;noticeVersionId&quot;, Application::getNoticeVersionId),
+          new Column(&quot;cancellationReason&quot;, Application::getCancellationReason),
+          new Column(&quot;cancelledAt&quot;, Application::getCancelledAt));
+
+  /** The ULA interests sit with the other ULA answers, after the topics. */
+<span class="fc" id="L111">  private static final Column INTERESTS = new Column(&quot;interests&quot;, a -&gt; pairs(a.getInterests()));</span>
+
+  /** The columns of a file for the given form type, in order. */
+  static List&lt;Column&gt; columns(RecruitmentType type) {
+<span class="fc" id="L115">    List&lt;Column&gt; columns = new ArrayList&lt;&gt;(BEFORE_TYPE);</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">    columns.addAll(type == RecruitmentType.TA ? TA_ONLY : ULA_ONLY);</span>
+<span class="fc" id="L117">    columns.addAll(CHOICES);</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">    if (type == RecruitmentType.ULA) {</span>
+<span class="fc" id="L119">      columns.addAll(AVAILABILITY);</span>
+    }
+<span class="fc" id="L121">    columns.addAll(AFTER_TYPE);</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">    if (type == RecruitmentType.ULA) {</span>
+<span class="fc" id="L123">      columns.add(INTERESTS);</span>
+    }
+<span class="fc" id="L125">    return columns;</span>
+  }
+
+  /** The document: a header row, then one row per application, every field quoted. */
+  public String write(RecruitmentType type, List&lt;Application&gt; applications) {
+<span class="fc" id="L130">    List&lt;Column&gt; columns = columns(type);</span>
+<span class="fc" id="L131">    StringWriter out = new StringWriter();</span>
+    // Neither flushed nor closed: CSVWriter writes each row straight through to the StringWriter.
+<span class="fc" id="L133">    CSVWriter writer = new CSVWriter(out);</span>
+<span class="fc" id="L134">    writer.writeNext(columns.stream().map(Column::header).toArray(String[]::new));</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc" id="L136">      writer.writeNext(</span>
+<span class="fc" id="L137">          columns.stream().map(c -&gt; text(c.value().apply(application))).toArray(String[]::new));</span>
+<span class="fc" id="L138">    }</span>
+<span class="fc" id="L139">    return out.toString();</span>
+  }
+
+  /** Null reads as an empty cell; everything else as its usual string form. */
+  static String text(Object value) {
+<span class="fc bfc" id="L144" title="All 2 branches covered.">    return value == null ? &quot;&quot; : String.valueOf(value);</span>
+  }
+
+  /**
+   * One course as its fields separated by commas: UCSB or the other school's name, the course
+   * number, title, term and grade; the courses separated by semicolons, in the order given.
+   */
+  static String courses(List&lt;PriorCoursework&gt; courses) {
+<span class="fc bfc" id="L152" title="All 2 branches covered.">    if (courses == null) {</span>
+<span class="fc" id="L153">      return &quot;&quot;;</span>
+    }
+<span class="fc" id="L155">    return courses.stream()</span>
+<span class="fc" id="L156">        .map(</span>
+            c -&gt;
+<span class="fc" id="L158">                String.join(</span>
+                    &quot;,&quot;,
+<span class="fc bfc" id="L160" title="All 2 branches covered.">                    c.isUcsbCourse() ? &quot;UCSB&quot; : text(c.getOtherSchool()),</span>
+<span class="fc" id="L161">                    text(c.getCourseNumber()),</span>
+<span class="fc" id="L162">                    text(c.getCourseTitle()),</span>
+<span class="fc" id="L163">                    text(c.getTerm()),</span>
+<span class="fc" id="L164">                    text(c.getGrade())))</span>
+<span class="fc" id="L165">        .collect(Collectors.joining(&quot;;&quot;));</span>
+  }
+
+  /** {@code name:value} pairs separated by commas, in name order, e.g. {@code C++:5,Java:4}. */
+  static String pairs(Map&lt;String, ?&gt; values) {
+<span class="fc bfc" id="L170" title="All 2 branches covered.">    if (values == null) {</span>
+<span class="fc" id="L171">      return &quot;&quot;;</span>
+    }
+<span class="fc" id="L173">    return new TreeMap&lt;&gt;(values)</span>
+<span class="fc" id="L174">        .entrySet().stream()</span>
+<span class="fc" id="L175">            .map(e -&gt; e.getKey() + &quot;:&quot; + text(e.getValue()))</span>
+<span class="fc" id="L176">            .collect(Collectors.joining(&quot;,&quot;));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
