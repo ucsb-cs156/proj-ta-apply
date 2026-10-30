@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: []
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-151-quarters-table","number":154,"title":"Quarters table from the UCSB quarter calendar, with an Admin → Quarters page (closes #151)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/154"}]
