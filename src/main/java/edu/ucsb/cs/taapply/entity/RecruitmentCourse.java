@@ -86,6 +86,13 @@ public class RecruitmentCourse {
    */
   @Builder.Default private boolean stale = false;
 
+  /**
+   * Set when an admin added the row by enroll code (issue #125). Populate keeps refreshing such a
+   * row and does not mark it stale merely because its course is not flagged; only its section
+   * vanishing from the API does that.
+   */
+  @Builder.Default private boolean manuallyAdded = false;
+
   /** The status the UCSB API reports for a section that has been cancelled. */
   public static final String CANCELLED = "cancelled";
 

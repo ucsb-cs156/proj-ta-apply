@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.web;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 import com.microsoft.playwright.Download;
@@ -67,6 +68,40 @@ public class RecruitmentsWebIT extends WebTestCase {
                         """)));
   }
 
+  /**
+   * The by-enroll-code lookups: 130A's lecture, which the TA recruitment does not flag, and 156's
+   * discussion section, which comes back inside the whole 156 offering.
+   */
+  private void stubOfferingsByEnrollCode() {
+    wireMockServer.stubFor(
+        get(urlPathMatching("/academics/curriculums/v1/classes/[0-9]+/07493"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        """
+                        {"courseId":"CMPSC   156  ","title":"ADV APP PROGRAM","classSections":[
+                          {"enrollCode":"07492","section":"0100","enrolledTotal":120,
+                           "maxEnroll":150,"timeLocations":[],"instructors":[]},
+                          {"enrollCode":"07493","section":"0101","enrolledTotal":30,
+                           "maxEnroll":40,"timeLocations":[],"instructors":[]}
+                        ]}
+                        """)));
+    wireMockServer.stubFor(
+        get(urlPathMatching("/academics/curriculums/v1/classes/[0-9]+/07600"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        """
+                        {"courseId":"CMPSC   130A ","title":"DATA STRUCT","classSections":[
+                          {"enrollCode":"07600","section":"0100","enrolledTotal":90,
+                           "maxEnroll":100,"timeLocations":[],
+                           "instructors":[{"instructor":"HANDS ON"}]}
+                        ]}
+                        """)));
+  }
+
   private void createTaRecruitment() {
     // The form is in a modal behind the Create New Recruitment button (issue #108).
     page.getByTestId("RecruitmentsIndexPage-create-button").click();
@@ -115,6 +150,45 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId("RecruitmentCoursesPage-cell-row-2-col-courseId"))
         .not()
         .isVisible();
+  }
+
+  /** Issue #125: an admin can add an unflagged course's lecture by its enroll code. */
+  @Test
+  public void an_admin_can_add_a_lecture_by_enroll_code() throws Exception {
+    courseRepository.save(
+        Course.builder().courseId("CMPSC   156").title("ADV APP PROGRAM").needsTa(true).build());
+
+    stubOfferings();
+    stubOfferingsByEnrollCode();
+    setupAdminUser();
+    goToRecruitments();
+    createTaRecruitment();
+
+    Locator firstRow = page.getByTestId("RecruitmentsIndexPage-card-0-quarter");
+    waitFor(firstRow);
+    page.getByTestId("RecruitmentsIndexPage-card-0-courses-button").click();
+
+    Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    waitFor(firstCourse);
+    assertThat(page.getByTestId("RecruitmentCoursesPage-add")).isDisabled();
+
+    page.getByTestId("RecruitmentCoursesPage-enrollCode").fill("07600");
+    page.getByTestId("RecruitmentCoursesPage-add").click();
+
+    assertThat(page.getByText("Added CMPSC   130A section 0100 (07600).")).isVisible();
+    // Sorted by course id, 130A sits first, flagged as added by hand.
+    assertThat(page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId"))
+        .containsText("CMPSC   130A");
+    assertThat(page.getByTestId("RecruitmentCoursesPage-cell-row-0-manual")).containsText("manual");
+    assertThat(page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-instructor"))
+        .containsText("HANDS ON");
+    assertThat(page.getByTestId("RecruitmentCoursesPage-cell-row-1-manual")).not().isVisible();
+    assertThat(page.getByTestId("RecruitmentCoursesPage-enrollCode")).hasValue("");
+
+    // A discussion section is refused with the reason.
+    page.getByTestId("RecruitmentCoursesPage-enrollCode").fill("07493");
+    page.getByTestId("RecruitmentCoursesPage-add").click();
+    assertThat(page.getByText("is section 0101, a discussion or lab")).isVisible();
   }
 
   @Test

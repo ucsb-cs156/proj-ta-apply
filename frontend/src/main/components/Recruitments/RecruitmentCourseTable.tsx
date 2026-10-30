@@ -22,6 +22,8 @@ export type RecruitmentCourse = {
   removed: boolean;
   /** Set by the last Populate when it did not find the row (issue #122); admins still see it. */
   stale?: boolean;
+  /** Added by an admin by enroll code rather than by Populate (issue #125). */
+  manuallyAdded?: boolean;
 };
 
 /** On the badge of a stale row. */
@@ -68,9 +70,22 @@ export default function RecruitmentCourseTable({
       meta: shrinkToContent,
       // Padded and monospaced, exactly as Admin/Courses renders it, so the sort order is legible.
       cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => (
-        <span style={{ whiteSpace: "pre", fontFamily: "monospace" }}>
-          {cell.row.original.courseId}
-        </span>
+        <>
+          <span style={{ whiteSpace: "pre", fontFamily: "monospace" }}>
+            {cell.row.original.courseId}
+          </span>
+          {cell.row.original.manuallyAdded && (
+            <Badge
+              bg="info"
+              text="dark"
+              className="ms-2"
+              title="Added by an admin by enroll code"
+              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-manual`}
+            >
+              manual
+            </Badge>
+          )}
+        </>
       ),
     },
     { header: "Section", accessorKey: "section", meta: shrinkToContent },

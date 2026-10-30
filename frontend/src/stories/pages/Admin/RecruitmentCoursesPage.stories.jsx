@@ -24,6 +24,9 @@ export default {
         http.get("/api/systemInfo", () =>
           HttpResponse.json(systemInfoFixtures.showingNeither),
         ),
+        http.post("/api/recruitmentcourses/post", () =>
+          HttpResponse.json(recruitmentCoursesFixtures.oneManual),
+        ),
         http.get("/api/admin/recruitments/all", () =>
           HttpResponse.json([
             {
