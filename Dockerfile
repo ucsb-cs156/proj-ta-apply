@@ -11,8 +11,11 @@ RUN apt-get install -y  python3
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
-# Set JAVA_HOME environment variable
-ENV JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64
+# Set JAVA_HOME environment variable. The package's directory is named after the architecture
+# (java-25-openjdk-amd64 on the Dokku host, -arm64 on an Apple Silicon laptop); a symlink named
+# for neither lets the same Dockerfile build on both, and upstream Maven insists it be right.
+RUN ln -s "/usr/lib/jvm/java-25-openjdk-$(dpkg --print-architecture)" /usr/lib/jvm/java-25-openjdk
+ENV JAVA_HOME=/usr/lib/jvm/java-25-openjdk
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Maven: a pinned upstream release rather than Ubuntu 22.04's package (3.6.3), whose bundled
