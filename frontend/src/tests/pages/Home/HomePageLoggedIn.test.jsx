@@ -10,6 +10,7 @@ import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 
 const axiosMock = new AxiosMockAdapter(axios);
 
@@ -33,6 +34,9 @@ function renderHome(currentUserFixture, backend = {}) {
   axiosMock
     .onGet("/api/applications/mine")
     .reply(200, backend.applications ?? []);
+  axiosMock
+    .onGet("/api/instructor/recruitments")
+    .reply(200, backend.instructorRecruitments ?? []);
 
   return render(
     <QueryClientProvider client={queryClient}>
@@ -116,8 +120,29 @@ describe("HomePageLoggedIn tests", () => {
     renderHome(apiCurrentUserFixtures.instructorUser);
 
     expect(
-      await screen.findByTestId("HomePageLoggedIn-instructor-soon"),
-    ).toHaveTextContent("Instructor Functions Coming Soon");
+      await screen.findByTestId("HomePageLoggedIn-instructor-none"),
+    ).toHaveTextContent(
+      "No recruitment includes a course you are listed as teaching. Courses are matched by the catalog name an admin has assigned to you.",
+    );
+    expect(
+      screen.getByRole("heading", {
+        level: 3,
+        name: "Recruitments for Courses You Teach",
+      }),
+    ).toBeInTheDocument();
+    // Asked by the instructor's own email.
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/instructor/recruitments",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.get.find(
+        (r) => r.url === "/api/instructor/recruitments",
+      ).params,
+    ).toEqual({ email: "diba@ucsb.edu" });
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
     ).toEqual(["Instructor", "Student"]);
@@ -131,6 +156,41 @@ describe("HomePageLoggedIn tests", () => {
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
     ).toEqual(["Admin", "Instructor", "Student"]);
+  });
+
+  /** Issue #127: the recruitments with the instructor's courses, as cards with nested accordions. */
+  test("an instructor with courses gets a card per recruitment", async () => {
+    renderHome(apiCurrentUserFixtures.instructorUser, {
+      instructorRecruitments: instructorRecruitmentsFixtures.twoRecruitments,
+    });
+
+    expect(
+      await screen.findByTestId(
+        "HomePageLoggedIn-instructor-recruitments-card-1-quarter",
+      ),
+    ).toHaveTextContent("W26");
+    expect(
+      screen.getByTestId(
+        "HomePageLoggedIn-instructor-recruitments-card-1-course-2-header",
+      ).textContent,
+    ).toContain("CMPSC   156");
+    expect(
+      screen.getByTestId(
+        "HomePageLoggedIn-instructor-recruitments-card-1-course-2-body",
+      ),
+    ).toHaveTextContent("(Coming soon: options to review and rank applicants)");
+    expect(screen.queryByTestId("HomePageLoggedIn-instructor-none")).toBeNull();
+  });
+
+  test("a plain user's page never asks for instructor recruitments", async () => {
+    renderHome(apiCurrentUserFixtures.userOnly);
+
+    await screen.findByTestId("HomePageLoggedIn-dashboard-none-open");
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/instructor/recruitments",
+      ),
+    ).toHaveLength(0);
   });
 
   // ---- the student section is fed from the backend ----
