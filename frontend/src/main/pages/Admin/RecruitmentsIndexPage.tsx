@@ -1,8 +1,7 @@
 import { useState } from "react";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
-import RecruitmentTable, {
-  type Recruitment,
-} from "main/components/Recruitments/RecruitmentTable";
+import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import RecruitmentCards from "main/components/Recruitments/RecruitmentCards";
 import RecruitmentDeleteModal from "main/components/Recruitments/RecruitmentDeleteModal";
 import RecruitmentForm, {
   type RecruitmentFormFields,
@@ -73,7 +72,7 @@ export default function RecruitmentsIndexPage(): React.JSX.Element {
 
         <hr />
 
-        <RecruitmentTable
+        <RecruitmentCards
           recruitments={recruitments ?? []}
           onDeleteRequested={setPendingDelete}
           testIdPrefix="RecruitmentsIndexPage"

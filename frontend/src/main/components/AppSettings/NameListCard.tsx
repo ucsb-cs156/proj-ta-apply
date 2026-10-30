@@ -272,7 +272,8 @@ export default function NameListCard({
             uploadMutation.mutate(csvFile as File);
           }}
         >
-          <InputGroup size="sm">
+          {/* Natural width (issue #87): the file name and the button, not the page width. */}
+          <InputGroup size="sm" className="d-inline-flex w-auto">
             <Form.Control
               ref={fileInput}
               type="file"

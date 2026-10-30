@@ -539,6 +539,29 @@ stretched across the columns. The explanation on **Admin > Courses** now reads "
 courses in CMPSC that have been offered in the quarters you have populated this table from" and
 "the next time the course is offered".
 
+
+
+# Twenty-seventh Iteration
+
+The three CSV upload widgets share one compact layout (issue #87). The topic and interest lists on
+**TA App Settings** and **ULA App Settings** (`NameListCard`), the legacy application import on those
+pages (`LegacyApplicationsUploadCard`) and the bulk email upload on **Admin > Instructors**
+(`RoleEmailCsvUploadForm`) each put the file picker and its button side by side in a small
+`InputGroup` that takes its natural width (`d-inline-flex w-auto`), so the button sits right after
+the file name instead of at the far edge of the page or on the next line.
+
+# Twenty-eighth Iteration
+
+**Admin > Recruitments** shows cards instead of its thirteen-column table (issue #86), which
+overflowed a laptop screen. `RecruitmentCards` has a **Sort by** bar (Quarter, Type, Status and
+the four dates; a click sorts ascending by that key, a second click reverses, and the list starts
+newest quarter first as the backend lists them) above one card per recruitment: quarter, type and a
+status badge in the header, the four dates in the body, and the six actions (open/close
+applications, Courses, Test Application, Download CSV, Review Applications, Delete) in the footer,
+wrapping on a narrow screen. The sorting is done in the component. `RecruitmentTable` keeps only
+its seven field columns, for the read-only repeat of a recruitment at the top of its applications
+page; the Playwright flows address the cards by position (`RecruitmentsIndexPage-card-0-...`).
+
 # Twenty-ninth Iteration
 
 The ULA application form explains two things it did not before (issue #94). Under the guidance
@@ -548,3 +571,4 @@ it, and to explain that experience in the comment box. The comment box's label i
 Else that you would like us to know?** with a note on what to put there (experience for a course
 never taken, or a reason for wanting to ULA in general or for a specific course). The TA form is
 unchanged.
+

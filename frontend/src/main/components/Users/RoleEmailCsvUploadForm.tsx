@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { Button, Form } from "react-bootstrap";
+import { Button, Form, InputGroup } from "react-bootstrap";
 import RequiredField from "main/components/Common/RequiredField";
 
 export type RoleEmailCsvUploadFormFields = {
@@ -39,29 +39,32 @@ export default function RoleEmailCsvUploadForm({
         <Form.Label htmlFor={inputId}>
           {label} <RequiredField />
         </Form.Label>
-        <Form.Control
-          data-testid={testIdPrefix + "-upload"}
-          id={inputId}
-          type="file"
-          accept=".csv"
-          isInvalid={Boolean(errors.upload)}
-          {...register("upload", { required: true })}
-        />
-        <Form.Control.Feedback type="invalid">
-          {errors.upload && "A CSV file is required. "}
-        </Form.Control.Feedback>
-        <Form.Text muted>
+        {/* Natural width (issue #87): the file picker and the Upload button side by side. */}
+        <InputGroup size="sm" className="d-inline-flex w-auto" hasValidation>
+          <Form.Control
+            data-testid={testIdPrefix + "-upload"}
+            id={inputId}
+            type="file"
+            accept=".csv"
+            isInvalid={Boolean(errors.upload)}
+            {...register("upload", { required: true })}
+          />
+          <Button
+            type="submit"
+            variant="outline-primary"
+            data-testid={testIdPrefix + "-submit"}
+          >
+            Upload
+          </Button>
+          <Form.Control.Feedback type="invalid">
+            {errors.upload && "A CSV file is required. "}
+          </Form.Control.Feedback>
+        </InputGroup>
+        <Form.Text muted className="d-block">
           The file needs a header row with a column named <code>email</code>.
           Addresses already on the list are skipped, so re-uploading is safe.
         </Form.Text>
       </Form.Group>
-      <Button
-        type="submit"
-        data-testid={testIdPrefix + "-submit"}
-        className="mt-3"
-      >
-        Upload
-      </Button>
     </Form>
   );
 }

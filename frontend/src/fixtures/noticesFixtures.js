@@ -16,7 +16,8 @@ const noticesFixtures = {
   ulaV1: {
     id: 3,
     type: "ULA",
-    content: "# ULA Terms\n\nULAs may not grade exams.",
+    content:
+      "# ULA Terms\n\nFirst time ULAs must attend the ULA training sessions.",
     createdAt: "2026-01-05T10:00:00",
   },
 };
