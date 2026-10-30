@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -9,13 +10,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
+import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
+import edu.ucsb.cs.taapply.models.UcsbInstructor;
+import edu.ucsb.cs.taapply.models.UcsbSection;
+import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +42,8 @@ import org.springframework.test.web.servlet.MvcResult;
 public class RecruitmentCoursesControllerTests extends ControllerTestCase {
 
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
+  @MockitoBean RecruitmentRepository recruitmentRepository;
+  @MockitoBean UCSBCurriculumService ucsbCurriculumService;
   @MockitoBean UserRepository userRepository;
 
   private static RecruitmentCourse rc(long id, String courseId, String section, boolean removed) {
@@ -43,6 +55,208 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
         .enrollCode("EC" + id)
         .removed(removed)
         .build();
+  }
+
+  // ---- POST /api/recruitmentcourses/post (issue #125) ----
+
+  private static final Recruitment RECRUITMENT =
+      Recruitment.builder().id(7L).quarter("20261").type(RecruitmentType.TA).build();
+
+  private static UcsbSection section(String enrollCode, String number, String instructor) {
+    return UcsbSection.builder()
+        .enrollCode(enrollCode)
+        .section(number)
+        .enrolledTotal(100)
+        .maxEnroll(120)
+        .instructors(List.of(UcsbInstructor.builder().instructor(instructor).build()))
+        .timeLocations(
+            List.of(
+                UcsbTimeLocation.builder()
+                    .days("T R")
+                    .beginTime("14:00")
+                    .endTime("15:15")
+                    .building("PHELP")
+                    .room("3526")
+                    .build()))
+        .build();
+  }
+
+  private static UcsbCourseOffering offering156() {
+    return UcsbCourseOffering.builder()
+        .courseId("CMPSC 156  ")
+        .title("ADV APP PROGRAM")
+        .classSections(
+            List.of(section("07492", "0100", "CONRAD P"), section("07500", "0101", "GAUCHO C")))
+        .build();
+  }
+
+  @Test
+  public void logged_out_users_cannot_add_by_enroll_code() throws Exception {
+    mockMvc
+        .perform(post("/api/recruitmentcourses/post?recruitmentId=7&enrollCode=07492").with(csrf()))
+        .andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void regular_users_cannot_add_by_enroll_code() throws Exception {
+    mockMvc
+        .perform(post("/api/recruitmentcourses/post?recruitmentId=7&enrollCode=07492").with(csrf()))
+        .andExpect(status().is(403));
+  }
+
+  /** A lecture of a course that is not flagged, and not even in the courses table, can be added. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_add_a_lecture_by_enroll_code() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(ucsbCurriculumService.getOffering("20261", "07492")).thenReturn(offering156());
+    when(recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(7L, "07492"))
+        .thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/recruitmentcourses/post")
+                    .param("recruitmentId", "7")
+                    .param("enrollCode", " 07492 ")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    ArgumentCaptor<RecruitmentCourse> captor = ArgumentCaptor.forClass(RecruitmentCourse.class);
+    verify(recruitmentCourseRepository, times(1)).save(captor.capture());
+    RecruitmentCourse saved = captor.getValue();
+    assertEquals(7L, saved.getRecruitmentId());
+    assertEquals("CMPSC   156", saved.getCourseId());
+    assertEquals("07492", saved.getEnrollCode());
+    assertEquals("0100", saved.getSection());
+    assertEquals("ADV APP PROGRAM", saved.getTitle());
+    assertEquals("CONRAD P", saved.getInstructor());
+    assertEquals("T R", saved.getDays());
+    assertEquals("14:00 - 15:15", saved.getTime());
+    assertEquals("PHELP 3526", saved.getRoom());
+    assertEquals(100, saved.getEnrollment());
+    assertEquals(120, saved.getMaxEnroll());
+    assertEquals("open", saved.getStatus());
+    assertTrue(saved.isManuallyAdded());
+    assertFalse(saved.isRemoved());
+    assertFalse(saved.isStale());
+    assertEquals(mapper.writeValueAsString(saved), response.getResponse().getContentAsString());
+  }
+
+  /** Adding a lecture that is already there, removed and stale, refreshes it and puts it back. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void adding_an_existing_removed_row_puts_it_back_refreshed() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(ucsbCurriculumService.getOffering("20261", "07492")).thenReturn(offering156());
+    RecruitmentCourse existing = rc(3L, "CMPSC   156", "0100", true);
+    existing.setEnrollCode("07492");
+    existing.setStale(true);
+    existing.setInstructor("OLD NAME");
+    when(recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(7L, "07492"))
+        .thenReturn(Optional.of(existing));
+
+    mockMvc
+        .perform(post("/api/recruitmentcourses/post?recruitmentId=7&enrollCode=07492").with(csrf()))
+        .andExpect(status().isOk());
+
+    verify(recruitmentCourseRepository, times(1)).save(existing);
+    assertEquals(3L, existing.getId(), "same row, not a duplicate");
+    assertEquals("CONRAD P", existing.getInstructor());
+    assertFalse(existing.isRemoved());
+    assertFalse(existing.isStale());
+    assertTrue(existing.isManuallyAdded());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_secondary_section_cannot_be_added() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(ucsbCurriculumService.getOffering("20261", "07500")).thenReturn(offering156());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/recruitmentcourses/post?recruitmentId=7&enrollCode=07500").with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    assertEquals(
+        "Enroll code 07500 is section 0101, a discussion or lab; only lectures (section numbers"
+            + " ending in 00) can be added",
+        responseToJson(response).get("message"));
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  /** The API answers with the whole offering; the code must be one of its sections. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_enroll_code_the_offering_does_not_contain_is_refused() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(ucsbCurriculumService.getOffering("20261", "99999")).thenReturn(offering156());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/recruitmentcourses/post?recruitmentId=7&enrollCode=99999").with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    assertEquals(
+        "The UCSB API has no section with enroll code 99999 in quarter 20261",
+        responseToJson(response).get("message"));
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_offering_without_sections_or_a_null_answer_is_refused() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(ucsbCurriculumService.getOffering("20261", "11111"))
+        .thenReturn(UcsbCourseOffering.builder().courseId("CMPSC 156").build());
+    when(ucsbCurriculumService.getOffering("20261", "22222")).thenReturn(null);
+
+    mockMvc
+        .perform(post("/api/recruitmentcourses/post?recruitmentId=7&enrollCode=11111").with(csrf()))
+        .andExpect(status().isBadRequest());
+    mockMvc
+        .perform(post("/api/recruitmentcourses/post?recruitmentId=7&enrollCode=22222").with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  /** The API refusing the code (a 404 upstream, say) is a plain 400 for the admin. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_api_error_is_reported_as_an_unknown_enroll_code() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(ucsbCurriculumService.getOffering("20261", "00000"))
+        .thenThrow(new RuntimeException("404 Not Found"));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/recruitmentcourses/post?recruitmentId=7&enrollCode=00000").with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    assertEquals(
+        "The UCSB API has no section with enroll code 00000 in quarter 20261",
+        responseToJson(response).get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void adding_to_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(
+            post("/api/recruitmentcourses/post?recruitmentId=99&enrollCode=07492").with(csrf()))
+        .andExpect(status().isNotFound());
+    verify(ucsbCurriculumService, never()).getOffering(any(), any());
   }
 
   // ---- GET /api/recruitmentcourses/all ----

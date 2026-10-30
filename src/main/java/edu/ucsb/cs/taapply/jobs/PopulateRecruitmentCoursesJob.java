@@ -16,8 +16,10 @@ import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobContextConsumer;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,6 +44,8 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>A row the run did not find (its section gone from the API, or its course no longer flagged)
  *       is marked {@code stale}, and a row it did find is un-staled (issue #122). An empty API
  *       response changes no flags, so a bad fetch cannot mark everything stale at once.
+ *   <li>A row an admin added by enroll code (issue #125) is refreshed whenever its section is still
+ *       in the API, flagged course or not; it goes stale only when the section is gone.
  * </ul>
  */
 @Builder
@@ -99,21 +103,25 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
     int unstaled = 0;
     // The enroll codes this run found, for the reconciliation afterwards.
     Set<String> seen = new HashSet<>();
+    // Every lecture in the quarter by enroll code, flagged course or not, for the manually added
+    // rows (issue #125).
+    Map<String, Offered> offered = new HashMap<>();
 
     for (UcsbCourseOffering offering : offerings) {
       ctx.checkCancellation();
 
       String courseId = UCSBCurriculumService.normalizeCourseId(offering.getCourseId());
-      if (courseId == null || !wanted.contains(courseId)) {
-        continue;
-      }
-      if (offering.getClassSections() == null) {
+      if (courseId == null || offering.getClassSections() == null) {
         continue;
       }
 
       for (UcsbSection section : offering.getClassSections()) {
         // Only lectures: discussions and labs are not recruited for separately.
         if (!section.isPrimary() || section.getEnrollCode() == null) {
+          continue;
+        }
+        offered.put(section.getEnrollCode(), new Offered(courseId, offering, section));
+        if (!wanted.contains(courseId)) {
           continue;
         }
 
@@ -129,19 +137,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
         }
 
         RecruitmentCourse row = existing.orElseGet(() -> RecruitmentCourse.builder().build());
-        row.setRecruitmentId(recruitment.getId());
-        row.setCourseId(courseId);
-        row.setEnrollCode(section.getEnrollCode());
-        row.setSection(section.getSection());
-        row.setTitle(offering.getTitle());
-        row.setInstructor(firstInstructor(section));
-        row.setDays(firstDays(section));
-        row.setTime(firstTime(section));
-        row.setRoom(firstRoom(section));
-        row.setEnrollment(section.getEnrolledTotal());
-        row.setMaxEnroll(section.getMaxEnroll());
-        row.setStatus(statusOf(section));
-        row.setSummerSession(section.getSession());
+        applyOffering(row, recruitment.getId(), courseId, offering, section);
         // Found this run, so whatever an earlier run concluded, it is current (issue #122).
         if (row.isStale()) {
           unstaled++;
@@ -155,6 +151,29 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
           added++;
         }
         ctx.log(String.format("  %s section %s", courseId, section.getSection()));
+      }
+    }
+
+    // The rows an admin added by hand are refreshed from the same fetch, whatever their course
+    // (issue #125); one whose section is gone is left for the reconciliation to mark stale.
+    for (RecruitmentCourse row :
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId())) {
+      Offered found = offered.get(row.getEnrollCode());
+      if (!row.isManuallyAdded() || row.isRemoved() || found == null) {
+        continue;
+      }
+      if (seen.add(row.getEnrollCode())) {
+        applyOffering(
+            row, recruitment.getId(), found.courseId(), found.offering(), found.section());
+        if (row.isStale()) {
+          unstaled++;
+        }
+        row.setStale(false);
+        recruitmentCourseRepository.save(row);
+        updated++;
+        ctx.log(
+            String.format(
+                "  %s section %s (added by hand)", found.courseId(), found.section().getSection()));
       }
     }
 
@@ -202,6 +221,34 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
               row.getCourseId(), row.getSection()));
     }
     return markedStale;
+  }
+
+  /** A lecture in the quarter's offerings, with the course it belongs to. */
+  private record Offered(String courseId, UcsbCourseOffering offering, UcsbSection section) {}
+
+  /**
+   * Copies a lecture's offering details onto a row. Shared with the admin's add-by-enroll-code
+   * endpoint (issue #125), so the two paths cannot drift apart.
+   */
+  public static void applyOffering(
+      RecruitmentCourse row,
+      Long recruitmentId,
+      String courseId,
+      UcsbCourseOffering offering,
+      UcsbSection section) {
+    row.setRecruitmentId(recruitmentId);
+    row.setCourseId(courseId);
+    row.setEnrollCode(section.getEnrollCode());
+    row.setSection(section.getSection());
+    row.setTitle(offering.getTitle());
+    row.setInstructor(firstInstructor(section));
+    row.setDays(firstDays(section));
+    row.setTime(firstTime(section));
+    row.setRoom(firstRoom(section));
+    row.setEnrollment(section.getEnrolledTotal());
+    row.setMaxEnroll(section.getMaxEnroll());
+    row.setStatus(statusOf(section));
+    row.setSummerSession(section.getSession());
   }
 
   /** Course ids flagged for this recruitment's type. */

@@ -13,6 +13,10 @@ import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 
 import ApplicationForm from "main/components/Applications/ApplicationForm";
+import {
+  TA_COMMENTS_HELP,
+  TA_PREV_EXPERIENCE_HELP,
+} from "main/utils/applicationFields";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 
@@ -407,18 +411,73 @@ describe("ApplicationForm tests", () => {
     expect(screen.queryByText("Anything Else")).toBeNull();
   });
 
-  test("a TA form keeps the plain Anything Else label and neither explanation", () => {
+  test("a TA form keeps the plain Anything Else label, with its own explanation", () => {
     renderForm();
     expect(
       screen.queryByTestId("ApplicationForm-courseInterests-untaken"),
     ).toBeNull();
-    expect(screen.queryByTestId("ApplicationForm-comments-help")).toBeNull();
     const label = screen.getByText("Anything Else");
     expect(label).not.toHaveClass("fw-bold");
     expect(label).toHaveAttribute("for", "ApplicationForm-comments");
     expect(
       screen.queryByText("Anything Else that you would like us to know?"),
     ).toBeNull();
+    // Issue #137: the TA form's own explanation, not the ULA one.
+    const help = screen.getByTestId("ApplicationForm-comments-help");
+    expect(help).toHaveTextContent(TA_COMMENTS_HELP);
+    expect(help).toHaveClass("text-muted", "small", "mb-2");
+    expect(help.tagName).toBe("P");
+    expect(help).not.toHaveTextContent("never taken");
+    expect(label.compareDocumentPosition(help)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  // ---- issue #137: the TA help texts, the UCPath link and the Employee ID line break ----
+
+  test("a TA form explains Previous Teaching Experience; a ULA form does not", () => {
+    renderForm();
+    const help = screen.getByTestId("ApplicationForm-prevExperience-help");
+    expect(help).toHaveTextContent(TA_PREV_EXPERIENCE_HELP);
+    expect(help).toHaveClass("text-muted", "small", "mb-2");
+    expect(help.tagName).toBe("P");
+    const label = screen.getByText("Previous Teaching Experience");
+    const box = screen.getByTestId("ApplicationForm-prevExperience");
+    expect(label.compareDocumentPosition(help)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(help.compareDocumentPosition(box)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+
+    cleanup();
+    renderForm({ type: "ULA" });
+    expect(
+      screen.queryByTestId("ApplicationForm-prevExperience-help"),
+    ).toBeNull();
+  });
+
+  test("the UCPath note links to UCPath in a new tab, and the question above sits on its own line", async () => {
+    renderForm({ type: "ULA" });
+    const question = screen.getByText(
+      /Are you now, or have you ever been, employed at UCSB/,
+    );
+    expect(question.tagName).toBe("DIV");
+    expect(question).toHaveClass("form-text", "text-muted");
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-priorUcsbEmployment"),
+      "true",
+    );
+    const link = screen.getByTestId("ApplicationForm-ucpath-link");
+    expect(link).toHaveTextContent("UCPath");
+    expect(link).toHaveAttribute("href", "https://www.ucpath.ucsb.edu/");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noreferrer");
+    expect(link.closest("small")).toHaveTextContent(
+      "Log into UCPath and look up your employee ID. It is NOT your perm number and NOT your SSN; if you cannot find it, leave this blank.",
+    );
+    expect(screen.queryByText(/\(https:\/\/www\.ucpath/)).toBeNull();
   });
 
   test("a ULA application asks the ULA-only questions and not the TA ones", () => {
@@ -1272,7 +1331,7 @@ describe("ApplicationForm tests", () => {
 
   // ---- topic proficiencies ----
 
-  test("every topic gets radio buttons 1 to 5, none chosen, under the instruction", () => {
+  test("every topic gets radio buttons 5 down to 1, none chosen, under the instruction", () => {
     renderForm();
 
     expect(
@@ -1281,10 +1340,10 @@ describe("ApplicationForm tests", () => {
       ),
     ).toBeInTheDocument();
     const group = screen.getByTestId("ApplicationForm-topicProficiencies");
-    // The column headings are the levels themselves.
+    // The columns run 5 down to 1 with the ends worded (issue #137).
     expect(
       [...group.querySelectorAll("thead th")].map((th) => th.textContent),
-    ).toEqual(["Topic", "1", "2", "3", "4", "5"]);
+    ).toEqual(["Topic", "5 (highest)", "4", "3", "2", "1 (lowest)"]);
     topics.forEach((topic) => {
       const row = screen.getByTestId(
         `ApplicationForm-topic-${topic.replace(/\s+/g, "-")}`,
@@ -1406,11 +1465,11 @@ describe("ApplicationForm tests", () => {
       [...group.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual([
       "Interest",
-      "1-Not interested",
-      "2",
-      "3",
-      "4",
       "5-Very interested",
+      "4",
+      "3",
+      "2",
+      "1-Not interested",
     ]);
     interests.forEach((interest) => {
       const row = screen.getByTestId(

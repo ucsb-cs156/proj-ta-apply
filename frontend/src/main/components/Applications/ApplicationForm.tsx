@@ -17,6 +17,8 @@ import {
   OTHER_MAJOR,
   proficiencyInstruction,
   proficiencyLevels,
+  TA_COMMENTS_HELP,
+  TA_PREV_EXPERIENCE_HELP,
   toPayload,
   type ApplicationFormFields,
   type ApplicationPayload,
@@ -25,7 +27,8 @@ import {
   BS_MS_QUESTION,
   CHANGING_MAJOR_QUESTION,
   COURSE_PREFERENCES_GUIDANCE,
-  EMPLOYEE_ID_NOTE,
+  EMPLOYEE_ID_NOTE_AFTER,
+  EMPLOYEE_ID_NOTE_BEFORE,
   EMPLOYMENT_INTRO,
   GRADUATE_WARNING,
   GRADUATION_NOTE,
@@ -48,6 +51,7 @@ import {
   TRAINING_COMMITMENT_OPTIONS,
   TRAINING_EXPLANATION_PROMPT,
   TRAINING_STATEMENT,
+  UCPATH_URL,
   VIDEO_GUIDANCE,
   YES_NO_OPTIONS,
   booleanToSelect,
@@ -900,7 +904,10 @@ export default function ApplicationForm({
               <Form.Control.Feedback type="invalid">
                 Please answer this question.
               </Form.Control.Feedback>
-              <Form.Text muted>{PRIOR_EMPLOYMENT_QUESTION}</Form.Text>
+              {/* A block, so the Employee ID label below starts on its own line (issue #137). */}
+              <Form.Text as="div" muted>
+                {PRIOR_EMPLOYMENT_QUESTION}
+              </Form.Text>
               {asksEmployeeId && (
                 <>
                   <Form.Label htmlFor={id("employeeId")} className="mt-2">
@@ -911,7 +918,18 @@ export default function ApplicationForm({
                     data-testid={id("employeeId")}
                     {...register("employeeId")}
                   />
-                  <Form.Text muted>{EMPLOYEE_ID_NOTE}</Form.Text>
+                  <Form.Text muted>
+                    {EMPLOYEE_ID_NOTE_BEFORE}
+                    <a
+                      href={UCPATH_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-testid={id("ucpath-link")}
+                    >
+                      UCPath
+                    </a>
+                    {EMPLOYEE_ID_NOTE_AFTER}
+                  </Form.Text>
                 </>
               )}
             </Form.Group>
@@ -1121,6 +1139,14 @@ export default function ApplicationForm({
         <Form.Label htmlFor={id("prevExperience")}>
           Previous Teaching Experience
         </Form.Label>
+        {isTa && (
+          <p
+            className="text-muted small mb-2"
+            data-testid={id("prevExperience-help")}
+          >
+            {TA_PREV_EXPERIENCE_HELP}
+          </p>
+        )}
         <Form.Control
           id={id("prevExperience")}
           data-testid={id("prevExperience")}
@@ -1341,7 +1367,15 @@ export default function ApplicationForm({
 
       <Form.Group className="mb-3">
         {isTa ? (
-          <Form.Label htmlFor={id("comments")}>Anything Else</Form.Label>
+          <>
+            <Form.Label htmlFor={id("comments")}>Anything Else</Form.Label>
+            <p
+              className="text-muted small mb-2"
+              data-testid={id("comments-help")}
+            >
+              {TA_COMMENTS_HELP}
+            </p>
+          </>
         ) : (
           <>
             <Form.Label htmlFor={id("comments")} className="fw-bold">

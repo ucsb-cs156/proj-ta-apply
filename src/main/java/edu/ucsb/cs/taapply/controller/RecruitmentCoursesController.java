@@ -1,8 +1,14 @@
 package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJob;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
+import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,6 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class RecruitmentCoursesController extends ApiController {
 
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired UCSBCurriculumService ucsbCurriculumService;
 
   /**
    * Course id first, then section, so a course's several lectures sit together in order.
@@ -54,6 +63,67 @@ public class RecruitmentCoursesController extends ApiController {
         .filter(course -> includeRemoved || !course.isRemoved())
         .sorted(BY_COURSE_THEN_SECTION)
         .toList();
+  }
+
+  @Operation(
+      summary = "Add one lecture to a recruitment by its enroll code",
+      description =
+          "Looks the section up in the UCSB API for the recruitment's quarter and adds it as a row,"
+              + " flagged or not in Admin/Courses (issue #125). 404 for an unknown recruitment; 400"
+              + " for an enroll code the API does not know in that quarter, or one that is a"
+              + " discussion or lab rather than a lecture. A row that already exists is refreshed,"
+              + " and put back if it had been removed.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/post")
+  public RecruitmentCourse addByEnrollCode(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
+      @Parameter(name = "enrollCode", description = "e.g. 07492") @RequestParam String enrollCode) {
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    String code = enrollCode.strip();
+
+    UcsbCourseOffering offering;
+    try {
+      offering = ucsbCurriculumService.getOffering(recruitment.getQuarter(), code);
+    } catch (Exception e) {
+      log.warn("Lookup of enroll code {} in {} failed", code, recruitment.getQuarter(), e);
+      throw new IllegalArgumentException(
+          "The UCSB API has no section with enroll code %s in quarter %s"
+              .formatted(code, recruitment.getQuarter()));
+    }
+    UcsbSection section =
+        (offering == null || offering.getClassSections() == null
+                ? List.<UcsbSection>of()
+                : offering.getClassSections())
+            .stream()
+                .filter(s -> code.equals(s.getEnrollCode()))
+                .findFirst()
+                .orElseThrow(
+                    () ->
+                        new IllegalArgumentException(
+                            "The UCSB API has no section with enroll code %s in quarter %s"
+                                .formatted(code, recruitment.getQuarter())));
+    if (!section.isPrimary()) {
+      throw new IllegalArgumentException(
+          "Enroll code %s is section %s, a discussion or lab; only lectures (section numbers"
+                  .formatted(code, section.getSection())
+              + " ending in 00) can be added");
+    }
+
+    String courseId = UCSBCurriculumService.normalizeCourseId(offering.getCourseId());
+    RecruitmentCourse row =
+        recruitmentCourseRepository
+            .findByRecruitmentIdAndEnrollCode(recruitmentId, code)
+            .orElseGet(() -> RecruitmentCourse.builder().build());
+    PopulateRecruitmentCoursesJob.applyOffering(row, recruitmentId, courseId, offering, section);
+    row.setManuallyAdded(true);
+    row.setRemoved(false);
+    row.setStale(false);
+    recruitmentCourseRepository.save(row);
+    return row;
   }
 
   @Operation(

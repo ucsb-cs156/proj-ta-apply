@@ -27,10 +27,17 @@ export type ScaleLevel = { value: number; label: string };
 /** The lowest self-rating an applicant can give for a topic, on either form. */
 export const MIN_PROFICIENCY = 1;
 
-/** A TA applicant rates each topic 1 (lowest) to 5 (highest); the headings are the numbers. */
-export const TA_PROFICIENCY_LEVELS: ScaleLevel[] = [1, 2, 3, 4, 5].map(
-  (value) => ({ value, label: String(value) }),
-);
+/**
+ * A TA applicant rates each topic 1 (lowest) to 5 (highest). The columns run 5 down to 1 so the
+ * strongest answer sits first, with the two ends worded (issue #137).
+ */
+export const TA_PROFICIENCY_LEVELS: ScaleLevel[] = [
+  { value: 5, label: "5 (highest)" },
+  { value: 4, label: "4" },
+  { value: 3, label: "3" },
+  { value: 2, label: "2" },
+  { value: 1, label: "1 (lowest)" },
+];
 
 /** A ULA applicant rates each topic on three levels, worded so that 1 is the most comfortable. */
 export const ULA_PROFICIENCY_LEVELS: ScaleLevel[] = [
@@ -49,14 +56,25 @@ export const proficiencyInstruction = (type: "TA" | "ULA"): string =>
     ? "Choose a level of proficiency, with 1 being the lowest, and 5 being the highest."
     : "For each topic, choose 1 if you are very comfortable with it, 2 if somewhat comfortable, or 3 if you are not familiar with it.";
 
-/** A ULA applicant rates each interest area 1 (not interested) to 5 (very interested). */
+/**
+ * A ULA applicant rates each interest area 1 (not interested) to 5 (very interested). The columns
+ * run 5 down to 1, like the TA topic scale (issue #137).
+ */
 export const INTEREST_LEVELS: ScaleLevel[] = [
-  { value: 1, label: "1-Not interested" },
-  { value: 2, label: "2" },
-  { value: 3, label: "3" },
-  { value: 4, label: "4" },
   { value: 5, label: "5-Very interested" },
+  { value: 4, label: "4" },
+  { value: 3, label: "3" },
+  { value: 2, label: "2" },
+  { value: 1, label: "1-Not interested" },
 ];
+
+/** Under "Previous Teaching Experience" on a TA form (issue #137). */
+export const TA_PREV_EXPERIENCE_HELP =
+  "Please describe your prior experience with being a TA (at UCSB or elsewhere), Undergrad Learning Assistant (ULA), or any other experience with teaching that is relevant to your application to be a TA.";
+
+/** Under "Anything Else" on a TA form (issue #137). */
+export const TA_COMMENTS_HELP =
+  "Is there anything else you would like the department to know as we consider your application? For example, if there is a particular reason you are interested in being a TA for a certain course, or working with a particular professor, here is where you can share that.";
 
 /** The option value that means "my major is not on the list"; never stored. */
 export const OTHER_MAJOR = "__OTHER__";
