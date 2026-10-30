@@ -9,6 +9,7 @@ import { vi } from "vitest";
 import ApplicationPage from "main/pages/Applications/ApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
+import courseInstructorsFixtures from "fixtures/courseInstructorsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import noticesFixtures from "fixtures/noticesFixtures";
@@ -66,6 +67,9 @@ describe("ApplicationPage tests", () => {
     axiosMock
       .onGet("/api/recruitments/courses")
       .reply(200, ["CMPSC     8", "CMPSC   156"]);
+    axiosMock
+      .onGet("/api/recruitments/instructors")
+      .reply(200, courseInstructorsFixtures.twoCourses);
     axiosMock
       .onGet("/api/recruitments/sections")
       .reply(200, courseSectionsFixtures.cmpsc156);
@@ -204,6 +208,25 @@ describe("ApplicationPage tests", () => {
     );
     expect(screen.queryByTestId("ApplicationPage-late")).toBeNull();
     expect(screen.queryByTestId("ApplicationPage-view-only")).toBeNull();
+  });
+
+  /** Issue #121: the instructors follow the course numbers while editing. */
+  test("the editable form names each course's instructors", async () => {
+    renderPage();
+
+    const select = await screen.findByTestId(
+      "ApplicationPage-firstChoiceCourse",
+    );
+    await waitFor(() =>
+      expect([...select.options].map((o) => o.textContent)).toContain(
+        "CMPSC   156 (CONRAD P)",
+      ),
+    );
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/recruitments/instructors",
+      )[0].params,
+    ).toEqual({ recruitmentId: 2 });
   });
 
   test("saving an edit sends a PUT with the id", async () => {

@@ -25,8 +25,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
@@ -140,6 +143,42 @@ public class ApplicantRecruitmentsController extends ApiController {
         .distinct()
         .sorted()
         .toList();
+  }
+
+  @Operation(
+      summary = "Who teaches each course an applicant may choose from",
+      description =
+          "Padded course id to the instructors of its lectures in the recruitment, joined with"
+              + " commas, so the form can show the name after the course number (issue #121). A"
+              + " course with no instructor on record is left out; an unknown recruitment gives an"
+              + " empty map.")
+  @PreAuthorize("hasRole('ROLE_USER')")
+  @GetMapping("/instructors")
+  public Map<String, String> courseInstructors(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+
+    if (!recruitmentRepository.existsById(recruitmentId)) {
+      return Map.of();
+    }
+    return instructorsByCourse(recruitmentCourseRepository.findByRecruitmentId(recruitmentId));
+  }
+
+  /**
+   * The instructors of each course's lectures, distinct and sorted, from the rows on offer. Sorted
+   * by course too, so the JSON is stable.
+   */
+  static Map<String, String> instructorsByCourse(List<RecruitmentCourse> rows) {
+    Map<String, TreeSet<String>> names = new TreeMap<>();
+    for (RecruitmentCourse row : rows) {
+      String instructor = row.getInstructor() == null ? "" : row.getInstructor().strip();
+      if (row.isRemoved() || instructor.isEmpty()) {
+        continue;
+      }
+      names.computeIfAbsent(row.getCourseId(), k -> new TreeSet<>()).add(instructor);
+    }
+    Map<String, String> result = new TreeMap<>();
+    names.forEach((courseId, set) -> result.put(courseId, String.join(", ", set)));
+    return result;
   }
 
   @Operation(

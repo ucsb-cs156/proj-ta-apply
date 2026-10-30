@@ -1,3 +1,4 @@
+import courseInstructorsFixtures from "fixtures/courseInstructorsFixtures";
 import React from "react";
 import { HttpResponse, http } from "msw";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
@@ -28,6 +29,9 @@ const common = [
   http.get("/api/recruitments/courses", () => HttpResponse.json(courses)),
   http.get("/api/recruitments/sections", () =>
     HttpResponse.json(courseSectionsFixtures.cmpsc156),
+  ),
+  http.get("/api/recruitments/instructors", () =>
+    HttpResponse.json(courseInstructorsFixtures.fourCourses),
   ),
   // Add Multiple UCSB CMPSC Courses lists the course table (issue #100).
   http.get("/api/courses/all", () =>

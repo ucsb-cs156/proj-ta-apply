@@ -110,6 +110,23 @@ describe("TestApplicationPage tests", () => {
     ).toEqual({ type: "TA" });
   });
 
+  /** Issue #121: the instructors are read off the same rows as the course numbers. */
+  test("the course dropdown names each course's lecture instructors", async () => {
+    renderPage();
+
+    const select = await screen.findByTestId(
+      "TestApplicationPage-firstChoiceCourse",
+    );
+    await waitFor(() =>
+      expect([...select.options].map((o) => o.textContent)).toContain(
+        "CMPSC   156 (CONRAD P, SOMEONE ELSE)",
+      ),
+    );
+    expect([...select.options].map((o) => o.textContent)).toContain(
+      "CMPSC     1A (GAUCHO C)",
+    );
+  });
+
   test("the form is fed the majors and topics for the recruitment", async () => {
     renderPage();
 

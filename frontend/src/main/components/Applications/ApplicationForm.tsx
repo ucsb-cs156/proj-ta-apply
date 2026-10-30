@@ -6,6 +6,7 @@ import CourseSectionsCard from "main/components/Applications/CourseSectionsCard"
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import PriorCourseworkSection from "main/components/PriorCoursework/PriorCourseworkSection";
 import { MIN_COURSES, type PriorCourse } from "main/utils/priorCoursework";
+import { courseLabel, type CourseInstructors } from "main/utils/courseLabels";
 import RequiredField from "main/components/Common/RequiredField";
 import RequiredFieldExplanation from "main/components/Common/RequiredFieldExplanation";
 import type { NoticeVersion } from "main/utils/notices";
@@ -73,6 +74,8 @@ type ApplicationFormProps = {
   type: "TA" | "ULA";
   /** Course numbers offered by this recruitment, already padded for alignment. */
   courses: string[];
+  /** Course id to the instructors of its lectures, shown after the number (issue #121). */
+  instructors?: CourseInstructors;
   /**
    * The recruitment the courses belong to, so a chosen course's lecture and section times can be
    * looked up. Without it no times are shown, which suits a story or a test with no backend.
@@ -142,6 +145,7 @@ const slug = (name: string): string => name.replace(/\s+/g, "-");
 export default function ApplicationForm({
   type,
   courses,
+  instructors: courseInstructors,
   recruitmentId,
   majors,
   topics,
@@ -480,7 +484,7 @@ export default function ApplicationForm({
         <option value="">{includeNone ? "(none)" : "Choose a course"}</option>
         {values.map((course) => (
           <option key={course} value={course}>
-            {course}
+            {courseLabel(course, courseInstructors)}
           </option>
         ))}
       </>
@@ -1281,7 +1285,7 @@ export default function ApplicationForm({
                 return (
                   <tr key={courseId} data-testid={rowId}>
                     <td style={{ fontFamily: "monospace", whiteSpace: "pre" }}>
-                      {courseId}
+                      {courseLabel(courseId, courseInstructors)}
                     </td>
                     {rank ? (
                       <td

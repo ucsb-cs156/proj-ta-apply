@@ -317,6 +317,53 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     mockMvc.perform(get("/api/recruitments/courses?recruitmentId=1")).andExpect(status().is(403));
   }
 
+  // ---- course instructors (issue #121) ----
+
+  private static RecruitmentCourse taught(
+      long id, String courseId, String instructor, boolean removed) {
+    RecruitmentCourse c = course(id, courseId, removed);
+    c.setInstructor(instructor);
+    return c;
+  }
+
+  /** Two lectures with different instructors are joined; removed rows and blanks are left out. */
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void course_instructors_are_joined_distinct_sorted_and_exclude_removed_and_blank()
+      throws Exception {
+    when(recruitmentRepository.existsById(1L)).thenReturn(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(1L))
+        .thenReturn(
+            List.of(
+                taught(1L, "CMPSC   156", "GAUCHO C", false),
+                taught(2L, "CMPSC   156", " CONRAD P ", false),
+                taught(3L, "CMPSC   156", "CONRAD P", false),
+                taught(4L, "CMPSC     8", null, false),
+                taught(5L, "CMPSC    16", "  ", false),
+                taught(6L, "CMPSC   130A", "REMOVED R", true)));
+
+    assertEquals(
+        "{\"CMPSC   156\":\"CONRAD P, GAUCHO C\"}",
+        getJson("/api/recruitments/instructors?recruitmentId=1"));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void course_instructors_are_empty_for_a_recruitment_that_does_not_exist()
+      throws Exception {
+    when(recruitmentRepository.existsById(99L)).thenReturn(false);
+
+    assertEquals("{}", getJson("/api/recruitments/instructors?recruitmentId=99"));
+    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+  }
+
+  @Test
+  public void logged_out_users_cannot_read_course_instructors() throws Exception {
+    mockMvc
+        .perform(get("/api/recruitments/instructors?recruitmentId=1"))
+        .andExpect(status().is(403));
+  }
+
   // ---- section times ----
 
   private static UcsbCourseOffering offering() {
