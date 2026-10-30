@@ -21,12 +21,12 @@ export default function GoogleLogin({
           <Navbar.Text className="me-3" as={Link} to="/profile">
             Welcome, {currentUser.root.user.email}
           </Navbar.Text>
-          <HelpMenu />
+          <HelpMenu currentUser={currentUser} />
           <Button onClick={doLogout}>Log Out</Button>
         </>
       ) : (
         <>
-          <HelpMenu />
+          <HelpMenu currentUser={currentUser} />
           <Button onClick={handleLogin}>Log In</Button>
         </>
       )}
