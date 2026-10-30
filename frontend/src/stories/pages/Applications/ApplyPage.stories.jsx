@@ -28,6 +28,8 @@ const common = [
     HttpResponse.json(systemInfoFixtures.showingNeither),
   ),
   http.get("/api/recruitments/applicable", () => HttpResponse.json([openUla])),
+  // No application yet for this recruitment, so the form is offered.
+  http.get("/api/applications/mine", () => HttpResponse.json([])),
   http.get("/api/recruitments/courses", () => HttpResponse.json(courses)),
   http.get("/api/recruitments/sections", () =>
     HttpResponse.json(courseSectionsFixtures.cmpsc156),

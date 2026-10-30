@@ -37,6 +37,11 @@ function renderPage(recruitmentId = 2) {
       <MemoryRouter initialEntries={[`/apply/${recruitmentId}`]}>
         <Routes>
           <Route path="/apply/:recruitmentId" element={<ApplyPage />} />
+          {/* Where an applicant who has already applied is sent (issue #102). */}
+          <Route
+            path="/applications/:id"
+            element={<p data-testid="redirected-to-application" />}
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -102,6 +107,8 @@ describe("ApplyPage tests", () => {
       .onGet("/api/recruitments/options")
       .reply(200, appSettingsFixtures.ulaOptions);
     axiosMock.onGet("/api/applications/prefill").reply(200, []);
+    // No application yet for this recruitment, so the form is offered.
+    axiosMock.onGet("/api/applications/mine").reply(200, []);
     // No notice written yet for most tests, so the form asks for no agreement.
     axiosMock.onGet("/api/notices/current").reply(200, []);
   });
@@ -271,6 +278,59 @@ describe("ApplyPage tests", () => {
       await screen.findByTestId("ApplyPage-unavailable"),
     ).toHaveTextContent("That recruitment is not one you can apply to.");
     expect(screen.queryByTestId("ApplyPage-submit")).toBeNull();
+  });
+
+  /**
+   * Issue #102: the browser's back button after submitting returns to this page, where the form
+   * used to be offered again and the second submission refused with a 400. The applicant is sent
+   * to their application instead.
+   */
+  test("an applicant who has already applied is sent to their application", async () => {
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [applicationsFixtures.oneUlaApplication]);
+
+    renderPage(applicationsFixtures.oneUlaApplication.recruitmentId);
+
+    expect(
+      await screen.findByTestId("redirected-to-application"),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("ApplyPage-submit")).toBeNull();
+  });
+
+  test("an application for a different recruitment does not redirect", async () => {
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [
+        { ...applicationsFixtures.oneUlaApplication, recruitmentId: 77 },
+      ]);
+
+    renderPage();
+
+    expect(await screen.findByTestId("ApplyPage-submit")).toBeInTheDocument();
+    expect(screen.queryByTestId("redirected-to-application")).toBeNull();
+  });
+
+  test("the form waits until the existing applications are known", async () => {
+    let release;
+    axiosMock.onGet("/api/applications/mine").reply(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve([200, []]);
+        }),
+    );
+
+    renderPage();
+
+    // The heading is up, but no form until the list has arrived.
+    expect(
+      await screen.findByText("Apply: ULA positions, W26"),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(release).toBeDefined());
+    expect(screen.queryByTestId("ApplyPage-submit")).toBeNull();
+
+    release();
+    expect(await screen.findByTestId("ApplyPage-submit")).toBeInTheDocument();
   });
 
   test("submitting posts the application and returns home", async () => {
