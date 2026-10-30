@@ -8,6 +8,7 @@ import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
 import edu.ucsb.cs.taapply.models.Quarter;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +29,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Admin management of recruitments. */
+/**
+ * Admin management of recruitments. Every creation, deletion and change of status or dates is
+ * recorded in the recruitment audit trail (issue #139) through {@link RecruitmentAuditService}.
+ */
 @Tag(name = "Recruitments")
 @RequestMapping("/api/admin/recruitments")
 @RestController
@@ -39,6 +43,7 @@ public class RecruitmentsController extends ApiController {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired JobService jobService;
   @Autowired PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
+  @Autowired RecruitmentAuditService recruitmentAuditService;
 
   @Operation(
       summary = "Create a recruitment",
@@ -76,6 +81,7 @@ public class RecruitmentsController extends ApiController {
                 .tentativeOpeningDate(tentativeOpeningDate)
                 .primaryConsiderationDate(primaryConsiderationDate)
                 .build());
+    recruitmentAuditService.recordCreated(recruitment);
 
     jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));
     return recruitment;
@@ -104,6 +110,7 @@ public class RecruitmentsController extends ApiController {
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
 
+    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
     LocalDate today = LocalDate.now();
     if (status == ApplicationStatus.OPEN) {
       if (recruitment.getActualOpeningDate() == null) {
@@ -115,6 +122,7 @@ public class RecruitmentsController extends ApiController {
     recruitment.setApplicationStatus(status);
 
     recruitmentRepository.save(recruitment);
+    recruitmentAuditService.recordChanges(before, recruitment);
     return recruitment;
   }
 
@@ -149,6 +157,7 @@ public class RecruitmentsController extends ApiController {
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
 
+    recruitmentAuditService.recordDeleted(recruitment);
     recruitmentRepository.delete(recruitment);
     return genericMessage("Recruitment with id %s deleted".formatted(id));
   }

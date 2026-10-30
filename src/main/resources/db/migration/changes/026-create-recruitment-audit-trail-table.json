@@ -1,0 +1,56 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "026-create-recruitment-audit-trail-table",
+        "author": "pc",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "recruitment_audit_trail" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "recruitment_audit_trail",
+              "remarks": "Changes to recruitments themselves (issue #139); audit_trail is for changes to individual applications.",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "primaryKey": true, "nullable": false }
+                  }
+                },
+                { "column": { "name": "changed_at", "type": "TIMESTAMP" } },
+                {
+                  "column": {
+                    "name": "recruitment_id",
+                    "type": "BIGINT",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "what_changed",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                { "column": { "name": "old_value", "type": "VARCHAR(4000)" } },
+                { "column": { "name": "new_value", "type": "VARCHAR(4000)" } }
+              ]
+            }
+          },
+          {
+            "createIndex": {
+              "tableName": "recruitment_audit_trail",
+              "indexName": "ix_recruitment_audit_trail_recruitment_id",
+              "columns": [{ "column": { "name": "recruitment_id" } }]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Button, Form } from "react-bootstrap";
 import { useParams } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useBackend } from "main/utils/useBackend";
@@ -8,6 +10,19 @@ import AdminApplicationTable from "main/components/Applications/AdminApplication
 import type { Application } from "main/components/Applications/ApplicationTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { receivedText } from "main/utils/adminApplications";
+import RecruitmentAuditTrailTable, {
+  type RecruitmentAuditTrailPage,
+} from "main/components/Recruitments/RecruitmentAuditTrailTable";
+import { AUDIT_PAGE_SIZES } from "main/utils/recruitmentAuditTrail";
+
+// Stryker disable next-line all : the page before the first answer; nothing reads its fields
+const emptyAuditPage: RecruitmentAuditTrailPage = {
+  content: [],
+  number: 0,
+  size: 10,
+  totalElements: 0,
+  totalPages: 0,
+};
 
 /** An admin's overview of one recruitment's applications: /admin/recruitments/:recruitmentId/applications */
 export default function RecruitmentApplicationsPage(): React.JSX.Element {
@@ -35,6 +50,43 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
   );
   const applicationList = Array.isArray(applications) ? applications : [];
 
+  // Issue #139: the recruitment's own audit trail, paged on the server, newest first.
+  const [auditPage, setAuditPage] = useState(0);
+  const [auditPageSize, setAuditPageSize] = useState(10);
+  const { data: auditTrail } = useBackend<RecruitmentAuditTrailPage>(
+    [
+      "/api/admin/recruitmentaudittrail/all",
+      recruitmentId,
+      auditPage,
+      auditPageSize,
+    ],
+    {
+      method: "GET",
+      url: "/api/admin/recruitmentaudittrail/all",
+      params: {
+        recruitmentId,
+        page: auditPage,
+        size: auditPageSize,
+        sort: "id",
+        direction: "desc",
+      },
+    },
+    emptyAuditPage,
+  );
+  // useBackend always hands back the initial page, so the guards below never fire; the Previous
+  // button is disabled on the first page, so its clamp is never exercised either.
+  // Stryker disable next-line all
+  const auditTotalPages = auditTrail?.totalPages ?? 0;
+  // Stryker disable next-line all
+  const auditPageNumber = auditTrail?.number ?? 0;
+  // Stryker disable next-line all
+  const auditTotal = auditTrail?.totalElements ?? 0;
+  // Stryker disable next-line all
+  const auditRows = auditTrail?.content ?? [];
+  const previousAuditPage = () =>
+    // Stryker disable next-line all
+    setAuditPage((previousPage) => Math.max(previousPage - 1, 0));
+
   return (
     <BasicLayout>
       <div className="pt-2">
@@ -57,6 +109,61 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
           applications={applicationList}
           type={recruitment?.type ?? "TA"}
           testIdPrefix="RecruitmentApplicationsPage-applications"
+        />
+
+        <h2 className="h4 mt-4">Change History</h2>
+        <p data-testid="RecruitmentApplicationsPage-audit-intro">
+          Every change to this recruitment itself, newest first: when it was
+          created, each time it was opened or closed, and each date that
+          changed. Changes to individual applications are on the Audit Trail
+          page.
+        </p>
+        <div className="d-flex align-items-end justify-content-between mb-3 gap-3 flex-wrap">
+          <Form.Group controlId="recruitment-audit-page-size">
+            <Form.Label>Page size</Form.Label>
+            <Form.Select
+              value={auditPageSize}
+              onChange={(event) => {
+                setAuditPageSize(Number(event.target.value));
+                setAuditPage(0);
+              }}
+              data-testid="RecruitmentApplicationsPage-audit-page-size"
+            >
+              {AUDIT_PAGE_SIZES.map((sizeOption) => (
+                <option key={sizeOption} value={sizeOption}>
+                  {sizeOption}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+          <div className="d-flex align-items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={previousAuditPage}
+              disabled={auditPage === 0}
+              data-testid="RecruitmentApplicationsPage-audit-previous"
+            >
+              Previous
+            </Button>
+            <span data-testid="RecruitmentApplicationsPage-audit-page-indicator">
+              Page {auditPageNumber + 1} of {Math.max(auditTotalPages, 1)}
+            </span>
+            <Button
+              variant="secondary"
+              onClick={() => setAuditPage((previousPage) => previousPage + 1)}
+              disabled={auditPage + 1 >= auditTotalPages}
+              data-testid="RecruitmentApplicationsPage-audit-next"
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+        <p data-testid="RecruitmentApplicationsPage-audit-total">
+          {auditTotal} changes recorded.
+        </p>
+        <RecruitmentAuditTrailTable
+          rows={auditRows}
+          testIdPrefix="RecruitmentApplicationsPage-audit"
         />
       </div>
     </BasicLayout>

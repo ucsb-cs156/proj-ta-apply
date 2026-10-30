@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -23,6 +24,7 @@ import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs156.jobs.services.JobService;
 import java.time.LocalDate;
 import java.util.List;
@@ -30,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -45,6 +48,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
   @MockitoBean JobService jobService;
   @MockitoBean PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
   @MockitoBean UserRepository userRepository;
+  @MockitoBean RecruitmentAuditService recruitmentAuditService;
 
   private static final String CREATE_URL =
       "/api/admin/recruitments/post?quarter=20261&type=TA"
@@ -104,6 +108,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertNull(captor.getValue().getActualOpeningDate());
 
     verify(jobService, times(1)).runAsJob(populateJob);
+    // Issue #139: the creation goes in the recruitment audit trail.
+    verify(recruitmentAuditService, times(1)).recordCreated(saved);
     assertEquals(mapper.writeValueAsString(saved), response.getResponse().getContentAsString());
   }
 
@@ -118,6 +124,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
 
     verify(recruitmentRepository, never()).save(any());
     verify(jobService, never()).runAsJob(any());
+    verify(recruitmentAuditService, never()).recordCreated(any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -162,6 +169,9 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
   public void opening_stamps_the_actual_opening_date() throws Exception {
     Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("applicationStatus", "CLOSED"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
 
     MvcResult response =
         mockMvc
@@ -173,6 +183,13 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     verify(recruitmentRepository, times(1)).save(captor.capture());
     assertEquals(ApplicationStatus.OPEN, captor.getValue().getApplicationStatus());
     assertEquals(LocalDate.now(), captor.getValue().getActualOpeningDate());
+    // Issue #139: the snapshot is taken before the change and the differences recorded after
+    // the save, so the trail shows the status and the stamped date.
+    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
+    inOrder.verify(recruitmentAuditService).snapshot(r);
+    inOrder.verify(recruitmentRepository).save(r);
+    inOrder.verify(recruitmentAuditService).recordChanges(before, r);
+    assertEquals(ApplicationStatus.OPEN, r.getApplicationStatus());
     // The updated recruitment comes back, so the page can render the new state.
     assertEquals(
         mapper.writeValueAsString(captor.getValue()), response.getResponse().getContentAsString());
@@ -222,12 +239,15 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void changing_status_on_an_unknown_recruitment_is_a_404() throws Exception {
+    // (issue #139) nothing is recorded for a recruitment that does not exist
     when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
 
     mockMvc
         .perform(put("/api/admin/recruitments/status?id=99&status=OPEN").with(csrf()))
         .andExpect(status().isNotFound());
     verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).snapshot(any());
+    verify(recruitmentAuditService, never()).recordChanges(any(), any());
   }
 
   @Test
@@ -286,6 +306,10 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     verify(recruitmentRepository, times(1)).delete(r);
+    // Issue #139: recorded before the row goes, so the trail says the recruitment existed.
+    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
+    inOrder.verify(recruitmentAuditService).recordDeleted(r);
+    inOrder.verify(recruitmentRepository).delete(r);
     Map<String, Object> json = responseToJson(response);
     assertEquals("Recruitment with id 1 deleted", json.get("message"));
   }
@@ -299,6 +323,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(delete("/api/admin/recruitments/delete?id=99").with(csrf()))
         .andExpect(status().isNotFound());
     verify(recruitmentRepository, never()).delete(any());
+    verify(recruitmentAuditService, never()).recordDeleted(any());
   }
 
   @Test
