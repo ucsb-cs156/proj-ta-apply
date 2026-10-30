@@ -6,11 +6,20 @@ import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.repository.UCSBAPIQuarterRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /** Issue #151: the admin's Quarters page fills itself from the UCSB quarter calendar. */
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@ActiveProfiles("integration")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ResourceLock("port-8080")
 @Import(IntegrationConfig.class)
 public class QuartersWebIT extends WebTestCase {
