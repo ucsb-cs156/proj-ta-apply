@@ -7,16 +7,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import edu.ucsb.cs.taapply.entity.CatalogName;
 import edu.ucsb.cs.taapply.entity.Course;
 import edu.ucsb.cs.taapply.models.UcsbCourse;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
+import edu.ucsb.cs.taapply.models.UcsbInstructor;
+import edu.ucsb.cs.taapply.models.UcsbSection;
+import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.entities.Job;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +43,7 @@ public class PopulateCoursesJobTests {
 
   @Mock private UCSBCurriculumService ucsbCurriculumService;
   @Mock private CourseRepository courseRepository;
+  @Mock private CatalogNameRepository catalogNameRepository;
   @Mock private JobRateLimit jobRateLimit;
 
   private JobContext ctx;
@@ -55,8 +63,91 @@ public class PopulateCoursesJobTests {
         .subjectArea("CMPSC")
         .ucsbCurriculumService(ucsbCurriculumService)
         .courseRepository(courseRepository)
+        .catalogNameRepository(catalogNameRepository)
         .jobRateLimit(jobRateLimit)
         .build();
+  }
+
+  private static UcsbSection section(String number, String... instructorNames) {
+    List<UcsbInstructor> instructors = new ArrayList<>();
+    for (String name : instructorNames) {
+      instructors.add(UcsbInstructor.builder().instructor(name).functionCode("Teaching").build());
+    }
+    return UcsbSection.builder().section(number).instructors(instructors).build();
+  }
+
+  private static UcsbCourseOffering offering(UcsbSection... sections) {
+    return UcsbCourseOffering.builder()
+        .courseId("CMPSC   156")
+        .classSections(List.of(sections))
+        .build();
+  }
+
+  // ---- catalog names (issue #120) ----
+
+  @Test
+  public void records_the_instructors_of_primary_sections_as_catalog_names() throws Exception {
+    when(ucsbCurriculumService.getCourses("CMPSC", "20241", "U")).thenReturn(List.of());
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20241"))
+        .thenReturn(
+            List.of(
+                offering(
+                    section("0100", "CONRAD P", "GAUCHO C"),
+                    section("0101", "TA ONE"),
+                    section("0200", "CONRAD P")),
+                offering(section("0100", "  ", null, "NEW Z "))));
+    when(catalogNameRepository.existsById(any())).thenReturn(false);
+    when(catalogNameRepository.existsById("GAUCHO C")).thenReturn(true);
+
+    job("20241", "20241", "U").accept(ctx);
+
+    // CONRAD P once (already saved by the time it appears again? no: existsById is mocked false,
+    // so it is saved each time it is seen), GAUCHO C skipped as already there, TA ONE skipped as a
+    // secondary, blanks skipped, NEW Z trimmed.
+    verify(catalogNameRepository, times(2)).save(CatalogName.builder().name("CONRAD P").build());
+    verify(catalogNameRepository, never()).save(CatalogName.builder().name("GAUCHO C").build());
+    verify(catalogNameRepository, never()).save(CatalogName.builder().name("TA ONE").build());
+    verify(catalogNameRepository, times(1)).save(CatalogName.builder().name("NEW Z").build());
+    verify(catalogNameRepository, times(3)).save(any());
+    assertTrue(jobStarted.getLog().contains("20241: 3 new catalog name(s)"));
+    assertTrue(
+        jobStarted
+            .getLog()
+            .contains(
+                "Finished: 0 added, 0 updated, 3 catalog name(s) added, 0 quarter(s) failed"));
+  }
+
+  @Test
+  public void a_failing_offerings_fetch_keeps_the_courses_and_continues() throws Exception {
+    when(ucsbCurriculumService.getCourses("CMPSC", "20241", "U"))
+        .thenReturn(List.of(ucsb("CMPSC 156", "ADV APP PROGRAM")));
+    when(courseRepository.findByCourseId("CMPSC   156")).thenReturn(Optional.empty());
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20241"))
+        .thenThrow(new RuntimeException("API down"));
+
+    job("20241", "20241", "U").accept(ctx);
+
+    verify(courseRepository, times(1)).save(any());
+    verify(catalogNameRepository, never()).save(any());
+    assertTrue(jobStarted.getLog().contains("Error fetching instructors for 20241: API down"));
+    assertTrue(
+        jobStarted.getLog().contains("Finished: 1 added, 0 updated, 0 catalog name(s) added"));
+  }
+
+  @Test
+  public void offerings_without_sections_or_instructors_add_no_names() throws Exception {
+    PopulateCoursesJob job = job("20241", "20241", "U");
+
+    assertEquals(0, job.upsertCatalogNames(null));
+    assertEquals(0, job.upsertCatalogNames(List.of()));
+    assertEquals(
+        0,
+        job.upsertCatalogNames(
+            List.of(
+                UcsbCourseOffering.builder().courseId("CMPSC   156").classSections(null).build(),
+                offering(UcsbSection.builder().section("0100").instructors(null).build()),
+                offering(section("0100")))));
+    verify(catalogNameRepository, never()).save(any());
   }
 
   private static UcsbCourse ucsb(String courseId, String title) {
@@ -156,7 +247,9 @@ public class PopulateCoursesJobTests {
     verify(courseRepository).save(any());
     String log = jobStarted.getLog();
     assertTrue(log.contains("Error fetching 20241"), log);
-    assertTrue(log.contains("Finished: 1 added, 0 updated, 1 quarter(s) failed"), log);
+    assertTrue(
+        log.contains("Finished: 1 added, 0 updated, 0 catalog name(s) added, 1 quarter(s) failed"),
+        log);
   }
 
   @Test
@@ -184,7 +277,9 @@ public class PopulateCoursesJobTests {
     assertTrue(log.contains("Fetching CMPSC 20241 level U"));
     assertTrue(log.contains("  20241: 2 course(s) returned"), log);
     // Anchored on "Finished: " so a negated counter cannot slip through as a substring.
-    assertTrue(log.contains("Finished: 1 added, 1 updated, 0 quarter(s) failed"), log);
+    assertTrue(
+        log.contains("Finished: 1 added, 1 updated, 0 catalog name(s) added, 0 quarter(s) failed"),
+        log);
   }
 
   @Test

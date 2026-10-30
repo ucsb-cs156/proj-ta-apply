@@ -75,9 +75,11 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           removed courses out, and marks as stale any lecture it no longer finds
           in the UCSB schedule or whose course is no longer flagged. Stale
           lectures are hidden from applicants until a later Populate finds them
-          again; Remove them if they are not coming back. A lecture can also be
-          added by hand by its enroll code, flagged course or not; Populate
-          keeps refreshing it for as long as the schedule lists it.
+          again; Remove them if they are not coming back. A cancelled lecture is
+          hidden from applicants too, and comes back by itself if the schedule
+          un-cancels it. A lecture can also be added by hand by its enroll code,
+          flagged course or not; Populate keeps refreshing it for as long as the
+          schedule lists it.
         </p>
 
         <div className="d-flex align-items-center gap-3 mb-3">

@@ -13,11 +13,16 @@ import type { Application } from "main/components/Applications/ApplicationTable"
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { useCurrentUser } from "main/utils/currentUser";
+import { instructorsFromRows } from "main/utils/courseLabels";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { NoticeVersion } from "main/utils/notices";
 
-/** Only the course number is needed here; the rest of a RecruitmentCourse is for the admin table. */
-type RecruitmentCourseLike = { courseId: string };
+/** The course number and instructor are needed here; the rest of a RecruitmentCourse is for the admin table. */
+type RecruitmentCourseLike = {
+  courseId: string;
+  instructor?: string | null;
+  removed?: boolean;
+};
 
 /**
  * An admin's preview of the application form for one recruitment:
@@ -93,6 +98,8 @@ export default function TestApplicationPage(): React.JSX.Element {
   const courses = [
     ...new Set((recruitmentCourses ?? []).map((c) => c.courseId)),
   ].sort();
+  // And the instructors the applicant endpoint would give, from the same rows (issue #121).
+  const instructors = instructorsFromRows(recruitmentCourses ?? []);
 
   const saved = (mine ?? []).find(
     (a) =>
@@ -134,6 +141,7 @@ export default function TestApplicationPage(): React.JSX.Element {
             <ApplicationForm
               type={recruitment.type}
               courses={courses}
+              instructors={instructors}
               recruitmentId={recruitmentId}
               majors={options?.majors ?? []}
               topics={options?.topics ?? []}

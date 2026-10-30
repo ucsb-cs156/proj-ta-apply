@@ -356,11 +356,21 @@ public class PopulateRecruitmentCoursesJobTests {
   }
 
   @Test
-  public void isOnOffer_means_neither_removed_nor_stale() {
+  public void isOnOffer_means_neither_removed_nor_stale_nor_cancelled() {
     assertTrue(existingRow(1L, "CMPSC   156", "07492", false, false).isOnOffer());
     assertFalse(existingRow(1L, "CMPSC   156", "07492", true, false).isOnOffer());
     assertFalse(existingRow(1L, "CMPSC   156", "07492", false, true).isOnOffer());
     assertFalse(existingRow(1L, "CMPSC   156", "07492", true, true).isOnOffer());
+    // Issue #123: a cancelled lecture is not on offer; closed (full) and open ones are.
+    for (String status : new String[] {"open", "closed", null}) {
+      RecruitmentCourse row = existingRow(1L, "CMPSC   156", "07492", false, false);
+      row.setStatus(status);
+      assertTrue(row.isOnOffer(), String.valueOf(status));
+    }
+    RecruitmentCourse cancelled = existingRow(1L, "CMPSC   156", "07492", false, false);
+    cancelled.setStatus(RecruitmentCourse.CANCELLED);
+    assertFalse(cancelled.isOnOffer());
+    assertEquals("cancelled", RecruitmentCourse.CANCELLED);
   }
 
   // ---- rows added by hand (issue #125) ----

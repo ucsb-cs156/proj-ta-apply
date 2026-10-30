@@ -53,24 +53,26 @@ describe("HomePageLoggedIn tests", () => {
     vi.useRealTimers();
   });
 
-  test("greets the user by given name", async () => {
+  /** Issue #118: no page title or greeting; the navbar already carries both. */
+  test("has no TA Apply heading and no greeting", async () => {
     renderHome(apiCurrentUserFixtures.userOnly);
-    expect(
-      await screen.findByTestId("HomePageLoggedIn-greeting"),
-    ).toHaveTextContent("Welcome, Gaucho.");
+    await screen.findByTestId("HomePageLoggedIn-student");
+    expect(screen.queryByTestId("HomePageLoggedIn-greeting")).toBeNull();
+    expect(screen.queryByText("Welcome, Gaucho.")).toBeNull();
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
   });
 
   // ---- the sections per role (issue #107) ----
 
-  test("a plain user gets only the Student section", async () => {
+  test("a plain user gets only the Student section, without its heading", async () => {
     renderHome(apiCurrentUserFixtures.userOnly);
 
     expect(
       await screen.findByTestId("HomePageLoggedIn-student"),
     ).toBeInTheDocument();
-    expect(
-      screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
-    ).toEqual(["Student"]);
+    // Issue #118: with nothing to tell it from, the section needs no heading.
+    expect(screen.queryByRole("heading", { level: 2 })).toBeNull();
+    expect(screen.queryByText("Student")).toBeNull();
     expect(screen.queryByTestId("HomePageLoggedIn-admin")).toBeNull();
     expect(screen.queryByTestId("HomePageLoggedIn-instructor")).toBeNull();
     expect(
@@ -186,7 +188,7 @@ describe("HomePageLoggedIn tests", () => {
       </QueryClientProvider>,
     );
 
-    await screen.findByTestId("HomePageLoggedIn-greeting");
+    await screen.findByTestId("HomePageLoggedIn-student");
     await waitFor(() =>
       expect(
         axiosMock.history.get.some((r) => r.url === "/api/currentUser"),

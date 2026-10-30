@@ -316,9 +316,115 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
   }
 
+  private static RecruitmentCourse withStatus(long id, String courseId, String status) {
+    RecruitmentCourse c = course(id, courseId, false);
+    c.setEnrollCode("0" + id);
+    c.setStatus(status);
+    return c;
+  }
+
+  /** Issue #123: a course is dropped only when all of its lectures are cancelled. */
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void a_course_whose_every_lecture_is_cancelled_is_not_offered() throws Exception {
+    when(recruitmentRepository.existsById(1L)).thenReturn(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(1L))
+        .thenReturn(
+            List.of(
+                withStatus(1L, "CMPSC   156", "cancelled"),
+                withStatus(2L, "CMPSC   156", "open"),
+                withStatus(3L, "CMPSC     8", "cancelled"),
+                withStatus(4L, "CMPSC    16", "closed"),
+                withStatus(5L, "CMPSC    24", null)));
+
+    assertEquals(
+        mapper.writeValueAsString(List.of("CMPSC    16", "CMPSC    24", "CMPSC   156")),
+        getJson("/api/recruitments/courses?recruitmentId=1"));
+  }
+
+  /** The section lookup goes by a lecture still on offer, not a cancelled one. */
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void section_times_skip_a_cancelled_lecture() throws Exception {
+    seedAll();
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    RecruitmentCourse cancelled = withStatus(1L, "CMPSC   156", "cancelled");
+    cancelled.setEnrollCode("00001");
+    RecruitmentCourse open = withStatus(2L, "CMPSC   156", "open");
+    open.setEnrollCode("07492");
+    when(recruitmentCourseRepository.findByRecruitmentId(1L)).thenReturn(List.of(cancelled, open));
+    when(ucsbCurriculumService.getOffering("20262", "07492")).thenReturn(offering());
+
+    sectionsJson(1L);
+
+    verify(ucsbCurriculumService).getOffering("20262", "07492");
+    verify(ucsbCurriculumService, never()).getOffering("20262", "00001");
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void a_course_with_only_a_cancelled_lecture_has_no_section_times() throws Exception {
+    seedAll();
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    RecruitmentCourse cancelled = withStatus(1L, "CMPSC   156", "cancelled");
+    cancelled.setEnrollCode("07492");
+    when(recruitmentCourseRepository.findByRecruitmentId(1L)).thenReturn(List.of(cancelled));
+
+    assertEquals(
+        mapper.writeValueAsString(CourseSections.none("CMPSC   156", "20262")), sectionsJson(1L));
+    verify(ucsbCurriculumService, never()).getOffering(any(), any());
+  }
+
   @Test
   public void logged_out_users_cannot_read_course_choices() throws Exception {
     mockMvc.perform(get("/api/recruitments/courses?recruitmentId=1")).andExpect(status().is(403));
+  }
+
+  // ---- course instructors (issue #121) ----
+
+  private static RecruitmentCourse taught(
+      long id, String courseId, String instructor, boolean removed) {
+    RecruitmentCourse c = course(id, courseId, removed);
+    c.setInstructor(instructor);
+    return c;
+  }
+
+  /** Two lectures with different instructors are joined; removed rows and blanks are left out. */
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void course_instructors_are_joined_distinct_sorted_and_exclude_removed_and_blank()
+      throws Exception {
+    when(recruitmentRepository.existsById(1L)).thenReturn(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(1L))
+        .thenReturn(
+            List.of(
+                taught(1L, "CMPSC   156", "GAUCHO C", false),
+                taught(2L, "CMPSC   156", " CONRAD P ", false),
+                taught(3L, "CMPSC   156", "CONRAD P", false),
+                taught(4L, "CMPSC     8", null, false),
+                taught(5L, "CMPSC    16", "  ", false),
+                taught(6L, "CMPSC   130A", "REMOVED R", true)));
+
+    assertEquals(
+        "{\"CMPSC   156\":\"CONRAD P, GAUCHO C\"}",
+        getJson("/api/recruitments/instructors?recruitmentId=1"));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void course_instructors_are_empty_for_a_recruitment_that_does_not_exist()
+      throws Exception {
+    when(recruitmentRepository.existsById(99L)).thenReturn(false);
+
+    assertEquals("{}", getJson("/api/recruitments/instructors?recruitmentId=99"));
+    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+  }
+
+  @Test
+  public void logged_out_users_cannot_read_course_instructors() throws Exception {
+    mockMvc
+        .perform(get("/api/recruitments/instructors?recruitmentId=1"))
+        .andExpect(status().is(403));
   }
 
   // ---- section times ----

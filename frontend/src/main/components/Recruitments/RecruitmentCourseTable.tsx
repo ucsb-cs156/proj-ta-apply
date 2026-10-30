@@ -29,6 +29,9 @@ export type RecruitmentCourse = {
 /** On the badge of a stale row. */
 export const STALE_LABEL = "Stale / not in API";
 
+/** The status the UCSB API reports for a cancelled section; applicants are not offered it. */
+export const CANCELLED = "cancelled";
+
 type RecruitmentCourseTableProps = {
   courses: RecruitmentCourse[];
   /** Part of the query key to invalidate, so the table reflects the current toggle. */
@@ -101,11 +104,21 @@ export default function RecruitmentCourseTable({
       header: "Status",
       accessorKey: "status",
       meta: shrinkToContent,
-      // A stale row keeps its last known status, with a warning beside it so the admin can decide
-      // whether to Remove it (issue #122).
+      // A cancelled lecture is shown as a red badge, since applicants no longer see it (issue
+      // #123); a stale row keeps its last known status, with a warning beside it so the admin can
+      // decide whether to Remove it (issue #122).
       cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => (
         <>
-          {cell.row.original.status}
+          {cell.row.original.status === CANCELLED ? (
+            <Badge
+              bg="danger"
+              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-cancelled`}
+            >
+              Cancelled
+            </Badge>
+          ) : (
+            cell.row.original.status
+          )}
           {cell.row.original.stale && (
             <Badge
               bg="warning"

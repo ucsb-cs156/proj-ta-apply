@@ -1,6 +1,8 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import InstructorsIndexPage from "main/pages/Admin/InstructorsIndexPage";
+import InstructorsIndexPage, {
+  CATALOG_NAME_NOTE,
+} from "main/pages/Admin/InstructorsIndexPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import mockConsole from "tests/testutils/mockConsole";
@@ -37,6 +39,9 @@ describe("InstructorsIndexPage tests", () => {
     axiosMock
       .onGet("/api/systemInfo")
       .reply(200, systemInfoFixtures.showingNeither);
+    axiosMock
+      .onGet("/api/admin/instructors/catalogNames")
+      .reply(200, roleEmailFixtures.catalogNames);
   };
 
   const queryClient = new QueryClient();
@@ -262,6 +267,114 @@ describe("InstructorsIndexPage tests", () => {
     expect(mockToast).toHaveBeenCalledWith(
       "Upload complete: 1 added, 0 already present, 2 invalid (nope, also-nope)",
     );
+  });
+
+  // ---- catalog names (issue #120) ----
+
+  test("explains the catalog name and fetches the names for the dropdown", async () => {
+    setupAdminUser();
+    axiosMock
+      .onGet("/api/admin/instructors/get")
+      .reply(200, roleEmailFixtures.threeItems);
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <InstructorsIndexPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByTestId("InstructorsIndexPage-catalog-note"),
+    ).toHaveTextContent(CATALOG_NAME_NOTE);
+    expect(CATALOG_NAME_NOTE).toMatch(
+      /^Catalog Name is how the course schedule spells/,
+    );
+    const select = await screen.findByTestId(
+      `${testId}-cell-row-0-col-catalogName-select`,
+    );
+    await waitFor(() => expect(select.options).toHaveLength(4));
+    expect(select).toHaveValue("STRUCTOR I");
+    expect(useBackendSpy).toHaveBeenCalledWith(
+      ["/api/admin/instructors/catalogNames"],
+      { method: "GET", url: "/api/admin/instructors/catalogNames" },
+      [],
+    );
+  });
+
+  test("choosing a catalog name saves it, toasts and refreshes the list", async () => {
+    setupAdminUser();
+    axiosMock
+      .onGet("/api/admin/instructors/get")
+      .reply(200, roleEmailFixtures.threeItems);
+    axiosMock
+      .onPut("/api/admin/instructors/catalogName")
+      .reply(200, roleEmailFixtures.threeItems[1]);
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <InstructorsIndexPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const select = await screen.findByTestId(
+      `${testId}-cell-row-1-col-catalogName-select`,
+    );
+    await waitFor(() => expect(select.options).toHaveLength(4));
+    fireEvent.change(select, { target: { value: "CONRAD P" } });
+
+    await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
+    expect(axiosMock.history.put[0].url).toBe(
+      "/api/admin/instructors/catalogName",
+    );
+    expect(axiosMock.history.put[0].params).toEqual({
+      email: "admin1@example.com",
+      catalogName: "CONRAD P",
+    });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("Catalog name saved."),
+    );
+    // The list is re-fetched.
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/instructors/get",
+        ).length,
+      ).toBeGreaterThanOrEqual(2),
+    );
+  });
+
+  test("choosing (null) clears the catalog name", async () => {
+    setupAdminUser();
+    axiosMock
+      .onGet("/api/admin/instructors/get")
+      .reply(200, roleEmailFixtures.threeItems);
+    axiosMock
+      .onPut("/api/admin/instructors/catalogName")
+      .reply(200, roleEmailFixtures.threeItems[0]);
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <InstructorsIndexPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const select = await screen.findByTestId(
+      `${testId}-cell-row-0-col-catalogName-select`,
+    );
+    await waitFor(() => expect(select).toHaveValue("STRUCTOR I"));
+    fireEvent.change(select, { target: { value: "" } });
+
+    await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
+    expect(axiosMock.history.put[0].params).toEqual({
+      email: "instructor1@example.com",
+      catalogName: "",
+    });
   });
 
   /** Issue #61: the name columns are blank for anyone who has not logged in yet. */
