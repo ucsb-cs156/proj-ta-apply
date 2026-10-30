@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"pc-issue-101-comments-go-home","number":104,"title":"Go back to the home page after saving post-application comments","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/104"}]
+pull_requests: []
