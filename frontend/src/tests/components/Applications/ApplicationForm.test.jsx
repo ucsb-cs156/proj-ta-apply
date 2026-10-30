@@ -947,6 +947,178 @@ describe("ApplicationForm tests", () => {
     expect(radio("CMPSC-156", "NOT_INTERESTED")).toBeChecked();
   });
 
+  // ---- issue #148: ULA warning for courses asked for but not listed as taken ----
+
+  const untakenIcon = (course) =>
+    screen.queryByTestId(`ApplicationForm-courseInterest-${course}-untaken`);
+  const untakenWarning = () =>
+    screen.queryByTestId("ApplicationForm-courseInterests-untaken-warning");
+
+  test("the ULA table has an unlabelled first column, blank until a course is asked for", () => {
+    renderForm({ type: "ULA" });
+
+    const table = screen
+      .getByTestId("ApplicationForm-courseInterests")
+      .querySelector("table");
+    const headers = [...table.querySelectorAll("thead th")].map(
+      (th) => th.textContent,
+    );
+    expect(headers).toEqual([
+      "",
+      "Course",
+      "Enthusiastic",
+      "Would Consider",
+      "Not Applicable / Not Interested",
+    ]);
+    expect(
+      screen.getByTestId("ApplicationForm-courseInterests-warning-header"),
+    ).toHaveAttribute("aria-label", "Warnings");
+    const row = screen.getByTestId("ApplicationForm-courseInterest-CMPSC-8");
+    expect(row.children).toHaveLength(5);
+    expect(row.children[0]).toHaveClass("text-center", "text-danger");
+    expect(row.children[0].textContent).toBe("");
+    // The course column is still the padded one.
+    expect(row.children[1].textContent).toBe("CMPSC     8");
+    for (const course of ["CMPSC-8", "CMPSC-130A", "CMPSC-156"]) {
+      expect(untakenIcon(course)).toBeNull();
+    }
+    expect(untakenWarning()).toBeNull();
+  });
+
+  test("the TA table has no such column and never warns", async () => {
+    renderForm();
+    const table = screen
+      .getByTestId("ApplicationForm-courseInterests")
+      .querySelector("table");
+    expect(
+      [...table.querySelectorAll("thead th")].map((th) => th.textContent)[0],
+    ).toBe("Course");
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.click(radio("CMPSC-8", "ENTHUSIASTIC"));
+    expect(untakenIcon("CMPSC-156")).toBeNull();
+    expect(untakenIcon("CMPSC-8")).toBeNull();
+    expect(untakenWarning()).toBeNull();
+    expect(
+      screen.queryByTestId("ApplicationForm-courseInterests-warning-header"),
+    ).toBeNull();
+  });
+
+  test("a choice, Enthusiastic or Would Consider on an untaken course is flagged, with the explanation", async () => {
+    renderForm({ type: "ULA" });
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    const icon = untakenIcon("CMPSC-156");
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveAttribute(
+      "title",
+      "Not listed as a course you have taken",
+    );
+    const svg = icon.querySelector("svg");
+    expect(svg).toHaveAttribute("role", "img");
+    expect(svg).toHaveAttribute(
+      "aria-label",
+      "Not listed as a course you have taken",
+    );
+    expect(svg).not.toHaveAttribute("aria-hidden");
+    expect(icon.closest("td")).toBe(
+      screen.getByTestId("ApplicationForm-courseInterest-CMPSC-156")
+        .children[0],
+    );
+    const warning = untakenWarning();
+    expect(warning).toHaveClass("small", "text-danger");
+    const paragraphs = [...warning.querySelectorAll("p")];
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0].querySelector("svg")).not.toBeNull();
+    expect(paragraphs[0].textContent).toBe(
+      "signifies that this is a course you have not listed as one you have taken. Be sure that in the comments field at the bottom of the application, you explain what background you have that prepares you to be a ULA for this course.",
+    );
+    expect(paragraphs[1].textContent).toBe(
+      "For example, CS students don't typically take CMPSC 5A or 5B, but if they have Python programming background, and some statistics background (e.g. PSTAT 5 or PSTAT 120A), that's typically enough preparation to be a ULA for CMPSC 5A/5B.",
+    );
+    // The table precedes the explanation.
+    expect(
+      screen
+        .getByTestId("ApplicationForm-courseInterest-CMPSC-156")
+        .compareDocumentPosition(warning),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-secondChoiceCourse"),
+      "CMPSC   130A",
+    );
+    expect(untakenIcon("CMPSC-130A")).toBeInTheDocument();
+
+    await userEvent.click(radio("CMPSC-8", "ENTHUSIASTIC"));
+    expect(untakenIcon("CMPSC-8")).toBeInTheDocument();
+    await userEvent.click(radio("CMPSC-8", "WOULD_CONSIDER"));
+    expect(untakenIcon("CMPSC-8")).toBeInTheDocument();
+    await userEvent.click(radio("CMPSC-8", "NOT_INTERESTED"));
+    expect(untakenIcon("CMPSC-8")).toBeNull();
+
+    // Un-choosing clears the flag; with nothing flagged the explanation goes too.
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-secondChoiceCourse"),
+      "",
+    );
+    expect(untakenIcon("CMPSC-130A")).toBeNull();
+    expect(untakenWarning()).toBeInTheDocument();
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "",
+    );
+    expect(untakenIcon("CMPSC-156")).toBeNull();
+    expect(untakenWarning()).toBeNull();
+  });
+
+  test("a course already listed as taken, however it is spelt, is not flagged", async () => {
+    renderForm({
+      type: "ULA",
+      initialContents: {
+        firstChoiceCourse: "CMPSC   156",
+        courseInterests: { "CMPSC   130A": "ENTHUSIASTIC" },
+        priorCoursework: [
+          { ...priorCourseworkFixtures.ucsbCourse, courseNumber: "cmpsc156" },
+          { ...priorCourseworkFixtures.elsewhere, courseNumber: "CMPSC 130A" },
+        ],
+      },
+    });
+    await screen.findByTestId(
+      "ApplicationForm-courseInterest-CMPSC-156-choice",
+    );
+    expect(untakenIcon("CMPSC-156")).toBeNull();
+    expect(untakenIcon("CMPSC-130A")).toBeNull();
+    expect(untakenWarning()).toBeNull();
+  });
+
+  test("adding the course to the coursework table clears its flag at once", async () => {
+    renderForm({ type: "ULA" });
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    expect(untakenIcon("CMPSC-156")).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByTestId("ApplicationForm-coursework-add-button"),
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-coursework-modal-courseNumber"),
+      "CMPSC 156",
+    );
+    await userEvent.click(
+      screen.getByTestId("ApplicationForm-coursework-modal-save"),
+    );
+
+    await waitFor(() => expect(untakenIcon("CMPSC-156")).toBeNull());
+    expect(untakenWarning()).toBeNull();
+  });
+
   /** A course marked earlier and then made a choice is not reported twice. */
   test("submits only the courses marked, leaving out the defaults and the two choices", async () => {
     const submitAction = renderForm({

@@ -7,6 +7,13 @@ import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import PriorCourseworkSection from "main/components/PriorCoursework/PriorCourseworkSection";
 import { MIN_COURSES, type PriorCourse } from "main/utils/priorCoursework";
 import { courseLabel, type CourseInstructors } from "main/utils/courseLabels";
+import {
+  UNTAKEN_EXAMPLE,
+  UNTAKEN_EXPLANATION,
+  UNTAKEN_TITLE,
+  untakenAskedFor,
+} from "main/utils/untakenCourses";
+import { WarningIcon } from "main/components/Common/Icons";
 import RequiredField from "main/components/Common/RequiredField";
 import RequiredFieldExplanation from "main/components/Common/RequiredFieldExplanation";
 import type { NoticeVersion } from "main/utils/notices";
@@ -336,6 +343,14 @@ export default function ApplicationForm({
     if (courseId === secondChoice) return "2nd choice";
     return null;
   };
+
+  // Issue #148, ULA only: the courses asked for without being listed as taken. Derived on every
+  // render, so adding a course to the coursework table clears its warning at once.
+  const untaken = new Set(
+    isTa
+      ? []
+      : untakenAskedFor(courseList, priorCoursework, rankOf, interestIn),
+  );
 
   /**
    * One answer per listed course, so the payload says what was asked, not only what changed; and
@@ -1311,6 +1326,12 @@ export default function ApplicationForm({
           <Table size="sm" responsive className="align-middle">
             <thead>
               <tr>
+                {!isTa && (
+                  <th
+                    aria-label="Warnings"
+                    data-testid={id("courseInterests-warning-header")}
+                  />
+                )}
                 <th>Course</th>
                 {COURSE_INTEREST_OPTIONS.map((option) => (
                   <th key={option.value} className="text-center fw-normal">
@@ -1325,6 +1346,22 @@ export default function ApplicationForm({
                 const rowId = id(`courseInterest-${slug(courseId)}`);
                 return (
                   <tr key={courseId} data-testid={rowId}>
+                    {!isTa && (
+                      <td className="text-center text-danger">
+                        {untaken.has(courseId) && (
+                          <span
+                            title={UNTAKEN_TITLE}
+                            data-testid={`${rowId}-untaken`}
+                          >
+                            <WarningIcon
+                              role="img"
+                              aria-hidden={undefined}
+                              aria-label={UNTAKEN_TITLE}
+                            />
+                          </span>
+                        )}
+                      </td>
+                    )}
                     <td style={{ fontFamily: "monospace", whiteSpace: "pre" }}>
                       {courseLabel(courseId, courseInstructors)}
                     </td>
@@ -1362,6 +1399,18 @@ export default function ApplicationForm({
               })}
             </tbody>
           </Table>
+        )}
+        {untaken.size > 0 && (
+          <div
+            className="small text-danger"
+            data-testid={id("courseInterests-untaken-warning")}
+          >
+            <p className="mb-1">
+              <WarningIcon className="me-1 align-text-bottom" />
+              {UNTAKEN_EXPLANATION}
+            </p>
+            <p className="mb-0">{UNTAKEN_EXAMPLE}</p>
+          </div>
         )}
       </Form.Group>
 

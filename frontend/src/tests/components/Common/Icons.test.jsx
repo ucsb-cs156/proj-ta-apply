@@ -3,9 +3,43 @@ import {
   GraphIcon,
   UserListIcon,
   InfoIcon,
+  WarningIcon,
 } from "main/components/Common/Icons";
 
 describe("Icons tests", () => {
+  /** Issue #148: the red warning triangle on the ULA course table. */
+  describe("WarningIcon", () => {
+    test("WarningIcon is a 16px currentColor Bootstrap icon, hidden from readers by default", () => {
+      const { container } = render(<WarningIcon />);
+      const svg = container.querySelector("svg");
+
+      expect(svg).toBeInTheDocument();
+      expect(svg).toHaveAttribute("width", "16");
+      expect(svg).toHaveAttribute("height", "16");
+      expect(svg).toHaveAttribute("fill", "currentColor");
+      expect(svg).toHaveAttribute("viewBox", "0 0 16 16");
+      expect(svg).toHaveAttribute("aria-hidden", "true");
+      expect(svg.querySelector("path")).toBeInTheDocument();
+    });
+
+    test("WarningIcon takes extra props, and aria-hidden can be lifted for a labelled one", () => {
+      const { container } = render(
+        <WarningIcon
+          className="text-danger"
+          role="img"
+          aria-hidden={undefined}
+          aria-label="Warning"
+        />,
+      );
+      const svg = container.querySelector("svg");
+
+      expect(svg).toHaveClass("text-danger");
+      expect(svg).toHaveAttribute("role", "img");
+      expect(svg).toHaveAttribute("aria-label", "Warning");
+      expect(svg).not.toHaveAttribute("aria-hidden");
+    });
+  });
+
   describe("GraphIcon", () => {
     test("GraphIcon renders an svg with the expected default attributes", () => {
       const { container } = render(<GraphIcon />);
