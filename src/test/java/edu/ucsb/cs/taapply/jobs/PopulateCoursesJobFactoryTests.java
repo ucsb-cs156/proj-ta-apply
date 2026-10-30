@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
+import edu.ucsb.cs.taapply.services.UcsbQuarterService;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ public class PopulateCoursesJobFactoryTests {
   @MockitoBean private UCSBCurriculumService ucsbCurriculumService;
   @MockitoBean private CourseRepository courseRepository;
   @MockitoBean private CatalogNameRepository catalogNameRepository;
+  @MockitoBean private UcsbQuarterService ucsbQuarterService;
   @MockitoBean private JobRateLimit jobRateLimit;
 
   @Test
@@ -38,6 +40,7 @@ public class PopulateCoursesJobFactoryTests {
     assertSame(ucsbCurriculumService, job.getUcsbCurriculumService());
     assertSame(courseRepository, job.getCourseRepository());
     assertSame(catalogNameRepository, job.getCatalogNameRepository());
+    assertSame(ucsbQuarterService, job.getUcsbQuarterService());
     assertSame(jobRateLimit, job.getJobRateLimit());
   }
 }

@@ -66,6 +66,34 @@ public abstract class WebTestCase {
                 com.github.tomakehurst.wiremock.client.WireMock.aResponse()
                     .withHeader("Content-Type", "application/json")
                     .withBody("{\"quarter\":\"20212\"}")));
+    // The quarter calendar for the same fixed range (issue #151): the quarters an admin's
+    // Quarters page or a Courses populate can save are 20211..20214.
+    wireMockServer.stubFor(
+        com.github.tomakehurst.wiremock.client.WireMock.get(
+                com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo(
+                    "/academics/quartercalendar/v1/quarters"))
+            .willReturn(
+                com.github.tomakehurst.wiremock.client.WireMock.aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        """
+                        [
+                          {"quarter":"20211","qyy":"W21","name":"WINTER 2021","category":"WINTER",
+                           "academicYear":"2020-2021","firstDayOfQuarter":"2021-01-04T00:00:00",
+                           "firstDayOfClasses":"2021-01-04T00:00:00","lastDayOfClasses":"2021-03-12T00:00:00",
+                           "pass1Begin":"2020-11-09T09:00:00"},
+                          {"quarter":"20212","qyy":"S21","name":"SPRING 2021","category":"SPRING",
+                           "academicYear":"2020-2021","firstDayOfQuarter":"2021-03-29T00:00:00",
+                           "firstDayOfClasses":"2021-03-29T00:00:00","lastDayOfClasses":"2021-06-11T00:00:00",
+                           "pass1Begin":"2020-12-28T09:00:00"},
+                          {"quarter":"20213","qyy":"M21","name":"SUMMER 2021","category":"SUMMER",
+                           "academicYear":"2020-2021","firstDayOfQuarter":"2021-06-28T00:00:00"},
+                          {"quarter":"20214","qyy":"F21","name":"FALL 2021","category":"FALL",
+                           "academicYear":"2021-2022","firstDayOfQuarter":"2021-09-26T00:00:00",
+                           "firstDayOfClasses":"2021-10-01T00:00:00","lastDayOfFinals":"2021-12-17T00:00:00"},
+                          {"quarter":"20221","qyy":"W22","name":"WINTER 2022","category":"WINTER"}
+                        ]
+                        """)));
     wireMockServer.start();
   }
 

@@ -6,6 +6,7 @@ import AdminsCreatePage from "main/pages/Admin/AdminsCreatePage";
 import InstructorsIndexPage from "main/pages/Admin/InstructorsIndexPage";
 import InstructorsCreatePage from "main/pages/Admin/InstructorsCreatePage";
 import CoursesIndexPage from "main/pages/Admin/CoursesIndexPage";
+import QuartersPage from "main/pages/Admin/QuartersPage";
 import RecruitmentCoursesPage from "main/pages/Admin/RecruitmentCoursesPage";
 import ProtectedPage from "main/pages/Auth/ProtectedPage";
 import NotFoundPage from "main/pages/Auth/NotFoundPage";
@@ -159,6 +160,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<CoursesIndexPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/quarters"
+          element={
+            <ProtectedPage
+              component={<QuartersPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

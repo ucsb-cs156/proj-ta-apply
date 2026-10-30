@@ -10,6 +10,7 @@ import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
+import edu.ucsb.cs.taapply.services.UcsbQuarterService;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobContextConsumer;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
@@ -38,6 +39,10 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>A quarter whose API call fails is logged and skipped rather than aborting the run, so one
  * transient error does not discard the quarters that already succeeded.
+ *
+ * <p>The same range of quarters is also saved to the quarter calendar table from the UCSB quarter
+ * API (issue #151), before the courses are fetched; a failure there is logged and the courses are
+ * still fetched.
  */
 @Builder
 @Getter
@@ -52,6 +57,7 @@ public class PopulateCoursesJob implements JobContextConsumer {
   private UCSBCurriculumService ucsbCurriculumService;
   private CourseRepository courseRepository;
   private CatalogNameRepository catalogNameRepository;
+  private UcsbQuarterService ucsbQuarterService;
   private JobRateLimit jobRateLimit;
 
   @Override
@@ -62,6 +68,15 @@ public class PopulateCoursesJob implements JobContextConsumer {
         String.format(
             "Populating %s courses at level %s for %d quarter(s): %s to %s",
             subjectArea, level, quarters.size(), startQuarterYYYYQ, endQuarterYYYYQ));
+
+    // Issue #151: the quarter calendar for the same range, kept alongside the courses.
+    try {
+      int saved = ucsbQuarterService.loadQuarters(startQuarterYYYYQ, endQuarterYYYYQ).size();
+      ctx.log(String.format("Saved %d quarter(s) of the UCSB quarter calendar", saved));
+    } catch (Exception e) {
+      ctx.log(String.format("Error fetching the quarter calendar: %s", e.getMessage()));
+      log.error("Error fetching the quarter calendar", e);
+    }
 
     int added = 0;
     int updated = 0;

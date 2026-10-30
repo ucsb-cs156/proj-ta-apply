@@ -155,6 +155,23 @@ export default function HelpAdminsPage(): React.JSX.Element {
           courses belong in it too even though they rarely get TAs or ULAs.
         </p>
 
+        <h2 className="my-3 h4" id="quarters">
+          Quarters
+        </h2>
+        <p>
+          <Link to="/admin/quarters">Quarters</Link> is the UCSB quarter
+          calendar as this app has it: one card per quarter with its names, its
+          academic year and every date the UCSB API gives for it (first and last
+          days of classes and finals, the registration passes, the fee deadline,
+          the add deadlines). It is read-only. Opening the page asks UCSB for
+          any quarter newer than the latest on file, through the current quarter
+          plus one (plus two during Spring, so Summer and Fall are both there),
+          and populating the Courses page saves the quarters of its range as
+          well. The cards can be sorted newest or oldest first. These dates are
+          kept so that a later feature can offer them as fields in the notices
+          text, such as the first day of the recruitment&apos;s quarter.
+        </p>
+
         <h2 className="my-3 h4" id="recruitments">
           Recruitments
         </h2>

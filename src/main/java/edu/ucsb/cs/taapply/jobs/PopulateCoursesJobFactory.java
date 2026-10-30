@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.jobs;
 import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
+import edu.ucsb.cs.taapply.services.UcsbQuarterService;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,8 @@ public class PopulateCoursesJobFactory {
 
   @Autowired private CatalogNameRepository catalogNameRepository;
 
+  @Autowired private UcsbQuarterService ucsbQuarterService;
+
   @Autowired private JobRateLimit jobRateLimit;
 
   @Value("${app.subjectArea:CMPSC}")
@@ -38,6 +41,7 @@ public class PopulateCoursesJobFactory {
         .ucsbCurriculumService(ucsbCurriculumService)
         .courseRepository(courseRepository)
         .catalogNameRepository(catalogNameRepository)
+        .ucsbQuarterService(ucsbQuarterService)
         .jobRateLimit(jobRateLimit)
         .build();
   }
