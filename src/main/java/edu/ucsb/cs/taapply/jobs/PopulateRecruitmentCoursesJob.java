@@ -10,10 +10,12 @@ import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobContextConsumer;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -49,6 +51,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
   private UCSBCurriculumService ucsbCurriculumService;
   private CourseRepository courseRepository;
   private RecruitmentCourseRepository recruitmentCourseRepository;
+  private RecruitmentRepository recruitmentRepository;
   private JobRateLimit jobRateLimit;
 
   @Override
@@ -64,6 +67,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
 
     if (wanted.isEmpty()) {
       ctx.log("No courses are flagged for this type; nothing to do.");
+      stampRefreshed();
       return;
     }
 
@@ -138,6 +142,13 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
     ctx.log(
         String.format(
             "Finished: %d added, %d updated, %d left removed", added, updated, skippedRemoved));
+    stampRefreshed();
+  }
+
+  /** Records that the list is now as fresh as the API, so the admin page can say so (#124). */
+  private void stampRefreshed() {
+    recruitment.setLastPopulatedAt(LocalDateTime.now());
+    recruitmentRepository.save(recruitment);
   }
 
   /** Course ids flagged for this recruitment's type. */

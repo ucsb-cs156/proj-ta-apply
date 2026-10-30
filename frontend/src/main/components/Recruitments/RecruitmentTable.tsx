@@ -11,6 +11,8 @@ export type Recruitment = {
   primaryConsiderationDate: string | null;
   actualOpeningDate: string | null;
   actualClosingDate: string | null;
+  /** When the course list was last filled from the UCSB API (issue #124); null until it has been. */
+  lastPopulatedAt?: string | null;
 };
 
 /**

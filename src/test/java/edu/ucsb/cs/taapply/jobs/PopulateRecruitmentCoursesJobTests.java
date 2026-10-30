@@ -1,6 +1,8 @@
 package edu.ucsb.cs.taapply.jobs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,10 +22,12 @@ import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.entities.Job;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +48,7 @@ public class PopulateRecruitmentCoursesJobTests {
   @Mock private UCSBCurriculumService ucsbCurriculumService;
   @Mock private CourseRepository courseRepository;
   @Mock private RecruitmentCourseRepository recruitmentCourseRepository;
+  @Mock private RecruitmentRepository recruitmentRepository;
   @Mock private JobRateLimit jobRateLimit;
 
   private JobContext ctx;
@@ -64,8 +69,51 @@ public class PopulateRecruitmentCoursesJobTests {
         .ucsbCurriculumService(ucsbCurriculumService)
         .courseRepository(courseRepository)
         .recruitmentCourseRepository(recruitmentCourseRepository)
+        .recruitmentRepository(recruitmentRepository)
         .jobRateLimit(jobRateLimit)
         .build();
+  }
+
+  // ---- last refreshed (issue #124) ----
+
+  @Test
+  public void a_successful_run_stamps_when_the_recruitment_was_last_populated() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(List.of(offering("CMPSC   156  ", section("07492", "0100", "CONRAD P"))));
+    PopulateRecruitmentCoursesJob job = job(RecruitmentType.TA);
+    LocalDateTime before = LocalDateTime.now();
+
+    job.accept(ctx);
+
+    LocalDateTime stamped = job.getRecruitment().getLastPopulatedAt();
+    assertNotNull(stamped);
+    assertFalse(stamped.isBefore(before));
+    verify(recruitmentRepository, times(1)).save(job.getRecruitment());
+  }
+
+  @Test
+  public void a_run_with_nothing_flagged_still_counts_as_a_refresh() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", false, false)));
+    PopulateRecruitmentCoursesJob job = job(RecruitmentType.TA);
+
+    job.accept(ctx);
+
+    assertNotNull(job.getRecruitment().getLastPopulatedAt());
+    verify(recruitmentRepository, times(1)).save(job.getRecruitment());
+  }
+
+  @Test
+  public void a_failed_fetch_does_not_stamp_the_recruitment() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenThrow(new RuntimeException("upstream 500"));
+    PopulateRecruitmentCoursesJob job = job(RecruitmentType.TA);
+
+    assertThrows(RuntimeException.class, () -> job.accept(ctx));
+
+    assertNull(job.getRecruitment().getLastPopulatedAt());
+    verify(recruitmentRepository, never()).save(any());
   }
 
   private static Course course(String id, boolean needsTa, boolean needsUla) {
