@@ -19,6 +19,7 @@ const recruitmentCoursesFixtures = {
       summerSession: null,
       removed: false,
       stale: false,
+      manuallyAdded: false,
     },
     {
       id: 2,
@@ -37,6 +38,7 @@ const recruitmentCoursesFixtures = {
       summerSession: null,
       removed: false,
       stale: false,
+      manuallyAdded: false,
     },
     {
       id: 3,
@@ -55,6 +57,7 @@ const recruitmentCoursesFixtures = {
       summerSession: null,
       removed: false,
       stale: false,
+      manuallyAdded: false,
     },
     {
       id: 4,
@@ -73,6 +76,7 @@ const recruitmentCoursesFixtures = {
       summerSession: null,
       removed: true,
       stale: false,
+      manuallyAdded: false,
     },
   ],
 };
@@ -81,6 +85,13 @@ const recruitmentCoursesFixtures = {
 recruitmentCoursesFixtures.oneStale = {
   ...recruitmentCoursesFixtures.fourCourses[2],
   stale: true,
+};
+
+/** A lecture an admin added by enroll code (issue #125). */
+recruitmentCoursesFixtures.oneManual = {
+  ...recruitmentCoursesFixtures.fourCourses[3],
+  removed: false,
+  manuallyAdded: true,
 };
 
 /** The first lecture of 1A as the schedule has cancelled it (issue #123). */

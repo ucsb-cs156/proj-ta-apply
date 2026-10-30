@@ -85,6 +85,13 @@ export default function CoursesIndexPage(): React.JSX.Element {
           applications and/or ULA applications the next time the course is
           offered.
         </p>
+        <p data-testid="CoursesIndexPage-menu-note">
+          Note that this list is used to populate the menu that allows students
+          (including graduate students applying to be TAs) to easily add UCSB{" "}
+          {subjectArea} courses they have taken to their application. So it
+          should be populated with graduate courses too, even though we do not
+          typically assign TAs or ULAs to these courses.
+        </p>
 
         <Form
           onSubmit={(e) => {

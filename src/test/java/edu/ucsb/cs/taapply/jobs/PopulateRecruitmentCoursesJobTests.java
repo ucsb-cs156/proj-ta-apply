@@ -420,6 +420,120 @@ public class PopulateRecruitmentCoursesJobTests {
     assertEquals("cancelled", RecruitmentCourse.CANCELLED);
   }
 
+  // ---- rows added by hand (issue #125) ----
+
+  private static RecruitmentCourse manualRow(long id, String courseId, String enrollCode) {
+    RecruitmentCourse row = existingRow(id, courseId, enrollCode, false, false);
+    row.setManuallyAdded(true);
+    row.setInstructor("OLD NAME");
+    return row;
+  }
+
+  /** Its course is not flagged, yet the row is refreshed and not stale while the API has it. */
+  @Test
+  public void a_manually_added_row_of_an_unflagged_course_is_refreshed_not_staled()
+      throws Exception {
+    when(courseRepository.findAll())
+        .thenReturn(
+            List.of(course("CMPSC   156", true, false), course("CMPSC     8", false, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(
+            List.of(
+                offering("CMPSC   156  ", section("07492", "0100", "CONRAD P")),
+                offering("CMPSC     8  ", section("07100", "0100", "GAUCHO C"))));
+    RecruitmentCourse manual = manualRow(2L, "CMPSC     8", "07100");
+    manual.setStale(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(manual));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    assertFalse(manual.isStale());
+    assertEquals("GAUCHO C", manual.getInstructor());
+    assertTrue(manual.isManuallyAdded());
+    verify(recruitmentCourseRepository, times(1)).save(manual);
+    assertTrue(jobStarted.getLog().contains("CMPSC     8 section 0100 (added by hand)"));
+    assertTrue(
+        jobStarted
+            .getLog()
+            .contains("Finished: 1 added, 1 updated, 0 left removed, 0 marked stale, 1 un-staled"),
+        jobStarted.getLog());
+  }
+
+  /** A fresh manual row is simply refreshed: updated, nothing un-staled. */
+  @Test
+  public void a_fresh_manually_added_row_counts_as_updated_only() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(
+            List.of(
+                offering("CMPSC   156  ", section("07492", "0100", "CONRAD P")),
+                offering("CMPSC     8  ", section("07100", "0100", "GAUCHO C"))));
+    RecruitmentCourse manual = manualRow(2L, "CMPSC     8", "07100");
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(manual));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    assertFalse(manual.isStale());
+    assertEquals("GAUCHO C", manual.getInstructor());
+    assertTrue(
+        jobStarted
+            .getLog()
+            .contains("Finished: 1 added, 1 updated, 0 left removed, 0 marked stale, 0 un-staled"),
+        jobStarted.getLog());
+  }
+
+  /** Once its section is gone from the API, a manual row goes stale like any other. */
+  @Test
+  public void a_manually_added_row_whose_section_is_gone_is_marked_stale() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(List.of(offering("CMPSC   156  ", section("07492", "0100", "CONRAD P"))));
+    RecruitmentCourse manual = manualRow(2L, "CMPSC     8", "07100");
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(manual));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    assertTrue(manual.isStale());
+    assertEquals("OLD NAME", manual.getInstructor());
+  }
+
+  /** A manual row of a flagged course is handled by the ordinary path, once. */
+  @Test
+  public void a_manually_added_row_of_a_flagged_course_is_not_refreshed_twice() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(List.of(offering("CMPSC   156  ", section("07492", "0100", "CONRAD P"))));
+    RecruitmentCourse manual = manualRow(2L, "CMPSC   156", "07492");
+    when(recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(7L, "07492"))
+        .thenReturn(Optional.of(manual));
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(manual));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    verify(recruitmentCourseRepository, times(1)).save(manual);
+    assertTrue(jobStarted.getLog().contains("Finished: 0 added, 1 updated"), jobStarted.getLog());
+  }
+
+  /** A removed manual row is the admin's business: neither refreshed nor marked. */
+  @Test
+  public void a_removed_manually_added_row_is_left_alone() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(
+            List.of(
+                offering("CMPSC   156  ", section("07492", "0100", "CONRAD P")),
+                offering("CMPSC     8  ", section("07100", "0100", "GAUCHO C"))));
+    RecruitmentCourse manual = manualRow(2L, "CMPSC     8", "07100");
+    manual.setRemoved(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(manual));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    verify(recruitmentCourseRepository, never()).save(manual);
+    assertEquals("OLD NAME", manual.getInstructor());
+    assertFalse(manual.isStale());
+  }
+
   // ---- primaries ----
 
   /** The heart of it: two lectures are two rows, each with its own instructor and enrollment. */

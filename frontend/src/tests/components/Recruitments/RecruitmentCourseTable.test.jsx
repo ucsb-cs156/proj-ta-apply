@@ -178,6 +178,24 @@ describe("RecruitmentCourseTable tests", () => {
     ).toHaveTextContent("Remove");
   });
 
+  /** Issue #125: a row added by hand says so beside its number. */
+  test("a manually added row carries a manual badge after the course number", () => {
+    renderTable([notRemoved[0], recruitmentCoursesFixtures.oneManual]);
+
+    const badge = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-1-manual",
+    );
+    expect(badge).toHaveTextContent("manual");
+    expect(badge).toHaveClass("badge", "bg-info", "text-dark", "ms-2");
+    expect(badge).toHaveAttribute("title", "Added by an admin by enroll code");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-1-col-courseId"),
+    ).toContainElement(badge);
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-cell-row-0-manual"),
+    ).toBeNull();
+  });
+
   /** Issue #123: a cancelled lecture gets a red badge in place of the plain status. */
   test("a cancelled row shows a red Cancelled badge in the Status column", () => {
     renderTable([recruitmentCoursesFixtures.oneCancelled, notRemoved[1]]);
