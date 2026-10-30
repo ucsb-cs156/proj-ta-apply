@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Maven settings for the Docker build only (issue #157). The Dokku host builds every image from
+  scratch, and a busy day of deploys got its address rate-limited by Maven Central (HTTP 429), which
+  then failed every build. Google keeps a complete, continuously synchronised mirror of Central;
+  routing the build's Central traffic there means a throttled host still builds. Maven checks the
+  artifacts' checksums as usual. Developers' own builds do not use this file.
+
+  Only "central" is mirrored: jitpack.io (lib-jobs) and any other repository in pom.xml are untouched.
+  To go back to Central itself, drop the "-s /home/app/docker/maven-settings.xml" from the Dockerfile.
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+  <mirrors>
+    <mirror>
+      <id>google-maven-central</id>
+      <name>Google's mirror of Maven Central</name>
+      <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>
