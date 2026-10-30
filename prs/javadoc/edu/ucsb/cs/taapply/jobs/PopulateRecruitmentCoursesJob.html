@@ -97,6 +97,9 @@ recruitment's type, that is actually offered in its quarter.
   <li>A row the admin removed stays removed. Re-running must not undo that decision.
   <li>Which courses are eligible follows the recruitment type: TA reads <code>needsTa</code>, ULA
       reads <code>needsUla</code>.
+  <li>A row the run did not find (its section gone from the API, or its course no longer flagged)
+      is marked <code>stale</code>, and a row it did find is un-staled (issue #122). An empty API
+      response changes no flags, so a bad fetch cannot mark everything stale at once.
 </ul></div>
 </div>
 </section>
