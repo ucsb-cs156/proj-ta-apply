@@ -165,9 +165,9 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator firstRow = page.getByTestId("RecruitmentsIndexPage-card-0-quarter");
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
     waitFor(firstRow);
-    page.getByTestId("RecruitmentsIndexPage-card-0-courses-button").click();
+    page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 
     Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     waitFor(firstCourse);
