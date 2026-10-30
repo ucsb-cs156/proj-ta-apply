@@ -4,6 +4,7 @@ import { Button, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useNoticeFillIn } from "main/utils/useNoticeFillIn";
 import ApplicationSummary from "main/components/Applications/ApplicationSummary";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
@@ -43,6 +44,7 @@ export default function AdminApplicationPage(): React.JSX.Element {
   const recruitment = (recruitments ?? []).find(
     (r) => r.id === application?.recruitmentId,
   );
+  const noticeFillIn = useNoticeFillIn(recruitment);
 
   // The notice version the applicant agreed to, shown back exactly as they saw it.
   const agreedId = application?.noticeVersionId ?? null;
@@ -128,15 +130,7 @@ export default function AdminApplicationPage(): React.JSX.Element {
               application={application}
               type={recruitment?.type ?? "TA"}
               notice={notice}
-              noticeFillIn={
-                recruitment
-                  ? {
-                      quarter: recruitment.quarter,
-                      primaryConsiderationDate:
-                        recruitment.primaryConsiderationDate,
-                    }
-                  : null
-              }
+              noticeFillIn={noticeFillIn}
               testIdPrefix="AdminApplicationPage-summary"
             />
 

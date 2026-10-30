@@ -15,6 +15,7 @@ import PostApplicationCommentsForm, {
 import type { Application } from "main/components/Applications/ApplicationTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useNoticeFillIn } from "main/utils/useNoticeFillIn";
 import { useCurrentUser } from "main/utils/currentUser";
 import { isEditable, phaseOf } from "main/utils/applicationAccess";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
@@ -43,6 +44,7 @@ export default function ApplicationPage(): React.JSX.Element {
   const recruitment = (applicable ?? []).find(
     (r) => r.id === application?.recruitmentId,
   );
+  const noticeFillIn = useNoticeFillIn(recruitment);
 
   const { data: courses } = useBackend<string[]>(
     ["/api/recruitments/courses", application?.recruitmentId],
@@ -182,15 +184,7 @@ export default function ApplicationPage(): React.JSX.Element {
                 topics={options?.topics ?? []}
                 interests={options?.interests ?? []}
                 notice={notice}
-                noticeFillIn={
-                  recruitment
-                    ? {
-                        quarter: recruitment.quarter,
-                        primaryConsiderationDate:
-                          recruitment.primaryConsiderationDate,
-                      }
-                    : null
-                }
+                noticeFillIn={noticeFillIn}
                 initialContents={application}
                 defaultNames={{
                   firstName: currentUser.root?.user?.givenName,
@@ -239,15 +233,7 @@ export default function ApplicationPage(): React.JSX.Element {
                   application={application}
                   type={recruitment?.type ?? "TA"}
                   notice={agreedNotice}
-                  noticeFillIn={
-                    recruitment
-                      ? {
-                          quarter: recruitment.quarter,
-                          primaryConsiderationDate:
-                            recruitment.primaryConsiderationDate,
-                        }
-                      : null
-                  }
+                  noticeFillIn={noticeFillIn}
                   testIdPrefix="ApplicationPage-summary"
                 />
               </>
@@ -270,15 +256,7 @@ export default function ApplicationPage(): React.JSX.Element {
                   application={application}
                   type={recruitment?.type ?? "TA"}
                   notice={agreedNotice}
-                  noticeFillIn={
-                    recruitment
-                      ? {
-                          quarter: recruitment.quarter,
-                          primaryConsiderationDate:
-                            recruitment.primaryConsiderationDate,
-                        }
-                      : null
-                  }
+                  noticeFillIn={noticeFillIn}
                   testIdPrefix="ApplicationPage-summary"
                 />
               </>

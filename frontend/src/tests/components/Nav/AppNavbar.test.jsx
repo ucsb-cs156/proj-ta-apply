@@ -194,6 +194,7 @@ describe("AppNavbar tests", () => {
       "/help/instructors",
     );
     expect(screen.queryByText("For Admins")).toBeNull();
+    expect(screen.queryByText("Notices Fields")).toBeNull();
     expect(screen.queryByText("CSV Upload/Download Formats")).toBeNull();
   });
 
@@ -230,6 +231,10 @@ describe("AppNavbar tests", () => {
       "href",
       "/help/admins",
     );
+    expect(screen.getByText("Notices Fields")).toHaveAttribute(
+      "href",
+      "/help/notice-fields",
+    );
     // An admin who is not an instructor does not get the instructors page.
     expect(screen.queryByText("For Instructors")).toBeNull();
     expect(
@@ -243,6 +248,7 @@ describe("AppNavbar tests", () => {
       "For TA Applicants",
       "For ULA Applicants",
       "For Admins",
+      "Notices Fields",
       "CSV Upload/Download Formats",
     ]);
   });

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import axios from "axios";
@@ -8,7 +8,11 @@ import HelpTaApplicantsPage from "main/pages/Help/HelpTaApplicantsPage";
 import HelpUlaApplicantsPage from "main/pages/Help/HelpUlaApplicantsPage";
 import HelpInstructorsPage from "main/pages/Help/HelpInstructorsPage";
 import HelpAdminsPage from "main/pages/Help/HelpAdminsPage";
-import { NOTICE_FIELD_EXAMPLES } from "main/utils/noticeFields";
+import HelpNoticeFieldsPage from "main/pages/Help/HelpNoticeFieldsPage";
+import {
+  NOTICE_FIELD_EXAMPLES,
+  QUARTER_NOTICE_FIELDS,
+} from "main/utils/noticeFields";
 import {
   ADMIN_MENU_ENTRIES,
   VIDEO_INSTRUCTIONS_URL,
@@ -157,35 +161,19 @@ describe("Help pages (issue #140)", () => {
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
     expect(screen.getByText(/ADMIN_EMAILS/)).toBeInTheDocument();
-    // Issue #150: the notices fields, documented under TA App Settings with the issue's examples.
-    const fieldsHeading = document.getElementById("notice-fields");
-    expect(fieldsHeading.tagName).toBe("H3");
-    expect(fieldsHeading).toHaveTextContent("Fields in the notices text");
-    expect(
-      screen.getByTestId("HelpAdminsPage-notice-fields"),
-    ).toHaveTextContent(
-      "${quarter} becomes the quarter, written out (for example Winter 2026), and ${primaryConsiderationDate} becomes the primary consideration date (for example January 20, 2026)",
+    // Issues #150 and #153: a pointer to the Notices Fields page, which has the details.
+    const pointer = screen.getByTestId("HelpAdminsPage-notice-fields");
+    expect(pointer.id).toBe("notice-fields");
+    expect(pointer).toHaveTextContent(
+      "its quarter, its primary consideration date, and every date of that quarter from the Quarters calendar. They are all listed, with examples, on Help → Notices Fields.",
     );
     expect(
-      [
-        ...screen
-          .getByTestId("HelpAdminsPage-notice-field-examples")
-          .querySelectorAll("li"),
-      ].map((li) => li.textContent),
-    ).toEqual(NOTICE_FIELD_EXAMPLES);
+      within(pointer).getByRole("link", { name: "Help → Notices Fields" }),
+    ).toHaveAttribute("href", "/help/notice-fields");
     expect(screen.getByRole("link", { name: "fields" })).toHaveAttribute(
       "href",
       "#notice-fields",
     );
-    expect(
-      screen.getByTestId("HelpAdminsPage-notice-fields").textContent,
-    ).toMatch(
-      /Anything else between \$\{ and \} is left exactly as typed\. Two examples:$/,
-    );
-    expect(
-      [...screen.getByTestId("HelpAdminsPage-flow").querySelectorAll("li")][1]
-        .textContent,
-    ).toMatch(/under Recruitments on your home page, create a recruitment/);
     expect(
       screen.getByRole("link", { name: "CSV Upload/Download Formats" }),
     ).toHaveAttribute("href", "/help/csv");
@@ -253,6 +241,70 @@ describe("Help pages (issue #140)", () => {
         .querySelectorAll("li"),
     ].map((li) => li.textContent);
     expect(items[3]).toMatch(/See the Instructions for preparing your video\./);
+  });
+
+  /** Issue #153: every field on one admin-only page, each shown with a sample value. */
+  test("the Notices Fields page lists every field with an example, and the issue's examples filled in", async () => {
+    renderPage(<HelpNoticeFieldsPage />);
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Notices Fields" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("HelpNoticeFieldsPage-field-quarter").textContent,
+    ).toBe("${quarter}The recruitment's quarter, written outFall 2021");
+    expect(
+      screen.getByTestId("HelpNoticeFieldsPage-field-primaryConsiderationDate")
+        .textContent,
+    ).toBe(
+      "${primaryConsiderationDate}Its primary consideration dateSeptember 20, 2021",
+    );
+    const rows = screen
+      .getByTestId("HelpNoticeFieldsPage-quarter-fields")
+      .querySelectorAll("tbody tr");
+    expect(rows).toHaveLength(QUARTER_NOTICE_FIELDS.length);
+    expect(
+      screen.getByTestId("HelpNoticeFieldsPage-field-firstDayOfClasses")
+        .textContent,
+    ).toBe("${firstDayOfClasses}First day of classesOctober 1, 2021");
+    expect(
+      screen.getByTestId("HelpNoticeFieldsPage-field-pass1Begin").textContent,
+    ).toBe("${pass1Begin}Pass 1 beginsMay 10, 2021 at 9:00 AM");
+    expect(
+      screen.getByTestId("HelpNoticeFieldsPage-field-qyy").textContent,
+    ).toBe("${qyy}The quarter in short form, e.g. F21F21");
+    for (const { key } of QUARTER_NOTICE_FIELDS) {
+      const cells = screen
+        .getByTestId(`HelpNoticeFieldsPage-field-${key}`)
+        .querySelectorAll("td");
+      expect(cells[0].textContent).toBe("${" + key + "}");
+      expect(cells[2].textContent).not.toContain("${");
+      expect(cells[2].textContent).not.toBe("");
+    }
+    const examples = [
+      ...screen
+        .getByTestId("HelpNoticeFieldsPage-examples")
+        .querySelectorAll("li"),
+    ];
+    expect(examples).toHaveLength(NOTICE_FIELD_EXAMPLES.length + 1);
+    expect(examples[0].querySelector("code").textContent).toBe(
+      NOTICE_FIELD_EXAMPLES[0],
+    );
+    expect(examples[0].querySelector("em").textContent).toBe(
+      "If you are a BS/MS student, and you will be in graduate status during Fall 2021, please apply to be a TA instead of applying to be a ULA.",
+    );
+    expect(examples[1].querySelector("em").textContent).toMatch(
+      /^Applications received by September 20, 2021 will be given full consideration\./,
+    );
+    expect(examples[2].querySelector("em").textContent).toBe(
+      "Classes begin on October 1, 2021; the last day to add a course is October 18, 2021.",
+    );
+    expect(screen.getByRole("link", { name: "Quarters" })).toHaveAttribute(
+      "href",
+      "/admin/quarters",
+    );
+    expect(
+      screen.getByText(/The examples are for FALL 2021\./),
+    ).toBeInTheDocument();
   });
 
   test("arriving at the admins page with a hash scrolls to that section", async () => {

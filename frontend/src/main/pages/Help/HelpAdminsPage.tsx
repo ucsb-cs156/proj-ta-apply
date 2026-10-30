@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router";
 import { Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { ADMIN_MENU_ENTRIES } from "main/utils/helpPages";
-import { NOTICE_FIELD_EXAMPLES } from "main/utils/noticeFields";
 
 /**
  * The admin's handbook: /help/admins (issue #140). A table of every option on the Admin and
@@ -252,28 +251,13 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Markdown with a live preview; each save is kept as a new version, and
           each application records which version its applicant agreed to.
         </p>
-        <h3 className="h6 mt-3" id="notice-fields">
-          Fields in the notices text
-        </h3>
-        <p data-testid="HelpAdminsPage-notice-fields">
-          The text can carry two fields that are filled in for each applicant
-          from their recruitment: <code>{"${quarter}"}</code> becomes the
-          quarter, written out (for example <em>Winter 2026</em>), and{" "}
-          <code>{"${primaryConsiderationDate}"}</code> becomes the primary
-          consideration date (for example <em>January 20, 2026</em>). The
-          editor&apos;s preview shows the fields as written, since it belongs to
-          no recruitment; the applicant&apos;s form, the view of a submitted
-          application, and the admin&apos;s Test Application all show them
-          filled in. Anything else between <code>{"${"}</code> and{" "}
-          <code>{"}"}</code> is left exactly as typed. Two examples:
+        <p id="notice-fields" data-testid="HelpAdminsPage-notice-fields">
+          The text can carry fields that are filled in for each applicant from
+          their recruitment: its quarter, its primary consideration date, and
+          every date of that quarter from the Quarters calendar. They are all
+          listed, with examples, on{" "}
+          <Link to="/help/notice-fields">Help &rarr; Notices Fields</Link>.
         </p>
-        <ul data-testid="HelpAdminsPage-notice-field-examples">
-          {NOTICE_FIELD_EXAMPLES.map((example) => (
-            <li key={example}>
-              <code>{example}</code>
-            </li>
-          ))}
-        </ul>
         <p>
           The <strong>Import Legacy TA Applications</strong> card loads a CSV
           exported from the old PHP application into a recruitment, for the

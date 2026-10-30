@@ -2,10 +2,14 @@ import { describe, expect, test } from "vitest";
 import {
   fillNoticeFields,
   longDate,
+  longDateTime,
   NOTICE_FIELD_EXAMPLES,
   NOTICE_FIELDS,
   NOTICE_FIELDS_HINT,
+  QUARTER_NAME_FIELDS,
+  QUARTER_NOTICE_FIELDS,
   quarterName,
+  SAMPLE_CALENDAR,
 } from "main/utils/noticeFields";
 
 describe("noticeFields (issue #150)", () => {
@@ -51,10 +55,79 @@ describe("noticeFields (issue #150)", () => {
     expect(fillNoticeFields("plain", { quarter: "20261" })).toBe("plain");
   });
 
+  // ---- issue #153: the quarter calendar's fields ----
+
+  test("longDateTime writes the date out, with the time only for a pass", () => {
+    expect(longDateTime("2021-05-10T09:00:00", true)).toBe(
+      "May 10, 2021 at 9:00 AM",
+    );
+    expect(longDateTime("2021-05-10T13:05:00", true)).toBe(
+      "May 10, 2021 at 1:05 PM",
+    );
+    expect(longDateTime("2021-05-10T00:00:00", true)).toBe(
+      "May 10, 2021 at 12:00 AM",
+    );
+    expect(longDateTime("2021-05-10T12:30:00", true)).toBe(
+      "May 10, 2021 at 12:30 PM",
+    );
+    expect(longDateTime("2021-05-10T09:00:00", false)).toBe("May 10, 2021");
+    expect(longDateTime("2021-05-10", true)).toBe("May 10, 2021");
+  });
+
+  test("the calendar fields: four names then the thirteen dates, every one filled from a row", () => {
+    expect(QUARTER_NAME_FIELDS.map((f) => f.key)).toEqual([
+      "qyy",
+      "name",
+      "category",
+      "academicYear",
+    ]);
+    expect(QUARTER_NOTICE_FIELDS).toHaveLength(17);
+    expect(QUARTER_NOTICE_FIELDS.slice(0, 4)).toEqual(QUARTER_NAME_FIELDS);
+    expect(QUARTER_NOTICE_FIELDS[4].key).toBe("firstDayOfQuarter");
+    expect(QUARTER_NOTICE_FIELDS[16]).toEqual({
+      key: "pass3Begin",
+      label: "Pass 3 begins",
+    });
+    const fillIn = { calendar: SAMPLE_CALENDAR };
+    expect(
+      fillNoticeFields("${qyy} ${name} ${category} ${academicYear}", fillIn),
+    ).toBe("F21 FALL 2021 FALL 2021-2022");
+    expect(
+      fillNoticeFields(
+        "Classes begin ${firstDayOfClasses}; pass 1 at ${pass1Begin}.",
+        fillIn,
+      ),
+    ).toBe("Classes begin October 1, 2021; pass 1 at May 10, 2021 at 9:00 AM.");
+    for (const { key } of QUARTER_NOTICE_FIELDS) {
+      expect(fillNoticeFields("${" + key + "}", fillIn)).not.toContain("${");
+    }
+  });
+
+  test("a calendar field with no value, or no calendar, stays as written; the recruitment's own fields still fill", () => {
+    const text =
+      "${quarter} ${firstDayOfClasses} ${lastDayThirdWeek} ${quarterX}";
+    expect(
+      fillNoticeFields(text, {
+        quarter: "20214",
+        calendar: {
+          ...SAMPLE_CALENDAR,
+          lastDayThirdWeek: null,
+          firstDayOfClasses: "",
+        },
+      }),
+    ).toBe("Fall 2021 ${firstDayOfClasses} ${lastDayThirdWeek} ${quarterX}");
+    expect(fillNoticeFields(text, { quarter: "20214", calendar: null })).toBe(
+      "Fall 2021 ${firstDayOfClasses} ${lastDayThirdWeek} ${quarterX}",
+    );
+    expect(fillNoticeFields(text, { quarter: "20214" })).toBe(
+      "Fall 2021 ${firstDayOfClasses} ${lastDayThirdWeek} ${quarterX}",
+    );
+  });
+
   test("the field names, the hint and the issue's two examples", () => {
     expect(NOTICE_FIELDS).toEqual(["quarter", "primaryConsiderationDate"]);
     expect(NOTICE_FIELDS_HINT).toBe(
-      "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place. The preview shows them as written.",
+      "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place; the various dates of that quarter, such as ${firstDayOfClasses}, can be inserted the same way. The preview shows them as written.",
     );
     expect(NOTICE_FIELD_EXAMPLES).toEqual([
       "If you are a BS/MS student, and you will be in graduate status during ${quarter}, please apply to be a TA instead of applying to be a ULA.",

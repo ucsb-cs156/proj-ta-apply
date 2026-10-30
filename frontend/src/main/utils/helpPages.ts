@@ -28,6 +28,7 @@ export const HELP_PAGES: HelpPage[] = [
     audience: "instructor",
   },
   { path: "/help/admins", label: "For Admins", audience: "admin" },
+  { path: "/help/notice-fields", label: "Notices Fields", audience: "admin" },
   {
     path: "/help/csv",
     label: "CSV Upload/Download Formats",

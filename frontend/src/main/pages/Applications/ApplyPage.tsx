@@ -11,6 +11,7 @@ import {
 import type { Application } from "main/components/Applications/ApplicationTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useNoticeFillIn } from "main/utils/useNoticeFillIn";
 import { useCurrentUser } from "main/utils/currentUser";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { NoticeVersion } from "main/utils/notices";
@@ -85,6 +86,7 @@ export default function ApplyPage(): React.JSX.Element {
   const recruitment = (applicable ?? []).find(
     (r) => String(r.id) === String(recruitmentId),
   );
+  const noticeFillIn = useNoticeFillIn(recruitment);
   const existing = (mine ?? []).find(
     (a) => String(a.recruitmentId) === String(recruitmentId),
   );
@@ -145,15 +147,7 @@ export default function ApplyPage(): React.JSX.Element {
             topics={options?.topics ?? []}
             interests={options?.interests ?? []}
             notice={(notices ?? [])[0] ?? null}
-            noticeFillIn={
-              recruitment
-                ? {
-                    quarter: recruitment.quarter,
-                    primaryConsiderationDate:
-                      recruitment.primaryConsiderationDate,
-                  }
-                : null
-            }
+            noticeFillIn={noticeFillIn}
             initialContents={(prefill ?? [])[0]}
             defaultNames={{
               firstName: currentUser.root?.user?.givenName,

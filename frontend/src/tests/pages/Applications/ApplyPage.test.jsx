@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -118,6 +118,55 @@ describe("ApplyPage tests", () => {
   });
 
   /** The notice shown is the current one for the recruitment's type, and must be agreed to. */
+  /** Issue #153: the quarter calendar's fields, from /api/quarters/one for the recruitment's quarter. */
+  test("fills a quarter calendar field from the quarter on file, and leaves it when none is", async () => {
+    axiosMock.onGet("/api/notices/current").reply(200, [
+      {
+        ...noticesFixtures.ulaV1,
+        content: "Classes begin ${firstDayOfClasses} in ${name}.",
+      },
+    ]);
+    axiosMock
+      .onGet("/api/quarters/one", { params: { yyyyq: "20261" } })
+      .reply(200, {
+        quarter: "20261",
+        qyy: "W26",
+        name: "WINTER 2026",
+        firstDayOfClasses: "2026-01-05T00:00:00",
+      });
+    renderPage();
+    const filled = await screen.findByTestId("ApplyPage-notice-content");
+    await waitFor(() =>
+      expect(filled).toHaveTextContent(
+        "Classes begin January 5, 2026 in WINTER 2026.",
+      ),
+    );
+    expect(
+      axiosMock.history.get.filter((r) => r.url === "/api/quarters/one")[0]
+        .params,
+    ).toEqual({ yyyyq: "20261" });
+  });
+
+  test("a quarter not on file leaves the calendar fields as written, quietly", async () => {
+    axiosMock.onGet("/api/notices/current").reply(200, [
+      {
+        ...noticesFixtures.ulaV1,
+        content: "Classes begin ${firstDayOfClasses} in ${name}.",
+      },
+    ]);
+    axiosMock.onGet("/api/quarters/one").reply(404, { message: "not on file" });
+    renderPage();
+    const content = await screen.findByTestId("ApplyPage-notice-content");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/quarters/one"),
+      ).toHaveLength(1),
+    );
+    expect(content).toHaveTextContent(
+      "Classes begin ${firstDayOfClasses} in ${name}.",
+    );
+  });
+
   /** Issue #150: the notice's fields are filled from the recruitment being applied to. */
   test("fills the notice's quarter and date fields from the recruitment", async () => {
     axiosMock.onGet("/api/notices/current").reply(200, [
