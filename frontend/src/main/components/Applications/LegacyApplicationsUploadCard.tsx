@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Button, Card, Form, Modal } from "react-bootstrap";
+import { Button, Card, Form, InputGroup, Modal } from "react-bootstrap";
 import { Link } from "react-router";
 import { toast } from "react-toastify";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
@@ -143,31 +143,32 @@ export default function LegacyApplicationsUploadCard({
                 ))}
               </Form.Select>
             </Form.Group>
-            <Form.Group className="mb-2" controlId={id("file")}>
+            <Form.Group controlId={id("file")}>
               <Form.Label>{words.file}</Form.Label>
-              <Form.Control
-                ref={fileInput}
-                size="sm"
-                type="file"
-                accept=".csv"
-                data-testid={id("file")}
-                onChange={(e) =>
-                  setFile(
-                    // Stryker disable next-line all : a file input's files list is never null
-                    (e.target as HTMLInputElement).files?.[0] ?? null,
-                  )
-                }
-              />
+              {/* Natural width (issue #87): the file picker and the Import button side by side. */}
+              <InputGroup size="sm" className="d-inline-flex w-auto">
+                <Form.Control
+                  ref={fileInput}
+                  type="file"
+                  accept=".csv"
+                  data-testid={id("file")}
+                  onChange={(e) =>
+                    setFile(
+                      // Stryker disable next-line all : a file input's files list is never null
+                      (e.target as HTMLInputElement).files?.[0] ?? null,
+                    )
+                  }
+                />
+                <Button
+                  type="submit"
+                  variant="outline-primary"
+                  data-testid={id("button")}
+                  disabled={quarter === "" || file === null}
+                >
+                  Import
+                </Button>
+              </InputGroup>
             </Form.Group>
-            <Button
-              type="submit"
-              size="sm"
-              variant="outline-primary"
-              data-testid={id("button")}
-              disabled={quarter === "" || file === null}
-            >
-              Import
-            </Button>
           </Form>
         )}
       </Card.Body>

@@ -539,3 +539,13 @@ stretched across the columns. The explanation on **Admin > Courses** now reads "
 courses in CMPSC that have been offered in the quarters you have populated this table from" and
 "the next time the course is offered".
 
+
+# Twenty-seventh Iteration
+
+The three CSV upload widgets share one compact layout (issue #87). The topic and interest lists on
+**TA App Settings** and **ULA App Settings** (`NameListCard`), the legacy application import on those
+pages (`LegacyApplicationsUploadCard`) and the bulk email upload on **Admin > Instructors**
+(`RoleEmailCsvUploadForm`) each put the file picker and its button side by side in a small
+`InputGroup` that takes its natural width (`d-inline-flex w-auto`), so the button sits right after
+the file name instead of at the far edge of the page or on the next line.
+

@@ -347,6 +347,22 @@ describe("NameListCard tests", () => {
     );
   });
 
+  /** Issue #87: the upload bar is as wide as the file picker and its button, not the page. */
+  test("the file picker and the Upload CSV button share a natural-width input group", async () => {
+    renderCard();
+    const input = await screen.findByTestId("Card-csv-upload-input");
+    const group = input.parentElement;
+    expect(group).toHaveClass(
+      "input-group",
+      "input-group-sm",
+      "d-inline-flex",
+      "w-auto",
+    );
+    expect(screen.getByTestId("Card-csv-upload-button").parentElement).toBe(
+      group,
+    );
+  });
+
   test("the Upload CSV button is disabled until a file is chosen", async () => {
     renderCard();
     await screen.findByTestId("Card-table-cell-row-0-col-name");
