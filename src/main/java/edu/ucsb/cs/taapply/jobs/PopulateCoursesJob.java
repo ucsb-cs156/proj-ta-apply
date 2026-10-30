@@ -1,8 +1,13 @@
 package edu.ucsb.cs.taapply.jobs;
 
+import edu.ucsb.cs.taapply.entity.CatalogName;
 import edu.ucsb.cs.taapply.entity.Course;
 import edu.ucsb.cs.taapply.models.Quarter;
 import edu.ucsb.cs.taapply.models.UcsbCourse;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
+import edu.ucsb.cs.taapply.models.UcsbInstructor;
+import edu.ucsb.cs.taapply.models.UcsbSection;
+import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.services.JobContext;
@@ -27,6 +32,10 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>Nothing is ever deleted, including courses outside the requested range.
  * </ul>
  *
+ * <p>Each quarter is also asked for its offerings with sections, and the instructors of record of
+ * every primary section are upserted into the catalog names table (issue #120), so an admin can say
+ * which catalog name each instructor goes by.
+ *
  * <p>A quarter whose API call fails is logged and skipped rather than aborting the run, so one
  * transient error does not discard the quarters that already succeeded.
  */
@@ -42,6 +51,7 @@ public class PopulateCoursesJob implements JobContextConsumer {
   private String subjectArea;
   private UCSBCurriculumService ucsbCurriculumService;
   private CourseRepository courseRepository;
+  private CatalogNameRepository catalogNameRepository;
   private JobRateLimit jobRateLimit;
 
   @Override
@@ -56,6 +66,7 @@ public class PopulateCoursesJob implements JobContextConsumer {
     int added = 0;
     int updated = 0;
     int failedQuarters = 0;
+    int namesAdded = 0;
 
     for (Quarter quarter : quarters) {
       ctx.checkCancellation();
@@ -99,11 +110,51 @@ public class PopulateCoursesJob implements JobContextConsumer {
       }
 
       ctx.log(String.format("  %s: %d course(s) returned", yyyyq, courses.size()));
+
+      // A failing offerings fetch costs only this quarter's names, never the courses above.
+      try {
+        int names = upsertCatalogNames(ucsbCurriculumService.getOfferings(subjectArea, yyyyq));
+        namesAdded += names;
+        ctx.log(String.format("  %s: %d new catalog name(s)", yyyyq, names));
+      } catch (Exception e) {
+        ctx.log(String.format("Error fetching instructors for %s: %s", yyyyq, e.getMessage()));
+        log.error("Error fetching offerings for {}", yyyyq, e);
+      }
     }
 
     ctx.log(
         String.format(
-            "Finished: %d added, %d updated, %d quarter(s) failed",
-            added, updated, failedQuarters));
+            "Finished: %d added, %d updated, %d catalog name(s) added, %d quarter(s) failed",
+            added, updated, namesAdded, failedQuarters));
+  }
+
+  /**
+   * Records every instructor of record of a primary (lecture) section as a catalog name, and
+   * returns how many were new. Secondaries are skipped: their TAs are not who the catalog names an
+   * instructor by. Blank names are skipped, and a name already recorded is left alone.
+   */
+  int upsertCatalogNames(List<UcsbCourseOffering> offerings) {
+    int added = 0;
+    for (UcsbCourseOffering offering :
+        offerings == null ? List.<UcsbCourseOffering>of() : offerings) {
+      for (UcsbSection section :
+          offering.getClassSections() == null
+              ? List.<UcsbSection>of()
+              : offering.getClassSections()) {
+        if (!section.isPrimary() || section.getInstructors() == null) {
+          continue;
+        }
+        for (UcsbInstructor instructor : section.getInstructors()) {
+          String name =
+              instructor.getInstructor() == null ? "" : instructor.getInstructor().strip();
+          if (name.isEmpty() || catalogNameRepository.existsById(name)) {
+            continue;
+          }
+          catalogNameRepository.save(CatalogName.builder().name(name).build());
+          added++;
+        }
+      }
+    }
+    return added;
   }
 }

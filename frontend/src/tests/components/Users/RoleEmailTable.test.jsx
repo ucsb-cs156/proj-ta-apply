@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import RoleEmailTable, {
   NAMES_NOTE,
+  NO_CATALOG_NAME,
 } from "main/components/Users/RoleEmailTable";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
@@ -270,6 +271,117 @@ describe("RoleEmailTable", () => {
         screen.getByTestId(`RoleEmailTable-header-${col}`),
       ).not.toHaveAttribute("style");
     }
+  });
+
+  // ---- the Catalog Name column (issue #120) ----
+
+  test("without a catalog-name handler there is no Catalog Name column", () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RoleEmailTable
+            data={roleEmailFixtures.threeItems}
+            catalogNames={roleEmailFixtures.catalogNames}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    expect(screen.queryByText("Catalog Name")).toBeNull();
+    expect(
+      screen.queryByTestId("RoleEmailTable-cell-row-0-col-catalogName-select"),
+    ).toBeNull();
+  });
+
+  test("with a handler, each row gets a dropdown of (null) and every catalog name, on the current one", () => {
+    const onChange = vi.fn();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RoleEmailTable
+            data={roleEmailFixtures.threeItems}
+            catalogNames={roleEmailFixtures.catalogNames}
+            onCatalogNameChange={onChange}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const headers = Array.from(
+      document.querySelectorAll('[data-testid="RoleEmailTable"] thead th'),
+    ).map((th) => th.textContent.trim());
+    expect(headers).toEqual([
+      "Email",
+      "First Name",
+      "Last Name",
+      "Catalog Name",
+      "Delete",
+    ]);
+
+    const first = screen.getByTestId(
+      "RoleEmailTable-cell-row-0-col-catalogName-select",
+    );
+    expect([...first.options].map((o) => o.textContent)).toEqual([
+      "(null)",
+      "CONRAD P",
+      "STRUCTOR I",
+      "TEACHER S",
+    ]);
+    expect(NO_CATALOG_NAME).toBe("(null)");
+    expect(first.options[0].value).toBe("");
+    expect(first).toHaveValue("STRUCTOR I");
+    expect(first).toHaveAccessibleName(
+      "Catalog name for instructor1@example.com",
+    );
+    // No catalog name yet: (null) selected.
+    expect(
+      screen.getByTestId("RoleEmailTable-cell-row-1-col-catalogName-select"),
+    ).toHaveValue("");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  test("choosing a name, or (null), calls back with the email and the choice", async () => {
+    const onChange = vi.fn();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RoleEmailTable
+            data={roleEmailFixtures.threeItems}
+            catalogNames={roleEmailFixtures.catalogNames}
+            onCatalogNameChange={onChange}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.change(
+      screen.getByTestId("RoleEmailTable-cell-row-1-col-catalogName-select"),
+      { target: { value: "CONRAD P" } },
+    );
+    expect(onChange).toHaveBeenCalledWith("admin1@example.com", "CONRAD P");
+
+    fireEvent.change(
+      screen.getByTestId("RoleEmailTable-cell-row-0-col-catalogName-select"),
+      { target: { value: "" } },
+    );
+    expect(onChange).toHaveBeenLastCalledWith("instructor1@example.com", null);
+    expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  test("with a handler but no names yet, the dropdown offers only (null)", () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RoleEmailTable
+            data={roleEmailFixtures.threeItems}
+            onCatalogNameChange={vi.fn()}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    const select = screen.getByTestId(
+      "RoleEmailTable-cell-row-1-col-catalogName-select",
+    );
+    expect(select.options).toHaveLength(1);
   });
 
   /** Issue #61: names from the users table, so only for people who have logged in. */

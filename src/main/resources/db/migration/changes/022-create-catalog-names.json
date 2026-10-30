@@ -1,0 +1,48 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "022-create-catalog-names",
+        "author": "pc",
+        "comment": "Instructor names as the course catalog spells them, and which one each instructor is (issue #120).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "catalog_names" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "catalog_names",
+              "columns": [
+                {
+                  "column": {
+                    "name": "name",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "primaryKey": true, "nullable": false }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addColumn": {
+              "tableName": "instructors",
+              "columns": [
+                { "column": { "name": "catalog_name", "type": "VARCHAR(255)" } }
+              ]
+            }
+          },
+          {
+            "addForeignKeyConstraint": {
+              "constraintName": "fk_instructors_catalog_name",
+              "baseTableName": "instructors",
+              "baseColumnNames": "catalog_name",
+              "referencedTableName": "catalog_names",
+              "referencedColumnNames": "name"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
