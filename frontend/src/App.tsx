@@ -53,7 +53,16 @@ export default function App() {
       <Routes>
         <Route path="/" element={homePage} />
         <Route path="/help/about" element={<AboutTaApply />} />
-        <Route path="/help/csv" element={<HelpCsvPage />} />
+        <Route
+          path="/help/csv"
+          element={
+            <ProtectedPage
+              component={<HelpCsvPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
         <Route path="/login" element={<SignInPage />} />
         <Route path="/login/success" element={<SignInSuccessPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />

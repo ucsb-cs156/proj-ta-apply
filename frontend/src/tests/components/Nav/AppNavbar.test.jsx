@@ -138,7 +138,7 @@ describe("AppNavbar tests", () => {
     });
   });
 
-  test("renders Help menu with links to the help pages", async () => {
+  test("renders Help menu with only the About page when not logged in", async () => {
     renderNavbar(
       currentUserFixtures.notLoggedIn,
       systemInfoFixtures.showingNeither,
@@ -157,6 +157,33 @@ describe("AppNavbar tests", () => {
       "href",
       "/help/about",
     );
+    // Issue #99: the CSV formats page is admin-only, so it is not offered to anyone else.
+    expect(screen.queryByText("CSV Upload/Download Formats")).toBeNull();
+  });
+
+  test("Help menu does not offer the CSV formats page to an ordinary user", async () => {
+    renderNavbar(
+      currentUserFixtures.userOnly,
+      systemInfoFixtures.showingNeither,
+    );
+    fireEvent.click(screen.getByText("Help"));
+
+    await waitFor(() => {
+      expect(screen.getByText("About TA Apply")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("CSV Upload/Download Formats")).toBeNull();
+  });
+
+  test("Help menu offers the CSV formats page to an admin", async () => {
+    renderNavbar(
+      currentUserFixtures.adminUser,
+      systemInfoFixtures.showingNeither,
+    );
+    fireEvent.click(screen.getByText("Help"));
+
+    await waitFor(() => {
+      expect(screen.getByText("About TA Apply")).toBeInTheDocument();
+    });
     expect(screen.getByText("CSV Upload/Download Formats")).toHaveAttribute(
       "href",
       "/help/csv",
