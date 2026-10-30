@@ -63,6 +63,13 @@ describe("CoursesIndexPage tests", () => {
         "Tick the boxes to indicate whether each course should be listed under TA applications and/or ULA applications " +
         "the next time the course is offered.",
     );
+    // Issue #136: why graduate courses belong in the list too.
+    expect(screen.getByTestId("CoursesIndexPage-menu-note")).toHaveTextContent(
+      "Note that this list is used to populate the menu that allows students " +
+        "(including graduate students applying to be TAs) to easily add UCSB CMPSC courses " +
+        "they have taken to their application. So it should be populated with graduate courses too, " +
+        "even though we do not typically assign TAs or ULAs to these courses.",
+    );
     // Subject area comes from systemInfo, not a hardcoded literal.
     expect(await screen.findByText("CMPSC")).toBeInTheDocument();
     expect(
