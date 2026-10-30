@@ -172,7 +172,21 @@
 <a name='L107'></a><a href='#L107'>107</a>
 <a name='L108'></a><a href='#L108'>108</a>
 <a name='L109'></a><a href='#L109'>109</a>
-<a name='L110'></a><a href='#L110'>110</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -202,15 +216,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">39x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">39x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">39x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">39x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -281,7 +303,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Button, Form } from "react-bootstrap";
+import Modal from "react-bootstrap/Modal";
 import { useForm } from "react-hook-form";
 import SingleQuarterDropdown from "main/components/Quarters/SingleQuarterDropdown";
 import RequiredField from "main/components/Common/RequiredField";
@@ -300,11 +329,18 @@ type Quarter = { yyyyq: string; qyy: string };
 type RecruitmentFormProps = {
   quarters: Quarter[];
   submitAction: (data: RecruitmentFormFields) =&gt; void;
+  /** The Cancel button; the form lives in a modal (issue #108), so there is always one. */
+  onCancel: () =&gt; void;
 };
 &nbsp;
+/**
+ * The four fields of a new recruitment, laid out as a modal's body and footer: the page wraps it
+ * in the Create New Recruitment modal, and a story or test can show it on its own.
+ */
 export default function RecruitmentForm({
   quarters,
   submitAction,
+  onCancel,
 }: RecruitmentFormProps): React.JSX.Element {
   // Stryker disable all
   const {
@@ -321,19 +357,21 @@ export default function RecruitmentForm({
 &nbsp;
   return (
     &lt;Form onSubmit={handleSubmit((data) =&gt; submitAction({ ...data, quarter }))}&gt;
-      &lt;p className="mb-2"&gt;
-        &lt;RequiredFieldExplanation /&gt;
-      &lt;/p&gt;
-      &lt;div className="d-flex gap-3 align-items-start flex-wrap"&gt;
-        &lt;SingleQuarterDropdown
-          quarters={quarters}
-          quarter={quarter}
-          setQuarter={setQuarter}
-          controlId={`${testIdPrefix}.Quarter`}
-          label="Quarter"
-        /&gt;
+      &lt;Modal.Body&gt;
+        &lt;p className="mb-2"&gt;
+          &lt;RequiredFieldExplanation /&gt;
+        &lt;/p&gt;
+        &lt;div className="mb-3"&gt;
+          &lt;SingleQuarterDropdown
+            quarters={quarters}
+            quarter={quarter}
+            setQuarter={setQuarter}
+            controlId={`${testIdPrefix}.Quarter`}
+            label="Quarter"
+          /&gt;
+        &lt;/div&gt;
 &nbsp;
-        &lt;Form.Group&gt;
+        &lt;Form.Group className="mb-3"&gt;
           &lt;Form.Label htmlFor={`${testIdPrefix}-type`}&gt;Type&lt;/Form.Label&gt;
           &lt;Form.Select
             id={`${testIdPrefix}-type`}
@@ -345,7 +383,7 @@ export default function RecruitmentForm({
           &lt;/Form.Select&gt;
         &lt;/Form.Group&gt;
 &nbsp;
-        &lt;Form.Group&gt;
+        &lt;Form.Group className="mb-3"&gt;
           &lt;Form.Label htmlFor={`${testIdPrefix}-tentativeOpeningDate`}&gt;
             Tentative Opening Date &lt;RequiredField /&gt;
           &lt;/Form.Label&gt;
@@ -362,7 +400,7 @@ export default function RecruitmentForm({
           &lt;/Form.Control.Feedback&gt;
         &lt;/Form.Group&gt;
 &nbsp;
-        &lt;Form.Group&gt;
+        &lt;Form.Group className="mb-3"&gt;
           &lt;Form.Label htmlFor={`${testIdPrefix}-primaryConsiderationDate`}&gt;
             Primary Consideration Date &lt;RequiredField /&gt;
           &lt;/Form.Label&gt;
@@ -378,15 +416,19 @@ export default function RecruitmentForm({
               "A primary consideration date is required."}
           &lt;/Form.Control.Feedback&gt;
         &lt;/Form.Group&gt;
-&nbsp;
+      &lt;/Modal.Body&gt;
+      &lt;Modal.Footer&gt;
         &lt;Button
-          type="submit"
-          className="mt-4"
-          data-testid={`${testIdPrefix}-submit`}
+          variant="secondary"
+          onClick={onCancel}
+          data-testid={`${testIdPrefix}-cancel`}
         &gt;
-          Create
+          Cancel
         &lt;/Button&gt;
-      &lt;/div&gt;
+        &lt;Button type="submit" data-testid={`${testIdPrefix}-submit`}&gt;
+          Create New Recruitment
+        &lt;/Button&gt;
+      &lt;/Modal.Footer&gt;
     &lt;/Form&gt;
   );
 }
@@ -397,7 +439,7 @@ export default function RecruitmentForm({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-30T04:31:51.200Z
+                at 2026-10-30T04:46:31.115Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
