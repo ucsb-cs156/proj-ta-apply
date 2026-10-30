@@ -362,7 +362,9 @@
 <a name='L297'></a><a href='#L297'>297</a>
 <a name='L298'></a><a href='#L298'>298</a>
 <a name='L299'></a><a href='#L299'>299</a>
-<a name='L300'></a><a href='#L300'>300</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L300'></a><a href='#L300'>300</a>
+<a name='L301'></a><a href='#L301'>301</a>
+<a name='L302'></a><a href='#L302'>302</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -389,6 +391,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -661,6 +664,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import { Table } from "react-bootstrap";
@@ -696,8 +700,9 @@ export default function HelpAdminsPage(): React.JSX.Element {
           The flow of a recruitment
         &lt;/h2&gt;
         &lt;p&gt;
-          Everything on the Admin menu serves one cycle, repeated each quarter
-          for TAs and again for ULAs:
+          Everything on the Admin menu, and the Recruitments section of your
+          home page, serves one cycle, repeated each quarter for TAs and again
+          for ULAs:
         &lt;/p&gt;
         &lt;ol data-testid="HelpAdminsPage-flow"&gt;
           &lt;li&gt;
@@ -708,11 +713,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
             &lt;strong&gt;ULA App Settings&lt;/strong&gt;.
           &lt;/li&gt;
           &lt;li&gt;
-            &lt;strong&gt;Each quarter:&lt;/strong&gt; on &lt;strong&gt;Recruitments&lt;/strong&gt;,
-            create a recruitment for the quarter and type. Its course list is
-            filled automatically from the quarter&amp;apos;s schedule; check it with{" "}
-            &lt;em&gt;Courses&lt;/em&gt;, try the form with &lt;em&gt;Test Application&lt;/em&gt;, then{" "}
-            &lt;em&gt;Open Applications&lt;/em&gt;.
+            &lt;strong&gt;Each quarter:&lt;/strong&gt; under &lt;strong&gt;Recruitments&lt;/strong&gt;{" "}
+            on your home page, create a recruitment for the quarter and type.
+            Its course list is filled automatically from the quarter&amp;apos;s
+            schedule; check it with &lt;em&gt;Courses&lt;/em&gt;, try the form with{" "}
+            &lt;em&gt;Test Application&lt;/em&gt;, then &lt;em&gt;Open Applications&lt;/em&gt;.
           &lt;/li&gt;
           &lt;li&gt;
             &lt;strong&gt;While open:&lt;/strong&gt; applicants apply and edit until the
@@ -729,7 +734,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
         &lt;/ol&gt;
 &nbsp;
         &lt;h2 className="my-3 h4" id="menu"&gt;
-          The Admin and Developer menus
+          The Admin and Developer menus, and the home page
         &lt;/h2&gt;
         &lt;Table striped bordered size="sm" data-testid="HelpAdminsPage-menu"&gt;
           &lt;thead&gt;
@@ -820,14 +825,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Recruitments
         &lt;/h2&gt;
         &lt;p&gt;
-          &lt;Link to="/admin/recruitments"&gt;Recruitments&lt;/Link&gt; is where each
-          hiring round is run. &lt;em&gt;Create New Recruitment&lt;/em&gt; asks for a
-          quarter, a type (TA or ULA), a tentative opening date and a primary
-          consideration date; only one recruitment of each type may exist per
-          quarter. Creating one launches the job that fills its course list, so
-          the list is there without a second step. Each recruitment is a card,
-          newest quarter first, showing its status, dates and how many
-          applications it has, with these buttons:
+          &lt;strong&gt;Recruitments&lt;/strong&gt;, on &lt;Link to="/"&gt;your home page&lt;/Link&gt;,
+          is where each hiring round is run (issue #141 moved it there from the
+          Admin menu). &lt;em&gt;Create New Recruitment&lt;/em&gt; asks for a quarter, a
+          type (TA or ULA), a tentative opening date and a primary consideration
+          date; only one recruitment of each type may exist per quarter.
+          Creating one launches the job that fills its course list, so the list
+          is there without a second step. Each recruitment is a card, newest
+          quarter first, showing its status, dates and how many applications it
+          has, with these buttons:
         &lt;/p&gt;
         &lt;ul data-testid="HelpAdminsPage-recruitment-buttons"&gt;
           &lt;li&gt;
@@ -967,7 +973,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-30T19:36:18.711Z
+                at 2026-10-30T19:55:00.197Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
