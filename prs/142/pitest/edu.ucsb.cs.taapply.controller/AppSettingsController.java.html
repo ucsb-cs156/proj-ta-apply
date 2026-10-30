@@ -1,0 +1,3858 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>AppSettingsController.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.controller;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import com.opencsv.exceptions.CsvException;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.TaMajor;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.TaTopic;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.UlaInterest;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.UlaMajor;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.UlaTopic;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.errors.EntityNotFoundException;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.TaMajorRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.TaTopicRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.UlaInterestRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.UlaMajorRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.repository.UlaTopicRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.services.NameListCsvService;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.services.NameListCsvService.UploadResult;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import io.swagger.v3.oas.annotations.Operation;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import io.swagger.v3.oas.annotations.Parameter;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import io.swagger.v3.oas.annotations.tags.Tag;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import jakarta.annotation.PostConstruct;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.io.IOException;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Comparator;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.LinkedHashMap;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.List;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Map;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.function.Function;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.stream.StreamSupport;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import lombok.extern.slf4j.Slf4j;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_29'/>
+29
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_29'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.beans.factory.annotation.Autowired;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.data.repository.CrudRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.http.HttpHeaders;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.http.MediaType;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.http.ResponseEntity;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.security.access.prepost.PreAuthorize;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_35'/>
+35
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_35'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.web.bind.annotation.DeleteMapping;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.web.bind.annotation.GetMapping;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.web.bind.annotation.PathVariable;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.web.bind.annotation.PostMapping;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.web.bind.annotation.PutMapping;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.web.bind.annotation.RequestMapping;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_41'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.web.bind.annotation.RequestParam;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_42'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.web.bind.annotation.RestController;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_43'/>
+43
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_43'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import org.springframework.web.multipart.MultipartFile;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_44'/>
+44
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_44'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_45'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_46'/>
+46
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_46'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * The five admin-maintained name lists behind the TA and ULA application forms: the majors and the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_47'/>
+47
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_47'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * topics an applicant may pick from, and for ULAs the interest areas they rate.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_48'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_49'/>
+49
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_49'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;Each list is its own table with a single string column that is also the key, so the five are</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_50'/>
+50
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_50'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * served by one controller keyed on the {@code list} path segment rather than five copies of the</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_51'/>
+51
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_51'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * same CRUD code. Renaming is a delete plus an insert, since the name is the key.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_52'/>
+52
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_52'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_53'/>
+53
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_53'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>@Tag(name = &#34;AppSettings&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_54'/>
+54
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_54'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>@RequestMapping(&#34;/api/admin/settings&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_55'/>
+55
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_55'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>@RestController</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_56'/>
+56
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_56'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>@Slf4j</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_57'/>
+57
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_57'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>public class AppSettingsController extends ApiController {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_58'/>
+58
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_58'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_59'/>
+59
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_59'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** A row of any of the lists, as the frontend sees it. */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_60'/>
+60
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_60'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  public static record NameItem(String name) {}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_61'/>
+61
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_61'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_62'/>
+62
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_62'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** The repository behind one list, plus how to make one of its rows. */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_63'/>
+63
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_63'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  record NameList(CrudRepository&#60;?, String&#62; repository, Function&#60;String, Object&#62; row) {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_64'/>
+64
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_64'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_65'/>
+65
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_65'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    @SuppressWarnings({&#34;unchecked&#34;, &#34;rawtypes&#34;})</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_66'/>
+66
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_66'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    void save(String name) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_67'/>
+67
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_67'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      ((CrudRepository) repository).save(row().apply(name));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_68'/>
+68
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_68'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_69'/>
+69
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_69'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_70'/>
+70
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_70'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_71'/>
+71
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_71'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static final String TA_MAJORS = &#34;ta-majors&#34;;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_72'/>
+72
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_72'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static final String TA_TOPICS = &#34;ta-topics&#34;;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_73'/>
+73
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_73'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static final String ULA_MAJORS = &#34;ula-majors&#34;;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_74'/>
+74
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_74'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static final String ULA_TOPICS = &#34;ula-topics&#34;;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_75'/>
+75
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_75'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static final String ULA_INTERESTS = &#34;ula-interests&#34;;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_76'/>
+76
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_76'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_77'/>
+77
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_77'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired TaMajorRepository taMajorRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_78'/>
+78
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_78'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired TaTopicRepository taTopicRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_79'/>
+79
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_79'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired UlaMajorRepository ulaMajorRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_80'/>
+80
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_80'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired UlaTopicRepository ulaTopicRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_81'/>
+81
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_81'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired UlaInterestRepository ulaInterestRepository;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_82'/>
+82
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_82'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Autowired NameListCsvService nameListCsvService;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_83'/>
+83
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_83'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_84'/>
+84
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_84'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  private final Map&#60;String, NameList&#62; lists = new LinkedHashMap&#60;&#62;();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_85'/>
+85
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_85'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_86'/>
+86
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_86'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @PostConstruct</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_87'/>
+87
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_87'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  void wireLists() {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_88'/>
+88
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_88'>1</a>
+<span>
+1. lambda$wireLists$0 : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$wireLists$0 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    lists.put(TA_MAJORS, new NameList(taMajorRepository, n -&#62; TaMajor.builder().name(n).build()));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_89'/>
+89
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_89'>1</a>
+<span>
+1. lambda$wireLists$1 : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$wireLists$1 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    lists.put(TA_TOPICS, new NameList(taTopicRepository, n -&#62; TaTopic.builder().name(n).build()));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_90'/>
+90
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_90'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    lists.put(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_91'/>
+91
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_91'>1</a>
+<span>
+1. lambda$wireLists$2 : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$wireLists$2 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        ULA_MAJORS, new NameList(ulaMajorRepository, n -&#62; UlaMajor.builder().name(n).build()));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_92'/>
+92
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_92'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    lists.put(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_93'/>
+93
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_93'>1</a>
+<span>
+1. lambda$wireLists$3 : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$wireLists$3 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        ULA_TOPICS, new NameList(ulaTopicRepository, n -&#62; UlaTopic.builder().name(n).build()));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_94'/>
+94
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_94'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    lists.put(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_95'/>
+95
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_95'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        ULA_INTERESTS,</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_96'/>
+96
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_96'>1</a>
+<span>
+1. lambda$wireLists$4 : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$wireLists$4 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        new NameList(ulaInterestRepository, n -&#62; UlaInterest.builder().name(n).build()));</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_97'/>
+97
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_97'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_98'/>
+98
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_98'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_99'/>
+99
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_99'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private NameList listNamed(String list) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_100'/>
+100
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_100'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    NameList found = lists.get(list);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_101'/>
+101
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_101'>1</a>
+<span>
+1. listNamed : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (found == null) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_102'/>
+102
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_102'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalArgumentException(</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_103'/>
+103
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_103'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>          &#34;No such settings list: %s (expected one of %s)&#34;.formatted(list, lists.keySet()));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_104'/>
+104
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_104'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_105'/>
+105
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_105'>1</a>
+<span>
+1. listNamed : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::listNamed &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return found;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_106'/>
+106
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_106'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_107'/>
+107
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_107'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_108'/>
+108
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_108'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_109'/>
+109
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_109'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Names are keys, so leading/trailing whitespace would create near-duplicates. The parameter is a</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_110'/>
+110
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_110'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * required @RequestParam, so it is never null here.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_111'/>
+111
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_111'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_112'/>
+112
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_112'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private static String clean(String name) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_113'/>
+113
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_113'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    String cleaned = name.strip();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_114'/>
+114
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_114'>1</a>
+<span>
+1. clean : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (cleaned.isEmpty()) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_115'/>
+115
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_115'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalArgumentException(&#34;A name is required&#34;);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_116'/>
+116
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_116'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_117'/>
+117
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_117'>1</a>
+<span>
+1. clean : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::clean &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return cleaned;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_118'/>
+118
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_118'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_119'/>
+119
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_119'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_120'/>
+120
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_120'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private List&#60;NameItem&#62; namesIn(NameList list) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_121'/>
+121
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_121'>1</a>
+<span>
+1. namesIn : replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/controller/AppSettingsController::namesIn &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return StreamSupport.stream(list.repository().findAll().spliterator(), false)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_122'/>
+122
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_122'>1</a>
+<span>
+1. lambda$namesIn$0 : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$namesIn$0 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        .map(row -&#62; new NameItem(nameOf(row)))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_123'/>
+123
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_123'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .sorted(Comparator.comparing(NameItem::name, String.CASE_INSENSITIVE_ORDER))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_124'/>
+124
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_124'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .toList();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_125'/>
+125
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_125'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_126'/>
+126
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_126'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_127'/>
+127
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_127'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  private static String nameOf(Object row) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_128'/>
+128
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_128'>2</a>
+<span>
+1. nameOf : negated conditional &rarr; KILLED<br/>
+2. nameOf : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::nameOf &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (row instanceof TaMajor m) return m.getName();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_129'/>
+129
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_129'>2</a>
+<span>
+1. nameOf : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::nameOf &rarr; KILLED<br/>
+2. nameOf : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (row instanceof TaTopic t) return t.getName();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_130'/>
+130
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_130'>2</a>
+<span>
+1. nameOf : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::nameOf &rarr; KILLED<br/>
+2. nameOf : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (row instanceof UlaMajor m) return m.getName();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_131'/>
+131
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_131'>2</a>
+<span>
+1. nameOf : negated conditional &rarr; KILLED<br/>
+2. nameOf : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::nameOf &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (row instanceof UlaTopic t) return t.getName();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_132'/>
+132
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_132'>1</a>
+<span>
+1. nameOf : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::nameOf &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return ((UlaInterest) row).getName();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_133'/>
+133
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_133'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_134'/>
+134
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_134'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_135'/>
+135
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_135'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Operation(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_136'/>
+136
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_136'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      summary = &#34;Every name in a list, sorted&#34;,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_137'/>
+137
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_137'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      description = &#34;list is one of ta-majors, ta-topics, ula-majors, ula-topics, ula-interests.&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_138'/>
+138
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_138'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @PreAuthorize(&#34;hasRole(&#39;ROLE_ADMIN&#39;)&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_139'/>
+139
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_139'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @GetMapping(&#34;/{list}/all&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_140'/>
+140
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_140'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public List&#60;NameItem&#62; all(@PathVariable String list) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_141'/>
+141
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_141'>1</a>
+<span>
+1. all : replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/controller/AppSettingsController::all &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return namesIn(listNamed(list));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_142'/>
+142
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_142'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_143'/>
+143
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_143'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_144'/>
+144
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_144'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Operation(summary = &#34;Add a name to a list&#34;, description = &#34;400 if it is blank or already there.&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_145'/>
+145
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_145'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @PreAuthorize(&#34;hasRole(&#39;ROLE_ADMIN&#39;)&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_146'/>
+146
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_146'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @PostMapping(&#34;/{list}/post&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_147'/>
+147
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_147'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public NameItem post(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_148'/>
+148
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_148'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      @PathVariable String list, @Parameter(name = &#34;name&#34;) @RequestParam String name) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_149'/>
+149
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_149'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    NameList target = listNamed(list);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_150'/>
+150
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_150'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    String cleaned = clean(name);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_151'/>
+151
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_151'>1</a>
+<span>
+1. post : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (target.repository().existsById(cleaned)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_152'/>
+152
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_152'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalArgumentException(&#34;%s is already in the list&#34;.formatted(cleaned));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_153'/>
+153
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_153'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_154'/>
+154
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_154'>1</a>
+<span>
+1. post : removed call to edu/ucsb/cs/taapply/controller/AppSettingsController$NameList::save &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    target.save(cleaned);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_155'/>
+155
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_155'>1</a>
+<span>
+1. post : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::post &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return new NameItem(cleaned);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_156'/>
+156
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_156'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_157'/>
+157
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_157'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_158'/>
+158
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_158'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Operation(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_159'/>
+159
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_159'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      summary = &#34;Rename an entry&#34;,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_160'/>
+160
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_160'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      description =</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_161'/>
+161
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_161'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>          &#34;The name is the key, so this removes the old row and inserts the new one. 404 if the&#34;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_162'/>
+162
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_162'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>              + &#34; old name is not in the list, 400 if the new one already is.&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_163'/>
+163
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_163'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @PreAuthorize(&#34;hasRole(&#39;ROLE_ADMIN&#39;)&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_164'/>
+164
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_164'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @PutMapping(&#34;/{list}&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_165'/>
+165
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_165'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public NameItem rename(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_166'/>
+166
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_166'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      @PathVariable String list,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_167'/>
+167
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_167'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      @Parameter(name = &#34;name&#34;) @RequestParam String name,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_168'/>
+168
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_168'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      @Parameter(name = &#34;newName&#34;) @RequestParam String newName) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_169'/>
+169
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_169'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    NameList target = listNamed(list);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_170'/>
+170
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_170'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    String cleanedNew = clean(newName);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_171'/>
+171
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_171'>1</a>
+<span>
+1. rename : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (!target.repository().existsById(name)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_172'/>
+172
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_172'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new EntityNotFoundException(NameItem.class, name);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_173'/>
+173
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_173'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_174'/>
+174
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_174'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    // Renaming to itself is a no-op rather than an error, so saving an unchanged edit is harmless.</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_175'/>
+175
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_175'>1</a>
+<span>
+1. rename : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (!cleanedNew.equals(name)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_176'/>
+176
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_176'>1</a>
+<span>
+1. rename : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      if (target.repository().existsById(cleanedNew)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_177'/>
+177
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_177'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        throw new IllegalArgumentException(&#34;%s is already in the list&#34;.formatted(cleanedNew));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_178'/>
+178
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_178'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_179'/>
+179
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_179'>1</a>
+<span>
+1. rename : removed call to org/springframework/data/repository/CrudRepository::deleteById &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      target.repository().deleteById(name);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_180'/>
+180
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_180'>1</a>
+<span>
+1. rename : removed call to edu/ucsb/cs/taapply/controller/AppSettingsController$NameList::save &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      target.save(cleanedNew);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_181'/>
+181
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_181'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_182'/>
+182
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_182'>1</a>
+<span>
+1. rename : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::rename &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return new NameItem(cleanedNew);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_183'/>
+183
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_183'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_184'/>
+184
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_184'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_185'/>
+185
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_185'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Operation(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_186'/>
+186
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_186'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      summary = &#34;Download a list as CSV&#34;,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_187'/>
+187
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_187'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      description =</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_188'/>
+188
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_188'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>          &#34;One column, name, with a header row; the same shape the upload accepts, so a list can be&#34;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_189'/>
+189
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_189'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>              + &#34; moved from one deployment to another.&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_190'/>
+190
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_190'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @PreAuthorize(&#34;hasRole(&#39;ROLE_ADMIN&#39;)&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_191'/>
+191
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_191'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @GetMapping(value = &#34;/{list}/csv&#34;, produces = &#34;text/csv&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_192'/>
+192
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_192'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public ResponseEntity&#60;String&#62; downloadCsv(@PathVariable String list) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_193'/>
+193
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_193'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    List&#60;String&#62; names = namesIn(listNamed(list)).stream().map(NameItem::name).toList();</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_194'/>
+194
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_194'>1</a>
+<span>
+1. downloadCsv : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::downloadCsv &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return ResponseEntity.ok()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_195'/>
+195
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_195'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .header(HttpHeaders.CONTENT_DISPOSITION, &#34;attachment; filename=\&#34;%s.csv\&#34;&#34;.formatted(list))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_196'/>
+196
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_196'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .contentType(new MediaType(&#34;text&#34;, &#34;csv&#34;))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_197'/>
+197
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_197'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .body(nameListCsvService.write(names));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_198'/>
+198
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_198'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_199'/>
+199
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_199'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_200'/>
+200
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_200'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Operation(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_201'/>
+201
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_201'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      summary = &#34;Upload names to a list from a CSV&#34;,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_202'/>
+202
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_202'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      description =</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_203'/>
+203
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_203'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>          &#34;The file needs a header row with a column named name; other columns are ignored and&#34;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_204'/>
+204
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_204'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>              + &#34; blank rows are skipped. Names already in the list are counted, not duplicated, so&#34;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_205'/>
+205
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_205'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>              + &#34; re-uploading is safe. 400 if the file is empty or has no name column.&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_206'/>
+206
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_206'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @PreAuthorize(&#34;hasRole(&#39;ROLE_ADMIN&#39;)&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_207'/>
+207
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_207'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @PostMapping(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_208'/>
+208
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_208'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      value = &#34;/{list}/upload/csv&#34;,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_209'/>
+209
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_209'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      consumes = {&#34;multipart/form-data&#34;})</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_210'/>
+210
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_210'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public UploadResult uploadCsv(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_211'/>
+211
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_211'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      @PathVariable String list, @Parameter(name = &#34;file&#34;) @RequestParam(&#34;file&#34;) MultipartFile file)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_212'/>
+212
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_212'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      throws IOException, CsvException {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_213'/>
+213
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_213'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    NameList target = listNamed(list);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_214'/>
+214
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_214'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    int inserted = 0;</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_215'/>
+215
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_215'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    int alreadyPresent = 0;</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_216'/>
+216
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_216'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    for (String name : nameListCsvService.read(file)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_217'/>
+217
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_217'>1</a>
+<span>
+1. uploadCsv : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      if (target.repository().existsById(name)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_218'/>
+218
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_218'>1</a>
+<span>
+1. uploadCsv : Changed increment from 1 to -1 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        alreadyPresent++;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_219'/>
+219
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_219'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      } else {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_220'/>
+220
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_220'>1</a>
+<span>
+1. uploadCsv : removed call to edu/ucsb/cs/taapply/controller/AppSettingsController$NameList::save &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        target.save(name);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_221'/>
+221
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_221'>1</a>
+<span>
+1. uploadCsv : Changed increment from 1 to -1 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        inserted++;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_222'/>
+222
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_222'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_223'/>
+223
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_223'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_224'/>
+224
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_224'>1</a>
+<span>
+1. uploadCsv : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::uploadCsv &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return new UploadResult(inserted, alreadyPresent);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_225'/>
+225
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_225'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_226'/>
+226
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_226'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_227'/>
+227
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_227'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Operation(summary = &#34;Remove a name from a list&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_228'/>
+228
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_228'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @PreAuthorize(&#34;hasRole(&#39;ROLE_ADMIN&#39;)&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_229'/>
+229
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_229'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @DeleteMapping(&#34;/{list}/delete&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_230'/>
+230
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_230'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public Object delete(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_231'/>
+231
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_231'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      @PathVariable String list, @Parameter(name = &#34;name&#34;) @RequestParam String name) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_232'/>
+232
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_232'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    NameList target = listNamed(list);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_233'/>
+233
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_233'>1</a>
+<span>
+1. delete : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (!target.repository().existsById(name)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_234'/>
+234
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_234'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new EntityNotFoundException(NameItem.class, name);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_235'/>
+235
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_235'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_236'/>
+236
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_236'>1</a>
+<span>
+1. delete : removed call to org/springframework/data/repository/CrudRepository::deleteById &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    target.repository().deleteById(name);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_237'/>
+237
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_237'>1</a>
+<span>
+1. delete : replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::delete &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return genericMessage(&#34;%s removed from %s&#34;.formatted(name, list));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_238'/>
+238
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_238'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68ce10f4_239'/>
+239
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_239'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_88'>88</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_88'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$wireLists$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_replaces_the_old_row_with_the_new_one()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$wireLists$0 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_89'>89</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_89'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$wireLists$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#2]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$wireLists$1 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_91'>91</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_91'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$wireLists$2<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#3]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$wireLists$2 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_93'>93</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_93'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$wireLists$3<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#4]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$wireLists$3 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_96'>96</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_96'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$wireLists$4<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#5]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$wireLists$4 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_101'>101</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_101'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>listNamed<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:downloading_an_unknown_list_is_a_400()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_105'>105</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_105'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>listNamed<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:an_empty_list_downloads_as_just_the_header()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::listNamed &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_114'>114</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_114'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>clean<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:adding_a_blank_name_is_refused()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_117'>117</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_117'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>clean<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_to_the_same_name_changes_nothing()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::clean &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_121'>121</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_121'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>namesIn<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:all_is_sorted_case_insensitively()]</span></span> replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/controller/AppSettingsController::namesIn &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_122'>122</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_122'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$namesIn$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:all_is_sorted_case_insensitively()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::lambda$namesIn$0 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_128'>128</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_128'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>nameOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:all_is_sorted_case_insensitively()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>nameOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:all_is_sorted_case_insensitively()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::nameOf &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_129'>129</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_129'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>nameOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:each_list_is_backed_by_its_own_repository()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::nameOf &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>nameOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:each_list_is_backed_by_its_own_repository()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_130'>130</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_130'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>nameOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:each_list_is_backed_by_its_own_repository()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::nameOf &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>nameOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:each_list_is_backed_by_its_own_repository()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_131'>131</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_131'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>nameOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:each_list_is_backed_by_its_own_repository()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>nameOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:each_list_is_backed_by_its_own_repository()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::nameOf &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_132'>132</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_132'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>nameOf<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:each_list_is_backed_by_its_own_repository()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/controller/AppSettingsController::nameOf &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_141'>141</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_141'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>all<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:all_is_sorted_case_insensitively()]</span></span> replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/controller/AppSettingsController::all &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_151'>151</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_151'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>post<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#3]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_154'>154</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_154'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>post<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#3]</span></span> removed call to edu/ucsb/cs/taapply/controller/AppSettingsController$NameList::save &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_155'>155</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_155'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>post<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#3]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::post &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_171'>171</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_171'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>rename<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_to_the_same_name_changes_nothing()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_175'>175</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_175'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>rename<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_to_the_same_name_changes_nothing()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_176'>176</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_176'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>rename<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_onto_an_existing_name_is_refused()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_179'>179</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_179'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>rename<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_replaces_the_old_row_with_the_new_one()]</span></span> removed call to org/springframework/data/repository/CrudRepository::deleteById &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_180'>180</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_180'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>rename<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_replaces_the_old_row_with_the_new_one()]</span></span> removed call to edu/ucsb/cs/taapply/controller/AppSettingsController$NameList::save &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_182'>182</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_182'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>rename<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_to_the_same_name_changes_nothing()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::rename &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_194'>194</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_194'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>downloadCsv<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:an_empty_list_downloads_as_just_the_header()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::downloadCsv &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_217'>217</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_217'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>uploadCsv<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:names_already_in_the_list_are_counted_not_inserted_again()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_218'>218</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_218'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>uploadCsv<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:names_already_in_the_list_are_counted_not_inserted_again()]</span></span> Changed increment from 1 to -1 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_220'>220</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_220'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>uploadCsv<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:names_already_in_the_list_are_counted_not_inserted_again()]</span></span> removed call to edu/ucsb/cs/taapply/controller/AppSettingsController$NameList::save &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_221'>221</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_221'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>uploadCsv<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:names_already_in_the_list_are_counted_not_inserted_again()]</span></span> Changed increment from 1 to -1 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_224'>224</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_224'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>uploadCsv<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:names_already_in_the_list_are_counted_not_inserted_again()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::uploadCsv &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_233'>233</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_233'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>delete<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:removing_a_name_that_is_not_in_the_list_is_a_404()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_236'>236</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_236'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>delete<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:an_admin_can_remove_a_name()]</span></span> removed call to org/springframework/data/repository/CrudRepository::deleteById &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68ce10f4_237'>237</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68ce10f4_237'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>delete<br/><b>Killed by : </b>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:an_admin_can_remove_a_name()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/AppSettingsController::delete &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_to_the_same_name_changes_nothing()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_a_name_that_is_not_in_the_list_is_a_404()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_onto_an_existing_name_is_refused()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_replaces_the_old_row_with_the_new_one()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:downloading_an_unknown_list_is_a_400()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:an_unknown_list_is_a_400_naming_the_valid_ones()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:adding_a_blank_name_is_refused()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:uploading_to_an_unknown_list_is_a_400()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:an_empty_list_downloads_as_just_the_header()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:an_empty_csv_is_refused()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:removing_a_name_that_is_not_in_the_list_is_a_404()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:renaming_to_a_blank_name_is_refused()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:an_admin_can_remove_a_name()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:all_is_sorted_case_insensitively()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:a_csv_without_a_name_column_is_refused()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#3] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#5] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#4] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#2] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:an_admin_can_download_a_list_as_csv()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:names_already_in_the_list_are_counted_not_inserted_again()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[test-template:an_admin_can_add_a_name_to_each_list(java.lang.String)]/[test-template-invocation:#1] (12 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:an_admin_can_upload_names_from_a_csv()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:short_rows_are_skipped()] (17 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:each_list_is_backed_by_its_own_repository()] (16 ms)</li><li>edu.ucsb.cs.taapply.controller.AppSettingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AppSettingsControllerTests]/[method:adding_a_duplicate_is_refused()] (12 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>
