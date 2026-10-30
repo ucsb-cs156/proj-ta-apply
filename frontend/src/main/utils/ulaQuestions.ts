@@ -51,6 +51,10 @@ export const selectToBoolean = (value: string): boolean | null =>
 /** The perm number rule the backend enforces too: exactly 7 letters or digits. */
 export const PERM_NUMBER_PATTERN = /^[A-Za-z0-9]{7}$/;
 
+/** Under the Previous ULA Service? field (issue #117). */
+export const PREVIOUS_SERVICE_QUESTION =
+  "How many quarters of previous ULA experience do you have?";
+
 export const PERM_NUMBER_HINT =
   "7 characters, letters and digits only, no dash. Lower case is stored as upper case.";
 

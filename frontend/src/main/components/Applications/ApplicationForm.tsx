@@ -38,6 +38,7 @@ import {
   OTHER_CAMPUS_JOB_QUESTION,
   PERM_NUMBER_HINT,
   PERM_NUMBER_PATTERN,
+  PREVIOUS_SERVICE_QUESTION,
   PRIOR_EMPLOYMENT_QUESTION,
   STUDENT_STATUS_OPTIONS,
   STUDENT_STATUS_QUESTION,
@@ -380,6 +381,33 @@ export default function ApplicationForm({
 
   const id = (name: string) => `${testIdPrefix}-${name}`;
 
+  /**
+   * The expected graduation, in a column of the given width: a small one in the Academics row on
+   * a TA form, half a row beside Changing major on a ULA form so its note has room (issue #117).
+   */
+  const graduationField = (width: number) => (
+    <Form.Group as={Col} md={width} className="mb-3">
+      <Form.Label htmlFor={id("graduationDate")}>
+        Expected Graduation {!isTa && <RequiredField />}
+      </Form.Label>
+      <Form.Control
+        id={id("graduationDate")}
+        data-testid={id("graduationDate")}
+        placeholder="e.g. S27"
+        isInvalid={Boolean(errors.graduationDate)}
+        {...register("graduationDate", { required: !isTa })}
+      />
+      <Form.Control.Feedback type="invalid">
+        {errors.graduationDate && "Your expected graduation is required."}
+      </Form.Control.Feedback>
+      {!isTa && (
+        <Form.Text muted data-testid={id("graduationDate-note")}>
+          {GRADUATION_NOTE}
+        </Form.Text>
+      )}
+    </Form.Group>
+  );
+
   /** One entry of the list of what is missing, beside the submit button (issue #97). */
   type Missing = { name: string; label: string };
   const missingField = (
@@ -405,10 +433,7 @@ export default function ApplicationForm({
     ...missingField("yearInProgram", "Year in Program"),
     ...missingField("graduationDate", "Expected Graduation"),
     ...missingField("permNumber", "Perm Number"),
-    ...missingField(
-      "previousServiceAsUla",
-      "Quarters Previously Served as a ULA",
-    ),
+    ...missingField("previousServiceAsUla", "Previous ULA Service?"),
     ...missingField("bsMsStudent", "BS/MS student?"),
     ...missingField("otherCampusJob", "Other campus job this quarter?"),
     ...missingField("priorUcsbEmployment", "Prior UCSB employment?"),
@@ -612,29 +637,12 @@ export default function ApplicationForm({
             {errors.yearInProgram && "Your year in program is required."}
           </Form.Control.Feedback>
         </Form.Group>
-        <Form.Group as={Col} md={2} className="mb-3">
-          <Form.Label htmlFor={id("graduationDate")}>
-            Expected Graduation {!isTa && <RequiredField />}
-          </Form.Label>
-          <Form.Control
-            id={id("graduationDate")}
-            data-testid={id("graduationDate")}
-            placeholder="e.g. S27"
-            isInvalid={Boolean(errors.graduationDate)}
-            {...register("graduationDate", { required: !isTa })}
-          />
-          <Form.Control.Feedback type="invalid">
-            {errors.graduationDate && "Your expected graduation is required."}
-          </Form.Control.Feedback>
-          {!isTa && (
-            <Form.Text muted data-testid={id("graduationDate-note")}>
-              {GRADUATION_NOTE}
-            </Form.Text>
-          )}
-        </Form.Group>
+        {/* A TA form keeps it here; the ULA one gives it half a row below (issue #117). */}
+        {isTa && graduationField(2)}
       </Row>
       {!isTa && (
-        <Row>
+        <Row data-testid={id("graduation-row")}>
+          {graduationField(6)}
           <Form.Group as={Col} md={6} className="mb-3">
             <Form.Label htmlFor={id("changingMajor")}>
               Changing major?
@@ -743,7 +751,7 @@ export default function ApplicationForm({
             </Form.Group>
             <Form.Group as={Col} md={3} className="mb-3">
               <Form.Label htmlFor={id("previousServiceAsUla")}>
-                Quarters Previously Served as a ULA <RequiredField />
+                Previous ULA Service? <RequiredField />
               </Form.Label>
               <Form.Control
                 id={id("previousServiceAsUla")}
@@ -758,6 +766,9 @@ export default function ApplicationForm({
                 {errors.previousServiceAsUla &&
                   "Enter how many quarters you have served as a ULA (0 if none)."}
               </Form.Control.Feedback>
+              <Form.Text muted data-testid={id("previousServiceAsUla-note")}>
+                {PREVIOUS_SERVICE_QUESTION}
+              </Form.Text>
             </Form.Group>
             <Form.Group as={Col} md={6} className="mb-3">
               <Form.Label htmlFor={id("videoLink")}>Video Link</Form.Label>
