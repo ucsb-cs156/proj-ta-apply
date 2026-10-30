@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -1080,10 +1081,12 @@ public class ApplicationsControllerTests extends ControllerTestCase {
       username = "grad",
       roles = {"USER"})
   @Test
-  public void comments_are_refused_once_the_recruitment_is_closed() throws Exception {
+  public void comments_are_refused_once_the_recruitment_closed_long_ago() throws Exception {
     when(applicationRepository.findById(5L))
         .thenReturn(Optional.of(application(5L, 3L, GRAD_EMAIL)));
-    when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
+    Recruitment longClosed = recruitment(3L, RecruitmentType.TA, ApplicationStatus.CLOSED, PAST);
+    longClosed.setActualClosingDate(LocalDate.now().minusMonths(7));
+    when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(longClosed));
 
     MvcResult response =
         mockMvc
@@ -1091,8 +1094,175 @@ public class ApplicationsControllerTests extends ControllerTestCase {
             .andExpect(status().is(403))
             .andReturn();
 
-    assertEquals("This recruitment is closed", responseToJson(response).get("message"));
+    assertEquals(
+        "This recruitment closed more than six months ago",
+        responseToJson(response).get("message"));
     verify(applicationRepository, never()).save(any());
+  }
+
+  /** Issue #107: comments stay open for six months after a recruitment closes. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void comments_are_still_allowed_for_six_months_after_closing() throws Exception {
+    Application existing = application(5L, 3L, GRAD_EMAIL);
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    Recruitment recentlyClosed =
+        recruitment(3L, RecruitmentType.TA, ApplicationStatus.CLOSED, PAST);
+    recentlyClosed.setActualClosingDate(LocalDate.now().minusMonths(5));
+    when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(recentlyClosed));
+
+    mockMvc
+        .perform(put("/api/applications/comments?id=5&postApplicationComments=Since").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals("Since", saved().getPostApplicationComments());
+  }
+
+  /** A closed recruitment without a recorded closing date is treated as long closed. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void comments_are_refused_on_a_closed_recruitment_with_no_closing_date() throws Exception {
+    when(applicationRepository.findById(5L))
+        .thenReturn(Optional.of(application(5L, 3L, GRAD_EMAIL)));
+    when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
+
+    mockMvc
+        .perform(put("/api/applications/comments?id=5&postApplicationComments=hi").with(csrf()))
+        .andExpect(status().is(403));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  // ---- PUT /cancel (issue #107) ----
+
+  private static Application cancelled(long id, long recruitmentId, String email) {
+    Application a = application(id, recruitmentId, email);
+    a.setStatus(ApplicationReviewStatus.CANCELLED);
+    a.setCancellationReason("Found other employment");
+    a.setCancelledAt(LocalDateTime.of(2026, 2, 3, 4, 5));
+    return a;
+  }
+
+  @Test
+  public void logged_out_users_cannot_cancel() throws Exception {
+    mockMvc
+        .perform(put("/api/applications/cancel?id=5&reason=x").with(csrf()))
+        .andExpect(status().is(403));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void an_applicant_can_cancel_their_own_application_with_a_reason() throws Exception {
+    Application existing = application(5L, 3L, GRAD_EMAIL);
+    existing.setAdminComments("Strong candidate");
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/applications/cancel")
+                    .param("id", "5")
+                    .param("reason", "  Found other employment  ")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    Application stored = saved();
+    assertEquals(ApplicationReviewStatus.CANCELLED, stored.getStatus());
+    assertEquals("Found other employment", stored.getCancellationReason());
+    assertNotNull(stored.getCancelledAt());
+    assertTrue(stored.getCancelledAt().isAfter(LocalDateTime.now().minusMinutes(1)));
+    // The admin's notes stay stored but are not sent back.
+    assertEquals("Strong candidate", stored.getAdminComments());
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("CANCELLED", json.get("status"));
+    assertEquals("Found other employment", json.get("cancellationReason"));
+    assertNull(json.get("adminComments"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void cancelling_needs_a_reason() throws Exception {
+    when(applicationRepository.findById(5L))
+        .thenReturn(Optional.of(application(5L, 3L, GRAD_EMAIL)));
+
+    MvcResult response =
+        mockMvc
+            // .param, since MockMvc does not decode %20 in a URL.
+            .perform(
+                put("/api/applications/cancel")
+                    .param("id", "5")
+                    .param("reason", "   ")
+                    .with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    assertEquals(
+        "Please give a brief reason for cancelling your application",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_cancelled_application_cannot_be_cancelled_edited_or_commented_on_again()
+      throws Exception {
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(cancelled(5L, 1L, GRAD_EMAIL)));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/applications/cancel?id=5&reason=again").with(csrf()))
+            .andExpect(status().is(403))
+            .andReturn();
+    assertEquals("This application was cancelled", responseToJson(response).get("message"));
+
+    mockMvc
+        .perform(
+            put("/api/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().is(403));
+    mockMvc
+        .perform(put("/api/applications/comments?id=5&postApplicationComments=hi").with(csrf()))
+        .andExpect(status().is(403));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void an_applicant_cannot_cancel_someone_elses_application() throws Exception {
+    when(applicationRepository.findById(5L))
+        .thenReturn(Optional.of(application(5L, 1L, "someoneelse@example.org")));
+
+    mockMvc
+        .perform(put("/api/applications/cancel?id=5&reason=x").with(csrf()))
+        .andExpect(status().is(403));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void cancelling_an_unknown_application_is_a_404() throws Exception {
+    when(applicationRepository.findById(5L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(put("/api/applications/cancel?id=5&reason=x").with(csrf()))
+        .andExpect(status().isNotFound());
   }
 
   @WithMockUser(

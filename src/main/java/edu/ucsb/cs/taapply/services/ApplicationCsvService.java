@@ -103,7 +103,9 @@ public class ApplicationCsvService {
           new Column("comments", Application::getComments),
           new Column("postApplicationComments", Application::getPostApplicationComments),
           new Column("adminComments", Application::getAdminComments),
-          new Column("noticeVersionId", Application::getNoticeVersionId));
+          new Column("noticeVersionId", Application::getNoticeVersionId),
+          new Column("cancellationReason", Application::getCancellationReason),
+          new Column("cancelledAt", Application::getCancelledAt));
 
   /** The ULA interests sit with the other ULA answers, after the topics. */
   private static final Column INTERESTS = new Column("interests", a -> pairs(a.getInterests()));

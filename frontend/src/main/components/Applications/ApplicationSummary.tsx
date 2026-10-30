@@ -1,6 +1,7 @@
 import type { Application } from "main/components/Applications/ApplicationTable";
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import PriorCourseworkTable from "main/components/PriorCoursework/PriorCourseworkTable";
+import { submittedText } from "main/utils/adminApplications";
 import { courseInterestLabel } from "main/utils/applicationFields";
 import type { NoticeVersion } from "main/utils/notices";
 import {
@@ -78,6 +79,15 @@ export default function ApplicationSummary({
   const isTa = type === "TA";
 
   const rows: { label: string; value: string; mono?: boolean }[] = [
+    // First, so nobody reads a cancelled application without knowing (issue #107).
+    ...(application.status === "CANCELLED"
+      ? [
+          {
+            label: "Cancelled",
+            value: `${submittedText(application.cancelledAt)}: ${show(application.cancellationReason)}`,
+          },
+        ]
+      : []),
     {
       label: "Name",
       value: [

@@ -1,7 +1,10 @@
 import { describe, test, expect, vi } from "vitest";
 import {
+  RECENT_MONTHS,
+  addMonthsIso,
   closedExplanation,
   isEditable,
+  isRecentlyClosed,
   phaseOf,
   todayIso,
 } from "main/utils/applicationAccess";
@@ -62,13 +65,66 @@ describe("applicationAccess", () => {
     expect(closedExplanation(null)).toBe("Applications are closed.");
   });
 
-  test("a closed recruitment is view only, deadline or not", () => {
+  test("a closed recruitment with no closing date is view only, deadline or not", () => {
     expect(phaseOf(recruitment("CLOSED", "2026-01-20"), "2026-01-01")).toBe(
       "VIEW_ONLY",
     );
     expect(phaseOf(recruitment("CLOSED", "2026-01-20"), "2026-02-01")).toBe(
       "VIEW_ONLY",
     );
+  });
+
+  /** Issue #107: for six months after closing, the comments stay live. */
+  test("a recently closed recruitment is comments only, then view only", () => {
+    const closed = {
+      ...recruitment("CLOSED", "2026-01-20"),
+      actualClosingDate: "2026-02-01",
+    };
+    expect(phaseOf(closed, "2026-02-01")).toBe("COMMENTS_ONLY");
+    expect(phaseOf(closed, "2026-08-01")).toBe("COMMENTS_ONLY");
+    expect(phaseOf(closed, "2026-08-02")).toBe("VIEW_ONLY");
+    expect(isEditable("COMMENTS_ONLY")).toBe(false);
+  });
+
+  test("isRecentlyClosed is six months, and never for an open recruitment", () => {
+    expect(RECENT_MONTHS).toBe(6);
+    const closed = {
+      ...recruitment("CLOSED", "2026-01-20"),
+      actualClosingDate: "2026-02-01",
+    };
+    expect(isRecentlyClosed(closed, "2026-08-01")).toBe(true);
+    expect(isRecentlyClosed(closed, "2026-08-02")).toBe(false);
+    expect(
+      isRecentlyClosed({ ...closed, applicationStatus: "OPEN" }, "2026-03-01"),
+    ).toBe(false);
+    expect(
+      isRecentlyClosed({ ...closed, actualClosingDate: null }, "2026-03-01"),
+    ).toBe(false);
+    expect(isRecentlyClosed(undefined, "2026-03-01")).toBe(false);
+    expect(isRecentlyClosed(null, "2026-03-01")).toBe(false);
+  });
+
+  test("isRecentlyClosed defaults to today", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 2, 1, 12, 0, 0));
+    const closed = {
+      ...recruitment("CLOSED", "2026-01-20"),
+      actualClosingDate: "2026-02-01",
+    };
+    expect(isRecentlyClosed(closed)).toBe(true);
+    expect(
+      isRecentlyClosed({ ...closed, actualClosingDate: "2025-02-01" }),
+    ).toBe(false);
+    vi.useRealTimers();
+  });
+
+  test("addMonthsIso works like LocalDate.plusMonths", () => {
+    expect(addMonthsIso("2026-02-01", 6)).toBe("2026-08-01");
+    expect(addMonthsIso("2026-08-31", 1)).toBe("2026-09-30");
+    expect(addMonthsIso("2026-10-15", 6)).toBe("2027-04-15");
+    expect(addMonthsIso("2026-12-31", 2)).toBe("2027-02-28");
+    expect(addMonthsIso("2024-01-31", 1)).toBe("2024-02-29");
+    expect(addMonthsIso("2026-03-05", 0)).toBe("2026-03-05");
   });
 
   test("an open recruitment with no deadline stays editable", () => {

@@ -66,7 +66,9 @@ public class ApplicationCsvServiceTests {
           "comments",
           "postApplicationComments",
           "adminComments",
-          "noticeVersionId");
+          "noticeVersionId",
+          "cancellationReason",
+          "cancelledAt");
 
   @SafeVarargs
   private static List<String> headers(List<String>... parts) {
@@ -218,7 +220,10 @@ public class ApplicationCsvServiceTests {
             "Happy to help, \"either\" one",
             "Still keen",
             "Interview Tuesday",
-            "40"),
+            "40",
+            // Not cancelled: both cancellation columns blank (issue #107).
+            "",
+            ""),
         List.of(rows.get(1)));
   }
 

@@ -15,7 +15,7 @@ export type Application = {
   id: number;
   recruitmentId: number;
   email: string;
-  status: "PENDING" | "HIRED" | "NOT_HIRED";
+  status: "PENDING" | "HIRED" | "NOT_HIRED" | "CANCELLED";
   postApplicationComments: string | null;
   /** True when an admin entered it to preview the form; see TestApplicationPage. */
   testApplication: boolean;
@@ -69,6 +69,9 @@ export type Application = {
   adminComments: string | null;
   /** The notice version the applicant agreed to; null for applications older than any notice. */
   noticeVersionId: number | null;
+  /** Why and when the applicant cancelled (issue #107); both null unless the status is CANCELLED. */
+  cancellationReason: string | null;
+  cancelledAt: string | null;
 };
 
 type ApplicationTableProps = {

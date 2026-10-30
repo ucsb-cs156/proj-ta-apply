@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.services;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 
 /**
@@ -14,6 +15,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ApplicationAccessService {
+
+  /** How long after closing a recruitment still counts as recent, for comments (issue #107). */
+  public static final int RECENT_MONTHS = 6;
 
   /** Applications may only be created against an open recruitment. */
   public boolean acceptingApplications(Recruitment recruitment) {
@@ -30,11 +34,22 @@ public class ApplicationAccessService {
   }
 
   /**
-   * Whether post-application comments may still be changed. The same rule as editing: until the
-   * recruitment closes. They stay a separate field because reviewers read them as "what changed
-   * since you applied".
+   * Whether a closed recruitment closed recently: within the last {@link #RECENT_MONTHS}, counting
+   * the day six months on as still recent. A recruitment that is open, or that has no recorded
+   * closing date, is not "recently closed".
    */
-  public boolean commentable(Recruitment recruitment) {
-    return acceptingApplications(recruitment);
+  public boolean recentlyClosed(Recruitment recruitment, LocalDate today) {
+    if (acceptingApplications(recruitment) || recruitment.getActualClosingDate() == null) {
+      return false;
+    }
+    return !today.isAfter(recruitment.getActualClosingDate().plusMonths(RECENT_MONTHS));
+  }
+
+  /**
+   * Whether post-application comments may still be changed: while the recruitment is open, and for
+   * six months after it closes (issue #107), as the place for what has changed since applying.
+   */
+  public boolean commentable(Recruitment recruitment, LocalDate today) {
+    return acceptingApplications(recruitment) || recentlyClosed(recruitment, today);
   }
 }

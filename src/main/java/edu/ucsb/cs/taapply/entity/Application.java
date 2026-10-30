@@ -242,4 +242,13 @@ public class Application {
 
   /** Changing into, or adding, a CS, CE or CCS Computing major. */
   private Boolean changingMajor;
+
+  // ---- cancellation by the applicant (issue #107) ----
+
+  /** Why the applicant cancelled; null unless the status is CANCELLED. */
+  @Column(length = 4000)
+  private String cancellationReason;
+
+  /** When the applicant cancelled; null unless the status is CANCELLED. */
+  private LocalDateTime cancelledAt;
 }
