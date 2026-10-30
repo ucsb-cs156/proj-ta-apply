@@ -5,7 +5,10 @@ import { MemoryRouter } from "react-router";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 
-import RecruitmentCourseTable from "main/components/Recruitments/RecruitmentCourseTable";
+import RecruitmentCourseTable, {
+  CANCELLED,
+  STALE_LABEL,
+} from "main/components/Recruitments/RecruitmentCourseTable";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
 
 const axiosMock = new AxiosMockAdapter(axios);
@@ -144,6 +147,78 @@ describe("RecruitmentCourseTable tests", () => {
 
     await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
     expect(axiosMock.history.put[0].params).toEqual({ id: 4, removed: false });
+  });
+
+  /** Issue #122: a stale row says so beside its status; a fresh one does not. */
+  test("a stale row carries a warning badge in the Status column", () => {
+    renderTable([notRemoved[0], recruitmentCoursesFixtures.oneStale]);
+
+    const badge = screen.getByTestId("RecruitmentCourseTable-cell-row-1-stale");
+    expect(badge).toHaveTextContent("Stale / not in API");
+    expect(STALE_LABEL).toBe("Stale / not in API");
+    expect(badge).toHaveClass("badge", "bg-warning", "text-dark", "ms-2");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-1-col-status"),
+    ).toContainElement(badge);
+    // The status itself is still shown.
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-1-col-status"),
+    ).toHaveTextContent(/^closed/);
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-cell-row-0-stale"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-col-status"),
+    ).toHaveTextContent(/^open$/);
+    // The Remove button is still offered, so the admin can drop it for good.
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-1-col-removed-button",
+      ),
+    ).toHaveTextContent("Remove");
+  });
+
+  /** Issue #123: a cancelled lecture gets a red badge in place of the plain status. */
+  test("a cancelled row shows a red Cancelled badge in the Status column", () => {
+    renderTable([recruitmentCoursesFixtures.oneCancelled, notRemoved[1]]);
+
+    const badge = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-0-cancelled",
+    );
+    expect(badge).toHaveTextContent("Cancelled");
+    expect(badge).toHaveClass("badge", "bg-danger");
+    expect(CANCELLED).toBe("cancelled");
+    const cell = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-0-col-status",
+    );
+    expect(cell).toContainElement(badge);
+    expect(cell.textContent).toBe("Cancelled");
+    // An open row keeps its plain status.
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-cell-row-1-cancelled"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-1-col-status")
+        .textContent,
+    ).toBe("open");
+  });
+
+  test("a row both cancelled and stale shows both badges", () => {
+    renderTable([{ ...recruitmentCoursesFixtures.oneCancelled, stale: true }]);
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-cancelled"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-stale"),
+    ).toBeInTheDocument();
+  });
+
+  test("a row without the stale flag at all is treated as fresh", () => {
+    const { stale: _omitted, ...legacy } = notRemoved[0];
+    renderTable([legacy]);
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-cell-row-0-stale"),
+    ).toBeNull();
   });
 
   test("renders an empty table without crashing", () => {

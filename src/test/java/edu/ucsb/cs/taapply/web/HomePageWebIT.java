@@ -33,15 +33,15 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class HomePageWebIT extends WebTestCase {
 
   @Test
-  public void logged_in_regular_user_sees_greeting_and_the_student_section() throws Exception {
+  public void logged_in_regular_user_sees_only_the_student_section() throws Exception {
     setupRegularUser();
 
-    // "Test" comes from the mock OAuth provider's given_name claim, not from the User row the
-    // test seeds: GoogleSignInServiceImpl treats the OIDC token as the source of truth for
-    // profile fields and overwrites the stored values on each sign-in.
-    assertThat(page.getByTestId("HomePageLoggedIn-greeting")).containsText("Welcome, Test.");
-    // Everyone signed in is a student as far as applying goes (issue #107); only that section.
+    // Everyone signed in is a student as far as applying goes (issue #107); only that section,
+    // and with no other section to tell it from, no Student heading either (issue #118).
     assertThat(page.getByTestId("HomePageLoggedIn-student")).isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-student").locator("h2")).hasCount(0);
+    assertThat(page.getByTestId("HomePageLoggedIn-greeting")).hasCount(0);
+    assertThat(page.locator("h1")).hasCount(0);
     assertThat(page.getByTestId("HomePageLoggedIn-dashboard-none-open"))
         .containsText("Applications are not currently being accepted.");
     assertThat(page.getByTestId("HomePageLoggedIn-admin")).not().isVisible();
@@ -57,6 +57,7 @@ public class HomePageWebIT extends WebTestCase {
     // The recruitments table, empty here: just its headings.
     assertThat(page.getByTestId("HomePageLoggedIn-admin-recruitments")).isVisible();
     assertThat(page.getByTestId("HomePageLoggedIn-student")).isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-student").locator("h2")).hasText("Student");
     assertThat(page.getByTestId("HomePageLoggedIn-instructor")).not().isVisible();
   }
 

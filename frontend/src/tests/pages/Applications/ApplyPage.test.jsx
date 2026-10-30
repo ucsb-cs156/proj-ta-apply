@@ -9,6 +9,7 @@ import { vi } from "vitest";
 import ApplyPage from "main/pages/Applications/ApplyPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
+import courseInstructorsFixtures from "fixtures/courseInstructorsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import noticesFixtures from "fixtures/noticesFixtures";
@@ -100,6 +101,9 @@ describe("ApplyPage tests", () => {
       .reply(200, systemInfoFixtures.showingNeither);
     axiosMock.onGet("/api/recruitments/applicable").reply(200, [openUla]);
     axiosMock.onGet("/api/recruitments/courses").reply(200, courses);
+    axiosMock
+      .onGet("/api/recruitments/instructors")
+      .reply(200, courseInstructorsFixtures.twoCourses);
     axiosMock
       .onGet("/api/recruitments/sections")
       .reply(200, courseSectionsFixtures.cmpsc156);
@@ -209,6 +213,25 @@ describe("ApplyPage tests", () => {
     expect(
       axiosMock.history.get.filter(
         (r) => r.url === "/api/recruitments/courses",
+      )[0].params,
+    ).toEqual({ recruitmentId: "2" });
+  });
+
+  /** Issue #121: the instructors come from the recruitment and follow the course number. */
+  test("the course dropdown names each course's instructors", async () => {
+    renderPage();
+
+    const select = await screen.findByTestId("ApplyPage-firstChoiceCourse");
+    await waitFor(() =>
+      expect([...select.options].map((o) => o.textContent)).toEqual([
+        "Choose a course",
+        "CMPSC     8 (GAUCHO C)",
+        "CMPSC   156 (CONRAD P)",
+      ]),
+    );
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/recruitments/instructors",
       )[0].params,
     ).toEqual({ recruitmentId: "2" });
   });

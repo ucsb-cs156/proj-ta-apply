@@ -1,6 +1,6 @@
 import OurTable from "main/components/Common/OurTable";
 import { useBackendMutation } from "main/utils/useBackend";
-import { Button } from "react-bootstrap";
+import { Badge, Button } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 
@@ -20,7 +20,15 @@ export type RecruitmentCourse = {
   status: string | null;
   summerSession: string | null;
   removed: boolean;
+  /** Set by the last Populate when it did not find the row (issue #122); admins still see it. */
+  stale?: boolean;
 };
+
+/** On the badge of a stale row. */
+export const STALE_LABEL = "Stale / not in API";
+
+/** The status the UCSB API reports for a cancelled section; applicants are not offered it. */
+export const CANCELLED = "cancelled";
 
 type RecruitmentCourseTableProps = {
   courses: RecruitmentCourse[];
@@ -77,7 +85,38 @@ export default function RecruitmentCourseTable({
     { header: "Room", accessorKey: "room", meta: shrinkToContent },
     { header: "Enrolled", accessorKey: "enrollment", meta: shrinkToContent },
     { header: "Max", accessorKey: "maxEnroll", meta: shrinkToContent },
-    { header: "Status", accessorKey: "status", meta: shrinkToContent },
+    {
+      header: "Status",
+      accessorKey: "status",
+      meta: shrinkToContent,
+      // A cancelled lecture is shown as a red badge, since applicants no longer see it (issue
+      // #123); a stale row keeps its last known status, with a warning beside it so the admin can
+      // decide whether to Remove it (issue #122).
+      cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => (
+        <>
+          {cell.row.original.status === CANCELLED ? (
+            <Badge
+              bg="danger"
+              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-cancelled`}
+            >
+              Cancelled
+            </Badge>
+          ) : (
+            cell.row.original.status
+          )}
+          {cell.row.original.stale && (
+            <Badge
+              bg="warning"
+              text="dark"
+              className="ms-2"
+              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-stale`}
+            >
+              {STALE_LABEL}
+            </Badge>
+          )}
+        </>
+      ),
+    },
     // Always present, though only summer offerings carry a value.
     {
       header: "Summer Session",

@@ -18,6 +18,7 @@ const recruitmentCoursesFixtures = {
       status: "open",
       summerSession: null,
       removed: false,
+      stale: false,
     },
     {
       id: 2,
@@ -35,6 +36,7 @@ const recruitmentCoursesFixtures = {
       status: "open",
       summerSession: null,
       removed: false,
+      stale: false,
     },
     {
       id: 3,
@@ -52,6 +54,7 @@ const recruitmentCoursesFixtures = {
       status: "closed",
       summerSession: null,
       removed: false,
+      stale: false,
     },
     {
       id: 4,
@@ -69,8 +72,21 @@ const recruitmentCoursesFixtures = {
       status: "open",
       summerSession: null,
       removed: true,
+      stale: false,
     },
   ],
+};
+
+/** The second lecture of 156 as the last Populate no longer found it (issue #122). */
+recruitmentCoursesFixtures.oneStale = {
+  ...recruitmentCoursesFixtures.fourCourses[2],
+  stale: true,
+};
+
+/** The first lecture of 1A as the schedule has cancelled it (issue #123). */
+recruitmentCoursesFixtures.oneCancelled = {
+  ...recruitmentCoursesFixtures.fourCourses[0],
+  status: "cancelled",
 };
 
 export default recruitmentCoursesFixtures;

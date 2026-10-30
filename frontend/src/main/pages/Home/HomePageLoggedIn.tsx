@@ -9,7 +9,8 @@ import { useBackend } from "main/utils/useBackend";
 
 /**
  * The home page, in a section per role (issue #107): Admin (the recruitments table) for an admin,
- * Instructor for an instructor, and Student for everyone, since any signed-in user may apply.
+ * Instructor for an instructor, and Student for everyone, since any signed-in user may apply. No
+ * page title or greeting (issue #118): the navbar already says where you are and who you are.
  */
 export default function HomePageLoggedIn(): React.JSX.Element {
   const currentUser = useCurrentUser();
@@ -48,14 +49,13 @@ export default function HomePageLoggedIn(): React.JSX.Element {
     options,
   );
 
+  // The Student heading only earns its place when there is another section to tell it from
+  // (issue #118); a plain student's page is the student section and nothing else.
+  const otherSections = isAdmin || isInstructor;
+
   return (
     <BasicLayout>
       <div className="pt-2">
-        <h1>TA Apply</h1>
-        <p data-testid="HomePageLoggedIn-greeting">
-          Welcome, {currentUser.root?.user?.givenName ?? "Gaucho"}.
-        </p>
-
         {isAdmin && (
           <section className="mb-4" data-testid="HomePageLoggedIn-admin">
             <h2>Admin</h2>
@@ -76,7 +76,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
         )}
 
         <section data-testid="HomePageLoggedIn-student">
-          <h2>Student</h2>
+          {otherSections && <h2>Student</h2>}
           <StudentDashboard
             recruitments={recruitments ?? []}
             applications={applications ?? []}

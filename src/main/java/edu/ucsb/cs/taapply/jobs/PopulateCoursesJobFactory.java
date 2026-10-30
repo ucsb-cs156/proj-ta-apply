@@ -1,5 +1,6 @@
 package edu.ucsb.cs.taapply.jobs;
 
+import edu.ucsb.cs.taapply.repository.CatalogNameRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
@@ -21,6 +22,8 @@ public class PopulateCoursesJobFactory {
 
   @Autowired private CourseRepository courseRepository;
 
+  @Autowired private CatalogNameRepository catalogNameRepository;
+
   @Autowired private JobRateLimit jobRateLimit;
 
   @Value("${app.subjectArea:CMPSC}")
@@ -34,6 +37,7 @@ public class PopulateCoursesJobFactory {
         .subjectArea(subjectArea)
         .ucsbCurriculumService(ucsbCurriculumService)
         .courseRepository(courseRepository)
+        .catalogNameRepository(catalogNameRepository)
         .jobRateLimit(jobRateLimit)
         .build();
   }

@@ -66,8 +66,13 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
         <p>
           The courses in this recruitment: every lecture of a course flagged for
           its type that is offered that quarter. Re-running Populate picks up
-          newly flagged courses and refreshes the offering details, and leaves
-          removed courses out.
+          newly flagged courses and refreshes the offering details, leaves
+          removed courses out, and marks as stale any lecture it no longer finds
+          in the UCSB schedule or whose course is no longer flagged. Stale
+          lectures are hidden from applicants until a later Populate finds them
+          again; Remove them if they are not coming back. A cancelled lecture is
+          hidden from applicants too, and comes back by itself if the schedule
+          un-cancels it.
         </p>
 
         <p data-testid="RecruitmentCoursesPage-last-refreshed">
