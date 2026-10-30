@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router";
+import { Navigate, useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
@@ -59,8 +59,21 @@ export default function ApplyPage(): React.JSX.Element {
     [],
   );
 
+  // The applicant's existing applications. Reaching this page for a recruitment they have already
+  // applied to (the browser's back button after submitting, or an old link) must not offer a form
+  // whose submission the backend would refuse (issue #102); it goes to the application instead.
+  const { data: mine, isFetched: mineFetched } = useBackend<Application[]>(
+    ["/api/applications/mine"],
+    { method: "GET", url: "/api/applications/mine" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+
   const recruitment = (applicable ?? []).find(
     (r) => String(r.id) === String(recruitmentId),
+  );
+  const existing = (mine ?? []).find(
+    (a) => String(a.recruitmentId) === String(recruitmentId),
   );
 
   // The current "Notices, Terms and Conditions" for this kind of form; empty until one is written.
@@ -94,6 +107,11 @@ export default function ApplyPage(): React.JSX.Element {
     ["/api/applications/mine"],
   );
 
+  if (existing) {
+    // replace, so that going back again does not land here a second time.
+    return <Navigate to={`/applications/${existing.id}`} replace />;
+  }
+
   return (
     <BasicLayout>
       <div className="pt-2">
@@ -102,7 +120,9 @@ export default function ApplyPage(): React.JSX.Element {
           {recruitment &&
             `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`}
         </h1>
-        {recruitment ? (
+        {/* The form waits for the list of existing applications, so it is never offered to someone
+            whose submission would be refused. */}
+        {recruitment && mineFetched && (
           <ApplicationForm
             type={recruitment.type}
             courses={courses ?? []}
@@ -120,7 +140,8 @@ export default function ApplyPage(): React.JSX.Element {
             buttonLabel="Submit Application"
             testIdPrefix="ApplyPage"
           />
-        ) : (
+        )}
+        {!recruitment && (
           <p data-testid="ApplyPage-unavailable">
             That recruitment is not one you can apply to.
           </p>
