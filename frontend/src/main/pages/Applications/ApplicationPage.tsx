@@ -182,6 +182,15 @@ export default function ApplicationPage(): React.JSX.Element {
                 topics={options?.topics ?? []}
                 interests={options?.interests ?? []}
                 notice={notice}
+                noticeFillIn={
+                  recruitment
+                    ? {
+                        quarter: recruitment.quarter,
+                        primaryConsiderationDate:
+                          recruitment.primaryConsiderationDate,
+                      }
+                    : null
+                }
                 initialContents={application}
                 defaultNames={{
                   firstName: currentUser.root?.user?.givenName,
@@ -230,6 +239,15 @@ export default function ApplicationPage(): React.JSX.Element {
                   application={application}
                   type={recruitment?.type ?? "TA"}
                   notice={agreedNotice}
+                  noticeFillIn={
+                    recruitment
+                      ? {
+                          quarter: recruitment.quarter,
+                          primaryConsiderationDate:
+                            recruitment.primaryConsiderationDate,
+                        }
+                      : null
+                  }
                   testIdPrefix="ApplicationPage-summary"
                 />
               </>
@@ -252,6 +270,15 @@ export default function ApplicationPage(): React.JSX.Element {
                   application={application}
                   type={recruitment?.type ?? "TA"}
                   notice={agreedNotice}
+                  noticeFillIn={
+                    recruitment
+                      ? {
+                          quarter: recruitment.quarter,
+                          primaryConsiderationDate:
+                            recruitment.primaryConsiderationDate,
+                        }
+                      : null
+                  }
                   testIdPrefix="ApplicationPage-summary"
                 />
               </>

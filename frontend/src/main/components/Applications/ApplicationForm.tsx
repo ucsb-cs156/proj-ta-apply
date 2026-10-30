@@ -17,6 +17,7 @@ import { WarningIcon } from "main/components/Common/Icons";
 import RequiredField from "main/components/Common/RequiredField";
 import RequiredFieldExplanation from "main/components/Common/RequiredFieldExplanation";
 import type { NoticeVersion } from "main/utils/notices";
+import type { NoticeFillIn } from "main/utils/noticeFields";
 import {
   COURSE_INTEREST_OPTIONS,
   DEFAULT_COURSE_INTEREST,
@@ -107,6 +108,8 @@ type ApplicationFormProps = {
    * for a new application, the one agreed to for an existing one. Null when none exists yet.
    */
   notice?: NoticeVersion | null;
+  /** The recruitment's quarter and deadline, filled into the notice's fields (issue #150). */
+  noticeFillIn?: NoticeFillIn | null;
   initialContents?: Partial<Application>;
   /**
    * Names from the signed-in Google account, used only where the application itself has none.
@@ -166,6 +169,7 @@ export default function ApplicationForm({
   topics,
   interests: interestOptions,
   notice = null,
+  noticeFillIn = null,
   initialContents,
   defaultNames,
   submitAction,
@@ -523,6 +527,7 @@ export default function ApplicationForm({
       <div className="mt-3">
         <NoticeAgreement
           notice={notice}
+          fillIn={noticeFillIn}
           agreed={agreed}
           invalid={agreementMissing}
           onChange={(checked) => {

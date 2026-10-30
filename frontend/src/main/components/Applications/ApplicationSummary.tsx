@@ -4,6 +4,7 @@ import PriorCourseworkTable from "main/components/PriorCoursework/PriorCoursewor
 import { submittedText } from "main/utils/adminApplications";
 import { courseInterestLabel } from "main/utils/applicationFields";
 import type { NoticeVersion } from "main/utils/notices";
+import type { NoticeFillIn } from "main/utils/noticeFields";
 import {
   OTHER_CAMPUS_JOB_OPTIONS,
   STUDENT_STATUS_OPTIONS,
@@ -18,6 +19,8 @@ type ApplicationSummaryProps = {
   type: "TA" | "ULA";
   /** The notice version the applicant agreed to, if the caller has it; shown back ticked. */
   notice?: NoticeVersion | null;
+  /** The recruitment's quarter and deadline, filled into the notice's fields (issue #150). */
+  noticeFillIn?: NoticeFillIn | null;
   testIdPrefix?: string;
 };
 
@@ -74,6 +77,7 @@ export default function ApplicationSummary({
   application,
   type,
   notice = null,
+  noticeFillIn = null,
   testIdPrefix = "ApplicationSummary",
 }: ApplicationSummaryProps): React.JSX.Element {
   const isTa = type === "TA";
@@ -246,6 +250,7 @@ export default function ApplicationSummary({
       {/* First, as on the form itself (issue #77). */}
       <NoticeAgreement
         notice={notice}
+        fillIn={noticeFillIn}
         agreed={application.noticeVersionId === notice?.id}
         onChange={() => {}}
         readOnly

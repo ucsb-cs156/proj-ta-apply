@@ -82,6 +82,18 @@ describe("ApplicationPage tests", () => {
   });
 
   /** The version agreed to is what is shown, fetched by id, not whatever is current. */
+  /** Issue #150: the agreed notice is shown with its fields filled from the recruitment. */
+  test("fills the notice's quarter and date fields from the recruitment", async () => {
+    axiosMock.onGet("/api/notices").reply(200, {
+      ...noticesFixtures.ulaV1,
+      content: "Apply for ${quarter} by ${primaryConsiderationDate}.",
+    });
+    renderPage();
+    expect(
+      await screen.findByTestId("ApplicationPage-notice-content"),
+    ).toHaveTextContent("Apply for Winter 2026 by January 20, 2026.");
+  });
+
   test("an editable application shows the notice version it agreed to, already ticked", async () => {
     renderPage();
 

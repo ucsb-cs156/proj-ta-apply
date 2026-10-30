@@ -117,6 +117,22 @@ describe("AdminApplicationPage tests", () => {
     expect(screen.getByText("Audit Trail")).toBeInTheDocument();
   });
 
+  /** Issue #150: the admin's view fills the notice's fields from the recruitment. */
+  test("fills the notice's quarter and date fields from the recruitment", async () => {
+    axiosMock.onGet("/api/notices").reply(200, {
+      ...noticesFixtures.ulaV1,
+      content: "Apply for ${quarter} by ${primaryConsiderationDate}.",
+    });
+    renderPage();
+    const content = await screen.findByTestId(
+      "AdminApplicationPage-summary-notice-content",
+    );
+    expect(content).toHaveTextContent(
+      /Apply for (Winter|Spring) 2026 by (January 20|April 15), 2026\./,
+    );
+    expect(content).not.toHaveTextContent("${quarter}");
+  });
+
   test("shows who applied, when, and the application read only, with the agreed notice", async () => {
     renderPage();
 

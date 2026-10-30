@@ -7,6 +7,7 @@ import {
   describeVersion,
   type NoticeVersion,
 } from "main/utils/notices";
+import { fillNoticeFields, type NoticeFillIn } from "main/utils/noticeFields";
 
 type NoticeAgreementProps = {
   /** The version to show; null or undefined renders nothing at all. */
@@ -17,6 +18,8 @@ type NoticeAgreementProps = {
   invalid?: boolean;
   /** Read-only display, e.g. on a summary: the box is shown ticked but cannot be changed. */
   readOnly?: boolean;
+  /** The recruitment's values for `${quarter}` and `${primaryConsiderationDate}` (issue #150). */
+  fillIn?: NoticeFillIn | null;
   testIdPrefix?: string;
 };
 
@@ -30,6 +33,7 @@ export default function NoticeAgreement({
   onChange,
   invalid = false,
   readOnly = false,
+  fillIn = null,
   testIdPrefix = "NoticeAgreement",
 }: NoticeAgreementProps): React.JSX.Element | null {
   if (!notice) {
@@ -43,7 +47,7 @@ export default function NoticeAgreement({
       <Card.Body>
         <div data-testid={`${testIdPrefix}-content`}>
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {notice.content}
+            {fillNoticeFields(notice.content, fillIn)}
           </ReactMarkdown>
         </div>
         <p className="text-muted small" data-testid={`${testIdPrefix}-version`}>

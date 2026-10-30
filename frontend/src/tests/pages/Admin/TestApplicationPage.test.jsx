@@ -97,6 +97,24 @@ describe("TestApplicationPage tests", () => {
     axiosMock.onGet("/api/notices/current").reply(200, []);
   });
 
+  /** Issue #150: the test form fills the notice's fields from its recruitment too. */
+  test("fills the notice's quarter and date fields from the recruitment", async () => {
+    axiosMock.onGet("/api/notices/current").reply(200, [
+      {
+        ...noticesFixtures.taV2,
+        content: "Apply for ${quarter} by ${primaryConsiderationDate}.",
+      },
+    ]);
+    renderPage();
+    const content = await screen.findByTestId(
+      "TestApplicationPage-notice-content",
+    );
+    expect(content).toHaveTextContent(
+      /Apply for (Winter|Spring) 2026 by (January 20|April 15), 2026\./,
+    );
+    expect(content).not.toHaveTextContent("${quarter}");
+  });
+
   test("shows the current notice for the recruitment's type, as applicants see it", async () => {
     axiosMock.onGet("/api/notices/current").reply(200, [noticesFixtures.taV2]);
     renderPage();

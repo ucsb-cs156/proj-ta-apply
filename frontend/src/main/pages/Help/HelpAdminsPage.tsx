@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router";
 import { Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { ADMIN_MENU_ENTRIES } from "main/utils/helpPages";
+import { NOTICE_FIELD_EXAMPLES } from "main/utils/noticeFields";
 
 /**
  * The admin's handbook: /help/admins (issue #140). A table of every option on the Admin and
@@ -234,6 +235,28 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Markdown with a live preview; each save is kept as a new version, and
           each application records which version its applicant agreed to.
         </p>
+        <h3 className="h6 mt-3" id="notice-fields">
+          Fields in the notices text
+        </h3>
+        <p data-testid="HelpAdminsPage-notice-fields">
+          The text can carry two fields that are filled in for each applicant
+          from their recruitment: <code>{"${quarter}"}</code> becomes the
+          quarter, written out (for example <em>Winter 2026</em>), and{" "}
+          <code>{"${primaryConsiderationDate}"}</code> becomes the primary
+          consideration date (for example <em>January 20, 2026</em>). The
+          editor&apos;s preview shows the fields as written, since it belongs to
+          no recruitment; the applicant&apos;s form, the view of a submitted
+          application, and the admin&apos;s Test Application all show them
+          filled in. Anything else between <code>{"${"}</code> and{" "}
+          <code>{"}"}</code> is left exactly as typed. Two examples:
+        </p>
+        <ul data-testid="HelpAdminsPage-notice-field-examples">
+          {NOTICE_FIELD_EXAMPLES.map((example) => (
+            <li key={example}>
+              <code>{example}</code>
+            </li>
+          ))}
+        </ul>
         <p>
           The <strong>Import Legacy TA Applications</strong> card loads a CSV
           exported from the old PHP application into a recruitment, for the
@@ -247,8 +270,9 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <Link to="/admin/settings/ula">ULA App Settings</Link> is the same for
           the ULA form: its <strong>Majors</strong>, <strong>Topics</strong> and{" "}
           <strong>Interests</strong> lists (the areas of ULA work each applicant
-          rates their interest in), the ULA notices, terms and conditions, and
-          the import of the old ULA Google Form&apos;s response sheet.
+          rates their interest in), the ULA notices, terms and conditions (with
+          the same <a href="#notice-fields">fields</a> available), and the
+          import of the old ULA Google Form&apos;s response sheet.
         </p>
 
         <h2 className="my-3 h4" id="legacy-ta-application">

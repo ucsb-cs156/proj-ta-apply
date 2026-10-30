@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { Button, Card, Col, Row, Table } from "react-bootstrap";
 import ReactMarkdown from "react-markdown";
+import { NOTICE_FIELDS_HINT } from "main/utils/noticeFields";
+import { Link } from "react-router";
 import remarkGfm from "remark-gfm";
 import SimpleMdeReact from "react-simplemde-editor";
 import "easymde/dist/easymde.min.css";
@@ -102,6 +104,13 @@ export default function NoticeEditorCard({
           box. Written in Markdown; the preview on the right is what applicants
           see. Each save is kept as a new version, so an application can always
           show the exact text its applicant agreed to.
+        </p>
+        <p className="text-muted small" data-testid={id("fields-hint")}>
+          {NOTICE_FIELDS_HINT}{" "}
+          <Link to="/help/admins#notice-fields">
+            More about these fields and examples
+          </Link>
+          .
         </p>
         <Row>
           <Col md={6} data-testid={id("editor")}>

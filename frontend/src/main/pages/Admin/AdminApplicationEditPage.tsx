@@ -149,6 +149,15 @@ export default function AdminApplicationEditPage(): React.JSX.Element {
               topics={options?.topics ?? []}
               interests={options?.interests ?? []}
               notice={notice}
+              noticeFillIn={
+                recruitment
+                  ? {
+                      quarter: recruitment.quarter,
+                      primaryConsiderationDate:
+                        recruitment.primaryConsiderationDate,
+                    }
+                  : null
+              }
               initialContents={application}
               submitAction={(payload) => saveMutation.mutate(payload)}
               buttonLabel="Save Changes"
