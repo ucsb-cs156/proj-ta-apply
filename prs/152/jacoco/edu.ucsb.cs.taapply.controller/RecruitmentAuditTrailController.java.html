@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentAuditTrailController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">RecruitmentAuditTrailController.java</span></div><h1>RecruitmentAuditTrailController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
+import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * The audit trail of changes to recruitments themselves, read-only, one recruitment at a time
+ * (issue #139). The trail of an admin's changes to individual applications is {@link
+ * AuditTrailController}.
+ */
+@Tag(name = &quot;RecruitmentAuditTrail&quot;)
+@RequestMapping(&quot;/api/admin/recruitmentaudittrail&quot;)
+@RestController
+<span class="fc" id="L29">@Slf4j</span>
+<span class="fc" id="L30">public class RecruitmentAuditTrailController extends ApiController {</span>
+
+  @Autowired RecruitmentAuditTrailRepository recruitmentAuditTrailRepository;
+
+  /** The columns the page may sort by: every column of the table. */
+<span class="fc" id="L35">  public static final Set&lt;String&gt; SORTABLE =</span>
+<span class="fc" id="L36">      Set.of(&quot;id&quot;, &quot;changedAt&quot;, &quot;recruitmentId&quot;, &quot;whatChanged&quot;, &quot;oldValue&quot;, &quot;newValue&quot;);</span>
+
+  /** One page of the trail, in the shape the Audit Trail and Users pages already consume. */
+<span class="fc" id="L39">  public static record RecruitmentAuditTrailPageDTO(</span>
+      List&lt;RecruitmentAuditTrail&gt; content,
+      int number,
+      int size,
+      long totalElements,
+      int totalPages) {
+    public RecruitmentAuditTrailPageDTO(Page&lt;RecruitmentAuditTrail&gt; page) {
+<span class="fc" id="L46">      this(</span>
+<span class="fc" id="L47">          page.getContent(),</span>
+<span class="fc" id="L48">          page.getNumber(),</span>
+<span class="fc" id="L49">          page.getSize(),</span>
+<span class="fc" id="L50">          page.getTotalElements(),</span>
+<span class="fc" id="L51">          page.getTotalPages());</span>
+<span class="fc" id="L52">    }</span>
+  }
+
+  @Operation(
+      summary = &quot;One page of the changes recorded against one recruitment&quot;,
+      description =
+          &quot;Sorted by any column, ascending or descending; newest first by default. 400 for a column&quot;
+              + &quot; that is not one of the table's. A recruitment nothing has been recorded for, or&quot;
+              + &quot; that never existed, gets an empty page rather than a 404.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/all&quot;)
+  public RecruitmentAuditTrailPageDTO forRecruitment(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
+      @RequestParam(defaultValue = &quot;0&quot;) int page,
+      @RequestParam(defaultValue = &quot;10&quot;) int size,
+      @Parameter(name = &quot;sort&quot;, description = &quot;A column name, e.g. changedAt&quot;)
+          @RequestParam(defaultValue = &quot;id&quot;)
+          String sort,
+      @Parameter(name = &quot;direction&quot;, description = &quot;asc or desc&quot;)
+          @RequestParam(defaultValue = &quot;desc&quot;)
+          String direction) {
+<span class="fc bfc" id="L73" title="All 2 branches covered.">    if (!SORTABLE.contains(sort)) {</span>
+<span class="fc" id="L74">      throw new IllegalArgumentException(</span>
+          &quot;Cannot sort by %s (expected one of %s)&quot;
+<span class="fc" id="L76">              .formatted(sort, SORTABLE.stream().sorted().toList()));</span>
+    }
+<span class="fc" id="L78">    Sort.Direction sortDirection = Sort.Direction.fromString(direction);</span>
+<span class="fc" id="L79">    return new RecruitmentAuditTrailPageDTO(</span>
+<span class="fc" id="L80">        recruitmentAuditTrailRepository.findByRecruitmentId(</span>
+<span class="fc" id="L81">            recruitmentId, PageRequest.of(page, size, Sort.by(sortDirection, sort))));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
