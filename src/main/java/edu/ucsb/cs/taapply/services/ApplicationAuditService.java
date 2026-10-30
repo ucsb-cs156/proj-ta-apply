@@ -20,7 +20,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Writes the audit trail for an admin's edit of a student's application: one row per field whose
- * value changed, with the value before and after as strings.
+ * value changed, with the value before and after as strings. (Changes to a recruitment itself are
+ * written by {@link RecruitmentAuditService} to a table of their own.)
  *
  * <p>The caller takes a {@link #snapshot} before applying the edit and calls {@link #record} with
  * it afterwards. A snapshot is the application's answers as strings, keyed by field name: the plain

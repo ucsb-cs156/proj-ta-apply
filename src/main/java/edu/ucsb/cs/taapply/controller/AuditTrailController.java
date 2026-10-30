@@ -18,7 +18,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** The audit trail, read-only: every change an admin made to a student's application. */
+/**
+ * The audit trail of <em>individual applications</em>, read-only: every change an admin made to a
+ * student's application. Changes to recruitments themselves (creation, deletion, status, dates) are
+ * served by {@link RecruitmentAuditTrailController}.
+ */
 @Tag(name = "AuditTrail")
 @RequestMapping("/api/admin/audittrail")
 @RestController

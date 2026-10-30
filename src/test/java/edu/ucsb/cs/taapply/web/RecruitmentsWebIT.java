@@ -244,6 +244,26 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-status-button"))
         .containsText("Close");
     assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-actualOpeningDate")).not().isEmpty();
+
+    // Issue #139: the Review Applications page lists the recruitment's own audit trail, newest
+    // first: the stamped opening date, the status change, then the creation.
+    page.getByTestId("HomePageLoggedIn-admin-card-0-review-button").click();
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-total"))
+        .hasText("3 changes recorded.");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-whatChanged"))
+        .hasText("actualOpeningDate");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-oldValue"))
+        .hasText("");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-newValue"))
+        .hasText(java.time.LocalDate.now().toString());
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-1-col-whatChanged"))
+        .hasText("applicationStatus");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-1-col-oldValue"))
+        .hasText("CLOSED");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-1-col-newValue"))
+        .hasText("OPEN");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-2-col-whatChanged"))
+        .hasText("created");
   }
 
   /** The CSV button hands the browser a file named after the recruitment, with the TA columns. */
