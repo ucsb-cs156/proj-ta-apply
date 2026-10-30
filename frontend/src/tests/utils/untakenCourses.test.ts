@@ -20,8 +20,12 @@ describe("untakenCourses (issue #148)", () => {
   });
 
   test("hasTaken matches the padded id against the coursework's course numbers, any school", () => {
+    // The named fixtures rather than threeCourses, which the JS fixture adds after the literal
+    // and so is invisible to this file's type check.
     const taken = [
-      ...priorCourseworkFixtures.threeCourses,
+      priorCourseworkFixtures.ucsbCourse,
+      priorCourseworkFixtures.inProgress,
+      priorCourseworkFixtures.elsewhere,
       { ...priorCourseworkFixtures.ucsbCourse, courseNumber: "cmpsc156" },
     ];
     expect(hasTaken(taken, "CMPSC   263")).toBe(true);
