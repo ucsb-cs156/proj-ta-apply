@@ -119,7 +119,11 @@ export type ApplicationFormFields = {
   otherCampusJob: string;
   priorUcsbEmployment: string;
   employeeId: string;
-  i9Appointment: string;
+  /**
+   * The I-9 Verification agreement box (issue #111): a checkbox, so always answered on a ULA form;
+   * null on a TA form, which does not ask.
+   */
+  i9Appointment: boolean | null;
   trainingCommitment: string;
   trainingCommitmentExplanation: string;
   changingMajor: string;
@@ -142,7 +146,6 @@ export type ApplicationPayload = Omit<
   | "wantsTaEligibility"
   | "otherCampusJob"
   | "priorUcsbEmployment"
-  | "i9Appointment"
   | "trainingCommitment"
   | "changingMajor"
 > & {
@@ -158,7 +161,6 @@ export type ApplicationPayload = Omit<
   wantsTaEligibility: boolean | null;
   otherCampusJob: string | null;
   priorUcsbEmployment: boolean | null;
-  i9Appointment: boolean | null;
   trainingCommitment: string | null;
   changingMajor: boolean | null;
 };
@@ -210,7 +212,6 @@ export function toPayload(data: ApplicationFormFields): ApplicationPayload {
     wantsTaEligibility: selectToBoolean(data.wantsTaEligibility),
     otherCampusJob: orNull(data.otherCampusJob),
     priorUcsbEmployment: selectToBoolean(data.priorUcsbEmployment),
-    i9Appointment: selectToBoolean(data.i9Appointment),
     trainingCommitment: orNull(data.trainingCommitment),
     changingMajor: selectToBoolean(data.changingMajor),
   };

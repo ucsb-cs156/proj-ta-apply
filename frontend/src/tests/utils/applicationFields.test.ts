@@ -53,7 +53,7 @@ const fields = (
   otherCampusJob: "NOT_SURE",
   priorUcsbEmployment: "true",
   employeeId: "1234567",
-  i9Appointment: "",
+  i9Appointment: false,
   trainingCommitment: "UNSURE",
   trainingCommitmentExplanation: "Might have a Friday lab",
   changingMajor: "false",
@@ -240,7 +240,9 @@ describe("toPayload", () => {
     expect(payload.bsMsStudent).toBe(true);
     expect(payload.wantsTaEligibility).toBe(false);
     expect(payload.priorUcsbEmployment).toBe(true);
-    expect(payload.i9Appointment).toBeNull();
+    // A checkbox since issue #111, so it travels as it is.
+    expect(payload.i9Appointment).toBe(false);
+    expect(toPayload(fields({ i9Appointment: true })).i9Appointment).toBe(true);
     expect(payload.changingMajor).toBe(false);
     expect(payload.studentStatusNextQuarter).toBe("GRADUATE");
     expect(payload.otherCampusJob).toBe("NOT_SURE");

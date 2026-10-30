@@ -86,8 +86,26 @@ export const PRIOR_EMPLOYMENT_QUESTION =
 export const EMPLOYEE_ID_NOTE =
   "Log into UCPath (https://www.ucpath.ucsb.edu/) and look up your employee ID. It is NOT your perm number and NOT your SSN; if you cannot find it, leave this blank.";
 
-export const I9_QUESTION =
-  "Have you made, or will you make, an appointment to complete the I-9 employment verification?";
+// ---- the I-9 Verification section (issue #111) ----
+
+export const I9_WHO =
+  "Students hired as ULAs must make an appointment for I-9 verification, unless they are told that their I-9 is already on file. Even students that have previously done an I-9 verification are sometimes asked to do it again.";
+
+export const I9_DOCUMENTS =
+  "Please review the documents needed for I-9 verification at the link below, and ensure that you have these with you on campus. If you do not, make an effort to get them and have them available.";
+
+export const I9_DOCUMENTS_URL =
+  "https://www.uscis.gov/i-9-central/form-i-9-acceptable-documents";
+
+export const I9_CONSEQUENCES =
+  "If you are hired, you may be contacted by CS department staff to come in for an I-9 verification, with these documents in hand (originals, not copies, and not photographs). Failure to do so may result in delays in your paycheck, or in extreme cases in rescinding your offer of employment.";
+
+export const I9_PROMPT =
+  "Please check the box below to indicate that you agree to show up for your I-9 appointment with these documents within one week of being notified that you have been hired:";
+
+/** The checkbox's label; ticked is stored as Yes. */
+export const I9_AGREEMENT =
+  "I agree to show up for my I-9 appointment with these documents within one week of being notified that I have been hired.";
 
 export const TRAINING_STATEMENT =
   "First-time ULAs are required to attend five mandatory training sessions in the first weeks of the quarter, on Fridays from 1:00 pm to 1:50 pm. Absences are not excused for personal reasons such as hackathons or weddings, and a course that meets at that time is not permitted; if you register for one you may be asked to leave the ULA program. Absences for illness or a true emergency are dealt with case by case.";

@@ -350,7 +350,10 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-employeeId")).not().isVisible();
     page.getByTestId("ApplyPage-priorUcsbEmployment").selectOption("true");
     page.getByTestId("ApplyPage-employeeId").fill("1234567");
-    page.getByTestId("ApplyPage-i9Appointment").selectOption("false");
+    // The I-9 agreement is its own section with a checkbox (issue #111).
+    assertThat(page.getByTestId("ApplyPage-i9-link"))
+        .hasAttribute("href", "https://www.uscis.gov/i-9-central/form-i-9-acceptable-documents");
+    page.getByTestId("ApplyPage-i9Appointment").check();
     assertThat(page.getByTestId("ApplyPage-training")).not().isVisible();
     page.getByTestId("ApplyPage-previousServiceAsUla").fill("0");
     assertThat(page.getByTestId("ApplyPage-training-statement"))
