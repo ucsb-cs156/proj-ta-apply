@@ -20,7 +20,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Writes the audit trail for an admin's edit of a student's application: one row per field whose
- * value changed, with the value before and after as strings.
+ * value changed, with the value before and after as strings. (Changes to a recruitment itself are
+ * written by {@link RecruitmentAuditService} to a table of their own.)
  *
  * &lt;p&gt;The caller takes a {@link #snapshot} before applying the edit and calls {@link #record} with
  * it afterwards. A snapshot is the application's answers as strings, keyed by field name: the plain
@@ -31,59 +32,59 @@ import org.springframework.stereotype.Service;
  * form rebuilds those rows on every save and they carry no identity across it.
  */
 @Service
-<span class="fc" id="L34">public class ApplicationAuditService {</span>
+<span class="fc" id="L35">public class ApplicationAuditService {</span>
 
   @Autowired private AuditTrailRepository auditTrailRepository;
   @Autowired private ObjectMapper objectMapper;
 
   /** The fields an admin may change, with how to read each as a string; null reads as null. */
-<span class="fc" id="L40">  private static final Map&lt;String, Function&lt;Application, Object&gt;&gt; FIELDS = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L41">  private static final Map&lt;String, Function&lt;Application, Object&gt;&gt; FIELDS = new LinkedHashMap&lt;&gt;();</span>
 
   static {
-<span class="fc" id="L43">    FIELDS.put(&quot;firstName&quot;, Application::getFirstName);</span>
-<span class="fc" id="L44">    FIELDS.put(&quot;middleName&quot;, Application::getMiddleName);</span>
-<span class="fc" id="L45">    FIELDS.put(&quot;lastName&quot;, Application::getLastName);</span>
-<span class="fc" id="L46">    FIELDS.put(&quot;major&quot;, Application::getMajor);</span>
-<span class="fc" id="L47">    FIELDS.put(&quot;gpaMajor&quot;, Application::getGpaMajor);</span>
-<span class="fc" id="L48">    FIELDS.put(&quot;gpaOverall&quot;, Application::getGpaOverall);</span>
-<span class="fc" id="L49">    FIELDS.put(&quot;yearInProgram&quot;, Application::getYearInProgram);</span>
-<span class="fc" id="L50">    FIELDS.put(&quot;graduationDate&quot;, Application::getGraduationDate);</span>
-<span class="fc" id="L51">    FIELDS.put(&quot;prevExperience&quot;, Application::getPrevExperience);</span>
-<span class="fc" id="L52">    FIELDS.put(&quot;comments&quot;, Application::getComments);</span>
-<span class="fc" id="L53">    FIELDS.put(&quot;firstChoiceCourse&quot;, Application::getFirstChoiceCourse);</span>
-<span class="fc" id="L54">    FIELDS.put(&quot;secondChoiceCourse&quot;, Application::getSecondChoiceCourse);</span>
-<span class="fc" id="L55">    FIELDS.put(&quot;availableForLecturesFirstChoice&quot;, Application::isAvailableForLecturesFirstChoice);</span>
-<span class="fc" id="L56">    FIELDS.put(&quot;availableForLecturesSecondChoice&quot;, Application::isAvailableForLecturesSecondChoice);</span>
-<span class="fc" id="L57">    FIELDS.put(</span>
+<span class="fc" id="L44">    FIELDS.put(&quot;firstName&quot;, Application::getFirstName);</span>
+<span class="fc" id="L45">    FIELDS.put(&quot;middleName&quot;, Application::getMiddleName);</span>
+<span class="fc" id="L46">    FIELDS.put(&quot;lastName&quot;, Application::getLastName);</span>
+<span class="fc" id="L47">    FIELDS.put(&quot;major&quot;, Application::getMajor);</span>
+<span class="fc" id="L48">    FIELDS.put(&quot;gpaMajor&quot;, Application::getGpaMajor);</span>
+<span class="fc" id="L49">    FIELDS.put(&quot;gpaOverall&quot;, Application::getGpaOverall);</span>
+<span class="fc" id="L50">    FIELDS.put(&quot;yearInProgram&quot;, Application::getYearInProgram);</span>
+<span class="fc" id="L51">    FIELDS.put(&quot;graduationDate&quot;, Application::getGraduationDate);</span>
+<span class="fc" id="L52">    FIELDS.put(&quot;prevExperience&quot;, Application::getPrevExperience);</span>
+<span class="fc" id="L53">    FIELDS.put(&quot;comments&quot;, Application::getComments);</span>
+<span class="fc" id="L54">    FIELDS.put(&quot;firstChoiceCourse&quot;, Application::getFirstChoiceCourse);</span>
+<span class="fc" id="L55">    FIELDS.put(&quot;secondChoiceCourse&quot;, Application::getSecondChoiceCourse);</span>
+<span class="fc" id="L56">    FIELDS.put(&quot;availableForLecturesFirstChoice&quot;, Application::isAvailableForLecturesFirstChoice);</span>
+<span class="fc" id="L57">    FIELDS.put(&quot;availableForLecturesSecondChoice&quot;, Application::isAvailableForLecturesSecondChoice);</span>
+<span class="fc" id="L58">    FIELDS.put(</span>
         &quot;availableForDiscussionFirstChoice&quot;, Application::isAvailableForDiscussionFirstChoice);
-<span class="fc" id="L59">    FIELDS.put(</span>
+<span class="fc" id="L60">    FIELDS.put(</span>
         &quot;availableForDiscussionSecondChoice&quot;, Application::isAvailableForDiscussionSecondChoice);
-<span class="fc" id="L61">    FIELDS.put(&quot;availabilityCommentsFirstChoice&quot;, Application::getAvailabilityCommentsFirstChoice);</span>
-<span class="fc" id="L62">    FIELDS.put(</span>
+<span class="fc" id="L62">    FIELDS.put(&quot;availabilityCommentsFirstChoice&quot;, Application::getAvailabilityCommentsFirstChoice);</span>
+<span class="fc" id="L63">    FIELDS.put(</span>
         &quot;availabilityCommentsSecondChoice&quot;, Application::getAvailabilityCommentsSecondChoice);
-<span class="fc" id="L64">    FIELDS.put(&quot;residencyStatus&quot;, Application::getResidencyStatus);</span>
-<span class="fc" id="L65">    FIELDS.put(&quot;languageExam&quot;, Application::getLanguageExam);</span>
-<span class="fc" id="L66">    FIELDS.put(&quot;languageExamDatePassed&quot;, Application::getLanguageExamDatePassed);</span>
-<span class="fc" id="L67">    FIELDS.put(&quot;classLevel&quot;, Application::getClassLevel);</span>
-<span class="fc" id="L68">    FIELDS.put(&quot;videoLink&quot;, Application::getVideoLink);</span>
-<span class="fc" id="L69">    FIELDS.put(&quot;previousServiceAsUla&quot;, Application::getPreviousServiceAsUla);</span>
-<span class="fc" id="L70">    FIELDS.put(&quot;permNumber&quot;, Application::getPermNumber);</span>
-<span class="fc" id="L71">    FIELDS.put(&quot;bsMsStudent&quot;, Application::getBsMsStudent);</span>
-<span class="fc" id="L72">    FIELDS.put(&quot;studentStatusNextQuarter&quot;, Application::getStudentStatusNextQuarter);</span>
-<span class="fc" id="L73">    FIELDS.put(&quot;wantsTaEligibility&quot;, Application::getWantsTaEligibility);</span>
-<span class="fc" id="L74">    FIELDS.put(&quot;otherCampusJob&quot;, Application::getOtherCampusJob);</span>
-<span class="fc" id="L75">    FIELDS.put(&quot;priorUcsbEmployment&quot;, Application::getPriorUcsbEmployment);</span>
-<span class="fc" id="L76">    FIELDS.put(&quot;employeeId&quot;, Application::getEmployeeId);</span>
-<span class="fc" id="L77">    FIELDS.put(&quot;i9Appointment&quot;, Application::getI9Appointment);</span>
-<span class="fc" id="L78">    FIELDS.put(&quot;trainingCommitment&quot;, Application::getTrainingCommitment);</span>
-<span class="fc" id="L79">    FIELDS.put(&quot;trainingCommitmentExplanation&quot;, Application::getTrainingCommitmentExplanation);</span>
-<span class="fc" id="L80">    FIELDS.put(&quot;changingMajor&quot;, Application::getChangingMajor);</span>
-<span class="fc" id="L81">    FIELDS.put(&quot;noticeVersionId&quot;, Application::getNoticeVersionId);</span>
+<span class="fc" id="L65">    FIELDS.put(&quot;residencyStatus&quot;, Application::getResidencyStatus);</span>
+<span class="fc" id="L66">    FIELDS.put(&quot;languageExam&quot;, Application::getLanguageExam);</span>
+<span class="fc" id="L67">    FIELDS.put(&quot;languageExamDatePassed&quot;, Application::getLanguageExamDatePassed);</span>
+<span class="fc" id="L68">    FIELDS.put(&quot;classLevel&quot;, Application::getClassLevel);</span>
+<span class="fc" id="L69">    FIELDS.put(&quot;videoLink&quot;, Application::getVideoLink);</span>
+<span class="fc" id="L70">    FIELDS.put(&quot;previousServiceAsUla&quot;, Application::getPreviousServiceAsUla);</span>
+<span class="fc" id="L71">    FIELDS.put(&quot;permNumber&quot;, Application::getPermNumber);</span>
+<span class="fc" id="L72">    FIELDS.put(&quot;bsMsStudent&quot;, Application::getBsMsStudent);</span>
+<span class="fc" id="L73">    FIELDS.put(&quot;studentStatusNextQuarter&quot;, Application::getStudentStatusNextQuarter);</span>
+<span class="fc" id="L74">    FIELDS.put(&quot;wantsTaEligibility&quot;, Application::getWantsTaEligibility);</span>
+<span class="fc" id="L75">    FIELDS.put(&quot;otherCampusJob&quot;, Application::getOtherCampusJob);</span>
+<span class="fc" id="L76">    FIELDS.put(&quot;priorUcsbEmployment&quot;, Application::getPriorUcsbEmployment);</span>
+<span class="fc" id="L77">    FIELDS.put(&quot;employeeId&quot;, Application::getEmployeeId);</span>
+<span class="fc" id="L78">    FIELDS.put(&quot;i9Appointment&quot;, Application::getI9Appointment);</span>
+<span class="fc" id="L79">    FIELDS.put(&quot;trainingCommitment&quot;, Application::getTrainingCommitment);</span>
+<span class="fc" id="L80">    FIELDS.put(&quot;trainingCommitmentExplanation&quot;, Application::getTrainingCommitmentExplanation);</span>
+<span class="fc" id="L81">    FIELDS.put(&quot;changingMajor&quot;, Application::getChangingMajor);</span>
+<span class="fc" id="L82">    FIELDS.put(&quot;noticeVersionId&quot;, Application::getNoticeVersionId);</span>
   }
 
   /** Asked on the ULA form only (issue #76), so a TA application's audit trail leaves them out. */
-<span class="fc" id="L85">  static final Set&lt;String&gt; ULA_AVAILABILITY_FIELDS =</span>
-<span class="fc" id="L86">      Set.of(</span>
+<span class="fc" id="L86">  static final Set&lt;String&gt; ULA_AVAILABILITY_FIELDS =</span>
+<span class="fc" id="L87">      Set.of(</span>
           &quot;availableForLecturesFirstChoice&quot;,
           &quot;availableForLecturesSecondChoice&quot;,
           &quot;availableForDiscussionFirstChoice&quot;,
@@ -92,19 +93,19 @@ import org.springframework.stereotype.Service;
           &quot;availabilityCommentsSecondChoice&quot;);
 
   /** The answers as strings: a plain field's value, or a join table's rows as JSON. */
-<span class="fc" id="L95">  public record Snapshot(Map&lt;String, String&gt; fields, Map&lt;String, Set&lt;String&gt;&gt; rows) {}</span>
+<span class="fc" id="L96">  public record Snapshot(Map&lt;String, String&gt; fields, Map&lt;String, Set&lt;String&gt;&gt; rows) {}</span>
 
   public Snapshot snapshot(Application application) {
-<span class="fc" id="L98">    Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L99">    FIELDS.forEach((name, getter) -&gt; fields.put(name, text(getter.apply(application))));</span>
+<span class="fc" id="L99">    Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L100">    FIELDS.forEach((name, getter) -&gt; fields.put(name, text(getter.apply(application))));</span>
 
-<span class="fc" id="L101">    Map&lt;String, Set&lt;String&gt;&gt; rows = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L102">    rows.put(&quot;priorCoursework&quot;, courseRows(application.getPriorCoursework()));</span>
-<span class="fc" id="L103">    rows.put(</span>
-<span class="fc" id="L104">        &quot;topicProficiencies&quot;, mapRows(application.getTopicProficiencies(), &quot;topic&quot;, &quot;proficiency&quot;));</span>
-<span class="fc" id="L105">    rows.put(&quot;interests&quot;, mapRows(application.getInterests(), &quot;interest&quot;, &quot;level&quot;));</span>
-<span class="fc" id="L106">    rows.put(&quot;courseInterests&quot;, mapRows(application.getCourseInterests(), &quot;courseId&quot;, &quot;interest&quot;));</span>
-<span class="fc" id="L107">    return new Snapshot(fields, rows);</span>
+<span class="fc" id="L102">    Map&lt;String, Set&lt;String&gt;&gt; rows = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L103">    rows.put(&quot;priorCoursework&quot;, courseRows(application.getPriorCoursework()));</span>
+<span class="fc" id="L104">    rows.put(</span>
+<span class="fc" id="L105">        &quot;topicProficiencies&quot;, mapRows(application.getTopicProficiencies(), &quot;topic&quot;, &quot;proficiency&quot;));</span>
+<span class="fc" id="L106">    rows.put(&quot;interests&quot;, mapRows(application.getInterests(), &quot;interest&quot;, &quot;level&quot;));</span>
+<span class="fc" id="L107">    rows.put(&quot;courseInterests&quot;, mapRows(application.getCourseInterests(), &quot;courseId&quot;, &quot;interest&quot;));</span>
+<span class="fc" id="L108">    return new Snapshot(fields, rows);</span>
   }
 
   /**
@@ -112,102 +113,102 @@ import org.springframework.stereotype.Service;
    * is now, and returns the rows written (empty when nothing changed).
    */
   public List&lt;AuditTrail&gt; record(Snapshot before, Application after, RecruitmentType type) {
-<span class="fc" id="L115">    Snapshot now = snapshot(after);</span>
-<span class="fc bfc" id="L116" title="All 2 branches covered.">    Long taId = type == RecruitmentType.TA ? after.getId() : null;</span>
-<span class="fc bfc" id="L117" title="All 2 branches covered.">    Long ulaId = type == RecruitmentType.ULA ? after.getId() : null;</span>
-<span class="fc" id="L118">    List&lt;AuditTrail&gt; changes = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L116">    Snapshot now = snapshot(after);</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">    Long taId = type == RecruitmentType.TA ? after.getId() : null;</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">    Long ulaId = type == RecruitmentType.ULA ? after.getId() : null;</span>
+<span class="fc" id="L119">    List&lt;AuditTrail&gt; changes = new ArrayList&lt;&gt;();</span>
 
-<span class="fc" id="L120">    before</span>
-<span class="fc" id="L121">        .fields()</span>
-<span class="fc" id="L122">        .forEach(</span>
+<span class="fc" id="L121">    before</span>
+<span class="fc" id="L122">        .fields()</span>
+<span class="fc" id="L123">        .forEach(</span>
             (name, old) -&gt; {
-<span class="fc bfc" id="L124" title="All 4 branches covered.">              if (type == RecruitmentType.TA &amp;&amp; ULA_AVAILABILITY_FIELDS.contains(name)) {</span>
-<span class="fc" id="L125">                return;</span>
+<span class="fc bfc" id="L125" title="All 4 branches covered.">              if (type == RecruitmentType.TA &amp;&amp; ULA_AVAILABILITY_FIELDS.contains(name)) {</span>
+<span class="fc" id="L126">                return;</span>
               }
-<span class="fc" id="L127">              String current = now.fields().get(name);</span>
-<span class="fc bfc" id="L128" title="All 2 branches covered.">              if (!Objects.equals(old, current)) {</span>
-<span class="fc" id="L129">                changes.add(row(taId, ulaId, name, old, current));</span>
+<span class="fc" id="L128">              String current = now.fields().get(name);</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">              if (!Objects.equals(old, current)) {</span>
+<span class="fc" id="L130">                changes.add(row(taId, ulaId, name, old, current));</span>
               }
-<span class="fc" id="L131">            });</span>
+<span class="fc" id="L132">            });</span>
 
-<span class="fc" id="L133">    before</span>
-<span class="fc" id="L134">        .rows()</span>
-<span class="fc" id="L135">        .forEach(</span>
+<span class="fc" id="L134">    before</span>
+<span class="fc" id="L135">        .rows()</span>
+<span class="fc" id="L136">        .forEach(</span>
             (name, oldRows) -&gt; {
-<span class="fc" id="L137">              Set&lt;String&gt; newRows = now.rows().get(name);</span>
-<span class="fc bfc" id="L138" title="All 2 branches covered.">              for (String gone : oldRows) {</span>
-<span class="fc bfc" id="L139" title="All 2 branches covered.">                if (!newRows.contains(gone)) {</span>
-<span class="fc" id="L140">                  changes.add(row(taId, ulaId, name, gone, null));</span>
+<span class="fc" id="L138">              Set&lt;String&gt; newRows = now.rows().get(name);</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">              for (String gone : oldRows) {</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">                if (!newRows.contains(gone)) {</span>
+<span class="fc" id="L141">                  changes.add(row(taId, ulaId, name, gone, null));</span>
                 }
-<span class="fc" id="L142">              }</span>
-<span class="fc bfc" id="L143" title="All 2 branches covered.">              for (String added : newRows) {</span>
-<span class="fc bfc" id="L144" title="All 2 branches covered.">                if (!oldRows.contains(added)) {</span>
-<span class="fc" id="L145">                  changes.add(row(taId, ulaId, name, null, added));</span>
+<span class="fc" id="L143">              }</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">              for (String added : newRows) {</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">                if (!oldRows.contains(added)) {</span>
+<span class="fc" id="L146">                  changes.add(row(taId, ulaId, name, null, added));</span>
                 }
-<span class="fc" id="L147">              }</span>
-<span class="fc" id="L148">            });</span>
+<span class="fc" id="L148">              }</span>
+<span class="fc" id="L149">            });</span>
 
-<span class="fc bfc" id="L150" title="All 2 branches covered.">    if (!changes.isEmpty()) {</span>
-<span class="fc" id="L151">      auditTrailRepository.saveAll(changes);</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">    if (!changes.isEmpty()) {</span>
+<span class="fc" id="L152">      auditTrailRepository.saveAll(changes);</span>
     }
-<span class="fc" id="L153">    return changes;</span>
+<span class="fc" id="L154">    return changes;</span>
   }
 
   private static AuditTrail row(
       Long taId, Long ulaId, String field, String oldValue, String newValue) {
-<span class="fc" id="L158">    return AuditTrail.builder()</span>
-<span class="fc" id="L159">        .taApplicationId(taId)</span>
-<span class="fc" id="L160">        .ulaApplicationId(ulaId)</span>
-<span class="fc" id="L161">        .fieldName(field)</span>
-<span class="fc" id="L162">        .oldValue(oldValue)</span>
-<span class="fc" id="L163">        .newValue(newValue)</span>
-<span class="fc" id="L164">        .build();</span>
+<span class="fc" id="L159">    return AuditTrail.builder()</span>
+<span class="fc" id="L160">        .taApplicationId(taId)</span>
+<span class="fc" id="L161">        .ulaApplicationId(ulaId)</span>
+<span class="fc" id="L162">        .fieldName(field)</span>
+<span class="fc" id="L163">        .oldValue(oldValue)</span>
+<span class="fc" id="L164">        .newValue(newValue)</span>
+<span class="fc" id="L165">        .build();</span>
   }
 
   /** A blank answer and no answer are the same thing: the form sends &quot;&quot; for a field left empty. */
   private static String text(Object value) {
-<span class="fc bfc" id="L169" title="All 2 branches covered.">    if (value == null) {</span>
-<span class="fc" id="L170">      return null;</span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">    if (value == null) {</span>
+<span class="fc" id="L171">      return null;</span>
     }
-<span class="fc" id="L172">    String text = String.valueOf(value);</span>
-<span class="fc bfc" id="L173" title="All 2 branches covered.">    return text.isBlank() ? null : text;</span>
+<span class="fc" id="L173">    String text = String.valueOf(value);</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">    return text.isBlank() ? null : text;</span>
   }
 
   /**
    * Each prior course as JSON, without its id: the rows are rebuilt on every save, so ids differ.
    */
   private Set&lt;String&gt; courseRows(List&lt;PriorCoursework&gt; courses) {
-<span class="fc" id="L180">    Set&lt;String&gt; rows = new LinkedHashSet&lt;&gt;();</span>
-<span class="fc bfc" id="L181" title="All 4 branches covered.">    for (PriorCoursework course : courses == null ? List.&lt;PriorCoursework&gt;of() : courses) {</span>
-<span class="fc" id="L182">      Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L183">      row.put(&quot;ucsbCourse&quot;, course.isUcsbCourse());</span>
-<span class="fc" id="L184">      row.put(&quot;otherSchool&quot;, course.getOtherSchool());</span>
-<span class="fc" id="L185">      row.put(&quot;courseNumber&quot;, course.getCourseNumber());</span>
-<span class="fc" id="L186">      row.put(&quot;courseTitle&quot;, course.getCourseTitle());</span>
-<span class="fc" id="L187">      row.put(&quot;term&quot;, course.getTerm());</span>
-<span class="fc" id="L188">      row.put(&quot;grade&quot;, course.getGrade());</span>
-<span class="fc" id="L189">      rows.add(json(row));</span>
-<span class="fc" id="L190">    }</span>
-<span class="fc" id="L191">    return rows;</span>
+<span class="fc" id="L181">    Set&lt;String&gt; rows = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L182" title="All 4 branches covered.">    for (PriorCoursework course : courses == null ? List.&lt;PriorCoursework&gt;of() : courses) {</span>
+<span class="fc" id="L183">      Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L184">      row.put(&quot;ucsbCourse&quot;, course.isUcsbCourse());</span>
+<span class="fc" id="L185">      row.put(&quot;otherSchool&quot;, course.getOtherSchool());</span>
+<span class="fc" id="L186">      row.put(&quot;courseNumber&quot;, course.getCourseNumber());</span>
+<span class="fc" id="L187">      row.put(&quot;courseTitle&quot;, course.getCourseTitle());</span>
+<span class="fc" id="L188">      row.put(&quot;term&quot;, course.getTerm());</span>
+<span class="fc" id="L189">      row.put(&quot;grade&quot;, course.getGrade());</span>
+<span class="fc" id="L190">      rows.add(json(row));</span>
+<span class="fc" id="L191">    }</span>
+<span class="fc" id="L192">    return rows;</span>
   }
 
   /** Each map entry as a JSON row with the given key and value names, in key order. */
   private Set&lt;String&gt; mapRows(Map&lt;String, ?&gt; values, String keyName, String valueName) {
-<span class="fc" id="L196">    Set&lt;String&gt; rows = new LinkedHashSet&lt;&gt;();</span>
-<span class="fc bfc" id="L197" title="All 2 branches covered.">    Map&lt;String, ?&gt; sorted = values == null ? Map.of() : new TreeMap&lt;&gt;(values);</span>
-<span class="fc" id="L198">    sorted.forEach(</span>
+<span class="fc" id="L197">    Set&lt;String&gt; rows = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L198" title="All 2 branches covered.">    Map&lt;String, ?&gt; sorted = values == null ? Map.of() : new TreeMap&lt;&gt;(values);</span>
+<span class="fc" id="L199">    sorted.forEach(</span>
         (key, value) -&gt; {
-<span class="fc" id="L200">          Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L201">          row.put(keyName, key);</span>
-<span class="fc" id="L202">          row.put(valueName, value);</span>
-<span class="fc" id="L203">          rows.add(json(row));</span>
-<span class="fc" id="L204">        });</span>
-<span class="fc" id="L205">    return rows;</span>
+<span class="fc" id="L201">          Map&lt;String, Object&gt; row = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L202">          row.put(keyName, key);</span>
+<span class="fc" id="L203">          row.put(valueName, value);</span>
+<span class="fc" id="L204">          rows.add(json(row));</span>
+<span class="fc" id="L205">        });</span>
+<span class="fc" id="L206">    return rows;</span>
   }
 
   /** valueToTree rather than writeValueAsString: a map of simple values has no checked failure. */
   private String json(Map&lt;String, Object&gt; row) {
-<span class="fc" id="L210">    return objectMapper.valueToTree(row).toString();</span>
+<span class="fc" id="L211">    return objectMapper.valueToTree(row).toString();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

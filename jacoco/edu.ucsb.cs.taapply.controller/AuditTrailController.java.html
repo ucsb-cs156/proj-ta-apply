@@ -18,18 +18,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** The audit trail, read-only: every change an admin made to a student's application. */
+/**
+ * The audit trail of &lt;em&gt;individual applications&lt;/em&gt;, read-only: every change an admin made to a
+ * student's application. Changes to recruitments themselves (creation, deletion, status, dates) are
+ * served by {@link RecruitmentAuditTrailController}.
+ */
 @Tag(name = &quot;AuditTrail&quot;)
 @RequestMapping(&quot;/api/admin/audittrail&quot;)
 @RestController
-<span class="fc" id="L25">@Slf4j</span>
-<span class="fc" id="L26">public class AuditTrailController extends ApiController {</span>
+<span class="fc" id="L29">@Slf4j</span>
+<span class="fc" id="L30">public class AuditTrailController extends ApiController {</span>
 
   @Autowired AuditTrailRepository auditTrailRepository;
 
   /** The columns the page may sort by: every column of the table. */
-<span class="fc" id="L31">  public static final Set&lt;String&gt; SORTABLE =</span>
-<span class="fc" id="L32">      Set.of(</span>
+<span class="fc" id="L35">  public static final Set&lt;String&gt; SORTABLE =</span>
+<span class="fc" id="L36">      Set.of(</span>
           &quot;id&quot;,
           &quot;editedAt&quot;,
           &quot;ulaApplicationId&quot;,
@@ -39,16 +43,16 @@ import org.springframework.web.bind.annotation.RestController;
           &quot;newValue&quot;);
 
   /** One page of the trail, in the shape the Users page already consumes. */
-<span class="fc" id="L42">  public static record AuditTrailPageDTO(</span>
+<span class="fc" id="L46">  public static record AuditTrailPageDTO(</span>
       List&lt;AuditTrail&gt; content, int number, int size, long totalElements, int totalPages) {
     public AuditTrailPageDTO(Page&lt;AuditTrail&gt; page) {
-<span class="fc" id="L45">      this(</span>
-<span class="fc" id="L46">          page.getContent(),</span>
-<span class="fc" id="L47">          page.getNumber(),</span>
-<span class="fc" id="L48">          page.getSize(),</span>
-<span class="fc" id="L49">          page.getTotalElements(),</span>
-<span class="fc" id="L50">          page.getTotalPages());</span>
-<span class="fc" id="L51">    }</span>
+<span class="fc" id="L49">      this(</span>
+<span class="fc" id="L50">          page.getContent(),</span>
+<span class="fc" id="L51">          page.getNumber(),</span>
+<span class="fc" id="L52">          page.getSize(),</span>
+<span class="fc" id="L53">          page.getTotalElements(),</span>
+<span class="fc" id="L54">          page.getTotalPages());</span>
+<span class="fc" id="L55">    }</span>
   }
 
   @Operation(
@@ -67,14 +71,14 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;direction&quot;, description = &quot;asc or desc&quot;)
           @RequestParam(defaultValue = &quot;desc&quot;)
           String direction) {
-<span class="fc bfc" id="L70" title="All 2 branches covered.">    if (!SORTABLE.contains(sort)) {</span>
-<span class="fc" id="L71">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    if (!SORTABLE.contains(sort)) {</span>
+<span class="fc" id="L75">      throw new IllegalArgumentException(</span>
           &quot;Cannot sort by %s (expected one of %s)&quot;
-<span class="fc" id="L73">              .formatted(sort, SORTABLE.stream().sorted().toList()));</span>
+<span class="fc" id="L77">              .formatted(sort, SORTABLE.stream().sorted().toList()));</span>
     }
-<span class="fc" id="L75">    Sort.Direction sortDirection = Sort.Direction.fromString(direction);</span>
-<span class="fc" id="L76">    return new AuditTrailPageDTO(</span>
-<span class="fc" id="L77">        auditTrailRepository.findAll(PageRequest.of(page, size, Sort.by(sortDirection, sort))));</span>
+<span class="fc" id="L79">    Sort.Direction sortDirection = Sort.Direction.fromString(direction);</span>
+<span class="fc" id="L80">    return new AuditTrailPageDTO(</span>
+<span class="fc" id="L81">        auditTrailRepository.findAll(PageRequest.of(page, size, Sort.by(sortDirection, sort))));</span>
   }
 
   @Operation(
@@ -85,13 +89,13 @@ import org.springframework.web.bind.annotation.RestController;
   public List&lt;AuditTrail&gt; forApplication(
       @Parameter(name = &quot;type&quot;, description = &quot;TA or ULA&quot;) @RequestParam String type,
       @Parameter(name = &quot;id&quot;) @RequestParam Long id) {
-<span class="fc bfc" id="L88" title="All 2 branches covered.">    if (&quot;TA&quot;.equals(type)) {</span>
-<span class="fc" id="L89">      return auditTrailRepository.findByTaApplicationIdOrderByIdAsc(id);</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">    if (&quot;TA&quot;.equals(type)) {</span>
+<span class="fc" id="L93">      return auditTrailRepository.findByTaApplicationIdOrderByIdAsc(id);</span>
     }
-<span class="fc bfc" id="L91" title="All 2 branches covered.">    if (&quot;ULA&quot;.equals(type)) {</span>
-<span class="fc" id="L92">      return auditTrailRepository.findByUlaApplicationIdOrderByIdAsc(id);</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">    if (&quot;ULA&quot;.equals(type)) {</span>
+<span class="fc" id="L96">      return auditTrailRepository.findByUlaApplicationIdOrderByIdAsc(id);</span>
     }
-<span class="fc" id="L94">    throw new IllegalArgumentException(&quot;type must be TA or ULA, not &quot; + type);</span>
+<span class="fc" id="L98">    throw new IllegalArgumentException(&quot;type must be TA or ULA, not &quot; + type);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -16,11 +16,13 @@ taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService,0,540,0,30,0,111,0,
 taapply,edu.ucsb.cs.taapply.services,SystemInfoServiceImpl,0,68,0,4,0,18,0,5,0,3
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService.Columns,0,179,0,22,0,26,0,15,0,4
 taapply,edu.ucsb.cs.taapply.services,LegacyApplicationCsvService,0,1460,0,180,0,305,0,122,0,32
+taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService.Snapshot,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,UCSBCurriculumService,0,355,0,24,0,72,0,23,0,11
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService,0,1225,0,136,0,246,0,97,0,29
 taapply,edu.ucsb.cs.taapply.services,LegacyApplicationCsvService.ImportResult,0,18,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RoleAssignmentService,0,89,0,14,0,17,0,13,0,6
 taapply,edu.ucsb.cs.taapply.services,JobUserProviderImpl,0,26,0,4,0,5,0,5,0,3
+taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService,0,143,0,6,0,32,0,13,0,10
 taapply,edu.ucsb.cs.taapply.services,ApiRetryHelper,0,320,0,16,0,65,0,19,0,11
 taapply,edu.ucsb.cs.taapply.services,ApplicationAccessService,0,48,0,12,0,7,0,11,0,5
 taapply,edu.ucsb.cs.taapply.startup,ScaffoldApplicationRunner,0,14,0,0,0,5,0,3,0,3
@@ -54,10 +56,12 @@ taapply,edu.ucsb.cs.taapply.controller,NoticesController,0,66,0,4,0,12,0,9,0,7
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController.ApplicationOptions,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,0,223,0,10,0,48,0,16,0,11
 taapply,edu.ucsb.cs.taapply.controller,AppSettingsController,0,395,0,26,0,67,0,32,0,19
+taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController,0,60,0,2,0,11,0,4,0,3
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController,0,313,0,26,0,70,0,36,0,23
 taapply,edu.ucsb.cs.taapply.controller,SystemInfoController,0,7,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,AppSettingsController.NameItem,0,6,0,0,0,1,0,1,0,1
-taapply,edu.ucsb.cs.taapply.controller,RecruitmentsController,0,163,0,8,0,41,0,13,0,9
+taapply,edu.ucsb.cs.taapply.controller,RecruitmentsController,0,184,0,8,0,45,0,13,0,9
+taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,InstructorsController.InstructorDTO,0,34,0,0,0,7,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,NoticesController.NoticeContent,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController.ApplicationFields,0,123,0,0,0,1,0,1,0,1
