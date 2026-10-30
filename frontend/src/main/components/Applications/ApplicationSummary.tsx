@@ -145,7 +145,7 @@ export default function ApplicationSummary({
       },
       { label: "Employee ID", value: show(application.employeeId) },
       {
-        label: "I-9 Appointment",
+        label: "I-9 Verification Agreement",
         value: yesNoLabel(application.i9Appointment),
       },
       {

@@ -490,7 +490,7 @@ describe("ApplicationSummary tests", () => {
     expect(row("Other Campus Job")).toHaveTextContent("Not sure yet");
     expect(row("Prior UCSB Employment")).toHaveTextContent("Yes");
     expect(row("Employee ID")).toHaveTextContent("1234567");
-    expect(row("I-9 Appointment")).toHaveTextContent("No");
+    expect(row("I-9 Verification Agreement")).toHaveTextContent("No");
     expect(row("Changing Major")).toHaveTextContent("No");
     // Not a first-time applicant, so the training question was not asked.
     expect(row("Training Commitment").textContent).toBe("");
@@ -547,7 +547,7 @@ describe("ApplicationSummary tests", () => {
       "BS/MS Student",
       "Other Campus Job",
       "Prior UCSB Employment",
-      "I-9 Appointment",
+      "I-9 Verification Agreement",
       "Training Commitment",
       "Changing Major",
     ]) {

@@ -218,7 +218,6 @@ describe("ApplicationForm tests", () => {
       ["BS/MS student?", "bsMsStudent"],
       ["Other campus job this quarter?", "otherCampusJob"],
       ["Prior UCSB employment?", "priorUcsbEmployment"],
-      ["I-9 appointment made or planned?", "i9Appointment"],
       ["Changing major?", "changingMajor"],
     ].forEach(([label, name]) => {
       expect(screen.getByTestId(`ApplicationForm-${name}`)).toHaveAttribute(
@@ -237,6 +236,8 @@ describe("ApplicationForm tests", () => {
       "availableForDiscussionFirstChoice",
       "availableForLecturesSecondChoice",
       "availableForDiscussionSecondChoice",
+      // The I-9 agreement is a checkbox too (issue #111).
+      "i9Appointment",
     ].forEach((name) =>
       expect(screen.getByTestId(`ApplicationForm-${name}`)).toHaveAttribute(
         "id",
@@ -2016,9 +2017,6 @@ describe("ApplicationForm tests", () => {
         expect(labelNamed(label).textContent).toMatch(/\*\s*$/);
       }
       expect(
-        labelNamed("I-9 appointment made or planned?").textContent,
-      ).not.toMatch(/\*/);
-      expect(
         screen.getByTestId("ApplicationForm-graduationDate-note"),
       ).toHaveTextContent("you are not eligible to serve as a ULA");
       expect(
@@ -2040,7 +2038,6 @@ describe("ApplicationForm tests", () => {
         "bsMsStudent",
         "otherCampusJob",
         "priorUcsbEmployment",
-        "i9Appointment",
         "changingMajor",
       ]) {
         const select = screen.getByTestId(`ApplicationForm-${name}`);
@@ -2351,9 +2348,8 @@ describe("ApplicationForm tests", () => {
         screen.getByTestId("ApplicationForm-employeeId"),
         "1234567",
       );
-      await userEvent.selectOptions(
+      await userEvent.click(
         screen.getByTestId("ApplicationForm-i9Appointment"),
-        "false",
       );
       await userEvent.selectOptions(
         screen.getByTestId("ApplicationForm-changingMajor"),
@@ -2371,7 +2367,7 @@ describe("ApplicationForm tests", () => {
       expect(payload.otherCampusJob).toBe("NOT_SURE");
       expect(payload.priorUcsbEmployment).toBe(true);
       expect(payload.employeeId).toBe("1234567");
-      expect(payload.i9Appointment).toBe(false);
+      expect(payload.i9Appointment).toBe(true);
       expect(payload.trainingCommitment).toBeNull();
       expect(payload.changingMajor).toBe(true);
     });
@@ -2407,12 +2403,103 @@ describe("ApplicationForm tests", () => {
       expect(screen.getByTestId("ApplicationForm-employeeId")).toHaveValue(
         "1234567",
       );
-      expect(screen.getByTestId("ApplicationForm-i9Appointment")).toHaveValue(
-        "",
-      );
+      expect(
+        screen.getByTestId("ApplicationForm-i9Appointment"),
+      ).not.toBeChecked();
       expect(screen.getByTestId("ApplicationForm-changingMajor")).toHaveValue(
         "",
       );
+    });
+
+    /** Issue #111: the I-9 question is its own section, with the department's text and a box. */
+    test("the I-9 Verification section has the instructions, the link and the agreement box", async () => {
+      // One course listed already, since a ULA form needs at least one to submit.
+      const submitAction = renderForm({
+        type: "ULA",
+        initialContents: {
+          priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+        },
+      });
+
+      expect(screen.getByText("I-9 Verification")).toBeInTheDocument();
+      const section = screen.getByTestId("ApplicationForm-i9");
+      expect(section).toHaveTextContent(
+        "Students hired as ULAs must make an appointment for I-9 verification, unless they are told that their I-9 is already on file. Even students that have previously done an I-9 verification are sometimes asked to do it again.",
+      );
+      expect(section).toHaveTextContent(
+        "Please review the documents needed for I-9 verification at the link below, and ensure that you have these with you on campus. If you do not, make an effort to get them and have them available.",
+      );
+      const link = screen.getByTestId("ApplicationForm-i9-link");
+      expect(link).toHaveAttribute(
+        "href",
+        "https://www.uscis.gov/i-9-central/form-i-9-acceptable-documents",
+      );
+      expect(link).toHaveTextContent(
+        "https://www.uscis.gov/i-9-central/form-i-9-acceptable-documents",
+      );
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noreferrer");
+      expect(section).toHaveTextContent(
+        "If you are hired, you may be contacted by CS department staff to come in for an I-9 verification, with these documents in hand (originals, not copies, and not photographs). Failure to do so may result in delays in your paycheck, or in extreme cases in rescinding your offer of employment.",
+      );
+      expect(section).toHaveTextContent(
+        "Please check the box below to indicate that you agree to show up for your I-9 appointment with these documents within one week of being notified that you have been hired:",
+      );
+      // The section comes after Prior employment and is not part of it.
+      expect(
+        screen.getByTestId("ApplicationForm-employment"),
+      ).not.toContainElement(
+        screen.getByTestId("ApplicationForm-i9Appointment"),
+      );
+      expect(
+        screen
+          .getByTestId("ApplicationForm-employment")
+          .compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+
+      const box = screen.getByTestId("ApplicationForm-i9Appointment");
+      expect(box).toHaveAttribute("type", "checkbox");
+      expect(box).not.toBeChecked();
+      expect(
+        screen.getByLabelText(
+          "I agree to show up for my I-9 appointment with these documents within one week of being notified that I have been hired.",
+        ),
+      ).toBe(box);
+
+      // Not required: unticked goes in as No.
+      await fillRequired();
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+      expect(submitAction.mock.calls[0][0].i9Appointment).toBe(false);
+    });
+
+    test("a previous Yes to the I-9 question pre-ticks the box", () => {
+      renderForm({
+        type: "ULA",
+        initialContents: {
+          ...applicationsFixtures.oneUlaApplication,
+          i9Appointment: true,
+        },
+      });
+
+      expect(screen.getByTestId("ApplicationForm-i9Appointment")).toBeChecked();
+    });
+
+    test("a TA form has no I-9 section and sends no answer for it", async () => {
+      const submitAction = renderForm({
+        type: "TA",
+        initialContents: {
+          priorCoursework: priorCourseworkFixtures.threeCourses,
+        },
+      });
+
+      expect(screen.queryByText("I-9 Verification")).toBeNull();
+      expect(screen.queryByTestId("ApplicationForm-i9")).toBeNull();
+
+      await fillRequired();
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+      expect(submitAction.mock.calls[0][0].i9Appointment).toBeNull();
     });
   });
 

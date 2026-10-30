@@ -28,7 +28,12 @@ import {
   EMPLOYMENT_INTRO,
   GRADUATE_WARNING,
   GRADUATION_NOTE,
-  I9_QUESTION,
+  I9_AGREEMENT,
+  I9_CONSEQUENCES,
+  I9_DOCUMENTS,
+  I9_DOCUMENTS_URL,
+  I9_PROMPT,
+  I9_WHO,
   OTHER_CAMPUS_JOB_OPTIONS,
   OTHER_CAMPUS_JOB_QUESTION,
   PERM_NUMBER_HINT,
@@ -211,7 +216,7 @@ export default function ApplicationForm({
     otherCampusJob: asString(initialContents?.otherCampusJob),
     priorUcsbEmployment: booleanToSelect(initialContents?.priorUcsbEmployment),
     employeeId: asString(initialContents?.employeeId),
-    i9Appointment: booleanToSelect(initialContents?.i9Appointment),
+    i9Appointment: Boolean(initialContents?.i9Appointment),
     trainingCommitment: asString(initialContents?.trainingCommitment),
     trainingCommitmentExplanation: asString(
       initialContents?.trainingCommitmentExplanation,
@@ -330,6 +335,8 @@ export default function ApplicationForm({
   ): ApplicationFormFields => ({
     ...data,
     major: chosenMajor,
+    // The I-9 box is only on the ULA form; a TA application has no answer, as before (#111).
+    i9Appointment: isTa ? null : data.i9Appointment,
     priorCoursework,
     noticeVersionId: notice ? notice.id : null,
     courseInterests: Object.fromEntries(
@@ -878,20 +885,33 @@ export default function ApplicationForm({
                 </>
               )}
             </Form.Group>
-            <Form.Group as={Col} md={4} className="mb-3">
-              <Form.Label htmlFor={id("i9Appointment")}>
-                I-9 appointment made or planned?
-              </Form.Label>
-              <Form.Select
-                id={id("i9Appointment")}
-                data-testid={id("i9Appointment")}
-                {...register("i9Appointment")}
-              >
-                {choices(YES_NO_OPTIONS)}
-              </Form.Select>
-              <Form.Text muted>{I9_QUESTION}</Form.Text>
-            </Form.Group>
           </Row>
+
+          {/* Its own section, with the department's instructions (issue #111). */}
+          <h2 className="h5 mt-3">I-9 Verification</h2>
+          <div data-testid={id("i9")} className="mb-3">
+            <p className="small mb-2">{I9_WHO}</p>
+            <p className="small mb-2">{I9_DOCUMENTS}</p>
+            <p className="small mb-2">
+              <a
+                href={I9_DOCUMENTS_URL}
+                target="_blank"
+                rel="noreferrer"
+                data-testid={id("i9-link")}
+              >
+                {I9_DOCUMENTS_URL}
+              </a>
+            </p>
+            <p className="small mb-2">{I9_CONSEQUENCES}</p>
+            <p className="small mb-2">{I9_PROMPT}</p>
+            <Form.Check
+              type="checkbox"
+              id={id("i9Appointment")}
+              data-testid={id("i9Appointment")}
+              label={I9_AGREEMENT}
+              {...register("i9Appointment")}
+            />
+          </div>
 
           {asksTraining && (
             <>
