@@ -2,6 +2,7 @@ import React from "react";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
+import courseInstructorsFixtures from "fixtures/courseInstructorsFixtures";
 import coursesFixtures from "fixtures/coursesFixtures";
 import { HttpResponse, http } from "msw";
 
@@ -36,6 +37,8 @@ export const TaApplication = Template.bind({});
 TaApplication.args = {
   type: "TA",
   courses,
+  // The instructors after the course numbers (issue #121).
+  instructors: courseInstructorsFixtures.fourCourses,
   majors: taMajors,
   topics: taTopics,
   submitAction: (payload) => console.log("submit", payload),

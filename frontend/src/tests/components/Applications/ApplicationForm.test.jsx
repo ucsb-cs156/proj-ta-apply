@@ -32,6 +32,7 @@ function renderForm({
   submitAction = vi.fn(),
   buttonLabel = undefined,
   courseList = courses,
+  instructors = undefined,
   recruitmentId = undefined,
   majorList = majors,
   topicList = topics,
@@ -44,6 +45,7 @@ function renderForm({
         <ApplicationForm
           type={type}
           courses={courseList}
+          instructors={instructors}
           recruitmentId={recruitmentId}
           majors={majorList}
           topics={topicList}
@@ -446,6 +448,48 @@ describe("ApplicationForm tests", () => {
     expect([...second.options].map((o) => o.value)).toEqual(["", ...courses]);
     // A second choice is optional, so its blank option says so.
     expect(second.options[0]).toHaveTextContent("(none)");
+  });
+
+  /** Issue #121: the instructors after the course number, in the dropdowns and the table. */
+  test("with instructors, each course is named with its instructors in parentheses", () => {
+    renderForm({
+      instructors: {
+        "CMPSC   156": "CONRAD P",
+        "CMPSC   130A": "SURI S, GAUCHO C",
+      },
+    });
+
+    const first = screen.getByTestId("ApplicationForm-firstChoiceCourse");
+    // The values stay the bare padded ids; only the labels change.
+    expect([...first.options].map((o) => o.value)).toEqual(["", ...courses]);
+    expect([...first.options].map((o) => o.textContent)).toEqual([
+      "Choose a course",
+      "CMPSC     8",
+      "CMPSC   130A (SURI S, GAUCHO C)",
+      "CMPSC   156 (CONRAD P)",
+    ]);
+    expect(
+      [...screen.getByTestId("ApplicationForm-secondChoiceCourse").options][3]
+        .textContent,
+    ).toBe("CMPSC   156 (CONRAD P)");
+    expect(
+      screen
+        .getByTestId("ApplicationForm-courseInterest-CMPSC-156")
+        .querySelector("td").textContent,
+    ).toBe("CMPSC   156 (CONRAD P)");
+    expect(
+      screen
+        .getByTestId("ApplicationForm-courseInterest-CMPSC-8")
+        .querySelector("td").textContent,
+    ).toBe("CMPSC     8");
+  });
+
+  test("without instructors the course names are bare", () => {
+    renderForm();
+    expect(
+      [...screen.getByTestId("ApplicationForm-firstChoiceCourse").options][3]
+        .textContent,
+    ).toBe("CMPSC   156");
   });
 
   test("course numbers keep their padding", () => {

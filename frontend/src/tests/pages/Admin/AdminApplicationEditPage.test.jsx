@@ -14,6 +14,7 @@ import noticesFixtures from "fixtures/noticesFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
+import courseInstructorsFixtures from "fixtures/courseInstructorsFixtures";
 
 const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
@@ -69,6 +70,9 @@ describe("AdminApplicationEditPage tests", () => {
       .onGet("/api/recruitments/courses")
       .reply(200, ["CMPSC     8", "CMPSC   156"]);
     axiosMock
+      .onGet("/api/recruitments/instructors")
+      .reply(200, courseInstructorsFixtures.twoCourses);
+    axiosMock
       .onGet("/api/recruitments/options")
       .reply(200, appSettingsFixtures.ulaOptions);
     axiosMock.onGet("/api/notices").reply(200, noticesFixtures.ulaV1);
@@ -122,6 +126,20 @@ describe("AdminApplicationEditPage tests", () => {
     expect(
       axiosMock.history.get.filter((r) => r.url === "/api/notices")[0].params,
     ).toEqual({ id: ula.noticeVersionId });
+  });
+
+  /** Issue #121: the admin's edit form names the instructors too. */
+  test("the form names each course's instructors", async () => {
+    renderPage();
+
+    const select = await screen.findByTestId(
+      "AdminApplicationEditPage-firstChoiceCourse",
+    );
+    await waitFor(() =>
+      expect([...select.options].map((o) => o.textContent)).toContain(
+        "CMPSC   156 (CONRAD P)",
+      ),
+    );
   });
 
   test("saving sends the admin endpoint the edited answers, then returns to the view", async () => {

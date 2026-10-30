@@ -1,3 +1,4 @@
+import type { CourseInstructors } from "main/utils/courseLabels";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
@@ -52,6 +53,21 @@ export default function ApplicationPage(): React.JSX.Element {
     },
     // Stryker disable next-line all : don't test default value of empty list
     [],
+    false,
+    // Stryker disable next-line all : the guard only avoids a pointless request
+    { enabled: Boolean(application) },
+  );
+
+  // Who teaches each course, for the names after the course numbers (issue #121).
+  const { data: instructors } = useBackend<CourseInstructors>(
+    ["/api/recruitments/instructors", application?.recruitmentId],
+    {
+      method: "GET",
+      url: "/api/recruitments/instructors",
+      params: { recruitmentId: application?.recruitmentId },
+    },
+    // Stryker disable next-line all : don't test default value of empty map
+    {},
     false,
     // Stryker disable next-line all : the guard only avoids a pointless request
     { enabled: Boolean(application) },
@@ -160,6 +176,7 @@ export default function ApplicationPage(): React.JSX.Element {
               <ApplicationForm
                 type={recruitment?.type ?? "TA"}
                 courses={courses ?? []}
+                instructors={instructors ?? {}}
                 recruitmentId={application.recruitmentId}
                 majors={options?.majors ?? []}
                 topics={options?.topics ?? []}

@@ -1,3 +1,4 @@
+import courseInstructorsFixtures from "fixtures/courseInstructorsFixtures";
 import React from "react";
 import { HttpResponse, http } from "msw";
 import { Route, Routes } from "react-router";
@@ -21,8 +22,12 @@ const common = [
   http.get("/api/admin/recruitments/all", () =>
     HttpResponse.json(recruitmentsFixtures.threeRecruitments),
   ),
-  http.get("/api/recruitments/courses", () =>
-    HttpResponse.json(["CMPSC     8", "CMPSC   156"]),
+  http.get(
+    "/api/recruitments/courses",
+    () => HttpResponse.json(["CMPSC     8", "CMPSC   156"]),
+    http.get("/api/recruitments/instructors", () =>
+      HttpResponse.json(courseInstructorsFixtures.fourCourses),
+    ),
   ),
   http.get("/api/recruitments/sections", () =>
     HttpResponse.json(courseSectionsFixtures.cmpsc156),
