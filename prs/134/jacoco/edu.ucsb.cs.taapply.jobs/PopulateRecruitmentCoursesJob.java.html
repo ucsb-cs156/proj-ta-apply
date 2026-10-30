@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PopulateRecruitmentCoursesJob.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.jobs</a> &gt; <span class="el_source">PopulateRecruitmentCoursesJob.java</span></div><h1>PopulateRecruitmentCoursesJob.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.jobs;
+
+import edu.ucsb.cs.taapply.entity.Course;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
+import edu.ucsb.cs.taapply.models.UcsbInstructor;
+import edu.ucsb.cs.taapply.models.UcsbSection;
+import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
+import edu.ucsb.cs.taapply.repository.CourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
+import edu.ucsb.cs156.jobs.services.JobContext;
+import edu.ucsb.cs156.jobs.services.JobContextConsumer;
+import edu.ucsb.cs156.jobs.services.JobRateLimit;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Fills a recruitment's course list: every primary section, of every course flagged for this
+ * recruitment's type, that is actually offered in its quarter.
+ *
+ * &lt;p&gt;Three things this must get right:
+ *
+ * &lt;ul&gt;
+ *   &lt;li&gt;A course with two lectures produces two rows, keyed on enroll code. They are planned
+ *       separately and often have different instructors.
+ *   &lt;li&gt;A row the admin removed stays removed. Re-running must not undo that decision.
+ *   &lt;li&gt;Which courses are eligible follows the recruitment type: TA reads {@code needsTa}, ULA
+ *       reads {@code needsUla}.
+ *   &lt;li&gt;A row the run did not find (its section gone from the API, or its course no longer flagged)
+ *       is marked {@code stale}, and a row it did find is un-staled (issue #122). An empty API
+ *       response changes no flags, so a bad fetch cannot mark everything stale at once.
+ *   &lt;li&gt;A row an admin added by enroll code (issue #125) is refreshed whenever its section is still
+ *       in the API, flagged course or not; it goes stale only when the section is gone.
+ * &lt;/ul&gt;
+ */
+@Builder
+@Getter
+@AllArgsConstructor
+<span class="fc" id="L52">@Slf4j</span>
+public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
+
+  private Recruitment recruitment;
+  private String subjectArea;
+  private UCSBCurriculumService ucsbCurriculumService;
+  private CourseRepository courseRepository;
+  private RecruitmentCourseRepository recruitmentCourseRepository;
+  private JobRateLimit jobRateLimit;
+
+  @Override
+  public void accept(JobContext ctx) throws Exception {
+<span class="fc" id="L64">    String quarter = recruitment.getQuarter();</span>
+<span class="fc" id="L65">    RecruitmentType type = recruitment.getType();</span>
+
+<span class="fc" id="L67">    Set&lt;String&gt; wanted = eligibleCourseIds();</span>
+<span class="fc" id="L68">    ctx.log(</span>
+<span class="fc" id="L69">        String.format(</span>
+            &quot;Populating %s recruitment for %s: %d course(s) flagged for %s&quot;,
+<span class="fc" id="L71">            type, quarter, wanted.size(), type));</span>
+
+<span class="fc bfc" id="L73" title="All 2 branches covered.">    if (wanted.isEmpty()) {</span>
+      // Nothing to fetch, but the rows on file are all of courses no longer flagged (#122).
+<span class="fc" id="L75">      ctx.log(&quot;No courses are flagged for this type; nothing to fetch.&quot;);</span>
+<span class="fc" id="L76">      int markedStale = markStale(ctx, Set.of());</span>
+<span class="fc" id="L77">      ctx.log(</span>
+<span class="fc" id="L78">          String.format(</span>
+              &quot;Finished: 0 added, 0 updated, 0 left removed, %d marked stale, 0 un-staled&quot;,
+<span class="fc" id="L80">              markedStale));</span>
+<span class="fc" id="L81">      return;</span>
+    }
+
+<span class="fc" id="L84">    ctx.checkCancellation();</span>
+<span class="fc" id="L85">    jobRateLimit.sleep();</span>
+
+    List&lt;UcsbCourseOffering&gt; offerings;
+    try {
+<span class="fc" id="L89">      offerings = ucsbCurriculumService.getOfferings(subjectArea, quarter);</span>
+<span class="fc" id="L90">    } catch (Exception e) {</span>
+<span class="fc" id="L91">      ctx.log(String.format(&quot;Error fetching offerings for %s: %s&quot;, quarter, e.getMessage()));</span>
+<span class="fc" id="L92">      log.error(&quot;Error fetching offerings for {}&quot;, quarter, e);</span>
+<span class="fc" id="L93">      throw e;</span>
+<span class="fc" id="L94">    }</span>
+
+<span class="fc" id="L96">    int added = 0;</span>
+<span class="fc" id="L97">    int updated = 0;</span>
+<span class="fc" id="L98">    int skippedRemoved = 0;</span>
+<span class="fc" id="L99">    int unstaled = 0;</span>
+    // The enroll codes this run found, for the reconciliation afterwards.
+<span class="fc" id="L101">    Set&lt;String&gt; seen = new HashSet&lt;&gt;();</span>
+    // Every lecture in the quarter by enroll code, flagged course or not, for the manually added
+    // rows (issue #125).
+<span class="fc" id="L104">    Map&lt;String, Offered&gt; offered = new HashMap&lt;&gt;();</span>
+
+<span class="fc bfc" id="L106" title="All 2 branches covered.">    for (UcsbCourseOffering offering : offerings) {</span>
+<span class="fc" id="L107">      ctx.checkCancellation();</span>
+
+<span class="fc" id="L109">      String courseId = UCSBCurriculumService.normalizeCourseId(offering.getCourseId());</span>
+<span class="fc bfc" id="L110" title="All 4 branches covered.">      if (courseId == null || offering.getClassSections() == null) {</span>
+<span class="fc" id="L111">        continue;</span>
+      }
+
+<span class="fc bfc" id="L114" title="All 2 branches covered.">      for (UcsbSection section : offering.getClassSections()) {</span>
+        // Only lectures: discussions and labs are not recruited for separately.
+<span class="fc bfc" id="L116" title="All 4 branches covered.">        if (!section.isPrimary() || section.getEnrollCode() == null) {</span>
+<span class="fc" id="L117">          continue;</span>
+        }
+<span class="fc" id="L119">        offered.put(section.getEnrollCode(), new Offered(courseId, offering, section));</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        if (!wanted.contains(courseId)) {</span>
+<span class="fc" id="L121">          continue;</span>
+        }
+
+<span class="fc" id="L124">        Optional&lt;RecruitmentCourse&gt; existing =</span>
+<span class="fc" id="L125">            recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(</span>
+<span class="fc" id="L126">                recruitment.getId(), section.getEnrollCode());</span>
+
+<span class="fc" id="L128">        seen.add(section.getEnrollCode());</span>
+<span class="fc bfc" id="L129" title="All 4 branches covered.">        if (existing.isPresent() &amp;&amp; existing.get().isRemoved()) {</span>
+          // The admin took this one out on purpose; leave it out.
+<span class="fc" id="L131">          skippedRemoved++;</span>
+<span class="fc" id="L132">          continue;</span>
+        }
+
+<span class="fc" id="L135">        RecruitmentCourse row = existing.orElseGet(() -&gt; RecruitmentCourse.builder().build());</span>
+<span class="fc" id="L136">        applyOffering(row, recruitment.getId(), courseId, offering, section);</span>
+        // Found this run, so whatever an earlier run concluded, it is current (issue #122).
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        if (row.isStale()) {</span>
+<span class="fc" id="L139">          unstaled++;</span>
+        }
+<span class="fc" id="L141">        row.setStale(false);</span>
+<span class="fc" id="L142">        recruitmentCourseRepository.save(row);</span>
+
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        if (existing.isPresent()) {</span>
+<span class="fc" id="L145">          updated++;</span>
+        } else {
+<span class="fc" id="L147">          added++;</span>
+        }
+<span class="fc" id="L149">        ctx.log(String.format(&quot;  %s section %s&quot;, courseId, section.getSection()));</span>
+<span class="fc" id="L150">      }</span>
+<span class="fc" id="L151">    }</span>
+
+    // The rows an admin added by hand are refreshed from the same fetch, whatever their course
+    // (issue #125); one whose section is gone is left for the reconciliation to mark stale.
+    for (RecruitmentCourse row :
+<span class="fc bfc" id="L156" title="All 2 branches covered.">        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId())) {</span>
+<span class="fc" id="L157">      Offered found = offered.get(row.getEnrollCode());</span>
+<span class="fc bfc" id="L158" title="All 6 branches covered.">      if (!row.isManuallyAdded() || row.isRemoved() || found == null) {</span>
+<span class="fc" id="L159">        continue;</span>
+      }
+<span class="fc bfc" id="L161" title="All 2 branches covered.">      if (seen.add(row.getEnrollCode())) {</span>
+<span class="fc" id="L162">        applyOffering(</span>
+<span class="fc" id="L163">            row, recruitment.getId(), found.courseId(), found.offering(), found.section());</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">        if (row.isStale()) {</span>
+<span class="fc" id="L165">          unstaled++;</span>
+        }
+<span class="fc" id="L167">        row.setStale(false);</span>
+<span class="fc" id="L168">        recruitmentCourseRepository.save(row);</span>
+<span class="fc" id="L169">        updated++;</span>
+<span class="fc" id="L170">        ctx.log(</span>
+<span class="fc" id="L171">            String.format(</span>
+<span class="fc" id="L172">                &quot;  %s section %s (added by hand)&quot;, found.courseId(), found.section().getSection()));</span>
+      }
+<span class="fc" id="L174">    }</span>
+
+<span class="fc" id="L176">    int markedStale = 0;</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">    if (offerings.isEmpty()) {</span>
+      // A guard, not a judgement: an empty answer is far more likely a bad fetch than a quarter
+      // with no classes, and must not mark every row stale.
+<span class="fc" id="L180">      ctx.log(&quot;No offerings returned; leaving the stale flags as they are.&quot;);</span>
+    } else {
+<span class="fc" id="L182">      markedStale = markStale(ctx, seen);</span>
+    }
+
+<span class="fc" id="L185">    ctx.log(</span>
+<span class="fc" id="L186">        String.format(</span>
+            &quot;Finished: %d added, %d updated, %d left removed, %d marked stale, %d un-staled&quot;,
+<span class="fc" id="L188">            added, updated, skippedRemoved, markedStale, unstaled));</span>
+<span class="fc" id="L189">  }</span>
+
+  /**
+   * Marks stale every row of this recruitment, removed ones aside, whose enroll code this run did
+   * not find, and returns how many it marked. The rows it did find were un-staled by the upsert. A
+   * row whose course is no longer flagged is never found, since only flagged courses are looked at,
+   * so that case needs no rule of its own.
+   */
+  private int markStale(JobContext ctx, Set&lt;String&gt; seen) {
+<span class="fc" id="L198">    int markedStale = 0;</span>
+    for (RecruitmentCourse row :
+<span class="fc bfc" id="L200" title="All 2 branches covered.">        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId())) {</span>
+<span class="fc bfc" id="L201" title="All 6 branches covered.">      if (row.isRemoved() || row.isStale() || seen.contains(row.getEnrollCode())) {</span>
+<span class="fc" id="L202">        continue;</span>
+      }
+<span class="fc" id="L204">      row.setStale(true);</span>
+<span class="fc" id="L205">      recruitmentCourseRepository.save(row);</span>
+<span class="fc" id="L206">      markedStale++;</span>
+<span class="fc" id="L207">      ctx.log(</span>
+<span class="fc" id="L208">          String.format(</span>
+              &quot;  %s section %s is no longer offered or flagged; marked stale&quot;,
+<span class="fc" id="L210">              row.getCourseId(), row.getSection()));</span>
+<span class="fc" id="L211">    }</span>
+<span class="fc" id="L212">    return markedStale;</span>
+  }
+
+  /** A lecture in the quarter's offerings, with the course it belongs to. */
+<span class="fc" id="L216">  private record Offered(String courseId, UcsbCourseOffering offering, UcsbSection section) {}</span>
+
+  /**
+   * Copies a lecture's offering details onto a row. Shared with the admin's add-by-enroll-code
+   * endpoint (issue #125), so the two paths cannot drift apart.
+   */
+  public static void applyOffering(
+      RecruitmentCourse row,
+      Long recruitmentId,
+      String courseId,
+      UcsbCourseOffering offering,
+      UcsbSection section) {
+<span class="fc" id="L228">    row.setRecruitmentId(recruitmentId);</span>
+<span class="fc" id="L229">    row.setCourseId(courseId);</span>
+<span class="fc" id="L230">    row.setEnrollCode(section.getEnrollCode());</span>
+<span class="fc" id="L231">    row.setSection(section.getSection());</span>
+<span class="fc" id="L232">    row.setTitle(offering.getTitle());</span>
+<span class="fc" id="L233">    row.setInstructor(firstInstructor(section));</span>
+<span class="fc" id="L234">    row.setDays(firstDays(section));</span>
+<span class="fc" id="L235">    row.setTime(firstTime(section));</span>
+<span class="fc" id="L236">    row.setRoom(firstRoom(section));</span>
+<span class="fc" id="L237">    row.setEnrollment(section.getEnrolledTotal());</span>
+<span class="fc" id="L238">    row.setMaxEnroll(section.getMaxEnroll());</span>
+<span class="fc" id="L239">    row.setStatus(statusOf(section));</span>
+<span class="fc" id="L240">    row.setSummerSession(section.getSession());</span>
+<span class="fc" id="L241">  }</span>
+
+  /** Course ids flagged for this recruitment's type. */
+  private Set&lt;String&gt; eligibleCourseIds() {
+<span class="fc" id="L245">    return StreamSupport.stream(courseRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L246">        .filter(this::wantsThisType)</span>
+<span class="fc" id="L247">        .map(Course::getCourseId)</span>
+<span class="fc" id="L248">        .collect(Collectors.toSet());</span>
+  }
+
+  private boolean wantsThisType(Course course) {
+<span class="fc bfc" id="L252" title="All 2 branches covered.">    return recruitment.getType() == RecruitmentType.TA ? course.isNeedsTa() : course.isNeedsUla();</span>
+  }
+
+  /** The first time-location of a primary section; the design ignores any others. */
+  private static UcsbTimeLocation firstTimeLocation(UcsbSection section) {
+<span class="fc" id="L257">    List&lt;UcsbTimeLocation&gt; locations = section.getTimeLocations();</span>
+<span class="fc bfc" id="L258" title="All 4 branches covered.">    return (locations == null || locations.isEmpty()) ? null : locations.get(0);</span>
+  }
+
+  static String firstInstructor(UcsbSection section) {
+<span class="fc" id="L262">    List&lt;UcsbInstructor&gt; instructors = section.getInstructors();</span>
+<span class="fc bfc" id="L263" title="All 4 branches covered.">    if (instructors == null || instructors.isEmpty()) {</span>
+<span class="fc" id="L264">      return null;</span>
+    }
+<span class="fc" id="L266">    return instructors.get(0).getInstructor();</span>
+  }
+
+  static String firstDays(UcsbSection section) {
+<span class="fc" id="L270">    UcsbTimeLocation location = firstTimeLocation(section);</span>
+<span class="fc bfc" id="L271" title="All 2 branches covered.">    return location == null ? null : location.getDays();</span>
+  }
+
+  /** Rendered as &quot;begin - end&quot;; null if the section has no meeting time (an online course, say). */
+  static String firstTime(UcsbSection section) {
+<span class="fc" id="L276">    UcsbTimeLocation location = firstTimeLocation(section);</span>
+<span class="fc bfc" id="L277" title="All 4 branches covered.">    if (location == null || location.getBeginTime() == null) {</span>
+<span class="fc" id="L278">      return null;</span>
+    }
+<span class="fc" id="L280">    return location.getBeginTime() + &quot; - &quot; + location.getEndTime();</span>
+  }
+
+  /** Building and room together, since neither is much use alone. */
+  static String firstRoom(UcsbSection section) {
+<span class="fc" id="L285">    UcsbTimeLocation location = firstTimeLocation(section);</span>
+<span class="fc bfc" id="L286" title="All 2 branches covered.">    if (location == null) {</span>
+<span class="fc" id="L287">      return null;</span>
+    }
+<span class="fc bfc" id="L289" title="All 2 branches covered.">    if (location.getBuilding() == null) {</span>
+<span class="fc" id="L290">      return location.getRoom();</span>
+    }
+<span class="fc" id="L292">    return (location.getBuilding() + &quot; &quot; + orEmpty(location.getRoom())).trim();</span>
+  }
+
+  private static String orEmpty(String value) {
+<span class="fc bfc" id="L296" title="All 2 branches covered.">    return value == null ? &quot;&quot; : value;</span>
+  }
+
+  /** Cancellation wins over closure: a cancelled class is not merely full. */
+  static String statusOf(UcsbSection section) {
+<span class="fc bfc" id="L301" title="All 2 branches covered.">    if (isYes(section.getCourseCancelled())) {</span>
+<span class="fc" id="L302">      return &quot;cancelled&quot;;</span>
+    }
+<span class="fc bfc" id="L304" title="All 2 branches covered.">    return isYes(section.getClassClosed()) ? &quot;closed&quot; : &quot;open&quot;;</span>
+  }
+
+  private static boolean isYes(String flag) {
+<span class="fc bfc" id="L308" title="All 4 branches covered.">    return flag != null &amp;&amp; !flag.isBlank();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
