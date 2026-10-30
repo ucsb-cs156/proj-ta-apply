@@ -15,7 +15,7 @@ import type { Application } from "main/components/Applications/ApplicationTable"
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { useCurrentUser } from "main/utils/currentUser";
-import { phaseOf } from "main/utils/applicationAccess";
+import { isEditable, phaseOf } from "main/utils/applicationAccess";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { NoticeVersion } from "main/utils/notices";
 
@@ -154,7 +154,7 @@ export default function ApplicationPage(): React.JSX.Element {
               Status: {application.status}
             </p>
 
-            {phase === "EDITABLE" && (
+            {isEditable(phase) && (
               <ApplicationForm
                 type={recruitment?.type ?? "TA"}
                 courses={courses ?? []}
@@ -174,24 +174,24 @@ export default function ApplicationPage(): React.JSX.Element {
               />
             )}
 
-            {phase === "COMMENTS_ONLY" && (
-              <>
-                <p data-testid="ApplicationPage-comments-only">
-                  The primary consideration date has passed, so this application
-                  can no longer be edited. You can still add comments below.
+            {/* Past the primary consideration date the application stays editable until the
+                admin closes applications (issue #98); the comments box is offered as well, as
+                the place to say what has changed since applying. */}
+            {phase === "LATE" && (
+              <div className="mt-4" data-testid="ApplicationPage-late">
+                <h2 className="h4">Post Application Comments</h2>
+                <p data-testid="ApplicationPage-late-note">
+                  The primary consideration date has passed. You can still
+                  update your application above until applications close; if
+                  something has changed since you applied, you can also say so
+                  here.
                 </p>
                 <PostApplicationCommentsForm
                   initialContents={application.postApplicationComments}
                   submitAction={(data) => commentsMutation.mutate(data)}
-                  testIdPrefix="ApplicationPage"
+                  testIdPrefix="ApplicationPage-comments"
                 />
-                <ApplicationSummary
-                  application={application}
-                  type={recruitment?.type ?? "TA"}
-                  notice={agreedNotice}
-                  testIdPrefix="ApplicationPage-summary"
-                />
-              </>
+              </div>
             )}
 
             {phase === "VIEW_ONLY" && (

@@ -34,46 +34,27 @@ public class ApplicationAccessServiceTests {
             recruitment(ApplicationStatus.CLOSED, LocalDate.of(2026, 1, 20))));
   }
 
-  // ---- the three phases ----
+  // ---- when an application may be changed ----
 
+  /** Issue #98: editing lasts for as long as applications are open, deadline or not. */
   @Test
-  public void an_application_is_editable_before_the_deadline() {
-    Recruitment r = recruitment(ApplicationStatus.OPEN, LocalDate.of(2026, 1, 20));
-    assertTrue(service.editable(r, LocalDate.of(2026, 1, 19)));
-  }
-
-  /** The deadline day itself still counts as open; it closes the day after. */
-  @Test
-  public void an_application_is_editable_on_the_deadline_itself() {
-    Recruitment r = recruitment(ApplicationStatus.OPEN, LocalDate.of(2026, 1, 20));
-    assertTrue(service.editable(r, LocalDate.of(2026, 1, 20)));
+  public void an_open_recruitment_is_editable_whatever_the_deadline() {
+    assertTrue(service.editable(recruitment(ApplicationStatus.OPEN, LocalDate.of(2026, 1, 20))));
+    assertTrue(service.editable(recruitment(ApplicationStatus.OPEN, LocalDate.of(2000, 1, 1))));
+    assertTrue(service.editable(recruitment(ApplicationStatus.OPEN, null)));
   }
 
   @Test
-  public void an_application_is_not_editable_after_the_deadline() {
-    Recruitment r = recruitment(ApplicationStatus.OPEN, LocalDate.of(2026, 1, 20));
-    assertFalse(service.editable(r, LocalDate.of(2026, 1, 21)));
+  public void a_closed_recruitment_is_never_editable() {
+    assertFalse(service.editable(recruitment(ApplicationStatus.CLOSED, LocalDate.of(2099, 1, 20))));
+    assertFalse(service.editable(recruitment(ApplicationStatus.CLOSED, null)));
   }
 
   @Test
-  public void a_closed_recruitment_is_never_editable_even_before_the_deadline() {
-    Recruitment r = recruitment(ApplicationStatus.CLOSED, LocalDate.of(2026, 1, 20));
-    assertFalse(service.editable(r, LocalDate.of(2026, 1, 1)));
-  }
+  public void comments_follow_the_same_rule_as_editing() {
+    Recruitment open = recruitment(ApplicationStatus.OPEN, LocalDate.of(2000, 1, 20));
+    Recruitment closed = recruitment(ApplicationStatus.CLOSED, LocalDate.of(2099, 1, 20));
 
-  @Test
-  public void a_recruitment_without_a_deadline_stays_editable_while_open() {
-    Recruitment r = recruitment(ApplicationStatus.OPEN, null);
-    assertTrue(service.editable(r, LocalDate.of(2030, 1, 1)));
-  }
-
-  /** Comments outlive the deadline, which is the point of keeping them separate. */
-  @Test
-  public void comments_survive_the_deadline_but_not_the_closing() {
-    Recruitment open = recruitment(ApplicationStatus.OPEN, LocalDate.of(2026, 1, 20));
-    Recruitment closed = recruitment(ApplicationStatus.CLOSED, LocalDate.of(2026, 1, 20));
-
-    assertFalse(service.editable(open, LocalDate.of(2026, 2, 1)));
     assertTrue(service.commentable(open));
     assertFalse(service.commentable(closed));
   }

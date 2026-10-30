@@ -69,9 +69,9 @@ Editable.parameters = {
   },
 };
 
-/** Past the deadline the answers are shown back, and only the comments can still change. */
-export const CommentsOnly = Template.bind({});
-CommentsOnly.parameters = {
+/** Past the deadline the form is still offered (issue #98), with the comments box after it. */
+export const PastDeadline = Template.bind({});
+PastDeadline.parameters = {
   msw: {
     handlers: [
       ...common,

@@ -961,10 +961,10 @@ public class ApplicationsControllerTests extends ControllerTestCase {
       username = "grad",
       roles = {"USER"})
   @Test
-  public void editing_is_refused_once_the_deadline_has_passed() throws Exception {
+  public void editing_is_refused_once_applications_are_closed() throws Exception {
     when(applicationRepository.findById(5L))
-        .thenReturn(Optional.of(application(5L, 4L, GRAD_EMAIL)));
-    when(recruitmentRepository.findById(4L)).thenReturn(Optional.of(PAST_DEADLINE_TA));
+        .thenReturn(Optional.of(application(5L, 3L, GRAD_EMAIL)));
+    when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
 
     MvcResult response =
         mockMvc
@@ -977,10 +977,30 @@ public class ApplicationsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertEquals(
-        "This application can no longer be edited; you may still update your post application"
-            + " comments",
+        "This application can no longer be edited; applications are closed",
         responseToJson(response).get("message"));
     verify(applicationRepository, never()).save(any());
+  }
+
+  /** Issue #98: the primary consideration date no longer ends editing; only closing does. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void editing_is_still_allowed_past_the_deadline_while_open() throws Exception {
+    when(applicationRepository.findById(5L))
+        .thenReturn(Optional.of(application(5L, 4L, GRAD_EMAIL)));
+    when(recruitmentRepository.findById(4L)).thenReturn(Optional.of(PAST_DEADLINE_TA));
+
+    mockMvc
+        .perform(
+            put("/api/applications?id=5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals("Ada", saved().getFirstName());
   }
 
   @WithMockUser(

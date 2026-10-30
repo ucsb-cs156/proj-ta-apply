@@ -200,7 +200,7 @@ describe("ApplicationPage tests", () => {
     expect(screen.getByTestId("ApplicationPage-submit")).toHaveTextContent(
       "Update Application",
     );
-    expect(screen.queryByTestId("ApplicationPage-comments-only")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-late")).toBeNull();
     expect(screen.queryByTestId("ApplicationPage-view-only")).toBeNull();
   });
 
@@ -236,23 +236,36 @@ describe("ApplicationPage tests", () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  // ---- comments only ----
+  // ---- late: past the deadline but still open ----
 
-  test("after the deadline only the comments form is offered", async () => {
+  /** Issue #98: the form stays, and the comments box joins it. */
+  test("after the deadline the form is still offered, with the comments box as well", async () => {
     vi.setSystemTime(new Date(2026, 1, 1, 12, 0, 0));
     renderPage();
 
     expect(
-      await screen.findByTestId("ApplicationPage-comments-only"),
-    ).toHaveTextContent("can no longer be edited");
+      await screen.findByTestId("ApplicationPage-late-note"),
+    ).toHaveTextContent("You can still update your application above");
     expect(
-      screen.getByTestId("ApplicationPage-postApplicationComments"),
+      screen.getByTestId("ApplicationPage-comments-postApplicationComments"),
     ).toHaveValue("I have since finished CS 130A.");
-    // The rest of the application is shown back, but not as an editable form.
-    expect(screen.queryByTestId("ApplicationPage-firstName")).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationPage-firstName")).toHaveValue(
+        "Chris",
+      ),
+    );
+    expect(screen.getByTestId("ApplicationPage-submit")).toHaveTextContent(
+      "Update Application",
+    );
+    // The comments box comes after the form, with its own button.
     expect(
-      screen.getByTestId("ApplicationPage-summary-Major"),
-    ).toHaveTextContent("Computer Science");
+      screen
+        .getByTestId("ApplicationPage-submit")
+        .compareDocumentPosition(
+          screen.getByTestId("ApplicationPage-comments-submit"),
+        ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.queryByTestId("ApplicationPage-view-only")).toBeNull();
   });
 
   test("saving comments sends a PUT to the comments endpoint", async () => {
@@ -262,11 +275,13 @@ describe("ApplicationPage tests", () => {
     renderPage();
 
     const box = await screen.findByTestId(
-      "ApplicationPage-postApplicationComments",
+      "ApplicationPage-comments-postApplicationComments",
     );
     await userEvent.clear(box);
     await userEvent.type(box, "Also took CS 190J.");
-    await userEvent.click(screen.getByTestId("ApplicationPage-submit"));
+    await userEvent.click(
+      screen.getByTestId("ApplicationPage-comments-submit"),
+    );
 
     await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
     expect(axiosMock.history.put[0].url).toBe("/api/applications/comments");
@@ -296,7 +311,7 @@ describe("ApplicationPage tests", () => {
     ).toHaveTextContent("This recruitment is closed");
     expect(screen.queryByTestId("ApplicationPage-firstName")).toBeNull();
     expect(
-      screen.queryByTestId("ApplicationPage-postApplicationComments"),
+      screen.queryByTestId("ApplicationPage-comments-postApplicationComments"),
     ).toBeNull();
     // The TA answers are shown back, since this was a TA application.
     expect(

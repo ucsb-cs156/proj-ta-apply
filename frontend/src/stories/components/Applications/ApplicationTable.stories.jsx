@@ -13,7 +13,7 @@ const Template = (args) => <ApplicationTable {...args} />;
 export const Empty = Template.bind({});
 Empty.args = { applications: [], recruitments: [] };
 
-/** The action column says what is still possible: editing, commenting, or only looking. */
+/** Edit while applications are open; once closed, a disabled Edit (hover it) and a View link. */
 export const TwoApplications = Template.bind({});
 TwoApplications.args = {
   applications: applicationsFixtures.twoApplications,
@@ -25,4 +25,5 @@ export const IncludingATestApplication = Template.bind({});
 IncludingATestApplication.args = {
   applications: applicationsFixtures.threeApplicationsIncludingATest,
   recruitments: recruitmentsFixtures.threeRecruitments,
+  showTestColumn: true,
 };
