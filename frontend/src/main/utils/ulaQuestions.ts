@@ -87,8 +87,13 @@ export const OTHER_CAMPUS_JOB_QUESTION =
 export const PRIOR_EMPLOYMENT_QUESTION =
   "Are you now, or have you ever been, employed at UCSB in any position where you received a paycheck from the University of California?";
 
-export const EMPLOYEE_ID_NOTE =
-  "Log into UCPath (https://www.ucpath.ucsb.edu/) and look up your employee ID. It is NOT your perm number and NOT your SSN; if you cannot find it, leave this blank.";
+/** Where an employee looks up their employee ID; the form links the word "UCPath" to it. */
+export const UCPATH_URL = "https://www.ucpath.ucsb.edu/";
+
+/** The note under the employee ID box, in two parts around the UCPath link (issue #137). */
+export const EMPLOYEE_ID_NOTE_BEFORE = "Log into ";
+export const EMPLOYEE_ID_NOTE_AFTER =
+  " and look up your employee ID. It is NOT your perm number and NOT your SSN; if you cannot find it, leave this blank.";
 
 // ---- the I-9 Verification section (issue #111) ----
 

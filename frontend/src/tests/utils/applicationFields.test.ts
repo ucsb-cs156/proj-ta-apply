@@ -6,6 +6,8 @@ import {
   INTEREST_LEVELS,
   MIN_PROFICIENCY,
   OTHER_MAJOR,
+  TA_COMMENTS_HELP,
+  TA_PREV_EXPERIENCE_HELP,
   TA_PROFICIENCY_LEVELS,
   ULA_PROFICIENCY_LEVELS,
   proficiencyInstruction,
@@ -169,14 +171,14 @@ describe("toPayload", () => {
 
   // ---- topic proficiencies ----
 
-  test("the TA topic scale runs 1 to 5, headed by the numbers", () => {
+  test("the TA topic scale runs 5 down to 1, with its ends worded", () => {
     expect(MIN_PROFICIENCY).toBe(1);
     expect(TA_PROFICIENCY_LEVELS).toEqual([
-      { value: 1, label: "1" },
-      { value: 2, label: "2" },
-      { value: 3, label: "3" },
+      { value: 5, label: "5 (highest)" },
       { value: 4, label: "4" },
-      { value: 5, label: "5" },
+      { value: 3, label: "3" },
+      { value: 2, label: "2" },
+      { value: 1, label: "1 (lowest)" },
     ]);
     expect(proficiencyLevels("TA")).toBe(TA_PROFICIENCY_LEVELS);
     expect(proficiencyInstruction("TA")).toBe(
@@ -196,14 +198,23 @@ describe("toPayload", () => {
     );
   });
 
-  test("the interest scale runs 1 to 5 with its ends worded", () => {
+  test("the interest scale runs 5 down to 1 with its ends worded", () => {
     expect(INTEREST_LEVELS).toEqual([
-      { value: 1, label: "1-Not interested" },
-      { value: 2, label: "2" },
-      { value: 3, label: "3" },
-      { value: 4, label: "4" },
       { value: 5, label: "5-Very interested" },
+      { value: 4, label: "4" },
+      { value: 3, label: "3" },
+      { value: 2, label: "2" },
+      { value: 1, label: "1-Not interested" },
     ]);
+  });
+
+  test("the TA help texts under Previous Teaching Experience and Anything Else", () => {
+    expect(TA_PREV_EXPERIENCE_HELP).toBe(
+      "Please describe your prior experience with being a TA (at UCSB or elsewhere), Undergrad Learning Assistant (ULA), or any other experience with teaching that is relevant to your application to be a TA.",
+    );
+    expect(TA_COMMENTS_HELP).toBe(
+      "Is there anything else you would like the department to know as we consider your application? For example, if there is a particular reason you are interested in being a TA for a certain course, or working with a particular professor, here is where you can share that.",
+    );
   });
 
   test("topic ratings are carried through as given", () => {
