@@ -68,6 +68,8 @@ public class RecruitmentsWebIT extends WebTestCase {
   }
 
   private void createTaRecruitment() {
+    // The form is in a modal behind the Create New Recruitment button (issue #108).
+    page.getByTestId("RecruitmentsIndexPage-create-button").click();
     page.getByTestId("RecruitmentForm-tentativeOpeningDate").fill("2026-01-05");
     page.getByTestId("RecruitmentForm-primaryConsiderationDate").fill("2026-01-20");
     page.getByTestId("RecruitmentForm-submit").click();

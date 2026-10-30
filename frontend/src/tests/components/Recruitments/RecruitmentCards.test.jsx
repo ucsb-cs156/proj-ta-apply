@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
@@ -7,7 +13,9 @@ import AxiosMockAdapter from "axios-mock-adapter";
 import { vi } from "vitest";
 
 import RecruitmentCards, {
+  DELETE_TOOLTIP,
   TEST_APPLICATION_TOOLTIP,
+  applicationsText,
 } from "main/components/Recruitments/RecruitmentCards";
 import { SORT_KEYS, sortRecruitments } from "main/utils/recruitmentSort";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
@@ -17,12 +25,17 @@ const axiosMock = new AxiosMockAdapter(axios);
 // Fixture order: S26 TA CLOSED (id 3), W26 ULA OPEN (id 2), W26 TA CLOSED (id 1).
 const three = recruitmentsFixtures.threeRecruitments;
 
-function renderCards(recruitments = three, onDeleteRequested = vi.fn()) {
+function renderCards(
+  recruitments = three,
+  onDeleteRequested = vi.fn(),
+  applicationCounts = undefined,
+) {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
         <RecruitmentCards
           recruitments={recruitments}
+          applicationCounts={applicationCounts}
           onDeleteRequested={onDeleteRequested}
           testIdPrefix="Cards"
         />
@@ -257,16 +270,74 @@ describe("RecruitmentCards tests", () => {
     );
     expect(review).toHaveClass("btn", "btn-info");
 
-    // All six sit in the footer, Delete pushed to the right.
+    // All five sit in the footer; Delete moved to the header (issue #108).
     const footer = screen
       .getByTestId("Cards-card-2-card")
       .querySelector(".card-footer");
     expect(footer).toHaveClass("d-flex", "flex-wrap", "gap-2");
-    expect(footer.children).toHaveLength(6);
-    expect(screen.getByTestId("Cards-card-2-delete-button")).toHaveClass(
-      "btn-danger",
-      "ms-auto",
+    expect(footer.children).toHaveLength(5);
+    expect(footer).not.toContainElement(
+      screen.getByTestId("Cards-card-2-delete-button"),
     );
+  });
+
+  /** Issue #108: the count beside the status badge, and a trash icon at the right. */
+  test("the header shows how many applications are on file", () => {
+    renderCards(three, vi.fn(), { 2: 15, 1: 1 });
+
+    expect(screen.getByTestId("Cards-card-2-applications")).toHaveTextContent(
+      "15 applications",
+    );
+    expect(screen.getByTestId("Cards-card-1-applications")).toHaveTextContent(
+      "1 application",
+    );
+    // Not in the map: none.
+    expect(screen.getByTestId("Cards-card-0-applications")).toHaveTextContent(
+      "0 applications",
+    );
+    expect(applicationsText(0)).toBe("0 applications");
+    expect(applicationsText(1)).toBe("1 application");
+    expect(applicationsText(2)).toBe("2 applications");
+    // The count follows the status badge in the header.
+    const header = screen
+      .getByTestId("Cards-card-2-card")
+      .querySelector(".card-header");
+    expect(header).toContainElement(
+      screen.getByTestId("Cards-card-2-applications"),
+    );
+    expect(
+      screen
+        .getByTestId("Cards-card-2-applicationStatus")
+        .compareDocumentPosition(
+          screen.getByTestId("Cards-card-2-applications"),
+        ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("without counts every card says 0 applications", () => {
+    renderCards();
+    expect(screen.getByTestId("Cards-card-2-applications")).toHaveTextContent(
+      "0 applications",
+    );
+  });
+
+  test("the trash icon sits at the right of the header with a tooltip", async () => {
+    renderCards();
+
+    const button = screen.getByTestId("Cards-card-2-delete-button");
+    expect(button).toHaveClass("btn-outline-danger", "btn-sm", "ms-auto");
+    expect(button).toHaveAttribute("aria-label", "Delete this Recruitment");
+    expect(button.querySelector("svg")).not.toBeNull();
+    expect(button.textContent).toBe("");
+    expect(
+      screen.getByTestId("Cards-card-2-card").querySelector(".card-header"),
+    ).toContainElement(button);
+    expect(DELETE_TOOLTIP).toBe("Delete this Recruitment");
+
+    fireEvent.mouseOver(button);
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Delete this Recruitment");
+    expect(tooltip).toHaveAttribute("id", "Cards-card-2-delete-tooltip");
   });
 
   /** Delete is confirmed by the page, so the card only reports the request. */
