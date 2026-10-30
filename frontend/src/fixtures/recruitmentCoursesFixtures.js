@@ -83,4 +83,10 @@ recruitmentCoursesFixtures.oneStale = {
   stale: true,
 };
 
+/** The first lecture of 1A as the schedule has cancelled it (issue #123). */
+recruitmentCoursesFixtures.oneCancelled = {
+  ...recruitmentCoursesFixtures.fourCourses[0],
+  status: "cancelled",
+};
+
 export default recruitmentCoursesFixtures;
