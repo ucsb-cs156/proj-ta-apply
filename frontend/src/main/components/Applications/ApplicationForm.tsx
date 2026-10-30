@@ -53,6 +53,10 @@ import {
   booleanToSelect,
   type Option,
 } from "main/utils/ulaQuestions";
+import {
+  VIDEO_INSTRUCTIONS_TEXT,
+  VIDEO_INSTRUCTIONS_URL,
+} from "main/utils/helpPages";
 
 /**
  * The answers react-hook-form manages. The major, the per-course interest answers, the topic
@@ -782,8 +786,19 @@ export default function ApplicationForm({
                 placeholder="https://"
                 {...register("videoLink")}
               />
-              <Form.Text muted data-testid={id("videoLink-note")}>
+              <Form.Text as="div" muted data-testid={id("videoLink-note")}>
                 {VIDEO_GUIDANCE}
+              </Form.Text>
+              {/* Issue #140: the department's instructions for the video, in a new tab. */}
+              <Form.Text as="div">
+                <a
+                  href={VIDEO_INSTRUCTIONS_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  data-testid={id("videoLink-instructions")}
+                >
+                  {VIDEO_INSTRUCTIONS_TEXT}
+                </a>
               </Form.Text>
             </Form.Group>
           </Row>

@@ -11,6 +11,10 @@ import RecruitmentCoursesPage from "main/pages/Admin/RecruitmentCoursesPage";
 import ProtectedPage from "main/pages/Auth/ProtectedPage";
 import NotFoundPage from "main/pages/Auth/NotFoundPage";
 import AboutTaApply from "main/pages/Help/AboutTaApply";
+import HelpTaApplicantsPage from "main/pages/Help/HelpTaApplicantsPage";
+import HelpUlaApplicantsPage from "main/pages/Help/HelpUlaApplicantsPage";
+import HelpInstructorsPage from "main/pages/Help/HelpInstructorsPage";
+import HelpAdminsPage from "main/pages/Help/HelpAdminsPage";
 import HelpCsvPage from "main/pages/Help/HelpCsvPage";
 import SignInPage from "main/pages/Auth/SignInPage";
 import SignInSuccessPage from "main/pages/Auth/SignInSuccessPage";
@@ -53,6 +57,31 @@ export default function App() {
       <Routes>
         <Route path="/" element={homePage} />
         <Route path="/help/about" element={<AboutTaApply />} />
+        <Route path="/help/ta-applicants" element={<HelpTaApplicantsPage />} />
+        <Route
+          path="/help/ula-applicants"
+          element={<HelpUlaApplicantsPage />}
+        />
+        <Route
+          path="/help/instructors"
+          element={
+            <ProtectedPage
+              component={<HelpInstructorsPage />}
+              enforceRole={"ROLE_INSTRUCTOR"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/help/admins"
+          element={
+            <ProtectedPage
+              component={<HelpAdminsPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
         <Route
           path="/help/csv"
           element={
