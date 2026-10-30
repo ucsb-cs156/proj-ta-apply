@@ -492,36 +492,53 @@ for; ULA positions are funded for undergraduates only.</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">The one field we need from the UCSB quarter calendar API's "current quarter" endpoint.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCourse.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourse</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/entity/UCSBAPIQuarter.html" title="class in edu.ucsb.cs.taapply.entity">UCSBAPIQuarter</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">One quarter of the UCSB quarter calendar, exactly as the UCSB API describes it (issue #151): its
+names and the dates of its classes, finals, registration passes and deadlines.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/controller/UCSBAPIQuarterController.html" title="class in edu.ucsb.cs.taapply.controller">UCSBAPIQuarterController</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">The UCSB quarter calendar on file, for the admin's Quarters page (issue #151).</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="edu/ucsb/cs/taapply/repository/UCSBAPIQuarterRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UCSBAPIQuarterRepository</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="block">The UCSB quarter calendar on file (issue #151), keyed by YYYYQ.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCourse.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourse</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">The only two fields we take from the UCSB curriculum API's class search: the course number and
 its title.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A course as returned with its sections, when the API is asked for class sections.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCoursePage.html" title="class in edu.ucsb.cs.taapply.models">UcsbCoursePage</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbCoursePage.html" title="class in edu.ucsb.cs.taapply.models">UcsbCoursePage</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">One page of results from the UCSB curriculum API's class search.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html" title="class in edu.ucsb.cs.taapply.services">UCSBCurriculumService</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/UCSBCurriculumService.html" title="class in edu.ucsb.cs.taapply.services">UCSBCurriculumService</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Wraps the UCSB Academic Curriculum API, narrowed to what iteration 2 needs: the distinct course
 numbers and titles offered in a given subject area, quarter and level.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbInstructor.html" title="class in edu.ucsb.cs.taapply.models">UcsbInstructor</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbInstructor.html" title="class in edu.ucsb.cs.taapply.models">UcsbInstructor</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">An instructor of record for a section.</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbOfferingPage.html" title="class in edu.ucsb.cs.taapply.models">UcsbOfferingPage</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbOfferingPage.html" title="class in edu.ucsb.cs.taapply.models">UcsbOfferingPage</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">One page of the class search when sections are included.</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Derives the last quarter the admin Courses dropdowns should offer, from the quarter UCSB says it
 currently is.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.QuarterRefresh.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService.QuarterRefresh</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="block">What a refresh of the quarters on file did: the range asked for and the rows saved.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="edu/ucsb/cs/taapply/models/UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">

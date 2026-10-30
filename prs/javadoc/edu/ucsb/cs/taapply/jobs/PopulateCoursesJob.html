@@ -102,7 +102,11 @@ every primary section are upserted into the catalog names table (issue #120), so
 which catalog name each instructor goes by.
 
 <p>A quarter whose API call fails is logged and skipped rather than aborting the run, so one
-transient error does not discard the quarters that already succeeded.</div>
+transient error does not discard the quarters that already succeeded.
+
+<p>The same range of quarters is also saved to the quarter calendar table from the UCSB quarter
+API (issue #151), before the courses are fetched; a failure there is logged and the courses are
+still fetched.</div>
 </div>
 </section>
 <section class="summary">

@@ -54,12 +54,14 @@ loadScripts(document, 'script');</script>
 <div class="toc-header">Contents&nbsp;<input type="text" class="filter-input" disabled placeholder="Filter contents (type .)" aria-label="Filter table of contents" autocomplete="off" spellcheck="false"><input type="reset" class="reset-filter" disabled tabindex="-1" value="Reset"></div>
 <ol class="toc-list" tabindex="-1">
 <li><a href="#" tabindex="0">Description</a></li>
+<li><a href="#nested-class-summary" tabindex="0">Nested Class Summary</a></li>
 <li><a href="#field-summary" tabindex="0">Field Summary</a></li>
 <li><a href="#constructor-summary" tabindex="0">Constructor Summary</a></li>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#field-detail" tabindex="0">Field Details</a>
 <ol class="toc-list">
 <li><a href="#CURRENT_QUARTER_ENDPOINT" tabindex="0">CURRENT_QUARTER_ENDPOINT</a></li>
+<li><a href="#ALL_QUARTERS_ENDPOINT" tabindex="0">ALL_QUARTERS_ENDPOINT</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
@@ -69,6 +71,9 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#getAllQuartersFromAPI()" tabindex="0">getAllQuartersFromAPI()</a></li>
+<li><a href="#loadQuarters(java.lang.String,java.lang.String)" tabindex="0">loadQuarters(String, String)</a></li>
+<li><a href="#refreshThroughEnd()" tabindex="0">refreshThroughEnd()</a></li>
 <li><a href="#getCurrentQuarterYYYYQ()" tabindex="0">getCurrentQuarterYYYYQ()</a></li>
 <li><a href="#endQuarterFor(java.lang.String)" tabindex="0">endQuarterFor(String)</a></li>
 <li><a href="#getEndQtrYYYYQ()" tabindex="0">getEndQtrYYYYQ()</a></li>
@@ -100,6 +105,23 @@ except in Spring, when look ahead two so that both Summer and Fall are offered.<
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<li>
+<section class="nested-class-summary" id="nested-class-summary">
+<h2>Nested Class Summary</h2>
+<div class="caption"><span>Nested Classes</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Class</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="UcsbQuarterService.QuarterRefresh.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService.QuarterRefresh</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">What a refresh of the quarters on file did: the range asked for and the rows saved.</div>
+</div>
+</div>
+</section>
+</li>
 <!-- =========== FIELD SUMMARY =========== -->
 <li>
 <section class="field-summary" id="field-summary">
@@ -110,8 +132,13 @@ except in Spring, when look ahead two so that both Summer and Fall are offered.<
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#CURRENT_QUARTER_ENDPOINT" class="member-name-link">CURRENT_QUARTER_ENDPOINT</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-second even-row-color"><code><a href="#ALL_QUARTERS_ENDPOINT" class="member-name-link">ALL_QUARTERS_ENDPOINT</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Every quarter the calendar knows, past and future; filtered to a range before saving.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#CURRENT_QUARTER_ENDPOINT" class="member-name-link">CURRENT_QUARTER_ENDPOINT</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -145,15 +172,34 @@ except in Spring, when look ahead two so that both Summer and Fall are offered.<
 <div class="block">The last quarter to offer, given the current one: one quarter ahead, or two in Spring so that
 both Summer and Fall are reachable.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCurrentQuarterYYYYQ()" class="member-name-link">getCurrentQuarterYYYYQ</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/UCSBAPIQuarter.html" title="class in edu.ucsb.cs.taapply.entity">UCSBAPIQuarter</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getAllQuartersFromAPI()" class="member-name-link">getAllQuartersFromAPI</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">The quarter UCSB says it currently is, in YYYYQ form.</div>
+<div class="block">The whole quarter calendar as the UCSB API returns it (issue #151).</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEndQtrYYYYQ()" class="member-name-link">getEndQtrYYYYQ</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCurrentQuarterYYYYQ()" class="member-name-link">getCurrentQuarterYYYYQ</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The quarter UCSB says it currently is, in YYYYQ form.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEndQtrYYYYQ()" class="member-name-link">getEndQtrYYYYQ</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The end of the range for the quarter dropdowns.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/UCSBAPIQuarter.html" title="class in edu.ucsb.cs.taapply.entity">UCSBAPIQuarter</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#loadQuarters(java.lang.String,java.lang.String)" class="member-name-link">loadQuarters</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;startYYYYQ,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;endYYYYQ)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Saves every quarter of the calendar from <code>startYYYYQ</code> to <code>endYYYYQ</code> inclusive,
+overwriting what is on file, and returns them oldest first (issue #151).</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="UcsbQuarterService.QuarterRefresh.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService.QuarterRefresh</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#refreshThroughEnd()" class="member-name-link">refreshThroughEnd</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Brings the quarters on file up to the end of the range the dropdowns offer (issue #151): from
+the latest quarter on file (or the current quarter, when nothing is on file yet) through the
+current quarter plus one, or plus two during Spring, as <a href="#endQuarterFor(java.lang.String)"><code>endQuarterFor(String)</code></a> decides.</div>
 </div>
 </div>
 </div>
@@ -188,6 +234,23 @@ both Summer and Fall are reachable.</div>
 </div>
 </section>
 </li>
+<li>
+<section class="detail" id="ALL_QUARTERS_ENDPOINT">
+<h3>ALL_QUARTERS_ENDPOINT</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ALL_QUARTERS_ENDPOINT</span></div>
+<div class="block">Every quarter the calendar knows, past and future; filtered to a range before saving.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.UcsbQuarterService.ALL_QUARTERS_ENDPOINT">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -212,6 +275,53 @@ both Summer and Fall are reachable.</div>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="getAllQuartersFromAPI()">
+<h3>getAllQuartersFromAPI</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/UCSBAPIQuarter.html" title="class in edu.ucsb.cs.taapply.entity">UCSBAPIQuarter</a>&gt;</span>&nbsp;<span class="element-name">getAllQuartersFromAPI</span>()
+                                           throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
+<div class="block">The whole quarter calendar as the UCSB API returns it (issue #151).</div>
+<dl class="notes">
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="loadQuarters(java.lang.String,java.lang.String)">
+<h3>loadQuarters</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/UCSBAPIQuarter.html" title="class in edu.ucsb.cs.taapply.entity">UCSBAPIQuarter</a>&gt;</span>&nbsp;<span class="element-name">loadQuarters</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;startYYYYQ,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;endYYYYQ)</span>
+                                  throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
+<div class="block">Saves every quarter of the calendar from <code>startYYYYQ</code> to <code>endYYYYQ</code> inclusive,
+overwriting what is on file, and returns them oldest first (issue #151). Quarters outside the
+range are left alone, so nothing on file is ever removed.</div>
+<dl class="notes">
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="refreshThroughEnd()">
+<h3>refreshThroughEnd</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="UcsbQuarterService.QuarterRefresh.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService.QuarterRefresh</a></span>&nbsp;<span class="element-name">refreshThroughEnd</span>()
+                                                    throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
+<div class="block">Brings the quarters on file up to the end of the range the dropdowns offer (issue #151): from
+the latest quarter on file (or the current quarter, when nothing is on file yet) through the
+current quarter plus one, or plus two during Spring, as <a href="#endQuarterFor(java.lang.String)"><code>endQuarterFor(String)</code></a> decides.</div>
+<dl class="notes">
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="getCurrentQuarterYYYYQ()">
 <h3>getCurrentQuarterYYYYQ</h3>
