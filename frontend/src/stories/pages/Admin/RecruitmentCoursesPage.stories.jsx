@@ -2,6 +2,7 @@ import React from "react";
 import { HttpResponse, http } from "msw";
 import RecruitmentCoursesPage from "main/pages/Admin/RecruitmentCoursesPage";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
+import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -22,6 +23,15 @@ export default {
         ),
         http.get("/api/systemInfo", () =>
           HttpResponse.json(systemInfoFixtures.showingNeither),
+        ),
+        http.get("/api/admin/recruitments/all", () =>
+          HttpResponse.json([
+            {
+              ...recruitmentsFixtures.threeRecruitments[1],
+              id: 7,
+              lastPopulatedAt: "2026-02-01T03:00:00",
+            },
+          ]),
         ),
         http.put("/api/recruitmentcourses/removed", () =>
           HttpResponse.json({}),

@@ -5,6 +5,8 @@ import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import RecruitmentCourseTable, {
   type RecruitmentCourse,
 } from "main/components/Recruitments/RecruitmentCourseTable";
+import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { toast } from "react-toastify";
 
@@ -27,6 +29,17 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
     [],
   );
 
+  // For the last-refreshed line (issue #124); every Populate stamps the recruitment.
+  const { data: recruitments } = useBackend<Recruitment[]>(
+    ["/api/admin/recruitments/all"],
+    { method: "GET", url: "/api/admin/recruitments/all" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+  const recruitment = (recruitments ?? []).find(
+    (r) => String(r.id) === String(recruitmentId),
+  );
+
   const populateMutation = useBackendMutation<void, unknown>(
     () => ({
       url: "/api/jobs/launch/populateRecruitmentCourses",
@@ -39,7 +52,11 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           "Populate job started. Watch its progress on the Developer > Jobs page.",
         ),
     },
-    ["/api/recruitmentcourses/all", includeRemoved],
+    [
+      "/api/recruitmentcourses/all",
+      includeRemoved,
+      "/api/admin/recruitments/all",
+    ],
   );
 
   return (
@@ -56,6 +73,12 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           again; Remove them if they are not coming back. A cancelled lecture is
           hidden from applicants too, and comes back by itself if the schedule
           un-cancels it.
+        </p>
+
+        <p data-testid="RecruitmentCoursesPage-last-refreshed">
+          {lastRefreshedText(recruitment?.lastPopulatedAt)} Open, upcoming and
+          recently closed recruitments are also refreshed automatically every
+          night.
         </p>
 
         <div className="d-flex align-items-center gap-3 mb-3">

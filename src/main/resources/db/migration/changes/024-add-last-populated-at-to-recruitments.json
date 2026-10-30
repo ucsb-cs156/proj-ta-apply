@@ -1,0 +1,27 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "024-add-last-populated-at-to-recruitments",
+        "author": "pc",
+        "comment": "When the recruitment's course list was last refreshed from the UCSB API (issue #124).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "recruitments", "columnName": "last_populated_at" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [{ "column": { "name": "last_populated_at", "type": "TIMESTAMP" } }]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

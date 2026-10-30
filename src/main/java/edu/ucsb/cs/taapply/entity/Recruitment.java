@@ -4,6 +4,7 @@ import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.*;
 
 /**
@@ -50,4 +51,10 @@ public class Recruitment {
 
   /** Null until it has been closed at least once; overwritten on each close. */
   private LocalDate actualClosingDate;
+
+  /**
+   * When the course list was last filled from the UCSB API, by hand or by the nightly refresh
+   * (issue #124); null until the first successful Populate.
+   */
+  private LocalDateTime lastPopulatedAt;
 }
