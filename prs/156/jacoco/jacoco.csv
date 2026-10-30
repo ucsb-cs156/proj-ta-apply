@@ -10,7 +10,7 @@ taapply,edu.ucsb.cs.taapply.services,SystemInfoService,0,3,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,CurrentUserService,0,10,0,2,0,2,0,3,0,2
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService,0,144,0,14,0,31,0,12,0,5
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService.ImportResult,0,21,0,0,0,1,0,1,0,1
-taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService,0,330,0,24,0,76,0,26,0,14
+taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService,0,342,0,22,0,77,0,26,0,15
 taapply,edu.ucsb.cs.taapply.services,RoleEmailCsvService.UploadResult,0,15,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService.Row,0,55,0,8,0,10,0,8,0,4
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService.UploadResult,0,9,0,0,0,1,0,1,0,1
