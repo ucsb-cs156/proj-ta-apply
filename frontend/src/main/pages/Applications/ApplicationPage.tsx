@@ -1,4 +1,4 @@
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
@@ -22,6 +22,7 @@ import type { NoticeVersion } from "main/utils/notices";
 /** One of the applicant's own applications: /applications/:id */
 export default function ApplicationPage(): React.JSX.Element {
   const { id } = useParams();
+  const navigate = useNavigate();
   const currentUser = useCurrentUser();
 
   const { data: application } = useBackend<Application | null>(
@@ -126,7 +127,13 @@ export default function ApplicationPage(): React.JSX.Element {
         postApplicationComments: data.postApplicationComments,
       },
     }),
-    { onSuccess: () => toast("Your comments have been saved.") },
+    {
+      // Back to the home page once saved, as after submitting the application (issue #101).
+      onSuccess: () => {
+        toast("Your comments have been saved.");
+        navigate("/");
+      },
+    },
     ["/api/applications", "/api/applications/mine"],
   );
 

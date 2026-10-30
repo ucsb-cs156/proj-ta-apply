@@ -21,6 +21,12 @@ vi.mock("react-toastify", async (importOriginal) => ({
   toast: (x) => mockToast(x),
 }));
 
+const mockNavigate = vi.fn();
+vi.mock("react-router", async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
+}));
+
 const axiosMock = new AxiosMockAdapter(axios);
 
 const [, openUla, closedTa] = recruitmentsFixtures.threeRecruitments;
@@ -41,6 +47,7 @@ function renderPage(id = 2) {
 describe("ApplicationPage tests", () => {
   beforeEach(() => {
     mockToast.mockClear();
+    mockNavigate.mockClear();
     axiosMock.reset();
     axiosMock.resetHistory();
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -225,6 +232,8 @@ describe("ApplicationPage tests", () => {
         "Your application has been updated.",
       ),
     );
+    // Editing stays on the page; only saving comments goes home (issue #101).
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   // ---- comments only ----
@@ -268,6 +277,8 @@ describe("ApplicationPage tests", () => {
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith("Your comments have been saved."),
     );
+    // Issue #101: once saved, back to the home page.
+    expect(mockNavigate).toHaveBeenCalledWith("/");
   });
 
   // ---- view only ----
