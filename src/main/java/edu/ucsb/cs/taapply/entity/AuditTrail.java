@@ -17,6 +17,9 @@ import org.hibernate.annotations.CreationTimestamp;
  * One change an admin made to one field of a student's application: what the field was called, what
  * it held before and what it holds now (Admin > Audit Trail).
  *
+ * <p>This is the audit trail for <em>individual applications</em>. Changes to a recruitment itself
+ * (its creation, deletion, status and dates) are a different table, {@link RecruitmentAuditTrail}.
+ *
  * <p>Exactly one of {@code ulaApplicationId} and {@code taApplicationId} is set, which the table's
  * check constraint enforces (changeset 017). Values are strings whatever the field's type; a row of
  * a join table (a prior course, a topic rating, an interest) is stored as the JSON of the whole
