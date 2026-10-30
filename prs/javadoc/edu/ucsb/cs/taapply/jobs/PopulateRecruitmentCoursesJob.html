@@ -64,6 +64,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#accept(edu.ucsb.cs156.jobs.services.JobContext)" tabindex="0">accept(JobContext)</a></li>
+<li><a href="#applyOffering(edu.ucsb.cs.taapply.entity.RecruitmentCourse,java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.models.UcsbCourseOffering,edu.ucsb.cs.taapply.models.UcsbSection)" tabindex="0">applyOffering(RecruitmentCourse, Long, String, UcsbCourseOffering, UcsbSection)</a></li>
 </ol>
 </li>
 </ol>
@@ -100,6 +101,8 @@ recruitment's type, that is actually offered in its quarter.
   <li>A row the run did not find (its section gone from the API, or its course no longer flagged)
       is marked <code>stale</code>, and a row it did find is un-staled (issue #122). An empty API
       response changes no flags, so a bad fetch cannot mark everything stale at once.
+  <li>A row an admin added by enroll code (issue #125) is refreshed whenever its section is still
+      in the API, flagged course or not; it goes stale only when the section is gone.
 </ul></div>
 </div>
 </section>
@@ -123,7 +126,7 @@ recruitment's type, that is actually offered in its quarter.
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -132,6 +135,15 @@ recruitment's type, that is actually offered in its quarter.
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#accept(edu.ucsb.cs156.jobs.services.JobContext)" class="member-name-link">accept</a><wbr>(edu.ucsb.cs156.jobs.services.JobContext&nbsp;ctx)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#applyOffering(edu.ucsb.cs.taapply.entity.RecruitmentCourse,java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.models.UcsbCourseOffering,edu.ucsb.cs.taapply.models.UcsbSection)" class="member-name-link">applyOffering</a><wbr>(<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId,
+ <a href="../models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a>&nbsp;offering,
+ <a href="../models/UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a>&nbsp;section)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Copies a lecture's offering details onto a row.</div>
+</div>
 </div>
 </div>
 </div>
@@ -180,6 +192,20 @@ recruitment's type, that is actually offered in its quarter.
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code></dd>
 </dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="applyOffering(edu.ucsb.cs.taapply.entity.RecruitmentCourse,java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.models.UcsbCourseOffering,edu.ucsb.cs.taapply.models.UcsbSection)">
+<h3>applyOffering</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">applyOffering</span><wbr><span class="parameters">(<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId,
+ <a href="../models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a>&nbsp;offering,
+ <a href="../models/UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a>&nbsp;section)</span></div>
+<div class="block">Copies a lecture's offering details onto a row. Shared with the admin's add-by-enroll-code
+endpoint (issue #125), so the two paths cannot drift apart.</div>
 </div>
 </section>
 </li>
