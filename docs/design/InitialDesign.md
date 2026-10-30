@@ -561,3 +561,14 @@ applications, Courses, Test Application, Download CSV, Review Applications, Dele
 wrapping on a narrow screen. The sorting is done in the component. `RecruitmentTable` keeps only
 its seven field columns, for the read-only repeat of a recruitment at the top of its applications
 page; the Playwright flows address the cards by position (`RecruitmentsIndexPage-card-0-...`).
+
+# Twenty-ninth Iteration
+
+The ULA application form explains two things it did not before (issue #94). Under the guidance
+on the other-courses table, a paragraph asks applicants to leave a course they have not taken at
+Not Applicable / Not Interested unless other experience or course work prepares them to ULA for
+it, and to explain that experience in the comment box. The comment box's label is now **Anything
+Else that you would like us to know?** with a note on what to put there (experience for a course
+never taken, or a reason for wanting to ULA in general or for a specific course). The TA form is
+unchanged.
+
