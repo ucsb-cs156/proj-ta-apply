@@ -2,6 +2,7 @@ import React from "react";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
+import coursesFixtures from "fixtures/coursesFixtures";
 import { HttpResponse, http } from "msw";
 
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
@@ -19,6 +20,10 @@ export default {
       handlers: [
         http.get("/api/recruitments/sections", () =>
           HttpResponse.json(courseSectionsFixtures.cmpsc156),
+        ),
+        // Add Multiple UCSB CMPSC Courses lists the course table (issue #100).
+        http.get("/api/courses/all", () =>
+          HttpResponse.json(coursesFixtures.threeCourses),
         ),
       ],
     },

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "react-bootstrap";
+import BulkUcsbCoursesModal from "main/components/PriorCoursework/BulkUcsbCoursesModal";
 import PriorCourseworkModal from "main/components/PriorCoursework/PriorCourseworkModal";
 import PriorCourseworkTable from "main/components/PriorCoursework/PriorCourseworkTable";
 import RequiredField from "main/components/Common/RequiredField";
@@ -16,12 +17,15 @@ type PriorCourseworkSectionProps = {
   onChange: (courses: PriorCourse[]) => void;
   /** Set by the form after a submit attempt with too few courses. */
   invalid?: boolean;
+  /** The subject area the course table holds, named on the bulk-add button. */
+  subjectArea?: string;
   testIdPrefix?: string;
 };
 
 /**
  * The prior coursework part of an application form: the instruction for this form type, the table
- * of courses entered so far, an Add Course button, and the modal that adds or edits one. The rows
+ * of courses entered so far, an Add Course button, and the modal that adds or edits one; beside it,
+ * a button for adding several UCSB courses at once from the course table (issue #100). The rows
  * live in the parent form's state and go to the backend with the rest of the application.
  */
 export default function PriorCourseworkSection({
@@ -29,10 +33,12 @@ export default function PriorCourseworkSection({
   courses,
   onChange,
   invalid = false,
+  subjectArea = "CMPSC",
   testIdPrefix = "PriorCoursework",
 }: PriorCourseworkSectionProps): React.JSX.Element {
   // null: modal closed; -1: adding; otherwise the index of the row being edited.
   const [editing, setEditing] = useState<number | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const id = (suffix: string) => `${testIdPrefix}-${suffix}`;
   const list = Array.isArray(courses) ? courses : [];
@@ -78,6 +84,14 @@ export default function PriorCourseworkSection({
         >
           Add Course
         </Button>
+        <Button
+          variant="outline-success"
+          size="sm"
+          data-testid={id("bulk-button")}
+          onClick={() => setBulkOpen(true)}
+        >
+          Add Multiple UCSB {subjectArea} Courses
+        </Button>
         <span className="small" data-testid={id("count")}>
           {list.length} of at least {minimum} listed
         </span>
@@ -95,6 +109,19 @@ export default function PriorCourseworkSection({
         onCancel={() => setEditing(null)}
         testIdPrefix={id("modal")}
       />
+      {/* Mounted only while open, so the course list is fetched only when it is wanted. */}
+      {bulkOpen && (
+        <BulkUcsbCoursesModal
+          show
+          subjectArea={subjectArea}
+          onAdd={(added) => {
+            onChange([...list, ...added]);
+            setBulkOpen(false);
+          }}
+          onCancel={() => setBulkOpen(false)}
+          testIdPrefix={id("bulk")}
+        />
+      )}
     </div>
   );
 }

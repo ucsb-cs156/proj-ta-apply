@@ -45,16 +45,24 @@ public class CoursesControllerTests extends ControllerTestCase {
     mockMvc.perform(get("/api/courses/all")).andExpect(status().is(403));
   }
 
+  /** Issue #100: an applicant's form offers the list for adding several UCSB courses at once. */
   @WithMockUser(roles = {"USER"})
   @Test
-  public void logged_in_regular_users_cannot_get_all() throws Exception {
-    mockMvc.perform(get("/api/courses/all")).andExpect(status().is(403));
+  public void logged_in_regular_users_can_get_all() throws Exception {
+    List<Course> expected = List.of(course("CMPSC   156", "ADV APP PROGRAM", true, false));
+    when(courseRepository.findAll()).thenReturn(expected);
+
+    MvcResult response =
+        mockMvc.perform(get("/api/courses/all")).andExpect(status().isOk()).andReturn();
+
+    assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
   }
 
   @WithMockUser(roles = {"USER", "INSTRUCTOR"})
   @Test
-  public void instructors_cannot_get_all() throws Exception {
-    mockMvc.perform(get("/api/courses/all")).andExpect(status().is(403));
+  public void instructors_can_get_all() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of());
+    mockMvc.perform(get("/api/courses/all")).andExpect(status().isOk());
   }
 
   @WithMockUser(roles = {"ADMIN"})
