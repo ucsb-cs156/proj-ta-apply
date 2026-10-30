@@ -343,6 +343,10 @@ it held before and what it holds now (Admin &gt; Audit Trail).</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html#CANCELLED" class="member-name-link">CANCELLED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html#CANCELLED" class="member-name-link">CANCELLED</a> - Static variable in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></dt>
+<dd>
+<div class="block">The status the UCSB API reports for a section that has been cancelled.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/TrainingCommitment.html#CANNOT" class="member-name-link">CANNOT</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/TrainingCommitment.html" title="enum class in edu.ucsb.cs.taapply.enums">TrainingCommitment</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.utilities">CanonicalFormConverter</a> - Class in <a href="edu/ucsb/cs/taapply/utilities/package-summary.html">edu.ucsb.cs.taapply.utilities</a></dt>
@@ -1098,7 +1102,8 @@ have logged in: until then both names are null.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html#isOnOffer()" class="member-name-link">isOnOffer()</a> - Method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></dt>
 <dd>
-<div class="block">Whether applicants should see this row: neither removed by an admin nor stale.</div>
+<div class="block">Whether applicants should see this row: not removed by an admin, not stale, and not cancelled
+(issue #123).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/models/UcsbSection.html#isPrimary()" class="member-name-link">isPrimary()</a> - Method in class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a></dt>
 <dd>
