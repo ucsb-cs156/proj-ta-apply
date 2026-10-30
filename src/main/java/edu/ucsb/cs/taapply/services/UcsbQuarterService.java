@@ -153,14 +153,16 @@ public class UcsbQuarterService {
   public QuarterRefresh refreshThroughEnd() throws Exception {
     String current = getCurrentQuarterYYYYQ();
     String end = endQuarterFor(current);
-    String start =
-        ucsbApiQuarterRepository
-            .findTopByOrderByQuarterDesc()
-            .map(UCSBAPIQuarter::getQuarter)
-            .orElse(current);
-    if (Quarter.yyyyqToInt(start) > Quarter.yyyyqToInt(end)) {
-      start = end;
-    }
+    int endValue = Quarter.yyyyqToInt(end);
+    // Never past the end: a file already beyond it refreshes just the end quarter.
+    int startValue =
+        Math.min(
+            ucsbApiQuarterRepository
+                .findTopByOrderByQuarterDesc()
+                .map(latest -> Quarter.yyyyqToInt(latest.getQuarter()))
+                .orElse(Quarter.yyyyqToInt(current)),
+            endValue);
+    String start = new Quarter(startValue).getYYYYQ();
     return new QuarterRefresh(start, end, loadQuarters(start, end));
   }
 
