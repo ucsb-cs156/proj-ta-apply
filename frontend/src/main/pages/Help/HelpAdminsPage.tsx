@@ -157,13 +157,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Instructor section of the home page. Add one with{" "}
           <em>Add New Instructor</em>, or many at once by uploading a CSV of
           emails (the format is on the{" "}
-          <Link to="/help/csv">CSV Upload/Download Formats</Link> page). Each
-          row also has a <strong>Catalog Name</strong>: the spelling the course
-          schedule uses for that instructor, for example &ldquo;CONRAD P&rdquo;,
-          chosen from the names the course-population jobs have seen. Set it so
-          the instructor&apos;s courses can be matched to them; until it is set,
-          their Instructor section says no recruitment includes a course they
-          teach.
+          <Link to="/help/csv">CSV Upload/Download Formats</Link> page);{" "}
+          <em>Download Instructors (CSV)</em> saves the whole list in a shape
+          the upload accepts, so it can be moved from one deployment to another.
+          Each row also has a <strong>Catalog Name</strong>: the spelling the
+          course schedule uses for that instructor, for example &ldquo;CONRAD
+          P&rdquo;, chosen from the names the course-population jobs have seen.
+          Set it so the instructor&apos;s courses can be matched to them; until
+          it is set, their Instructor section says no recruitment includes a
+          course they teach.
         </p>
 
         <h2 className="my-3 h4" id="courses">
@@ -246,6 +248,20 @@ export default function HelpAdminsPage(): React.JSX.Element {
           necessarily be considered the final allocation. Admins have the
           flexibility to adjust it up or down based on the particular needs of
           specific courses and other relevant factors.
+        </p>
+        <p
+          id="allocation-visibility"
+          data-testid="HelpAdminsPage-allocation-visibility"
+        >
+          Allocations are hidden from faculty until you choose otherwise. Under
+          the hiring target, the page says whether they are currently hidden or
+          shown. <strong>Show Allocations to Faculty</strong> puts each
+          lecture&apos;s allocation on the instructor&apos;s home page card and
+          at the top of its ranking page, where it asks them to rank at least
+          that many candidates and preferably twice as many; instructors see
+          only their own courses. <strong>Hide Allocations from Faculty</strong>{" "}
+          takes it away again. Showing or hiding is recorded in the
+          recruitment&apos;s change history.
         </p>
 
         <h2 className="my-3 h4" id="quarters">

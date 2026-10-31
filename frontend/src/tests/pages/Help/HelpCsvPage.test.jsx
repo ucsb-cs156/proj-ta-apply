@@ -54,15 +54,40 @@ describe("HelpCsvPage tests", () => {
     expect(
       screen.getByText(/on the Instructors admin page/),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("emailUploadsIntro").textContent).toBe(
+      "The file must have a header row containing a column named email " +
+        "(the header name is case-insensitive); a file with just that column " +
+        "is enough. Each row is processed independently: an address that is " +
+        "already on the list is skipped rather than reported as an error, " +
+        "and a malformed row is skipped and reported rather than aborting " +
+        "the rows that already succeeded. Re-uploading the same file is " +
+        "therefore safe.",
+    );
     expect(screen.getByTestId("instructorCsvExample").textContent).toBe(
       csvFixtures.instructorEmails,
     );
     expect(screen.getByTestId("instructorCsvDescription").textContent).toBe(
       "On the Instructors admin page, admins can upload a CSV of " +
-        "instructor email addresses. Each address uploaded is permitted " +
-        "to log in as an instructor and review applications for their own " +
-        "courses. Here is an example file (note that the name column is " +
-        "ignored; only the email column is used):",
+        "instructors. Each address uploaded is permitted to log in as an " +
+        "instructor and review applications for their own courses. A " +
+        "catalogName column, when present, sets each instructor's catalog " +
+        "name (including for an instructor already on the list) when the " +
+        "value is a name on record, one the Populate Courses job has seen; " +
+        "other columns, such as firstName and lastName, are accepted but " +
+        "ignored, since names come from the users table when the instructor " +
+        "first logs in. Here is an example file:",
+    );
+
+    // Issue #172: the Instructors page's download, in the shape the upload accepts.
+    expect(
+      screen.getByTestId("instructorsDownloadDescription").textContent,
+    ).toBe(
+      "The Instructors admin page offers a Download Instructors (CSV) " +
+        "button that saves the whole list: columns email, firstName, " +
+        "lastName and catalogName, with a header row and every cell quoted. " +
+        "The upload accepts this shape, so the list can be moved from one " +
+        "deployment to another; the name columns are blank for an " +
+        "instructor who has not logged in yet.",
     );
 
     expect(screen.getByTestId("downloadsSummary")).toHaveTextContent(

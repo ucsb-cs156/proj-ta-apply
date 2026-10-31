@@ -7,6 +7,7 @@ import CandidateTable, {
   type Candidate,
 } from "main/components/Instructor/CandidateTable";
 import { useCurrentUser, hasRole } from "main/utils/currentUser";
+import { rankingAllocationNotice } from "main/utils/allocations";
 
 type CourseDetails = {
   id: number;
@@ -29,6 +30,11 @@ export type CandidateRankingPageData = {
   facultyRankingDeadline: string | null;
   course: CourseDetails;
   otherCourses: CourseDetails[];
+  /**
+   * How many TAs or ULAs the course was allocated (issue #178): null or absent while the admin
+   * hides allocations from faculty; admins always get it.
+   */
+  allocation?: number | null;
 };
 
 /** The course-scoped instructor ranking workspace. */
@@ -74,6 +80,15 @@ export default function CandidateRankingPage(): React.JSX.Element {
           <p role="alert">No candidate-ranking details were returned.</p>
         ) : (
           <>
+            {data.allocation != null && (
+              <p
+                className="lead"
+                role="note"
+                data-testid="CandidateRankingPage-allocation"
+              >
+                {rankingAllocationNotice(data.type, data.allocation)}
+              </p>
+            )}
             <section aria-label="Recruitment details">
               <h2>Recruitment</h2>
               <dl className="row">

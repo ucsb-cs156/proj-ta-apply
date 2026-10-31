@@ -26,6 +26,13 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           ranking deadline. These dates and status are separate from the
           application dates.
         </p>
+        <p data-testid="HelpInstructorsPage-allocations">
+          Once an admin chooses to show them, each of your courses also says how
+          many TAs (or ULAs) have been allocated to it, both on the card and at
+          the top of its ranking page. Please rank at least that many
+          candidates, and preferably twice as many. Until then no allocation is
+          shown.
+        </p>
         <p>
           When faculty reviews are open, expand one of your listed courses and
           choose <strong>Rank Candidates</strong>. After reviews close, the link

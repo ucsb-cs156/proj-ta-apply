@@ -40,6 +40,7 @@ public class RecruitmentAuditService {
     FIELDS.put("reviewStatus", Recruitment::getReviewStatus);
     FIELDS.put("facultyReviewOpeningDate", Recruitment::getFacultyReviewOpeningDate);
     FIELDS.put("facultyRankingDeadline", Recruitment::getFacultyRankingDeadline);
+    FIELDS.put("allocationsVisibleToFaculty", Recruitment::getAllocationsVisibleToFaculty);
   }
 
   /** A recruitment's audited fields as strings, keyed by field name; a null field is null. */

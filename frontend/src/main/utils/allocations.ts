@@ -81,3 +81,33 @@ export const autoAssignTooltip = (
   type: "TA" | "ULA",
 ): string =>
   `Automatically allocate the ${totalHiringTarget} ${type}s across courses based on enrollment`;
+
+/** Issue #178: the two states of the show/hide control on the Recruitment Courses page. */
+export const ALLOCATIONS_HIDDEN_MESSAGE =
+  "Allocations of TAs/ULAs per course are currently hidden from faculty.";
+export const ALLOCATIONS_SHOWN_MESSAGE =
+  "Allocations of TAs/ULAs per course are currently shown to faculty (though only for their own courses)";
+export const SHOW_ALLOCATIONS_LABEL = "Show Allocations to Faculty";
+export const HIDE_ALLOCATIONS_LABEL = "Hide Allocations from Faculty";
+
+/** The line under a course on an instructor's home page card once allocations are shown. */
+export const courseAllocationText = (
+  type: "TA" | "ULA",
+  allocation: number,
+): string => `${type}s allocated to this course: ${allocation}`;
+
+/**
+ * The notice at the top of the candidate ranking page once allocations are shown (issue #178):
+ * how many positions the course has, and that the instructor should rank at least that many
+ * candidates and preferably twice as many.
+ */
+export const rankingAllocationNotice = (
+  type: "TA" | "ULA",
+  allocation: number,
+): string => {
+  const positions =
+    allocation === 1 ? `1 ${type} has` : `${allocation} ${type}s have`;
+  const candidates =
+    allocation === 1 ? "1 candidate" : `${allocation} candidates`;
+  return `${positions} been allocated to this course. Please rank at least ${candidates}, and preferably ${2 * allocation}.`;
+};

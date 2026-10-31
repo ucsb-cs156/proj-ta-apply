@@ -88,4 +88,13 @@ public class Recruitment {
    */
   @Column(name = "avg_cost_per_position", precision = 12, scale = 2)
   private BigDecimal avgCostPerPosition;
+
+  /**
+   * Whether the per-course allocations are shown on the faculty-facing pages, the home page cards
+   * and the candidate ranking page (issue #178). Hidden by default. Faculty see this, so changes
+   * are recorded in the audit trail like opening reviews.
+   */
+  @Column(name = "allocations_visible_to_faculty", nullable = false)
+  @Builder.Default
+  private Boolean allocationsVisibleToFaculty = false;
 }

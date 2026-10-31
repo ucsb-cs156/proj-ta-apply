@@ -61,7 +61,13 @@ public class InstructorRecruitmentsController extends ApiController {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired CandidateRankingRepository candidateRankingRepository;
 
-  /** A recruitment as the admin's and student's cards know it, plus the instructor's courses. */
+  /**
+   * A recruitment as the admin's and student's cards know it, plus the instructor's courses.
+   *
+   * <p>While the recruitment's allocations are hidden from faculty (issue #178), each course is a
+   * copy with its allocation, enrollment estimate and unrounded allocation blanked, so the numbers
+   * never leave the server; when shown, the rows go out as stored.
+   */
   public static record InstructorRecruitment(
       Long id,
       String quarter,
@@ -76,6 +82,10 @@ public class InstructorRecruitmentsController extends ApiController {
       LocalDate facultyRankingDeadline,
       List<RecruitmentCourse> courses) {
     public static InstructorRecruitment of(Recruitment r, List<RecruitmentCourse> courses) {
+      List<RecruitmentCourse> shown =
+          allocationsVisible(r)
+              ? courses
+              : courses.stream().map(InstructorRecruitment::withoutAllocation).toList();
       return new InstructorRecruitment(
           r.getId(),
           r.getQuarter(),
@@ -88,11 +98,29 @@ public class InstructorRecruitmentsController extends ApiController {
           r.getReviewStatus(),
           r.getFacultyReviewOpeningDate(),
           r.getFacultyRankingDeadline(),
-          courses);
+          shown);
+    }
+
+    /** The row with the planning figures an instructor may not see yet blanked. */
+    static RecruitmentCourse withoutAllocation(RecruitmentCourse row) {
+      return row.toBuilder()
+          .allocation(null)
+          .enrollmentEstimate(null)
+          .unroundedAllocation(null)
+          .build();
     }
   }
 
-  /** Course-scoped metadata shared by rankings and the read-only application page. */
+  /** Whether the admin has chosen to show this recruitment's allocations to faculty. */
+  static boolean allocationsVisible(Recruitment r) {
+    return Boolean.TRUE.equals(r.getAllocationsVisibleToFaculty());
+  }
+
+  /**
+   * Course-scoped metadata shared by rankings and the read-only application page. {@code
+   * allocation} is how many TAs or ULAs the course was allocated: present for admins, and for
+   * instructors only once the admin shows allocations to faculty (issue #178); otherwise null.
+   */
   public static record CandidateRankingPage(
       Long recruitmentId,
       String quarter,
@@ -105,7 +133,8 @@ public class InstructorRecruitmentsController extends ApiController {
       LocalDate facultyReviewOpeningDate,
       LocalDate facultyRankingDeadline,
       CourseDetails course,
-      List<CourseDetails> otherCourses) {}
+      List<CourseDetails> otherCourses,
+      Integer allocation) {}
 
   /** Course identity and catalog display fields; section rows remain distinct by id. */
   public static record CourseDetails(
@@ -210,7 +239,8 @@ public class InstructorRecruitmentsController extends ApiController {
         recruitment.getFacultyReviewOpeningDate(),
         recruitment.getFacultyRankingDeadline(),
         CourseDetails.of(course),
-        otherCourses);
+        otherCourses,
+        scope.isAdmin() || allocationsVisible(recruitment) ? course.getAllocation() : null);
   }
 
   /**
@@ -265,7 +295,7 @@ public class InstructorRecruitmentsController extends ApiController {
   }
 
   private record RankingScope(
-      Recruitment recruitment, RecruitmentCourse course, String catalogName) {}
+      Recruitment recruitment, RecruitmentCourse course, String catalogName, boolean isAdmin) {}
 
   private RankingScope rankingScope(Long recruitmentId, Long recruitmentCourseId, boolean editing) {
     Recruitment recruitment =
@@ -315,7 +345,7 @@ public class InstructorRecruitmentsController extends ApiController {
       throw new ForbiddenException(
           "Only assigned instructors may rank candidates while reviews are Open.");
     }
-    return new RankingScope(recruitment, course, catalogName);
+    return new RankingScope(recruitment, course, catalogName, isAdmin);
   }
 
   public static record Candidate(

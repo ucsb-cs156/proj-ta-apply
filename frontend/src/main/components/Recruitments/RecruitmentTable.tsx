@@ -23,6 +23,8 @@ export type Recruitment = {
    * entered on the Budget for Quarter page.
    */
   avgCostPerPosition?: number | null;
+  /** Whether faculty see the per-course allocations on their pages (issue #178); hidden by default. */
+  allocationsVisibleToFaculty?: boolean;
 };
 
 /** The applicant-facing recruitment shape deliberately excludes faculty review fields. */

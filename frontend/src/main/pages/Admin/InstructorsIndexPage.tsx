@@ -93,10 +93,18 @@ export default function InstructorsIndexPage(): React.JSX.Element {
           testIdPrefix="InstructorsIndexPage"
         />
         <hr />
-        <h2>Bulk Upload</h2>
+        <h2>CSV Download / Upload</h2>
+        <a
+          className="btn btn-primary mb-3"
+          href="/api/admin/instructors/download/csv"
+          download="instructors.csv"
+          data-testid="InstructorsIndexPage-download-csv"
+        >
+          Download Instructors (CSV)
+        </a>
         <RoleEmailCsvUploadForm
           submitAction={onUpload}
-          label="Upload Instructor Emails (CSV)"
+          label="Upload Instructors (CSV)"
           testIdPrefix="InstructorCSVUploadForm"
         />
       </div>
