@@ -211,6 +211,22 @@ describe("Help pages (issue #140)", () => {
       document.getElementById("courses").compareDocumentPosition(hiring) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    // Issue #175: the refresh on opening and the enrollment estimates.
+    const estimates = screen.getByTestId("HelpAdminsPage-enrollment-estimates");
+    expect(estimates.id).toBe("enrollment-estimates");
+    expect(estimates).toHaveTextContent(
+      "Opening the page also refreshes every lecture's enrollment and maximum enrollment from the UCSB schedule while you wait",
+    );
+    expect(estimates).toHaveTextContent(
+      "It is saved a second after you stop typing, or at once when you leave the box; an empty box means no estimate.",
+    );
+    expect(estimates).toHaveTextContent(
+      "Set enrollment estimates from: max or actual",
+    );
+    expect(
+      hiring.compareDocumentPosition(estimates) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   /** The words either side of each JSX line break stay separated by a space. */

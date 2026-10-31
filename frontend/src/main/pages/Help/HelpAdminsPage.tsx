@@ -210,6 +210,23 @@ export default function HelpAdminsPage(): React.JSX.Element {
           lectures keep their number but do not count. These are planning
           figures: changes to them are not recorded in the change history.
         </p>
+        <p
+          id="enrollment-estimates"
+          data-testid="HelpAdminsPage-enrollment-estimates"
+        >
+          Opening the page also refreshes every lecture&apos;s enrollment and
+          maximum enrollment from the UCSB schedule while you wait, so the
+          figures you plan from are current; if the schedule cannot be reached,
+          the page says so and shows the stored figures. The{" "}
+          <strong>Enrollment Estimate</strong> column is your own estimate of
+          how many students each lecture will have, the basis for allocating
+          positions. It is saved a second after you stop typing, or at once when
+          you leave the box; an empty box means no estimate. To start from the
+          schedule&apos;s figures, use{" "}
+          <em>Set enrollment estimates from: max</em> or <em>actual</em>, which
+          fills every lecture&apos;s estimate from its maximum or current
+          enrollment in one step.
+        </p>
 
         <h2 className="my-3 h4" id="quarters">
           Quarters

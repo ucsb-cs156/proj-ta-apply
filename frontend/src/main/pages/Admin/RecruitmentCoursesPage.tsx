@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { useParams } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
@@ -131,6 +131,59 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
     ],
   );
 
+  // Issue #175: the enrollment figures are refreshed from the UCSB API as the page opens, so the
+  // numbers the admin plans from are current. The stored ones are shown meanwhile, and kept if
+  // the API cannot be reached.
+  const [refreshing, setRefreshing] = useState(true);
+  // The backend's reason when the refresh failed; null while it is running or after it succeeded.
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const refreshMutation = useBackendMutation<void, RecruitmentCourse[]>(
+    () => ({
+      url: "/api/recruitmentcourses/refresh",
+      method: "POST",
+      params: { recruitmentId },
+    }),
+    {
+      onSuccess: () => setRefreshing(false),
+      onError: (error) => {
+        setRefreshError(apiErrorMessage(error));
+        setRefreshing(false);
+      },
+    },
+    ["/api/recruitmentcourses/all", "/api/admin/recruitments/all"],
+  );
+  // Once, when the page opens; a ref rather than an empty dependency list, so React's strict-mode
+  // double mount in development does not refresh twice.
+  const refreshed = useRef(false);
+  const refresh = refreshMutation.mutate;
+  // Stryker disable all : the guard only matters under strict mode's double mount, which the
+  // tests do not simulate; the dependency list cannot be told apart from an empty one either.
+  useEffect(() => {
+    if (refreshed.current) return;
+    refreshed.current = true;
+    refresh();
+  }, [refresh]);
+  // Stryker restore all
+
+  // Issue #175: every course's estimate from the API's max or actual enrollment in one step.
+  const fillEstimatesMutation = useBackendMutation<
+    "MAX" | "ACTUAL",
+    RecruitmentCourse[]
+  >(
+    (source) => ({
+      url: "/api/recruitmentcourses/enrollmentEstimates",
+      method: "PUT",
+      params: { recruitmentId, source },
+    }),
+    {
+      onSuccess: (_rows, source) =>
+        toast(
+          `Enrollment estimates set from ${source === "MAX" ? "maximum" : "actual"} enrollment.`,
+        ),
+    },
+    ["/api/recruitmentcourses/all"],
+  );
+
   const addMutation = useBackendMutation<string, RecruitmentCourse>(
     (code) => ({
       url: "/api/recruitmentcourses/post",
@@ -185,6 +238,17 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           recently closed recruitments are also refreshed automatically every
           night.
         </p>
+        {refreshing && (
+          <p role="status" data-testid="RecruitmentCoursesPage-refreshing">
+            Refreshing enrollment from the UCSB API…
+          </p>
+        )}
+        {refreshError !== null && (
+          <p role="alert" data-testid="RecruitmentCoursesPage-refresh-failed">
+            Enrollment could not be refreshed: {refreshError} The stored figures
+            are shown.
+          </p>
+        )}
 
         <div className="d-flex align-items-center gap-3 mb-3">
           <Button
@@ -235,6 +299,31 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
             onChange={() => setIncludeRemoved(!includeRemoved)}
             data-testid="RecruitmentCoursesPage-show-removed"
           />
+        </div>
+
+        <div
+          className="mb-2"
+          data-testid="RecruitmentCoursesPage-fill-estimates"
+        >
+          Set enrollment estimates from:{" "}
+          <Button
+            variant="link"
+            className="p-0 align-baseline"
+            onClick={() => fillEstimatesMutation.mutate("MAX")}
+            data-testid="RecruitmentCoursesPage-fill-estimates-max"
+          >
+            max
+          </Button>
+          ,{" "}
+          <Button
+            variant="link"
+            className="p-0 align-baseline"
+            onClick={() => fillEstimatesMutation.mutate("ACTUAL")}
+            data-testid="RecruitmentCoursesPage-fill-estimates-actual"
+          >
+            actual
+          </Button>
+          .
         </div>
 
         {rankingSummariesError && (

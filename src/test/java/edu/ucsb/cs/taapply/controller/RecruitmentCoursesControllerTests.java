@@ -2,8 +2,10 @@ package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,6 +20,7 @@ import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.UpstreamApiException;
 import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
 import edu.ucsb.cs.taapply.models.UcsbInstructor;
 import edu.ucsb.cs.taapply.models.UcsbSection;
@@ -25,6 +28,7 @@ import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.RecruitmentCoursesRefreshService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +48,7 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean UCSBCurriculumService ucsbCurriculumService;
+  @MockitoBean RecruitmentCoursesRefreshService recruitmentCoursesRefreshService;
   @MockitoBean UserRepository userRepository;
 
   private static RecruitmentCourse rc(long id, String courseId, String section, boolean removed) {
@@ -515,5 +520,294 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     verify(recruitmentCourseRepository, never()).save(any());
     Map<String, Object> json = responseToJson(response);
     assertEquals("EntityNotFoundException", json.get("type"));
+  }
+
+  // ---- POST /api/recruitmentcourses/refresh (issue #175) ----
+
+  @Test
+  public void logged_out_users_cannot_refresh() throws Exception {
+    mockMvc
+        .perform(post("/api/recruitmentcourses/refresh?recruitmentId=7").with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentCoursesRefreshService, never()).refresh(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_refresh() throws Exception {
+    mockMvc
+        .perform(post("/api/recruitmentcourses/refresh?recruitmentId=7").with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentCoursesRefreshService, never()).refresh(any());
+  }
+
+  /** The answer is the list as the page shows it: removed rows left out, course then section. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_refresh_runs_the_service_and_returns_the_visible_rows_in_order()
+      throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(recruitmentCoursesRefreshService.refresh(RECRUITMENT)).thenReturn(2);
+    RecruitmentCourse a = rc(1L, "CMPSC   156", "0200", false);
+    RecruitmentCourse b = rc(2L, "CMPSC   156", "0100", false);
+    RecruitmentCourse removed = rc(3L, "CMPSC     8", "0100", true);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(removed, a, b));
+
+    MvcResult response =
+        mockMvc
+            .perform(post("/api/recruitmentcourses/refresh?recruitmentId=7").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    verify(recruitmentCoursesRefreshService, times(1)).refresh(RECRUITMENT);
+    assertEquals(
+        mapper.writeValueAsString(List.of(b, a)), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void refreshing_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(post("/api/recruitmentcourses/refresh?recruitmentId=99").with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    verify(recruitmentCoursesRefreshService, never()).refresh(any());
+    assertEquals("EntityNotFoundException", responseToJson(response).get("type"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_failed_refresh_is_a_502_with_the_services_message() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    doThrow(new UpstreamApiException("The UCSB API could not be reached", new RuntimeException()))
+        .when(recruitmentCoursesRefreshService)
+        .refresh(RECRUITMENT);
+
+    MvcResult response =
+        mockMvc
+            .perform(post("/api/recruitmentcourses/refresh?recruitmentId=7").with(csrf()))
+            .andExpect(status().isBadGateway())
+            .andReturn();
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("UpstreamApiException", json.get("type"));
+    assertEquals("The UCSB API could not be reached", json.get("message"));
+  }
+
+  // ---- PUT /api/recruitmentcourses/enrollmentEstimate (issue #175) ----
+
+  @Test
+  public void logged_out_users_cannot_set_an_estimate() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/recruitmentcourses/enrollmentEstimate?id=1&enrollmentEstimate=100")
+                .with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_set_an_estimate() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/recruitmentcourses/enrollmentEstimate?id=1&enrollmentEstimate=100")
+                .with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  @Test
+  public void a_new_row_has_no_estimate_yet() {
+    assertNull(rc(1L, "CMPSC   156", "0100", false).getEnrollmentEstimate());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_set_an_estimate() throws Exception {
+    RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/recruitmentcourses/enrollmentEstimate?id=1&enrollmentEstimate=140")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(140, course.getEnrollmentEstimate());
+    verify(recruitmentCourseRepository, times(1)).save(course);
+    RecruitmentCourse expected = rc(1L, "CMPSC   156", "0100", false);
+    expected.setEnrollmentEstimate(140);
+    assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_estimate_of_zero_is_allowed_and_leaving_it_out_clears_it() throws Exception {
+    RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
+    course.setEnrollmentEstimate(50);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+
+    mockMvc
+        .perform(
+            put("/api/recruitmentcourses/enrollmentEstimate?id=1&enrollmentEstimate=0")
+                .with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals(0, course.getEnrollmentEstimate());
+
+    mockMvc
+        .perform(put("/api/recruitmentcourses/enrollmentEstimate?id=1").with(csrf()))
+        .andExpect(status().isOk());
+    assertNull(course.getEnrollmentEstimate());
+    verify(recruitmentCourseRepository, times(2)).save(course);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_negative_estimate_is_a_400() throws Exception {
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/recruitmentcourses/enrollmentEstimate?id=1&enrollmentEstimate=-5")
+                    .with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    verify(recruitmentCourseRepository, never()).findById(any());
+    verify(recruitmentCourseRepository, never()).save(any());
+    assertEquals(
+        "enrollmentEstimate must not be negative", responseToJson(response).get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void setting_the_estimate_of_an_unknown_course_is_a_404() throws Exception {
+    when(recruitmentCourseRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/recruitmentcourses/enrollmentEstimate?id=99&enrollmentEstimate=1")
+                    .with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    verify(recruitmentCourseRepository, never()).save(any());
+    assertEquals("EntityNotFoundException", responseToJson(response).get("type"));
+  }
+
+  // ---- PUT /api/recruitmentcourses/enrollmentEstimates (issue #175) ----
+
+  private static RecruitmentCourse withEnrollment(
+      RecruitmentCourse course, Integer enrollment, Integer maxEnroll) {
+    course.setEnrollment(enrollment);
+    course.setMaxEnroll(maxEnroll);
+    return course;
+  }
+
+  @Test
+  public void logged_out_users_cannot_fill_estimates() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/recruitmentcourses/enrollmentEstimates?recruitmentId=7&source=MAX")
+                .with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_fill_estimates() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/recruitmentcourses/enrollmentEstimates?recruitmentId=7&source=MAX")
+                .with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  /** MAX copies maxEnroll; a row with no figure keeps its estimate; a removed row is skipped. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_fill_estimates_from_max() throws Exception {
+    when(recruitmentRepository.existsById(7L)).thenReturn(true);
+    RecruitmentCourse a = withEnrollment(rc(1L, "CMPSC   156", "0100", false), 100, 150);
+    RecruitmentCourse noFigure = withEnrollment(rc(2L, "CMPSC   156", "0200", false), null, null);
+    noFigure.setEnrollmentEstimate(42);
+    RecruitmentCourse removed = withEnrollment(rc(3L, "CMPSC     8", "0100", true), 10, 20);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L))
+        .thenReturn(List.of(a, noFigure, removed));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/recruitmentcourses/enrollmentEstimates?recruitmentId=7&source=MAX")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(150, a.getEnrollmentEstimate());
+    assertEquals(42, noFigure.getEnrollmentEstimate());
+    assertNull(removed.getEnrollmentEstimate());
+    verify(recruitmentCourseRepository, times(1)).save(a);
+    verify(recruitmentCourseRepository, never()).save(noFigure);
+    verify(recruitmentCourseRepository, never()).save(removed);
+    assertEquals(
+        mapper.writeValueAsString(List.of(a, noFigure)),
+        response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_fill_estimates_from_actual() throws Exception {
+    when(recruitmentRepository.existsById(7L)).thenReturn(true);
+    RecruitmentCourse a = withEnrollment(rc(1L, "CMPSC   156", "0100", false), 100, 150);
+    RecruitmentCourse b = withEnrollment(rc(2L, "CMPSC   156", "0200", false), 0, 80);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(a, b));
+
+    mockMvc
+        .perform(
+            put("/api/recruitmentcourses/enrollmentEstimates?recruitmentId=7&source=ACTUAL")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(100, a.getEnrollmentEstimate());
+    assertEquals(0, b.getEnrollmentEstimate());
+    verify(recruitmentCourseRepository, times(1)).save(a);
+    verify(recruitmentCourseRepository, times(1)).save(b);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_unknown_source_is_a_400() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/recruitmentcourses/enrollmentEstimates?recruitmentId=7&source=median")
+                .with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void filling_estimates_of_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.existsById(99L)).thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/recruitmentcourses/enrollmentEstimates?recruitmentId=99&source=MAX")
+                    .with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+    assertEquals("EntityNotFoundException", responseToJson(response).get("type"));
   }
 }
