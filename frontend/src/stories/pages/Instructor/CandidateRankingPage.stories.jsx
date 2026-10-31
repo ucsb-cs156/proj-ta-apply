@@ -6,6 +6,26 @@ import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 import candidatesFixtures from "fixtures/candidatesFixtures";
 
+/** The handlers every story shares; a variant puts its own override in front of them. */
+const handlers = [
+  http.get("/api/currentUser", () =>
+    HttpResponse.json(apiCurrentUserFixtures.instructorUser),
+  ),
+  http.get("/api/systemInfo", () =>
+    HttpResponse.json(systemInfoFixtures.showingNeither),
+  ),
+  http.get("/api/instructor/recruitments/1/courses/2/ranking", () =>
+    HttpResponse.json(instructorRecruitmentsFixtures.candidateRankingPage),
+  ),
+  http.get("/api/instructor/recruitments/1/courses/2/candidates", () =>
+    HttpResponse.json(candidatesFixtures),
+  ),
+  http.put(
+    "/api/instructor/recruitments/1/courses/2/candidates/:id/rank",
+    async ({ request }) => HttpResponse.json(await request.json()),
+  ),
+];
+
 export default {
   title: "pages/Instructor/CandidateRankingPage",
   component: CandidateRankingPage,
@@ -13,28 +33,7 @@ export default {
     reactRouter: {
       initialEntries: ["/recruitments/1/courses/2/ranking"],
     },
-    msw: {
-      handlers: [
-        http.get("/api/currentUser", () =>
-          HttpResponse.json(apiCurrentUserFixtures.instructorUser),
-        ),
-        http.get("/api/systemInfo", () =>
-          HttpResponse.json(systemInfoFixtures.showingNeither),
-        ),
-        http.get("/api/instructor/recruitments/1/courses/2/ranking", () =>
-          HttpResponse.json(
-            instructorRecruitmentsFixtures.candidateRankingPage,
-          ),
-        ),
-        http.get("/api/instructor/recruitments/1/courses/2/candidates", () =>
-          HttpResponse.json(candidatesFixtures),
-        ),
-        http.put(
-          "/api/instructor/recruitments/1/courses/2/candidates/:id/rank",
-          async ({ request }) => HttpResponse.json(await request.json()),
-        ),
-      ],
-    },
+    msw: { handlers },
   },
 };
 
@@ -52,7 +51,7 @@ WithAllocation.parameters = {
           instructorRecruitmentsFixtures.candidateRankingPageWithAllocation,
         ),
       ),
-      ...Default.parameters.msw.handlers,
+      ...handlers,
     ],
   },
 };
