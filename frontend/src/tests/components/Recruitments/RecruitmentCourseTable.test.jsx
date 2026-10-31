@@ -90,7 +90,6 @@ describe("RecruitmentCourseTable tests", () => {
       "Allocation",
       "Delta",
       "Status",
-      "Summer Session",
     ].forEach((header) => {
       expect(screen.getByText(header)).toBeInTheDocument();
     });
@@ -885,5 +884,209 @@ describe("RecruitmentCourseTable tests", () => {
   test("tolerates a non-array courses prop", () => {
     renderTable(null);
     expect(screen.getByText("Course Number")).toBeInTheDocument();
+  });
+
+  // ---- Issue #185: UX tweaks ----
+
+  const renderWith = (props) =>
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <RecruitmentCourseTable
+            courses={notRemoved}
+            includeRemoved={false}
+            testIdPrefix="RecruitmentCourseTable"
+            {...props}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+  test("sorts the course number exactly as stored, so 5A comes before 130A", async () => {
+    const courses = [
+      { ...notRemoved[0], id: 101, courseId: "CMPSC   130A", section: "0100" },
+      { ...notRemoved[0], id: 102, courseId: "CMPSC     5A", section: "0100" },
+      { ...notRemoved[0], id: 103, courseId: "CMPSC    16", section: "0100" },
+      { ...notRemoved[0], id: 104, courseId: "CMPSC     8", section: "0100" },
+    ];
+    renderTable(courses);
+    // Row test ids follow the original row, so read the course numbers in display order.
+    const ids = () =>
+      [
+        ...screen
+          .getByTestId("RecruitmentCourseTable")
+          .querySelectorAll("tbody tr td:first-child span"),
+      ].map((span) => span.textContent);
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCourseTable-header-courseId-sort-header"),
+    );
+    expect(ids()).toEqual([
+      "CMPSC     5A",
+      "CMPSC     8",
+      "CMPSC    16",
+      "CMPSC   130A",
+    ]);
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCourseTable-header-courseId-sort-header"),
+    );
+    expect(ids()).toEqual([
+      "CMPSC   130A",
+      "CMPSC    16",
+      "CMPSC     8",
+      "CMPSC     5A",
+    ]);
+  });
+
+  test("the copy control beside an email is an icon, and Not mapped links to the Instructors page", () => {
+    renderWith({
+      rankingSummaries: recruitmentCoursesFixtures.rankingSummaries.map(
+        (summary) =>
+          summary.recruitmentCourseId === 3
+            ? { ...summary, instructorEmail: null }
+            : summary,
+      ),
+      showRankings: true,
+    });
+
+    const copy = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-0-copy-email",
+    );
+    expect(copy).toHaveAttribute("title", "Copy");
+    expect(copy).toHaveTextContent("");
+    expect(copy.querySelector("svg[data-testid='copy-icon']")).not.toBeNull();
+    expect(copy.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(copy.querySelector("svg")).toHaveAttribute("width", "16");
+
+    const unmapped = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-2-unmapped",
+    );
+    expect(unmapped.tagName).toBe("A");
+    expect(unmapped).toHaveTextContent("Not mapped");
+    expect(unmapped).toHaveAttribute("href", "/admin/instructors");
+    expect(unmapped).toHaveAttribute("target", "_blank");
+    expect(unmapped).toHaveAttribute("rel", "noreferrer");
+    expect(unmapped).toHaveAttribute(
+      "title",
+      "Map this instructor's catalog name to an email on the Instructors page",
+    );
+  });
+
+  test("stacked headings are two lines at 80% size, and every heading is centred", () => {
+    renderWith({ quarter: "20263" });
+
+    [
+      ["enrollmentEstimate", "Enrollment Estimate"],
+      ["unroundedAllocation", "Unrounded Allocation"],
+      ["ratio", "TA:student ratio"],
+      ["summerSession", "Summer Session"],
+    ].forEach(([id, text]) => {
+      const heading = screen.getByTestId(`RecruitmentCourseTable-header-${id}`);
+      expect(heading).toHaveTextContent(text);
+      const small = [...heading.querySelectorAll("span")].find(
+        (span) => span.style.fontSize !== "",
+      );
+      expect(small.style.fontSize).toBe("80%");
+      expect(small.querySelector("br")).not.toBeNull();
+      expect(heading.style.textAlign).toBe("center");
+    });
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-header-title").style.textAlign,
+    ).toBe("center");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-header-enrollment").style
+        .textAlign,
+    ).toBe("center");
+  });
+
+  test("numeric columns are right-aligned, the ratio left-aligned", () => {
+    renderWith({
+      rankingSummaries: recruitmentCoursesFixtures.rankingSummaries,
+      showRankings: true,
+    });
+
+    [
+      "rankingCount",
+      "enrollment",
+      "maxEnroll",
+      "enrollmentEstimate",
+      "allocation",
+      "unroundedAllocation",
+      "delta",
+    ].forEach((id) => {
+      expect(
+        screen.getByTestId(`RecruitmentCourseTable-cell-row-0-col-${id}`).style
+          .textAlign,
+      ).toBe("right");
+    });
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-enrollment").style
+        .textAlign,
+    ).toBe("right");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-col-ratio").style
+        .textAlign,
+    ).toBe("");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-col-title").style
+        .textAlign,
+    ).toBe("");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-allocation"),
+    ).toHaveClass("text-end");
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-0-enrollmentEstimate",
+      ),
+    ).toHaveClass("text-end");
+  });
+
+  test("the Summer Session column exists only for a summer quarter", () => {
+    const { unmount } = renderWith({ quarter: "20264" });
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-header-summerSession"),
+    ).not.toBeInTheDocument();
+    unmount();
+
+    renderWith({});
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-header-summerSession"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("a summer quarter shows the Summer Session column after Status", () => {
+    renderWith({ quarter: "20263" });
+
+    const headers = [
+      ...screen
+        .getByTestId("RecruitmentCourseTable")
+        .querySelectorAll("thead th"),
+    ].map((th) => th.getAttribute("data-testid"));
+    expect(headers.indexOf("RecruitmentCourseTable-header-summerSession")).toBe(
+      headers.indexOf("RecruitmentCourseTable-header-status") + 1,
+    );
+    expect(headers.indexOf("RecruitmentCourseTable-header-removed")).toBe(
+      headers.indexOf("RecruitmentCourseTable-header-summerSession") + 1,
+    );
+  });
+
+  test("hidden columns leave the table, heading, cells and footer alike", () => {
+    renderWith({ hiddenColumns: ["room", "enrollment"] });
+
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-header-room"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-cell-row-0-col-room"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-footer-enrollment"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-maxEnroll"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-header-courseId"),
+    ).toBeInTheDocument();
   });
 });

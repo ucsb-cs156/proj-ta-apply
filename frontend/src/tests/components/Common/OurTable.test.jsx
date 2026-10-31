@@ -225,4 +225,68 @@ describe("OurTable tests", () => {
       expect(screen.getByTestId("t-cell-row-1-col-n")).toHaveTextContent("3");
     });
   });
+
+  // ---- Issue #185 ----
+
+  test("columnVisibility leaves a column out of the headings, cells and footer", () => {
+    const columns = [
+      { Header: "Name", accessor: "name", footer: "Total" },
+      { Header: "Age", accessor: "age", footer: "99" },
+    ];
+    const data = [{ name: "Ann", age: 1 }];
+    render(
+      <OurTable
+        data={data}
+        columns={columns}
+        testid="vis"
+        columnVisibility={{ age: false }}
+      />,
+    );
+
+    expect(screen.getByTestId("vis-header-name")).toBeInTheDocument();
+    expect(screen.queryByTestId("vis-header-age")).not.toBeInTheDocument();
+    expect(screen.getByTestId("vis-cell-row-0-col-name")).toHaveTextContent(
+      "Ann",
+    );
+    expect(
+      screen.queryByTestId("vis-cell-row-0-col-age"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("vis-footer-name")).toHaveTextContent("Total");
+    expect(screen.queryByTestId("vis-footer-age")).not.toBeInTheDocument();
+  });
+
+  test("centerHeaders centres every heading but leaves the cells' alignment alone", () => {
+    const columns = [
+      { Header: "Name", accessor: "name" },
+      {
+        Header: "Age",
+        accessor: "age",
+        meta: { style: { textAlign: "right", width: "1%" } },
+      },
+    ];
+    const data = [{ name: "Ann", age: 1 }];
+    const { unmount } = render(
+      <OurTable data={data} columns={columns} testid="ctr" centerHeaders />,
+    );
+
+    expect(screen.getByTestId("ctr-header-name").style.textAlign).toBe(
+      "center",
+    );
+    const age = screen.getByTestId("ctr-header-age");
+    expect(age.style.textAlign).toBe("center");
+    expect(age.style.width).toBe("1%");
+    expect(screen.getByTestId("ctr-cell-row-0-col-age").style.textAlign).toBe(
+      "right",
+    );
+    expect(screen.getByTestId("ctr-cell-row-0-col-name").style.textAlign).toBe(
+      "",
+    );
+    unmount();
+
+    render(<OurTable data={data} columns={columns} testid="plain" />);
+    expect(screen.getByTestId("plain-header-name").style.textAlign).toBe("");
+    expect(screen.getByTestId("plain-header-age").style.textAlign).toBe(
+      "right",
+    );
+  });
 });

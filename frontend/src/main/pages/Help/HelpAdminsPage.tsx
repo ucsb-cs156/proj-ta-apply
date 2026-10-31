@@ -264,6 +264,21 @@ export default function HelpAdminsPage(): React.JSX.Element {
           multiple sections. Turn on <em>Show removed courses</em> to include
           removed sections in both the table and reminder list.
         </p>
+        <p id="course-columns" data-testid="HelpAdminsPage-course-columns">
+          The table can be trimmed to what you need: the{" "}
+          <strong>Columns</strong> menu above it lists every column but the
+          course number, and unticking one hides it, heading, cells and totals
+          alike, until you tick it again or choose <em>Show all columns</em>.
+          The choice is kept for that recruitment, so it is the same on your
+          next visit and for the other admins. The{" "}
+          <strong>Summer Session</strong> column appears only for a summer
+          quarter. Headings are centred, numbers are right-aligned, and sorting
+          by course number follows the padded course id exactly as it is shown,
+          so CMPSC 5A comes before CMPSC 130A. In the <strong>Email</strong>{" "}
+          column, the copy icon copies one address and <em>Not mapped</em> opens
+          the Instructors page in a new tab, where the catalog name can be given
+          an email.
+        </p>
         <p id="hiring-target" data-testid="HelpAdminsPage-hiring-target">
           The top of that page is where the hiring is planned. Enter the{" "}
           <strong>total number of TAs (or ULAs) expected to be hired</strong>;

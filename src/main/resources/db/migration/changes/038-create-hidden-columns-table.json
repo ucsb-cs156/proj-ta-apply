@@ -1,0 +1,65 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "038-create-hidden-columns-table",
+        "author": "pc",
+        "comment": "Which columns an admin has hidden on a recruitment's tables, one row per hidden column, kept apart from the recruitments table (issue #185).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "hidden_columns" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "hidden_columns",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "primaryKey": true, "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "table_key",
+                    "type": "VARCHAR(64)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "recruitment_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false,
+                      "foreignKeyName": "fk_hidden_columns_recruitment",
+                      "references": "recruitments(id)",
+                      "deleteCascade": true
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "column_id",
+                    "type": "VARCHAR(64)",
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addUniqueConstraint": {
+              "tableName": "hidden_columns",
+              "columnNames": "table_key, recruitment_id, column_id",
+              "constraintName": "uk_hidden_columns_table_recruitment_column"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

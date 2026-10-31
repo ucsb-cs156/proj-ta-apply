@@ -17,6 +17,7 @@ import { Badge, Button, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 import { Link } from "react-router";
+import { isSummerQuarter } from "main/utils/courseColumns";
 
 export type RecruitmentCourse = {
   id: number;
@@ -102,6 +103,7 @@ function AllocationCell({
       step={1}
       size="sm"
       style={{ width: "5em" }}
+      className="text-end"
       aria-label={`Allocation for ${course.courseId} section ${course.section ?? ""}`}
       value={value}
       isInvalid={draft !== undefined && !isValidAllocation(draft)}
@@ -144,6 +146,7 @@ function EnrollmentEstimateCell({
       step={1}
       size="sm"
       style={{ width: "6em" }}
+      className="text-end"
       aria-label={`Enrollment estimate for ${course.courseId} section ${course.section ?? ""}`}
       value={value}
       isInvalid={draft !== undefined && !isValidEnrollmentEstimate(draft)}
@@ -164,14 +167,31 @@ const estimateRequest = (id: number, value: string) => ({
 });
 
 /**
- * A heading on two lines, so a column is no wider than its values. The space before the break
- * keeps the heading's text whole for screen readers and tests.
+ * A heading on two lines in a smaller font (80% of the other headings), so a column is no wider
+ * than its values (issue #185). The space before the break keeps the heading's text whole for
+ * screen readers and tests.
  */
 const stacked = (top: string, bottom: string): React.JSX.Element => (
-  <>
+  <span style={{ fontSize: "80%" }}>
     {top} <br />
     {bottom}
-  </>
+  </span>
+);
+
+/** Bootstrap's clipboard icon, for the copy control beside an email (issue #185). */
+const CopyIcon = (): React.JSX.Element => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    fill="currentColor"
+    viewBox="0 0 16 16"
+    aria-hidden="true"
+    data-testid="copy-icon"
+  >
+    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
+    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
+  </svg>
 );
 
 type RecruitmentCourseTableProps = {
@@ -183,6 +203,10 @@ type RecruitmentCourseTableProps = {
   onCopyEmail?: (email: string) => void;
   /** Part of the query key to invalidate, so the table reflects the current toggle. */
   includeRemoved: boolean;
+  /** The recruitment's quarter (YYYYQ); the Summer Session column exists only for a summer one. */
+  quarter?: string | null;
+  /** Column ids the admin has hidden (issue #185); see {@link columnChoices}. */
+  hiddenColumns?: string[];
   testIdPrefix?: string;
 };
 
@@ -193,6 +217,9 @@ export default function RecruitmentCourseTable({
   showRankings = false,
   onCopyEmail = () => {},
   includeRemoved,
+  quarter = null,
+  // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
+  hiddenColumns = [],
   testIdPrefix = "RecruitmentCourseTable",
 }: RecruitmentCourseTableProps): React.JSX.Element {
   const objectToAxiosParams = (
@@ -316,6 +343,10 @@ export default function RecruitmentCourseTable({
   const shrinkToContent = {
     style: { width: "1%", whiteSpace: "nowrap" as const },
   };
+  // Numbers line up on the right (issue #185); the ratio column stays left-aligned.
+  const numeric = {
+    style: { ...shrinkToContent.style, textAlign: "right" as const },
+  };
   const rankingSummaryByCourse = new Map(
     rankingSummaries.map((summary) => [summary.recruitmentCourseId, summary]),
   );
@@ -341,7 +372,7 @@ export default function RecruitmentCourseTable({
           {
             header: "Rankings",
             accessorKey: "rankingCount",
-            meta: shrinkToContent,
+            meta: numeric,
             cell: ({
               cell,
             }: {
@@ -373,6 +404,9 @@ export default function RecruitmentCourseTable({
       header: "Course Number",
       accessorKey: "courseId",
       meta: shrinkToContent,
+      // Sort the padded id exactly as stored and shown, code unit by code unit, so "CMPSC     5A"
+      // comes before "CMPSC   130A"; TanStack's default would split digits from letters (#185).
+      sortingFn: "textCaseSensitive" as const,
       footer: `Total Course Count: ${counted.length}`,
       // Padded and monospaced, exactly as Admin/Courses renders it, so the sort order is legible.
       cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => (
@@ -418,12 +452,17 @@ export default function RecruitmentCourseTable({
       }) => {
         const email = cell.row.original.instructorEmail;
         if (!isValidEmail(email)) {
+          // Straight to where the mapping is made, in a new tab so the table is not lost (#185).
           return (
-            <span
+            <a
+              href="/admin/instructors"
+              target="_blank"
+              rel="noreferrer"
+              title="Map this instructor's catalog name to an email on the Instructors page"
               data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-unmapped`}
             >
               Not mapped
-            </span>
+            </a>
           );
         }
         return (
@@ -433,11 +472,12 @@ export default function RecruitmentCourseTable({
               variant="link"
               size="sm"
               className="p-0 ms-2"
+              title="Copy"
               aria-label={`Copy ${email}`}
               onClick={() => onCopyEmail(email)}
               data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-copy-email`}
             >
-              Copy
+              <CopyIcon />
             </Button>
           </>
         );
@@ -449,21 +489,21 @@ export default function RecruitmentCourseTable({
     {
       header: "Enrolled",
       accessorKey: "enrollment",
-      meta: shrinkToContent,
+      meta: numeric,
       footer: String(sumOf((course) => course.enrollment)),
     },
     {
       header: "Max",
       accessorKey: "maxEnroll",
-      meta: shrinkToContent,
+      meta: numeric,
       footer: String(sumOf((course) => course.maxEnroll)),
     },
     {
-      header: "Enrollment Estimate",
+      header: stacked("Enrollment", "Estimate"),
       accessorKey: "enrollmentEstimate",
       footer: String(sumOf((course) => course.enrollmentEstimate)),
       meta: {
-        ...shrinkToContent,
+        ...numeric,
         testIdPrefix,
         drafts: estimateDrafts,
         onChange: onEstimateChange,
@@ -475,7 +515,7 @@ export default function RecruitmentCourseTable({
       header: "Allocation",
       accessorKey: "allocation",
       meta: {
-        ...shrinkToContent,
+        ...numeric,
         testIdPrefix,
         drafts: allocationDrafts,
         onChange: onAllocationChange,
@@ -502,7 +542,7 @@ export default function RecruitmentCourseTable({
         </OverlayTrigger>
       ),
       accessorKey: "unroundedAllocation",
-      meta: shrinkToContent,
+      meta: numeric,
       // Always one decimal place (issue #176); a dash until the backend has computed it.
       cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) =>
         cell.row.original.unroundedAllocation == null
@@ -513,7 +553,7 @@ export default function RecruitmentCourseTable({
       header: "Delta",
       id: "delta",
       accessorFn: (course: RecruitmentCourse) => allocationDelta(course),
-      meta: shrinkToContent,
+      meta: numeric,
       // Share minus allocation: green with a plus sign when the course is owed positions, red
       // when it has more than its share, black 0.0 when it is about right (issue #176).
       cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => {
@@ -568,12 +608,16 @@ export default function RecruitmentCourseTable({
         </>
       ),
     },
-    // Always present, though only summer offerings carry a value.
-    {
-      header: "Summer Session",
-      accessorKey: "summerSession",
-      meta: shrinkToContent,
-    },
+    // Only a summer quarter's offerings carry a value, so the column exists only then (#185).
+    ...(isSummerQuarter(quarter)
+      ? [
+          {
+            header: stacked("Summer", "Session"),
+            accessorKey: "summerSession",
+            meta: shrinkToContent,
+          },
+        ]
+      : []),
     {
       header: "",
       id: "removed",
@@ -601,6 +645,10 @@ export default function RecruitmentCourseTable({
       data={Array.isArray(courses) ? rows : []}
       columns={columns}
       testid={testIdPrefix}
+      centerHeaders
+      columnVisibility={Object.fromEntries(
+        hiddenColumns.map((id) => [id, false]),
+      )}
     />
   );
 }

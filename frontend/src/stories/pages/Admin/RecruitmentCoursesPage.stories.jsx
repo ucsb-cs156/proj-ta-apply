@@ -36,6 +36,14 @@ export default {
             },
           ]),
         ),
+        http.get("/api/admin/hiddencolumns", () => HttpResponse.json([])),
+        http.put("/api/admin/hiddencolumns", ({ request }) =>
+          HttpResponse.json(
+            new URL(request.url).searchParams.get("hidden") === "true"
+              ? [new URL(request.url).searchParams.get("columnId")]
+              : [],
+          ),
+        ),
         http.put("/api/recruitmentcourses/removed", () =>
           HttpResponse.json({}),
         ),
