@@ -1,4 +1,5 @@
 import { Accordion, Badge, Card } from "react-bootstrap";
+import { Link } from "react-router";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import type { RecruitmentCourse } from "main/components/Recruitments/RecruitmentCourseTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
@@ -8,10 +9,6 @@ import { DATE_KEYS } from "main/utils/recruitmentSort";
 export type InstructorRecruitment = Recruitment & {
   courses: RecruitmentCourse[];
 };
-
-/** Inside each course's accordion until the review tools exist (issue #127). */
-export const COMING_SOON =
-  "(Coming soon: options to review and rank applicants)";
 
 type InstructorRecruitmentCardsProps = {
   recruitments: InstructorRecruitment[];
@@ -120,7 +117,30 @@ export default function InstructorRecruitmentCards({
                     <Accordion.Body
                       data-testid={id(`course-${course.id}-body`)}
                     >
-                      {COMING_SOON}
+                      {recruitment.reviewStatus === "Open" && (
+                        <Link
+                          className="btn btn-primary"
+                          to={`/recruitments/${recruitment.id}/courses/${course.id}/ranking`}
+                          data-testid={id(`course-${course.id}-rank`)}
+                        >
+                          Rank Candidates
+                        </Link>
+                      )}
+                      {recruitment.reviewStatus === "Closed" && (
+                        <Link
+                          className="btn btn-secondary"
+                          to={`/recruitments/${recruitment.id}/courses/${course.id}/ranking`}
+                          data-testid={id(`course-${course.id}-view-rankings`)}
+                        >
+                          View Candidate Rankings
+                        </Link>
+                      )}
+                      {recruitment.reviewStatus === "NotStarted" && (
+                        <p className="mb-0">
+                          Candidate rankings will be available when faculty
+                          reviews open.
+                        </p>
+                      )}
                     </Accordion.Body>
                   </Accordion.Item>
                 ))}

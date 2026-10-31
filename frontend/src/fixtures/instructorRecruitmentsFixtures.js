@@ -19,6 +19,34 @@ const instructorRecruitmentsFixtures = {
     },
     { ...openUla, courses: [{ ...oneA, recruitmentId: 2 }] },
   ],
+  candidateRankingPage: {
+    recruitmentId: 1,
+    quarter: "20261",
+    type: "TA",
+    tentativeOpeningDate: "2025-12-01",
+    primaryConsiderationDate: "2026-01-20",
+    actualOpeningDate: "2026-01-06",
+    actualClosingDate: "2026-02-01",
+    reviewStatus: "Closed",
+    facultyReviewOpeningDate: "2026-01-08",
+    facultyRankingDeadline: "2026-02-15",
+    course: {
+      id: 2,
+      courseId: "CMPSC   156",
+      section: "0100",
+      title: "Advanced Applications Programming",
+      instructor: "CONRAD P",
+    },
+    otherCourses: [
+      {
+        id: 3,
+        courseId: "CMPSC   156",
+        section: "0200",
+        title: "Advanced Applications Programming",
+        instructor: "CONRAD P",
+      },
+    ],
+  },
 };
 
 export default instructorRecruitmentsFixtures;

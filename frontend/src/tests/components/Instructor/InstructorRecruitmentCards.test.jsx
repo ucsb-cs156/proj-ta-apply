@@ -1,16 +1,20 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 
-import InstructorRecruitmentCards, {
-  COMING_SOON,
-} from "main/components/Instructor/InstructorRecruitmentCards";
+import InstructorRecruitmentCards from "main/components/Instructor/InstructorRecruitmentCards";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 
 const [closedTa, openUla] = instructorRecruitmentsFixtures.twoRecruitments;
 
 function renderCards(recruitments = [closedTa, openUla]) {
   render(
-    <InstructorRecruitmentCards recruitments={recruitments} testIdPrefix="I" />,
+    <MemoryRouter>
+      <InstructorRecruitmentCards
+        recruitments={recruitments}
+        testIdPrefix="I"
+      />
+    </MemoryRouter>,
   );
 }
 
@@ -111,7 +115,7 @@ describe("InstructorRecruitmentCards tests", () => {
     expect(screen.queryByTestId("I-card-2-course-2")).toBeNull();
   });
 
-  test("a course opens on its own to the placeholder, and closes again", async () => {
+  test("each course has the review action gated by review status", async () => {
     renderCards();
 
     const first = within(
@@ -121,11 +125,18 @@ describe("InstructorRecruitmentCards tests", () => {
       screen.getByTestId("I-card-1-course-3-header"),
     ).getByRole("button");
     expect(first).toHaveAttribute("aria-expanded", "false");
-    expect(screen.getByTestId("I-card-1-course-2-body")).toHaveTextContent(
-      COMING_SOON,
+    expect(
+      screen.getByTestId("I-card-1-course-2-view-rankings"),
+    ).toHaveTextContent("View Candidate Rankings");
+    expect(
+      screen.getByTestId("I-card-1-course-2-view-rankings"),
+    ).toHaveAttribute("href", "/recruitments/1/courses/2/ranking");
+    expect(screen.getByTestId("I-card-2-course-1-rank")).toHaveTextContent(
+      "Rank Candidates",
     );
-    expect(COMING_SOON).toBe(
-      "(Coming soon: options to review and rank applicants)",
+    expect(screen.getByTestId("I-card-2-course-1-rank")).toHaveAttribute(
+      "href",
+      "/recruitments/2/courses/1/ranking",
     );
 
     await userEvent.click(first);
@@ -141,6 +152,18 @@ describe("InstructorRecruitmentCards tests", () => {
     expect(first).toHaveAttribute("aria-expanded", "false");
   });
 
+  test("not-started reviews have no ranking action", () => {
+    renderCards([{ ...closedTa, reviewStatus: "NotStarted" }]);
+
+    expect(screen.queryByRole("link", { name: /rank candidates/i })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: /view candidate rankings/i }),
+    ).toBeNull();
+    expect(
+      screen.getAllByText(/available when faculty reviews open/i),
+    ).toHaveLength(closedTa.courses.length);
+  });
+
   test("odd input renders nothing rather than crashing", () => {
     renderCards(undefined);
     expect(screen.getByTestId("I").children).toHaveLength(2);
@@ -152,7 +175,11 @@ describe("InstructorRecruitmentCards tests", () => {
   });
 
   test("the default test id prefix is the component name", () => {
-    render(<InstructorRecruitmentCards recruitments={[openUla]} />);
+    render(
+      <MemoryRouter>
+        <InstructorRecruitmentCards recruitments={[openUla]} />
+      </MemoryRouter>,
+    );
     expect(
       screen.getByTestId("InstructorRecruitmentCards-card-2-quarter"),
     ).toHaveTextContent("W26");

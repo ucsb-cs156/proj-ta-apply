@@ -26,6 +26,15 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           ranking deadline. These dates and status are separate from the
           application dates.
         </p>
+        <p>
+          When faculty reviews are open, expand one of your listed courses and
+          choose <strong>Rank Candidates</strong>. After reviews close, the link
+          changes to <strong>View Candidate Rankings</strong>. The course page
+          shows the recruitment dates and the course section; if you teach
+          multiple courses in that recruitment, it also links to your other
+          sections. Candidate ranking tools will be added to that page later.
+          Contact an admin if a course or ranking page is unavailable.
+        </p>
       </div>
     </BasicLayout>
   );

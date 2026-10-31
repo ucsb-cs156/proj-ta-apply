@@ -5,6 +5,9 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.errors.ForbiddenException;
+import edu.ucsb.cs.taapply.model.CurrentUser;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -20,7 +23,9 @@ import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -74,6 +79,34 @@ public class InstructorRecruitmentsController extends ApiController {
     }
   }
 
+  /** The read-only, course-scoped data needed by the second-iteration ranking placeholder. */
+  public static record CandidateRankingPage(
+      Long recruitmentId,
+      String quarter,
+      RecruitmentType type,
+      LocalDate tentativeOpeningDate,
+      LocalDate primaryConsiderationDate,
+      LocalDate actualOpeningDate,
+      LocalDate actualClosingDate,
+      String reviewStatus,
+      LocalDate facultyReviewOpeningDate,
+      LocalDate facultyRankingDeadline,
+      CourseDetails course,
+      List<CourseDetails> otherCourses) {}
+
+  /** Course identity and catalog display fields; section rows remain distinct by id. */
+  public static record CourseDetails(
+      Long id, String courseId, String section, String title, String instructor) {
+    public static CourseDetails of(RecruitmentCourse course) {
+      return new CourseDetails(
+          course.getId(),
+          course.getCourseId(),
+          course.getSection(),
+          course.getTitle(),
+          course.getInstructor());
+    }
+  }
+
   /** Newest quarter first, TA before ULA within a quarter: the order the other lists use. */
   private static final Comparator<Recruitment> NEWEST_FIRST =
       Comparator.comparing(Recruitment::getQuarter).reversed().thenComparing(Recruitment::getType);
@@ -119,5 +152,87 @@ public class InstructorRecruitmentsController extends ApiController {
                     r,
                     byRecruitment.get(r.getId()).stream().sorted(BY_COURSE_THEN_SECTION).toList()))
         .toList();
+  }
+
+  /**
+   * Read-only candidate-ranking page metadata. Instructor access is derived from the authenticated
+   * user's email and admin-managed catalog-name mapping; no caller-supplied identity is trusted.
+   */
+  @Operation(
+      summary = "Get the course-scoped candidate ranking page",
+      description =
+          "Instructors may read only their own active recruitment courses. Admins may read any"
+              + " course. This iteration returns page metadata and sibling course links only; it"
+              + " does not expose or modify candidate rankings.")
+  @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
+  @GetMapping("/{recruitmentId}/courses/{recruitmentCourseId}/ranking")
+  public CandidateRankingPage candidateRankingPage(
+      @PathVariable Long recruitmentId, @PathVariable Long recruitmentCourseId) {
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    RecruitmentCourse course =
+        recruitmentCourseRepository
+            .findById(recruitmentCourseId)
+            .orElseThrow(
+                () -> new EntityNotFoundException(RecruitmentCourse.class, recruitmentCourseId));
+
+    if (!recruitmentId.equals(course.getRecruitmentId())) {
+      throw new IllegalArgumentException(
+          "Recruitment course %s does not belong to recruitment %s"
+              .formatted(recruitmentCourseId, recruitmentId));
+    }
+    if (!course.isOnOffer()) {
+      throw new ForbiddenException(
+          "This recruitment course has been removed or is no longer available.");
+    }
+    if ("NotStarted".equals(recruitment.getReviewStatus())) {
+      throw new ForbiddenException(
+          "Candidate rankings are unavailable because faculty reviews have not started.");
+    }
+
+    CurrentUser currentUser = getCurrentUser();
+    if (currentUser == null || currentUser.getUser() == null) {
+      throw new ForbiddenException("The authenticated user could not be identified.");
+    }
+    String email = currentUser.getUser().getEmail();
+    boolean isAdmin =
+        currentUser.getRoles() != null
+            && currentUser.getRoles().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+
+    String catalogName =
+        instructorRepository.findByEmail(email).map(Instructor::getCatalogName).orElse(null);
+    if (!isAdmin && (catalogName == null || !catalogName.equals(course.getInstructor()))) {
+      throw new ForbiddenException(
+          "This recruitment course is not assigned to the authenticated instructor.");
+    }
+
+    List<CourseDetails> otherCourses =
+        catalogName == null
+            ? List.of()
+            : recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
+                .filter(row -> !row.getId().equals(recruitmentCourseId))
+                .filter(row -> catalogName.equals(row.getInstructor()))
+                .filter(RecruitmentCourse::isOnOffer)
+                .sorted(BY_COURSE_THEN_SECTION)
+                .map(CourseDetails::of)
+                .toList();
+
+    return new CandidateRankingPage(
+        recruitment.getId(),
+        recruitment.getQuarter(),
+        recruitment.getType(),
+        recruitment.getTentativeOpeningDate(),
+        recruitment.getPrimaryConsiderationDate(),
+        recruitment.getActualOpeningDate(),
+        recruitment.getActualClosingDate(),
+        recruitment.getReviewStatus(),
+        recruitment.getFacultyReviewOpeningDate(),
+        recruitment.getFacultyRankingDeadline(),
+        CourseDetails.of(course),
+        otherCourses);
   }
 }
