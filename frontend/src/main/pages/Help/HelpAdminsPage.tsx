@@ -94,6 +94,33 @@ export default function HelpAdminsPage(): React.JSX.Element {
           from the recruitment stays in the table while it still has rankings or
           an assignee, marked as no longer offered.
         </p>
+        <p
+          id="publish-assignments"
+          data-testid="HelpAdminsPage-publish-assignments"
+        >
+          When the tentative assignments are close to final, the very bottom of
+          the recruitment&apos;s <strong>Courses</strong> page has{" "}
+          <strong>Publish Assignments</strong>. It asks you to confirm:
+          publishing creates a read-only <strong>Assignments</strong> page for
+          admins and faculty, with every course and the TAs (or ULAs) assigned
+          to each, and unlocks CSV downloads of the same table to hand to the
+          financial office for hiring paperwork. Assignments can still be
+          changed afterwards, and the page always shows the current ones, but it
+          is best to wait until most are settled. Once published, the
+          recruitment card shows an <strong>Assignments Published</strong> badge
+          and a <strong>Published Assignments</strong> button (instructors see
+          an <strong>Assignments</strong> button on their card), and publishing
+          is written to the recruitment&apos;s change history. The page offers{" "}
+          <em>One Row per course</em> (course number, instructor, instructor
+          email, then one column per assigned TA or ULA as &ldquo;First Last
+          (email)&rdquo;) or <em>One Row per TA/ULA</em> (name, email, course,
+          instructor, instructor email and, for ULAs, whether this is their
+          first time as a ULA), with <em>Download CSV (row per course)</em> and{" "}
+          <em>Download CSV (row per student)</em>. Only real, uncancelled
+          applicants with an assignment appear; an instructor whose catalog name
+          is not mapped on the Instructors page shows as &ldquo;Not
+          mapped&rdquo;.
+        </p>
 
         <h2 className="my-3 h4" id="flow">
           The flow of a recruitment
@@ -365,6 +392,13 @@ export default function HelpAdminsPage(): React.JSX.Element {
             the applicant into a lecture; the{" "}
             <a href="#assignments">Assignments</a> section below has the
             details.
+          </li>
+          <li>
+            <strong>Published Assignments.</strong> Shown once{" "}
+            <em>Publish Assignments</em> has been clicked at the bottom of the
+            Courses page: the read-only assignments page that admins and faculty
+            share, with its two CSV downloads (see{" "}
+            <a href="#publish-assignments">publishing</a> above).
           </li>
           <li>
             <strong>Delete.</strong> Removes the recruitment, its course list

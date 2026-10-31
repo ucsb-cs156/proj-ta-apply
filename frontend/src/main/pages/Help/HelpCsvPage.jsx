@@ -244,6 +244,25 @@ export default function HelpCsvPage() {
           other cell blank; applicant rows follow. Test applications are left
           out; the full layout is described on the For Admins help page.
         </p>
+        <p data-testid="assignmentsCsvDescription">
+          Once a recruitment&apos;s assignments are published, the assignments
+          page offers two downloads of the same table it shows, header row first
+          and every cell quoted. <b>Download CSV (row per course)</b> has{" "}
+          <code>Course</code> (for example <code>CMPSC 8</code>),{" "}
+          <code>Instructor</code>, <code>Instructor email</code> (
+          <code>Not mapped</code> when no single instructor record has that
+          catalog name), then one column per assigned person headed{" "}
+          <code>TA</code> or <code>ULA</code> holding{" "}
+          <code>First Last (email)</code>; there are as many of those columns as
+          the fullest course needs, and courses with nobody assigned are still
+          listed. <b>Download CSV (row per student)</b> has{" "}
+          <code>First name</code>, <code>Last name</code>, <code>Email</code>,{" "}
+          <code>Course assignment</code>, <code>Course instructor</code>,{" "}
+          <code>Course instructor email</code> and, for a ULA recruitment,{" "}
+          <code>First time ULA</code> (<code>yes</code> when the applicant
+          reported no previous quarters as a ULA). Only real, uncancelled
+          applicants with an assignment are included.
+        </p>
         <p data-testid="downloadsSummary">
           Besides the App Settings lists described above, the{" "}
           <i>Recruitments</i> admin page offers a <b>CSV</b> button per

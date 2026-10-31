@@ -18,6 +18,8 @@ export type Recruitment = {
   lastPopulatedAt?: string | null;
   /** How many TAs or ULAs the recruitment expects to hire in all (issue #174); at least 1. */
   totalHiringTarget?: number;
+  /** Whether the assignments page and its CSVs are open to admins and faculty (issue #180). */
+  assignmentsPublished?: boolean;
 };
 
 /** The applicant-facing recruitment shape deliberately excludes faculty review fields. */

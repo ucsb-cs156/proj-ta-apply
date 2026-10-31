@@ -79,4 +79,13 @@ public class Recruitment {
   @Column(name = "total_hiring_target", nullable = false)
   @Builder.Default
   private Integer totalHiringTarget = 1;
+
+  /**
+   * Whether the admin has published the assignments (issue #180): once true, admins and faculty can
+   * open the read-only assignments page and download its CSVs. A lifecycle change seen by faculty,
+   * so it is audited like opening reviews.
+   */
+  @Column(name = "assignments_published", nullable = false)
+  @Builder.Default
+  private Boolean assignmentsPublished = false;
 }

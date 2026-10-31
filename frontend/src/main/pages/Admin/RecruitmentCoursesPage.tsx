@@ -8,6 +8,7 @@ import RecruitmentCourseTable, {
   type RecruitmentCourseRankingSummary,
 } from "main/components/Recruitments/RecruitmentCourseTable";
 import HiringTargetPanel from "main/components/Recruitments/HiringTargetPanel";
+import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
@@ -447,6 +448,12 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
               </span>
             )}
           </div>
+        )}
+        {recruitment && (
+          <PublishAssignmentsPanel
+            recruitment={recruitment}
+            testIdPrefix="RecruitmentCoursesPage-publish"
+          />
         )}
       </div>
     </BasicLayout>

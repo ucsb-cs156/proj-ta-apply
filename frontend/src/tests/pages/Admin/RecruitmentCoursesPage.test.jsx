@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -1067,5 +1067,79 @@ describe("RecruitmentCoursesPage tests", () => {
     expect(populatePosts()[0].params).toEqual({ recruitmentId: "7" });
     await waitFor(() => expect(mockToast).toHaveBeenCalled());
     expect(mockToast.mock.calls[0][0]).toMatch(/Jobs/);
+  });
+
+  // Issue #180: publishing the assignments from the very bottom of the page.
+  test("the Publish Assignments panel is the last thing on the page and publishes recruitment 7", async () => {
+    axiosMock
+      .onPut("/api/admin/recruitments/assignmentsPublished")
+      .reply(200, {});
+    renderPage();
+
+    const button = await screen.findByTestId(
+      "RecruitmentCoursesPage-publish-button",
+    );
+    expect(button).toHaveTextContent("Publish Assignments");
+    const panel = screen.getByTestId("RecruitmentCoursesPage-publish");
+    expect(panel.nextElementSibling).toBeNull();
+    const table = document.querySelector("table");
+    expect(panel.parentElement).toContainElement(table);
+    expect(
+      table.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    await userEvent.click(button);
+    const modal = await screen.findByTestId(
+      "RecruitmentCoursesPage-publish-modal",
+    );
+    expect(modal).toHaveTextContent("information about the ULAs hired");
+    const recruitmentGets = () =>
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/admin/recruitments/all",
+      ).length;
+    const before = recruitmentGets();
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-publish-confirm"),
+    );
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter(
+          (r) => r.url === "/api/admin/recruitments/assignmentsPublished",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find(
+        (r) => r.url === "/api/admin/recruitments/assignmentsPublished",
+      ).params,
+    ).toEqual({ id: 7, published: true });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("Assignments published."),
+    );
+    await waitFor(() => expect(recruitmentGets()).toBeGreaterThan(before));
+  });
+
+  test("once published the page says so instead of offering the button", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+      {
+        ...recruitmentsFixtures.threeRecruitments[1],
+        id: 7,
+        assignmentsPublished: true,
+      },
+    ]);
+    renderPage();
+
+    const line = await screen.findByTestId(
+      "RecruitmentCoursesPage-publish-published",
+    );
+    expect(line).toHaveTextContent("Assignments are published.");
+    expect(within(line).getByRole("link")).toHaveAttribute(
+      "href",
+      "/recruitments/7/assignments",
+    );
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-publish-button"),
+    ).not.toBeInTheDocument();
   });
 });
