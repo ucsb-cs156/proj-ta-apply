@@ -192,6 +192,38 @@ describe("InstructorsIndexPage tests", () => {
       [],
     );
   });
+  /** Issue #172: the list can be downloaded as a CSV, in the shape the upload accepts. */
+  test("offers a CSV download of the instructors next to the upload form", async () => {
+    setupAdminUser();
+    axiosMock.onGet("/api/admin/instructors/get").reply(200, []);
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <InstructorsIndexPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const download = await screen.findByTestId(
+      "InstructorsIndexPage-download-csv",
+    );
+    expect(download.textContent).toBe("Download Instructors (CSV)");
+    expect(download).toHaveAttribute(
+      "href",
+      "/api/admin/instructors/download/csv",
+    );
+    expect(download).toHaveAttribute("download", "instructors.csv");
+    expect(download).toHaveAttribute("class", "btn btn-primary mb-3");
+    expect(
+      screen.getByRole("heading", { name: "CSV Download / Upload" })
+        .textContent,
+    ).toBe("CSV Download / Upload");
+    expect(
+      screen.getByText("Upload Instructors (CSV)", { exact: false }),
+    ).toBeInTheDocument();
+  });
+
   test("uploading a CSV posts it and toasts the summary", async () => {
     setupAdminUser();
     axiosMock

@@ -1,7 +1,8 @@
 const csvFixtures = {
-  instructorEmails: `name,email
-Chris Gaucho,cgaucho@ucsb.edu
-Lauren Del Playa,ldelplaya@ucsb.edu`,
+  instructorEmails: `email,firstName,lastName,catalogName
+cgaucho@ucsb.edu,Chris,Gaucho,GAUCHO C
+ldelplaya@ucsb.edu,,,
+phtcon@ucsb.edu`,
   /** What a majors or topics list downloads as, and what its upload accepts. */
   settingsNames: `"name"
 "Computer Engineering"
