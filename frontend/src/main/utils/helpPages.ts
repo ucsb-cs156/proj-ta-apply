@@ -93,6 +93,14 @@ export const ADMIN_MENU_ENTRIES: AdminMenuEntry[] = [
       "The UCSB quarter calendar on file: the dates of each quarter, kept current from the API.",
   },
   {
+    menu: "Admin",
+    label: "Budget for Quarter",
+    path: "/admin/budget/selectQuarter",
+    section: "budget",
+    summary:
+      "A quarter's funds and costs for TAs and ULAs, the hiring targets, and the bottom line.",
+  },
+  {
     menu: "Home page",
     label: "Recruitments",
     path: "/",

@@ -136,6 +136,38 @@ describe("Help pages (issue #140)", () => {
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
   });
 
+  test("the admins page explains the Budget for Quarter page and its three lines", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const heading = document.getElementById("budget");
+    expect(heading.tagName).toBe("H2");
+    expect(heading).toHaveTextContent("Budget for Quarter");
+    // The menu table's anchor, then the section's link to the page itself.
+    expect(
+      screen
+        .getAllByRole("link", { name: "Budget for Quarter" })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["#budget", "/admin/budget/selectQuarter"]);
+    expect(
+      screen.getByText(
+        /where the hiring for the quarter is planned holistically/,
+      ),
+    ).toBeInTheDocument();
+    const lines = screen.getByTestId("HelpAdminsPage-budget-lines");
+    expect(lines.id).toBe("budget-lines");
+    expect(lines).toHaveTextContent(
+      "Any of the three may include subzero money, gift money or both, and any of them may be zero in a given quarter. For planning, the restricted money is spent first",
+    );
+    expect(lines).toHaveTextContent(
+      "the bottom line is funds minus expenses, shown green with a plus sign when there is money to spare, red with a minus sign when the plan is over budget, and black when it comes out even.",
+    );
+    expect(
+      heading.compareDocumentPosition(document.getElementById("recruitments")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   test("the admins page starts with a table of every menu option linking to its section", async () => {
     renderPage(<HelpAdminsPage />);
     expect(
