@@ -193,19 +193,19 @@ import org.springframework.web.bind.annotation.RestController;
     }
 
 <span class="fc" id="L195">    CurrentUser currentUser = getCurrentUser();</span>
-<span class="pc bpc" id="L196" title="2 of 4 branches missed.">    if (currentUser == null || currentUser.getUser() == null) {</span>
-<span class="nc" id="L197">      throw new ForbiddenException(&quot;The authenticated user could not be identified.&quot;);</span>
+<span class="fc bfc" id="L196" title="All 4 branches covered.">    if (currentUser == null || currentUser.getUser() == null) {</span>
+<span class="fc" id="L197">      throw new ForbiddenException(&quot;The authenticated user could not be identified.&quot;);</span>
     }
 <span class="fc" id="L199">    String email = currentUser.getUser().getEmail();</span>
 <span class="fc" id="L200">    boolean isAdmin =</span>
-<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        currentUser.getRoles() != null</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">        currentUser.getRoles() != null</span>
 <span class="fc" id="L202">            &amp;&amp; currentUser.getRoles().stream()</span>
 <span class="fc" id="L203">                .map(GrantedAuthority::getAuthority)</span>
 <span class="fc bfc" id="L204" title="All 2 branches covered.">                .anyMatch(&quot;ROLE_ADMIN&quot;::equals);</span>
 
 <span class="fc" id="L206">    String catalogName =</span>
 <span class="fc" id="L207">        instructorRepository.findByEmail(email).map(Instructor::getCatalogName).orElse(null);</span>
-<span class="pc bpc" id="L208" title="1 of 6 branches missed.">    if (!isAdmin &amp;&amp; (catalogName == null || !catalogName.equals(course.getInstructor()))) {</span>
+<span class="fc bfc" id="L208" title="All 6 branches covered.">    if (!isAdmin &amp;&amp; (catalogName == null || !catalogName.equals(course.getInstructor()))) {</span>
 <span class="fc" id="L209">      throw new ForbiddenException(</span>
           &quot;This recruitment course is not assigned to the authenticated instructor.&quot;);
     }
