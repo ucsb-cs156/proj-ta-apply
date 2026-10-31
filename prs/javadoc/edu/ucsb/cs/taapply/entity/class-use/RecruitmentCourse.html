@@ -222,6 +222,17 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="edu.ucsb.cs.taapply.services">
 <h2>Uses of <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a> in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a></h2>
+<div class="caption"><span>Fields in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with type parameters of type <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Field</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Comparator.html" title="class or interface in java.util" class="external-link">Comparator</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#BY_COURSE_SECTION_ENROLL" class="member-name-link">BY_COURSE_SECTION_ENROLL</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Course id, then section, then enrollment code, a null reading as "" in each.</div>
+</div>
+</div>
 <div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> that return types with arguments of type <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span></div>
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -245,6 +256,22 @@ the enrollment estimates, and returns the sections in page order:
 <div class="block">Recomputes and stores <code>unroundedAllocation</code> for every non-removed section of the
 recruitment: <code>totalHiringTarget * estimate / total of the estimates</code>, or 0.0 for every
 section when the estimates add up to nothing.</div>
+</div>
+</div>
+<div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with parameters of type <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#label(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">label</a><wbr>(<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;course)</code></div>
+<div class="col-last even-row-color">
+<div class="block">"CMPSC 16 (section 0100, enroll 100)": how a section is named in the CSV.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#ranksFor(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">ranksFor</a><wbr>(<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;course)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">The ranks one section gave, keyed by application id.</div>
 </div>
 </div>
 </section>

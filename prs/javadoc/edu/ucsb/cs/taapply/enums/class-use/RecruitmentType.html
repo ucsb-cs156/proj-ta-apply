@@ -253,24 +253,56 @@ the order they are declared.</div>
 <li>
 <section class="detail" id="edu.ucsb.cs.taapply.services">
 <h2>Uses of <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a> in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a></h2>
+<div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> that return <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.Assignments.</span><code><a href="../../services/AssignmentsService.Assignments.html#type()" class="member-name-link">type</a>()</code></div>
+<div class="col-last even-row-color">
+<div class="block">Returns the value of the <code>type</code> record component.</div>
+</div>
+</div>
 <div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with parameters of type <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></span></div>
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/AuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">AuditTrail</a>&gt;</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">record</a><wbr>(<a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a>&nbsp;before,
+<div class="col-first even-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../services/AssignmentsService.IdentityColumn.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.IdentityColumn</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#identityColumns(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">identityColumns</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The identity columns for a recruitment's type: the common four, class level for TAs, year in
+program and graduation date, then GPAs and previous ULA service for ULAs.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/AuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">AuditTrail</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">record</a><wbr>(<a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a>&nbsp;before,
  <a href="../../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;after,
  <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
-<div class="col-last even-row-color">
+<div class="col-last odd-row-color">
 <div class="block">Records every difference between the snapshot taken before the edit and the application as it
 is now, and returns the rows written (empty when nothing changed).</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">ApplicationCsvService.</span><code><a href="../../services/ApplicationCsvService.html#write(edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List)" class="member-name-link">write</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationCsvService.</span><code><a href="../../services/ApplicationCsvService.html#write(edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List)" class="member-name-link">write</a><wbr>(<a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
-<div class="col-last odd-row-color">
+<div class="col-last even-row-color">
 <div class="block">The document: a header row, then one row per application, every field quoted.</div>
+</div>
+</div>
+<div class="caption"><span>Constructors in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with parameters of type <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier</div>
+<div class="table-header col-second">Constructor</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../../services/AssignmentsService.Assignments.html#%3Cinit%3E(java.lang.Long,edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List,java.util.List,java.util.List)" class="member-name-link">Assignments</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;identityHeaders,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../services/AssignmentsService.CourseSummary.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CourseSummary</a>&gt;&nbsp;courses,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../services/AssignmentsService.AssignmentRow.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.AssignmentRow</a>&gt;&nbsp;rows)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Creates an instance of a <code>Assignments</code> record class.</div>
 </div>
 </div>
 </section>

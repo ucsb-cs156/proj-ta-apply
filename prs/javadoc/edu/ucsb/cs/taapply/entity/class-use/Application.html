@@ -164,6 +164,28 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="edu.ucsb.cs.taapply.services">
 <h2>Uses of <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a> in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a></h2>
+<div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> that return types with arguments of type <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#real(java.util.List)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The given applications without test applications and without cancelled ones.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#realApplications(java.lang.Long)" class="member-name-link">realApplications</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">The applications that take part in assignments: every application to the recruitment that is
+neither a test application nor cancelled by the applicant, in the order they were created.</div>
+</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.IdentityColumn.</span><code><a href="../../services/AssignmentsService.IdentityColumn.html#value()" class="member-name-link">value</a>()</code></div>
+<div class="col-last even-row-color">
+<div class="block">Returns the value of the <code>value</code> record component.</div>
+</div>
+</div>
 <div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with parameters of type <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span></div>
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -186,11 +208,33 @@ is now, and returns the rows written (empty when nothing changed).</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#assignedCounts(java.util.List)" class="member-name-link">assignedCounts</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
+<div class="col-last even-row-color">
+<div class="block">How many of the given applications are tentatively assigned to each recruitment course.</div>
+</div>
+<div class="col-first odd-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#real(java.util.List)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">The given applications without test applications and without cancelled ones.</div>
+</div>
 <div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><span class="type-name-label">ApplicationCsvService.</span><code><a href="../../services/ApplicationCsvService.html#write(edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List)" class="member-name-link">write</a><wbr>(<a href="../../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
 <div class="col-last even-row-color">
 <div class="block">The document: a header row, then one row per application, every field quoted.</div>
+</div>
+</div>
+<div class="caption"><span>Constructor parameters in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with type arguments of type <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier</div>
+<div class="table-header col-second">Constructor</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../../services/AssignmentsService.IdentityColumn.html#%3Cinit%3E(java.lang.String,java.util.function.Function)" class="member-name-link">IdentityColumn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;header,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;value)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Creates an instance of a <code>IdentityColumn</code> record class.</div>
 </div>
 </div>
 </section>

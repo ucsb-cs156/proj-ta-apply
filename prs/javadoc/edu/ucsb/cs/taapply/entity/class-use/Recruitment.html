@@ -204,9 +204,14 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">Applications may only be created against an open recruitment.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">AllocationService.</span><code><a href="../../services/AllocationService.html#autoAllocate(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">autoAllocate</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-first odd-row-color"><code><a href="../../services/AssignmentsService.Assignments.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.Assignments</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#assignments(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">assignments</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
 <div class="col-last odd-row-color">
+<div class="block">The sections and applicants of the Assignments page.</div>
+</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AllocationService.</span><code><a href="../../services/AllocationService.html#autoAllocate(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">autoAllocate</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last even-row-color">
 <div class="block">Overwrites every non-removed section's allocation with a best effort at the hiring target from
 the enrollment estimates, and returns the sections in page order:
 
@@ -216,75 +221,75 @@ the enrollment estimates, and returns the sections in page order:
       <code>allocation - unroundedAllocation</code>) loses one; while the total is below the target,
       the section furthest below its share gains one.</div>
 </div>
-<div class="col-first even-row-color"><code>boolean</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#commentable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">commentable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+<div class="col-first odd-row-color"><code>boolean</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#commentable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">commentable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
-<div class="col-last even-row-color">
+<div class="col-last odd-row-color">
 <div class="block">Whether post-application comments may still be changed: while the recruitment is open, and for
 six months after it closes (issue #107), as the place for what has changed since applying.</div>
 </div>
-<div class="col-first odd-row-color"><code>boolean</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#editable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">editable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>boolean</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#editable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">editable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last even-row-color">
 <div class="block">Whether the whole application may still be edited: for as long as the admin keeps applications
 open (issue #98).</div>
 </div>
-<div class="col-first even-row-color"><code>boolean</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#recentlyClosed(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">recentlyClosed</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+<div class="col-first odd-row-color"><code>boolean</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#recentlyClosed(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">recentlyClosed</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
-<div class="col-last even-row-color">
+<div class="col-last odd-row-color">
 <div class="block">Whether a closed recruitment closed recently: within the last <a href="../../services/ApplicationAccessService.html#RECENT_MONTHS"><code>ApplicationAccessService.RECENT_MONTHS</code></a>, counting
 the day six months on as still recent.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">AllocationService.</span><code><a href="../../services/AllocationService.html#recompute(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recompute</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">AllocationService.</span><code><a href="../../services/AllocationService.html#recompute(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recompute</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last even-row-color">
 <div class="block">Recomputes and stores <code>unroundedAllocation</code> for every non-removed section of the
 recruitment: <code>totalHiringTarget * estimate / total of the estimates</code>, or 0.0 for every
 section when the estimates add up to nothing.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#recordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordChanges</a><wbr>(<a href="../../services/RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a>&nbsp;before,
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#recordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordChanges</a><wbr>(<a href="../../services/RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a>&nbsp;before,
  <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;after)</code></div>
-<div class="col-last even-row-color">
+<div class="col-last odd-row-color">
 <div class="block">Records every field whose value differs between the snapshot taken before an edit and the
 recruitment as it is now, one row each, and returns the rows written (empty when nothing
 changed).</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="../RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#recordCreated(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordCreated</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code><a href="../RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#recordCreated(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordCreated</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last even-row-color">
 <div class="block">Records that the recruitment was just created, and returns the row written.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="../RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#recordDeleted(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordDeleted</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code><a href="../RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#recordDeleted(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordDeleted</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">Records that the recruitment is about to be deleted, and returns the row written.</div>
 </div>
-<div class="col-first odd-row-color"><code>int</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentCoursesRefreshService.</span><code><a href="../../services/RecruitmentCoursesRefreshService.html#refresh(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">refresh</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>int</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">RecruitmentCoursesRefreshService.</span><code><a href="../../services/RecruitmentCoursesRefreshService.html#refresh(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">refresh</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last even-row-color">
 <div class="block">Rewrites the offering details of every non-removed row whose enroll code the API still lists,
 stamps the recruitment as refreshed, and returns how many rows it rewrote.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="../../services/RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#snapshot(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">snapshot</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code><a href="../../services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">LegacyApplicationCsvService.</span><code><a href="../../services/LegacyApplicationCsvService.html#upload(org.springframework.web.multipart.MultipartFile,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
- <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last odd-row-color">
-<div class="block">Reads the file and saves one application per row into the recruitment.</div>
-</div>
-<div class="col-first even-row-color"><code><a href="../../services/LegacyUlaApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService.ImportResult</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">LegacyUlaApplicationCsvService.</span><code><a href="../../services/LegacyUlaApplicationCsvService.html#upload(org.springframework.web.multipart.MultipartFile,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
+<div class="col-first odd-row-color"><code><a href="../../services/RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#snapshot(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">snapshot</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code><a href="../../services/LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">LegacyApplicationCsvService.</span><code><a href="../../services/LegacyApplicationCsvService.html#upload(org.springframework.web.multipart.MultipartFile,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
  <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
 <div class="col-last even-row-color">
+<div class="block">Reads the file and saves one application per row into the recruitment.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="../../services/LegacyUlaApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService.ImportResult</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">LegacyUlaApplicationCsvService.</span><code><a href="../../services/LegacyUlaApplicationCsvService.html#upload(org.springframework.web.multipart.MultipartFile,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
+ <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">Reads the sheet and saves one application per row into the recruitment.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">RankingsCsvService.</span><code><a href="../../services/RankingsCsvService.html#write(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">write</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">RankingsCsvService.</span><code><a href="../../services/RankingsCsvService.html#write(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">write</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>

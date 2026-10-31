@@ -111,96 +111,121 @@ value changed, with the value before and after as strings.</div>
 <div class="block">The applications to one recruitment as a CSV document, one row per application, for an admin to
 open in a spreadsheet.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="CurrentUserService.html" title="class in edu.ucsb.cs.taapply.services">CurrentUserService</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">&nbsp;</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="CurrentUserServiceImpl.html" title="class in edu.ucsb.cs.taapply.services">CurrentUserServiceImpl</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">What the admin Assignments page and the rankings CSV have in common (issue #179): which
+applicants count, how they are identified, which sections appear in which order, and how many
+applicants are tentatively assigned to each section.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="AssignmentsService.AssignmentRow.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.AssignmentRow</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab4">
+<div class="block">One applicant as the page shows them: the identity columns as text, keyed by header; the
+tentatively assigned recruitment course id, or null; and each section's rank, keyed by
+recruitment course id, only for sections that ranked them.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="AssignmentsService.Assignments.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.Assignments</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="block">Everything the admin Assignments page needs for one recruitment.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="AssignmentsService.CourseSummary.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CourseSummary</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab4">
+<div class="block">One section as the page shows it: the stored allocation, how many applicants are tentatively
+assigned to it, and how many places are left (negative when over-assigned).</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="AssignmentsService.IdentityColumn.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.IdentityColumn</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="block">One column identifying an applicant: its header and how to read it off an application.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="CurrentUserService.html" title="class in edu.ucsb.cs.taapply.services">CurrentUserService</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">&nbsp;</div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="GoogleSignInService.html" title="interface in edu.ucsb.cs.taapply.services">GoogleSignInService</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">&nbsp;</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="GoogleSignInServiceImpl.html" title="class in edu.ucsb.cs.taapply.services">GoogleSignInServiceImpl</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">&nbsp;</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="GrantedAuthoritiesService.html" title="class in edu.ucsb.cs.taapply.services">GrantedAuthoritiesService</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="CurrentUserServiceImpl.html" title="class in edu.ucsb.cs.taapply.services">CurrentUserServiceImpl</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">&nbsp;</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="JobUserProviderImpl.html" title="class in edu.ucsb.cs.taapply.services">JobUserProviderImpl</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="GoogleSignInService.html" title="interface in edu.ucsb.cs.taapply.services">GoogleSignInService</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">&nbsp;</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="GoogleSignInServiceImpl.html" title="class in edu.ucsb.cs.taapply.services">GoogleSignInServiceImpl</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">&nbsp;</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="GrantedAuthoritiesService.html" title="class in edu.ucsb.cs.taapply.services">GrantedAuthoritiesService</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">&nbsp;</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="JobUserProviderImpl.html" title="class in edu.ucsb.cs.taapply.services">JobUserProviderImpl</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Bridge between the lib-jobs library and this app's notion of "current user"; lib-jobs uses it to
 stamp createdById/createdByEmail on Job records.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="LegacyApplicationCsvService.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="LegacyApplicationCsvService.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Imports the legacy PHP TA application's CSV export into a TA recruitment, one application per
 row, "as if" each student had entered it, so their next application can be pre-filled from it.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab4"><a href="LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab4">
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="LegacyApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService.ImportResult</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
 <div class="block">What an upload did; <code>problems</code> names each skipped row and why, and <code>addedTopics</code>
 the knowledge topics that were not on the TA topics list and were added to it.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="LegacyUlaApplicationCsvService.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="LegacyUlaApplicationCsvService.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Imports the ULA application Google Form's response sheet, downloaded as CSV, into a ULA
 recruitment, one application per row, "as if" each student had entered it, so their next
 application can be pre-filled from it (issue #70).</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab4"><a href="LegacyUlaApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService.ImportResult</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab4">
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="LegacyUlaApplicationCsvService.ImportResult.html" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService.ImportResult</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
 <div class="block">What an upload did, and what it added to the ULA topics and interests lists.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="NameListCsvService.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="NameListCsvService.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The CSV form of an admin-maintained name list (majors, topics): one column, <code>name</code>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab4"><a href="NameListCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService.UploadResult</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab4">
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="NameListCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService.UploadResult</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
 <div class="block">Summary of what an upload did.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="RankingsCsvService.html" title="class in edu.ucsb.cs.taapply.services">RankingsCsvService</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="RankingsCsvService.html" title="class in edu.ucsb.cs.taapply.services">RankingsCsvService</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">A historical snapshot of faculty rankings, not just currently offered courses.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Writes the audit trail of changes to recruitments themselves (issue #139): a row when one is
 created, a row when one is deleted, and a row per field that changed when one is edited, opened
 or closed.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab4">
 <div class="block">A recruitment's audited fields as strings, keyed by field name; a null field is null.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="RecruitmentCoursesRefreshService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentCoursesRefreshService</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="RecruitmentCoursesRefreshService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentCoursesRefreshService</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Refreshes a recruitment's course rows from the UCSB API while the admin waits (issue #175), so
 the enrollment figures the Recruitment Courses page is planned from are current when it opens.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="RoleAssignmentService.html" title="class in edu.ucsb.cs.taapply.services">RoleAssignmentService</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="RoleAssignmentService.html" title="class in edu.ucsb.cs.taapply.services">RoleAssignmentService</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The single place that decides which roles an email address holds.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="RoleEmailCsvService.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="RoleEmailCsvService.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Bulk upload of email addresses into one of the role tables, from a CSV file.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab4">
 <div class="block">Summary of what an upload did, so the admin can see which rows did not take effect.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="SystemInfoService.html" title="class in edu.ucsb.cs.taapply.services">SystemInfoService</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">&nbsp;</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="SystemInfoServiceImpl.html" title="class in edu.ucsb.cs.taapply.services">SystemInfoServiceImpl</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="SystemInfoService.html" title="class in edu.ucsb.cs.taapply.services">SystemInfoService</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">&nbsp;</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="UCSBCurriculumService.html" title="class in edu.ucsb.cs.taapply.services">UCSBCurriculumService</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="SystemInfoServiceImpl.html" title="class in edu.ucsb.cs.taapply.services">SystemInfoServiceImpl</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">&nbsp;</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="UCSBCurriculumService.html" title="class in edu.ucsb.cs.taapply.services">UCSBCurriculumService</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Wraps the UCSB Academic Curriculum API, narrowed to what iteration 2 needs: the distinct course
 numbers and titles offered in a given subject area, quarter and level.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Derives the last quarter the admin Courses dropdowns should offer, from the quarter UCSB says it
 currently is.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab4"><a href="UcsbQuarterService.QuarterRefresh.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService.QuarterRefresh</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab4">
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="UcsbQuarterService.QuarterRefresh.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService.QuarterRefresh</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
 <div class="block">What a refresh of the quarters on file did: the range asked for and the rows saved.</div>
 </div>
 </div>
