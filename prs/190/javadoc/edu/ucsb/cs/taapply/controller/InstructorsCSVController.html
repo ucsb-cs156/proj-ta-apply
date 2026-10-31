@@ -54,8 +54,14 @@ loadScripts(document, 'script');</script>
 <div class="toc-header">Contents&nbsp;<input type="text" class="filter-input" disabled placeholder="Filter contents (type .)" aria-label="Filter table of contents" autocomplete="off" spellcheck="false"><input type="reset" class="reset-filter" disabled tabindex="-1" value="Reset"></div>
 <ol class="toc-list" tabindex="-1">
 <li><a href="#" tabindex="0">Description</a></li>
+<li><a href="#field-summary" tabindex="0">Field Summary</a></li>
 <li><a href="#constructor-summary" tabindex="0">Constructor Summary</a></li>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
+<li><a href="#field-detail" tabindex="0">Field Details</a>
+<ol class="toc-list">
+<li><a href="#CATALOG_NAME_HEADER" tabindex="0">CATALOG_NAME_HEADER</a></li>
+</ol>
+</li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E()" tabindex="0">InstructorsCSVController()</a></li>
@@ -64,6 +70,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#uploadInstructorsCSV(org.springframework.web.multipart.MultipartFile)" tabindex="0">uploadInstructorsCSV(MultipartFile)</a></li>
+<li><a href="#downloadInstructorsCSV()" tabindex="0">downloadInstructorsCSV()</a></li>
 </ol>
 </li>
 </ol>
@@ -85,12 +92,29 @@ loadScripts(document, 'script');</script>
 @RestController("InstructorsCSVController")
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">InstructorsCSVController</span>
 <span class="extends-implements">extends <a href="ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></span></div>
-<div class="block">Bulk upload of instructor email addresses from a CSV file. The parsing and upsert behavior lives
-in <a href="../services/RoleEmailCsvService.html" title="class in edu.ucsb.cs.taapply.services"><code>RoleEmailCsvService</code></a>, shared with the grad students upload.</div>
+<div class="block">Bulk upload and download of the instructor list as a CSV file (issue #172). The parsing and
+upsert behavior lives in <a href="../services/RoleEmailCsvService.html" title="class in edu.ucsb.cs.taapply.services"><code>RoleEmailCsvService</code></a>, shared with the grad students upload.</div>
 </div>
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- =========== FIELD SUMMARY =========== -->
+<li>
+<section class="field-summary" id="field-summary">
+<h2>Field Summary</h2>
+<div class="caption"><span>Fields</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Field</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#CATALOG_NAME_HEADER" class="member-name-link">CATALOG_NAME_HEADER</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">The optional upload column and download header carrying the instructor's catalog name.</div>
+</div>
+</div>
+</section>
+</li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 <li>
 <section class="constructor-summary" id="constructor-summary">
@@ -115,9 +139,12 @@ in <a href="../services/RoleEmailCsvService.html" title="class in edu.ucsb.cs.ta
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../services/RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#uploadInstructorsCSV(org.springframework.web.multipart.MultipartFile)" class="member-name-link">uploadInstructorsCSV</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#downloadInstructorsCSV()" class="member-name-link">downloadInstructorsCSV</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../services/RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#uploadInstructorsCSV(org.springframework.web.multipart.MultipartFile)" class="member-name-link">uploadInstructorsCSV</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -133,6 +160,31 @@ in <a href="../services/RoleEmailCsvService.html" title="class in edu.ucsb.cs.ta
 </section>
 <section class="details">
 <ul class="details-list">
+<!-- ============ FIELD DETAIL =========== -->
+<li>
+<section class="field-details" id="field-detail">
+<h2>Field Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="CATALOG_NAME_HEADER">
+<h3>CATALOG_NAME_HEADER</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">CATALOG_NAME_HEADER</span></div>
+<div class="block">The optional upload column and download header carrying the instructor's catalog name.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.InstructorsCSVController.CATALOG_NAME_HEADER">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+</ul>
+</section>
+</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
@@ -170,6 +222,17 @@ com.opencsv.exceptions.CsvException</span></div>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code></dd>
 <dd><code>com.opencsv.exceptions.CsvException</code></dd>
 </dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="downloadInstructorsCSV()">
+<h3>downloadInstructorsCSV</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@GetMapping(value="/download/csv",
+            produces="text/csv")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">org.springframework.http.ResponseEntity&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">downloadInstructorsCSV</span>()</div>
 </div>
 </section>
 </li>

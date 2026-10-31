@@ -70,33 +70,37 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><a href="class-use/BudgetService.QuarterSummary.html#edu.ucsb.cs.taapply.controller">BudgetService.QuarterSummary</a></div>
+<div class="col-first even-row-color"><a href="class-use/AssignmentsService.Assignments.html#edu.ucsb.cs.taapply.controller">AssignmentsService.Assignments</a></div>
 <div class="col-last even-row-color">
+<div class="block">Everything the admin Assignments page needs for one recruitment.</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/BudgetService.QuarterSummary.html#edu.ucsb.cs.taapply.controller">BudgetService.QuarterSummary</a></div>
+<div class="col-last odd-row-color">
 <div class="block">A quarter with at least one recruitment, and which types it has.</div>
 </div>
-<div class="col-first odd-row-color"><a href="class-use/BudgetService.Summary.html#edu.ucsb.cs.taapply.controller">BudgetService.Summary</a></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><a href="class-use/BudgetService.Summary.html#edu.ucsb.cs.taapply.controller">BudgetService.Summary</a></div>
+<div class="col-last even-row-color">
 <div class="block">Everything the page shows for one quarter.</div>
 </div>
-<div class="col-first even-row-color"><a href="class-use/LegacyApplicationCsvService.ImportResult.html#edu.ucsb.cs.taapply.controller">LegacyApplicationCsvService.ImportResult</a></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><a href="class-use/LegacyApplicationCsvService.ImportResult.html#edu.ucsb.cs.taapply.controller">LegacyApplicationCsvService.ImportResult</a></div>
+<div class="col-last odd-row-color">
 <div class="block">What an upload did; <code>problems</code> names each skipped row and why, and <code>addedTopics</code>
 the knowledge topics that were not on the TA topics list and were added to it.</div>
 </div>
-<div class="col-first odd-row-color"><a href="class-use/LegacyUlaApplicationCsvService.ImportResult.html#edu.ucsb.cs.taapply.controller">LegacyUlaApplicationCsvService.ImportResult</a></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><a href="class-use/LegacyUlaApplicationCsvService.ImportResult.html#edu.ucsb.cs.taapply.controller">LegacyUlaApplicationCsvService.ImportResult</a></div>
+<div class="col-last even-row-color">
 <div class="block">What an upload did, and what it added to the ULA topics and interests lists.</div>
 </div>
-<div class="col-first even-row-color"><a href="class-use/NameListCsvService.UploadResult.html#edu.ucsb.cs.taapply.controller">NameListCsvService.UploadResult</a></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><a href="class-use/NameListCsvService.UploadResult.html#edu.ucsb.cs.taapply.controller">NameListCsvService.UploadResult</a></div>
+<div class="col-last odd-row-color">
 <div class="block">Summary of what an upload did.</div>
 </div>
-<div class="col-first odd-row-color"><a href="class-use/RoleEmailCsvService.UploadResult.html#edu.ucsb.cs.taapply.controller">RoleEmailCsvService.UploadResult</a></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><a href="class-use/RoleEmailCsvService.UploadResult.html#edu.ucsb.cs.taapply.controller">RoleEmailCsvService.UploadResult</a></div>
+<div class="col-last even-row-color">
 <div class="block">Summary of what an upload did, so the admin can see which rows did not take effect.</div>
 </div>
-<div class="col-first even-row-color"><a href="class-use/UcsbQuarterService.QuarterRefresh.html#edu.ucsb.cs.taapply.controller">UcsbQuarterService.QuarterRefresh</a></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><a href="class-use/UcsbQuarterService.QuarterRefresh.html#edu.ucsb.cs.taapply.controller">UcsbQuarterService.QuarterRefresh</a></div>
+<div class="col-last odd-row-color">
 <div class="block">What a refresh of the quarters on file did: the range asked for and the rows saved.</div>
 </div>
 </div>
@@ -111,6 +115,25 @@ the knowledge topics that were not on the TA topics list and were added to it.</
 <div class="col-first even-row-color"><a href="class-use/ApplicationAuditService.Snapshot.html#edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></div>
 <div class="col-last even-row-color">
 <div class="block">The answers as strings: a plain field's value, or a join table's rows as JSON.</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/AssignmentsService.AssignmentRow.html#edu.ucsb.cs.taapply.services">AssignmentsService.AssignmentRow</a></div>
+<div class="col-last odd-row-color">
+<div class="block">One applicant as the page shows them: the identity columns as text, keyed by header; the
+tentatively assigned recruitment course id, or null; and each section's rank, keyed by
+recruitment course id, only for sections that ranked them.</div>
+</div>
+<div class="col-first even-row-color"><a href="class-use/AssignmentsService.Assignments.html#edu.ucsb.cs.taapply.services">AssignmentsService.Assignments</a></div>
+<div class="col-last even-row-color">
+<div class="block">Everything the admin Assignments page needs for one recruitment.</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/AssignmentsService.CourseSummary.html#edu.ucsb.cs.taapply.services">AssignmentsService.CourseSummary</a></div>
+<div class="col-last odd-row-color">
+<div class="block">One section as the page shows it: the stored allocation, how many applicants are tentatively
+assigned to it, and how many places are left (negative when over-assigned).</div>
+</div>
+<div class="col-first even-row-color"><a href="class-use/AssignmentsService.IdentityColumn.html#edu.ucsb.cs.taapply.services">AssignmentsService.IdentityColumn</a></div>
+<div class="col-last even-row-color">
+<div class="block">One column identifying an applicant: its header and how to read it off an application.</div>
 </div>
 <div class="col-first odd-row-color"><a href="class-use/BudgetService.QuarterSummary.html#edu.ucsb.cs.taapply.services">BudgetService.QuarterSummary</a></div>
 <div class="col-last odd-row-color">
