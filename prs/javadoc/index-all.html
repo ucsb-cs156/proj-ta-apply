@@ -138,6 +138,10 @@ Courses page.</div>
 <dd>
 <div class="block">Creates an instance of a <code>AdminDTO</code> record class.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminRankingsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html#%3Cinit%3E()" class="member-name-link">AdminRankingsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminRankingsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/AdminRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">AdminRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
@@ -622,6 +626,8 @@ who has just chosen that course.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#deleteRecruitment(java.lang.Long)" class="member-name-link">deleteRecruitment(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#downloadCsv(java.lang.Long)" class="member-name-link">downloadCsv(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html#downloadCsv(java.lang.Long)" class="member-name-link">downloadCsv(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminRankingsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#downloadCsv(java.lang.String)" class="member-name-link">downloadCsv(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
 <dd>&nbsp;</dd>
@@ -1956,6 +1962,12 @@ like) from it.</div>
 <dd>
 <div class="block">Returns the value of the <code>rankingCount</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RankingsCsvService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">RankingsCsvService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">A historical snapshot of faculty rankings, not just currently offered courses.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RankingsCsvService.html#%3Cinit%3E()" class="member-name-link">RankingsCsvService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RankingsCsvService.html" title="class in edu.ucsb.cs.taapply.services">RankingsCsvService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/NameListCsvService.html#read(org.springframework.web.multipart.MultipartFile)" class="member-name-link">read(MultipartFile)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/NameListCsvService.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService</a></dt>
 <dd>
 <div class="block">The distinct, trimmed, non-blank names in the file, in file order.</div>
@@ -2859,6 +2871,8 @@ the order they are declared.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/wiremock/WiremockServiceImpl.html#%3Cinit%3E()" class="member-name-link">WiremockServiceImpl()</a> - Constructor for class edu.ucsb.cs.taapply.services.wiremock.<a href="edu/ucsb/cs/taapply/services/wiremock/WiremockServiceImpl.html" title="class in edu.ucsb.cs.taapply.services.wiremock">WiremockServiceImpl</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/CourseInterest.html#WOULD_CONSIDER" class="member-name-link">WOULD_CONSIDER</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/CourseInterest.html" title="enum class in edu.ucsb.cs.taapply.enums">CourseInterest</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RankingsCsvService.html#write(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">write(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RankingsCsvService.html" title="class in edu.ucsb.cs.taapply.services">RankingsCsvService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationCsvService.html#write(edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List)" class="member-name-link">write(RecruitmentType, List)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationCsvService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationCsvService</a></dt>
 <dd>
