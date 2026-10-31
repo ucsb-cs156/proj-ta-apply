@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"review/163-candidate-rankings","number":169,"title":"Review iteration 3: sortable candidates, immediate rankings and tie warnings","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/169"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"review/164-admin-ranking-reminders","number":170,"title":"Review iteration 4: admin ranking counts and faculty reminder emails","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/170"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"review/163-candidate-rankings","number":169,"title":"Review iteration 3: sortable candidates, immediate rankings and tie warnings","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/169"}]
