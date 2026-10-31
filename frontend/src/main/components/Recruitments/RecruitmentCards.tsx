@@ -21,6 +21,15 @@ import {
   sortRecruitments,
   type SortKey,
 } from "main/utils/recruitmentSort";
+import {
+  CLOSE_APPLICATIONS_TOOLTIP,
+  CLOSE_REVIEWS_TOOLTIP,
+  MORE_ABOUT_TEXT,
+  OPEN_APPLICATIONS_TOOLTIP,
+  OPEN_REVIEWS_CONFIRMATION,
+  OPEN_REVIEWS_TOOLTIP,
+  statusConfirmation,
+} from "main/utils/recruitmentActions";
 
 /** On the Test button of each card. */
 export const TEST_APPLICATION_TOOLTIP =
@@ -65,9 +74,12 @@ export default function RecruitmentCards({
         status: recruitment.applicationStatus === "OPEN" ? "CLOSED" : "OPEN",
       },
     }),
-    {},
+    { onSuccess: () => setStatusModal(null) },
     ["/api/admin/recruitments/all"],
   );
+  // The recruitment whose Open/Close Applications button was clicked, while the modal asks
+  // "Are you sure?" (issue #186); null when the modal is closed.
+  const [statusModal, setStatusModal] = useState<Recruitment | null>(null);
 
   const [reviewModal, setReviewModal] = useState<ReviewModal | null>(null);
   const [deadline, setDeadline] = useState("");
@@ -282,35 +294,55 @@ export default function RecruitmentCards({
               </dl>
             </Card.Body>
             <Card.Footer className="d-flex flex-wrap gap-2">
-              <Button
-                variant={open ? "warning" : "success"}
-                onClick={() => statusMutation.mutate(recruitment)}
-                data-testid={id("status-button")}
+              <OverlayTrigger
+                placement="top"
+                overlay={
+                  <Tooltip id={id("status-tooltip")}>
+                    {open
+                      ? CLOSE_APPLICATIONS_TOOLTIP
+                      : OPEN_APPLICATIONS_TOOLTIP}
+                  </Tooltip>
+                }
               >
-                {open ? "Close Applications" : "Open Applications"}
-              </Button>
-              {reviewsOpen ? (
                 <Button
-                  variant="warning"
-                  onClick={() =>
-                    reviewStatusMutation.mutate({
-                      recruitment,
-                      status: "Closed",
-                    })
-                  }
-                  data-testid={id("review-status-button")}
+                  variant={open ? "warning" : "success"}
+                  onClick={() => setStatusModal(recruitment)}
+                  data-testid={id("status-button")}
                 >
-                  Close Faculty Reviews
+                  {open ? "Close Applications" : "Open Applications"}
                 </Button>
-              ) : (
-                <Button
-                  variant="success"
-                  onClick={() => openReviewModal(recruitment, "open")}
-                  data-testid={id("review-status-button")}
-                >
-                  Open Faculty Reviews
-                </Button>
-              )}
+              </OverlayTrigger>
+              <OverlayTrigger
+                placement="top"
+                overlay={
+                  <Tooltip id={id("review-status-tooltip")}>
+                    {reviewsOpen ? CLOSE_REVIEWS_TOOLTIP : OPEN_REVIEWS_TOOLTIP}
+                  </Tooltip>
+                }
+              >
+                {reviewsOpen ? (
+                  <Button
+                    variant="warning"
+                    onClick={() =>
+                      reviewStatusMutation.mutate({
+                        recruitment,
+                        status: "Closed",
+                      })
+                    }
+                    data-testid={id("review-status-button")}
+                  >
+                    Close Faculty Reviews
+                  </Button>
+                ) : (
+                  <Button
+                    variant="success"
+                    onClick={() => openReviewModal(recruitment, "open")}
+                    data-testid={id("review-status-button")}
+                  >
+                    Open Faculty Reviews
+                  </Button>
+                )}
+              </OverlayTrigger>
               <Link
                 className="btn btn-primary"
                 to={`/admin/recruitments/${recruitment.id}/courses`}
@@ -363,6 +395,59 @@ export default function RecruitmentCards({
         );
       })}
       <Modal
+        show={statusModal !== null}
+        onHide={() => setStatusModal(null)}
+        centered
+        data-testid={`${testIdPrefix}-status-modal`}
+      >
+        {statusModal !== null &&
+          (() => {
+            const closing = statusModal.applicationStatus === "OPEN";
+            const confirmation = statusConfirmation(closing);
+            return (
+              <>
+                <Modal.Header closeButton>
+                  <Modal.Title>
+                    {confirmation.title}: {yyyyqToQyy(statusModal.quarter)}{" "}
+                    {statusModal.type}
+                  </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <p data-testid={`${testIdPrefix}-status-modal-explanation`}>
+                    {confirmation.explanation}{" "}
+                    <a
+                      href={confirmation.helpLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-testid={`${testIdPrefix}-status-modal-help`}
+                    >
+                      {MORE_ABOUT_TEXT}
+                    </a>
+                  </p>
+                  <p className="fw-bold mb-0">Are you sure?</p>
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setStatusModal(null)}
+                    data-testid={`${testIdPrefix}-status-modal-no`}
+                  >
+                    {confirmation.no}
+                  </Button>
+                  <Button
+                    variant={closing ? "warning" : "success"}
+                    disabled={statusMutation.isPending}
+                    onClick={() => statusMutation.mutate(statusModal)}
+                    data-testid={`${testIdPrefix}-status-modal-yes`}
+                  >
+                    {confirmation.yes}
+                  </Button>
+                </Modal.Footer>
+              </>
+            );
+          })()}
+      </Modal>
+      <Modal
         show={reviewModal !== null}
         onHide={() => setReviewModal(null)}
         centered
@@ -377,6 +462,19 @@ export default function RecruitmentCards({
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
+            {reviewModal?.mode === "open" && (
+              <p data-testid={`${testIdPrefix}-faculty-review-explanation`}>
+                {OPEN_REVIEWS_CONFIRMATION.explanation}{" "}
+                <a
+                  href={OPEN_REVIEWS_CONFIRMATION.helpLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  data-testid={`${testIdPrefix}-faculty-review-help`}
+                >
+                  {MORE_ABOUT_TEXT}
+                </a>
+              </p>
+            )}
             <Form.Group controlId={`${testIdPrefix}-faculty-ranking-deadline`}>
               <Form.Label>Faculty ranking deadline</Form.Label>
               <Form.Control
@@ -401,15 +499,19 @@ export default function RecruitmentCards({
               onClick={() => setReviewModal(null)}
               data-testid={`${testIdPrefix}-faculty-review-cancel`}
             >
-              Cancel
+              {reviewModal?.mode === "open"
+                ? OPEN_REVIEWS_CONFIRMATION.no
+                : "Cancel"}
             </Button>
             <Button
-              variant="primary"
+              variant={reviewModal?.mode === "open" ? "success" : "primary"}
               type="submit"
               disabled={savingReviewChanges}
               data-testid={`${testIdPrefix}-faculty-review-save`}
             >
-              {reviewModal?.mode === "open" ? "Open Reviews" : "Save Deadline"}
+              {reviewModal?.mode === "open"
+                ? OPEN_REVIEWS_CONFIRMATION.yes
+                : "Save Deadline"}
             </Button>
           </Modal.Footer>
         </Form>

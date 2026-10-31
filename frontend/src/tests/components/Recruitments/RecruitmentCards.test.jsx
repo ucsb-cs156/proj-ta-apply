@@ -230,22 +230,195 @@ describe("RecruitmentCards tests", () => {
     expect(closeButton).toHaveTextContent("Close Applications");
     expect(closeButton).toHaveClass("btn-warning");
 
+    // Issue #186: the button asks first; nothing is sent until Yes.
     await userEvent.click(openButton);
+    const openDialog = await screen.findByRole("dialog");
+    expect(screen.getByTestId("Cards-status-modal")).toContainElement(
+      screen.getByTestId("Cards-status-modal-yes"),
+    );
+    expect(openDialog).toHaveTextContent("Open Applications: S26 TA");
+    expect(
+      screen.getByTestId("Cards-status-modal-explanation"),
+    ).toHaveTextContent(
+      "Applicants will be able to submit applications for this recruitment, and to edit them until the primary consideration date. The first opening stamps the actual opening date, which is kept even if the recruitment is closed and reopened. More about this action",
+    );
+    const help = screen.getByTestId("Cards-status-modal-help");
+    expect(help).toHaveAttribute(
+      "href",
+      "/help/admins#open-close-applications",
+    );
+    expect(help).toHaveAttribute("target", "_blank");
+    expect(help).toHaveAttribute("rel", "noreferrer");
+    expect(within(openDialog).getByText("Are you sure?")).toHaveClass(
+      "fw-bold",
+    );
+    expect(axiosMock.history.put).toHaveLength(0);
+    const yes = screen.getByTestId("Cards-status-modal-yes");
+    expect(yes).toHaveTextContent("Yes, Open Applications Now");
+    expect(yes).toHaveClass("btn-success");
+    expect(screen.getByTestId("Cards-status-modal-no")).toHaveTextContent(
+      "No, don't open applications now",
+    );
+
+    await userEvent.click(yes);
     await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
     expect(axiosMock.history.put[0].url).toBe("/api/admin/recruitments/status");
     expect(axiosMock.history.put[0].params).toEqual({ id: 3, status: "OPEN" });
-    // The list is refreshed from the backend afterwards.
+    // The list is refreshed from the backend afterwards, and the modal closes.
     await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(1));
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({
       queryKey: ["/api/admin/recruitments/all"],
     });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
     await userEvent.click(closeButton);
+    const closeDialog = await screen.findByRole("dialog");
+    expect(closeDialog).toHaveTextContent("Close Applications: W26 ULA");
+    expect(
+      screen.getByTestId("Cards-status-modal-explanation"),
+    ).toHaveTextContent(
+      "Applicants will no longer be able to submit or edit applications for this recruitment. The actual closing date is stamped with today's date. Every application already on file is kept, and the recruitment can be opened again later.",
+    );
+    const yesClose = screen.getByTestId("Cards-status-modal-yes");
+    expect(yesClose).toHaveTextContent("Yes, Close Applications Now");
+    expect(yesClose).toHaveClass("btn-warning");
+    expect(screen.getByTestId("Cards-status-modal-no")).toHaveTextContent(
+      "No, don't close applications now",
+    );
+    await userEvent.click(yesClose);
     await waitFor(() => expect(axiosMock.history.put.length).toBe(2));
     expect(axiosMock.history.put[1].params).toEqual({
       id: 2,
       status: "CLOSED",
     });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  test("No, and the modal's close control, change nothing", async () => {
+    renderCards();
+
+    await userEvent.click(screen.getByTestId("Cards-card-0-status-button"));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId("Cards-status-modal-no"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(axiosMock.history.put).toHaveLength(0);
+
+    await userEvent.click(screen.getByTestId("Cards-card-2-status-button"));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("the status modal stays open on failure and disables Yes while pending", async () => {
+    let resolveRequest;
+    axiosMock.onPut("/api/admin/recruitments/status").reply(
+      () =>
+        new Promise((resolve) => {
+          resolveRequest = () => resolve([200, {}]);
+        }),
+    );
+    renderCards();
+
+    await userEvent.click(screen.getByTestId("Cards-card-0-status-button"));
+    const yes = await screen.findByTestId("Cards-status-modal-yes");
+    expect(yes).not.toBeDisabled();
+    await userEvent.click(yes);
+    await waitFor(() => expect(yes).toBeDisabled());
+    resolveRequest();
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    axiosMock.onPut("/api/admin/recruitments/status").reply(500, "no");
+    await userEvent.click(screen.getByTestId("Cards-card-0-status-button"));
+    await userEvent.click(await screen.findByTestId("Cards-status-modal-yes"));
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(2));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("Cards-status-modal-yes")).not.toBeDisabled(),
+    );
+  });
+
+  test("the lifecycle buttons have tooltips that say what they do", async () => {
+    renderCards();
+
+    const cases = [
+      [
+        "Cards-card-0-status-button",
+        "Cards-card-0-status-tooltip",
+        "Let applicants submit and edit applications for this recruitment",
+      ],
+      [
+        "Cards-card-2-status-button",
+        "Cards-card-2-status-tooltip",
+        "Stop accepting applications for this recruitment",
+      ],
+      [
+        "Cards-card-0-review-status-button",
+        "Cards-card-0-review-status-tooltip",
+        "Let faculty see and rank the candidates for their courses, with a ranking deadline",
+      ],
+      [
+        "Cards-card-2-review-status-button",
+        "Cards-card-2-review-status-tooltip",
+        "Stop faculty from changing their rankings; the dates on file are kept",
+      ],
+    ];
+    for (const [buttonId, tooltipId, text] of cases) {
+      const button = screen.getByTestId(buttonId);
+      fireEvent.mouseOver(button);
+      const tooltip = await screen.findByRole("tooltip");
+      expect(tooltip).toHaveTextContent(text);
+      expect(tooltip).toHaveAttribute("id", tooltipId);
+      fireEvent.mouseOut(button);
+      await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
+    }
+  });
+
+  test("the Open Faculty Reviews modal explains itself, links to help, and asks Yes or No", async () => {
+    renderCards();
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-0-review-status-button"),
+    );
+    const explanation = screen.getByTestId("Cards-faculty-review-explanation");
+    expect(explanation).toHaveTextContent(
+      "Faculty will be able to see the candidates for their courses and enter rankings until the deadline you give here. The first opening stamps the faculty review opening date, which is kept if reviews are reopened; the deadline can be changed later. The change is recorded in the recruitment's change history. More about this action",
+    );
+    const help = screen.getByTestId("Cards-faculty-review-help");
+    expect(help).toHaveAttribute("href", "/help/admins#faculty-reviews");
+    expect(help).toHaveAttribute("target", "_blank");
+    expect(help).toHaveAttribute("rel", "noreferrer");
+    // The explanation comes before the deadline box.
+    expect(
+      explanation.compareDocumentPosition(
+        screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const save = screen.getByTestId("Cards-faculty-review-save");
+    expect(save).toHaveTextContent("Yes, Open Faculty Reviews Now");
+    expect(save).toHaveClass("btn-success");
+    expect(screen.getByTestId("Cards-faculty-review-cancel")).toHaveTextContent(
+      "No, don't open faculty reviews now",
+    );
+    await userEvent.click(screen.getByTestId("Cards-faculty-review-cancel"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    // Changing the deadline is not a lifecycle change: no explanation, plain buttons.
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-edit-faculty-ranking-deadline"),
+    );
+    expect(
+      screen.queryByTestId("Cards-faculty-review-explanation"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("Cards-faculty-review-save")).toHaveTextContent(
+      "Save Deadline",
+    );
+    expect(screen.getByTestId("Cards-faculty-review-save")).toHaveClass(
+      "btn-primary",
+    );
+    expect(screen.getByTestId("Cards-faculty-review-cancel")).toHaveTextContent(
+      "Cancel",
+    );
   });
 
   test("the links lead to that recruitment's courses, preview, CSV and review pages", () => {
