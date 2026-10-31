@@ -62,43 +62,42 @@ public class AllocationService {
    */
   public List<RecruitmentCourse> autoAllocate(Recruitment recruitment) {
     List<RecruitmentCourse> active = recompute(recruitment);
-    if (active.isEmpty()) {
-      return active;
-    }
-    int target = recruitment.getTotalHiringTarget();
+    if (!active.isEmpty()) {
+      int target = recruitment.getTotalHiringTarget();
 
-    int sum = 0;
-    for (RecruitmentCourse row : active) {
-      int rounded = (int) Math.floor(row.getUnroundedAllocation() + 0.5);
-      row.setAllocation(rounded);
-      sum += rounded;
-    }
-    // Whenever the total is above the target, the excesses add up to more than zero, so the most
-    // over section has a positive excess and therefore an allocation above zero: taking one from
-    // it can never go below zero.
-    while (sum > target) {
-      RecruitmentCourse mostOver = active.get(0);
+      int sum = 0;
       for (RecruitmentCourse row : active) {
-        if (excess(row) > excess(mostOver)) {
-          mostOver = row;
-        }
+        int rounded = (int) Math.floor(row.getUnroundedAllocation() + 0.5);
+        row.setAllocation(rounded);
+        sum += rounded;
       }
-      mostOver.setAllocation(mostOver.getAllocation() - 1);
-      sum--;
-    }
-    while (sum < target) {
-      RecruitmentCourse mostUnder = active.get(0);
-      for (RecruitmentCourse row : active) {
-        if (excess(row) < excess(mostUnder)) {
-          mostUnder = row;
+      // Whenever the total is above the target, the excesses add up to more than zero, so the most
+      // over section has a positive excess and therefore an allocation above zero: taking one from
+      // it can never go below zero.
+      while (sum > target) {
+        RecruitmentCourse mostOver = active.get(0);
+        for (RecruitmentCourse row : active) {
+          if (excess(row) > excess(mostOver)) {
+            mostOver = row;
+          }
         }
+        mostOver.setAllocation(mostOver.getAllocation() - 1);
+        sum--;
       }
-      mostUnder.setAllocation(mostUnder.getAllocation() + 1);
-      sum++;
-    }
+      while (sum < target) {
+        RecruitmentCourse mostUnder = active.get(0);
+        for (RecruitmentCourse row : active) {
+          if (excess(row) < excess(mostUnder)) {
+            mostUnder = row;
+          }
+        }
+        mostUnder.setAllocation(mostUnder.getAllocation() + 1);
+        sum++;
+      }
 
-    for (RecruitmentCourse row : active) {
-      recruitmentCourseRepository.save(row);
+      for (RecruitmentCourse row : active) {
+        recruitmentCourseRepository.save(row);
+      }
     }
     return active;
   }
