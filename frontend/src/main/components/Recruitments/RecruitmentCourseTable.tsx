@@ -33,8 +33,11 @@ export type RecruitmentCourse = {
   stale?: boolean;
   /** Added by an admin by enroll code rather than by Populate (issue #125). */
   manuallyAdded?: boolean;
-  /** How many TAs or ULAs the admin has allocated to this section (issue #174); 0 until set. */
-  allocation?: number;
+  /**
+   * How many TAs or ULAs the admin has allocated to this section (issue #174); 0 until set. Null
+   * in the rows an instructor gets while the admin hides allocations from faculty (issue #178).
+   */
+  allocation?: number | null;
   /** The admin's estimate of the section's enrollment (issue #175); null until entered. */
   enrollmentEstimate?: number | null;
 };

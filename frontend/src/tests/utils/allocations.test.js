@@ -4,6 +4,12 @@ import {
   isValidEnrollmentEstimate,
   isValidHiringTarget,
   OVER_ALLOCATED_MESSAGE,
+  ALLOCATIONS_HIDDEN_MESSAGE,
+  ALLOCATIONS_SHOWN_MESSAGE,
+  SHOW_ALLOCATIONS_LABEL,
+  HIDE_ALLOCATIONS_LABEL,
+  courseAllocationText,
+  rankingAllocationNotice,
 } from "main/utils/allocations";
 
 describe("allocations utilities", () => {
@@ -45,6 +51,46 @@ describe("allocations utilities", () => {
   test("the over-allocation message is the one the design asks for", () => {
     expect(OVER_ALLOCATED_MESSAGE).toBe(
       "Please either increase the hiring target, or reduce the allocations for one or more courses.",
+    );
+  });
+
+  // ---- issue #178 ----
+
+  test("the visibility messages and button labels are the ones the design asks for", () => {
+    expect(ALLOCATIONS_HIDDEN_MESSAGE).toBe(
+      "Allocations of TAs/ULAs per course are currently hidden from faculty.",
+    );
+    expect(ALLOCATIONS_SHOWN_MESSAGE).toBe(
+      "Allocations of TAs/ULAs per course are currently shown to faculty (though only for their own courses)",
+    );
+    expect(SHOW_ALLOCATIONS_LABEL).toBe("Show Allocations to Faculty");
+    expect(HIDE_ALLOCATIONS_LABEL).toBe("Hide Allocations from Faculty");
+  });
+
+  test("the card line names the type and the number", () => {
+    expect(courseAllocationText("TA", 2)).toBe(
+      "TAs allocated to this course: 2",
+    );
+    expect(courseAllocationText("ULA", 1)).toBe(
+      "ULAs allocated to this course: 1",
+    );
+    expect(courseAllocationText("TA", 0)).toBe(
+      "TAs allocated to this course: 0",
+    );
+  });
+
+  test("the ranking notice handles singular and plural and doubles the number", () => {
+    expect(rankingAllocationNotice("TA", 2)).toBe(
+      "2 TAs have been allocated to this course. Please rank at least 2 candidates, and preferably 4.",
+    );
+    expect(rankingAllocationNotice("ULA", 1)).toBe(
+      "1 ULA has been allocated to this course. Please rank at least 1 candidate, and preferably 2.",
+    );
+    expect(rankingAllocationNotice("ULA", 0)).toBe(
+      "0 ULAs have been allocated to this course. Please rank at least 0 candidates, and preferably 0.",
+    );
+    expect(rankingAllocationNotice("TA", 3)).toBe(
+      "3 TAs have been allocated to this course. Please rank at least 3 candidates, and preferably 6.",
     );
   });
 });

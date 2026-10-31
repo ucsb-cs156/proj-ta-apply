@@ -18,6 +18,8 @@ export type Recruitment = {
   lastPopulatedAt?: string | null;
   /** How many TAs or ULAs the recruitment expects to hire in all (issue #174); at least 1. */
   totalHiringTarget?: number;
+  /** Whether faculty see the per-course allocations on their pages (issue #178); hidden by default. */
+  allocationsVisibleToFaculty?: boolean;
 };
 
 /** The applicant-facing recruitment shape deliberately excludes faculty review fields. */

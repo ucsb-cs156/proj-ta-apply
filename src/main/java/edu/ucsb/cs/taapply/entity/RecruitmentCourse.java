@@ -20,7 +20,7 @@ import lombok.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Builder
+@Builder(toBuilder = true)
 @Entity(name = "recruitment_courses")
 @Table(
     uniqueConstraints =

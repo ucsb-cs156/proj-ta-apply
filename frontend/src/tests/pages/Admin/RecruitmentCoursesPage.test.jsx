@@ -900,4 +900,110 @@ describe("RecruitmentCoursesPage tests", () => {
     await waitFor(() => expect(mockToast).toHaveBeenCalled());
     expect(mockToast.mock.calls[0][0]).toMatch(/Jobs/);
   });
+
+  // ---- show or hide allocations to faculty (issue #178) ----
+
+  test("the visibility panel sits under the hiring target and starts hidden", async () => {
+    renderPage();
+
+    const panel = await screen.findByTestId(
+      "RecruitmentCoursesPage-allocation-visibility",
+    );
+    expect(
+      screen.getByTestId(
+        "RecruitmentCoursesPage-allocation-visibility-message",
+      ),
+    ).toHaveTextContent(
+      "Allocations of TAs/ULAs per course are currently hidden from faculty.",
+    );
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-allocation-visibility-toggle"),
+    ).toHaveTextContent("Show Allocations to Faculty");
+    const hiring = screen.getByTestId("RecruitmentCoursesPage-hiring-target");
+    expect(
+      hiring.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const refreshed = screen.getByTestId(
+      "RecruitmentCoursesPage-last-refreshed",
+    );
+    expect(
+      panel.compareDocumentPosition(refreshed) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("showing allocations saves the flag for this recruitment and re-reads the list", async () => {
+    axiosMock
+      .onPut("/api/admin/recruitments/allocationsVisibleToFaculty")
+      .reply(200, {
+        ...recruitmentsFixtures.threeRecruitments[1],
+        id: 7,
+        allocationsVisibleToFaculty: true,
+      });
+    renderPage();
+
+    const toggle = await screen.findByTestId(
+      "RecruitmentCoursesPage-allocation-visibility-toggle",
+    );
+    const listReads = () =>
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/admin/recruitments/all",
+      ).length;
+    const before = listReads();
+    await userEvent.click(toggle);
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter(
+          (r) =>
+            r.url === "/api/admin/recruitments/allocationsVisibleToFaculty",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find(
+        (r) => r.url === "/api/admin/recruitments/allocationsVisibleToFaculty",
+      ).params,
+    ).toEqual({ id: 7, visible: true });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Allocations are now shown to faculty.",
+      ),
+    );
+    await waitFor(() => expect(listReads()).toBeGreaterThan(before));
+  });
+
+  test("a recruitment that already shows allocations offers to hide them", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+      {
+        ...recruitmentsFixtures.threeRecruitments[1],
+        id: 7,
+        allocationsVisibleToFaculty: true,
+      },
+    ]);
+    renderPage();
+
+    expect(
+      await screen.findByTestId(
+        "RecruitmentCoursesPage-allocation-visibility-toggle",
+      ),
+    ).toHaveTextContent("Hide Allocations from Faculty");
+    expect(
+      screen.getByTestId(
+        "RecruitmentCoursesPage-allocation-visibility-message",
+      ),
+    ).toHaveTextContent(
+      "Allocations of TAs/ULAs per course are currently shown to faculty (though only for their own courses)",
+    );
+  });
+
+  test("the visibility panel waits for the recruitment", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    renderPage();
+
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-allocation-visibility"),
+    ).toBeNull();
+  });
 });

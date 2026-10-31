@@ -229,6 +229,20 @@ export default function HelpAdminsPage(): React.JSX.Element {
           fills every lecture&apos;s estimate from its maximum or current
           enrollment in one step.
         </p>
+        <p
+          id="allocation-visibility"
+          data-testid="HelpAdminsPage-allocation-visibility"
+        >
+          Allocations are hidden from faculty until you choose otherwise. Under
+          the hiring target, the page says whether they are currently hidden or
+          shown. <strong>Show Allocations to Faculty</strong> puts each
+          lecture&apos;s allocation on the instructor&apos;s home page card and
+          at the top of its ranking page, where it asks them to rank at least
+          that many candidates and preferably twice as many; instructors see
+          only their own courses. <strong>Hide Allocations from Faculty</strong>{" "}
+          takes it away again. Showing or hiding is recorded in the
+          recruitment&apos;s change history.
+        </p>
 
         <h2 className="my-3 h4" id="quarters">
           Quarters

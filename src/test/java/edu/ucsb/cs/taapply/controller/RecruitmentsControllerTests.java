@@ -1,7 +1,9 @@
 package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -755,5 +757,145 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     verify(recruitmentRepository, never()).save(any());
     Map<String, Object> json = responseToJson(response);
     assertEquals("EntityNotFoundException", json.get("type"));
+  }
+
+  // ---- PUT /api/admin/recruitments/allocationsVisibleToFaculty (issue #178) ----
+
+  private static final String VISIBILITY_URL =
+      "/api/admin/recruitments/allocationsVisibleToFaculty";
+
+  @Test
+  public void logged_out_users_cannot_show_or_hide_allocations() throws Exception {
+    mockMvc
+        .perform(put(VISIBILITY_URL + "?id=1&visible=true").with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentRepository, never()).findById(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_show_or_hide_allocations() throws Exception {
+    mockMvc
+        .perform(put(VISIBILITY_URL + "?id=1&visible=true").with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentRepository, never()).findById(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void showing_allocations_saves_the_flag_and_records_it_in_the_audit_trail()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    assertFalse(r.getAllocationsVisibleToFaculty());
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("allocationsVisibleToFaculty", "false"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    MvcResult response =
+        mockMvc
+            .perform(put(VISIBILITY_URL + "?id=1&visible=true").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertTrue(r.getAllocationsVisibleToFaculty());
+    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
+    inOrder.verify(recruitmentAuditService).snapshot(r);
+    inOrder.verify(recruitmentRepository).save(r);
+    inOrder.verify(recruitmentAuditService).recordChanges(before, r);
+    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+    assertTrue(
+        response
+            .getResponse()
+            .getContentAsString()
+            .contains("\"allocationsVisibleToFaculty\":true"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void hiding_allocations_saves_the_flag_and_records_it_in_the_audit_trail()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.ULA);
+    r.setAllocationsVisibleToFaculty(true);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("allocationsVisibleToFaculty", "true"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    MvcResult response =
+        mockMvc
+            .perform(put(VISIBILITY_URL + "?id=1&visible=false").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertFalse(r.getAllocationsVisibleToFaculty());
+    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
+    inOrder.verify(recruitmentAuditService).snapshot(r);
+    inOrder.verify(recruitmentRepository).save(r);
+    inOrder.verify(recruitmentAuditService).recordChanges(before, r);
+    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void setting_the_visibility_it_already_has_neither_saves_nor_audits() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    MvcResult response =
+        mockMvc
+            .perform(put(VISIBILITY_URL + "?id=1&visible=false").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertFalse(r.getAllocationsVisibleToFaculty());
+    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).snapshot(any());
+    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_null_visibility_flag_counts_as_hidden_when_showing() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAllocationsVisibleToFaculty(null);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before = new RecruitmentAuditService.Snapshot(1L, Map.of());
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    mockMvc
+        .perform(put(VISIBILITY_URL + "?id=1&visible=true").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertTrue(r.getAllocationsVisibleToFaculty());
+    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).recordChanges(before, r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void showing_allocations_for_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(put(VISIBILITY_URL + "?id=99&visible=true").with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("EntityNotFoundException", json.get("type"));
+    assertEquals("Recruitment with id 99 not found", json.get("message"));
+    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void showing_allocations_without_saying_which_way_is_a_400() throws Exception {
+    mockMvc.perform(put(VISIBILITY_URL + "?id=1").with(csrf())).andExpect(status().isBadRequest());
+    verify(recruitmentRepository, never()).findById(any());
+    verify(recruitmentRepository, never()).save(any());
   }
 }

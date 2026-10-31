@@ -196,6 +196,35 @@ public class RecruitmentsController extends ApiController {
     return recruitment;
   }
 
+  @Operation(
+      summary = "Show or hide the per-course allocations on faculty-facing pages",
+      description =
+          "While hidden (the default) neither the home page cards nor the candidate ranking page"
+              + " tell an instructor how many TAs or ULAs a course was allocated, and the"
+              + " instructor endpoints leave the number out (issue #178). Faculty see the result,"
+              + " so the change is recorded in the recruitment audit trail.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @Transactional
+  @PutMapping("/allocationsVisibleToFaculty")
+  public Recruitment updateAllocationsVisibleToFaculty(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "visible") @RequestParam boolean visible) {
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
+    if (visible == Boolean.TRUE.equals(recruitment.getAllocationsVisibleToFaculty())) {
+      return recruitment;
+    }
+
+    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
+    recruitment.setAllocationsVisibleToFaculty(visible);
+    recruitmentRepository.save(recruitment);
+    recruitmentAuditService.recordChanges(before, recruitment);
+    return recruitment;
+  }
+
   @Operation(summary = "List all recruitments, most recent quarter first")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/all")

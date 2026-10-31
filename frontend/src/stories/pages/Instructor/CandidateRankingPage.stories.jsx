@@ -21,19 +21,17 @@ export default {
         http.get("/api/systemInfo", () =>
           HttpResponse.json(systemInfoFixtures.showingNeither),
         ),
-        http.get(
-          "/api/instructor/recruitments/1/courses/2/ranking",
-          () =>
-            HttpResponse.json(
-              instructorRecruitmentsFixtures.candidateRankingPage,
-            ),
-          http.get("/api/instructor/recruitments/1/courses/2/candidates", () =>
-            HttpResponse.json(candidatesFixtures),
+        http.get("/api/instructor/recruitments/1/courses/2/ranking", () =>
+          HttpResponse.json(
+            instructorRecruitmentsFixtures.candidateRankingPage,
           ),
-          http.put(
-            "/api/instructor/recruitments/1/courses/2/candidates/:id/rank",
-            async ({ request }) => HttpResponse.json(await request.json()),
-          ),
+        ),
+        http.get("/api/instructor/recruitments/1/courses/2/candidates", () =>
+          HttpResponse.json(candidatesFixtures),
+        ),
+        http.put(
+          "/api/instructor/recruitments/1/courses/2/candidates/:id/rank",
+          async ({ request }) => HttpResponse.json(await request.json()),
         ),
       ],
     },
@@ -43,3 +41,18 @@ export default {
 const Template = () => <CandidateRankingPage />;
 
 export const Default = Template.bind({});
+
+/** The admin has shown allocations: the page opens with how many TAs the course has (issue #178). */
+export const WithAllocation = Template.bind({});
+WithAllocation.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/instructor/recruitments/1/courses/2/ranking", () =>
+        HttpResponse.json(
+          instructorRecruitmentsFixtures.candidateRankingPageWithAllocation,
+        ),
+      ),
+      ...Default.parameters.msw.handlers,
+    ],
+  },
+};

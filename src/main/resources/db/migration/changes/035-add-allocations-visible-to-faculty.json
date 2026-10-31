@@ -1,0 +1,39 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "035-add-allocations-visible-to-faculty",
+        "author": "pc",
+        "comment": "Whether the per-course TA/ULA allocations of a recruitment are shown on faculty-facing pages; hidden by default (issue #178).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "recruitments",
+                "columnName": "allocations_visible_to_faculty"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [
+                {
+                  "column": {
+                    "name": "allocations_visible_to_faculty",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
