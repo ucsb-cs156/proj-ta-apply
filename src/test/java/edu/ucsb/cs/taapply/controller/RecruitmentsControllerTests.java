@@ -25,6 +25,7 @@ import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.AllocationService;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs156.jobs.services.JobService;
 import java.time.LocalDate;
@@ -50,6 +51,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
   @MockitoBean PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
   @MockitoBean UserRepository userRepository;
   @MockitoBean RecruitmentAuditService recruitmentAuditService;
+  @MockitoBean AllocationService allocationService;
 
   private static final String CREATE_URL =
       "/api/admin/recruitments/post?quarter=20261&type=TA"
@@ -688,10 +690,13 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertEquals(12, r.getTotalHiringTarget());
-    verify(recruitmentRepository, times(1)).save(r);
     verify(recruitmentAuditService, never()).snapshot(any());
     verify(recruitmentAuditService, never()).recordChanges(any(), any());
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+    // Issue #176: every section's share depends on the target, recomputed after the save.
+    InOrder inOrder = inOrder(recruitmentRepository, allocationService);
+    inOrder.verify(recruitmentRepository).save(r);
+    inOrder.verify(allocationService).recompute(r);
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -726,6 +731,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     }
     verify(recruitmentRepository, never()).findById(any());
     verify(recruitmentRepository, never()).save(any());
+    verify(allocationService, never()).recompute(any());
   }
 
   @WithMockUser(roles = {"ADMIN"})

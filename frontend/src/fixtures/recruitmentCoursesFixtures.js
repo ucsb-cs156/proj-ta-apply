@@ -22,6 +22,7 @@ const recruitmentCoursesFixtures = {
       manuallyAdded: false,
       allocation: 2,
       enrollmentEstimate: 220,
+      unroundedAllocation: 3.6666666666666665,
     },
     {
       id: 2,
@@ -43,6 +44,7 @@ const recruitmentCoursesFixtures = {
       manuallyAdded: false,
       allocation: 3,
       enrollmentEstimate: 140,
+      unroundedAllocation: 2.3333333333333335,
     },
     {
       id: 3,
@@ -64,6 +66,7 @@ const recruitmentCoursesFixtures = {
       manuallyAdded: false,
       allocation: 1,
       enrollmentEstimate: null,
+      unroundedAllocation: 0.0,
     },
     {
       id: 4,
@@ -85,6 +88,7 @@ const recruitmentCoursesFixtures = {
       manuallyAdded: false,
       allocation: 1,
       enrollmentEstimate: 95,
+      unroundedAllocation: 1.5,
     },
   ],
   rankingSummaries: [
