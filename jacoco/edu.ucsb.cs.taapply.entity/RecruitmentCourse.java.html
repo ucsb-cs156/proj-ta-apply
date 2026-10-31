@@ -109,6 +109,15 @@ public class RecruitmentCourse {
   @Column(name = &quot;enrollment_estimate&quot;)
   private Integer enrollmentEstimate;
 
+  /**
+   * How many positions this section would get if they could be split into fractions and were shared
+   * out by enrollment estimate alone (issue #176): {@code totalHiringTarget * enrollmentEstimate /
+   * total of the estimates}. Recomputed by {@code AllocationService} whenever the target or any
+   * estimate changes; null until the first recomputation. A guide for the admin, not an allocation.
+   */
+  @Column(name = &quot;unrounded_allocation&quot;)
+  private Double unroundedAllocation;
+
   /** The status the UCSB API reports for a section that has been cancelled. */
   public static final String CANCELLED = &quot;cancelled&quot;;
 
@@ -119,7 +128,7 @@ public class RecruitmentCourse {
    */
   @JsonIgnore
   public boolean isOnOffer() {
-<span class="fc bfc" id="L122" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
+<span class="fc bfc" id="L131" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
