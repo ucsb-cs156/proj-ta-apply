@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminAssignmentsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">AdminAssignmentsController.java</span></div><h1>AdminAssignmentsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.AssignmentsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * The admin Assignments page (issue #179): faculty rankings side by side with the admin's tentative
+ * assignment of each applicant to a section. Admin only; nothing here is shown to applicants or
+ * faculty at this stage.
+ */
+@Tag(name = &quot;AdminAssignments&quot;)
+@RequestMapping(&quot;/api/admin/assignments&quot;)
+@RestController
+<span class="fc" id="L30">public class AdminAssignmentsController extends ApiController {</span>
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired ApplicationRepository applicationRepository;
+  @Autowired AssignmentsService assignmentsService;
+
+  @Operation(
+      summary = &quot;A recruitment's sections, applicants, rankings and tentative assignments&quot;,
+      description =
+          &quot;Real, uncancelled applications only, with the identity columns of the rankings CSV for&quot;
+              + &quot; the recruitment's type. Every section not removed is listed; a removed section&quot;
+              + &quot; only while it still has rankings or an assignee. Each section carries its&quot;
+              + &quot; allocation, how many are assigned to it and how many places are left. 404 for a&quot;
+              + &quot; recruitment that does not exist.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;&quot;)
+  public AssignmentsService.Assignments forRecruitment(
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
+<span class="fc" id="L48">    return assignmentsService.assignments(recruitmentOf(recruitmentId));</span>
+  }
+
+  @Operation(
+      summary = &quot;Tentatively assign an applicant to a section, or clear the assignment&quot;,
+      description =
+          &quot;Leave recruitmentCourseId out to clear. 400 if the section is not part of the&quot;
+              + &quot; application's recruitment; 404 for an application or section that does not exist.&quot;
+              + &quot; Returns the recruitment's assignments as the GET does, with the new counts.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;/tentative&quot;)
+  public AssignmentsService.Assignments setTentative(
+      @Parameter(name = &quot;applicationId&quot;) @RequestParam Long applicationId,
+      @Parameter(name = &quot;recruitmentCourseId&quot;) @RequestParam(required = false)
+          Long recruitmentCourseId) {
+<span class="fc" id="L63">    Application application =</span>
+        applicationRepository
+<span class="fc" id="L65">            .findById(applicationId)</span>
+<span class="fc" id="L66">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, applicationId));</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">    if (recruitmentCourseId != null) {</span>
+<span class="fc" id="L68">      RecruitmentCourse course =</span>
+          recruitmentCourseRepository
+<span class="fc" id="L70">              .findById(recruitmentCourseId)</span>
+<span class="fc" id="L71">              .orElseThrow(</span>
+<span class="fc" id="L72">                  () -&gt; new EntityNotFoundException(RecruitmentCourse.class, recruitmentCourseId));</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">      if (!course.getRecruitmentId().equals(application.getRecruitmentId())) {</span>
+<span class="fc" id="L74">        throw new IllegalArgumentException(</span>
+            &quot;RecruitmentCourse %d is not part of recruitment %d&quot;
+<span class="fc" id="L76">                .formatted(recruitmentCourseId, application.getRecruitmentId()));</span>
+      }
+    }
+<span class="fc" id="L79">    application.setTentativeAssignmentId(recruitmentCourseId);</span>
+<span class="fc" id="L80">    applicationRepository.save(application);</span>
+<span class="fc" id="L81">    return assignmentsService.assignments(recruitmentOf(application.getRecruitmentId()));</span>
+  }
+
+  private Recruitment recruitmentOf(Long recruitmentId) {
+<span class="fc" id="L85">    return recruitmentRepository</span>
+<span class="fc" id="L86">        .findById(recruitmentId)</span>
+<span class="fc" id="L87">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
