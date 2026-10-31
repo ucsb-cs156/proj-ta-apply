@@ -465,7 +465,41 @@
 <a name='L400'></a><a href='#L400'>400</a>
 <a name='L401'></a><a href='#L401'>401</a>
 <a name='L402'></a><a href='#L402'>402</a>
-<a name='L403'></a><a href='#L403'>403</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L403'></a><a href='#L403'>403</a>
+<a name='L404'></a><a href='#L404'>404</a>
+<a name='L405'></a><a href='#L405'>405</a>
+<a name='L406'></a><a href='#L406'>406</a>
+<a name='L407'></a><a href='#L407'>407</a>
+<a name='L408'></a><a href='#L408'>408</a>
+<a name='L409'></a><a href='#L409'>409</a>
+<a name='L410'></a><a href='#L410'>410</a>
+<a name='L411'></a><a href='#L411'>411</a>
+<a name='L412'></a><a href='#L412'>412</a>
+<a name='L413'></a><a href='#L413'>413</a>
+<a name='L414'></a><a href='#L414'>414</a>
+<a name='L415'></a><a href='#L415'>415</a>
+<a name='L416'></a><a href='#L416'>416</a>
+<a name='L417'></a><a href='#L417'>417</a>
+<a name='L418'></a><a href='#L418'>418</a>
+<a name='L419'></a><a href='#L419'>419</a>
+<a name='L420'></a><a href='#L420'>420</a>
+<a name='L421'></a><a href='#L421'>421</a>
+<a name='L422'></a><a href='#L422'>422</a>
+<a name='L423'></a><a href='#L423'>423</a>
+<a name='L424'></a><a href='#L424'>424</a>
+<a name='L425'></a><a href='#L425'>425</a>
+<a name='L426'></a><a href='#L426'>426</a>
+<a name='L427'></a><a href='#L427'>427</a>
+<a name='L428'></a><a href='#L428'>428</a>
+<a name='L429'></a><a href='#L429'>429</a>
+<a name='L430'></a><a href='#L430'>430</a>
+<a name='L431'></a><a href='#L431'>431</a>
+<a name='L432'></a><a href='#L432'>432</a>
+<a name='L433'></a><a href='#L433'>433</a>
+<a name='L434'></a><a href='#L434'>434</a>
+<a name='L435'></a><a href='#L435'>435</a>
+<a name='L436'></a><a href='#L436'>436</a>
+<a name='L437'></a><a href='#L437'>437</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -578,6 +612,40 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">60x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1098,6 +1166,40 @@ export default function HelpAdminsPage(): React.JSX.Element {
           fills every lecture&amp;apos;s estimate from its maximum or current
           enrollment in one step.
         &lt;/p&gt;
+        &lt;p id="auto-assign" data-testid="HelpAdminsPage-auto-assign"&gt;
+          The table ends with a totals row, and three columns guide the
+          allocation: &lt;strong&gt;Unrounded Allocation&lt;/strong&gt; is how many
+          positions each lecture would get if positions could be split into
+          fractions and were shared out by enrollment estimate alone;{" "}
+          &lt;strong&gt;Delta&lt;/strong&gt; is that share minus the allocation, green with
+          a plus sign when a lecture is owed positions and red when it has more
+          than its share; and the &lt;strong&gt;TA:student ratio&lt;/strong&gt; is the
+          estimated students per position. &lt;em&gt;Auto assign TA allocations&lt;/em&gt;{" "}
+          (or ULA) fills the Allocation column from those shares, after a
+          warning that it overwrites every allocation: each lecture gets its
+          share rounded, then positions are taken from the lectures furthest
+          over their share, or given to those furthest under it, one at a time
+          until the total is exactly the hiring target. The purpose of this
+          feature is to give admins a way to make a first-cut allocation based
+          on enrollment, as close to fair as the numbers allow; it should not
+          necessarily be considered the final allocation. Admins have the
+          flexibility to adjust it up or down based on the particular needs of
+          specific courses and other relevant factors.
+        &lt;/p&gt;
+        &lt;p
+          id="allocation-visibility"
+          data-testid="HelpAdminsPage-allocation-visibility"
+        &gt;
+          Allocations are hidden from faculty until you choose otherwise. Under
+          the hiring target, the page says whether they are currently hidden or
+          shown. &lt;strong&gt;Show Allocations to Faculty&lt;/strong&gt; puts each
+          lecture&amp;apos;s allocation on the instructor&amp;apos;s home page card and
+          at the top of its ranking page, where it asks them to rank at least
+          that many candidates and preferably twice as many; instructors see
+          only their own courses. &lt;strong&gt;Hide Allocations from Faculty&lt;/strong&gt;{" "}
+          takes it away again. Showing or hiding is recorded in the
+          recruitment&amp;apos;s change history.
+        &lt;/p&gt;
 &nbsp;
         &lt;h2 className="my-3 h4" id="quarters"&gt;
           Quarters
@@ -1276,7 +1378,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-31T18:22:54.175Z
+                at 2026-10-31T20:14:51.297Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
