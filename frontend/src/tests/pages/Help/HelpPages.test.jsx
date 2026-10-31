@@ -185,10 +185,31 @@ describe("Help pages (issue #140)", () => {
       screen
         .getByTestId("HelpAdminsPage-recruitment-buttons")
         .querySelectorAll("li"),
-    ).toHaveLength(7);
+    ).toHaveLength(8);
     expect(
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
+    // Issue #186: the confirmations on the cards link to these two items.
+    const openClose = screen.getByTestId(
+      "HelpAdminsPage-open-close-applications",
+    );
+    expect(openClose.id).toBe("open-close-applications");
+    expect(openClose.tagName).toBe("LI");
+    expect(openClose).toHaveTextContent(
+      "Each button first asks Are you sure? with a short account of what will happen, so a stray click changes nothing.",
+    );
+    const reviews = screen.getByTestId("HelpAdminsPage-faculty-reviews");
+    expect(reviews.id).toBe("faculty-reviews");
+    expect(reviews).toHaveTextContent(
+      /^Open Faculty Reviews \/ Close Faculty Reviews\. Faculty can see and rank the candidates for their courses only while reviews are Open\./,
+    );
+    expect(reviews).toHaveTextContent(
+      "Opening and closing, and deadline changes, are recorded in the recruitment's change history.",
+    );
+    expect(
+      openClose.compareDocumentPosition(reviews) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     // Issue #179: the Assignments page and the planning rows of the rankings CSV.
     const assignments = screen.getByTestId("HelpAdminsPage-assignments");
     expect(document.getElementById("assignments").tagName).toBe("H2");
@@ -323,13 +344,23 @@ describe("Help pages (issue #140)", () => {
     expect(buttons[0]).toMatch(
       /^Open Applications \/ Close Applications\. Recruitments do not open/,
     );
-    expect(buttons[1]).toMatch(/from the schedule\. Populate re-runs the job/);
-    expect(buttons[1]).toMatch(/finds it again\. Remove takes a lecture out/);
-    expect(buttons[4]).toMatch(/Each has a View page \(everything/);
-    expect(buttons[5]).toMatch(
+    expect(buttons[0]).toMatch(
+      /primary consideration date\. Closing keeps every application on file, and a closed recruitment can be opened again\. Each button first asks/,
+    );
+    // Issue #186: the faculty reviews item sits between applications and Courses.
+    expect(buttons[1]).toMatch(
+      /^Open Faculty Reviews \/ Close Faculty Reviews\. Faculty can see and rank/,
+    );
+    expect(buttons[1]).toMatch(
+      /ranking deadline, after a short account of what will happen; the first opening stamps/,
+    );
+    expect(buttons[2]).toMatch(/from the schedule\. Populate re-runs the job/);
+    expect(buttons[2]).toMatch(/finds it again\. Remove takes a lecture out/);
+    expect(buttons[5]).toMatch(/Each has a View page \(everything/);
+    expect(buttons[6]).toMatch(
       /^Assignments\. The faculty rankings of every real applicant side by side, one column per lecture, with a Tentative Assignment dropdown on each row/,
     );
-    expect(buttons[6]).toMatch(/^Delete\. Removes the recruitment/);
+    expect(buttons[7]).toMatch(/^Delete\. Removes the recruitment/);
     expect(
       document.getElementById("ta-app-settings").nextElementSibling.textContent,
     ).toMatch(/the Majors list and the Topics list \(the areas/);
