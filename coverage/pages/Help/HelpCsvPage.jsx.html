@@ -321,7 +321,20 @@
 <a name='L256'></a><a href='#L256'>256</a>
 <a name='L257'></a><a href='#L257'>257</a>
 <a name='L258'></a><a href='#L258'>258</a>
-<a name='L259'></a><a href='#L259'>259</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -343,6 +356,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -610,12 +636,12 @@ export default function HelpCsvPage() {
           Admins can bulk-upload email addresses from a CSV file on the
           Instructors admin page. Click below for details and an example.
         &lt;/p&gt;
-        &lt;p&gt;
+        &lt;p data-testid="emailUploadsIntro"&gt;
           The file must have a header row containing a column named{" "}
-          &lt;code&gt;email&lt;/code&gt; (the header name is case-insensitive); any
-          additional columns are ignored. Each row is processed independently:
-          an address that is already on the list is skipped rather than reported
-          as an error, and a malformed row is skipped and reported rather than
+          &lt;code&gt;email&lt;/code&gt; (the header name is case-insensitive); a file with
+          just that column is enough. Each row is processed independently: an
+          address that is already on the list is skipped rather than reported as
+          an error, and a malformed row is skipped and reported rather than
           aborting the rows that already succeeded. Re-uploading the same file
           is therefore safe.
         &lt;/p&gt;
@@ -625,11 +651,15 @@ export default function HelpCsvPage() {
             &lt;Accordion.Body&gt;
               &lt;p data-testid="instructorCsvDescription"&gt;
                 On the &lt;i&gt;Instructors&lt;/i&gt; admin page, admins can upload a CSV of
-                instructor email addresses. Each address uploaded is permitted
-                to log in as an instructor and review applications for their own
-                courses. Here is an example file (note that the{" "}
-                &lt;code&gt;name&lt;/code&gt; column is ignored; only the &lt;code&gt;email&lt;/code&gt;{" "}
-                column is used):
+                instructors. Each address uploaded is permitted to log in as an
+                instructor and review applications for their own courses. A{" "}
+                &lt;code&gt;catalogName&lt;/code&gt; column, when present, sets each
+                instructor&amp;apos;s catalog name (including for an instructor
+                already on the list) when the value is a name on record, one the
+                Populate Courses job has seen; other columns, such as{" "}
+                &lt;code&gt;firstName&lt;/code&gt; and &lt;code&gt;lastName&lt;/code&gt;, are accepted
+                but ignored, since names come from the users table when the
+                instructor first logs in. Here is an example file:
               &lt;/p&gt;
               &lt;pre className="csvExample" data-testid="instructorCsvExample"&gt;
                 {csvFixtures.instructorEmails}
@@ -798,6 +828,15 @@ export default function HelpCsvPage() {
         &lt;/Accordion&gt;
 &nbsp;
         &lt;h2 className="my-4"&gt;CSV Download formats&lt;/h2&gt;
+        &lt;p data-testid="instructorsDownloadDescription"&gt;
+          The &lt;i&gt;Instructors&lt;/i&gt; admin page offers a{" "}
+          &lt;b&gt;Download Instructors (CSV)&lt;/b&gt; button that saves the whole list:
+          columns &lt;code&gt;email&lt;/code&gt;, &lt;code&gt;firstName&lt;/code&gt;,{" "}
+          &lt;code&gt;lastName&lt;/code&gt; and &lt;code&gt;catalogName&lt;/code&gt;, with a header row
+          and every cell quoted. The upload accepts this shape, so the list can
+          be moved from one deployment to another; the name columns are blank
+          for an instructor who has not logged in yet.
+        &lt;/p&gt;
         &lt;p data-testid="downloadsSummary"&gt;
           Besides the App Settings lists described above, the{" "}
           &lt;i&gt;Recruitments&lt;/i&gt; admin page offers a &lt;b&gt;CSV&lt;/b&gt; button per
@@ -844,7 +883,7 @@ export default function HelpCsvPage() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-31T18:22:30.738Z
+                at 2026-10-31T18:22:54.175Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
