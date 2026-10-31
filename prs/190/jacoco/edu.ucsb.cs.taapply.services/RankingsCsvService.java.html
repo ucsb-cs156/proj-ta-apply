@@ -2,16 +2,14 @@
 
 import com.opencsv.CSVWriter;
 import edu.ucsb.cs.taapply.entity.Application;
-import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
-import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
-import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.services.AssignmentsService.IdentityColumn;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,71 +17,84 @@ import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/** A historical snapshot of faculty rankings, not just currently offered courses. */
+/**
+ * A historical snapshot of faculty rankings, not just currently offered courses.
+ *
+ * &lt;p&gt;Since issue #179 the file also carries the admin's planning: a {@code tentativeAssignment}
+ * column after the identity columns, and three rows directly under the header, labelled in the
+ * first column, with each section's allocation, how many applicants are tentatively assigned to it
+ * and how many places are left.
+ */
 @Service
-<span class="fc" id="L24">public class RankingsCsvService {</span>
+<span class="fc" id="L29">public class RankingsCsvService {</span>
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
-  @Autowired CandidateRankingRepository candidateRankingRepository;
+  @Autowired AssignmentsService assignmentsService;
 
-<span class="fc" id="L29">  private record Column(String header, Function&lt;Application, Object&gt; value) {}</span>
+  /** Labels, in the first column, of the three planning rows under the header. */
+  static final String ALLOCATION_ROW = &quot;Allocation&quot;;
 
-<span class="fc" id="L31">  private static final List&lt;Column&gt; IDENTITY =</span>
-<span class="fc" id="L32">      List.of(</span>
-          new Column(&quot;firstName&quot;, Application::getFirstName),
-          new Column(&quot;lastName&quot;, Application::getLastName),
-          new Column(&quot;email&quot;, Application::getEmail),
-          new Column(&quot;major&quot;, Application::getMajor));
+  static final String ASSIGNED_ROW = &quot;Assigned&quot;;
+  static final String LEFT_ROW = &quot;Left to assign&quot;;
+
+<span class="fc" id="L40">  private record Column(String header, Function&lt;Application, Object&gt; value) {}</span>
 
   public String write(Recruitment recruitment) {
-<span class="fc" id="L39">    List&lt;Column&gt; columns = new ArrayList&lt;&gt;(IDENTITY);</span>
-<span class="fc bfc" id="L40" title="All 2 branches covered.">    if (recruitment.getType() == RecruitmentType.TA) {</span>
-<span class="fc" id="L41">      columns.add(new Column(&quot;classLevel&quot;, Application::getClassLevel));</span>
-    }
-<span class="fc" id="L43">    columns.add(new Column(&quot;yearInProgram&quot;, Application::getYearInProgram));</span>
-<span class="fc" id="L44">    columns.add(new Column(&quot;graduationDate&quot;, Application::getGraduationDate));</span>
-<span class="fc bfc" id="L45" title="All 2 branches covered.">    if (recruitment.getType() == RecruitmentType.ULA) {</span>
-<span class="fc" id="L46">      columns.add(new Column(&quot;gpaMajor&quot;, Application::getGpaMajor));</span>
-<span class="fc" id="L47">      columns.add(new Column(&quot;gpaOverall&quot;, Application::getGpaOverall));</span>
-<span class="fc" id="L48">      columns.add(new Column(&quot;previousServiceAsUla&quot;, Application::getPreviousServiceAsUla));</span>
-    }
-
+<span class="fc" id="L43">    List&lt;Column&gt; columns = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">    for (IdentityColumn identity : AssignmentsService.identityColumns(recruitment.getType())) {</span>
+<span class="fc" id="L45">      columns.add(new Column(identity.header(), identity.value()));</span>
+<span class="fc" id="L46">    }</span>
     // Do not filter on isOnOffer: removed/stale/cancelled sections retain their rankings.
-<span class="fc" id="L52">    List&lt;RecruitmentCourse&gt; courses =</span>
-<span class="fc" id="L53">        new ArrayList&lt;&gt;(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));</span>
-<span class="fc" id="L54">    courses.sort(</span>
-<span class="fc" id="L55">        Comparator.comparing((RecruitmentCourse c) -&gt; ApplicationCsvService.text(c.getCourseId()))</span>
-<span class="fc" id="L56">            .thenComparing(c -&gt; ApplicationCsvService.text(c.getSection()))</span>
-<span class="fc" id="L57">            .thenComparing(c -&gt; ApplicationCsvService.text(c.getEnrollCode())));</span>
-<span class="fc bfc" id="L58" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
-<span class="fc" id="L59">      Map&lt;Long, Integer&gt; ranks = new HashMap&lt;&gt;();</span>
-      for (CandidateRanking ranking :
-<span class="fc bfc" id="L61" title="All 2 branches covered.">          candidateRankingRepository.findByRecruitmentCourseId(course.getId())) {</span>
-<span class="fc" id="L62">        ranks.put(ranking.getApplicationId(), ranking.getRank());</span>
-<span class="fc" id="L63">      }</span>
-<span class="fc" id="L64">      columns.add(</span>
-          new Column(
-              &quot;%s (section %s, enroll %s)&quot;
-<span class="fc" id="L67">                  .formatted(</span>
-<span class="fc" id="L68">                      ApplicationCsvService.text(course.getCourseId()),</span>
-<span class="fc" id="L69">                      ApplicationCsvService.text(course.getSection()),</span>
-<span class="fc" id="L70">                      ApplicationCsvService.text(course.getEnrollCode())),</span>
-<span class="fc" id="L71">              a -&gt; ranks.get(a.getId())));</span>
-<span class="fc" id="L72">    }</span>
+<span class="fc" id="L48">    List&lt;RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L49">        new ArrayList&lt;&gt;(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));</span>
+<span class="fc" id="L50">    courses.sort(AssignmentsService.BY_COURSE_SECTION_ENROLL);</span>
+<span class="fc" id="L51">    Map&lt;Long, String&gt; labels = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L53">      labels.put(course.getId(), AssignmentsService.label(course));</span>
+<span class="fc" id="L54">    }</span>
+<span class="fc" id="L55">    columns.add(new Column(&quot;tentativeAssignment&quot;, a -&gt; labels.get(a.getTentativeAssignmentId())));</span>
 
-<span class="fc" id="L74">    StringWriter out = new StringWriter();</span>
-<span class="fc" id="L75">    CSVWriter writer = new CSVWriter(out);</span>
-<span class="fc" id="L76">    writer.writeNext(columns.stream().map(Column::header).toArray(String[]::new));</span>
-    for (Application application :
-<span class="fc bfc" id="L78" title="All 2 branches covered.">        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId())) {</span>
-<span class="fc bfc" id="L79" title="All 2 branches covered.">      if (!application.isTestApplication()) {</span>
-<span class="fc" id="L80">        writer.writeNext(</span>
-<span class="fc" id="L81">            columns.stream()</span>
-<span class="fc" id="L82">                .map(c -&gt; ApplicationCsvService.text(c.value().apply(application)))</span>
-<span class="fc" id="L83">                .toArray(String[]::new));</span>
+<span class="fc" id="L57">    List&lt;Application&gt; applications =</span>
+<span class="fc" id="L58">        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId());</span>
+    // Counted like the Assignments page: real, uncancelled applicants only.
+<span class="fc" id="L60">    Map&lt;Long, Integer&gt; assigned =</span>
+<span class="fc" id="L61">        AssignmentsService.assignedCounts(AssignmentsService.real(applications));</span>
+<span class="fc" id="L62">    String[] allocationRow = planningRow(ALLOCATION_ROW, columns.size() + courses.size());</span>
+<span class="fc" id="L63">    String[] assignedRow = planningRow(ASSIGNED_ROW, allocationRow.length);</span>
+<span class="fc" id="L64">    String[] leftRow = planningRow(LEFT_ROW, allocationRow.length);</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L66">      Map&lt;Long, Integer&gt; ranks = assignmentsService.ranksFor(course);</span>
+<span class="fc" id="L67">      int column = columns.size();</span>
+<span class="fc" id="L68">      int count = assigned.getOrDefault(course.getId(), 0);</span>
+<span class="fc" id="L69">      allocationRow[column] = String.valueOf(course.getAllocation());</span>
+<span class="fc" id="L70">      assignedRow[column] = String.valueOf(count);</span>
+<span class="fc" id="L71">      leftRow[column] = String.valueOf(course.getAllocation() - count);</span>
+<span class="fc" id="L72">      columns.add(new Column(labels.get(course.getId()), a -&gt; ranks.get(a.getId())));</span>
+<span class="fc" id="L73">    }</span>
+
+<span class="fc" id="L75">    StringWriter out = new StringWriter();</span>
+<span class="fc" id="L76">    CSVWriter writer = new CSVWriter(out);</span>
+<span class="fc" id="L77">    writer.writeNext(columns.stream().map(Column::header).toArray(String[]::new));</span>
+<span class="fc" id="L78">    writer.writeNext(allocationRow);</span>
+<span class="fc" id="L79">    writer.writeNext(assignedRow);</span>
+<span class="fc" id="L80">    writer.writeNext(leftRow);</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">      if (!application.isTestApplication()) {</span>
+<span class="fc" id="L83">        writer.writeNext(</span>
+<span class="fc" id="L84">            columns.stream()</span>
+<span class="fc" id="L85">                .map(c -&gt; ApplicationCsvService.text(c.value().apply(application)))</span>
+<span class="fc" id="L86">                .toArray(String[]::new));</span>
       }
-<span class="fc" id="L85">    }</span>
-<span class="fc" id="L86">    return out.toString();</span>
+<span class="fc" id="L88">    }</span>
+<span class="fc" id="L89">    return out.toString();</span>
+  }
+
+  /** A row of the given width, blank except for its label in the first column. */
+  private static String[] planningRow(String label, int width) {
+<span class="fc" id="L94">    String[] row = new String[width];</span>
+<span class="fc" id="L95">    Arrays.fill(row, &quot;&quot;);</span>
+<span class="fc" id="L96">    row[0] = label;</span>
+<span class="fc" id="L97">    return row;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

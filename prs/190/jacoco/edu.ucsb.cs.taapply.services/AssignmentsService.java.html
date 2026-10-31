@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssignmentsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">AssignmentsService.java</span></div><h1>AssignmentsService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.CandidateRanking;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * What the admin Assignments page and the rankings CSV have in common (issue #179): which
+ * applicants count, how they are identified, which sections appear in which order, and how many
+ * applicants are tentatively assigned to each section.
+ */
+@Service
+<span class="fc" id="L28">public class AssignmentsService {</span>
+  @Autowired ApplicationRepository applicationRepository;
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired CandidateRankingRepository candidateRankingRepository;
+
+  /** One column identifying an applicant: its header and how to read it off an application. */
+<span class="fc" id="L34">  public record IdentityColumn(String header, Function&lt;Application, Object&gt; value) {}</span>
+
+<span class="fc" id="L36">  private static final List&lt;IdentityColumn&gt; COMMON_IDENTITY =</span>
+<span class="fc" id="L37">      List.of(</span>
+          new IdentityColumn(&quot;firstName&quot;, Application::getFirstName),
+          new IdentityColumn(&quot;lastName&quot;, Application::getLastName),
+          new IdentityColumn(&quot;email&quot;, Application::getEmail),
+          new IdentityColumn(&quot;major&quot;, Application::getMajor));
+
+  /**
+   * The identity columns for a recruitment's type: the common four, class level for TAs, year in
+   * program and graduation date, then GPAs and previous ULA service for ULAs. No video links,
+   * middle names or admin comments.
+   */
+  public static List&lt;IdentityColumn&gt; identityColumns(RecruitmentType type) {
+<span class="fc" id="L49">    List&lt;IdentityColumn&gt; columns = new ArrayList&lt;&gt;(COMMON_IDENTITY);</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">    if (type == RecruitmentType.TA) {</span>
+<span class="fc" id="L51">      columns.add(new IdentityColumn(&quot;classLevel&quot;, Application::getClassLevel));</span>
+    }
+<span class="fc" id="L53">    columns.add(new IdentityColumn(&quot;yearInProgram&quot;, Application::getYearInProgram));</span>
+<span class="fc" id="L54">    columns.add(new IdentityColumn(&quot;graduationDate&quot;, Application::getGraduationDate));</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">    if (type == RecruitmentType.ULA) {</span>
+<span class="fc" id="L56">      columns.add(new IdentityColumn(&quot;gpaMajor&quot;, Application::getGpaMajor));</span>
+<span class="fc" id="L57">      columns.add(new IdentityColumn(&quot;gpaOverall&quot;, Application::getGpaOverall));</span>
+<span class="fc" id="L58">      columns.add(new IdentityColumn(&quot;previousServiceAsUla&quot;, Application::getPreviousServiceAsUla));</span>
+    }
+<span class="fc" id="L60">    return columns;</span>
+  }
+
+  /** Course id, then section, then enrollment code, a null reading as &quot;&quot; in each. */
+<span class="fc" id="L64">  public static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_SECTION_ENROLL =</span>
+<span class="fc" id="L65">      Comparator.comparing((RecruitmentCourse c) -&gt; ApplicationCsvService.text(c.getCourseId()))</span>
+<span class="fc" id="L66">          .thenComparing(c -&gt; ApplicationCsvService.text(c.getSection()))</span>
+<span class="fc" id="L67">          .thenComparing(c -&gt; ApplicationCsvService.text(c.getEnrollCode()));</span>
+
+  /** &quot;CMPSC 16 (section 0100, enroll 100)&quot;: how a section is named in the CSV. */
+  public static String label(RecruitmentCourse course) {
+<span class="fc" id="L71">    return &quot;%s (section %s, enroll %s)&quot;</span>
+<span class="fc" id="L72">        .formatted(</span>
+<span class="fc" id="L73">            ApplicationCsvService.text(course.getCourseId()),</span>
+<span class="fc" id="L74">            ApplicationCsvService.text(course.getSection()),</span>
+<span class="fc" id="L75">            ApplicationCsvService.text(course.getEnrollCode()));</span>
+  }
+
+  /**
+   * One section as the page shows it: the stored allocation, how many applicants are tentatively
+   * assigned to it, and how many places are left (negative when over-assigned). {@code historical}
+   * marks a section no longer on offer (removed, stale or cancelled) that is kept for its rankings.
+   */
+<span class="fc" id="L83">  public record CourseSummary(</span>
+      Long id,
+      String courseId,
+      String section,
+      String enrollCode,
+      Integer allocation,
+      int assigned,
+      int left,
+      boolean historical) {}
+
+  /**
+   * One applicant as the page shows them: the identity columns as text, keyed by header; the
+   * tentatively assigned recruitment course id, or null; and each section's rank, keyed by
+   * recruitment course id, only for sections that ranked them.
+   */
+<span class="fc" id="L98">  public record AssignmentRow(</span>
+      Long applicationId,
+      Map&lt;String, String&gt; identity,
+      Long tentativeAssignment,
+      Map&lt;Long, Integer&gt; rankings) {}
+
+  /** Everything the admin Assignments page needs for one recruitment. */
+<span class="fc" id="L105">  public record Assignments(</span>
+      Long recruitmentId,
+      RecruitmentType type,
+      List&lt;String&gt; identityHeaders,
+      List&lt;CourseSummary&gt; courses,
+      List&lt;AssignmentRow&gt; rows) {}
+
+  /**
+   * The applications that take part in assignments: every application to the recruitment that is
+   * neither a test application nor cancelled by the applicant, in the order they were created.
+   */
+  public List&lt;Application&gt; realApplications(Long recruitmentId) {
+<span class="fc" id="L117">    return real(applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));</span>
+  }
+
+  /** The given applications without test applications and without cancelled ones. */
+  public static List&lt;Application&gt; real(List&lt;Application&gt; applications) {
+<span class="fc" id="L122">    return applications.stream()</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        .filter(a -&gt; !a.isTestApplication())</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        .filter(a -&gt; a.getStatus() != ApplicationReviewStatus.CANCELLED)</span>
+<span class="fc" id="L125">        .toList();</span>
+  }
+
+  /** How many of the given applications are tentatively assigned to each recruitment course. */
+  public static Map&lt;Long, Integer&gt; assignedCounts(List&lt;Application&gt; applications) {
+<span class="fc" id="L130">    Map&lt;Long, Integer&gt; counts = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">      if (application.getTentativeAssignmentId() != null) {</span>
+<span class="fc" id="L133">        counts.merge(application.getTentativeAssignmentId(), 1, Integer::sum);</span>
+      }
+<span class="fc" id="L135">    }</span>
+<span class="fc" id="L136">    return counts;</span>
+  }
+
+  /** The ranks one section gave, keyed by application id. */
+  public Map&lt;Long, Integer&gt; ranksFor(RecruitmentCourse course) {
+<span class="fc" id="L141">    Map&lt;Long, Integer&gt; ranks = new HashMap&lt;&gt;();</span>
+    for (CandidateRanking ranking :
+<span class="fc bfc" id="L143" title="All 2 branches covered.">        candidateRankingRepository.findByRecruitmentCourseId(course.getId())) {</span>
+<span class="fc" id="L144">      ranks.put(ranking.getApplicationId(), ranking.getRank());</span>
+<span class="fc" id="L145">    }</span>
+<span class="fc" id="L146">    return ranks;</span>
+  }
+
+  /**
+   * The sections and applicants of the Assignments page. Every section not removed is a column; a
+   * removed section is kept only while it still has rankings or a tentative assignee, so nothing
+   * faculty entered disappears from view.
+   */
+  public Assignments assignments(Recruitment recruitment) {
+<span class="fc" id="L155">    List&lt;IdentityColumn&gt; identity = identityColumns(recruitment.getType());</span>
+<span class="fc" id="L156">    List&lt;Application&gt; applications = realApplications(recruitment.getId());</span>
+<span class="fc" id="L157">    Map&lt;Long, Integer&gt; assigned = assignedCounts(applications);</span>
+
+<span class="fc" id="L159">    List&lt;RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L160">        new ArrayList&lt;&gt;(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));</span>
+<span class="fc" id="L161">    courses.sort(BY_COURSE_SECTION_ENROLL);</span>
+
+<span class="fc" id="L163">    List&lt;CourseSummary&gt; summaries = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L164">    Map&lt;Long, Map&lt;Long, Integer&gt;&gt; ranksByCourse = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L166">      Map&lt;Long, Integer&gt; ranks = ranksFor(course);</span>
+<span class="fc" id="L167">      int count = assigned.getOrDefault(course.getId(), 0);</span>
+<span class="fc bfc" id="L168" title="All 6 branches covered.">      if (course.isRemoved() &amp;&amp; ranks.isEmpty() &amp;&amp; count == 0) {</span>
+<span class="fc" id="L169">        continue;</span>
+      }
+<span class="fc" id="L171">      ranksByCourse.put(course.getId(), ranks);</span>
+<span class="fc" id="L172">      summaries.add(</span>
+          new CourseSummary(
+<span class="fc" id="L174">              course.getId(),</span>
+<span class="fc" id="L175">              course.getCourseId(),</span>
+<span class="fc" id="L176">              course.getSection(),</span>
+<span class="fc" id="L177">              course.getEnrollCode(),</span>
+<span class="fc" id="L178">              course.getAllocation(),</span>
+              count,
+<span class="fc" id="L180">              course.getAllocation() - count,</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">              !course.isOnOffer()));</span>
+<span class="fc" id="L182">    }</span>
+
+<span class="fc" id="L184">    List&lt;AssignmentRow&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L185" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc" id="L186">      Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L187" title="All 2 branches covered.">      for (IdentityColumn column : identity) {</span>
+<span class="fc" id="L188">        fields.put(column.header(), ApplicationCsvService.text(column.value().apply(application)));</span>
+<span class="fc" id="L189">      }</span>
+<span class="fc" id="L190">      Map&lt;Long, Integer&gt; rankings = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L191">      ranksByCourse.forEach(</span>
+          (courseId, ranks) -&gt; {
+<span class="fc bfc" id="L193" title="All 2 branches covered.">            if (ranks.containsKey(application.getId())) {</span>
+<span class="fc" id="L194">              rankings.put(courseId, ranks.get(application.getId()));</span>
+            }
+<span class="fc" id="L196">          });</span>
+<span class="fc" id="L197">      rows.add(</span>
+          new AssignmentRow(
+<span class="fc" id="L199">              application.getId(), fields, application.getTentativeAssignmentId(), rankings));</span>
+<span class="fc" id="L200">    }</span>
+
+<span class="fc" id="L202">    return new Assignments(</span>
+<span class="fc" id="L203">        recruitment.getId(),</span>
+<span class="fc" id="L204">        recruitment.getType(),</span>
+<span class="fc" id="L205">        identity.stream().map(IdentityColumn::header).toList(),</span>
+        summaries,
+        rows);
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
