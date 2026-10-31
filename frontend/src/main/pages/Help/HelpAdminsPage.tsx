@@ -88,6 +88,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>Left</strong>, in red when more have been assigned than
           allocated; those numbers stay put when you sort.
         </p>
+        <p data-testid="HelpAdminsPage-interest-cells">
+          Each lecture&apos;s ranking cell is right-aligned and coloured by the
+          applicant&apos;s own interest in that lecture: light green for a first
+          or second choice (marked ➊ or ➋) or <em>Enthusiastic</em> (✓), pale
+          yellow for <em>Would Consider</em> (▬) and pale red for{" "}
+          <em>Not Interested/Not Applicable</em> (✖); the legend above the table
+          repeats this. Faculty see the same colours on their ranking page,
+          where candidates who marked a course Not Interested are listed only if
+          the instructor asks for them. Applications the student cancelled are
+          not rows here and cannot be assigned; the{" "}
+          <strong>Cancelled applications</strong> table at the bottom of the
+          page lists them with their reason.
+        </p>
         <p data-testid="HelpAdminsPage-tentative-assignment">
           Choosing a lecture in the dropdown (or the blank entry to clear it)
           saves at once and updates the counts. A tentative assignment is

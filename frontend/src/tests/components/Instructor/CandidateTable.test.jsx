@@ -375,4 +375,65 @@ describe("CandidateTable", () => {
     });
     expect(input()).toHaveValue(2);
   });
+
+  // ---- issue #199: interest colours and symbols, right-aligned ranks ----
+
+  test("the preference cell is coloured and marked by the applicant's interest", () => {
+    table({
+      candidates: [
+        ...candidatesFixtures,
+        {
+          ...candidatesFixtures[0],
+          applicationId: 98,
+          rank: null,
+          preference: "Would Consider",
+          firstName: "Barbara",
+          lastName: "Liskov",
+        },
+        {
+          ...candidatesFixtures[0],
+          applicationId: 99,
+          rank: null,
+          preference: "Not Interested",
+          firstName: "Edsger",
+          lastName: "Dijkstra",
+        },
+      ],
+    });
+
+    const cell = (id) => screen.getByTestId(`CandidateTable-preference-${id}`);
+    const mark = (id) =>
+      screen.getByTestId(`CandidateTable-preference-${id}-mark`);
+    expect(cell(1).style.backgroundColor).toBe("rgb(209, 231, 221)");
+    expect(cell(1)).toHaveTextContent("➊1st Choice");
+    expect(mark(1).style.fontSize).toBe("120%");
+    expect(cell(2).style.backgroundColor).toBe("rgb(209, 231, 221)");
+    expect(mark(2)).toHaveTextContent("➋");
+    expect(cell(98).style.backgroundColor).toBe("rgb(255, 243, 205)");
+    expect(mark(98)).toHaveTextContent("▬");
+    expect(mark(98)).toHaveAttribute(
+      "title",
+      "Applicant would consider this course",
+    );
+    expect(cell(99).style.backgroundColor).toBe("rgb(248, 215, 218)");
+    expect(mark(99)).toHaveTextContent("✖");
+    expect(cell(99)).toHaveTextContent("Not Interested");
+    // Not Interested sorts after every other preference.
+    expect(names().at(-1)).toBe("Edsger");
+    expect(names().at(-2)).toBe("Barbara");
+  });
+
+  test("the ranking column is right-aligned and the other cells are not", () => {
+    table();
+    const row = screen.getAllByRole("row")[1];
+    const cells = within(row).getAllByRole("cell");
+    expect(cells[0]).toHaveClass("text-end");
+    expect(cells[1]).not.toHaveClass("text-end");
+    expect(cells[2]).not.toHaveClass("text-end");
+    expect(cells[2]).not.toHaveAttribute("data-testid");
+    // Only the preference cell is coloured by interest.
+    expect(cells[1].style.backgroundColor).not.toBe("");
+    expect(cells[2].style.backgroundColor).toBe("");
+    expect(cells[0].style.backgroundColor).toBe("");
+  });
 });

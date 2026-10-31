@@ -4,7 +4,10 @@ import CandidateRankingPage from "main/pages/Instructor/CandidateRankingPage";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
-import candidatesFixtures from "fixtures/candidatesFixtures";
+import candidatesFixtures, {
+  candidatesWithNotInterested,
+} from "fixtures/candidatesFixtures";
+import cancelledApplicationsFixtures from "fixtures/cancelledApplicationsFixtures";
 
 /** The handlers every story shares; a variant puts its own override in front of them. */
 const handlers = [
@@ -17,8 +20,18 @@ const handlers = [
   http.get("/api/instructor/recruitments/1/courses/2/ranking", () =>
     HttpResponse.json(instructorRecruitmentsFixtures.candidateRankingPage),
   ),
-  http.get("/api/instructor/recruitments/1/courses/2/candidates", () =>
-    HttpResponse.json(candidatesFixtures),
+  // Ticking the box under the table asks for the Not Interested candidates too (issue #199).
+  http.get(
+    "/api/instructor/recruitments/1/courses/2/candidates",
+    ({ request }) =>
+      HttpResponse.json(
+        new URL(request.url).searchParams.get("includeNotInterested") === "true"
+          ? candidatesWithNotInterested
+          : candidatesFixtures,
+      ),
+  ),
+  http.get("/api/instructor/recruitments/1/courses/2/cancelled", () =>
+    HttpResponse.json(cancelledApplicationsFixtures.two),
   ),
   http.put(
     "/api/instructor/recruitments/1/courses/2/candidates/:id/rank",
@@ -50,6 +63,19 @@ WithAllocation.parameters = {
         HttpResponse.json(
           instructorRecruitmentsFixtures.candidateRankingPageWithAllocation,
         ),
+      ),
+      ...handlers,
+    ],
+  },
+};
+
+/** Nobody has cancelled: the table at the bottom is replaced by a sentence (issue #199). */
+export const NoCancelledApplications = Template.bind({});
+NoCancelledApplications.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/instructor/recruitments/1/courses/2/cancelled", () =>
+        HttpResponse.json(cancelledApplicationsFixtures.none),
       ),
       ...handlers,
     ],

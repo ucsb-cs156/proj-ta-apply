@@ -7,7 +7,6 @@ import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
-import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
@@ -17,6 +16,7 @@ import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.AssignmentsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -277,7 +277,7 @@ public class InstructorRecruitmentsController extends ApiController {
         .map(
             course -> {
               Set<Long> eligibleApplicationIds =
-                  eligible(applications, course).stream()
+                  eligible(applications, course, true).stream()
                       .map(Application::getId)
                       .collect(Collectors.toSet());
               long rankingCount =
@@ -367,43 +367,56 @@ public class InstructorRecruitmentsController extends ApiController {
   public static record RankEdit(Integer rank) {}
 
   static String preference(Application application, String courseId) {
-    if (courseId.equals(application.getFirstChoiceCourse())) return "1st Choice";
-    if (courseId.equals(application.getSecondChoiceCourse())) return "2nd Choice";
-    CourseInterest interest = application.getCourseInterests().get(courseId);
-    if (interest == CourseInterest.ENTHUSIASTIC) return "Enthusiastic";
-    if (interest == CourseInterest.WOULD_CONSIDER) return "Would Consider";
-    return null;
+    return AssignmentsService.preference(application, courseId);
   }
 
-  private List<Application> eligible(RankingScope scope) {
+  /**
+   * The applications a section may rank: real (not test) applications the applicant has not
+   * cancelled (issue #199), and, unless {@code includeNotInterested}, only those that expressed
+   * some interest in the course.
+   */
+  private List<Application> eligible(RankingScope scope, boolean includeNotInterested) {
     return eligible(
         applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()),
-        scope.course());
+        scope.course(),
+        includeNotInterested);
   }
 
-  private List<Application> eligible(List<Application> applications, RecruitmentCourse course) {
-    return applications.stream()
-        .filter(application -> !application.isTestApplication())
-        .filter(application -> preference(application, course.getCourseId()) != null)
+  private List<Application> eligible(
+      List<Application> applications, RecruitmentCourse course, boolean includeNotInterested) {
+    return AssignmentsService.real(applications).stream()
+        .filter(
+            application ->
+                includeNotInterested || preference(application, course.getCourseId()) != null)
         .toList();
   }
 
+  @Operation(
+      summary = "The candidates a section may rank",
+      description =
+          "Real applications the applicant has not cancelled. By default only applicants who"
+              + " expressed interest in the course (first or second choice, Enthusiastic or Would"
+              + " Consider); includeNotInterested=true adds the rest, with the preference \"Not"
+              + " Interested\" (issue #199).")
   @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
   @GetMapping("/{recruitmentId}/courses/{recruitmentCourseId}/candidates")
   public List<Candidate> candidates(
-      @PathVariable Long recruitmentId, @PathVariable Long recruitmentCourseId) {
+      @PathVariable Long recruitmentId,
+      @PathVariable Long recruitmentCourseId,
+      @Parameter(name = "includeNotInterested") @RequestParam(defaultValue = "false")
+          boolean includeNotInterested) {
     RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);
     Map<Long, Integer> ranks = new HashMap<>();
     candidateRankingRepository
         .findByRecruitmentCourseId(recruitmentCourseId)
         .forEach(row -> ranks.put(row.getApplicationId(), row.getRank()));
-    return eligible(scope).stream()
+    return eligible(scope, includeNotInterested).stream()
         .map(
             application ->
                 new Candidate(
                     application.getId(),
                     ranks.get(application.getId()),
-                    preference(application, scope.course().getCourseId()),
+                    preferenceLabel(application, scope.course().getCourseId()),
                     application.getFirstName(),
                     application.getLastName(),
                     application.getEmail(),
@@ -418,6 +431,29 @@ public class InstructorRecruitmentsController extends ApiController {
         .toList();
   }
 
+  /**
+   * The preference as shown: "Not Interested" rather than null for an applicant who marked none.
+   */
+  private static String preferenceLabel(Application application, String courseId) {
+    String preference = preference(application, courseId);
+    return preference == null ? AssignmentsService.NOT_INTERESTED : preference;
+  }
+
+  @Operation(
+      summary = "The recruitment's cancelled applications, as the ranking page lists them",
+      description =
+          "Name, email and the applicant's reason, so faculty can see what became of an applicant"
+              + " they expected among the candidates (issue #199). Same access rules as the"
+              + " candidates.")
+  @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
+  @GetMapping("/{recruitmentId}/courses/{recruitmentCourseId}/cancelled")
+  public List<AssignmentsService.CancelledApplication> cancelled(
+      @PathVariable Long recruitmentId, @PathVariable Long recruitmentCourseId) {
+    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);
+    return AssignmentsService.cancelled(
+        applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()));
+  }
+
   @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
   @PutMapping("/{recruitmentId}/courses/{recruitmentCourseId}/candidates/{applicationId}/rank")
   public RankEdit rank(
@@ -426,7 +462,8 @@ public class InstructorRecruitmentsController extends ApiController {
       @PathVariable Long applicationId,
       @RequestBody JsonNode body) {
     RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, true);
-    List<Application> applications = eligible(scope);
+    // Anyone the instructor can list, with or without the not-interested box ticked, can be ranked.
+    List<Application> applications = eligible(scope, true);
     requireCandidate(applications, applicationId);
     JsonNode value = body.get("rank");
     if (value == null
@@ -478,7 +515,7 @@ public class InstructorRecruitmentsController extends ApiController {
       @PathVariable Long recruitmentCourseId,
       @PathVariable Long applicationId) {
     RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);
-    Application a = requireCandidate(eligible(scope), applicationId);
+    Application a = requireCandidate(eligible(scope, true), applicationId);
     return new CandidateApplication(
         a.getId(),
         a.getRecruitmentId(),

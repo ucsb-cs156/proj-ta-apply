@@ -2,6 +2,7 @@ import React from "react";
 import { HttpResponse, http } from "msw";
 import AdminAssignmentsPage from "main/pages/Admin/AdminAssignmentsPage";
 import assignmentsFixtures from "fixtures/assignmentsFixtures";
+import cancelledApplicationsFixtures from "fixtures/cancelledApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
@@ -21,6 +22,9 @@ const handlers = (page, after) => [
     ]),
   ),
   http.get("/api/admin/assignments", () => HttpResponse.json(page)),
+  http.get("/api/admin/assignments/cancelled", () =>
+    HttpResponse.json(cancelledApplicationsFixtures.two),
+  ),
   http.put("/api/admin/assignments/tentative", () => HttpResponse.json(after)),
 ];
 

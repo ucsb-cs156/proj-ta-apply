@@ -61,6 +61,24 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           name to open the full, read-only application in a new tab, without
           staff-only notes or editing controls.
         </p>
+        <p data-testid="HelpInstructorsPage-interest">
+          The <strong>Course Preference</strong> cell of each candidate is
+          coloured by their own interest in your course: light green for a first
+          or second choice (marked ➊ or ➋) or <em>Enthusiastic</em> (✓), pale
+          yellow for <em>Would Consider</em> (▬) and pale red for{" "}
+          <em>Not Interested/Not Applicable</em> (✖); the legend above the table
+          repeats this. Candidates who marked your course Not Interested/Not
+          Applicable are left out until you tick{" "}
+          <strong>
+            Include candidates that marked my course with &quot;Not
+            Interested/Not Applicable&quot;
+          </strong>{" "}
+          under the table; a red warning then asks you to consider whether you
+          should rank them at all. Applicants who cancelled their application
+          are never candidates; the <strong>Cancelled applications</strong>{" "}
+          table at the bottom of the page lists them with their reason, so you
+          can tell what became of someone you expected to see.
+        </p>
         <p data-testid="HelpInstructorsPage-assignments">
           When the admins have settled who is hired, the recruitment card gains
           an <strong>Assignments Published</strong> badge and an{" "}

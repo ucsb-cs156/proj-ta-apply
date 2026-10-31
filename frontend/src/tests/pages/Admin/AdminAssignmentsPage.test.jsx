@@ -8,6 +8,7 @@ import { vi } from "vitest";
 
 import AdminAssignmentsPage from "main/pages/Admin/AdminAssignmentsPage";
 import assignmentsFixtures from "fixtures/assignmentsFixtures";
+import cancelledApplicationsFixtures from "fixtures/cancelledApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
@@ -74,6 +75,9 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     axiosMock
       .onPut("/api/admin/assignments/tentative")
       .reply(200, assignmentsFixtures.taPageAfterMove);
+    axiosMock
+      .onGet("/api/admin/assignments/cancelled")
+      .reply(200, cancelledApplicationsFixtures.two);
   });
 
   test("heads the page with the recruitment, explains it, and asks for the recruitment's assignments", async () => {
@@ -227,5 +231,47 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(
       screen.queryByTestId("AdminAssignmentsPage-table-cell-row-0-col-email"),
     ).toBeNull();
+  });
+
+  // ---- issue #199 ----
+
+  test("shows the legend and the cancelled applications of the recruitment", async () => {
+    renderPage();
+
+    const cancelled = await screen.findByTestId(
+      "AdminAssignmentsPage-cancelled-table-cell-row-0-col-name",
+    );
+    expect(cancelled).toHaveTextContent("Grace Hopper");
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-cancelled-why"),
+    ).toHaveTextContent("cannot be assigned");
+    const gets = axiosMock.history.get.filter(
+      (r) => r.url === "/api/admin/assignments/cancelled",
+    );
+    expect(gets).toHaveLength(1);
+    expect(gets[0].params).toEqual({ recruitmentId: "7" });
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-legend"),
+    ).toBeInTheDocument();
+    // Legend above the table, cancelled list below it.
+    const table = screen.getByTestId("AdminAssignmentsPage-table");
+    expect(
+      screen
+        .getByTestId("AdminAssignmentsPage-legend")
+        .compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      table.compareDocumentPosition(
+        screen.getByTestId("AdminAssignmentsPage-cancelled"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("says so when nobody has cancelled", async () => {
+    axiosMock.onGet("/api/admin/assignments/cancelled").reply(200, []);
+    renderPage();
+    expect(
+      await screen.findByTestId("AdminAssignmentsPage-cancelled-empty"),
+    ).toHaveTextContent("No applicant has cancelled their application.");
   });
 });
