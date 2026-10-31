@@ -6,24 +6,24 @@ import type { Application } from "main/components/Applications/ApplicationTable"
 import {
   adminApplicationEditPath,
   adminApplicationPath,
-  submittedText,
 } from "main/utils/adminApplications";
+import {
+  applicationColumns,
+  show,
+  type ApplicationColumn,
+} from "main/utils/applicationColumns";
 
 type AdminApplicationTableProps = {
   applications: Application[];
   /** TA and ULA applications answer different questions, so the columns differ. */
   type: "TA" | "ULA";
+  /** Column ids the admin has hidden (issue #189); see applicationColumns. */
+  hiddenColumns?: string[];
   testIdPrefix?: string;
 };
 
-const CLASS_LEVEL_LABELS: Record<string, string> = { PHD: "PhD", MS: "MS" };
-
-/** Blank rather than "null", like the summary. */
-const show = (value: unknown): string =>
-  value === null || value === undefined ? "" : String(value);
-
 /**
- * A heading on two lines, so the column is no wider than its dates (issue #109). The space before
+ * A heading on two lines, so the column is no wider than its values (issue #109). The space before
  * the break keeps the heading's text ("Expected Graduation") whole for screen readers and tests.
  */
 const stacked = (top: string, bottom: string): React.JSX.Element => (
@@ -33,38 +33,31 @@ const stacked = (top: string, bottom: string): React.JSX.Element => (
   </>
 );
 
+const shrinkToContent = {
+  style: { width: "1%", whiteSpace: "nowrap" as const },
+};
+
+/** A column from the catalogue: its heading, its value and whether it shrinks to its content. */
+const toLegacyColumn = (column: ApplicationColumn): LegacyColumn => ({
+  header: column.stacked ? stacked(...column.stacked) : column.label,
+  id: column.id,
+  accessorFn: column.value,
+  ...(column.shrink ? { meta: shrinkToContent } : {}),
+});
+
 /**
- * An admin's overview of the applications to one recruitment: a few columns per application, with
- * the id and a View button linking to the full read-only application and an Edit button to the
- * admin's edit form. Test applications an admin entered are listed too, marked as such, so the
- * admin can tell them from the real ones.
+ * An admin's overview of the applications to one recruitment (issue #189): the id, View and Edit
+ * buttons and the name first, then the submission time and every answer on the form, each a
+ * column the admin can hide or show. The table takes its natural width. Test applications an
+ * admin entered are listed too, marked as such, so the admin can tell them from the real ones.
  */
 export default function AdminApplicationTable({
   applications,
   type,
+  // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
+  hiddenColumns = [],
   testIdPrefix = "AdminApplicationTable",
 }: AdminApplicationTableProps): React.JSX.Element {
-  const shrinkToContent = {
-    style: { width: "1%", whiteSpace: "nowrap" as const },
-  };
-
-  const typeColumn: LegacyColumn =
-    type === "TA"
-      ? {
-          header: "Level",
-          id: "classLevel",
-          accessorFn: (application: Application) =>
-            CLASS_LEVEL_LABELS[show(application.classLevel)] ?? "",
-          meta: shrinkToContent,
-        }
-      : {
-          header: stacked("Expected", "Graduation"),
-          id: "graduationDate",
-          accessorFn: (application: Application) =>
-            show(application.graduationDate),
-          meta: shrinkToContent,
-        };
-
   const columns: LegacyColumn[] = [
     {
       header: "id",
@@ -94,39 +87,9 @@ export default function AdminApplicationTable({
       },
     },
     {
-      header: "Submitted",
-      id: "submittedAt",
-      accessorKey: "submittedAt",
-      meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<Application, unknown> }) =>
-        submittedText(cell.row.original.submittedAt),
-    },
-    {
-      header: "Name",
-      id: "name",
-      accessorFn: (application: Application) =>
-        [application.firstName, application.middleName, application.lastName]
-          .filter((part) => show(part) !== "")
-          .join(" "),
-    },
-    {
-      header: "Major",
-      id: "major",
-      accessorFn: (application: Application) => show(application.major),
-    },
-    typeColumn,
-    // The email, in place of the two course choices (issue #109): the choices are on the
-    // application itself, while the email is how an admin finds or contacts the applicant.
-    {
-      header: "Email",
-      id: "email",
-      accessorFn: (application: Application) => show(application.email),
-      meta: shrinkToContent,
-    },
-    {
+      // No accessor, so TanStack never offers to sort View or Edit.
       header: "View",
       id: "view",
-      enableSorting: false,
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<Application, unknown> }) => (
         <Link
@@ -141,7 +104,6 @@ export default function AdminApplicationTable({
     {
       header: "Edit",
       id: "edit",
-      accessorKey: "id",
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<Application, unknown> }) => (
         <Link
@@ -153,6 +115,16 @@ export default function AdminApplicationTable({
         </Link>
       ),
     },
+    {
+      header: "Name",
+      id: "name",
+      meta: shrinkToContent,
+      accessorFn: (application: Application) =>
+        [application.firstName, application.middleName, application.lastName]
+          .filter((part) => show(part) !== "")
+          .join(" "),
+    },
+    ...applicationColumns(type).map(toLegacyColumn),
   ];
 
   return (
@@ -160,6 +132,10 @@ export default function AdminApplicationTable({
       data={Array.isArray(applications) ? applications : []}
       columns={columns}
       testid={testIdPrefix}
+      fitContent
+      columnVisibility={Object.fromEntries(
+        hiddenColumns.map((id) => [id, false]),
+      )}
     />
   );
 }

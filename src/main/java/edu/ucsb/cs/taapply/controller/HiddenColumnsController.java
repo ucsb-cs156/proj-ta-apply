@@ -8,8 +8,10 @@ import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,9 +21,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Which columns are hidden on a recruitment's tables (issue #185). The frontend asks for the list
- * when a page opens and tells the backend each time a column is hidden or shown; both calls answer
- * with the current list of hidden column ids, sorted.
+ * Which columns are hidden on a recruitment's tables (issues #185 and #189). The frontend asks for
+ * the list when a page opens and tells the backend each time a column is hidden or shown, or
+ * replaces the whole set when a table is first opened; every call answers with the current list of
+ * hidden column ids, sorted.
  */
 @Tag(name = "Hidden columns")
 @RequestMapping("/api/admin/hiddencolumns")
@@ -66,6 +69,42 @@ public class HiddenColumnsController extends ApiController {
               .build());
     } else if (!hidden && existing.isPresent()) {
       hiddenColumnRepository.delete(existing.get());
+    }
+    return columnIds(tableKey, recruitmentId);
+  }
+
+  @Operation(
+      summary = "Replace the whole set of hidden columns on one of a recruitment's tables",
+      description =
+          "Every column named becomes hidden and every other one shown, in one call: used when"
+              + " a table is first opened to put its default-hidden columns on file. Returns the"
+              + " ids now hidden.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PutMapping("/all")
+  public List<String> replaceHidden(
+      @Parameter(name = "tableKey") @RequestParam String tableKey,
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
+      @Parameter(name = "columnIds", description = "Comma-separated; may be empty")
+          @RequestParam(defaultValue = "")
+          List<String> columnIds) {
+    requireRecruitment(recruitmentId);
+    List<HiddenColumn> existing =
+        hiddenColumnRepository.findByTableKeyAndRecruitmentIdOrderByColumnIdAsc(
+            tableKey, recruitmentId);
+    Set<String> wanted = new LinkedHashSet<>(columnIds);
+    wanted.remove("");
+    for (HiddenColumn row : existing) {
+      if (!wanted.remove(row.getColumnId())) {
+        hiddenColumnRepository.delete(row);
+      }
+    }
+    for (String columnId : wanted) {
+      hiddenColumnRepository.save(
+          HiddenColumn.builder()
+              .tableKey(tableKey)
+              .recruitmentId(recruitmentId)
+              .columnId(columnId)
+              .build());
     }
     return columnIds(tableKey, recruitmentId);
   }

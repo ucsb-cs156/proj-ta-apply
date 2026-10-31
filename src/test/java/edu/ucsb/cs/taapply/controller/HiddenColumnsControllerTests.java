@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -213,6 +214,99 @@ public class HiddenColumnsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(put(PUT_URL + "&hidden=true").with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    assertEquals("Recruitment with id 7 not found", responseToJson(response).get("message"));
+    verify(hiddenColumnRepository, never()).save(any());
+    verify(hiddenColumnRepository, never()).delete(any());
+  }
+
+  // ---- PUT /all (issue #189) ----
+
+  private static final String ALL_URL =
+      "/api/admin/hiddencolumns/all?tableKey=recruitmentApplications&recruitmentId=7";
+
+  @Test
+  public void logged_out_users_cannot_replace_the_hidden_columns() throws Exception {
+    mockMvc.perform(put(ALL_URL + "&columnIds=a,b").with(csrf())).andExpect(status().is(403));
+    verify(hiddenColumnRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_replace_the_hidden_columns() throws Exception {
+    mockMvc.perform(put(ALL_URL + "&columnIds=a,b").with(csrf())).andExpect(status().is(403));
+    verify(hiddenColumnRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void replacing_saves_the_new_ids_deletes_the_rest_and_keeps_the_ones_in_both()
+      throws Exception {
+    recruitmentExists();
+    HiddenColumn days = hidden(1L, "days");
+    HiddenColumn room = hidden(2L, "room");
+    days.setTableKey("recruitmentApplications");
+    room.setTableKey("recruitmentApplications");
+    when(hiddenColumnRepository.findByTableKeyAndRecruitmentIdOrderByColumnIdAsc(
+            "recruitmentApplications", 7L))
+        .thenReturn(List.of(days, room))
+        .thenReturn(List.of(hidden(3L, "_defaults"), hidden(4L, "gpaMajor"), room));
+
+    MvcResult response =
+        mockMvc
+            .perform(put(ALL_URL + "&columnIds=room,gpaMajor,_defaults,room").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    verify(hiddenColumnRepository).delete(days);
+    verify(hiddenColumnRepository, never()).delete(room);
+    ArgumentCaptor<HiddenColumn> saved = ArgumentCaptor.forClass(HiddenColumn.class);
+    verify(hiddenColumnRepository, times(2)).save(saved.capture());
+    assertEquals(
+        List.of("gpaMajor", "_defaults"),
+        saved.getAllValues().stream().map(HiddenColumn::getColumnId).toList());
+    saved
+        .getAllValues()
+        .forEach(
+            row -> {
+              assertEquals("recruitmentApplications", row.getTableKey());
+              assertEquals(7L, row.getRecruitmentId());
+            });
+    assertEquals(
+        "[\"_defaults\",\"gpaMajor\",\"room\"]", response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void replacing_with_nothing_shows_every_column() throws Exception {
+    recruitmentExists();
+    HiddenColumn room = hidden(2L, "room");
+    when(hiddenColumnRepository.findByTableKeyAndRecruitmentIdOrderByColumnIdAsc(
+            "recruitmentApplications", 7L))
+        .thenReturn(List.of(room))
+        .thenReturn(List.of());
+
+    MvcResult response =
+        mockMvc.perform(put(ALL_URL).with(csrf())).andExpect(status().isOk()).andReturn();
+
+    verify(hiddenColumnRepository).delete(room);
+    verify(hiddenColumnRepository, never()).save(any());
+    assertEquals("[]", response.getResponse().getContentAsString());
+
+    mockMvc.perform(put(ALL_URL + "&columnIds=").with(csrf())).andExpect(status().isOk());
+    verify(hiddenColumnRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void replacing_the_hidden_columns_of_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(put(ALL_URL + "&columnIds=a").with(csrf()))
             .andExpect(status().isNotFound())
             .andReturn();
 
