@@ -138,10 +138,10 @@ public class HomePageWebIT extends WebTestCase {
     // Only the instructor's own course, not the colleague's.
     assertThat(page.getByTestId(card + "-courses")).not().containsText("130A");
 
-    // The accordion opens to the placeholder.
+    // Reviews have not started, so no ranking action is offered yet.
     page.getByTestId(header).getByRole(com.microsoft.playwright.options.AriaRole.BUTTON).click();
     assertThat(page.getByTestId(card + "-course-" + mine.getId() + "-body"))
-        .containsText("(Coming soon: options to review and rank applicants)");
+        .containsText("Candidate rankings will be available when faculty reviews open.");
     assertThat(page.getByTestId("HomePageLoggedIn-instructor-none")).not().isVisible();
   }
 }
