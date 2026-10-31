@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
@@ -473,7 +474,10 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             put("/api/admin/recruitments/reviewStatus?id=1&status=Open"
                     + "&facultyRankingDeadline=2026-02-01")
                 .with(csrf()))
-        .andExpect(status().isOk());
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.reviewStatus").value("Open"))
+        .andExpect(jsonPath("$.facultyRankingDeadline").value("2026-02-01"));
 
     verify(recruitmentRepository, never()).save(any());
     verify(recruitmentAuditService, never()).snapshot(any());
@@ -495,7 +499,9 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             put("/api/admin/recruitments/facultyRankingDeadline?id=1"
                     + "&facultyRankingDeadline=2026-02-15")
                 .with(csrf()))
-        .andExpect(status().isOk());
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.facultyRankingDeadline").value("2026-02-15"));
     assertEquals(LocalDate.of(2026, 2, 15), r.getFacultyRankingDeadline());
     verify(recruitmentRepository).save(r);
     verify(recruitmentAuditService).recordChanges(before, r);
@@ -506,7 +512,9 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             put("/api/admin/recruitments/facultyRankingDeadline?id=1"
                     + "&facultyRankingDeadline=2026-02-15")
                 .with(csrf()))
-        .andExpect(status().isOk());
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.facultyRankingDeadline").value("2026-02-15"));
     verify(recruitmentRepository, times(1)).save(any());
     verify(recruitmentAuditService, times(1)).snapshot(any());
     verify(recruitmentAuditService, times(1)).recordChanges(any(), any());

@@ -116,7 +116,20 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
 
   private String applicantJson(List<Recruitment> recruitments) throws Exception {
     return mapper.writeValueAsString(
-        recruitments.stream().map(ApplicantRecruitmentDto::from).toList());
+        recruitments.stream()
+            .map(
+                r ->
+                    new ApplicantRecruitmentDto(
+                        r.getId(),
+                        r.getQuarter(),
+                        r.getType(),
+                        r.getApplicationStatus(),
+                        r.getTentativeOpeningDate(),
+                        r.getPrimaryConsiderationDate(),
+                        r.getActualOpeningDate(),
+                        r.getActualClosingDate(),
+                        r.getLastPopulatedAt()))
+            .toList());
   }
 
   // ---- authorization ----
