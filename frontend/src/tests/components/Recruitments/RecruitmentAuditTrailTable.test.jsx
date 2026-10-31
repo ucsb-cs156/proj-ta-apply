@@ -83,4 +83,29 @@ describe("RecruitmentAuditTrailTable tests", () => {
       screen.queryByTestId("RecruitmentAuditTrailTable-cell-row-0-col-id"),
     ).toBeNull();
   });
+
+  test("the table takes its natural width, so Old Value and New Value are no wider than their values (issue #201)", () => {
+    render(
+      <RecruitmentAuditTrailTable
+        rows={recruitmentAuditTrailFixtures.threeRows}
+      />,
+    );
+
+    const table = screen.getByTestId("RecruitmentAuditTrailTable");
+    expect(table).toHaveClass("w-auto");
+    expect(table).toHaveClass("table", "table-striped", "table-bordered");
+    // The leading columns shrink to their content; the value columns are left to their contents.
+    ["id", "changedAt", "whatChanged"].forEach((id) => {
+      expect(
+        screen.getByTestId(`RecruitmentAuditTrailTable-header-${id}`).style
+          .width,
+      ).toBe("1%");
+    });
+    ["oldValue", "newValue"].forEach((id) => {
+      expect(
+        screen.getByTestId(`RecruitmentAuditTrailTable-header-${id}`).style
+          .width,
+      ).toBe("");
+    });
+  });
 });

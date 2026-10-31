@@ -33,7 +33,11 @@ type RecruitmentAuditTrailTableProps = {
 const show = (value: unknown): string =>
   value === null || value === undefined ? "" : String(value);
 
-/** The changes to one recruitment, as served: the page decides the order and the paging. */
+/**
+ * The changes to one recruitment, as served: the page decides the order and the paging. The table
+ * is sized to its content (issue #201), so Old Value and New Value are only as wide as their
+ * values and any slack is left on the right.
+ */
 export default function RecruitmentAuditTrailTable({
   rows,
   testIdPrefix = "RecruitmentAuditTrailTable",
@@ -82,6 +86,7 @@ export default function RecruitmentAuditTrailTable({
       columns={columns}
       testid={testIdPrefix}
       enableSorting={false}
+      fitContent
     />
   );
 }
