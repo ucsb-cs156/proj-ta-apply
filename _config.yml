@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"ux/198-quiet-toasts-when-logged-out","number":204,"title":"Quiet the backend-error toasts when the session is gone or the server is unreachable (closes #198)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/204"}]
+pull_requests: []
