@@ -209,6 +209,56 @@ As tentativeAssignments are made, the values at the top of each course column sh
 
 Once these features are in place, the CSV download should be modified to include these extra rows and columns.
 
+# Increment 7: Allow Admin to publish assignments
+
+When the admin is satisfied that the tentative assignments are final, there should be a button on the RecruitmentCourses page at the very bottom that says: "Publish Assignments".
+
+Clicking this will bring up a modal that says: 
+
+> Proceeding will create a new page that shows the table of Assignments, with all courses, and information about the TAs (or ULAs) hired, and make this available to admins and faculty.  It will also unlock the ability to download a CSV file of assignments to pass off to the financial office to start hiring paperwork.
+>
+> It is still possible to update assignments after this point, but it's best to wait on this step until most assignments are
+> finalized
+>
+> Proceed? [Yes] [No]
+
+Store the value of this field, assignmentsPublished, on the recruitment.  Boolean, default value false.
+
+When assignments are published, show this as a badge on the Admin and Instructor views, and provide a button labelled "Assignments".
+
+It should bring up a read only page visible to both Admins and Instructors.   
+
+On this page, there should be a radio button to select two options: 
+* () One Row per course
+* () One Row per TA/ULA
+
+The one row per course view should have these columns:
+* Course number (e.g. CMPSC 5A)
+* Instructor name (in format shown in catalog)
+* Instructor email
+* TA/ULA 1
+* TA/ULA 2
+* TA/ULA 3
+* etc.
+
+The TA/ULA columns should simply be labelled TA or ULA without the numbers.  The contents should be a single string that is `{FirstName} {LastName} ((emailAddress})`.
+
+The one row per TA/ULA view should have these columns:
+
+* First name
+* Last name
+* email
+* Course assignment (e.g. CMPSC 5A)
+* Course instructor (in Catalog format)
+* Course instructor email
+
+In addition, for the ULAs, one additional column:
+
+* First time ULA (value is either yes or no, depending on self-reported previous quarters of ULA experience).
+
+There should be buttons: [Download CSV (row per course)] [Download CSV (row per student)]
+
+
 
 
 
