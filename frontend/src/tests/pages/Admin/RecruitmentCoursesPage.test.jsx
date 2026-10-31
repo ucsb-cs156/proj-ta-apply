@@ -67,6 +67,8 @@ describe("RecruitmentCoursesPage tests", () => {
     axiosMock
       .onGet("/api/systemInfo")
       .reply(200, systemInfoFixtures.showingNeither);
+    axiosMock.onGet("/api/admin/hiddencolumns").reply(200, []);
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, []);
     axiosMock
       .onPost("/api/jobs/launch/populateRecruitmentCourses")
       .reply(200, { id: 1 });
@@ -201,7 +203,6 @@ describe("RecruitmentCoursesPage tests", () => {
       "RecruitmentCoursesPage-header-delta",
       "RecruitmentCoursesPage-header-ratio",
       "RecruitmentCoursesPage-header-status",
-      "RecruitmentCoursesPage-header-summerSession",
       "RecruitmentCoursesPage-header-removed",
     ]);
 
@@ -1173,5 +1174,117 @@ describe("RecruitmentCoursesPage tests", () => {
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-allocation-visibility"),
     ).toBeNull();
+  });
+
+  // ---- Issue #185: hiding and showing columns ----
+
+  test("asks the backend which columns are hidden and leaves them out of the table", async () => {
+    axiosMock.onGet("/api/admin/hiddencolumns").reply(200, ["room", "days"]);
+    renderPage();
+
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    const gets = axiosMock.history.get.filter(
+      (r) => r.url === "/api/admin/hiddencolumns",
+    );
+    expect(gets).toHaveLength(1);
+    expect(gets[0].params).toEqual({
+      tableKey: "recruitmentCourses",
+      recruitmentId: "7",
+    });
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("RecruitmentCoursesPage-header-room"),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-header-days"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-header-time"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-columns-toggle"),
+    ).toHaveTextContent("Columns (2 hidden)");
+  });
+
+  test("unticking a column in the Columns menu hides it on the backend and re-reads the list", async () => {
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, ["room"]);
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    const getsBefore = axiosMock.history.get.filter(
+      (r) => r.url === "/api/admin/hiddencolumns",
+    ).length;
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-columns-toggle"),
+    );
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-columns-room"),
+    );
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter(
+          (r) => r.url === "/api/admin/hiddencolumns",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find((r) => r.url === "/api/admin/hiddencolumns")
+        .params,
+    ).toEqual({
+      tableKey: "recruitmentCourses",
+      recruitmentId: "7",
+      columnId: "room",
+      hidden: true,
+    });
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/hiddencolumns",
+        ).length,
+      ).toBeGreaterThan(getsBefore),
+    );
+  });
+
+  test("the Columns menu offers the Rankings column once reviews start, and never the course number", async () => {
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, [{ ...recruitmentsFixtures.threeRecruitments[1], id: 7 }]);
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-ranking-link");
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-columns-toggle"),
+    );
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-columns-rankingCount"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-columns-courseId"),
+    ).not.toBeInTheDocument();
+    // A winter recruitment has no Summer Session column to hide.
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-columns-summerSession"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("a summer recruitment has the Summer Session column and offers to hide it", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+      {
+        ...recruitmentsFixtures.threeRecruitments[2],
+        id: 7,
+        quarter: "20263",
+      },
+    ]);
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-header-summerSession");
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-columns-toggle"),
+    );
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-columns-summerSession"),
+    ).toBeInTheDocument();
   });
 });

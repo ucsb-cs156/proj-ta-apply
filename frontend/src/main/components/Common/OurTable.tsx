@@ -7,6 +7,7 @@ import {
   useReactTable,
   type Cell,
   type ColumnDef,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import { Button } from "react-bootstrap";
 import SortCaret from "main/components/Common/SortCaret";
@@ -31,6 +32,13 @@ type OurTableProps<T extends object> = {
    * so each column has its natural width and the slack is left on the right (issue #84).
    */
   fitContent?: boolean;
+  /**
+   * Columns to leave out, by id, as TanStack's visibility state: `{ room: false }` hides the
+   * Room column, cells, footer and all (issue #185). Columns not named are shown.
+   */
+  columnVisibility?: VisibilityState;
+  /** Centre every heading in its cell (issue #185); cells keep their own alignment. */
+  centerHeaders?: boolean;
 };
 
 export default function OurTable<T extends object>({
@@ -39,6 +47,8 @@ export default function OurTable<T extends object>({
   testid = "testid",
   enableSorting = true,
   fitContent = false,
+  columnVisibility = {},
+  centerHeaders = false,
 }: OurTableProps<T>): React.JSX.Element {
   const newColumns = convertOldStyleColumnsToNewStyle(columns);
   const memoizedData = useMemo(() => data, [data]);
@@ -54,6 +64,7 @@ export default function OurTable<T extends object>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     enableSorting,
+    state: { columnVisibility },
   });
 
   return (
@@ -73,7 +84,14 @@ export default function OurTable<T extends object>({
                 data-testid={`${testid}-header-${header.column.id}`}
                 key={`${testid}-header-${header.column.id}`}
                 colSpan={header.colSpan}
-                style={styleOf(header.column.columnDef.meta)}
+                style={
+                  centerHeaders
+                    ? {
+                        ...styleOf(header.column.columnDef.meta),
+                        textAlign: "center",
+                      }
+                    : styleOf(header.column.columnDef.meta)
+                }
               >
                 {header.isPlaceholder ? null : (
                   <div
