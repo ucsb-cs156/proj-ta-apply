@@ -9,6 +9,7 @@ import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
 import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.AllocationService;
 import edu.ucsb.cs.taapply.services.RecruitmentCoursesRefreshService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,6 +38,7 @@ public class RecruitmentCoursesController extends ApiController {
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired UCSBCurriculumService ucsbCurriculumService;
   @Autowired RecruitmentCoursesRefreshService recruitmentCoursesRefreshService;
+  @Autowired AllocationService allocationService;
 
   /**
    * Course id first, then section, so a course's several lectures sit together in order.
@@ -148,7 +150,17 @@ public class RecruitmentCoursesController extends ApiController {
 
     course.setRemoved(removed);
     recruitmentCourseRepository.save(course);
+    // A removed section leaves the total of the estimates, so every share changes (issue #176).
+    allocationService.recompute(recruitmentOf(course));
     return course;
+  }
+
+  /** The recruitment a row belongs to; the row's foreign key makes it exist. */
+  private Recruitment recruitmentOf(RecruitmentCourse course) {
+    return recruitmentRepository
+        .findById(course.getRecruitmentId())
+        .orElseThrow(
+            () -> new EntityNotFoundException(Recruitment.class, course.getRecruitmentId()));
   }
 
   @Operation(
@@ -196,6 +208,8 @@ public class RecruitmentCoursesController extends ApiController {
 
     int refreshed = recruitmentCoursesRefreshService.refresh(recruitment);
     log.info("Refreshed {} course(s) of recruitment {}", refreshed, recruitmentId);
+    // Also fills in the share of any row Populate has added since the last change (issue #176).
+    allocationService.recompute(recruitment);
     return allForRecruitment(recruitmentId, false);
   }
 
@@ -223,6 +237,7 @@ public class RecruitmentCoursesController extends ApiController {
 
     course.setEnrollmentEstimate(enrollmentEstimate);
     recruitmentCourseRepository.save(course);
+    allocationService.recompute(recruitmentOf(course));
     return course;
   }
 
@@ -239,9 +254,10 @@ public class RecruitmentCoursesController extends ApiController {
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
       @Parameter(name = "source") @RequestParam EnrollmentEstimateSource source) {
 
-    if (!recruitmentRepository.existsById(recruitmentId)) {
-      throw new EntityNotFoundException(Recruitment.class, recruitmentId);
-    }
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
 
     for (RecruitmentCourse row : recruitmentCourseRepository.findByRecruitmentId(recruitmentId)) {
       if (row.isRemoved()) {
@@ -254,6 +270,30 @@ public class RecruitmentCoursesController extends ApiController {
         recruitmentCourseRepository.save(row);
       }
     }
+    allocationService.recompute(recruitment);
+    return allForRecruitment(recruitmentId, false);
+  }
+
+  @Operation(
+      summary = "Allocate the hiring target across the sections by enrollment estimate",
+      description =
+          "Overwrites every non-removed section's allocation with a first cut at the"
+              + " recruitment's total hiring target, shared out by enrollment estimate (issue"
+              + " #176): each section's fractional share rounded, then adjusted one at a time"
+              + " (the section furthest above its share loses one, or furthest below gains one)"
+              + " until the total is exactly the target. Returns the current list without removed"
+              + " rows. 404 for an unknown recruitment.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/autoAllocate")
+  public List<RecruitmentCourse> autoAllocate(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+
+    allocationService.autoAllocate(recruitment);
     return allForRecruitment(recruitmentId, false);
   }
 }

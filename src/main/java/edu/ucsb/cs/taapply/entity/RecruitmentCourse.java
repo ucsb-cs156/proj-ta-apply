@@ -109,6 +109,15 @@ public class RecruitmentCourse {
   @Column(name = "enrollment_estimate")
   private Integer enrollmentEstimate;
 
+  /**
+   * How many positions this section would get if they could be split into fractions and were shared
+   * out by enrollment estimate alone (issue #176): {@code totalHiringTarget * enrollmentEstimate /
+   * total of the estimates}. Recomputed by {@code AllocationService} whenever the target or any
+   * estimate changes; null until the first recomputation. A guide for the admin, not an allocation.
+   */
+  @Column(name = "unrounded_allocation")
+  private Double unroundedAllocation;
+
   /** The status the UCSB API reports for a section that has been cancelled. */
   public static final String CANCELLED = "cancelled";
 

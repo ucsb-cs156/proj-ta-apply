@@ -122,6 +122,34 @@ export default function OurTable<T extends object>({
           );
         })}
       </tbody>
+      {/* A totals row, only when some column defines a footer (issue #176). */}
+      {memoizedColumns.some((column) => column.footer !== undefined) && (
+        <tfoot>
+          {table.getFooterGroups().map((footerGroup, i) => (
+            <tr
+              data-testid={`${testid}-footer-group-${i}`}
+              // Stryker disable next-line StringLiteral : React key property not exposed in dom
+              key={`${testid}-footer-group-${i}`}
+            >
+              {footerGroup.headers.map((header) => (
+                <th
+                  data-testid={`${testid}-footer-${header.column.id}`}
+                  key={`${testid}-footer-${header.column.id}`}
+                  colSpan={header.colSpan}
+                  style={styleOf(header.column.columnDef.meta)}
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.footer,
+                        header.getContext(),
+                      )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </tfoot>
+      )}
     </table>
   );
 }

@@ -1,5 +1,11 @@
 import {
+  allocationDelta,
+  autoAssignTooltip,
+  deltaDisplay,
   ESTIMATE_SAVE_DELAY_MS,
+  oneDecimal,
+  ratioDisplay,
+  unroundedTooltip,
   isValidAllocation,
   isValidEnrollmentEstimate,
   isValidHiringTarget,
@@ -45,6 +51,94 @@ describe("allocations utilities", () => {
   test("the over-allocation message is the one the design asks for", () => {
     expect(OVER_ALLOCATED_MESSAGE).toBe(
       "Please either increase the hiring target, or reduce the allocations for one or more courses.",
+    );
+  });
+
+  // ---- issue #176 ----
+
+  test("one decimal place, always", () => {
+    expect(oneDecimal(1)).toBe("1.0");
+    expect(oneDecimal(2.25)).toBe("2.3");
+    expect(oneDecimal(3.6666)).toBe("3.7");
+    expect(oneDecimal(0)).toBe("0.0");
+  });
+
+  test("the delta is the unrounded share minus the allocation", () => {
+    expect(
+      allocationDelta({ unroundedAllocation: 3.5, allocation: 2 }),
+    ).toBeCloseTo(1.5);
+    expect(
+      allocationDelta({ unroundedAllocation: 1.2, allocation: 3 }),
+    ).toBeCloseTo(-1.8);
+    expect(allocationDelta({ allocation: 2 })).toBe(-2);
+    expect(allocationDelta({ unroundedAllocation: 2.5 })).toBe(2.5);
+    expect(
+      allocationDelta({ unroundedAllocation: null, allocation: null }),
+    ).toBe(0);
+  });
+
+  test("a positive delta is green with a plus sign", () => {
+    expect(deltaDisplay(1.5)).toEqual({
+      text: "+1.5",
+      className: "text-success",
+    });
+    expect(deltaDisplay(0.05)).toEqual({
+      text: "+0.1",
+      className: "text-success",
+    });
+    expect(deltaDisplay(2)).toEqual({
+      text: "+2.0",
+      className: "text-success",
+    });
+  });
+
+  test("a negative delta is red with its minus sign", () => {
+    expect(deltaDisplay(-1.5)).toEqual({
+      text: "-1.5",
+      className: "text-danger",
+    });
+    expect(deltaDisplay(-0.05)).toEqual({
+      text: "-0.1",
+      className: "text-danger",
+    });
+  });
+
+  test("anything that rounds to zero is a plain black 0.0, never -0.0", () => {
+    expect(deltaDisplay(0)).toEqual({ text: "0.0", className: "" });
+    expect(deltaDisplay(0.04)).toEqual({ text: "0.0", className: "" });
+    expect(deltaDisplay(-0.04)).toEqual({ text: "0.0", className: "" });
+  });
+
+  test("the ratio is 1:n with n rounded, or a dash", () => {
+    expect(ratioDisplay({ enrollmentEstimate: 220, allocation: 2 })).toBe(
+      "1:110",
+    );
+    expect(ratioDisplay({ enrollmentEstimate: 140, allocation: 3 })).toBe(
+      "1:47",
+    );
+    expect(ratioDisplay({ enrollmentEstimate: 0, allocation: 3 })).toBe("1:0");
+    expect(ratioDisplay({ enrollmentEstimate: 140, allocation: 0 })).toBe(
+      "\u2014",
+    );
+    expect(ratioDisplay({ enrollmentEstimate: 140 })).toBe("\u2014");
+    expect(ratioDisplay({ enrollmentEstimate: null, allocation: 3 })).toBe(
+      "\u2014",
+    );
+    expect(ratioDisplay({ allocation: 3 })).toBe("\u2014");
+  });
+
+  test("the tooltips name the type and the target", () => {
+    expect(unroundedTooltip("TA")).toBe(
+      'unroundedAllocation is how many TAs the course would receive if TAs could be divided into "fractional bits", and were divided based only on estimatedEnrollment. In reality, one must round up or round down, but this number provides a guide for approaching a fair allocation.',
+    );
+    expect(unroundedTooltip("ULA")).toMatch(
+      /^unroundedAllocation is how many ULAs the course would receive if ULAs could/,
+    );
+    expect(autoAssignTooltip(12, "TA")).toBe(
+      "Automatically allocate the 12 TAs across courses based on enrollment",
+    );
+    expect(autoAssignTooltip(6, "ULA")).toBe(
+      "Automatically allocate the 6 ULAs across courses based on enrollment",
     );
   });
 });
