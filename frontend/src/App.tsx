@@ -7,6 +7,8 @@ import InstructorsIndexPage from "main/pages/Admin/InstructorsIndexPage";
 import InstructorsCreatePage from "main/pages/Admin/InstructorsCreatePage";
 import CoursesIndexPage from "main/pages/Admin/CoursesIndexPage";
 import QuartersPage from "main/pages/Admin/QuartersPage";
+import BudgetSelectQuarterPage from "main/pages/Admin/BudgetSelectQuarterPage";
+import BudgetPage from "main/pages/Admin/BudgetPage";
 import RecruitmentCoursesPage from "main/pages/Admin/RecruitmentCoursesPage";
 import ProtectedPage from "main/pages/Auth/ProtectedPage";
 import NotFoundPage from "main/pages/Auth/NotFoundPage";
@@ -184,6 +186,26 @@ export default function App() {
           element={
             <ProtectedPage
               component={<QuartersPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/budget/selectQuarter"
+          element={
+            <ProtectedPage
+              component={<BudgetSelectQuarterPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/budget/:qyy"
+          element={
+            <ProtectedPage
+              component={<BudgetPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

@@ -1,0 +1,32 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "034-add-avg-cost-per-position-to-recruitments",
+        "author": "pc",
+        "comment": "The estimated average cost of one TA (on a TA recruitment) or one ULA (on a ULA recruitment), in dollars and cents, for the Budget for Quarter page (issue #177).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "recruitments",
+                "columnName": "avg_cost_per_position"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [
+                { "column": { "name": "avg_cost_per_position", "type": "NUMERIC(12,2)" } }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
