@@ -33,3 +33,6 @@ GITHUB_PAT
 
 .ai-research-api-key
 
+
+# Claude Code agent worktrees
+.claude/worktrees/

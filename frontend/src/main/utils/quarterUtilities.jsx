@@ -16,6 +16,19 @@ const yyyyqToQyy = (yyyyq) => {
   )}`;
 };
 
+/**
+ * The inverse of yyyyqToQyy: "F26" -> "20264". Returns null for anything that is not a quarter
+ * letter (W, S, M or F) followed by two digits; the century is always 20.
+ */
+const qyyToYyyyq = (qyy) => {
+  // Anything that is not a string is turned into one by test(), and never matches.
+  if (!/^[WSMF]\d\d$/.test(qyy)) {
+    return null;
+  }
+  const q = shortQuarters.indexOf(qyy.charAt(0)) + 1;
+  return `20${qyy.substring(1, 3)}${q}`;
+};
+
 const toFormat = (quarter, year) => {
   return year.toString() + parseInt(quarter).toString();
 };
@@ -88,6 +101,7 @@ export {
   fromFormat,
   toFormat,
   yyyyqToQyy,
+  qyyToYyyyq,
   fromNumericYYYYQ,
   toNumericYYYYQ,
   nextQuarter,

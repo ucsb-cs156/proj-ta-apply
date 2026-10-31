@@ -125,6 +125,7 @@ describe("AppNavbar tests", () => {
       "Instructors",
       "Courses",
       "Quarters",
+      "Budget for Quarter",
       "TA App Settings",
       "ULA App Settings",
       "Legacy TA Application",
