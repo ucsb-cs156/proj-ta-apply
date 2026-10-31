@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PublishedAssignmentsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">PublishedAssignmentsService.java</span></div><h1>PublishedAssignmentsService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import com.opencsv.CSVWriter;
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.Instructor;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.InstructorRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * The published assignments of a recruitment (issue #180), as the read-only page and its CSV
+ * downloads show them: one row per course with the people assigned to it, or one row per TA or ULA
+ * with their course. Both come as a header row and text rows, so the page and the CSV are the same
+ * table. Only real, uncancelled applications with a tentative assignment take part.
+ */
+@Service
+<span class="fc" id="L29">public class PublishedAssignmentsService {</span>
+  @Autowired AssignmentsService assignmentsService;
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired InstructorRepository instructorRepository;
+
+  public static final String LAYOUT_COURSE = &quot;course&quot;;
+  public static final String LAYOUT_STUDENT = &quot;student&quot;;
+
+  /** What an instructor's email reads when the catalog name maps to no, or several, instructors. */
+  public static final String NOT_MAPPED = &quot;Not mapped&quot;;
+
+  /** A table: the headers, then one list of cells per row, every cell text. */
+<span class="fc" id="L41">  public record Table(</span>
+      Long recruitmentId,
+      RecruitmentType type,
+      String layout,
+      List&lt;String&gt; headers,
+      List&lt;List&lt;String&gt;&gt; rows) {}
+
+  /** Last name, then first name, case-insensitively, a null reading as &quot;&quot;. */
+<span class="fc" id="L49">  static final Comparator&lt;Application&gt; BY_NAME =</span>
+<span class="fc" id="L50">      Comparator.comparing(</span>
+<span class="fc" id="L51">              (Application a) -&gt; ApplicationCsvService.text(a.getLastName()),</span>
+              String.CASE_INSENSITIVE_ORDER)
+<span class="fc" id="L53">          .thenComparing(</span>
+<span class="fc" id="L54">              a -&gt; ApplicationCsvService.text(a.getFirstName()), String.CASE_INSENSITIVE_ORDER);</span>
+
+  /**
+   * The table for one layout.
+   *
+   * @throws IllegalArgumentException for a layout other than &quot;course&quot; or &quot;student&quot;, or when the
+   *     recruitment's assignments are not published
+   */
+  public Table table(Recruitment recruitment, String layout) {
+<span class="fc bfc" id="L63" title="All 4 branches covered.">    if (!LAYOUT_COURSE.equals(layout) &amp;&amp; !LAYOUT_STUDENT.equals(layout)) {</span>
+<span class="fc" id="L64">      throw new IllegalArgumentException(&quot;layout must be course or student&quot;);</span>
+    }
+<span class="fc bfc" id="L66" title="All 2 branches covered.">    if (!Boolean.TRUE.equals(recruitment.getAssignmentsPublished())) {</span>
+<span class="fc" id="L67">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L68">          &quot;Assignments for recruitment %d have not been published&quot;.formatted(recruitment.getId()));</span>
+    }
+<span class="fc" id="L70">    List&lt;RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L71">        new ArrayList&lt;&gt;(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));</span>
+<span class="fc" id="L72">    courses.sort(AssignmentsService.BY_COURSE_SECTION_ENROLL);</span>
+<span class="fc" id="L73">    Map&lt;Long, RecruitmentCourse&gt; byId = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L75">      byId.put(course.getId(), course);</span>
+<span class="fc" id="L76">    }</span>
+<span class="fc" id="L77">    List&lt;Application&gt; assigned =</span>
+<span class="fc" id="L78">        assignmentsService.realApplications(recruitment.getId()).stream()</span>
+<span class="fc" id="L79">            .filter(a -&gt; byId.containsKey(a.getTentativeAssignmentId()))</span>
+<span class="fc" id="L80">            .sorted(BY_NAME)</span>
+<span class="fc" id="L81">            .toList();</span>
+<span class="fc" id="L82">    Map&lt;String, String&gt; emails = emailsByCatalogName();</span>
+
+    List&lt;String&gt; headers;
+<span class="fc" id="L85">    List&lt;List&lt;String&gt;&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">    if (LAYOUT_COURSE.equals(layout)) {</span>
+<span class="fc" id="L87">      Map&lt;Long, List&lt;Application&gt;&gt; byCourse =</span>
+<span class="fc" id="L88">          assigned.stream().collect(Collectors.groupingBy(Application::getTentativeAssignmentId));</span>
+<span class="fc" id="L89">      int width = 0;</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">      for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L91">        List&lt;Application&gt; people = byCourse.getOrDefault(course.getId(), List.of());</span>
+        // A removed section only while someone is still assigned to it.
+<span class="fc bfc" id="L93" title="All 4 branches covered.">        if (course.isRemoved() &amp;&amp; people.isEmpty()) {</span>
+<span class="fc" id="L94">          continue;</span>
+        }
+<span class="fc" id="L96">        width = Math.max(width, people.size());</span>
+<span class="fc" id="L97">        List&lt;String&gt; row = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L98">        row.add(courseNumber(course));</span>
+<span class="fc" id="L99">        row.add(ApplicationCsvService.text(course.getInstructor()));</span>
+<span class="fc" id="L100">        row.add(emailFor(course, emails));</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">        for (Application person : people) {</span>
+<span class="fc" id="L102">          row.add(</span>
+              &quot;%s %s (%s)&quot;
+<span class="fc" id="L104">                  .formatted(</span>
+<span class="fc" id="L105">                      ApplicationCsvService.text(person.getFirstName()),</span>
+<span class="fc" id="L106">                      ApplicationCsvService.text(person.getLastName()),</span>
+<span class="fc" id="L107">                      ApplicationCsvService.text(person.getEmail())));</span>
+<span class="fc" id="L108">        }</span>
+<span class="fc" id="L109">        rows.add(row);</span>
+<span class="fc" id="L110">      }</span>
+<span class="fc" id="L111">      headers = new ArrayList&lt;&gt;(List.of(&quot;Course&quot;, &quot;Instructor&quot;, &quot;Instructor email&quot;));</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">      for (int i = 0; i &lt; width; i++) {</span>
+<span class="fc" id="L113">        headers.add(recruitment.getType().name());</span>
+      }
+<span class="fc bfc" id="L115" title="All 2 branches covered.">      for (List&lt;String&gt; row : rows) {</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        while (row.size() &lt; headers.size()) {</span>
+<span class="fc" id="L117">          row.add(&quot;&quot;);</span>
+        }
+<span class="fc" id="L119">      }</span>
+<span class="fc" id="L120">    } else {</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">      boolean ula = recruitment.getType() == RecruitmentType.ULA;</span>
+<span class="fc" id="L122">      headers =</span>
+          new ArrayList&lt;&gt;(
+<span class="fc" id="L124">              List.of(</span>
+                  &quot;First name&quot;,
+                  &quot;Last name&quot;,
+                  &quot;Email&quot;,
+                  &quot;Course assignment&quot;,
+                  &quot;Course instructor&quot;,
+                  &quot;Course instructor email&quot;));
+<span class="fc bfc" id="L131" title="All 2 branches covered.">      if (ula) {</span>
+<span class="fc" id="L132">        headers.add(&quot;First time ULA&quot;);</span>
+      }
+<span class="fc bfc" id="L134" title="All 2 branches covered.">      for (Application person : assigned) {</span>
+<span class="fc" id="L135">        RecruitmentCourse course = byId.get(person.getTentativeAssignmentId());</span>
+<span class="fc" id="L136">        List&lt;String&gt; row = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L137">        row.add(ApplicationCsvService.text(person.getFirstName()));</span>
+<span class="fc" id="L138">        row.add(ApplicationCsvService.text(person.getLastName()));</span>
+<span class="fc" id="L139">        row.add(ApplicationCsvService.text(person.getEmail()));</span>
+<span class="fc" id="L140">        row.add(courseNumber(course));</span>
+<span class="fc" id="L141">        row.add(ApplicationCsvService.text(course.getInstructor()));</span>
+<span class="fc" id="L142">        row.add(emailFor(course, emails));</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">        if (ula) {</span>
+<span class="fc" id="L144">          row.add(firstTimeUla(person));</span>
+        }
+<span class="fc" id="L146">        rows.add(row);</span>
+<span class="fc" id="L147">      }</span>
+    }
+<span class="fc" id="L149">    return new Table(recruitment.getId(), recruitment.getType(), layout, headers, rows);</span>
+  }
+
+  /** The table as CSV: the header row, then the rows, every cell quoted. */
+  public String csv(Recruitment recruitment, String layout) {
+<span class="fc" id="L154">    Table table = table(recruitment, layout);</span>
+<span class="fc" id="L155">    StringWriter out = new StringWriter();</span>
+<span class="fc" id="L156">    CSVWriter writer = new CSVWriter(out);</span>
+<span class="fc" id="L157">    writer.writeNext(table.headers().toArray(String[]::new));</span>
+<span class="fc bfc" id="L158" title="All 2 branches covered.">    for (List&lt;String&gt; row : table.rows()) {</span>
+<span class="fc" id="L159">      writer.writeNext(row.toArray(String[]::new));</span>
+<span class="fc" id="L160">    }</span>
+<span class="fc" id="L161">    return out.toString();</span>
+  }
+
+  /** &quot;CMPSC 8&quot; as the catalog pads it reads &quot;CMPSC 8&quot;. */
+  static String courseNumber(RecruitmentCourse course) {
+<span class="fc" id="L166">    return ApplicationCsvService.text(course.getCourseId()).trim().replaceAll(&quot;\\s+&quot;, &quot; &quot;);</span>
+  }
+
+  /** &quot;yes&quot; for someone who reports no previous quarters as a ULA, &quot;no&quot; otherwise. */
+  static String firstTimeUla(Application application) {
+<span class="fc" id="L171">    Integer quarters = application.getPreviousServiceAsUla();</span>
+<span class="fc bfc" id="L172" title="All 4 branches covered.">    return quarters == null || quarters == 0 ? &quot;yes&quot; : &quot;no&quot;;</span>
+  }
+
+  /** Each catalog name that exactly one instructor goes by, with that instructor's email. */
+  private Map&lt;String, String&gt; emailsByCatalogName() {
+<span class="fc" id="L177">    Map&lt;String, List&lt;String&gt;&gt; all =</span>
+<span class="fc" id="L178">        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)</span>
+<span class="fc bfc" id="L179" title="All 2 branches covered.">            .filter(instructor -&gt; instructor.getCatalogName() != null)</span>
+<span class="fc" id="L180">            .collect(</span>
+<span class="fc" id="L181">                Collectors.groupingBy(</span>
+                    Instructor::getCatalogName,
+<span class="fc" id="L183">                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));</span>
+<span class="fc" id="L184">    Map&lt;String, String&gt; unique = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L185">    all.forEach(</span>
+        (name, emails) -&gt; {
+<span class="fc bfc" id="L187" title="All 2 branches covered.">          if (emails.size() == 1) {</span>
+<span class="fc" id="L188">            unique.put(name, emails.get(0));</span>
+          }
+<span class="fc" id="L190">        });</span>
+<span class="fc" id="L191">    return unique;</span>
+  }
+
+  private static String emailFor(RecruitmentCourse course, Map&lt;String, String&gt; emails) {
+    // A null instructor is simply absent from the map.
+<span class="fc" id="L196">    String email = emails.get(course.getInstructor());</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">    return email == null ? NOT_MAPPED : email;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
