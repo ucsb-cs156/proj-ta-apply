@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
@@ -119,6 +120,10 @@ public class InstructorRecruitmentsController extends ApiController {
     }
   }
 
+  /** Read-only admin metadata for the course table and faculty reminders. */
+  public static record AdminCourseRankingSummary(
+      Long recruitmentCourseId, long rankingCount, String instructorEmail) {}
+
   /** Newest quarter first, TA before ULA within a quarter: the order the other lists use. */
   private static final Comparator<Recruitment> NEWEST_FIRST =
       Comparator.comparing(Recruitment::getQuarter).reversed().thenComparing(Recruitment::getType);
@@ -208,6 +213,57 @@ public class InstructorRecruitmentsController extends ApiController {
         otherCourses);
   }
 
+  /**
+   * Ranking counts and catalog-name email mappings for the rows visible on one recruitment's
+   * Courses page. Counts use the same eligibility rules as the instructor ranking table.
+   */
+  @Operation(summary = "Get admin ranking counts and mapped instructor emails for a recruitment")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @GetMapping("/{recruitmentId}/admin-course-rankings")
+  public List<AdminCourseRankingSummary> adminCourseRankingSummaries(
+      @PathVariable Long recruitmentId,
+      @Parameter(name = "includeRemoved") @RequestParam(defaultValue = "false")
+          boolean includeRemoved) {
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    List<Application> applications =
+        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId).stream()
+            .filter(application -> recruitmentId.equals(application.getRecruitmentId()))
+            .toList();
+    Map<String, List<String>> emailsByCatalogName =
+        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)
+            .filter(instructor -> instructor.getCatalogName() != null)
+            .collect(
+                Collectors.groupingBy(
+                    Instructor::getCatalogName,
+                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));
+
+    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
+        .filter(course -> recruitmentId.equals(course.getRecruitmentId()))
+        .filter(course -> includeRemoved || !course.isRemoved())
+        .sorted(BY_COURSE_THEN_SECTION)
+        .map(
+            course -> {
+              Set<Long> eligibleApplicationIds =
+                  eligible(applications, course).stream()
+                      .map(Application::getId)
+                      .collect(Collectors.toSet());
+              long rankingCount =
+                  candidateRankingRepository.findByRecruitmentCourseId(course.getId()).stream()
+                      .filter(ranking -> ranking.getRank() != null)
+                      .filter(
+                          ranking -> eligibleApplicationIds.contains(ranking.getApplicationId()))
+                      .count();
+              List<String> mappedEmails = emailsByCatalogName.get(course.getInstructor());
+              String instructorEmail =
+                  mappedEmails != null && mappedEmails.size() == 1 ? mappedEmails.get(0) : null;
+              return new AdminCourseRankingSummary(course.getId(), rankingCount, instructorEmail);
+            })
+        .toList();
+  }
+
   private record RankingScope(
       Recruitment recruitment, RecruitmentCourse course, String catalogName) {}
 
@@ -227,15 +283,6 @@ public class InstructorRecruitmentsController extends ApiController {
           "Recruitment course %s does not belong to recruitment %s"
               .formatted(recruitmentCourseId, recruitmentId));
     }
-    if (!course.isOnOffer()) {
-      throw new ForbiddenException(
-          "This recruitment course has been removed or is no longer available.");
-    }
-    if ("NotStarted".equals(recruitment.getReviewStatus())) {
-      throw new ForbiddenException(
-          "Candidate rankings are unavailable because faculty reviews have not started.");
-    }
-
     CurrentUser currentUser = getCurrentUser();
     if (currentUser == null || currentUser.getUser() == null) {
       throw new ForbiddenException("The authenticated user could not be identified.");
@@ -246,6 +293,17 @@ public class InstructorRecruitmentsController extends ApiController {
             && currentUser.getRoles().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_ADMIN"::equals);
+
+    // Admins may inspect historical rankings for stale, cancelled, or removed rows, but those
+    // rows remain unavailable to instructors and this read exception never grants edit access.
+    if (!course.isOnOffer() && !isAdmin) {
+      throw new ForbiddenException(
+          "This recruitment course has been removed or is no longer available.");
+    }
+    if ("NotStarted".equals(recruitment.getReviewStatus())) {
+      throw new ForbiddenException(
+          "Candidate rankings are unavailable because faculty reviews have not started.");
+    }
 
     String catalogName =
         instructorRepository.findByEmail(email).map(Instructor::getCatalogName).orElse(null);
@@ -288,11 +346,15 @@ public class InstructorRecruitmentsController extends ApiController {
   }
 
   private List<Application> eligible(RankingScope scope) {
-    return applicationRepository
-        .findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId())
-        .stream()
+    return eligible(
+        applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()),
+        scope.course());
+  }
+
+  private List<Application> eligible(List<Application> applications, RecruitmentCourse course) {
+    return applications.stream()
         .filter(application -> !application.isTestApplication())
-        .filter(application -> preference(application, scope.course().getCourseId()) != null)
+        .filter(application -> preference(application, course.getCourseId()) != null)
         .toList();
   }
 

@@ -161,6 +161,20 @@ export default function HelpAdminsPage(): React.JSX.Element {
           menu applicants use to add UCSB courses they have taken, so graduate
           courses belong in it too even though they rarely get TAs or ULAs.
         </p>
+        <p>
+          On a recruitment&apos;s own <strong>Courses</strong> page, after
+          faculty reviews have started, the leftmost <strong>Rankings</strong>{" "}
+          column shows how many eligible applications have an entered ranking
+          for each section. The number links to the read-only ranking page;
+          sections with no entered rankings link with a zero. The{" "}
+          <strong>Email</strong> column uses the instructor&apos;s catalog-name
+          mapping from the Instructors page. Use its <em>Copy</em> control for
+          one address, or <em>Copy emails of faculty with zero rankings</em> to
+          prepare a reminder. Bulk reminders include only mapped addresses for
+          the courses currently visible, deduplicated when an instructor has
+          multiple sections. Turn on <em>Show removed courses</em> to include
+          removed sections in both the table and reminder list.
+        </p>
 
         <h2 className="my-3 h4" id="quarters">
           Quarters

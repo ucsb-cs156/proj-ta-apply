@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { useParams } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import RecruitmentCourseTable, {
+  isValidEmail,
   type RecruitmentCourse,
+  type RecruitmentCourseRankingSummary,
 } from "main/components/Recruitments/RecruitmentCourseTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
@@ -42,6 +44,64 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
   const recruitment = (recruitments ?? []).find(
     (r) => String(r.id) === String(recruitmentId),
   );
+  const showRankings =
+    recruitment?.reviewStatus !== undefined &&
+    recruitment.reviewStatus !== "NotStarted";
+
+  const {
+    data: rankingSummaries,
+    isError: rankingSummariesError,
+    error: rankingSummariesFailure,
+  } = useBackend<RecruitmentCourseRankingSummary[]>(
+    [
+      "/api/instructor/recruitments/admin-course-rankings",
+      recruitmentId,
+      includeRemoved,
+    ],
+    {
+      method: "GET",
+      url: `/api/instructor/recruitments/${recruitmentId}/admin-course-rankings`,
+      params: { includeRemoved },
+    },
+    [],
+    true,
+    { enabled: Boolean(recruitmentId) },
+  );
+  const rankingSummaryByCourse = useMemo(
+    () =>
+      new Map(
+        (rankingSummaries ?? []).map((summary) => [
+          summary.recruitmentCourseId,
+          summary,
+        ]),
+      ),
+    [rankingSummaries],
+  );
+
+  const copyToClipboard = async (value: string, successMessage: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast(successMessage);
+    } catch {
+      toast(
+        "Unable to copy to clipboard. Check your browser clipboard permissions.",
+      );
+    }
+  };
+
+  const zeroRankingEmails = useMemo(() => {
+    const emails = (courses ?? [])
+      .filter(
+        (course) => rankingSummaryByCourse.get(course.id)?.rankingCount === 0,
+      )
+      .map((course) => rankingSummaryByCourse.get(course.id)?.instructorEmail)
+      .filter((email): email is string => isValidEmail(email));
+    const unique = new Map<string, string>();
+    emails.forEach((email) =>
+      unique.set(email.trim().toLowerCase(), email.trim()),
+    );
+    return [...unique.values()];
+  }, [courses, rankingSummaryByCourse]);
 
   const populateMutation = useBackendMutation<void, unknown>(
     () => ({
@@ -59,6 +119,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
       "/api/recruitmentcourses/all",
       includeRemoved,
       "/api/admin/recruitments/all",
+      "/api/instructor/recruitments/admin-course-rankings",
     ],
   );
 
@@ -78,7 +139,11 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
       // The backend says why (unknown code, a discussion section); pass that on.
       onError: (error) => toast(apiErrorMessage(error)),
     },
-    ["/api/recruitmentcourses/all", includeRemoved],
+    [
+      "/api/recruitmentcourses/all",
+      includeRemoved,
+      "/api/instructor/recruitments/admin-course-rankings",
+    ],
   );
 
   return (
@@ -156,11 +221,46 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           />
         </div>
 
+        {rankingSummariesError && (
+          <p role="alert">
+            Unable to load ranking counts and instructor emails:{" "}
+            {apiErrorMessage(rankingSummariesFailure)}
+          </p>
+        )}
         <RecruitmentCourseTable
           courses={courses ?? []}
+          rankingSummaries={rankingSummaries ?? []}
+          showRankings={showRankings}
+          onCopyEmail={(email) =>
+            copyToClipboard(email, "Email copied to clipboard.")
+          }
           includeRemoved={includeRemoved}
           testIdPrefix="RecruitmentCoursesPage"
         />
+        {showRankings && (
+          <div className="mb-3">
+            <Button
+              disabled={rankingSummariesError || zeroRankingEmails.length === 0}
+              onClick={() =>
+                copyToClipboard(
+                  zeroRankingEmails.join("\n"),
+                  "Faculty emails copied to clipboard.",
+                )
+              }
+              data-testid="RecruitmentCoursesPage-copy-zero-ranking-emails"
+            >
+              Copy emails of faculty with zero rankings
+            </Button>
+            {!rankingSummariesError && zeroRankingEmails.length === 0 && (
+              <span
+                className="ms-2"
+                data-testid="RecruitmentCoursesPage-no-zero-ranking-emails"
+              >
+                No mapped faculty email addresses are available.
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </BasicLayout>
   );

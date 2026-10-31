@@ -3,6 +3,7 @@ import { useBackendMutation } from "main/utils/useBackend";
 import { Badge, Button } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
+import { Link } from "react-router";
 
 export type RecruitmentCourse = {
   id: number;
@@ -26,6 +27,20 @@ export type RecruitmentCourse = {
   manuallyAdded?: boolean;
 };
 
+export type RecruitmentCourseRankingSummary = {
+  recruitmentCourseId: number;
+  rankingCount: number;
+  instructorEmail: string | null;
+};
+
+// eslint-disable-next-line react-refresh/only-export-components -- shared by the table and its reminder action
+export const isValidEmail = (
+  email: string | null | undefined,
+): email is string =>
+  email !== null &&
+  email !== undefined &&
+  /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email.trim());
+
 /** On the badge of a stale row. */
 export const STALE_LABEL = "Stale / not in API";
 
@@ -34,6 +49,9 @@ export const CANCELLED = "cancelled";
 
 type RecruitmentCourseTableProps = {
   courses: RecruitmentCourse[];
+  rankingSummaries?: RecruitmentCourseRankingSummary[];
+  showRankings?: boolean;
+  onCopyEmail?: (email: string) => void;
   /** Part of the query key to invalidate, so the table reflects the current toggle. */
   includeRemoved: boolean;
   testIdPrefix?: string;
@@ -41,6 +59,9 @@ type RecruitmentCourseTableProps = {
 
 export default function RecruitmentCourseTable({
   courses,
+  rankingSummaries = [],
+  showRankings = false,
+  onCopyEmail = () => {},
   includeRemoved,
   testIdPrefix = "RecruitmentCourseTable",
 }: RecruitmentCourseTableProps): React.JSX.Element {
@@ -56,14 +77,60 @@ export default function RecruitmentCourseTable({
   const mutation = useBackendMutation<RecruitmentCourse, unknown>(
     objectToAxiosParams,
     {},
-    ["/api/recruitmentcourses/all", includeRemoved],
+    [
+      "/api/recruitmentcourses/all",
+      includeRemoved,
+      "/api/instructor/recruitments/admin-course-rankings",
+    ],
   );
 
   const shrinkToContent = {
     style: { width: "1%", whiteSpace: "nowrap" as const },
   };
+  const rankingSummaryByCourse = new Map(
+    rankingSummaries.map((summary) => [summary.recruitmentCourseId, summary]),
+  );
+  const rows = (Array.isArray(courses) ? courses : []).map((course) => ({
+    ...course,
+    rankingCount: rankingSummaryByCourse.get(course.id)?.rankingCount ?? null,
+    instructorEmail:
+      rankingSummaryByCourse.get(course.id)?.instructorEmail ?? null,
+  }));
 
   const columns = [
+    ...(showRankings
+      ? [
+          {
+            header: "Rankings",
+            accessorKey: "rankingCount",
+            meta: shrinkToContent,
+            cell: ({
+              cell,
+            }: {
+              cell: Cell<
+                RecruitmentCourse & {
+                  rankingCount: number | null;
+                  instructorEmail: string | null;
+                },
+                unknown
+              >;
+            }) => {
+              const course = cell.row.original;
+              if (course.rankingCount === null) {
+                return <span aria-label="Ranking count unavailable">—</span>;
+              }
+              return (
+                <Link
+                  to={`/recruitments/${course.recruitmentId}/courses/${course.id}/ranking`}
+                  data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-ranking-link`}
+                >
+                  {course.rankingCount}
+                </Link>
+              );
+            },
+          },
+        ]
+      : []),
     {
       header: "Course Number",
       accessorKey: "courseId",
@@ -95,6 +162,48 @@ export default function RecruitmentCourseTable({
       meta: { style: { width: "100%" } },
     },
     { header: "Instructor", accessorKey: "instructor", meta: shrinkToContent },
+    {
+      header: "Email",
+      accessorKey: "instructorEmail",
+      meta: shrinkToContent,
+      cell: ({
+        cell,
+      }: {
+        cell: Cell<
+          RecruitmentCourse & {
+            rankingCount: number | null;
+            instructorEmail: string | null;
+          },
+          unknown
+        >;
+      }) => {
+        const email = cell.row.original.instructorEmail;
+        if (!isValidEmail(email)) {
+          return (
+            <span
+              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-unmapped`}
+            >
+              Not mapped
+            </span>
+          );
+        }
+        return (
+          <>
+            <span>{email}</span>
+            <Button
+              variant="link"
+              size="sm"
+              className="p-0 ms-2"
+              aria-label={`Copy ${email}`}
+              onClick={() => onCopyEmail(email)}
+              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-copy-email`}
+            >
+              Copy
+            </Button>
+          </>
+        );
+      },
+    },
     { header: "Days", accessorKey: "days", meta: shrinkToContent },
     { header: "Time", accessorKey: "time", meta: shrinkToContent },
     { header: "Room", accessorKey: "room", meta: shrinkToContent },
@@ -162,7 +271,7 @@ export default function RecruitmentCourseTable({
 
   return (
     <OurTable
-      data={Array.isArray(courses) ? courses : []}
+      data={Array.isArray(courses) ? rows : []}
       columns={columns}
       testid={testIdPrefix}
     />

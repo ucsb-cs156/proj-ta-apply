@@ -25,10 +25,19 @@ const axiosMock = new AxiosMockAdapter(axios);
 const notRemoved = recruitmentCoursesFixtures.fourCourses.filter(
   (c) => !c.removed,
 );
+const visibleRankingSummaries =
+  recruitmentCoursesFixtures.rankingSummaries.filter(
+    (summary) => summary.recruitmentCourseId !== 4,
+  );
+const mockClipboardWriteText = vi.fn();
 
 function renderPage() {
   return render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
       <MemoryRouter initialEntries={["/admin/recruitments/7/courses"]}>
         <Routes>
           <Route
@@ -44,6 +53,12 @@ function renderPage() {
 describe("RecruitmentCoursesPage tests", () => {
   beforeEach(() => {
     mockToast.mockClear();
+    mockClipboardWriteText.mockReset();
+    mockClipboardWriteText.mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: mockClipboardWriteText },
+    });
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock
@@ -74,6 +89,16 @@ describe("RecruitmentCoursesPage tests", () => {
         params: { recruitmentId: "7", includeRemoved: true },
       })
       .reply(200, recruitmentCoursesFixtures.fourCourses);
+    axiosMock
+      .onGet("/api/instructor/recruitments/7/admin-course-rankings", {
+        params: { includeRemoved: false },
+      })
+      .reply(200, visibleRankingSummaries);
+    axiosMock
+      .onGet("/api/instructor/recruitments/7/admin-course-rankings", {
+        params: { includeRemoved: true },
+      })
+      .reply(200, recruitmentCoursesFixtures.rankingSummaries);
   });
 
   /** Issue #124: how fresh the list is, and that it is refreshed nightly. */
@@ -137,6 +162,275 @@ describe("RecruitmentCoursesPage tests", () => {
         "RecruitmentCoursesPage-cell-row-0-col-courseId",
       ),
     ).toHaveTextContent("CMPSC     1A", { normalizeWhitespace: false });
+  });
+
+  test("shows sortable Rankings as the leftmost column only after reviews start", async () => {
+    renderPage();
+
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-ranking-link");
+    await screen.findByRole("link", { name: "2" });
+    const table = screen.getByTestId("RecruitmentCoursesPage");
+    expect(
+      [...table.querySelectorAll("thead th")].map((header) =>
+        header.getAttribute("data-testid"),
+      ),
+    ).toEqual([
+      "RecruitmentCoursesPage-header-rankingCount",
+      "RecruitmentCoursesPage-header-courseId",
+      "RecruitmentCoursesPage-header-section",
+      "RecruitmentCoursesPage-header-title",
+      "RecruitmentCoursesPage-header-instructor",
+      "RecruitmentCoursesPage-header-instructorEmail",
+      "RecruitmentCoursesPage-header-days",
+      "RecruitmentCoursesPage-header-time",
+      "RecruitmentCoursesPage-header-room",
+      "RecruitmentCoursesPage-header-enrollment",
+      "RecruitmentCoursesPage-header-maxEnroll",
+      "RecruitmentCoursesPage-header-status",
+      "RecruitmentCoursesPage-header-summerSession",
+      "RecruitmentCoursesPage-header-removed",
+    ]);
+
+    await userEvent.click(
+      screen.getByTestId(
+        "RecruitmentCoursesPage-header-rankingCount-sort-header",
+      ),
+    );
+    expect(
+      [...table.querySelectorAll("tbody tr a")].map((link) =>
+        link.getAttribute("href"),
+      ),
+    ).toEqual([
+      "/recruitments/7/courses/2/ranking",
+      "/recruitments/7/courses/1/ranking",
+      "/recruitments/7/courses/3/ranking",
+    ]);
+    await userEvent.click(
+      screen.getByTestId(
+        "RecruitmentCoursesPage-header-rankingCount-sort-header",
+      ),
+    );
+    expect(
+      [...table.querySelectorAll("tbody tr a")].map((link) =>
+        link.getAttribute("href"),
+      ),
+    ).toEqual([
+      "/recruitments/7/courses/1/ranking",
+      "/recruitments/7/courses/3/ranking",
+      "/recruitments/7/courses/2/ranking",
+    ]);
+  });
+
+  test.each(["Open", "Closed"])(
+    "shows ranking links while reviews are %s",
+    async (reviewStatus) => {
+      axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+        {
+          ...recruitmentsFixtures.threeRecruitments[1],
+          id: 7,
+          reviewStatus,
+        },
+      ]);
+      renderPage();
+      expect(
+        await screen.findByTestId(
+          "RecruitmentCoursesPage-cell-row-0-ranking-link",
+        ),
+      ).toHaveTextContent("0");
+    },
+  );
+
+  test("hides Rankings and the reminder action when review has not started", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+      {
+        ...recruitmentsFixtures.threeRecruitments[0],
+        id: 7,
+        reviewStatus: "NotStarted",
+      },
+    ]);
+    renderPage();
+
+    await screen.findByTestId("RecruitmentCoursesPage-last-refreshed");
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-copy-email");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-header-rankingCount"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-copy-zero-ranking-emails"),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText("pconrad@ucsb.edu")).toHaveLength(2);
+  });
+
+  test("copies a mapped email from its Email column and reports success", async () => {
+    renderPage();
+    await userEvent.click(
+      await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-copy-email"),
+    );
+
+    expect(mockClipboardWriteText).toHaveBeenCalledWith("pconrad@ucsb.edu");
+    expect(mockToast).toHaveBeenCalledWith("Email copied to clipboard.");
+  });
+
+  test("labels unmapped faculty instead of showing catalog names or a copy control", async () => {
+    axiosMock
+      .onGet("/api/instructor/recruitments/7/admin-course-rankings", {
+        params: { includeRemoved: false },
+      })
+      .reply(
+        200,
+        visibleRankingSummaries.map((summary) =>
+          summary.recruitmentCourseId === 3
+            ? { ...summary, instructorEmail: null }
+            : summary,
+        ),
+      );
+    renderPage();
+
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-cell-row-2-unmapped"),
+    ).toHaveTextContent("Not mapped");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-cell-row-2-copy-email"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("does not copy malformed instructor addresses", async () => {
+    axiosMock
+      .onGet("/api/instructor/recruitments/7/admin-course-rankings", {
+        params: { includeRemoved: false },
+      })
+      .reply(
+        200,
+        visibleRankingSummaries.map((summary) =>
+          summary.recruitmentCourseId === 1
+            ? { ...summary, instructorEmail: "not-an-email" }
+            : summary,
+        ),
+      );
+    renderPage();
+
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-1-copy-email");
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-unmapped"),
+    ).toHaveTextContent("Not mapped");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-cell-row-0-copy-email"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-copy-zero-ranking-emails"),
+    ).toBeEnabled();
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-copy-zero-ranking-emails"),
+    );
+    expect(mockClipboardWriteText).toHaveBeenCalledWith("pconrad@ucsb.edu");
+  });
+
+  test("copies deduplicated valid zero-ranking emails in visible course scope", async () => {
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-copy-email");
+    const button = await screen.findByTestId(
+      "RecruitmentCoursesPage-copy-zero-ranking-emails",
+    );
+    await userEvent.click(button);
+    expect(mockClipboardWriteText).toHaveBeenLastCalledWith("pconrad@ucsb.edu");
+    expect(mockToast).toHaveBeenLastCalledWith(
+      "Faculty emails copied to clipboard.",
+    );
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-show-removed"),
+    );
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-3-copy-email");
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-copy-zero-ranking-emails"),
+    );
+    expect(mockClipboardWriteText).toHaveBeenLastCalledWith(
+      "pconrad@ucsb.edu\nturing@ucsb.edu",
+    );
+    expect(
+      axiosMock.history.get
+        .filter(
+          (request) =>
+            request.url ===
+            "/api/instructor/recruitments/7/admin-course-rankings",
+        )
+        .map((request) => request.params.includeRemoved),
+    ).toEqual([false, true]);
+  });
+
+  test("disables bulk copy when there are no mapped zero-ranking addresses", async () => {
+    axiosMock
+      .onGet("/api/instructor/recruitments/7/admin-course-rankings", {
+        params: { includeRemoved: false },
+      })
+      .reply(
+        200,
+        visibleRankingSummaries.map((summary) => ({
+          ...summary,
+          rankingCount: 1,
+          instructorEmail: null,
+        })),
+      );
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-unmapped");
+    const button = await screen.findByTestId(
+      "RecruitmentCoursesPage-copy-zero-ranking-emails",
+    );
+    expect(button).toBeDisabled();
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-no-zero-ranking-emails"),
+    ).toHaveTextContent("No mapped faculty email addresses are available.");
+    expect(mockClipboardWriteText).not.toHaveBeenCalled();
+  });
+
+  test("reports clipboard failures explicitly", async () => {
+    mockClipboardWriteText.mockRejectedValueOnce(
+      new Error("permission denied"),
+    );
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-copy-email");
+    await userEvent.click(
+      await screen.findByTestId(
+        "RecruitmentCoursesPage-copy-zero-ranking-emails",
+      ),
+    );
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Unable to copy to clipboard. Check your browser clipboard permissions.",
+      ),
+    );
+  });
+
+  test("reports unavailable metadata separately from no reminder recipients", async () => {
+    axiosMock
+      .onGet("/api/instructor/recruitments/7/admin-course-rankings", {
+        params: { includeRemoved: false },
+      })
+      .reply(503, { message: "Ranking metadata temporarily unavailable." });
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    try {
+      renderPage();
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Unable to load ranking counts and instructor emails: Ranking metadata temporarily unavailable.",
+      );
+      expect(
+        await screen.findByTestId(
+          "RecruitmentCoursesPage-copy-zero-ranking-emails",
+        ),
+      ).toBeDisabled();
+      expect(
+        screen.queryByTestId("RecruitmentCoursesPage-no-zero-ranking-emails"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("RecruitmentCoursesPage-cell-row-0-ranking-link"),
+      ).not.toBeInTheDocument();
+      expect(mockClipboardWriteText).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   /** Removed rows are hidden until asked for. */
