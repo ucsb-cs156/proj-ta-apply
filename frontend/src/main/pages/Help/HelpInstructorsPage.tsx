@@ -32,8 +32,27 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           changes to <strong>View Candidate Rankings</strong>. The course page
           shows the recruitment dates and the course section; if you teach
           multiple courses in that recruitment, it also links to your other
-          sections. Candidate ranking tools will be added to that page later.
-          Contact an admin if a course or ranking page is unavailable.
+          sections. The table contains real applicants who chose this course or
+          expressed enthusiasm or willingness to consider it. Each section has
+          independent rankings. Click any column heading to sort; course
+          preference sorts from first choice to second choice, enthusiastic,
+          then would consider. Contact an admin if a course or ranking page is
+          unavailable.
+        </p>
+        <p>
+          Enter any integer from 1 through the number of candidates. Each valid
+          edit saves immediately; clear an input to remove its rank. Watch the
+          Saving, Saved, or Save failed message, and retry failed saves before
+          leaving the page. Ties are allowed and save immediately, but after two
+          seconds tied ranks turn bright yellow with a warning. Use ties only
+          when you have absolutely no preference between those candidates.
+        </p>
+        <p>
+          Only instructors assigned to a section may edit its rankings while
+          reviews are Open; the deadline is informational until an admin closes
+          reviews. Closed reviews and admin views are read-only. Click either
+          name to open the full, read-only application in a new tab, without
+          staff-only notes or editing controls.
         </p>
       </div>
     </BasicLayout>

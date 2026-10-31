@@ -3,6 +3,10 @@ import { apiErrorMessage } from "main/utils/apiError";
 import { useBackend } from "main/utils/useBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { Link, useParams } from "react-router";
+import CandidateTable, {
+  type Candidate,
+} from "main/components/Instructor/CandidateTable";
+import { useCurrentUser, hasRole } from "main/utils/currentUser";
 
 type CourseDetails = {
   id: number;
@@ -12,7 +16,7 @@ type CourseDetails = {
   instructor: string | null;
 };
 
-type CandidateRankingPageData = {
+export type CandidateRankingPageData = {
   recruitmentId: number;
   quarter: string;
   type: "TA" | "ULA";
@@ -27,7 +31,7 @@ type CandidateRankingPageData = {
   otherCourses: CourseDetails[];
 };
 
-/** The course-scoped, read-only placeholder for candidate ranking (issue #162). */
+/** The course-scoped instructor ranking workspace. */
 export default function CandidateRankingPage(): React.JSX.Element {
   const { recruitmentId, recruitmentCourseId } = useParams();
   const validIds =
@@ -36,6 +40,15 @@ export default function CandidateRankingPage(): React.JSX.Element {
     /^\d+$/.test(recruitmentId) &&
     /^\d+$/.test(recruitmentCourseId);
   const url = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/ranking`;
+  const candidatesUrl = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/candidates`;
+  const currentUser = useCurrentUser();
+  const candidates = useBackend<Candidate[] | null>(
+    [candidatesUrl],
+    { method: "GET", url: candidatesUrl },
+    null,
+    true,
+    { enabled: validIds },
+  );
   const { data, isFetching, isError, error } =
     useBackend<CandidateRankingPageData | null>(
       [url],
@@ -168,10 +181,28 @@ export default function CandidateRankingPage(): React.JSX.Element {
               </section>
             )}
 
-            <p data-testid="CandidateRankingPage-placeholder">
-              Coming soon on this page: a table to rank the candidates for{" "}
-              {data.type} for this course
-            </p>
+            {candidates.isError ? (
+              <p role="alert">
+                Unable to load candidates: {apiErrorMessage(candidates.error)}
+              </p>
+            ) : candidates.isFetching && candidates.data == null ? (
+              <p role="status">Loading candidates...</p>
+            ) : candidates.data == null ? (
+              <p role="alert">No candidate data were returned.</p>
+            ) : (
+              <CandidateTable
+                key={candidatesUrl}
+                candidates={candidates.data}
+                type={data.type}
+                editable={
+                  data.reviewStatus === "Open" &&
+                  hasRole(currentUser, "ROLE_INSTRUCTOR") &&
+                  !hasRole(currentUser, "ROLE_ADMIN")
+                }
+                apiUrl={candidatesUrl}
+                applicationUrl={`/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/applications`}
+              />
+            )}
           </>
         )}
       </div>

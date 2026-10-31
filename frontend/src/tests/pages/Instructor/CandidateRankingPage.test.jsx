@@ -9,6 +9,7 @@ import CandidateRankingPage from "main/pages/Instructor/CandidateRankingPage";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
+import candidatesFixtures from "fixtures/candidatesFixtures";
 
 const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
@@ -48,6 +49,9 @@ describe("CandidateRankingPage", () => {
     axiosMock
       .onGet("/api/systemInfo")
       .reply(200, systemInfoFixtures.showingNeither);
+    axiosMock
+      .onGet("/api/instructor/recruitments/1/courses/2/candidates")
+      .reply(200, candidatesFixtures);
   });
 
   test("shows the TA recruitment and course details and links only to other courses", async () => {
@@ -105,14 +109,14 @@ describe("CandidateRankingPage", () => {
       "href",
       "/recruitments/1/courses/3/ranking",
     );
+    expect(await screen.findByRole("table")).toBeInTheDocument();
     expect(
-      screen.getByTestId("CandidateRankingPage-placeholder"),
-    ).toHaveTextContent(
-      "Coming soon on this page: a table to rank the candidates for TA for this course",
-    );
+      screen.getByRole("columnheader", { name: "Level (PhD/MS)" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
   });
 
-  test("shows the ULA-specific placeholder and no sibling heading when there are no other courses", async () => {
+  test("shows ULA-specific columns and no sibling heading when there are no other courses", async () => {
     axiosMock.onGet(rankingUrl).reply(200, {
       ...instructorRecruitmentsFixtures.candidateRankingPage,
       type: "ULA",
@@ -121,10 +125,8 @@ describe("CandidateRankingPage", () => {
     renderPage();
 
     expect(
-      await screen.findByTestId("CandidateRankingPage-placeholder"),
-    ).toHaveTextContent(
-      "Coming soon on this page: a table to rank the candidates for ULA for this course",
-    );
+      await screen.findByRole("columnheader", { name: "GPA in Major" }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: /Your other/ }),
     ).not.toBeInTheDocument();
@@ -149,7 +151,7 @@ describe("CandidateRankingPage", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "Loading candidate ranking...",
     );
-    await screen.findByTestId("CandidateRankingPage-placeholder");
+    await screen.findByRole("table");
   });
 
   test("shows the backend's explicit error message", async () => {
@@ -162,6 +164,73 @@ describe("CandidateRankingPage", () => {
       "Unable to load candidate ranking: This course is not assigned to you.",
     );
     await waitFor(() => expect(mockToast).not.toHaveBeenCalled());
+  });
+
+  test("Open reviews allow instructors to rank immediately even after the informational deadline", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      reviewStatus: "Open",
+      facultyRankingDeadline: "2020-01-01",
+    });
+    renderPage();
+    expect(
+      await screen.findByRole("spinbutton", {
+        name: "Ranking for Ada Lovelace",
+      }),
+    ).toHaveValue(1);
+  });
+
+  test("admin views remain read-only even when reviews are Open", async () => {
+    axiosMock.onGet("/api/currentUser").reply(200, {
+      ...apiCurrentUserFixtures.adminUser,
+      rolesList: ["ROLE_ADMIN", "ROLE_INSTRUCTOR", "ROLE_USER"],
+    });
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      reviewStatus: "Open",
+    });
+    renderPage();
+    expect(
+      await screen.findByText("Rankings are read-only."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+  });
+
+  test("successful null candidate response is an error, not infinite loading", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(200, instructorRecruitmentsFixtures.candidateRankingPage);
+    axiosMock
+      .onGet("/api/instructor/recruitments/1/courses/2/candidates")
+      .reply(200, null);
+    renderPage();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "No candidate data were returned.",
+    );
+    expect(screen.queryByText("Loading candidates...")).not.toBeInTheDocument();
+  });
+
+  test("candidate fetch failures and pending fetches have explicit states", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(200, instructorRecruitmentsFixtures.candidateRankingPage);
+    let finish;
+    axiosMock
+      .onGet("/api/instructor/recruitments/1/courses/2/candidates")
+      .reply(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      );
+    renderPage();
+    expect(
+      await screen.findByText("Loading candidates..."),
+    ).toBeInTheDocument();
+    finish([500, { message: "Candidates unavailable" }]);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Unable to load candidates: Candidates unavailable",
+    );
   });
 
   test("shows an explicit error for a successful response without page details", async () => {
