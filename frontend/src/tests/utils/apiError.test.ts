@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { apiErrorMessage } from "main/utils/apiError";
+import { apiErrorMessage, shouldToastBackendError } from "main/utils/apiError";
 
 describe("apiErrorMessage", () => {
   test("prefers the backend's message", () => {
@@ -23,5 +23,31 @@ describe("apiErrorMessage", () => {
     );
     expect(apiErrorMessage({ response: {} })).toBe("[object Object]");
     expect(apiErrorMessage(null)).toBe("null");
+  });
+});
+
+describe("shouldToastBackendError (issue #198)", () => {
+  test("a failure the backend answered is worth a toast", () => {
+    expect(shouldToastBackendError({ response: { status: 400 } })).toBe(true);
+    expect(shouldToastBackendError({ response: { status: 404 } })).toBe(true);
+    expect(shouldToastBackendError({ response: { status: 500 } })).toBe(true);
+    expect(shouldToastBackendError({ response: { status: 502 } })).toBe(true);
+    // A response without a status is still a response.
+    expect(shouldToastBackendError({ response: {} })).toBe(true);
+  });
+
+  test("a lost session is not", () => {
+    expect(shouldToastBackendError({ response: { status: 401 } })).toBe(false);
+    expect(shouldToastBackendError({ response: { status: 403 } })).toBe(false);
+  });
+
+  test("an unreachable server is not", () => {
+    expect(shouldToastBackendError(new Error("Network Error"))).toBe(false);
+    expect(shouldToastBackendError({ response: null })).toBe(false);
+    expect(shouldToastBackendError({ response: undefined })).toBe(false);
+    expect(shouldToastBackendError({})).toBe(false);
+    expect(shouldToastBackendError(null)).toBe(false);
+    expect(shouldToastBackendError(undefined)).toBe(false);
+    expect(shouldToastBackendError("boom")).toBe(false);
   });
 });
