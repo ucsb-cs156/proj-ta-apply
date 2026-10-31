@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"csv/188-rankings-headings","number":193,"title":"Rankings CSV: course headings as the bare course number, section only when needed (closes #188)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/193"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"ux/186-confirm-admin-actions","number":195,"title":"Confirmation modals and tooltips for opening and closing applications and faculty reviews (closes #186)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/195"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"csv/188-rankings-headings","number":193,"title":"Rankings CSV: course headings as the bare course number, section only when needed (closes #188)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/193"}]
