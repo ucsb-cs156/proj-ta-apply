@@ -66,13 +66,51 @@ import org.springframework.stereotype.Service;
 <span class="fc" id="L66">          .thenComparing(c -&gt; ApplicationCsvService.text(c.getSection()))</span>
 <span class="fc" id="L67">          .thenComparing(c -&gt; ApplicationCsvService.text(c.getEnrollCode()));</span>
 
-  /** &quot;CMPSC 16 (section 0100, enroll 100)&quot;: how a section is named in the CSV. */
-  public static String label(RecruitmentCourse course) {
-<span class="fc" id="L71">    return &quot;%s (section %s, enroll %s)&quot;</span>
-<span class="fc" id="L72">        .formatted(</span>
-<span class="fc" id="L73">            ApplicationCsvService.text(course.getCourseId()),</span>
-<span class="fc" id="L74">            ApplicationCsvService.text(course.getSection()),</span>
-<span class="fc" id="L75">            ApplicationCsvService.text(course.getEnrollCode()));</span>
+  /**
+   * The course number without its subject: everything after the first run of whitespace in the
+   * stored course id, so &quot;CMPSC 5A&quot; is &quot;5A&quot; and &quot;CMPSC 16&quot; is &quot;16&quot; (issue #188). A null id, or one
+   * with no whitespace at all, gives &quot;&quot;.
+   */
+  public static String courseNumber(String courseId) {
+<span class="fc" id="L75">    String[] parts = ApplicationCsvService.text(courseId).trim().split(&quot;\\s+&quot;, 2);</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">    return parts.length == 2 ? parts[1] : &quot;&quot;;</span>
+  }
+
+  /**
+   * How each section is headed in the Rankings CSV (issue #188), keyed by recruitment course id:
+   * the bare course number, plus &quot; (section S)&quot; only when the export has more than one section of
+   * that course, and &quot;, enroll E&quot; inside the parentheses only in the odd case of two rows with the
+   * same course and section.
+   */
+  public static Map&lt;Long, String&gt; headings(List&lt;RecruitmentCourse&gt; courses) {
+<span class="fc" id="L86">    Map&lt;String, Integer&gt; byNumber = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L87">    Map&lt;String, Integer&gt; byNumberAndSection = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L89">      byNumber.merge(courseNumber(course.getCourseId()), 1, Integer::sum);</span>
+<span class="fc" id="L90">      byNumberAndSection.merge(numberAndSection(course), 1, Integer::sum);</span>
+<span class="fc" id="L91">    }</span>
+<span class="fc" id="L92">    Map&lt;Long, String&gt; headings = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L93" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L94">      String number = courseNumber(course.getCourseId());</span>
+<span class="fc" id="L95">      String heading = number;</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">      if (byNumber.get(number) &gt; 1) {</span>
+        String enroll =
+<span class="fc bfc" id="L98" title="All 2 branches covered.">            byNumberAndSection.get(numberAndSection(course)) &gt; 1</span>
+<span class="fc" id="L99">                ? &quot;, enroll &quot; + ApplicationCsvService.text(course.getEnrollCode())</span>
+<span class="fc" id="L100">                : &quot;&quot;;</span>
+<span class="fc" id="L101">        heading =</span>
+            &quot;%s (section %s%s)&quot;
+<span class="fc" id="L103">                .formatted(number, ApplicationCsvService.text(course.getSection()), enroll);</span>
+      }
+<span class="fc" id="L105">      headings.put(course.getId(), heading);</span>
+<span class="fc" id="L106">    }</span>
+<span class="fc" id="L107">    return headings;</span>
+  }
+
+  private static String numberAndSection(RecruitmentCourse course) {
+<span class="fc" id="L111">    return courseNumber(course.getCourseId())</span>
+        + &quot;\u0000&quot;
+<span class="fc" id="L113">        + ApplicationCsvService.text(course.getSection());</span>
   }
 
   /**
@@ -80,7 +118,7 @@ import org.springframework.stereotype.Service;
    * assigned to it, and how many places are left (negative when over-assigned). {@code historical}
    * marks a section no longer on offer (removed, stale or cancelled) that is kept for its rankings.
    */
-<span class="fc" id="L83">  public record CourseSummary(</span>
+<span class="fc" id="L121">  public record CourseSummary(</span>
       Long id,
       String courseId,
       String section,
@@ -95,14 +133,14 @@ import org.springframework.stereotype.Service;
    * tentatively assigned recruitment course id, or null; and each section's rank, keyed by
    * recruitment course id, only for sections that ranked them.
    */
-<span class="fc" id="L98">  public record AssignmentRow(</span>
+<span class="fc" id="L136">  public record AssignmentRow(</span>
       Long applicationId,
       Map&lt;String, String&gt; identity,
       Long tentativeAssignment,
       Map&lt;Long, Integer&gt; rankings) {}
 
   /** Everything the admin Assignments page needs for one recruitment. */
-<span class="fc" id="L105">  public record Assignments(</span>
+<span class="fc" id="L143">  public record Assignments(</span>
       Long recruitmentId,
       RecruitmentType type,
       List&lt;String&gt; identityHeaders,
@@ -114,36 +152,36 @@ import org.springframework.stereotype.Service;
    * neither a test application nor cancelled by the applicant, in the order they were created.
    */
   public List&lt;Application&gt; realApplications(Long recruitmentId) {
-<span class="fc" id="L117">    return real(applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));</span>
+<span class="fc" id="L155">    return real(applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));</span>
   }
 
   /** The given applications without test applications and without cancelled ones. */
   public static List&lt;Application&gt; real(List&lt;Application&gt; applications) {
-<span class="fc" id="L122">    return applications.stream()</span>
-<span class="fc bfc" id="L123" title="All 2 branches covered.">        .filter(a -&gt; !a.isTestApplication())</span>
-<span class="fc bfc" id="L124" title="All 2 branches covered.">        .filter(a -&gt; a.getStatus() != ApplicationReviewStatus.CANCELLED)</span>
-<span class="fc" id="L125">        .toList();</span>
+<span class="fc" id="L160">    return applications.stream()</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">        .filter(a -&gt; !a.isTestApplication())</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">        .filter(a -&gt; a.getStatus() != ApplicationReviewStatus.CANCELLED)</span>
+<span class="fc" id="L163">        .toList();</span>
   }
 
   /** How many of the given applications are tentatively assigned to each recruitment course. */
   public static Map&lt;Long, Integer&gt; assignedCounts(List&lt;Application&gt; applications) {
-<span class="fc" id="L130">    Map&lt;Long, Integer&gt; counts = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L131" title="All 2 branches covered.">    for (Application application : applications) {</span>
-<span class="fc bfc" id="L132" title="All 2 branches covered.">      if (application.getTentativeAssignmentId() != null) {</span>
-<span class="fc" id="L133">        counts.merge(application.getTentativeAssignmentId(), 1, Integer::sum);</span>
+<span class="fc" id="L168">    Map&lt;Long, Integer&gt; counts = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L169" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">      if (application.getTentativeAssignmentId() != null) {</span>
+<span class="fc" id="L171">        counts.merge(application.getTentativeAssignmentId(), 1, Integer::sum);</span>
       }
-<span class="fc" id="L135">    }</span>
-<span class="fc" id="L136">    return counts;</span>
+<span class="fc" id="L173">    }</span>
+<span class="fc" id="L174">    return counts;</span>
   }
 
   /** The ranks one section gave, keyed by application id. */
   public Map&lt;Long, Integer&gt; ranksFor(RecruitmentCourse course) {
-<span class="fc" id="L141">    Map&lt;Long, Integer&gt; ranks = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L179">    Map&lt;Long, Integer&gt; ranks = new HashMap&lt;&gt;();</span>
     for (CandidateRanking ranking :
-<span class="fc bfc" id="L143" title="All 2 branches covered.">        candidateRankingRepository.findByRecruitmentCourseId(course.getId())) {</span>
-<span class="fc" id="L144">      ranks.put(ranking.getApplicationId(), ranking.getRank());</span>
-<span class="fc" id="L145">    }</span>
-<span class="fc" id="L146">    return ranks;</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">        candidateRankingRepository.findByRecruitmentCourseId(course.getId())) {</span>
+<span class="fc" id="L182">      ranks.put(ranking.getApplicationId(), ranking.getRank());</span>
+<span class="fc" id="L183">    }</span>
+<span class="fc" id="L184">    return ranks;</span>
   }
 
   /**
@@ -152,57 +190,57 @@ import org.springframework.stereotype.Service;
    * faculty entered disappears from view.
    */
   public Assignments assignments(Recruitment recruitment) {
-<span class="fc" id="L155">    List&lt;IdentityColumn&gt; identity = identityColumns(recruitment.getType());</span>
-<span class="fc" id="L156">    List&lt;Application&gt; applications = realApplications(recruitment.getId());</span>
-<span class="fc" id="L157">    Map&lt;Long, Integer&gt; assigned = assignedCounts(applications);</span>
+<span class="fc" id="L193">    List&lt;IdentityColumn&gt; identity = identityColumns(recruitment.getType());</span>
+<span class="fc" id="L194">    List&lt;Application&gt; applications = realApplications(recruitment.getId());</span>
+<span class="fc" id="L195">    Map&lt;Long, Integer&gt; assigned = assignedCounts(applications);</span>
 
-<span class="fc" id="L159">    List&lt;RecruitmentCourse&gt; courses =</span>
-<span class="fc" id="L160">        new ArrayList&lt;&gt;(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));</span>
-<span class="fc" id="L161">    courses.sort(BY_COURSE_SECTION_ENROLL);</span>
+<span class="fc" id="L197">    List&lt;RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L198">        new ArrayList&lt;&gt;(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));</span>
+<span class="fc" id="L199">    courses.sort(BY_COURSE_SECTION_ENROLL);</span>
 
-<span class="fc" id="L163">    List&lt;CourseSummary&gt; summaries = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L164">    Map&lt;Long, Map&lt;Long, Integer&gt;&gt; ranksByCourse = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L165" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
-<span class="fc" id="L166">      Map&lt;Long, Integer&gt; ranks = ranksFor(course);</span>
-<span class="fc" id="L167">      int count = assigned.getOrDefault(course.getId(), 0);</span>
-<span class="fc bfc" id="L168" title="All 6 branches covered.">      if (course.isRemoved() &amp;&amp; ranks.isEmpty() &amp;&amp; count == 0) {</span>
-<span class="fc" id="L169">        continue;</span>
+<span class="fc" id="L201">    List&lt;CourseSummary&gt; summaries = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L202">    Map&lt;Long, Map&lt;Long, Integer&gt;&gt; ranksByCourse = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L203" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L204">      Map&lt;Long, Integer&gt; ranks = ranksFor(course);</span>
+<span class="fc" id="L205">      int count = assigned.getOrDefault(course.getId(), 0);</span>
+<span class="fc bfc" id="L206" title="All 6 branches covered.">      if (course.isRemoved() &amp;&amp; ranks.isEmpty() &amp;&amp; count == 0) {</span>
+<span class="fc" id="L207">        continue;</span>
       }
-<span class="fc" id="L171">      ranksByCourse.put(course.getId(), ranks);</span>
-<span class="fc" id="L172">      summaries.add(</span>
+<span class="fc" id="L209">      ranksByCourse.put(course.getId(), ranks);</span>
+<span class="fc" id="L210">      summaries.add(</span>
           new CourseSummary(
-<span class="fc" id="L174">              course.getId(),</span>
-<span class="fc" id="L175">              course.getCourseId(),</span>
-<span class="fc" id="L176">              course.getSection(),</span>
-<span class="fc" id="L177">              course.getEnrollCode(),</span>
-<span class="fc" id="L178">              course.getAllocation(),</span>
+<span class="fc" id="L212">              course.getId(),</span>
+<span class="fc" id="L213">              course.getCourseId(),</span>
+<span class="fc" id="L214">              course.getSection(),</span>
+<span class="fc" id="L215">              course.getEnrollCode(),</span>
+<span class="fc" id="L216">              course.getAllocation(),</span>
               count,
-<span class="fc" id="L180">              course.getAllocation() - count,</span>
-<span class="fc bfc" id="L181" title="All 2 branches covered.">              !course.isOnOffer()));</span>
-<span class="fc" id="L182">    }</span>
+<span class="fc" id="L218">              course.getAllocation() - count,</span>
+<span class="fc bfc" id="L219" title="All 2 branches covered.">              !course.isOnOffer()));</span>
+<span class="fc" id="L220">    }</span>
 
-<span class="fc" id="L184">    List&lt;AssignmentRow&gt; rows = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L185" title="All 2 branches covered.">    for (Application application : applications) {</span>
-<span class="fc" id="L186">      Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L187" title="All 2 branches covered.">      for (IdentityColumn column : identity) {</span>
-<span class="fc" id="L188">        fields.put(column.header(), ApplicationCsvService.text(column.value().apply(application)));</span>
-<span class="fc" id="L189">      }</span>
-<span class="fc" id="L190">      Map&lt;Long, Integer&gt; rankings = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L191">      ranksByCourse.forEach(</span>
+<span class="fc" id="L222">    List&lt;AssignmentRow&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L223" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc" id="L224">      Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L225" title="All 2 branches covered.">      for (IdentityColumn column : identity) {</span>
+<span class="fc" id="L226">        fields.put(column.header(), ApplicationCsvService.text(column.value().apply(application)));</span>
+<span class="fc" id="L227">      }</span>
+<span class="fc" id="L228">      Map&lt;Long, Integer&gt; rankings = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L229">      ranksByCourse.forEach(</span>
           (courseId, ranks) -&gt; {
-<span class="fc bfc" id="L193" title="All 2 branches covered.">            if (ranks.containsKey(application.getId())) {</span>
-<span class="fc" id="L194">              rankings.put(courseId, ranks.get(application.getId()));</span>
+<span class="fc bfc" id="L231" title="All 2 branches covered.">            if (ranks.containsKey(application.getId())) {</span>
+<span class="fc" id="L232">              rankings.put(courseId, ranks.get(application.getId()));</span>
             }
-<span class="fc" id="L196">          });</span>
-<span class="fc" id="L197">      rows.add(</span>
+<span class="fc" id="L234">          });</span>
+<span class="fc" id="L235">      rows.add(</span>
           new AssignmentRow(
-<span class="fc" id="L199">              application.getId(), fields, application.getTentativeAssignmentId(), rankings));</span>
-<span class="fc" id="L200">    }</span>
+<span class="fc" id="L237">              application.getId(), fields, application.getTentativeAssignmentId(), rankings));</span>
+<span class="fc" id="L238">    }</span>
 
-<span class="fc" id="L202">    return new Assignments(</span>
-<span class="fc" id="L203">        recruitment.getId(),</span>
-<span class="fc" id="L204">        recruitment.getType(),</span>
-<span class="fc" id="L205">        identity.stream().map(IdentityColumn::header).toList(),</span>
+<span class="fc" id="L240">    return new Assignments(</span>
+<span class="fc" id="L241">        recruitment.getId(),</span>
+<span class="fc" id="L242">        recruitment.getType(),</span>
+<span class="fc" id="L243">        identity.stream().map(IdentityColumn::header).toList(),</span>
         summaries,
         rows);
   }

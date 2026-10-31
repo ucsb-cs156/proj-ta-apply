@@ -10,7 +10,6 @@ import edu.ucsb.cs.taapply.services.AssignmentsService.IdentityColumn;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -24,9 +23,12 @@ import org.springframework.stereotype.Service;
  * column after the identity columns, and three rows directly under the header, labelled in the
  * first column, with each section's allocation, how many applicants are tentatively assigned to it
  * and how many places are left.
+ *
+ * &lt;p&gt;Since issue #188 a course column is headed by the bare course number (&quot;16&quot;), with the section
+ * added only when the recruitment has more than one section of that course (&quot;16 (section 0100)&quot;).
  */
 @Service
-<span class="fc" id="L29">public class RankingsCsvService {</span>
+<span class="fc" id="L31">public class RankingsCsvService {</span>
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired AssignmentsService assignmentsService;
@@ -37,21 +39,19 @@ import org.springframework.stereotype.Service;
   static final String ASSIGNED_ROW = &quot;Assigned&quot;;
   static final String LEFT_ROW = &quot;Left to assign&quot;;
 
-<span class="fc" id="L40">  private record Column(String header, Function&lt;Application, Object&gt; value) {}</span>
+<span class="fc" id="L42">  private record Column(String header, Function&lt;Application, Object&gt; value) {}</span>
 
   public String write(Recruitment recruitment) {
-<span class="fc" id="L43">    List&lt;Column&gt; columns = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L44" title="All 2 branches covered.">    for (IdentityColumn identity : AssignmentsService.identityColumns(recruitment.getType())) {</span>
-<span class="fc" id="L45">      columns.add(new Column(identity.header(), identity.value()));</span>
-<span class="fc" id="L46">    }</span>
+<span class="fc" id="L45">    List&lt;Column&gt; columns = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">    for (IdentityColumn identity : AssignmentsService.identityColumns(recruitment.getType())) {</span>
+<span class="fc" id="L47">      columns.add(new Column(identity.header(), identity.value()));</span>
+<span class="fc" id="L48">    }</span>
     // Do not filter on isOnOffer: removed/stale/cancelled sections retain their rankings.
-<span class="fc" id="L48">    List&lt;RecruitmentCourse&gt; courses =</span>
-<span class="fc" id="L49">        new ArrayList&lt;&gt;(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));</span>
-<span class="fc" id="L50">    courses.sort(AssignmentsService.BY_COURSE_SECTION_ENROLL);</span>
-<span class="fc" id="L51">    Map&lt;Long, String&gt; labels = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L52" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
-<span class="fc" id="L53">      labels.put(course.getId(), AssignmentsService.label(course));</span>
-<span class="fc" id="L54">    }</span>
+<span class="fc" id="L50">    List&lt;RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L51">        new ArrayList&lt;&gt;(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));</span>
+<span class="fc" id="L52">    courses.sort(AssignmentsService.BY_COURSE_SECTION_ENROLL);</span>
+    // Issue #188: the bare course number, with the section only where a course has several.
+<span class="fc" id="L54">    Map&lt;Long, String&gt; labels = AssignmentsService.headings(courses);</span>
 <span class="fc" id="L55">    columns.add(new Column(&quot;tentativeAssignment&quot;, a -&gt; labels.get(a.getTentativeAssignmentId())));</span>
 
 <span class="fc" id="L57">    List&lt;Application&gt; applications =</span>

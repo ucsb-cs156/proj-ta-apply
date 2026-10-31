@@ -2,7 +2,7 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService.QuarterRefresh,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,BudgetService.Summary,0,24,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RoleEmailCsvService,0,191,0,24,0,47,0,17,0,5
-taapply,edu.ucsb.cs.taapply.services,RankingsCsvService,0,250,0,10,0,47,0,13,0,8
+taapply,edu.ucsb.cs.taapply.services,RankingsCsvService,0,231,0,8,0,44,0,12,0,8
 taapply,edu.ucsb.cs.taapply.services,SystemInfoService,0,3,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,CurrentUserService,0,10,0,2,0,2,0,3,0,2
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.AssignmentRow,0,15,0,0,0,1,0,1,0,1
@@ -31,7 +31,7 @@ taapply,edu.ucsb.cs.taapply.services,SystemInfoServiceImpl,0,68,0,4,0,18,0,5,0,3
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService.Columns,0,179,0,22,0,26,0,15,0,4
 taapply,edu.ucsb.cs.taapply.services,LegacyApplicationCsvService,0,1460,0,180,0,305,0,122,0,32
 taapply,edu.ucsb.cs.taapply.services,UCSBCurriculumService,0,355,0,24,0,72,0,23,0,11
-taapply,edu.ucsb.cs.taapply.services,AssignmentsService,0,404,0,30,0,79,0,30,0,15
+taapply,edu.ucsb.cs.taapply.services,AssignmentsService,0,512,0,40,0,97,0,37,0,17
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService,0,1225,0,136,0,246,0,97,0,29
 taapply,edu.ucsb.cs.taapply.services,LegacyApplicationCsvService.ImportResult,0,18,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.CourseSummary,0,27,0,0,0,1,0,1,0,1
