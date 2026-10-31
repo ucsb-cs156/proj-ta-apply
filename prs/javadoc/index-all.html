@@ -179,6 +179,14 @@ logged in: until then both names are null.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.html#allInstructors()" class="member-name-link">allInstructors()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AllocationService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">AllocationService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">The arithmetic behind the allocation columns of the Recruitment Courses page (issue #176): each
+section's fractional share of the hiring target by enrollment estimate, and the first-cut
+allocation an admin can ask for from it.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AllocationService.html#%3Cinit%3E()" class="member-name-link">AllocationService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AllocationService.html" title="class in edu.ucsb.cs.taapply.services">AllocationService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/UCSBAPIQuarterController.html#allQuarters(java.lang.String)" class="member-name-link">allQuarters(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/UCSBAPIQuarterController.html" title="class in edu.ucsb.cs.taapply.controller">UCSBAPIQuarterController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#allRecruitments()" class="member-name-link">allRecruitments()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
@@ -357,6 +365,19 @@ student's application.</div>
 <dd>
 <div class="block">Every authority the given email should hold.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AllocationService.html#autoAllocate(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">autoAllocate(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AllocationService.html" title="class in edu.ucsb.cs.taapply.services">AllocationService</a></dt>
+<dd>
+<div class="block">Overwrites every non-removed section's allocation with a best effort at the hiring target from
+the enrollment estimates, and returns the sections in page order:
+
+
+  each section gets its unrounded share rounded to the nearest whole number (half up);
+  while the total is above the target, the section furthest above its share (the largest
+      <code>allocation - unroundedAllocation</code>) loses one; while the total is below the target,
+      the section furthest below its share gains one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#autoAllocate(java.lang.Long)" class="member-name-link">autoAllocate(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#availabilityCommentsFirstChoice()" class="member-name-link">availabilityCommentsFirstChoice()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>availabilityCommentsFirstChoice</code> record component.</div>
@@ -437,6 +458,10 @@ student's application.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html#%3Cinit%3E()" class="member-name-link">CanonicalFormConverter()</a> - Constructor for class edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html" title="class in edu.ucsb.cs.taapply.utilities">CanonicalFormConverter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html#CATALOG_NAME_HEADER" class="member-name-link">CATALOG_NAME_HEADER</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsCSVController</a></dt>
+<dd>
+<div class="block">The optional upload column and download header carrying the instructor's catalog name.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html#catalogName()" class="member-name-link">catalogName()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.InstructorDTO.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController.InstructorDTO</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>catalogName</code> record component.</div>
@@ -634,6 +659,8 @@ who has just chosen that course.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html#downloadCsv(java.lang.Long)" class="member-name-link">downloadCsv(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminRankingsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#downloadCsv(java.lang.String)" class="member-name-link">downloadCsv(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html#downloadInstructorsCSV()" class="member-name-link">downloadInstructorsCSV()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsCSVController</a></dt>
 <dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:E">E</h2>
@@ -1420,7 +1447,7 @@ have logged in: until then both names are null.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorsCSVController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>
-<div class="block">Bulk upload of instructor email addresses from a CSV file.</div>
+<div class="block">Bulk upload and download of the instructor list as a CSV file (issue #172).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html#%3Cinit%3E()" class="member-name-link">InstructorsCSVController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsCSVController</a></dt>
 <dd>&nbsp;</dd>
@@ -1996,6 +2023,12 @@ like) from it.</div>
 <dd>
 <div class="block">Whether a closed recruitment closed recently: within the last <a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#RECENT_MONTHS"><code>ApplicationAccessService.RECENT_MONTHS</code></a>, counting
 the day six months on as still recent.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AllocationService.html#recompute(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recompute(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AllocationService.html" title="class in edu.ucsb.cs.taapply.services">AllocationService</a></dt>
+<dd>
+<div class="block">Recomputes and stores <code>unroundedAllocation</code> for every non-removed section of the
+recruitment: <code>totalHiringTarget * estimate / total of the estimates</code>, or 0.0 for every
+section when the estimates add up to nothing.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">record(ApplicationAuditService.Snapshot, Application, RecruitmentType)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService</a></dt>
 <dd>
@@ -2730,9 +2763,10 @@ currently is.</div>
 <dd>
 <div class="block">Reads the sheet and saves one application per row into the recruitment.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.html#upload(org.springframework.web.multipart.MultipartFile,java.util.function.Predicate,java.util.function.Consumer)" class="member-name-link">upload(MultipartFile, Predicate, Consumer)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.html#upload(org.springframework.web.multipart.MultipartFile,java.lang.String,java.util.function.Predicate,java.util.function.BiConsumer,java.util.function.BiConsumer)" class="member-name-link">upload(MultipartFile, String, Predicate, BiConsumer, BiConsumer)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService</a></dt>
 <dd>
-<div class="block">Reads the file and stores each valid, not-yet-present address.</div>
+<div class="block">Reads the file and stores each valid, not-yet-present address, passing along the row's value of
+one optional column (issue #172).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#uploadCsv(java.lang.String,org.springframework.web.multipart.MultipartFile)" class="member-name-link">uploadCsv(String, MultipartFile)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
 <dd>&nbsp;</dd>

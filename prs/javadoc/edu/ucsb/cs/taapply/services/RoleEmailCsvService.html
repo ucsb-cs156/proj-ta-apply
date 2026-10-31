@@ -70,7 +70,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
-<li><a href="#upload(org.springframework.web.multipart.MultipartFile,java.util.function.Predicate,java.util.function.Consumer)" tabindex="0">upload(MultipartFile, Predicate, Consumer)</a></li>
+<li><a href="#upload(org.springframework.web.multipart.MultipartFile,java.lang.String,java.util.function.Predicate,java.util.function.BiConsumer,java.util.function.BiConsumer)" tabindex="0">upload(MultipartFile, String, Predicate, BiConsumer, BiConsumer)</a></li>
 </ol>
 </li>
 </ol>
@@ -96,9 +96,11 @@ any later role table behaves identically rather than merely similarly. The calle
 what differs: how to tell whether an address is already present, and how to store a new one.
 
 <p>The file must have a header row containing a column named <code>email</code> (case-insensitive);
-any additional columns are ignored. Rows are processed independently: an address already present
-is a no-op rather than an error, and a malformed row is skipped and reported rather than aborting
-the rows that already succeeded. Re-uploading the same file is therefore safe.</div>
+any additional columns are ignored, except one the caller may name as carrying an extra value for
+each row (the instructors upload uses <code>catalogName</code>, issue #172). Rows are processed
+independently: an address already present is a no-op rather than an error, and a malformed row is
+skipped and reported rather than aborting the rows that already succeeded. Re-uploading the same
+file is therefore safe.</div>
 </div>
 </section>
 <section class="summary">
@@ -160,11 +162,14 @@ the rows that already succeeded. Re-uploading the same file is therefore safe.</
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#upload(org.springframework.web.multipart.MultipartFile,java.util.function.Predicate,java.util.function.Consumer)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#upload(org.springframework.web.multipart.MultipartFile,java.lang.String,java.util.function.Predicate,java.util.function.BiConsumer,java.util.function.BiConsumer)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;optionalColumn,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;exists,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;save)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;save,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;updateExisting)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Reads the file and stores each valid, not-yet-present address.</div>
+<div class="block">Reads the file and stores each valid, not-yet-present address, passing along the row's value of
+one optional column (issue #172).</div>
 </div>
 </div>
 </div>
@@ -224,19 +229,28 @@ the rows that already succeeded. Re-uploading the same file is therefore safe.</
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="upload(org.springframework.web.multipart.MultipartFile,java.util.function.Predicate,java.util.function.Consumer)">
+<section class="detail" id="upload(org.springframework.web.multipart.MultipartFile,java.lang.String,java.util.function.Predicate,java.util.function.BiConsumer,java.util.function.BiConsumer)">
 <h3>upload</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></span>&nbsp;<span class="element-name">upload</span><wbr><span class="parameters">(org.springframework.web.multipart.MultipartFile&nbsp;file,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;optionalColumn,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;exists,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;save)</span>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;save,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;updateExisting)</span>
                                         throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a>,
 com.opencsv.exceptions.CsvException</span></div>
-<div class="block">Reads the file and stores each valid, not-yet-present address.</div>
+<div class="block">Reads the file and stores each valid, not-yet-present address, passing along the row's value of
+one optional column (issue #172).</div>
 <dl class="notes">
 <dt>Parameters:</dt>
+<dd><code>optionalColumn</code> - header name of a column whose value accompanies each address; matched
+    like <code>email</code> (case-insensitive, whitespace-tolerant), null when the file lacks the
+    column or the cell is blank</dd>
 <dd><code>exists</code> - whether the address is already in the target table</dd>
-<dd><code>save</code> - stores a new address; called only for valid, absent addresses</dd>
+<dd><code>save</code> - stores a new address and its optional value; called only for valid, absent
+    addresses</dd>
+<dd><code>updateExisting</code> - called instead of <code>save</code> for a valid address already present (still
+    counted as already present), so the optional value can be applied to it</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code></dd>
 <dd><code>com.opencsv.exceptions.CsvException</code></dd>

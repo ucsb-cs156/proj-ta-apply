@@ -200,25 +200,44 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">Applications may only be created against an open recruitment.</div>
 </div>
-<div class="col-first odd-row-color"><code>boolean</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#commentable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">commentable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">AllocationService.</span><code><a href="../../services/AllocationService.html#autoAllocate(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">autoAllocate</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
 <div class="col-last odd-row-color">
+<div class="block">Overwrites every non-removed section's allocation with a best effort at the hiring target from
+the enrollment estimates, and returns the sections in page order:
+
+
+  each section gets its unrounded share rounded to the nearest whole number (half up);
+  while the total is above the target, the section furthest above its share (the largest
+      <code>allocation - unroundedAllocation</code>) loses one; while the total is below the target,
+      the section furthest below its share gains one.</div>
+</div>
+<div class="col-first even-row-color"><code>boolean</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#commentable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">commentable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
+<div class="col-last even-row-color">
 <div class="block">Whether post-application comments may still be changed: while the recruitment is open, and for
 six months after it closes (issue #107), as the place for what has changed since applying.</div>
 </div>
-<div class="col-first even-row-color"><code>boolean</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#editable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">editable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>boolean</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#editable(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">editable</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">Whether the whole application may still be edited: for as long as the admin keeps applications
 open (issue #98).</div>
 </div>
-<div class="col-first odd-row-color"><code>boolean</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#recentlyClosed(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">recentlyClosed</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+<div class="col-first even-row-color"><code>boolean</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationAccessService.</span><code><a href="../../services/ApplicationAccessService.html#recentlyClosed(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">recentlyClosed</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
-<div class="col-last odd-row-color">
+<div class="col-last even-row-color">
 <div class="block">Whether a closed recruitment closed recently: within the last <a href="../../services/ApplicationAccessService.html#RECENT_MONTHS"><code>ApplicationAccessService.RECENT_MONTHS</code></a>, counting
 the day six months on as still recent.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">AllocationService.</span><code><a href="../../services/AllocationService.html#recompute(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recompute</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Recomputes and stores <code>unroundedAllocation</code> for every non-removed section of the
+recruitment: <code>totalHiringTarget * estimate / total of the estimates</code>, or 0.0 for every
+section when the estimates add up to nothing.</div>
 </div>
 <div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</code></div>
 <div class="col-second even-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../../services/RecruitmentAuditService.html#recordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordChanges</a><wbr>(<a href="../../services/RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a>&nbsp;before,

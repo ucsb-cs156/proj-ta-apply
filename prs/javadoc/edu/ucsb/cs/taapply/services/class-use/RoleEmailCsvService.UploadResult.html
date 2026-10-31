@@ -89,11 +89,14 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code><a href="../RoleEmailCsvService.UploadResult.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService.UploadResult</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">RoleEmailCsvService.</span><code><a href="../RoleEmailCsvService.html#upload(org.springframework.web.multipart.MultipartFile,java.util.function.Predicate,java.util.function.Consumer)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
+<div class="col-second even-row-color"><span class="type-name-label">RoleEmailCsvService.</span><code><a href="../RoleEmailCsvService.html#upload(org.springframework.web.multipart.MultipartFile,java.lang.String,java.util.function.Predicate,java.util.function.BiConsumer,java.util.function.BiConsumer)" class="member-name-link">upload</a><wbr>(org.springframework.web.multipart.MultipartFile&nbsp;file,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;optionalColumn,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;exists,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;save)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;save,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;updateExisting)</code></div>
 <div class="col-last even-row-color">
-<div class="block">Reads the file and stores each valid, not-yet-present address.</div>
+<div class="block">Reads the file and stores each valid, not-yet-present address, passing along the row's value of
+one optional column (issue #172).</div>
 </div>
 </div>
 </section>
