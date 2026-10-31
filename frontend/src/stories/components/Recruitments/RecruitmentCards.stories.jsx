@@ -33,3 +33,17 @@ ThreeRecruitments.args = {
 
 export const Empty = Template.bind({});
 Empty.args = { recruitments: [] };
+
+export const RankingsDownload = Template.bind({});
+RankingsDownload.args = {
+  recruitments: recruitmentsFixtures.threeRecruitments,
+  applicationCounts: { 1: 2, 2: 0, 3: 3 },
+};
+RankingsDownload.parameters = {
+  docs: {
+    description: {
+      story:
+        "Each recruitment has separate application and rankings CSV downloads. Rankings include real unranked applicants and historical course sections; empty recruitments download a header-only file.",
+    },
+  },
+};

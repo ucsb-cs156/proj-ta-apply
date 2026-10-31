@@ -37,6 +37,29 @@ export default function HelpAdminsPage(): React.JSX.Element {
           changes appear in the recruitment change history.
         </p>
 
+        <h2 className="my-3 h4" id="rankings-csv">
+          Download Rankings CSV
+        </h2>
+        <p>
+          On a recruitment card, <strong>Download Rankings CSV</strong> saves
+          that recruitment&apos;s faculty rankings as a spreadsheet-ready file.
+          This is separate from <strong>Download CSV</strong>, which exports
+          application answers. Rankings include every real applicant, even those
+          with no interests or rankings; test applications are excluded. Unset
+          rankings are blank, not zero, and ties are preserved.
+        </p>
+        <p>
+          TA columns are first name, last name, email, major, class level, year
+          in program and expected graduation. ULA columns are first name, last
+          name, email, major, year in program, expected graduation, GPA in
+          major, overall GPA and quarters of previous ULA service. No video
+          links or admin comments are exported. Course columns follow in course
+          ID and section order, with section and enrollment code in every
+          heading to distinguish independent faculty rankings. Removed, stale
+          and cancelled sections remain in this historical export so saved
+          rankings are not lost when offerings change.
+        </p>
+
         <h2 className="my-3 h4" id="flow">
           The flow of a recruitment
         </h2>

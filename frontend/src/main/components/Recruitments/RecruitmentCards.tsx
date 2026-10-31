@@ -336,6 +336,14 @@ export default function RecruitmentCards({
               >
                 Download CSV
               </a>
+              <a
+                className="btn btn-outline-secondary"
+                href={`/api/admin/rankings/csv?recruitmentId=${recruitment.id}`}
+                download={`rankings-${recruitment.id}.csv`}
+                data-testid={id("rankings-csv-button")}
+              >
+                Download Rankings CSV
+              </a>
               <Link
                 className="btn btn-info"
                 to={`/admin/recruitments/${recruitment.id}/applications`}
