@@ -80,6 +80,27 @@ class RankingsCsvServiceTests {
   }
 
   @Test
+  void section_order_takes_precedence_over_enrollment_code() throws Exception {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L))
+        .thenReturn(
+            List.of(course(20, "CMPSC 16", "0200", "100"), course(10, "CMPSC 16", "0100", "900")));
+
+    assertEquals(
+        List.of(
+            List.of(
+                "firstName",
+                "lastName",
+                "email",
+                "major",
+                "classLevel",
+                "yearInProgram",
+                "graduationDate",
+                "CMPSC 16 (section 0100, enroll 900)",
+                "CMPSC 16 (section 0200, enroll 100)")),
+        parse(service.write(recruitment(RecruitmentType.TA))));
+  }
+
+  @Test
   void ta_exact_rows_preserve_ties_and_historical_sections_without_leaking_other_applicants()
       throws Exception {
     RecruitmentCourse removed = course(10, "CMPSC 16", "0100", "100");
