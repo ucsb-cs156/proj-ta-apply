@@ -1,7 +1,7 @@
 GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
 taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService.QuarterRefresh,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,ApplicationCsvService,0,540,0,16,0,53,0,24,0,16
-taapply,edu.ucsb.cs.taapply.services,RoleEmailCsvService,0,152,0,16,0,39,0,12,0,4
+taapply,edu.ucsb.cs.taapply.services,RoleEmailCsvService,0,191,0,24,0,47,0,17,0,5
 taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService.Snapshot,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService.new TypeReference() {...},0,8,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RankingsCsvService,0,249,0,12,0,41,0,16,0,10
@@ -75,7 +75,7 @@ taapply,edu.ucsb.cs.taapply.controller,InstructorsController.InstructorDTO,0,34,
 taapply,edu.ucsb.cs.taapply.controller,NoticesController.NoticeContent,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController.ApplicationFields,0,123,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CandidateRankingPage,0,39,0,0,0,1,0,1,0,1
-taapply,edu.ucsb.cs.taapply.controller,InstructorsCSVController,0,29,0,0,0,5,0,4,0,4
+taapply,edu.ucsb.cs.taapply.controller,InstructorsCSVController,0,176,0,10,0,36,0,13,0,8
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CandidateApplication,0,21,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,QuarterCalendarController,0,22,0,0,0,5,0,4,0,4
 taapply,edu.ucsb.cs.taapply.controller,AdminsController,0,124,0,2,0,24,0,10,0,9
