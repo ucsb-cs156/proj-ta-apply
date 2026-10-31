@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import axios, { type AxiosRequestConfig } from "axios";
 import { toast } from "react-toastify";
+import { shouldToastBackendError } from "main/utils/apiError";
 
 // example
 //  queryKey ["/api/users/all"] for "api/users/all"
@@ -46,7 +47,9 @@ export function useBackend<T>(
         return response.data;
       } catch (e) {
         const errorMessage = `Error communicating with backend via ${axiosParameters.method} on ${axiosParameters.url}`;
-        if (!suppressToasts) {
+        // No toast once the session is gone or the server is unreachable (issue #198): the
+        // user is about to see the sign-in screen, and a flurry of toasts would only hide it.
+        if (!suppressToasts && shouldToastBackendError(e)) {
           toast(errorMessage);
         }
         console.error(errorMessage, e);
@@ -77,7 +80,12 @@ export function useBackendMutation<TInput, TData = unknown>(
     mutationFn: (object: TInput) =>
       wrappedParams<TData>(objectToAxiosParams(object)),
     onError: (data) => {
-      toast(`${data}`);
+      // As in useBackend: a lost session or an unreachable server is logged, not toasted (#198).
+      if (shouldToastBackendError(data)) {
+        toast(`${data}`);
+      } else {
+        console.error("Backend request failed", data);
+      }
     },
     // Stryker disable all: Not sure how to set up the complex behavior needed to test this
     onSettled: () => {
