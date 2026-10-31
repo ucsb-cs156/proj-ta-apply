@@ -157,13 +157,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Instructor section of the home page. Add one with{" "}
           <em>Add New Instructor</em>, or many at once by uploading a CSV of
           emails (the format is on the{" "}
-          <Link to="/help/csv">CSV Upload/Download Formats</Link> page). Each
-          row also has a <strong>Catalog Name</strong>: the spelling the course
-          schedule uses for that instructor, for example &ldquo;CONRAD P&rdquo;,
-          chosen from the names the course-population jobs have seen. Set it so
-          the instructor&apos;s courses can be matched to them; until it is set,
-          their Instructor section says no recruitment includes a course they
-          teach.
+          <Link to="/help/csv">CSV Upload/Download Formats</Link> page);{" "}
+          <em>Download Instructors (CSV)</em> saves the whole list in a shape
+          the upload accepts, so it can be moved from one deployment to another.
+          Each row also has a <strong>Catalog Name</strong>: the spelling the
+          course schedule uses for that instructor, for example &ldquo;CONRAD
+          P&rdquo;, chosen from the names the course-population jobs have seen.
+          Set it so the instructor&apos;s courses can be matched to them; until
+          it is set, their Instructor section says no recruitment includes a
+          course they teach.
         </p>
 
         <h2 className="my-3 h4" id="courses">

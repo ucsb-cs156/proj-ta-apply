@@ -247,7 +247,7 @@ describe("Help pages (issue #140)", () => {
     expect(
       document.getElementById("instructors").nextElementSibling.textContent,
     ).toMatch(
-      /Add one with Add New Instructor, or many at once by uploading a CSV of emails \(the format is on the CSV Upload\/Download Formats page\)\./,
+      /Add one with Add New Instructor, or many at once by uploading a CSV of emails \(the format is on the CSV Upload\/Download Formats page\); Download Instructors \(CSV\) saves the whole list in a shape the upload accepts, so it can be moved from one deployment to another\./,
     );
     const buttons = [
       ...screen

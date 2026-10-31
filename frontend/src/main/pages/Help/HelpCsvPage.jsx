@@ -29,12 +29,12 @@ export default function HelpCsvPage() {
           Admins can bulk-upload email addresses from a CSV file on the
           Instructors admin page. Click below for details and an example.
         </p>
-        <p>
+        <p data-testid="emailUploadsIntro">
           The file must have a header row containing a column named{" "}
-          <code>email</code> (the header name is case-insensitive); any
-          additional columns are ignored. Each row is processed independently:
-          an address that is already on the list is skipped rather than reported
-          as an error, and a malformed row is skipped and reported rather than
+          <code>email</code> (the header name is case-insensitive); a file with
+          just that column is enough. Each row is processed independently: an
+          address that is already on the list is skipped rather than reported as
+          an error, and a malformed row is skipped and reported rather than
           aborting the rows that already succeeded. Re-uploading the same file
           is therefore safe.
         </p>
@@ -44,11 +44,15 @@ export default function HelpCsvPage() {
             <Accordion.Body>
               <p data-testid="instructorCsvDescription">
                 On the <i>Instructors</i> admin page, admins can upload a CSV of
-                instructor email addresses. Each address uploaded is permitted
-                to log in as an instructor and review applications for their own
-                courses. Here is an example file (note that the{" "}
-                <code>name</code> column is ignored; only the <code>email</code>{" "}
-                column is used):
+                instructors. Each address uploaded is permitted to log in as an
+                instructor and review applications for their own courses. A{" "}
+                <code>catalogName</code> column, when present, sets each
+                instructor&apos;s catalog name (including for an instructor
+                already on the list) when the value is a name on record, one the
+                Populate Courses job has seen; other columns, such as{" "}
+                <code>firstName</code> and <code>lastName</code>, are accepted
+                but ignored, since names come from the users table when the
+                instructor first logs in. Here is an example file:
               </p>
               <pre className="csvExample" data-testid="instructorCsvExample">
                 {csvFixtures.instructorEmails}
@@ -217,6 +221,15 @@ export default function HelpCsvPage() {
         </Accordion>
 
         <h2 className="my-4">CSV Download formats</h2>
+        <p data-testid="instructorsDownloadDescription">
+          The <i>Instructors</i> admin page offers a{" "}
+          <b>Download Instructors (CSV)</b> button that saves the whole list:
+          columns <code>email</code>, <code>firstName</code>,{" "}
+          <code>lastName</code> and <code>catalogName</code>, with a header row
+          and every cell quoted. The upload accepts this shape, so the list can
+          be moved from one deployment to another; the name columns are blank
+          for an instructor who has not logged in yet.
+        </p>
         <p data-testid="downloadsSummary">
           Besides the App Settings lists described above, the{" "}
           <i>Recruitments</i> admin page offers a <b>CSV</b> button per
