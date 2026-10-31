@@ -203,7 +203,12 @@ describe("HomePageLoggedIn tests", () => {
       screen.getByTestId(
         "HomePageLoggedIn-instructor-recruitments-card-1-course-2-body",
       ),
-    ).toHaveTextContent("(Coming soon: options to review and rank applicants)");
+    ).toHaveTextContent("View Candidate Rankings");
+    expect(
+      screen.getByTestId(
+        "HomePageLoggedIn-instructor-recruitments-card-1-course-2-view-rankings",
+      ),
+    ).toHaveAttribute("href", "/recruitments/1/courses/2/ranking");
     expect(screen.queryByTestId("HomePageLoggedIn-instructor-none")).toBeNull();
   });
 

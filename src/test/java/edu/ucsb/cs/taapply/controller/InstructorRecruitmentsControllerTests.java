@@ -502,4 +502,55 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
         .andExpect(status().isForbidden());
     verify(recruitmentRepository, never()).findById(any());
   }
+
+  private void seedOpenRankingCourse() {
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setReviewStatus("Open");
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    when(recruitmentCourseRepository.findById(1L))
+        .thenReturn(Optional.of(row(1L, 10L, "CMPSC   156", "0100", false)));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void missing_current_user_or_user_record_is_rejected() throws Exception {
+    seedOpenRankingCourse();
+    when(currentUserService.getCurrentUser()).thenReturn(null);
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
+
+    when(currentUserService.getCurrentUser()).thenReturn(CurrentUser.builder().build());
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
+    verify(instructorRepository, never()).findByEmail(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void missing_instructor_mapping_cannot_grant_course_access() throws Exception {
+    seedOpenRankingCourse();
+    currentUser(EMAIL, false);
+    when(instructorRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
+    instructorWithCatalogName(null);
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void absent_authorities_do_not_grant_admin_bypass() throws Exception {
+    seedOpenRankingCourse();
+    when(currentUserService.getCurrentUser())
+        .thenReturn(CurrentUser.builder().user(User.builder().email(EMAIL).build()).build());
+    when(instructorRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
+  }
 }
