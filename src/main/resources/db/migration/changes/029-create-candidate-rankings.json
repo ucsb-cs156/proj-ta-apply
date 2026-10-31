@@ -1,0 +1,69 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "029-create-candidate-rankings",
+        "author": "copilot",
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "candidate_ranking",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "primaryKey": true, "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "recruitment_course_id",
+                    "type": "BIGINT",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "application_id",
+                    "type": "BIGINT",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                { "column": { "name": "rank", "type": "INT" } }
+              ]
+            }
+          },
+          {
+            "addUniqueConstraint": {
+              "tableName": "candidate_ranking",
+              "columnNames": "recruitment_course_id,application_id",
+              "constraintName": "uq_candidate_ranking_course_application"
+            }
+          },
+          {
+            "addForeignKeyConstraint": {
+              "baseTableName": "candidate_ranking",
+              "baseColumnNames": "recruitment_course_id",
+              "referencedTableName": "recruitment_courses",
+              "referencedColumnNames": "id",
+              "constraintName": "fk_candidate_ranking_course",
+              "onDelete": "CASCADE"
+            }
+          },
+          {
+            "addForeignKeyConstraint": {
+              "baseTableName": "candidate_ranking",
+              "baseColumnNames": "application_id",
+              "referencedTableName": "applications",
+              "referencedColumnNames": "id",
+              "constraintName": "fk_candidate_ranking_application",
+              "onDelete": "CASCADE"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

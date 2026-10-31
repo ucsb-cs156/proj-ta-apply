@@ -13,8 +13,19 @@ import {
   yesNoLabel,
 } from "main/utils/ulaQuestions";
 
+export type ApplicationSummaryData = Omit<
+  Application,
+  | "adminComments"
+  | "postApplicationComments"
+  | "testApplication"
+  | "status"
+  | "cancelledAt"
+  | "cancellationReason"
+> &
+  Partial<Pick<Application, "status" | "cancelledAt" | "cancellationReason">>;
+
 type ApplicationSummaryProps = {
-  application: Application;
+  application: ApplicationSummaryData;
   /** TA and ULA ask different questions, so only the relevant ones are shown back. */
   type: "TA" | "ULA";
   /** The notice version the applicant agreed to, if the caller has it; shown back ticked. */
@@ -88,7 +99,7 @@ export default function ApplicationSummary({
       ? [
           {
             label: "Cancelled",
-            value: `${submittedText(application.cancelledAt)}: ${show(application.cancellationReason)}`,
+            value: `${submittedText(application.cancelledAt ?? null)}: ${show(application.cancellationReason)}`,
           },
         ]
       : []),
