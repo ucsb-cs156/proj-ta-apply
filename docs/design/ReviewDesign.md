@@ -104,6 +104,27 @@ Finally, have a button that says: "Copy emails of faculty with zero rankings".  
 
 # Fifth Iteration
 
+Implemented as the separate admin-only **Download Rankings CSV** action
+(`/api/admin/rankings/csv?recruitmentId=...`), named `rankings-<id>.csv`.
+The existing applications CSV is unchanged. Field labels use the application
+field names in the order below (`classLevel`, `yearInProgram`, `graduationDate`,
+`gpaMajor`, `gpaOverall`, `previousServiceAsUla`). Rows are real applications
+in ascending application ID order, including applicants without interests or
+rankings. Null values and unset ranks are blank; stored numbers and ties are
+not changed.
+
+This is a historical ranking snapshot: **all persisted RecruitmentCourse
+sections for that recruitment**, including removed, stale and cancelled
+sections, get columns regardless of current offering availability. Course
+columns sort by stored course ID, then section, then enrollment code. Every
+heading includes section and enrollment code (even for a unique course ID),
+so separate primary sections and their historical rankings stay distinct.
+Only rankings attached to those recruitment-course scopes are read; only
+applications to that recruitment are exported. Test applications, video links
+and admin comments are excluded. UTF-8 and OpenCSV quoting preserve Unicode,
+commas, quotes and embedded newlines. An empty recruitment is a valid
+header-only file, while a missing recruitment is a 404.
+
 Allow the Admin to download the Rankings in a CSV that has these columns:
 
 For TAs:

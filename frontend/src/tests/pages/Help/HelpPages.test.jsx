@@ -34,6 +34,29 @@ const renderPage = (page, initialEntries = ["/"]) =>
   );
 
 describe("Help pages (issue #140)", () => {
+  test("admin help distinguishes rankings CSV and explains historical export policy", async () => {
+    renderPage(<HelpAdminsPage />);
+    expect(
+      await screen.findByRole("heading", {
+        name: "Download Rankings CSV",
+      }),
+    ).toHaveAttribute("id", "rankings-csv");
+    expect(
+      screen.getByText(/This is separate from/, { exact: false }),
+    ).toHaveTextContent(
+      /every real applicant.*no interests or rankings.*test applications are excluded.*Unset rankings are blank, not zero, and ties are preserved/,
+    );
+    expect(screen.getByText(/TA columns are/)).toHaveTextContent(
+      /TA columns are first name, last name, email, major, class level, year in program and expected graduation/,
+    );
+    expect(screen.getByText(/TA columns are/)).toHaveTextContent(
+      /ULA columns are first name, last name, email, major, year in program, expected graduation, GPA in major, overall GPA and quarters of previous ULA service/,
+    );
+    expect(screen.getByText(/TA columns are/)).toHaveTextContent(
+      /No video links or admin comments are exported.*section and enrollment code.*Removed, stale and cancelled sections remain/,
+    );
+  });
+
   test("the TA applicants page lists what is asked for, at a high level", async () => {
     renderPage(<HelpTaApplicantsPage />);
     expect(

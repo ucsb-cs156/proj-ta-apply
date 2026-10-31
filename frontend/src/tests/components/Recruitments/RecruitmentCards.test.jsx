@@ -277,6 +277,24 @@ describe("RecruitmentCards tests", () => {
     expect(csv).toHaveAttribute("download", "applications-2.csv");
     expect(csv).toHaveClass("btn", "btn-outline-secondary");
 
+    for (const [index, id] of [
+      [0, 3],
+      [1, 1],
+      [2, 2],
+    ]) {
+      const rankings = screen.getByTestId(
+        `Cards-card-${index}-rankings-csv-button`,
+      );
+      expect(rankings).toHaveTextContent("Download Rankings CSV");
+      expect(rankings).toHaveAttribute(
+        "href",
+        `/api/admin/rankings/csv?recruitmentId=${id}`,
+      );
+      expect(rankings).toHaveAttribute("download", `rankings-${id}.csv`);
+      expect(rankings).toHaveClass("btn", "btn-outline-secondary");
+      expect(rankings.closest(".card-footer")).not.toBeNull();
+    }
+
     const review = screen.getByTestId("Cards-card-2-review-button");
     expect(review).toHaveTextContent("Review Applications");
     expect(review).toHaveAttribute(
@@ -285,12 +303,12 @@ describe("RecruitmentCards tests", () => {
     );
     expect(review).toHaveClass("btn", "btn-info");
 
-    // All five sit in the footer; Delete moved to the header (issue #108).
+    // Actions sit in the footer; Delete moved to the header (issue #108).
     const footer = screen
       .getByTestId("Cards-card-2-card")
       .querySelector(".card-footer");
     expect(footer).toHaveClass("d-flex", "flex-wrap", "gap-2");
-    expect(footer.children).toHaveLength(6);
+    expect(footer.children).toHaveLength(7);
     expect(footer).not.toContainElement(
       screen.getByTestId("Cards-card-2-delete-button"),
     );
