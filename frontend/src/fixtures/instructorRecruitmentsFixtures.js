@@ -8,16 +8,66 @@ const [oneA, lecture156a, lecture156b] = recruitmentCoursesFixtures.fourCourses;
 
 /** What /api/instructor/recruitments returns for an instructor (issue #127). */
 const instructorRecruitmentsFixtures = {
-  /** Two recruitments: the TA one with two lectures, the ULA one with one. */
+  /**
+   * Two recruitments: the TA one with two lectures, the ULA one with one. Allocations are hidden
+   * from faculty (the default), so the rows come without allocation, estimate or share (issue #178).
+   */
   twoRecruitments: [
     {
       ...closedTa,
       courses: [
-        { ...lecture156a, recruitmentId: 1 },
-        { ...lecture156b, recruitmentId: 1, section: null, title: null },
+        {
+          ...lecture156a,
+          recruitmentId: 1,
+          allocation: null,
+          enrollmentEstimate: null,
+          unroundedAllocation: null,
+        },
+        {
+          ...lecture156b,
+          recruitmentId: 1,
+          section: null,
+          title: null,
+          allocation: null,
+          enrollmentEstimate: null,
+          unroundedAllocation: null,
+        },
       ],
     },
-    { ...openUla, courses: [{ ...oneA, recruitmentId: 2 }] },
+    {
+      ...openUla,
+      courses: [
+        {
+          ...oneA,
+          recruitmentId: 2,
+          allocation: null,
+          enrollmentEstimate: null,
+          unroundedAllocation: null,
+        },
+      ],
+    },
+  ],
+  /** The same two recruitments once the admin shows allocations to faculty (issue #178). */
+  twoRecruitmentsWithAllocations: [
+    {
+      ...closedTa,
+      allocationsVisibleToFaculty: true,
+      courses: [
+        { ...lecture156a, recruitmentId: 1, allocation: 2 },
+        {
+          ...lecture156b,
+          recruitmentId: 1,
+          section: null,
+          title: null,
+          allocation: 3,
+        },
+      ],
+    },
+    {
+      ...openUla,
+      allocationsVisibleToFaculty: true,
+      courses: [{ ...oneA, recruitmentId: 2, allocation: 1 }],
+    },
   ],
   candidateRankingPage: {
     recruitmentId: 1,
@@ -46,7 +96,14 @@ const instructorRecruitmentsFixtures = {
         instructor: "CONRAD P",
       },
     ],
+    allocation: null,
   },
+};
+
+/** The ranking page once the admin shows allocations: this lecture has two TAs (issue #178). */
+instructorRecruitmentsFixtures.candidateRankingPageWithAllocation = {
+  ...instructorRecruitmentsFixtures.candidateRankingPage,
+  allocation: 2,
 };
 
 export default instructorRecruitmentsFixtures;

@@ -1,0 +1,55 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "033-create-budgets-table",
+        "author": "pc",
+        "comment": "One budget per quarter for the Budget for Quarter page: the unrestricted, TAs-only and ULAs-only funds in dollars and cents (issue #177).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "budgets" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "budgets",
+              "columns": [
+                {
+                  "column": {
+                    "name": "quarter",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "primaryKey": true, "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "unrestricted_budget",
+                    "type": "NUMERIC(12,2)",
+                    "defaultValueNumeric": 0,
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "tas_only_budget",
+                    "type": "NUMERIC(12,2)",
+                    "defaultValueNumeric": 0,
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "ulas_only_budget",
+                    "type": "NUMERIC(12,2)",
+                    "defaultValueNumeric": 0,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

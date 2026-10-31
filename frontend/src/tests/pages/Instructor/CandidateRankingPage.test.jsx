@@ -250,4 +250,82 @@ describe("CandidateRankingPage", () => {
       axiosMock.history.get.some((request) => request.url.includes("/ranking")),
     ).toBe(false);
   });
+
+  // ---- the allocation notice (issue #178) ----
+
+  test("no allocation notice while the admin hides allocations", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(200, instructorRecruitmentsFixtures.candidateRankingPage);
+    renderPage();
+
+    await screen.findByTestId("CandidateRankingPage-quarter");
+    expect(
+      instructorRecruitmentsFixtures.candidateRankingPage.allocation,
+    ).toBeNull();
+    expect(screen.queryByTestId("CandidateRankingPage-allocation")).toBeNull();
+    expect(screen.queryByRole("note")).toBeNull();
+  });
+
+  test("no allocation notice when the response leaves the field out", async () => {
+    const { allocation, ...withoutField } =
+      instructorRecruitmentsFixtures.candidateRankingPage;
+    expect(allocation).toBeNull();
+    axiosMock.onGet(rankingUrl).reply(200, withoutField);
+    renderPage();
+
+    await screen.findByTestId("CandidateRankingPage-quarter");
+    expect(screen.queryByTestId("CandidateRankingPage-allocation")).toBeNull();
+  });
+
+  test("once shown, the notice opens the page with the allocation and how many to rank", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(
+        200,
+        instructorRecruitmentsFixtures.candidateRankingPageWithAllocation,
+      );
+    renderPage();
+
+    const notice = await screen.findByTestId("CandidateRankingPage-allocation");
+    expect(notice).toHaveTextContent(
+      "2 TAs have been allocated to this course. Please rank at least 2 candidates, and preferably 4.",
+    );
+    expect(notice).toHaveAttribute("role", "note");
+    expect(notice).toHaveClass("lead");
+    expect(screen.getByRole("note")).toBe(notice);
+    // Above the recruitment details, as the design asks (top of the page).
+    expect(
+      notice.compareDocumentPosition(
+        screen.getByRole("heading", { level: 2, name: "Recruitment" }),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("the notice is singular for one ULA", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      type: "ULA",
+      allocation: 1,
+    });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("CandidateRankingPage-allocation"),
+    ).toHaveTextContent(
+      "1 ULA has been allocated to this course. Please rank at least 1 candidate, and preferably 2.",
+    );
+  });
+
+  test("an allocation of zero is still announced", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      allocation: 0,
+    });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("CandidateRankingPage-allocation"),
+    ).toHaveTextContent("0 TAs have been allocated to this course.");
+  });
 });

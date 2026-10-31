@@ -185,6 +185,57 @@ describe("InstructorRecruitmentCards tests", () => {
     ).toHaveTextContent("W26");
   });
 
+  // ---- allocations shown to faculty (issue #178) ----
+
+  test("no allocation line while the admin hides allocations, whether the field is null or absent", () => {
+    const [ta, ula] = instructorRecruitmentsFixtures.twoRecruitments;
+    const absent = {
+      ...ula,
+      courses: ula.courses.map(({ allocation, ...rest }) => rest),
+    };
+    renderCards([ta, absent]);
+
+    expect(ta.courses[0].allocation).toBeNull();
+    expect(absent.courses[0]).not.toHaveProperty("allocation");
+    expect(screen.queryByText(/allocated to this course/)).toBeNull();
+    expect(screen.queryByTestId("I-card-1-course-2-allocation")).toBeNull();
+    expect(screen.queryByTestId("I-card-2-course-1-allocation")).toBeNull();
+  });
+
+  test("once shown, each course says how many TAs or ULAs it has, by the recruitment's type", () => {
+    renderCards(instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations);
+
+    const first = screen.getByTestId("I-card-1-course-2-allocation");
+    expect(first).toHaveTextContent("TAs allocated to this course: 2");
+    expect(first.tagName).toBe("P");
+    expect(first).toHaveClass("mb-2");
+    expect(
+      screen.getByTestId("I-card-1-course-3-allocation"),
+    ).toHaveTextContent("TAs allocated to this course: 3");
+    expect(
+      screen.getByTestId("I-card-2-course-1-allocation"),
+    ).toHaveTextContent("ULAs allocated to this course: 1");
+    // The line sits in the course's body, above the ranking action.
+    const body = screen.getByTestId("I-card-1-course-2-body");
+    expect(within(body).getByTestId("I-card-1-course-2-allocation")).toBe(
+      first,
+    );
+    expect(
+      first.compareDocumentPosition(
+        screen.getByTestId("I-card-1-course-2-view-rankings"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("an allocation of zero is still shown once allocations are visible", () => {
+    const [ta] = instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations;
+    renderCards([{ ...ta, courses: [{ ...ta.courses[0], allocation: 0 }] }]);
+
+    expect(
+      screen.getByTestId("I-card-1-course-2-allocation"),
+    ).toHaveTextContent("TAs allocated to this course: 0");
+  });
+
   // Issue #180: published assignments.
   test("without published assignments there is no badge and no Assignments button", () => {
     renderCards();

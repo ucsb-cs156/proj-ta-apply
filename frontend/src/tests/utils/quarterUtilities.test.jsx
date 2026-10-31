@@ -2,6 +2,7 @@ import {
   fromFormat,
   toFormat,
   yyyyqToQyy,
+  qyyToYyyyq,
   fromNumericYYYYQ,
   toNumericYYYYQ,
   nextQuarter,
@@ -22,6 +23,36 @@ describe("QuarterFormSelect conversion tests", () => {
     expect(qtrNumToQuarter[2]).toBe("SPRING");
     expect(qtrNumToQuarter[3]).toBe("SUMMER");
     expect(qtrNumToQuarter[4]).toBe("FALL");
+  });
+
+  test("qyyToYyyyq is the inverse of yyyyqToQyy", () => {
+    expect(qyyToYyyyq("W26")).toBe("20261");
+    expect(qyyToYyyyq("S26")).toBe("20262");
+    expect(qyyToYyyyq("M26")).toBe("20263");
+    expect(qyyToYyyyq("F26")).toBe("20264");
+    expect(qyyToYyyyq("F99")).toBe("20994");
+    expect(qyyToYyyyq("W00")).toBe("20001");
+    ["20261", "20262", "20263", "20264", "20211"].forEach((yyyyq) => {
+      expect(qyyToYyyyq(yyyyqToQyy(yyyyq))).toBe(yyyyq);
+    });
+  });
+
+  test("qyyToYyyyq is null for anything that is not a quarter", () => {
+    expect(qyyToYyyyq("")).toBe(null);
+    expect(qyyToYyyyq("F2")).toBe(null);
+    expect(qyyToYyyyq("F266")).toBe(null);
+    expect(qyyToYyyyq("f26")).toBe(null);
+    expect(qyyToYyyyq("X26")).toBe(null);
+    expect(qyyToYyyyq("20264")).toBe(null);
+    expect(qyyToYyyyq("XF26")).toBe(null);
+    expect(qyyToYyyyq("2F26")).toBe(null);
+    expect(qyyToYyyyq("F26 ")).toBe(null);
+    expect(qyyToYyyyq(" F26")).toBe(null);
+    expect(qyyToYyyyq("F26\n")).toBe(null);
+    expect(qyyToYyyyq("Fab")).toBe(null);
+    expect(qyyToYyyyq(undefined)).toBe(null);
+    expect(qyyToYyyyq(null)).toBe(null);
+    expect(qyyToYyyyq(26)).toBe(null);
   });
 
   test("toFormat correctly converts", () => {

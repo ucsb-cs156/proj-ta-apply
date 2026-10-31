@@ -25,3 +25,9 @@ export const TwoRecruitments = Template.bind({});
 TwoRecruitments.args = {
   recruitments: instructorRecruitmentsFixtures.twoRecruitments,
 };
+
+/** The admin has shown allocations to faculty: each course says how many it has (issue #178). */
+export const WithAllocationsShown = Template.bind({});
+WithAllocationsShown.args = {
+  recruitments: instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations,
+};

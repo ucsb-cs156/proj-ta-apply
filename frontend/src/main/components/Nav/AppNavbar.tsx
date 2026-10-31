@@ -73,6 +73,9 @@ export default function AppNavbar({
                   <NavDropdown.Item as={Link} to="/admin/quarters">
                     Quarters
                   </NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/admin/budget/selectQuarter">
+                    Budget for Quarter
+                  </NavDropdown.Item>
                   <NavDropdown.Item as={Link} to="/admin/settings/ta">
                     TA App Settings
                   </NavDropdown.Item>

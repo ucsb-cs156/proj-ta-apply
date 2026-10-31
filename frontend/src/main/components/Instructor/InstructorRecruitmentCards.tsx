@@ -4,6 +4,7 @@ import type { Recruitment } from "main/components/Recruitments/RecruitmentTable"
 import type { RecruitmentCourse } from "main/components/Recruitments/RecruitmentCourseTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { DATE_KEYS } from "main/utils/recruitmentSort";
+import { courseAllocationText } from "main/utils/allocations";
 
 /** A recruitment as /api/instructor/recruitments returns it: with the instructor's courses in it. */
 export type InstructorRecruitment = Recruitment & {
@@ -131,6 +132,17 @@ export default function InstructorRecruitmentCards({
                     <Accordion.Body
                       data-testid={id(`course-${course.id}-body`)}
                     >
+                      {course.allocation != null && (
+                        <p
+                          className="mb-2"
+                          data-testid={id(`course-${course.id}-allocation`)}
+                        >
+                          {courseAllocationText(
+                            recruitment.type,
+                            course.allocation,
+                          )}
+                        </p>
+                      )}
                       {recruitment.reviewStatus === "Open" && (
                         <Link
                           className="btn btn-primary"

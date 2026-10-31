@@ -133,6 +133,14 @@ describe("Help pages (issue #140)", () => {
       screen.getByText(/Instructor/, { selector: "strong" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/CONRAD P/)).toBeInTheDocument();
+    // Issue #178: what an instructor sees once allocations are shown.
+    const allocations = screen.getByTestId("HelpInstructorsPage-allocations");
+    expect(allocations).toHaveTextContent(
+      "Once an admin chooses to show them, each of your courses also says how many TAs (or ULAs) have been allocated to it, both on the card and at the top of its ranking page.",
+    );
+    expect(allocations).toHaveTextContent(
+      "Please rank at least that many candidates, and preferably twice as many. Until then no allocation is shown.",
+    );
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
     // Issue #180: the published assignments page.
     const assignments = screen.getByTestId("HelpInstructorsPage-assignments");
@@ -171,6 +179,38 @@ describe("Help pages (issue #140)", () => {
     expect(
       within(published).getByRole("link", { name: "publishing" }),
     ).toHaveAttribute("href", "#publish-assignments");
+  });
+
+  test("the admins page explains the Budget for Quarter page and its three lines", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const heading = document.getElementById("budget");
+    expect(heading.tagName).toBe("H2");
+    expect(heading).toHaveTextContent("Budget for Quarter");
+    // The menu table's anchor, then the section's link to the page itself.
+    expect(
+      screen
+        .getAllByRole("link", { name: "Budget for Quarter" })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["#budget", "/admin/budget/selectQuarter"]);
+    expect(
+      screen.getByText(
+        /where the hiring for the quarter is planned holistically/,
+      ),
+    ).toBeInTheDocument();
+    const lines = screen.getByTestId("HelpAdminsPage-budget-lines");
+    expect(lines.id).toBe("budget-lines");
+    expect(lines).toHaveTextContent(
+      "Any of the three may include subzero money, gift money or both, and any of them may be zero in a given quarter. For planning, the restricted money is spent first",
+    );
+    expect(lines).toHaveTextContent(
+      "the bottom line is funds minus expenses, shown green with a plus sign when there is money to spare, red with a minus sign when the plan is over budget, and black when it comes out even.",
+    );
+    expect(
+      heading.compareDocumentPosition(document.getElementById("recruitments")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   test("the admins page starts with a table of every menu option linking to its section", async () => {
@@ -302,6 +342,24 @@ describe("Help pages (issue #140)", () => {
     );
     expect(
       estimates.compareDocumentPosition(auto) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Issue #178: showing or hiding allocations to faculty.
+    const visibility = screen.getByTestId(
+      "HelpAdminsPage-allocation-visibility",
+    );
+    expect(visibility.id).toBe("allocation-visibility");
+    expect(visibility).toHaveTextContent(
+      "Allocations are hidden from faculty until you choose otherwise.",
+    );
+    expect(visibility).toHaveTextContent(
+      "Show Allocations to Faculty puts each lecture's allocation on the instructor's home page card and at the top of its ranking page",
+    );
+    expect(visibility).toHaveTextContent(
+      "Hide Allocations from Faculty takes it away again. Showing or hiding is recorded in the recruitment's change history.",
+    );
+    expect(
+      auto.compareDocumentPosition(visibility) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });

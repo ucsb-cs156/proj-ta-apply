@@ -14,6 +14,8 @@ import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -197,6 +199,61 @@ public class RecruitmentsController extends ApiController {
     recruitmentRepository.save(recruitment);
     // Every section's fractional share depends on the target (issue #176).
     allocationService.recompute(recruitment);
+    return recruitment;
+  }
+
+  @Operation(
+      summary = "Set the estimated average cost of one TA or ULA",
+      description =
+          "In dollars and cents, per TA on a TA recruitment and per ULA on a ULA recruitment, for"
+              + " the Budget for Quarter page (issue #177). Must not be negative. A planning"
+              + " figure: not recorded in the audit trail.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PutMapping("/avgCostPerPosition")
+  public Recruitment updateAvgCostPerPosition(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "avgCostPerPosition") @RequestParam BigDecimal avgCostPerPosition) {
+
+    if (avgCostPerPosition.signum() < 0) {
+      throw new IllegalArgumentException("avgCostPerPosition must not be negative");
+    }
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
+
+    recruitment.setAvgCostPerPosition(avgCostPerPosition.setScale(2, RoundingMode.HALF_UP));
+    recruitmentRepository.save(recruitment);
+    return recruitment;
+  }
+
+  @Operation(
+      summary = "Show or hide the per-course allocations on faculty-facing pages",
+      description =
+          "While hidden (the default) neither the home page cards nor the candidate ranking page"
+              + " tell an instructor how many TAs or ULAs a course was allocated, and the"
+              + " instructor endpoints leave the number out (issue #178). Faculty see the result,"
+              + " so the change is recorded in the recruitment audit trail.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @Transactional
+  @PutMapping("/allocationsVisibleToFaculty")
+  public Recruitment updateAllocationsVisibleToFaculty(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "visible") @RequestParam boolean visible) {
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
+    if (visible == Boolean.TRUE.equals(recruitment.getAllocationsVisibleToFaculty())) {
+      return recruitment;
+    }
+
+    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
+    recruitment.setAllocationsVisibleToFaculty(visible);
+    recruitmentRepository.save(recruitment);
+    recruitmentAuditService.recordChanges(before, recruitment);
     return recruitment;
   }
 

@@ -14,6 +14,7 @@ const recruitmentsFixtures = {
       facultyRankingDeadline: null,
       lastPopulatedAt: null,
       totalHiringTarget: 1,
+      allocationsVisibleToFaculty: false,
       assignmentsPublished: false,
     },
     {
@@ -30,6 +31,7 @@ const recruitmentsFixtures = {
       facultyRankingDeadline: "2026-02-15",
       lastPopulatedAt: null,
       totalHiringTarget: 6,
+      allocationsVisibleToFaculty: false,
       assignmentsPublished: false,
     },
     {
@@ -47,6 +49,7 @@ const recruitmentsFixtures = {
       facultyRankingDeadline: "2026-02-01",
       lastPopulatedAt: null,
       totalHiringTarget: 10,
+      allocationsVisibleToFaculty: false,
       assignmentsPublished: false,
     },
   ],

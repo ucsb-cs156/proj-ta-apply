@@ -311,6 +311,20 @@ export default function HelpAdminsPage(): React.JSX.Element {
           flexibility to adjust it up or down based on the particular needs of
           specific courses and other relevant factors.
         </p>
+        <p
+          id="allocation-visibility"
+          data-testid="HelpAdminsPage-allocation-visibility"
+        >
+          Allocations are hidden from faculty until you choose otherwise. Under
+          the hiring target, the page says whether they are currently hidden or
+          shown. <strong>Show Allocations to Faculty</strong> puts each
+          lecture&apos;s allocation on the instructor&apos;s home page card and
+          at the top of its ranking page, where it asks them to rank at least
+          that many candidates and preferably twice as many; instructors see
+          only their own courses. <strong>Hide Allocations from Faculty</strong>{" "}
+          takes it away again. Showing or hiding is recorded in the
+          recruitment&apos;s change history.
+        </p>
 
         <h2 className="my-3 h4" id="quarters">
           Quarters
@@ -327,6 +341,44 @@ export default function HelpAdminsPage(): React.JSX.Element {
           well. The cards can be sorted newest or oldest first. These dates are
           kept so that a later feature can offer them as fields in the notices
           text, such as the first day of the recruitment&apos;s quarter.
+        </p>
+
+        <h2 className="my-3 h4" id="budget">
+          Budget for Quarter
+        </h2>
+        <p>
+          <Link to="/admin/budget/selectQuarter">Budget for Quarter</Link> lists
+          every quarter that has a recruitment, newest first, with an x under{" "}
+          <strong>TA</strong> and under <strong>ULA</strong> for the
+          recruitments it has; the quarter links to its budget page. That page
+          is where the hiring for the quarter is planned holistically, against
+          the money available. Enter the estimated average cost of one TA and of
+          one ULA, and the three budget lines; every box is saved as you type,
+          and an entry that is not an amount in dollars and cents is dropped
+          when you leave it. The hiring targets of both recruitments can be
+          changed here too, beside what has been allocated to courses so far;
+          when the two do not agree, the page says so and links to the
+          Recruitment Courses page, where the allocations are adjusted. The
+          enrollment totals and ratios are over each recruitment&apos;s own
+          courses, which may differ between TAs and ULAs.
+        </p>
+        <p id="budget-lines" data-testid="HelpAdminsPage-budget-lines">
+          The three budget lines are the <strong>unrestricted</strong> budget,
+          which may be spent on either TAs or ULAs, and the additional{" "}
+          <strong>TAs only</strong> and <strong>ULAs only</strong> budgets,
+          which may be spent only on positions of that type. Any of the three
+          may include subzero money, gift money or both, and any of them may be
+          zero in a given quarter. For planning, the restricted money is spent
+          first: the cost of the TAs is paid from the TAs-only line, the cost of
+          the ULAs from the ULAs-only line, and whatever is left of either cost
+          comes from the unrestricted pool. The <strong>Budget</strong> section
+          works this out: the anticipated cost of each type is its hiring target
+          times its average cost, the funds are the three lines added, and the
+          bottom line is funds minus expenses, shown green with a plus sign when
+          there is money to spare, red with a minus sign when the plan is over
+          budget, and black when it comes out even. All of these are planning
+          figures, shown in dollars and cents and not recorded in the change
+          history.
         </p>
 
         <h2 className="my-3 h4" id="recruitments">

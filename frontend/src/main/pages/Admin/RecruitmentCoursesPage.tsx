@@ -8,6 +8,7 @@ import RecruitmentCourseTable, {
   type RecruitmentCourseRankingSummary,
 } from "main/components/Recruitments/RecruitmentCourseTable";
 import HiringTargetPanel from "main/components/Recruitments/HiringTargetPanel";
+import AllocationVisibilityPanel from "main/components/Recruitments/AllocationVisibilityPanel";
 import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
@@ -246,11 +247,17 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
         </p>
 
         {recruitment && (
-          <HiringTargetPanel
-            recruitment={recruitment}
-            allocatedSoFar={allocatedSoFar}
-            testIdPrefix="RecruitmentCoursesPage-hiring-target"
-          />
+          <>
+            <HiringTargetPanel
+              recruitment={recruitment}
+              allocatedSoFar={allocatedSoFar}
+              testIdPrefix="RecruitmentCoursesPage-hiring-target"
+            />
+            <AllocationVisibilityPanel
+              recruitment={recruitment}
+              testIdPrefix="RecruitmentCoursesPage-allocation-visibility"
+            />
+          </>
         )}
 
         <p data-testid="RecruitmentCoursesPage-last-refreshed">
