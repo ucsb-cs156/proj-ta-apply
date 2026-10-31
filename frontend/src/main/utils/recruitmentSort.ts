@@ -1,4 +1,7 @@
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import type {
+  Recruitment,
+  StudentRecruitment,
+} from "main/components/Recruitments/RecruitmentTable";
 
 /** The fields a card shows, in the order of the Sort by bar. */
 export const SORT_KEYS = [
@@ -21,12 +24,12 @@ export const DATE_KEYS = SORT_KEYS.slice(3);
  * date when ascending and after them when descending. Ties keep the backend's order: newest
  * quarter first, then TA before ULA.
  */
-export function sortRecruitments(
-  recruitments: Recruitment[],
-  key: SortKey,
-  descending: boolean,
-): Recruitment[] {
-  const text = (recruitment: Recruitment): string => recruitment[key] ?? "";
+type SortableRecruitment = Pick<Recruitment, SortKey | "quarter" | "type">;
+
+export function sortRecruitments<
+  T extends SortableRecruitment | StudentRecruitment,
+>(recruitments: T[], key: SortKey, descending: boolean): T[] {
+  const text = (recruitment: T): string => recruitment[key] ?? "";
   return [...recruitments].sort((a, b) => {
     const byKey = text(a).localeCompare(text(b));
     if (byKey !== 0) {

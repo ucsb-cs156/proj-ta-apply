@@ -22,6 +22,9 @@ const recruitment = (
   primaryConsiderationDate,
   actualOpeningDate: null,
   actualClosingDate: null,
+  reviewStatus: "NotStarted",
+  facultyReviewOpeningDate: null,
+  facultyRankingDeadline: null,
 });
 
 describe("applicationAccess", () => {

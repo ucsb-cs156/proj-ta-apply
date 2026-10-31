@@ -1,7 +1,7 @@
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentCoursesFixtures from "fixtures/recruitmentCoursesFixtures";
 
-// W26 ULA OPEN (id 2); W26 TA CLOSED on 2026-02-01 (id 1).
+// W26 ULA faculty reviews OPEN (id 2); W26 TA reviews CLOSED (id 1).
 const [, openUla, closedTa] = recruitmentsFixtures.threeRecruitments;
 // Both lectures of 156, taught by CONRAD P and SOMEONE ELSE, and the 1A lecture.
 const [oneA, lecture156a, lecture156b] = recruitmentCoursesFixtures.fourCourses;

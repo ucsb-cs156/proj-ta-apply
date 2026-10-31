@@ -28,6 +28,14 @@ export default function HelpAdminsPage(): React.JSX.Element {
     <BasicLayout>
       <div className="pt-2" data-testid="HelpAdminsPage">
         <h1 className="my-4">For Admins</h1>
+        <p>
+          Faculty reviews are managed separately from application opening and
+          closing. Choose <strong>Open Faculty Reviews</strong> to enter the
+          required ranking deadline; the first review opening date is retained
+          if reviews are reopened. Use <strong>Change</strong> beside the
+          deadline to edit it. Closing reviews does not erase either date, and
+          changes appear in the recruitment change history.
+        </p>
 
         <h2 className="my-3 h4" id="flow">
           The flow of a recruitment

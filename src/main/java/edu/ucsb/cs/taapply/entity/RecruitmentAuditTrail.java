@@ -22,10 +22,11 @@ import org.hibernate.annotations.CreationTimestamp;
  * student's application are a different table, {@link AuditTrail}.
  *
  * <p>{@code whatChanged} names the field ({@code applicationStatus}, {@code tentativeOpeningDate},
- * {@code primaryConsiderationDate}, {@code actualOpeningDate}, {@code actualClosingDate}), or is
- * {@link #CREATED} or {@link #DELETED}, when both values are null. A change to several fields in
- * one request is several rows. There is deliberately no foreign key to the recruitment: the rows
- * about a deleted recruitment are the record that it existed.
+ * {@code primaryConsiderationDate}, {@code actualOpeningDate}, {@code actualClosingDate}, {@code
+ * reviewStatus}, {@code facultyReviewOpeningDate}, {@code facultyRankingDeadline}), or is {@link
+ * #CREATED} or {@link #DELETED}, when both values are null. A change to several fields in one
+ * request is several rows. There is deliberately no foreign key to the recruitment: the rows about
+ * a deleted recruitment are the record that it existed.
  */
 @Data
 @AllArgsConstructor

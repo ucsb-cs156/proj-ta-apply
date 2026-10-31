@@ -53,6 +53,9 @@ public class InstructorRecruitmentsController extends ApiController {
       LocalDate primaryConsiderationDate,
       LocalDate actualOpeningDate,
       LocalDate actualClosingDate,
+      String reviewStatus,
+      LocalDate facultyReviewOpeningDate,
+      LocalDate facultyRankingDeadline,
       List<RecruitmentCourse> courses) {
     public static InstructorRecruitment of(Recruitment r, List<RecruitmentCourse> courses) {
       return new InstructorRecruitment(
@@ -64,6 +67,9 @@ public class InstructorRecruitmentsController extends ApiController {
           r.getPrimaryConsiderationDate(),
           r.getActualOpeningDate(),
           r.getActualClosingDate(),
+          r.getReviewStatus(),
+          r.getFacultyReviewOpeningDate(),
+          r.getFacultyRankingDeadline(),
           courses);
     }
   }

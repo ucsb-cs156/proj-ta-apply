@@ -19,9 +19,8 @@ type InstructorRecruitmentCardsProps = {
 };
 
 /**
- * One card per recruitment that includes a course the instructor teaches (issue #127): the same
- * header and dates as the student's cards, and in place of the buttons a nested card per course,
- * each an accordion with the course on its header and a placeholder inside.
+ * One card per recruitment that includes a course the instructor teaches (issue #127): the shared
+ * application summary plus the faculty-review state and dates, and a nested accordion per course.
  */
 export default function InstructorRecruitmentCards({
   recruitments,
@@ -56,6 +55,14 @@ export default function InstructorRecruitmentCards({
               >
                 {recruitment.applicationStatus}
               </Badge>
+              <Badge
+                bg={
+                  recruitment.reviewStatus === "Open" ? "success" : "secondary"
+                }
+                data-testid={id("reviewStatus")}
+              >
+                Faculty Reviews: {recruitment.reviewStatus}
+              </Badge>
             </Card.Header>
             <Card.Body>
               <dl className="row mb-0">
@@ -67,6 +74,26 @@ export default function InstructorRecruitmentCards({
                     </dd>
                   </div>
                 ))}
+              </dl>
+              <dl className="row mb-0 mt-2">
+                <div className="col-sm-6 d-flex">
+                  <dt className="me-2">Faculty Reviews Opened:</dt>
+                  <dd
+                    className="mb-1"
+                    data-testid={id("facultyReviewOpeningDate")}
+                  >
+                    {recruitment.facultyReviewOpeningDate ?? ""}
+                  </dd>
+                </div>
+                <div className="col-sm-6 d-flex">
+                  <dt className="me-2">Faculty Ranking Deadline:</dt>
+                  <dd
+                    className="mb-1"
+                    data-testid={id("facultyRankingDeadline")}
+                  >
+                    {recruitment.facultyRankingDeadline ?? ""}
+                  </dd>
+                </div>
               </dl>
             </Card.Body>
             <Card.Footer>

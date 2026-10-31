@@ -10,6 +10,7 @@ import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.models.ApplicantRecruitmentDto;
 import edu.ucsb.cs.taapply.models.CourseSections;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -80,8 +81,11 @@ public class ApplicantRecruitmentsController extends ApiController {
       description = "Each carries its type, so the page can say which positions it is for.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/open")
-  public List<Recruitment> openRecruitments() {
-    return all().stream().filter(applicationAccessService::acceptingApplications).toList();
+  public List<ApplicantRecruitmentDto> openRecruitments() {
+    return all().stream()
+        .filter(applicationAccessService::acceptingApplications)
+        .map(ApplicantRecruitmentDto::from)
+        .toList();
   }
 
   @Operation(
@@ -89,10 +93,13 @@ public class ApplicantRecruitmentsController extends ApiController {
       description = "So the home page can show when applications are expected to open.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/upcoming")
-  public List<Recruitment> upcomingRecruitments() {
+  public List<ApplicantRecruitmentDto> upcomingRecruitments() {
     // Never opened is the whole test: actualOpeningDate is stamped the first time a recruitment
     // opens and never cleared, so a null one has not opened yet and is necessarily still closed.
-    return all().stream().filter(r -> r.getActualOpeningDate() == null).toList();
+    return all().stream()
+        .filter(r -> r.getActualOpeningDate() == null)
+        .map(ApplicantRecruitmentDto::from)
+        .toList();
   }
 
   @Operation(
@@ -100,7 +107,7 @@ public class ApplicantRecruitmentsController extends ApiController {
       description = "So the home page can say when the last TA round and the last ULA round ran.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/recentlyClosed")
-  public List<Recruitment> recentlyClosed() {
+  public List<ApplicantRecruitmentDto> recentlyClosed() {
     // Both conditions matter: a reopened recruitment keeps the closing date of its earlier round,
     // so having closed once is not enough; it has to be closed now.
     // Already sorted most recent quarter first, so the first match of each type is the one to show.
@@ -109,6 +116,7 @@ public class ApplicantRecruitmentsController extends ApiController {
         .filter(r -> r.getApplicationStatus() == ApplicationStatus.CLOSED)
         .filter(r -> r.getActualClosingDate() != null)
         .filter(r -> seen.add(r.getType()))
+        .map(ApplicantRecruitmentDto::from)
         .toList();
   }
 
@@ -119,8 +127,8 @@ public class ApplicantRecruitmentsController extends ApiController {
               + " one.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/applicable")
-  public List<Recruitment> applicableRecruitments() {
-    return all();
+  public List<ApplicantRecruitmentDto> applicableRecruitments() {
+    return all().stream().map(ApplicantRecruitmentDto::from).toList();
   }
 
   @Operation(

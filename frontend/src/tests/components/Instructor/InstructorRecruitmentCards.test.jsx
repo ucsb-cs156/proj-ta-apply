@@ -15,7 +15,7 @@ function renderCards(recruitments = [closedTa, openUla]) {
 }
 
 describe("InstructorRecruitmentCards tests", () => {
-  test("a card has the quarter, type, status and dates like the student's", () => {
+  test("a card has application and faculty review status and dates", () => {
     renderCards();
 
     expect(screen.getByTestId("I")).toBeInTheDocument();
@@ -29,6 +29,12 @@ describe("InstructorRecruitmentCards tests", () => {
     const open = screen.getByTestId("I-card-2-applicationStatus");
     expect(open).toHaveTextContent("OPEN");
     expect(open).toHaveClass("bg-success");
+    expect(screen.getByTestId("I-card-1-reviewStatus")).toHaveTextContent(
+      "Faculty Reviews: Closed",
+    );
+    expect(screen.getByTestId("I-card-2-reviewStatus")).toHaveTextContent(
+      "Faculty Reviews: Open",
+    );
     expect(
       screen.getByTestId("I-card-1-tentativeOpeningDate"),
     ).toHaveTextContent("2026-01-05");
@@ -47,6 +53,33 @@ describe("InstructorRecruitmentCards tests", () => {
     );
     expect(screen.getAllByText("Tentative Opening:")).toHaveLength(2);
     expect(screen.getAllByText("Actually Closed:")).toHaveLength(2);
+    expect(
+      screen.getByTestId("I-card-2-facultyReviewOpeningDate"),
+    ).toHaveTextContent("2026-01-08");
+    expect(
+      screen.getByTestId("I-card-2-facultyRankingDeadline"),
+    ).toHaveTextContent("2026-02-15");
+  });
+
+  test("not-started reviews render without unset dates", () => {
+    renderCards([
+      {
+        ...closedTa,
+        reviewStatus: "NotStarted",
+        facultyReviewOpeningDate: null,
+        facultyRankingDeadline: null,
+      },
+    ]);
+
+    expect(screen.getByTestId("I-card-1-reviewStatus")).toHaveTextContent(
+      "Faculty Reviews: NotStarted",
+    );
+    expect(
+      screen.getByTestId("I-card-1-facultyReviewOpeningDate").textContent,
+    ).toBe("");
+    expect(
+      screen.getByTestId("I-card-1-facultyRankingDeadline").textContent,
+    ).toBe("");
   });
 
   test("each course is a nested accordion with the course on its header", () => {

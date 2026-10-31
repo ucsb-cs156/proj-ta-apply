@@ -11,9 +11,18 @@ export type Recruitment = {
   primaryConsiderationDate: string | null;
   actualOpeningDate: string | null;
   actualClosingDate: string | null;
+  reviewStatus: "NotStarted" | "Open" | "Closed";
+  facultyReviewOpeningDate: string | null;
+  facultyRankingDeadline: string | null;
   /** When the course list was last filled from the UCSB API (issue #124); null until it has been. */
   lastPopulatedAt?: string | null;
 };
+
+/** The applicant-facing recruitment shape deliberately excludes faculty review fields. */
+export type StudentRecruitment = Omit<
+  Recruitment,
+  "reviewStatus" | "facultyReviewOpeningDate" | "facultyRankingDeadline"
+>;
 
 /**
  * A heading on two lines, so a column of dates is no wider than its dates. The space before the
@@ -76,6 +85,21 @@ export default function RecruitmentTable({
     {
       header: stacked("Actually", "Closed"),
       accessorKey: "actualClosingDate",
+      meta: shrinkToContent,
+    },
+    {
+      header: stacked("Faculty Review", "Status"),
+      accessorKey: "reviewStatus",
+      meta: shrinkToContent,
+    },
+    {
+      header: stacked("Faculty Reviews", "Opened"),
+      accessorKey: "facultyReviewOpeningDate",
+      meta: shrinkToContent,
+    },
+    {
+      header: stacked("Faculty Ranking", "Deadline"),
+      accessorKey: "facultyRankingDeadline",
       meta: { style: { width: "100%" } },
     },
   ];

@@ -110,9 +110,7 @@ describe("Help pages (issue #140)", () => {
       screen.getByText(/Instructor/, { selector: "strong" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/CONRAD P/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/review and rank the applicants/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
   });
 
   test("the admins page starts with a table of every menu option linking to its section", async () => {

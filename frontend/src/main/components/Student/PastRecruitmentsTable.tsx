@@ -3,13 +3,13 @@ import { Link } from "react-router";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import type { Application } from "main/components/Applications/ApplicationTable";
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { applicationFor } from "main/utils/studentRecruitments";
 
 type PastRecruitmentsTableProps = {
   /** Only recruitments the student applied to belong here; the caller filters. */
-  recruitments: Recruitment[];
+  recruitments: StudentRecruitment[];
   applications: Application[];
   testIdPrefix?: string;
 };
@@ -31,7 +31,7 @@ export default function PastRecruitmentsTable({
       header: "Quarter",
       accessorKey: "quarter",
       meta: shrink,
-      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) =>
+      cell: ({ cell }: { cell: Cell<StudentRecruitment, unknown> }) =>
         yyyyqToQyy(cell.row.original.quarter),
     },
     { header: "Type", accessorKey: "type", meta: shrink },
@@ -60,7 +60,7 @@ export default function PastRecruitmentsTable({
       id: "view",
       enableSorting: false,
       meta: shrink,
-      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => {
+      cell: ({ cell }: { cell: Cell<StudentRecruitment, unknown> }) => {
         const application = applicationFor(
           applicationList,
           cell.row.original.id,

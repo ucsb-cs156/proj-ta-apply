@@ -13,7 +13,7 @@ import PostApplicationCommentsForm, {
   type PostApplicationCommentsFields,
 } from "main/components/Applications/PostApplicationCommentsForm";
 import type { Application } from "main/components/Applications/ApplicationTable";
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { useNoticeFillIn } from "main/utils/useNoticeFillIn";
 import { useCurrentUser } from "main/utils/currentUser";
@@ -34,7 +34,7 @@ export default function ApplicationPage(): React.JSX.Element {
     null,
   );
 
-  const { data: applicable } = useBackend<Recruitment[]>(
+  const { data: applicable } = useBackend<StudentRecruitment[]>(
     ["/api/recruitments/applicable"],
     { method: "GET", url: "/api/recruitments/applicable" },
     // Stryker disable next-line all : don't test default value of empty list

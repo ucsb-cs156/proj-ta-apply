@@ -11,6 +11,7 @@ import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 /**
@@ -36,6 +38,7 @@ public class RecruitmentRepositoryTests {
 
   @Autowired private RecruitmentRepository recruitmentRepository;
   @Autowired private RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
   private Recruitment recruitment(String quarter, RecruitmentType type) {
     return Recruitment.builder()
@@ -60,11 +63,34 @@ public class RecruitmentRepositoryTests {
     assertEquals("20261", found.getQuarter());
     assertEquals(RecruitmentType.TA, found.getType());
     assertEquals(ApplicationStatus.CLOSED, found.getApplicationStatus());
+    assertEquals("NotStarted", found.getReviewStatus());
     assertEquals(LocalDate.of(2026, 1, 5), found.getTentativeOpeningDate());
     assertEquals(LocalDate.of(2026, 1, 20), found.getPrimaryConsiderationDate());
     // Nothing has happened yet, so neither actual date is set.
     assertEquals(null, found.getActualOpeningDate());
     assertEquals(null, found.getActualClosingDate());
+    assertEquals(null, found.getFacultyReviewOpeningDate());
+    assertEquals(null, found.getFacultyRankingDeadline());
+  }
+
+  @Test
+  public void the_database_defaults_existing_and_directly_inserted_rows_to_not_started_reviews() {
+    jdbcTemplate.update(
+        "INSERT INTO recruitments (quarter, type, application_status) VALUES (?, ?, ?)",
+        "20261",
+        "TA",
+        "CLOSED");
+
+    Map<String, Object> row =
+        jdbcTemplate.queryForMap(
+            "SELECT review_status, faculty_review_opening_date, faculty_ranking_deadline"
+                + " FROM recruitments WHERE quarter = ? AND type = ?",
+            "20261",
+            "TA");
+
+    assertEquals("NotStarted", row.get("review_status"));
+    assertEquals(null, row.get("faculty_review_opening_date"));
+    assertEquals(null, row.get("faculty_ranking_deadline"));
   }
 
   @Test

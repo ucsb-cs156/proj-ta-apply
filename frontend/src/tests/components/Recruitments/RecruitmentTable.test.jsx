@@ -34,6 +34,9 @@ describe("RecruitmentTable tests", () => {
       "Primary Consideration",
       "Actually Opened",
       "Actually Closed",
+      "Faculty Review Status",
+      "Faculty Reviews Opened",
+      "Faculty Ranking Deadline",
     ]);
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByRole("link")).toBeNull();
@@ -48,6 +51,8 @@ describe("RecruitmentTable tests", () => {
       "primaryConsiderationDate",
       "actualOpeningDate",
       "actualClosingDate",
+      "facultyReviewOpeningDate",
+      "facultyRankingDeadline",
     ]) {
       const th = screen.getByTestId(`RecruitmentTable-header-${column}`);
       expect(th.querySelector("br"), column).not.toBeNull();
@@ -68,6 +73,12 @@ describe("RecruitmentTable tests", () => {
     expect(
       screen.getByTestId("RecruitmentTable-header-actualClosingDate"),
     ).toHaveTextContent("Actually Closed");
+    expect(
+      screen.getByTestId("RecruitmentTable-header-facultyReviewOpeningDate"),
+    ).toHaveTextContent("Faculty Reviews Opened");
+    expect(
+      screen.getByTestId("RecruitmentTable-header-facultyRankingDeadline"),
+    ).toHaveTextContent("Faculty Ranking Deadline");
   });
 
   test("the date columns shrink to their content and the last takes the slack", () => {
@@ -77,6 +88,11 @@ describe("RecruitmentTable tests", () => {
     ).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
     expect(
       screen.getByTestId("RecruitmentTable-cell-row-0-col-actualClosingDate"),
+    ).toHaveStyle({ width: "1%", whiteSpace: "nowrap" });
+    expect(
+      screen.getByTestId(
+        "RecruitmentTable-cell-row-0-col-facultyRankingDeadline",
+      ),
     ).toHaveStyle({ width: "100%" });
   });
 
@@ -104,6 +120,23 @@ describe("RecruitmentTable tests", () => {
     expect(
       screen.getByTestId("RecruitmentTable-cell-row-2-col-actualClosingDate"),
     ).toHaveTextContent("2026-02-01");
+  });
+
+  test("the admin detail table shows the faculty review state and dates", () => {
+    renderTable();
+    expect(
+      screen.getByTestId("RecruitmentTable-cell-row-1-col-reviewStatus"),
+    ).toHaveTextContent("Open");
+    expect(
+      screen.getByTestId(
+        "RecruitmentTable-cell-row-1-col-facultyReviewOpeningDate",
+      ),
+    ).toHaveTextContent("2026-01-08");
+    expect(
+      screen.getByTestId(
+        "RecruitmentTable-cell-row-1-col-facultyRankingDeadline",
+      ),
+    ).toHaveTextContent("2026-02-15");
   });
 
   test("the default test id prefix is RecruitmentTable", () => {

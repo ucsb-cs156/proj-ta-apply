@@ -21,9 +21,10 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           the catalog name on your account.
         </p>
         <p>
-          There is not much more to say yet: the options to review and rank the
-          applicants for your courses are coming, and will be explained here
-          when they arrive.
+          Each recruitment card shows whether faculty reviews are NotStarted,
+          Open, or Closed, the date reviews were first opened, and the faculty
+          ranking deadline. These dates and status are separate from the
+          application dates.
         </p>
       </div>
     </BasicLayout>

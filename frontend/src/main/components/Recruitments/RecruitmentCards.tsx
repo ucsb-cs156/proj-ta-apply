@@ -4,6 +4,8 @@ import {
   Button,
   ButtonGroup,
   Card,
+  Form,
+  Modal,
   OverlayTrigger,
   Tooltip,
 } from "react-bootstrap";
@@ -27,6 +29,8 @@ export const TEST_APPLICATION_TOOLTIP =
 /** On the trash icon of each card (issue #108). */
 export const DELETE_TOOLTIP = "Delete this Recruitment";
 
+type ReviewModal = { recruitment: Recruitment; mode: "open" | "editDeadline" };
+
 type RecruitmentCardsProps = {
   recruitments: Recruitment[];
   /** Recruitment id to its number of applications on file; a missing id counts as none. */
@@ -38,8 +42,8 @@ type RecruitmentCardsProps = {
 /**
  * One card per recruitment with a Sort by bar above (issue #86): the recruitments table had
  * thirteen columns and overflowed a laptop screen. Each card has the quarter, type, status and
- * application count in its header with a trash icon at the right (issue #108), the four dates in
- * its body and the five actions in its footer.
+ * application count in its header with a trash icon at the right (issue #108), the dates in its
+ * body and the application and faculty-review actions in its footer.
  */
 export default function RecruitmentCards({
   recruitments,
@@ -64,6 +68,81 @@ export default function RecruitmentCards({
     {},
     ["/api/admin/recruitments/all"],
   );
+
+  const [reviewModal, setReviewModal] = useState<ReviewModal | null>(null);
+  const [deadline, setDeadline] = useState("");
+  const [deadlineError, setDeadlineError] = useState("");
+
+  const reviewStatusMutation = useBackendMutation<
+    { recruitment: Recruitment; status: "Open" | "Closed"; deadline?: string },
+    unknown
+  >(
+    ({ recruitment, status, deadline: rankingDeadline }) => ({
+      url: "/api/admin/recruitments/reviewStatus",
+      method: "PUT",
+      params: {
+        id: recruitment.id,
+        status,
+        ...(rankingDeadline ? { facultyRankingDeadline: rankingDeadline } : {}),
+      },
+    }),
+    { onSuccess: () => setReviewModal(null) },
+    ["/api/admin/recruitments/all"],
+  );
+
+  const deadlineMutation = useBackendMutation<
+    { recruitment: Recruitment; deadline: string },
+    unknown
+  >(
+    ({ recruitment, deadline: rankingDeadline }) => ({
+      url: "/api/admin/recruitments/facultyRankingDeadline",
+      method: "PUT",
+      params: {
+        id: recruitment.id,
+        facultyRankingDeadline: rankingDeadline,
+      },
+    }),
+    { onSuccess: () => setReviewModal(null) },
+    ["/api/admin/recruitments/all"],
+  );
+
+  const openReviewModal = (
+    recruitment: Recruitment,
+    mode: ReviewModal["mode"],
+  ) => {
+    setDeadline(
+      mode === "open" ? "" : (recruitment.facultyRankingDeadline ?? ""),
+    );
+    setDeadlineError("");
+    setReviewModal({ recruitment, mode });
+  };
+
+  const submitReviewDate = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!reviewModal) return;
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(deadline) ||
+      Number.isNaN(Date.parse(deadline))
+    ) {
+      setDeadlineError("Enter a valid deadline.");
+      return;
+    }
+
+    if (reviewModal.mode === "open") {
+      reviewStatusMutation.mutate({
+        recruitment: reviewModal.recruitment,
+        status: "Open",
+        deadline,
+      });
+    } else {
+      deadlineMutation.mutate({
+        recruitment: reviewModal.recruitment,
+        deadline,
+      });
+    }
+  };
+  const savingReviewChanges =
+    reviewStatusMutation.isPending || deadlineMutation.isPending;
 
   const sortBy = (key: SortKey) => {
     if (key === sortKey) {
@@ -117,6 +196,7 @@ export default function RecruitmentCards({
         const id = (suffix: string) =>
           `${testIdPrefix}-card-${index}-${suffix}`;
         const open = recruitment.applicationStatus === "OPEN";
+        const reviewsOpen = recruitment.reviewStatus === "Open";
         return (
           <Card
             key={recruitment.id}
@@ -134,6 +214,12 @@ export default function RecruitmentCards({
                 data-testid={id("applicationStatus")}
               >
                 {recruitment.applicationStatus}
+              </Badge>
+              <Badge
+                bg={reviewsOpen ? "success" : "secondary"}
+                data-testid={id("reviewStatus")}
+              >
+                Faculty Reviews: {recruitment.reviewStatus}
               </Badge>
               <span data-testid={id("applications")}>
                 {applicationsText(applicationCounts[recruitment.id] ?? 0)}
@@ -166,6 +252,33 @@ export default function RecruitmentCards({
                     </dd>
                   </div>
                 ))}
+                <div className="col-sm-6 d-flex">
+                  <dt className="me-2">Faculty Reviews Opened:</dt>
+                  <dd
+                    className="mb-1"
+                    data-testid={id("facultyReviewOpeningDate")}
+                  >
+                    {recruitment.facultyReviewOpeningDate ?? ""}
+                  </dd>
+                </div>
+                <div className="col-sm-6 d-flex align-items-start">
+                  <dt className="me-2">Faculty Ranking Deadline:</dt>
+                  <dd
+                    className="mb-1"
+                    data-testid={id("facultyRankingDeadline")}
+                  >
+                    {recruitment.facultyRankingDeadline ?? ""}
+                  </dd>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="p-0 ms-2"
+                    onClick={() => openReviewModal(recruitment, "editDeadline")}
+                    data-testid={id("edit-faculty-ranking-deadline")}
+                  >
+                    Change
+                  </Button>
+                </div>
               </dl>
             </Card.Body>
             <Card.Footer className="d-flex flex-wrap gap-2">
@@ -176,6 +289,28 @@ export default function RecruitmentCards({
               >
                 {open ? "Close Applications" : "Open Applications"}
               </Button>
+              {reviewsOpen ? (
+                <Button
+                  variant="warning"
+                  onClick={() =>
+                    reviewStatusMutation.mutate({
+                      recruitment,
+                      status: "Closed",
+                    })
+                  }
+                  data-testid={id("review-status-button")}
+                >
+                  Close Faculty Reviews
+                </Button>
+              ) : (
+                <Button
+                  variant="success"
+                  onClick={() => openReviewModal(recruitment, "open")}
+                  data-testid={id("review-status-button")}
+                >
+                  Open Faculty Reviews
+                </Button>
+              )}
               <Link
                 className="btn btn-primary"
                 to={`/admin/recruitments/${recruitment.id}/courses`}
@@ -212,6 +347,58 @@ export default function RecruitmentCards({
           </Card>
         );
       })}
+      <Modal
+        show={reviewModal !== null}
+        onHide={() => setReviewModal(null)}
+        centered
+        data-testid={`${testIdPrefix}-faculty-review-modal`}
+      >
+        <Form onSubmit={submitReviewDate}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              {reviewModal?.mode === "open"
+                ? "Open Faculty Reviews"
+                : "Change Faculty Ranking Deadline"}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form.Group controlId={`${testIdPrefix}-faculty-ranking-deadline`}>
+              <Form.Label>Faculty ranking deadline</Form.Label>
+              <Form.Control
+                type="date"
+                required
+                value={deadline}
+                onChange={(event) => {
+                  setDeadline(event.target.value);
+                  setDeadlineError("");
+                }}
+                isInvalid={deadlineError !== ""}
+                data-testid={`${testIdPrefix}-faculty-ranking-deadline-input`}
+              />
+              <Form.Control.Feedback type="invalid">
+                {deadlineError || "Enter a deadline."}
+              </Form.Control.Feedback>
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              onClick={() => setReviewModal(null)}
+              data-testid={`${testIdPrefix}-faculty-review-cancel`}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={savingReviewChanges}
+              data-testid={`${testIdPrefix}-faculty-review-save`}
+            >
+              {reviewModal?.mode === "open" ? "Open Reviews" : "Save Deadline"}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
     </div>
   );
 }

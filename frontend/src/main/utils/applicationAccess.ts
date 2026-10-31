@@ -1,4 +1,4 @@
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 
 /**
  * What an applicant may do with an application, mirrored from the backend so pages can show the
@@ -41,7 +41,7 @@ export function addMonthsIso(iso: string, months: number): string {
  * still recent. An open recruitment, or one with no recorded closing date, is not recently closed.
  */
 export function isRecentlyClosed(
-  recruitment: Recruitment | undefined | null,
+  recruitment: StudentRecruitment | undefined | null,
   today: string = todayIso(),
 ): boolean {
   if (
@@ -55,7 +55,7 @@ export function isRecentlyClosed(
 }
 
 export function phaseOf(
-  recruitment: Recruitment | undefined | null,
+  recruitment: StudentRecruitment | undefined | null,
   today: string = todayIso(),
 ): Phase {
   // Without a recruitment there is nothing to justify showing an edit control.
@@ -82,7 +82,7 @@ export const isEditable = (phase: Phase): boolean =>
  * records only the date applications closed, not the time.
  */
 export function closedExplanation(
-  recruitment: Recruitment | undefined | null,
+  recruitment: StudentRecruitment | undefined | null,
 ): string {
   const closedOn = recruitment?.actualClosingDate;
   return closedOn

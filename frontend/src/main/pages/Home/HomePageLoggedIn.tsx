@@ -2,7 +2,7 @@ import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useCurrentUser, hasRole } from "main/utils/currentUser";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import RecruitmentsDashboard from "main/components/Recruitments/RecruitmentsDashboard";
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import StudentDashboard from "main/components/Student/StudentDashboard";
 import InstructorRecruitmentCards, {
   type InstructorRecruitment,
@@ -42,7 +42,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
   // loaded, so that a page shown to nobody asks the backend for nothing.
   // Stryker disable next-line all : the guard only avoids pointless requests
   const options = { enabled: currentUser.loggedIn };
-  const { data: recruitments } = useBackend<Recruitment[]>(
+  const { data: recruitments } = useBackend<StudentRecruitment[]>(
     ["/api/recruitments/applicable"],
     { method: "GET", url: "/api/recruitments/applicable" },
     // Stryker disable next-line all : don't test default value of empty list

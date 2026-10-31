@@ -1,12 +1,12 @@
 import type { Cell } from "@tanstack/react-table";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { daysUntil, opensInText } from "main/utils/studentRecruitments";
 
 type UpcomingRecruitmentsTableProps = {
-  recruitments: Recruitment[];
+  recruitments: StudentRecruitment[];
   testIdPrefix?: string;
 };
 
@@ -22,7 +22,7 @@ export default function UpcomingRecruitmentsTable({
       header: "Quarter",
       accessorKey: "quarter",
       meta: shrink,
-      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) =>
+      cell: ({ cell }: { cell: Cell<StudentRecruitment, unknown> }) =>
         yyyyqToQyy(cell.row.original.quarter),
     },
     { header: "Type", accessorKey: "type", meta: shrink },
@@ -34,12 +34,12 @@ export default function UpcomingRecruitmentsTable({
     {
       header: "Opens in",
       id: "opensIn",
-      accessorFn: (recruitment: Recruitment) =>
+      accessorFn: (recruitment: StudentRecruitment) =>
         recruitment.tentativeOpeningDate
           ? daysUntil(recruitment.tentativeOpeningDate)
           : null,
       meta: { style: { width: "100%" } },
-      cell: ({ cell }: { cell: Cell<Recruitment, unknown> }) => {
+      cell: ({ cell }: { cell: Cell<StudentRecruitment, unknown> }) => {
         const date = cell.row.original.tentativeOpeningDate;
         return date ? opensInText(daysUntil(date)) : "";
       },

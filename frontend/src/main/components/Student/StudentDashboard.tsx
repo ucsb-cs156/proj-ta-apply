@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import type { Application } from "main/components/Applications/ApplicationTable";
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import CancelApplicationModals from "main/components/Student/CancelApplicationModals";
 import PastRecruitmentsTable from "main/components/Student/PastRecruitmentsTable";
 import StudentRecruitmentCards from "main/components/Student/StudentRecruitmentCards";
@@ -12,13 +12,16 @@ import { classifyRecruitments } from "main/utils/studentRecruitments";
 
 type StudentDashboardProps = {
   /** Every recruitment, past or present. */
-  recruitments: Recruitment[];
+  recruitments: StudentRecruitment[];
   /** The student's own applications. */
   applications: Application[];
   testIdPrefix?: string;
 };
 
-type PendingCancel = { application: Application; recruitment: Recruitment };
+type PendingCancel = {
+  application: Application;
+  recruitment: StudentRecruitment;
+};
 
 /**
  * The Student section of the home page (issue #107): upcoming recruitments, the current and

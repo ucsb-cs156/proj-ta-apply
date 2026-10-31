@@ -1,7 +1,7 @@
 import { Badge, Button, Card, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Link } from "react-router";
 import type { Application } from "main/components/Applications/ApplicationTable";
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { DATE_KEYS } from "main/utils/recruitmentSort";
 import { applicationFor } from "main/utils/studentRecruitments";
@@ -11,12 +11,12 @@ export const NOT_OPEN_TOOLTIP = "Applications are not open yet";
 
 type StudentRecruitmentCardsProps = {
   /** The open and recently closed recruitments, in the order to show them. */
-  recruitments: Recruitment[];
+  recruitments: StudentRecruitment[];
   /** The student's own applications, to tell which recruitments they applied to. */
   applications: Application[];
   onCancelRequested?: (
     application: Application,
-    recruitment: Recruitment,
+    recruitment: StudentRecruitment,
   ) => void;
   testIdPrefix?: string;
 };

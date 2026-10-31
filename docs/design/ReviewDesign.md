@@ -16,7 +16,7 @@ Give the Admin a button to "Open Faculty Reviews" if the value is NotStarted or 
 Open.
 
 When the admin opens faculty reviews, a modal should pop up where the admin must enter a deadline for the faculty to enter their preferences.
-The date the review was opened should be recorded in the recruitment entity (add a field for this, and add a field for the facultyRankingDeadline.)
+The first date the review was opened should be recorded in the recruitment entity and preserved when reviews are reopened. Every opening or reopening requires a facultyRankingDeadline; admins can edit that deadline later. Both fields are LocalDates, and changes to the status and deadline are recorded in the recruitment audit trail.
 
 Show both on the header of the recruitment for Admins and Faculty.
 
@@ -131,4 +131,3 @@ For ULAs:
 * quarters of previous ULA service
 
 then, a column for each course, and in that course, the rankings for that course.
-

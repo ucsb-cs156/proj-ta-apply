@@ -10,6 +10,12 @@ export default {
     msw: {
       handlers: [
         http.put("/api/admin/recruitments/status", () => HttpResponse.json({})),
+        http.put("/api/admin/recruitments/reviewStatus", () =>
+          HttpResponse.json({}),
+        ),
+        http.put("/api/admin/recruitments/facultyRankingDeadline", () =>
+          HttpResponse.json({}),
+        ),
       ],
     },
   },
