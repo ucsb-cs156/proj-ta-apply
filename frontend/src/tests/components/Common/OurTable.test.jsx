@@ -166,4 +166,63 @@ describe("OurTable tests", () => {
       expect(firstNameHeader).toHaveAttribute("style", "cursor: pointer;");
     });
   });
+
+  describe("OurTable footer tests (issue #176)", () => {
+    const rows = [
+      { col1: "a", n: 2 },
+      { col1: "b", n: 3 },
+    ];
+
+    test("no footer row unless a column defines a footer", () => {
+      render(
+        <OurTable
+          data={rows}
+          columns={[
+            { header: "Col 1", accessorKey: "col1" },
+            { header: "N", accessorKey: "n" },
+          ]}
+          testid="t"
+        />,
+      );
+      expect(screen.getByTestId("t").querySelector("tfoot")).toBeNull();
+      expect(screen.queryByTestId("t-footer-group-0")).toBeNull();
+    });
+
+    test("renders each column's footer, a placeholder for those without one", () => {
+      render(
+        <OurTable
+          data={rows}
+          columns={[
+            {
+              header: "Col 1",
+              accessorKey: "col1",
+              footer: "Total Course Count: 2",
+              meta: { style: { width: "1%" } },
+            },
+            { header: "N", accessorKey: "n", footer: () => <em>5</em> },
+            { header: "None", accessorKey: "none" },
+          ]}
+          testid="t"
+        />,
+      );
+      const tfoot = screen.getByTestId("t").querySelector("tfoot");
+      expect(tfoot).not.toBeNull();
+      expect(screen.getByTestId("t-footer-group-0").tagName).toBe("TR");
+      expect(screen.getByTestId("t-footer-col1")).toHaveTextContent(
+        "Total Course Count: 2",
+      );
+      expect(screen.getByTestId("t-footer-col1").tagName).toBe("TH");
+      expect(screen.getByTestId("t-footer-col1")).toHaveStyle({ width: "1%" });
+      expect(screen.getByTestId("t-footer-col1")).toHaveAttribute(
+        "colspan",
+        "1",
+      );
+      expect(
+        screen.getByTestId("t-footer-n").querySelector("em"),
+      ).toHaveTextContent("5");
+      expect(screen.getByTestId("t-footer-none")).toBeEmptyDOMElement();
+      // The body is still there and sortable.
+      expect(screen.getByTestId("t-cell-row-1-col-n")).toHaveTextContent("3");
+    });
+  });
 });

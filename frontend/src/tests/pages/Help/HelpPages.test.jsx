@@ -227,6 +227,19 @@ describe("Help pages (issue #140)", () => {
       hiring.compareDocumentPosition(estimates) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    // Issue #176: the guide columns and the auto assign button.
+    const auto = screen.getByTestId("HelpAdminsPage-auto-assign");
+    expect(auto.id).toBe("auto-assign");
+    expect(auto).toHaveTextContent(
+      "Delta is that share minus the allocation, green with a plus sign when a lecture is owed positions and red when it has more than its share",
+    );
+    expect(auto).toHaveTextContent(
+      "The purpose of this feature is to give admins a way to make a first-cut allocation based on enrollment, as close to fair as the numbers allow; it should not necessarily be considered the final allocation. Admins have the flexibility to adjust it up or down based on the particular needs of specific courses and other relevant factors.",
+    );
+    expect(
+      estimates.compareDocumentPosition(auto) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   /** The words either side of each JSX line break stay separated by a space. */

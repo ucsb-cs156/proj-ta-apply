@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, Form } from "react-bootstrap";
+import { Button, Form, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useParams } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import RecruitmentCourseTable, {
@@ -12,6 +12,7 @@ import type { Recruitment } from "main/components/Recruitments/RecruitmentTable"
 import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { apiErrorMessage } from "main/utils/apiError";
+import { autoAssignTooltip } from "main/utils/allocations";
 import { toast } from "react-toastify";
 
 /** The course list for one recruitment: /admin/recruitments/:recruitmentId/courses */
@@ -184,6 +185,24 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
     ["/api/recruitmentcourses/all"],
   );
 
+  // Issue #176: a first cut at the allocations from the enrollment estimates, behind a
+  // confirmation since it overwrites every allocation and cannot be undone.
+  const [showAutoAssign, setShowAutoAssign] = useState(false);
+  const autoAssignMutation = useBackendMutation<void, RecruitmentCourse[]>(
+    () => ({
+      url: "/api/recruitmentcourses/autoAllocate",
+      method: "POST",
+      params: { recruitmentId },
+    }),
+    {
+      onSuccess: () => {
+        setShowAutoAssign(false);
+        toast("Allocations assigned from the enrollment estimates.");
+      },
+    },
+    ["/api/recruitmentcourses/all"],
+  );
+
   const addMutation = useBackendMutation<string, RecruitmentCourse>(
     (code) => ({
       url: "/api/recruitmentcourses/post",
@@ -326,6 +345,68 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           .
         </div>
 
+        {recruitment && (
+          <div className="mb-3">
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip id="RecruitmentCoursesPage-auto-assign-tooltip">
+                  {autoAssignTooltip(
+                    recruitment.totalHiringTarget ?? 1,
+                    recruitment.type,
+                  )}
+                </Tooltip>
+              }
+            >
+              <Button
+                variant="outline-primary"
+                onClick={() => setShowAutoAssign(true)}
+                data-testid="RecruitmentCoursesPage-auto-assign"
+              >
+                Auto assign {recruitment.type} allocations
+              </Button>
+            </OverlayTrigger>
+          </div>
+        )}
+        <Modal
+          show={showAutoAssign}
+          onHide={() => setShowAutoAssign(false)}
+          centered
+          data-testid="RecruitmentCoursesPage-auto-assign-modal"
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Auto assign allocations</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>
+              You have requested an automatic allocation based on estimated
+              enrollment.
+            </p>
+            <p>
+              This will overwrite all values currently in the allocation fields.
+              This cannot be undone.
+            </p>
+            <p className="mb-0">Are you sure?</p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="danger"
+              disabled={autoAssignMutation.isPending}
+              onClick={() => autoAssignMutation.mutate()}
+              data-testid="RecruitmentCoursesPage-auto-assign-confirm"
+            >
+              Yes, overwrite allocations
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setShowAutoAssign(false)}
+              data-testid="RecruitmentCoursesPage-auto-assign-cancel"
+            >
+              No, keep my current allocations
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
         {rankingSummariesError && (
           <p role="alert">
             Unable to load ranking counts and instructor emails:{" "}
@@ -334,6 +415,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
         )}
         <RecruitmentCourseTable
           courses={courses ?? []}
+          type={recruitment?.type}
           rankingSummaries={rankingSummaries ?? []}
           showRankings={showRankings}
           onCopyEmail={(email) =>
