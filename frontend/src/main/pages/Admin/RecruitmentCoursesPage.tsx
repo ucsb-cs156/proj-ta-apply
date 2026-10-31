@@ -8,6 +8,12 @@ import RecruitmentCourseTable, {
   type RecruitmentCourseRankingSummary,
 } from "main/components/Recruitments/RecruitmentCourseTable";
 import HiringTargetPanel from "main/components/Recruitments/HiringTargetPanel";
+import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
+import {
+  columnChoices,
+  COURSES_TABLE_KEY,
+  isSummerQuarter,
+} from "main/utils/courseColumns";
 import AllocationVisibilityPanel from "main/components/Recruitments/AllocationVisibilityPanel";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
@@ -50,6 +56,41 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
   const showRankings =
     recruitment?.reviewStatus !== undefined &&
     recruitment.reviewStatus !== "NotStarted";
+
+  // Issue #185: which columns the admin has hidden on this recruitment's table, kept on the
+  // backend so they stay hidden across visits and browsers.
+  // Stryker disable next-line all : a shorter key still prefixes the same query; invalidation is tested
+  const hiddenColumnsKey = ["/api/admin/hiddencolumns", recruitmentId];
+  const { data: hiddenColumnsData } = useBackend<string[]>(
+    hiddenColumnsKey,
+    {
+      // Stryker disable next-line all : GET is axios's default method
+      method: "GET",
+      url: "/api/admin/hiddencolumns",
+      params: { tableKey: COURSES_TABLE_KEY, recruitmentId },
+    },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+  const hideColumnMutation = useBackendMutation<
+    { columnId: string; hidden: boolean },
+    string[]
+  >(
+    ({ columnId, hidden }) => ({
+      url: "/api/admin/hiddencolumns",
+      method: "PUT",
+      params: {
+        tableKey: COURSES_TABLE_KEY,
+        recruitmentId,
+        columnId,
+        hidden,
+      },
+    }),
+    {},
+    hiddenColumnsKey,
+  );
+  // Stryker disable next-line all : the query's initial data is an empty list, never undefined
+  const hiddenColumns = hiddenColumnsData ?? [];
 
   // Issue #174: what the per-course allocations add up to. Removed rows are hidden by default
   // and never count, even when the toggle shows them.
@@ -420,9 +461,24 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
             {apiErrorMessage(rankingSummariesFailure)}
           </p>
         )}
+        <div className="mb-2">
+          <ColumnVisibilityControl
+            choices={columnChoices(
+              showRankings,
+              isSummerQuarter(recruitment?.quarter),
+            )}
+            hidden={hiddenColumns}
+            onToggle={(columnId, hidden) =>
+              hideColumnMutation.mutate({ columnId, hidden })
+            }
+            testIdPrefix="RecruitmentCoursesPage-columns"
+          />
+        </div>
         <RecruitmentCourseTable
           courses={courses ?? []}
           type={recruitment?.type}
+          quarter={recruitment?.quarter}
+          hiddenColumns={hiddenColumns}
           rankingSummaries={rankingSummaries ?? []}
           showRankings={showRankings}
           onCopyEmail={(email) =>

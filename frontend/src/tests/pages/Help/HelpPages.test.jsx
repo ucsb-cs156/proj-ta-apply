@@ -286,6 +286,19 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByRole("link", { name: "CSV Upload/Download Formats" }),
     ).toHaveAttribute("href", "/help/csv");
+    // Issue #185: the Columns menu and the other table tweaks, in the Courses section.
+    const columns = screen.getByTestId("HelpAdminsPage-course-columns");
+    expect(columns.id).toBe("course-columns");
+    expect(columns).toHaveTextContent(
+      "the Columns menu above it lists every column but the course number, and unticking one hides it, heading, cells and totals alike, until you tick it again or choose Show all columns.",
+    );
+    expect(columns).toHaveTextContent(
+      "sorting by course number follows the padded course id exactly as it is shown, so CMPSC 5A comes before CMPSC 130A.",
+    );
+    expect(
+      document.getElementById("courses").compareDocumentPosition(columns) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     // Issue #174: the hiring target and per-course allocations, in the Courses section.
     const hiring = screen.getByTestId("HelpAdminsPage-hiring-target");
     expect(hiring.id).toBe("hiring-target");
