@@ -67,6 +67,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#genericMessage(java.lang.String)" tabindex="0">genericMessage(String)</a></li>
 <li><a href="#handleEntityNotFoundException(java.lang.Throwable)" tabindex="0">handleEntityNotFoundException(Throwable)</a></li>
 <li><a href="#handleForbiddenException(java.lang.Throwable)" tabindex="0">handleForbiddenException(Throwable)</a></li>
+<li><a href="#handleUpstreamApiException(java.lang.Throwable)" tabindex="0">handleUpstreamApiException(Throwable)</a></li>
 <li><a href="#handleUnsupportedOperation(java.lang.UnsupportedOperationException)" tabindex="0">handleUnsupportedOperation(UnsupportedOperationException)</a></li>
 <li><a href="#handleIllegalArgument(java.lang.Throwable)" tabindex="0">handleIllegalArgument(Throwable)</a></li>
 </ol>
@@ -138,6 +139,9 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#handleUnsupportedOperation(java.lang.UnsupportedOperationException)" class="member-name-link">handleUnsupportedOperation</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/UnsupportedOperationException.html" title="class or interface in java.lang" class="external-link">UnsupportedOperationException</a>&nbsp;ex)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#handleUpstreamApiException(java.lang.Throwable)" class="member-name-link">handleUpstreamApiException</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;e)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -204,6 +208,16 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="annotations">@ExceptionHandler(<a href="../errors/ForbiddenException.html" title="class in edu.ucsb.cs.taapply.errors">ForbiddenException</a>.class)
 @ResponseStatus(FORBIDDEN)
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">handleForbiddenException</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;e)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="handleUpstreamApiException(java.lang.Throwable)">
+<h3>handleUpstreamApiException</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@ExceptionHandler(<a href="../errors/UpstreamApiException.html" title="class in edu.ucsb.cs.taapply.errors">UpstreamApiException</a>.class)
+@ResponseStatus(BAD_GATEWAY)
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">handleUpstreamApiException</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;e)</span></div>
 </div>
 </section>
 </li>

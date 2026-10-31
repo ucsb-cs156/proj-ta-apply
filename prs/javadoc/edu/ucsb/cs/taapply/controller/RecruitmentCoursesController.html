@@ -67,6 +67,9 @@ loadScripts(document, 'script');</script>
 <li><a href="#addByEnrollCode(java.lang.Long,java.lang.String)" tabindex="0">addByEnrollCode(Long, String)</a></li>
 <li><a href="#setRemoved(java.lang.Long,boolean)" tabindex="0">setRemoved(Long, boolean)</a></li>
 <li><a href="#setAllocation(java.lang.Long,java.lang.Integer)" tabindex="0">setAllocation(Long, Integer)</a></li>
+<li><a href="#refresh(java.lang.Long)" tabindex="0">refresh(Long)</a></li>
+<li><a href="#setEnrollmentEstimate(java.lang.Long,java.lang.Integer)" tabindex="0">setEnrollmentEstimate(Long, Integer)</a></li>
+<li><a href="#setEnrollmentEstimates(java.lang.Long,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource)" tabindex="0">setEnrollmentEstimates(Long, EnrollmentEstimateSource)</a></li>
 </ol>
 </li>
 </ol>
@@ -125,20 +128,31 @@ loadScripts(document, 'script');</script>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#allForRecruitment(java.lang.Long,boolean)" class="member-name-link">allForRecruitment</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
  boolean&nbsp;includeRemoved)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setAllocation(java.lang.Long,java.lang.Integer)" class="member-name-link">setAllocation</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;allocation)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#refresh(java.lang.Long)" class="member-name-link">refresh</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setRemoved(java.lang.Long,boolean)" class="member-name-link">setRemoved</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- boolean&nbsp;removed)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setAllocation(java.lang.Long,java.lang.Integer)" class="member-name-link">setAllocation</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;allocation)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setEnrollmentEstimate(java.lang.Long,java.lang.Integer)" class="member-name-link">setEnrollmentEstimate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;enrollmentEstimate)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setEnrollmentEstimates(java.lang.Long,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource)" class="member-name-link">setEnrollmentEstimates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="../enums/EnrollmentEstimateSource.html" title="enum class in edu.ucsb.cs.taapply.enums">EnrollmentEstimateSource</a>&nbsp;source)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setRemoved(java.lang.Long,boolean)" class="member-name-link">setRemoved</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ boolean&nbsp;removed)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-edu.ucsb.cs.taapply.controller.ApiController">Methods inherited from class&nbsp;<a href="ApiController.html#method-summary" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></h3>
-<code><a href="ApiController.html#genericMessage(java.lang.String)" title="genericMessage(String)">genericMessage</a>, <a href="ApiController.html#getCurrentUser()" title="getCurrentUser()">getCurrentUser</a>, <a href="ApiController.html#handleEntityNotFoundException(java.lang.Throwable)" title="handleEntityNotFoundException(Throwable)">handleEntityNotFoundException</a>, <a href="ApiController.html#handleForbiddenException(java.lang.Throwable)" title="handleForbiddenException(Throwable)">handleForbiddenException</a>, <a href="ApiController.html#handleIllegalArgument(java.lang.Throwable)" title="handleIllegalArgument(Throwable)">handleIllegalArgument</a>, <a href="ApiController.html#handleUnsupportedOperation(java.lang.UnsupportedOperationException)" title="handleUnsupportedOperation(UnsupportedOperationException)">handleUnsupportedOperation</a></code></div>
+<code><a href="ApiController.html#genericMessage(java.lang.String)" title="genericMessage(String)">genericMessage</a>, <a href="ApiController.html#getCurrentUser()" title="getCurrentUser()">getCurrentUser</a>, <a href="ApiController.html#handleEntityNotFoundException(java.lang.Throwable)" title="handleEntityNotFoundException(Throwable)">handleEntityNotFoundException</a>, <a href="ApiController.html#handleForbiddenException(java.lang.Throwable)" title="handleForbiddenException(Throwable)">handleForbiddenException</a>, <a href="ApiController.html#handleIllegalArgument(java.lang.Throwable)" title="handleIllegalArgument(Throwable)">handleIllegalArgument</a>, <a href="ApiController.html#handleUnsupportedOperation(java.lang.UnsupportedOperationException)" title="handleUnsupportedOperation(UnsupportedOperationException)">handleUnsupportedOperation</a>, <a href="ApiController.html#handleUpstreamApiException(java.lang.Throwable)" title="handleUpstreamApiException(Throwable)">handleUpstreamApiException</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -218,6 +232,43 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  @RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;allocation)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="refresh(java.lang.Long)">
+<h3>refresh</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PostMapping("/refresh")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</span>&nbsp;<span class="element-name">refresh</span><wbr><span class="parameters">(@RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setEnrollmentEstimate(java.lang.Long,java.lang.Integer)">
+<h3>setEnrollmentEstimate</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PutMapping("/enrollmentEstimate")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span>&nbsp;<span class="element-name">setEnrollmentEstimate</span><wbr><span class="parameters">(@RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ @RequestParam(required=false)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;enrollmentEstimate)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setEnrollmentEstimates(java.lang.Long,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource)">
+<h3>setEnrollmentEstimates</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PutMapping("/enrollmentEstimates")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</span>&nbsp;<span class="element-name">setEnrollmentEstimates</span><wbr><span class="parameters">(@RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ @RequestParam
+ <a href="../enums/EnrollmentEstimateSource.html" title="enum class in edu.ucsb.cs.taapply.enums">EnrollmentEstimateSource</a>&nbsp;source)</span></div>
 </div>
 </section>
 </li>
