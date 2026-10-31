@@ -53,7 +53,7 @@ describe("Help pages (issue #140)", () => {
       /ULA columns are first name, last name, email, major, year in program, expected graduation, GPA in major, overall GPA and quarters of previous ULA service/,
     );
     expect(screen.getByText(/TA columns are/)).toHaveTextContent(
-      /No video links or admin comments are exported.*section and enrollment code.*Removed, stale and cancelled sections remain/,
+      /No video links or admin comments are exported.*headed by the bare course number \(16, 5A\); the section is added only when the recruitment has more than one section of that course.*Removed, stale and cancelled sections remain/,
     );
   });
 

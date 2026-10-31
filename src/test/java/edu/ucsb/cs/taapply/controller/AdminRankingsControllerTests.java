@@ -158,21 +158,12 @@ class AdminRankingsControllerTests extends ControllerTestCase {
                   "yearInProgram",
                   "graduationDate",
                   "tentativeAssignment",
-                  "CMPSC 16 (section 0100, enroll 100)"),
+                  "16"),
               List.of("Allocation", "", "", "", "", "", "", "", "0"),
               List.of("Assigned", "", "", "", "", "", "", "", "1"),
               List.of("Left to assign", "", "", "", "", "", "", "", "-1"),
               List.of("Zoë,\"星\"\nAda", "雪", "a@ucsb.edu", "CS", "MS", "1", "Spring 2027", "", "3"),
-              List.of(
-                  "",
-                  "",
-                  "unranked@ucsb.edu",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "CMPSC 16 (section 0100, enroll 100)",
-                  "")),
+              List.of("", "", "unranked@ucsb.edu", "", "", "", "", "16", "")),
           reader.readAll().stream().map(Arrays::asList).toList());
     }
     verify(applicationRepository).findByRecruitmentIdOrderByIdAsc(7L);

@@ -162,12 +162,78 @@ class AssignmentsServiceTests {
     assertEquals(List.of(e, c, a, b, d), sorted);
   }
 
+  // ---- course numbers and CSV headings (issue #188) ----
+
   @Test
-  void label_names_course_section_and_enrollment_code_with_nulls_blank() {
+  void course_number_is_everything_after_the_subject() {
+    assertEquals("5A", AssignmentsService.courseNumber("CMPSC     5A"));
+    assertEquals("16", AssignmentsService.courseNumber("CMPSC    16"));
+    assertEquals("130A", AssignmentsService.courseNumber("CMPSC   130A"));
+    assertEquals("16", AssignmentsService.courseNumber("CMPSC 16"));
+    assertEquals("16", AssignmentsService.courseNumber("  CMPSC 16  "));
+    assertEquals("154A", AssignmentsService.courseNumber("ECE     154A"));
+    // Odd ids: whatever follows the first whitespace, kept as is.
+    assertEquals("\"8\",\n星", AssignmentsService.courseNumber("CMPSC \"8\",\n星"));
+    assertEquals("", AssignmentsService.courseNumber("CMPSC"));
+    assertEquals("", AssignmentsService.courseNumber("   "));
+    assertEquals("", AssignmentsService.courseNumber(""));
+    assertEquals("", AssignmentsService.courseNumber(null));
+  }
+
+  @Test
+  void a_course_with_one_section_is_headed_by_its_bare_number() {
+    Map<Long, String> headings =
+        AssignmentsService.headings(
+            List.of(
+                course(1, "CMPSC    16", "0100", "100", 0),
+                course(2, "CMPSC     5A", "0100", "200", 0),
+                course(3, "CMPSC   130A", null, null, 0)));
+    assertEquals(Map.of(1L, "16", 2L, "5A", 3L, "130A"), headings);
+  }
+
+  @Test
+  void a_course_with_several_sections_names_the_section_in_each_heading() {
+    Map<Long, String> headings =
+        AssignmentsService.headings(
+            List.of(
+                course(1, "CMPSC    16", "0100", "100", 0),
+                course(2, "CMPSC    16", "0200", "200", 0),
+                course(3, "CMPSC    24", "0100", "300", 0),
+                course(4, "CMPSC    16", null, "400", 0)));
     assertEquals(
-        "CMPSC 16 (section 0100, enroll 900)",
-        AssignmentsService.label(course(1, "CMPSC 16", "0100", "900", 0)));
-    assertEquals(" (section , enroll )", AssignmentsService.label(course(2, null, null, null, 0)));
+        Map.of(1L, "16 (section 0100)", 2L, "16 (section 0200)", 3L, "24", 4L, "16 (section )"),
+        headings);
+  }
+
+  @Test
+  void two_rows_with_the_same_course_and_section_fall_back_to_the_enroll_code() {
+    Map<Long, String> headings =
+        AssignmentsService.headings(
+            List.of(
+                course(1, "CMPSC    16", "0100", "100", 0),
+                course(2, "CMPSC    16", "0100", "101", 0),
+                course(3, "CMPSC    16", "0200", "200", 0),
+                course(4, "CMPSC     8", "0100", "300", 0),
+                course(5, "CMPSC     8", "0100", null, 0)));
+    assertEquals(
+        Map.of(
+            1L, "16 (section 0100, enroll 100)",
+            2L, "16 (section 0100, enroll 101)",
+            3L, "16 (section 0200)",
+            4L, "8 (section 0100, enroll 300)",
+            5L, "8 (section 0100, enroll )"),
+        headings);
+  }
+
+  @Test
+  void courses_without_an_id_share_the_blank_heading() {
+    assertEquals(Map.of(), AssignmentsService.headings(List.of()));
+    assertEquals(
+        Map.of(1L, ""), AssignmentsService.headings(List.of(course(1, null, null, null, 0))));
+    assertEquals(
+        Map.of(1L, " (section 0100)", 2L, " (section 0200)"),
+        AssignmentsService.headings(
+            List.of(course(1, null, "0100", "1", 0), course(2, "CMPSC", "0200", "2", 0))));
   }
 
   // ---- real applications and counts ----
