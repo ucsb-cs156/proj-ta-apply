@@ -350,20 +350,39 @@
 <a name='L285'></a><a href='#L285'>285</a>
 <a name='L286'></a><a href='#L286'>286</a>
 <a name='L287'></a><a href='#L287'>287</a>
-<a name='L288'></a><a href='#L288'>288</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a>
+<a name='L290'></a><a href='#L290'>290</a>
+<a name='L291'></a><a href='#L291'>291</a>
+<a name='L292'></a><a href='#L292'>292</a>
+<a name='L293'></a><a href='#L293'>293</a>
+<a name='L294'></a><a href='#L294'>294</a>
+<a name='L295'></a><a href='#L295'>295</a>
+<a name='L296'></a><a href='#L296'>296</a>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a>
+<a name='L299'></a><a href='#L299'>299</a>
+<a name='L300'></a><a href='#L300'>300</a>
+<a name='L301'></a><a href='#L301'>301</a>
+<a name='L302'></a><a href='#L302'>302</a>
+<a name='L303'></a><a href='#L303'>303</a>
+<a name='L304'></a><a href='#L304'>304</a>
+<a name='L305'></a><a href='#L305'>305</a>
+<a name='L306'></a><a href='#L306'>306</a>
+<a name='L307'></a><a href='#L307'>307</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -371,7 +390,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -885,6 +923,25 @@ export default function HelpCsvPage() {
           applicant rows follow. Test applications are left out; the full layout
           is described on the For Admins help page.
         &lt;/p&gt;
+        &lt;p data-testid="assignmentsCsvDescription"&gt;
+          Once a recruitment&amp;apos;s assignments are published, the assignments
+          page offers two downloads of the same table it shows, header row first
+          and every cell quoted. &lt;b&gt;Download CSV (row per course)&lt;/b&gt; has{" "}
+          &lt;code&gt;Course&lt;/code&gt; (for example &lt;code&gt;CMPSC 8&lt;/code&gt;),{" "}
+          &lt;code&gt;Instructor&lt;/code&gt;, &lt;code&gt;Instructor email&lt;/code&gt; (
+          &lt;code&gt;Not mapped&lt;/code&gt; when no single instructor record has that
+          catalog name), then one column per assigned person headed{" "}
+          &lt;code&gt;TA&lt;/code&gt; or &lt;code&gt;ULA&lt;/code&gt; holding{" "}
+          &lt;code&gt;First Last (email)&lt;/code&gt;; there are as many of those columns as
+          the fullest course needs, and courses with nobody assigned are still
+          listed. &lt;b&gt;Download CSV (row per student)&lt;/b&gt; has{" "}
+          &lt;code&gt;First name&lt;/code&gt;, &lt;code&gt;Last name&lt;/code&gt;, &lt;code&gt;Email&lt;/code&gt;,{" "}
+          &lt;code&gt;Course assignment&lt;/code&gt;, &lt;code&gt;Course instructor&lt;/code&gt;,{" "}
+          &lt;code&gt;Course instructor email&lt;/code&gt; and, for a ULA recruitment,{" "}
+          &lt;code&gt;First time ULA&lt;/code&gt; (&lt;code&gt;yes&lt;/code&gt; when the applicant
+          reported no previous quarters as a ULA). Only real, uncancelled
+          applicants with an assignment are included.
+        &lt;/p&gt;
         &lt;p data-testid="downloadsSummary"&gt;
           Besides the App Settings lists described above, the{" "}
           &lt;i&gt;Recruitments&lt;/i&gt; admin page offers a &lt;b&gt;CSV&lt;/b&gt; button per
@@ -931,7 +988,7 @@ export default function HelpCsvPage() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-31T21:17:30.985Z
+                at 2026-10-31T22:16:17.444Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
