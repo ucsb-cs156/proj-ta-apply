@@ -398,13 +398,30 @@ export default function HelpAdminsPage(): React.JSX.Element {
           has, with these buttons:
         </p>
         <ul data-testid="HelpAdminsPage-recruitment-buttons">
-          <li>
+          <li
+            id="open-close-applications"
+            data-testid="HelpAdminsPage-open-close-applications"
+          >
             <strong>Open Applications / Close Applications.</strong>{" "}
             Recruitments do not open or close by themselves on the tentative
             dates; an admin clicks. The first open stamps the actual opening
             date and never overwrites it; each close stamps the actual closing
             date. Applicants may apply only while the status is Open, and may
-            edit only until the primary consideration date.
+            edit only until the primary consideration date. Closing keeps every
+            application on file, and a closed recruitment can be opened again.
+            Each button first asks <em>Are you sure?</em> with a short account
+            of what will happen, so a stray click changes nothing.
+          </li>
+          <li id="faculty-reviews" data-testid="HelpAdminsPage-faculty-reviews">
+            <strong>Open Faculty Reviews / Close Faculty Reviews.</strong>{" "}
+            Faculty can see and rank the candidates for their courses only while
+            reviews are Open. Opening asks for the faculty ranking deadline,
+            after a short account of what will happen; the first opening stamps
+            the review opening date, which is kept if reviews are reopened, and{" "}
+            <em>Change</em> beside the deadline edits it later. Closing stops
+            faculty from changing their rankings and keeps both dates. Opening
+            and closing, and deadline changes, are recorded in the
+            recruitment&apos;s change history.
           </li>
           <li>
             <strong>Courses.</strong> The recruitment&apos;s course list: one
