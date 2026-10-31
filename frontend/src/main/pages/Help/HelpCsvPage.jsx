@@ -236,13 +236,15 @@ export default function HelpCsvPage() {
           type, then <code>tentativeAssignment</code> (the lecture the admin has
           pencilled the applicant into on the Assignments page, written as the
           lecture&apos;s column heading, blank if none), then one column per
-          lecture headed <code>COURSE (section S, enroll E)</code> holding that
-          lecture&apos;s rank for the applicant. Directly under the header come
-          three planning rows labelled <code>Allocation</code>,{" "}
-          <code>Assigned</code> and <code>Left to assign</code> in the first
-          column, with each lecture&apos;s numbers under its column and every
-          other cell blank; applicant rows follow. Test applications are left
-          out; the full layout is described on the For Admins help page.
+          lecture, headed by the bare course number (<code>16</code>), or{" "}
+          <code>16 (section 0100)</code> when the recruitment has more than one
+          section of that course, holding that lecture&apos;s rank for the
+          applicant. Directly under the header come three planning rows labelled{" "}
+          <code>Allocation</code>, <code>Assigned</code> and{" "}
+          <code>Left to assign</code> in the first column, with each
+          lecture&apos;s numbers under its column and every other cell blank;
+          applicant rows follow. Test applications are left out; the full layout
+          is described on the For Admins help page.
         </p>
         <p data-testid="assignmentsCsvDescription">
           Once a recruitment&apos;s assignments are published, the assignments

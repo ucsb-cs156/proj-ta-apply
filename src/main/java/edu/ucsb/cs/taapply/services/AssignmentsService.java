@@ -66,13 +66,51 @@ public class AssignmentsService {
           .thenComparing(c -> ApplicationCsvService.text(c.getSection()))
           .thenComparing(c -> ApplicationCsvService.text(c.getEnrollCode()));
 
-  /** "CMPSC 16 (section 0100, enroll 100)": how a section is named in the CSV. */
-  public static String label(RecruitmentCourse course) {
-    return "%s (section %s, enroll %s)"
-        .formatted(
-            ApplicationCsvService.text(course.getCourseId()),
-            ApplicationCsvService.text(course.getSection()),
-            ApplicationCsvService.text(course.getEnrollCode()));
+  /**
+   * The course number without its subject: everything after the first run of whitespace in the
+   * stored course id, so "CMPSC 5A" is "5A" and "CMPSC 16" is "16" (issue #188). A null id, or one
+   * with no whitespace at all, gives "".
+   */
+  public static String courseNumber(String courseId) {
+    String[] parts = ApplicationCsvService.text(courseId).trim().split("\\s+", 2);
+    return parts.length == 2 ? parts[1] : "";
+  }
+
+  /**
+   * How each section is headed in the Rankings CSV (issue #188), keyed by recruitment course id:
+   * the bare course number, plus " (section S)" only when the export has more than one section of
+   * that course, and ", enroll E" inside the parentheses only in the odd case of two rows with the
+   * same course and section.
+   */
+  public static Map<Long, String> headings(List<RecruitmentCourse> courses) {
+    Map<String, Integer> byNumber = new HashMap<>();
+    Map<String, Integer> byNumberAndSection = new HashMap<>();
+    for (RecruitmentCourse course : courses) {
+      byNumber.merge(courseNumber(course.getCourseId()), 1, Integer::sum);
+      byNumberAndSection.merge(numberAndSection(course), 1, Integer::sum);
+    }
+    Map<Long, String> headings = new HashMap<>();
+    for (RecruitmentCourse course : courses) {
+      String number = courseNumber(course.getCourseId());
+      String heading = number;
+      if (byNumber.get(number) > 1) {
+        String enroll =
+            byNumberAndSection.get(numberAndSection(course)) > 1
+                ? ", enroll " + ApplicationCsvService.text(course.getEnrollCode())
+                : "";
+        heading =
+            "%s (section %s%s)"
+                .formatted(number, ApplicationCsvService.text(course.getSection()), enroll);
+      }
+      headings.put(course.getId(), heading);
+    }
+    return headings;
+  }
+
+  private static String numberAndSection(RecruitmentCourse course) {
+    return courseNumber(course.getCourseId())
+        + "\u0000"
+        + ApplicationCsvService.text(course.getSection());
   }
 
   /**

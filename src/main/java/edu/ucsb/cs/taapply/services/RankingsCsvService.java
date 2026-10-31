@@ -10,7 +10,6 @@ import edu.ucsb.cs.taapply.services.AssignmentsService.IdentityColumn;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -24,6 +23,9 @@ import org.springframework.stereotype.Service;
  * column after the identity columns, and three rows directly under the header, labelled in the
  * first column, with each section's allocation, how many applicants are tentatively assigned to it
  * and how many places are left.
+ *
+ * <p>Since issue #188 a course column is headed by the bare course number ("16"), with the section
+ * added only when the recruitment has more than one section of that course ("16 (section 0100)").
  */
 @Service
 public class RankingsCsvService {
@@ -48,10 +50,8 @@ public class RankingsCsvService {
     List<RecruitmentCourse> courses =
         new ArrayList<>(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));
     courses.sort(AssignmentsService.BY_COURSE_SECTION_ENROLL);
-    Map<Long, String> labels = new HashMap<>();
-    for (RecruitmentCourse course : courses) {
-      labels.put(course.getId(), AssignmentsService.label(course));
-    }
+    // Issue #188: the bare course number, with the section only where a course has several.
+    Map<Long, String> labels = AssignmentsService.headings(courses);
     columns.add(new Column("tentativeAssignment", a -> labels.get(a.getTentativeAssignmentId())));
 
     List<Application> applications =
