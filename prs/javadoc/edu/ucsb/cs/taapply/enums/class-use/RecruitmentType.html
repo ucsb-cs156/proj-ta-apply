@@ -62,10 +62,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.enums">edu.ucsb.cs.taapply.enums</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.repository">edu.ucsb.cs.taapply.repository</a></div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.models">edu.ucsb.cs.taapply.models</a></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.services">edu.ucsb.cs.taapply.services</a></div>
+<div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.repository">edu.ucsb.cs.taapply.repository</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.services">edu.ucsb.cs.taapply.services</a></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <section class="class-uses">
 <ul class="block-list">
@@ -111,7 +113,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="../../controller/InstructorRecruitmentsController.InstructorRecruitment.html#%3Cinit%3E(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.util.List)" class="member-name-link">InstructorRecruitment</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+<div class="col-second even-row-color"><code><a href="../../controller/InstructorRecruitmentsController.InstructorRecruitment.html#%3Cinit%3E(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.lang.String,java.time.LocalDate,java.time.LocalDate,java.util.List)" class="member-name-link">InstructorRecruitment</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
  <a href="../ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a>&nbsp;applicationStatus,
@@ -119,6 +121,9 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;primaryConsiderationDate,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;actualOpeningDate,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;actualClosingDate,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;reviewStatus,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyReviewOpeningDate,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>InstructorRecruitment</code> record class.</div>
@@ -155,6 +160,41 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color">
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
+</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="edu.ucsb.cs.taapply.models">
+<h2>Uses of <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a> in <a href="../../models/package-summary.html">edu.ucsb.cs.taapply.models</a></h2>
+<div class="caption"><span>Methods in <a href="../../models/package-summary.html">edu.ucsb.cs.taapply.models</a> that return <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicantRecruitmentDto.</span><code><a href="../../models/ApplicantRecruitmentDto.html#type()" class="member-name-link">type</a>()</code></div>
+<div class="col-last even-row-color">
+<div class="block">Returns the value of the <code>type</code> record component.</div>
+</div>
+</div>
+<div class="caption"><span>Constructors in <a href="../../models/package-summary.html">edu.ucsb.cs.taapply.models</a> with parameters of type <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier</div>
+<div class="table-header col-second">Constructor</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../../models/ApplicantRecruitmentDto.html#%3Cinit%3E(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDateTime)" class="member-name-link">ApplicantRecruitmentDto</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="../RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
+ <a href="../ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a>&nbsp;applicationStatus,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;tentativeOpeningDate,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;primaryConsiderationDate,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;actualOpeningDate,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;actualClosingDate,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDateTime.html" title="class or interface in java.time" class="external-link">LocalDateTime</a>&nbsp;lastPopulatedAt)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Creates an instance of a <code>ApplicantRecruitmentDto</code> record class.</div>
 </div>
 </div>
 </section>

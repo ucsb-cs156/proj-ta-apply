@@ -64,6 +64,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#postRecruitment(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,java.time.LocalDate,java.time.LocalDate)" tabindex="0">postRecruitment(String, RecruitmentType, LocalDate, LocalDate)</a></li>
+<li><a href="#updateReviewStatus(java.lang.Long,java.lang.String,java.time.LocalDate)" tabindex="0">updateReviewStatus(Long, String, LocalDate)</a></li>
+<li><a href="#updateFacultyRankingDeadline(java.lang.Long,java.time.LocalDate)" tabindex="0">updateFacultyRankingDeadline(Long, LocalDate)</a></li>
 <li><a href="#allRecruitments()" tabindex="0">allRecruitments()</a></li>
 <li><a href="#updateStatus(java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationStatus)" tabindex="0">updateStatus(Long, ApplicationStatus)</a></li>
 <li><a href="#applicationCounts()" tabindex="0">applicationCounts()</a></li>
@@ -135,6 +137,15 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;primaryConsiderationDate)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateFacultyRankingDeadline(java.lang.Long,java.time.LocalDate)" class="member-name-link">updateFacultyRankingDeadline</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateReviewStatus(java.lang.Long,java.lang.String,java.time.LocalDate)" class="member-name-link">updateReviewStatus</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;status,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateStatus(java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationStatus)" class="member-name-link">updateStatus</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  <a href="../enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a>&nbsp;status)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -188,6 +199,36 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;tentativeOpeningDate,
  @RequestParam @DateTimeFormat(iso=DATE)
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;primaryConsiderationDate)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="updateReviewStatus(java.lang.Long,java.lang.String,java.time.LocalDate)">
+<h3>updateReviewStatus</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@Transactional
+@PutMapping("/reviewStatus")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">updateReviewStatus</span><wbr><span class="parameters">(@RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ @RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;status,
+ @RequestParam(required=false) @DateTimeFormat(iso=DATE)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="updateFacultyRankingDeadline(java.lang.Long,java.time.LocalDate)">
+<h3>updateFacultyRankingDeadline</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@Transactional
+@PutMapping("/facultyRankingDeadline")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">updateFacultyRankingDeadline</span><wbr><span class="parameters">(@RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ @RequestParam @DateTimeFormat(iso=DATE)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline)</span></div>
 </div>
 </section>
 </li>

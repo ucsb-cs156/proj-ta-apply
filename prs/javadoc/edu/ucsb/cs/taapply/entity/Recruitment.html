@@ -82,7 +82,9 @@ loadScripts(document, 'script');</script>
 <p>The two "actual" dates record what happened rather than what was planned: <code>
 actualOpeningDate</code> is stamped the first time applications open and never overwritten, so it keeps
 the date applicants were actually able to start; <code>actualClosingDate</code> is stamped on each
-close, so it reflects when applications last stopped being accepted.</div>
+close, so it reflects when applications last stopped being accepted. Faculty review dates follow
+the same first-opening rule: <code>facultyReviewOpeningDate</code> is preserved if reviews reopen,
+while <code>facultyRankingDeadline</code> can be changed for each opening.</div>
 </div>
 </section>
 <section class="summary">

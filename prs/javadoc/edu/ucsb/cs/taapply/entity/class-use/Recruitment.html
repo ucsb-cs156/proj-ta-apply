@@ -62,10 +62,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.jobs">edu.ucsb.cs.taapply.jobs</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.repository">edu.ucsb.cs.taapply.repository</a></div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.models">edu.ucsb.cs.taapply.models</a></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.services">edu.ucsb.cs.taapply.services</a></div>
+<div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.repository">edu.ucsb.cs.taapply.repository</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.services">edu.ucsb.cs.taapply.services</a></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <section class="class-uses">
 <ul class="block-list">
@@ -84,6 +86,15 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;primaryConsiderationDate)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code><a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentsController.</span><code><a href="../../controller/RecruitmentsController.html#updateFacultyRankingDeadline(java.lang.Long,java.time.LocalDate)" class="member-name-link">updateFacultyRankingDeadline</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code><a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">RecruitmentsController.</span><code><a href="../../controller/RecruitmentsController.html#updateReviewStatus(java.lang.Long,java.lang.String,java.time.LocalDate)" class="member-name-link">updateReviewStatus</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;status,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
 <div class="col-second odd-row-color"><span class="type-name-label">RecruitmentsController.</span><code><a href="../../controller/RecruitmentsController.html#updateStatus(java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationStatus)" class="member-name-link">updateStatus</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  <a href="../../enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a>&nbsp;status)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
@@ -95,18 +106,6 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</code></div>
 <div class="col-second even-row-color"><span class="type-name-label">RecruitmentsController.</span><code><a href="../../controller/RecruitmentsController.html#allRecruitments()" class="member-name-link">allRecruitments</a>()</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">ApplicantRecruitmentsController.</span><code><a href="../../controller/ApplicantRecruitmentsController.html#applicableRecruitments()" class="member-name-link">applicableRecruitments</a>()</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicantRecruitmentsController.</span><code><a href="../../controller/ApplicantRecruitmentsController.html#openRecruitments()" class="member-name-link">openRecruitments</a>()</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">ApplicantRecruitmentsController.</span><code><a href="../../controller/ApplicantRecruitmentsController.html#recentlyClosed()" class="member-name-link">recentlyClosed</a>()</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicantRecruitmentsController.</span><code><a href="../../controller/ApplicantRecruitmentsController.html#upcomingRecruitments()" class="member-name-link">upcomingRecruitments</a>()</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 <div class="caption"><span>Methods in <a href="../../controller/package-summary.html">edu.ucsb.cs.taapply.controller</a> with parameters of type <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span></div>
@@ -138,6 +137,20 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color">
 <div class="block">Whether a recruitment's course list is still worth refreshing today.</div>
 </div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="edu.ucsb.cs.taapply.models">
+<h2>Uses of <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a> in <a href="../../models/package-summary.html">edu.ucsb.cs.taapply.models</a></h2>
+<div class="caption"><span>Methods in <a href="../../models/package-summary.html">edu.ucsb.cs.taapply.models</a> with parameters of type <a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static <a href="../../models/ApplicantRecruitmentDto.html" title="class in edu.ucsb.cs.taapply.models">ApplicantRecruitmentDto</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicantRecruitmentDto.</span><code><a href="../../models/ApplicantRecruitmentDto.html#from(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">from</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
