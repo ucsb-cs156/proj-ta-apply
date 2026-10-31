@@ -147,5 +147,30 @@ import org.springframework.web.bind.annotation.RestController;
 <span class="fc" id="L147">    recruitmentCourseRepository.save(course);</span>
 <span class="fc" id="L148">    return course;</span>
   }
+
+  @Operation(
+      summary = &quot;Set how many TAs or ULAs are allocated to one section&quot;,
+      description =
+          &quot;The per-course share of the recruitment's total hiring target (issue #174). Must not be&quot;
+              + &quot; negative. A planning figure: not recorded in the audit trail.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;/allocation&quot;)
+  public RecruitmentCourse setAllocation(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;allocation&quot;) @RequestParam Integer allocation) {
+
+<span class="fc bfc" id="L162" title="All 2 branches covered.">    if (allocation &lt; 0) {</span>
+<span class="fc" id="L163">      throw new IllegalArgumentException(&quot;allocation must not be negative&quot;);</span>
+    }
+
+<span class="fc" id="L166">    RecruitmentCourse course =</span>
+        recruitmentCourseRepository
+<span class="fc" id="L168">            .findById(id)</span>
+<span class="fc" id="L169">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
+
+<span class="fc" id="L171">    course.setAllocation(allocation);</span>
+<span class="fc" id="L172">    recruitmentCourseRepository.save(course);</span>
+<span class="fc" id="L173">    return course;</span>
+  }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

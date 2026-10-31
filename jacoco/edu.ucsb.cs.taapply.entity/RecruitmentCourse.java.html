@@ -93,6 +93,14 @@ public class RecruitmentCourse {
    */
   @Builder.Default private boolean manuallyAdded = false;
 
+  /**
+   * How many TAs (or ULAs) the admin has allocated to this section (issue #174). Never negative; 0
+   * until the admin enters a number. A planning figure, so changes to it are not audited.
+   */
+  @Column(nullable = false)
+  @Builder.Default
+  private Integer allocation = 0;
+
   /** The status the UCSB API reports for a section that has been cancelled. */
   public static final String CANCELLED = &quot;cancelled&quot;;
 
@@ -103,7 +111,7 @@ public class RecruitmentCourse {
    */
   @JsonIgnore
   public boolean isOnOffer() {
-<span class="fc bfc" id="L106" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
+<span class="fc bfc" id="L114" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
