@@ -2535,7 +2535,15 @@ describe("ApplicationForm tests", () => {
       await userEvent.selectOptions(status, "GRADUATE");
       expect(
         screen.getByTestId("ApplicationForm-graduate-warning"),
-      ).toHaveTextContent("strongly encouraged to apply to be a TA instead");
+      ).toHaveTextContent(
+        "If you will be in graduate status, you are strongly encouraged to apply to be a TA instead of applying to be a ULA.",
+      );
+      // Issue #194: the sentence about departmental funding is gone.
+      expect(
+        screen.getByTestId("ApplicationForm-graduate-warning").textContent,
+      ).toBe(
+        "If you will be in graduate status, you are strongly encouraged to apply to be a TA instead of applying to be a ULA.",
+      );
       await userEvent.selectOptions(status, "UNDERGRADUATE");
       expect(
         screen.queryByTestId("ApplicationForm-graduate-warning"),
@@ -3174,5 +3182,74 @@ describe("ApplicationForm tests", () => {
       expect(listed()).toContain("Previous ULA Service?");
       expect(listed()).not.toContain("Training commitment");
     });
+  });
+
+  // ---- Issue #194: the selection tables are only as wide as their content ----
+
+  const selectionTableLayout = (groupTestId, labelHeading) => {
+    const group = screen.getByTestId(groupTestId);
+    const table = group.querySelector("table");
+    expect(table).toHaveClass("w-auto", "align-middle", "table-sm");
+    const headings = [...table.querySelectorAll("thead th")];
+    const label = headings.find((th) => th.textContent === labelHeading);
+    expect(label.style.width).toBe("1%");
+    expect(label.style.whiteSpace).toBe("nowrap");
+    const choices = headings.slice(headings.indexOf(label) + 1);
+    expect(choices.length).toBeGreaterThan(1);
+    choices.forEach((th) => {
+      expect(th.style.width).toBe("8em");
+      expect(th.style.whiteSpace).toBe("normal");
+      expect(th).toHaveClass("text-center", "fw-normal");
+    });
+    return { table, headings, label };
+  };
+
+  test("a TA form's topic and course tables shrink to their content with equal choice columns", () => {
+    renderForm();
+
+    selectionTableLayout("ApplicationForm-topicProficiencies", "Topic");
+    const topicRow = screen.getByTestId("ApplicationForm-topic-Java");
+    const topicLabel = topicRow.querySelector("td");
+    expect(topicLabel).toHaveTextContent("Java");
+    expect(topicLabel.style.width).toBe("1%");
+    expect(topicLabel.style.whiteSpace).toBe("nowrap");
+
+    const { headings } = selectionTableLayout(
+      "ApplicationForm-courseInterests",
+      "Course",
+    );
+    // No warning column on a TA form.
+    expect(headings[0].textContent).toBe("Course");
+    const courseRow = screen
+      .getByTestId("ApplicationForm-courseInterests")
+      .querySelector("tbody tr");
+    const courseLabel = courseRow.querySelector("td");
+    expect(courseLabel.style.width).toBe("1%");
+    // The padded course id keeps its spaces, so it stays `pre`, which never wraps either.
+    expect(courseLabel.style.whiteSpace).toBe("pre");
+    expect(courseLabel.style.fontFamily).toBe("monospace");
+  });
+
+  test("a ULA form's interest table and warning column shrink to their content too", () => {
+    renderForm({ type: "ULA" });
+
+    selectionTableLayout("ApplicationForm-topicProficiencies", "Topic");
+    selectionTableLayout("ApplicationForm-interests", "Interest");
+    const interestRow = screen
+      .getByTestId("ApplicationForm-interests")
+      .querySelector("tbody tr");
+    expect(interestRow.querySelector("td").style.width).toBe("1%");
+    expect(interestRow.querySelector("td").style.whiteSpace).toBe("nowrap");
+
+    const { headings } = selectionTableLayout(
+      "ApplicationForm-courseInterests",
+      "Course",
+    );
+    const warning = screen.getByTestId(
+      "ApplicationForm-courseInterests-warning-header",
+    );
+    expect(headings[0]).toBe(warning);
+    expect(warning.style.width).toBe("1%");
+    expect(warning.style.whiteSpace).toBe("nowrap");
   });
 });

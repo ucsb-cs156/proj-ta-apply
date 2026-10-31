@@ -70,7 +70,7 @@ export const STUDENT_STATUS_QUESTION =
   "Will you be in undergraduate or graduate student status during the quarter for which you are applying to be a ULA?";
 
 export const GRADUATE_WARNING =
-  "The department does not have funding to hire graduate students for ULA positions; only students in undergraduate status are considered. If you will be in graduate status, you are strongly encouraged to apply to be a TA instead.";
+  "If you will be in graduate status, you are strongly encouraged to apply to be a TA instead of applying to be a ULA.";
 
 export const TA_ELIGIBILITY_QUESTION =
   "Do you want to be eligible for TA positions in the future, and if so, will you enroll in the TA training course the next time it is offered in Fall?";

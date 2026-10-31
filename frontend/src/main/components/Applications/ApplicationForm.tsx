@@ -1,5 +1,10 @@
 import { useState } from "react";
 import { Alert, Button, Col, Form, Row, Table } from "react-bootstrap";
+import {
+  CHOICE_CELL_STYLE,
+  LABEL_CELL_STYLE,
+  SELECTION_TABLE_CLASS,
+} from "main/utils/formTableLayout";
 import { useForm } from "react-hook-form";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import CourseSectionsCard from "main/components/Applications/CourseSectionsCard";
@@ -1052,12 +1057,16 @@ export default function ApplicationForm({
             No topics are listed yet.
           </p>
         ) : (
-          <Table size="sm" responsive className="align-middle">
+          <Table size="sm" responsive className={SELECTION_TABLE_CLASS}>
             <thead>
               <tr>
-                <th>Topic</th>
+                <th style={LABEL_CELL_STYLE}>Topic</th>
                 {topicLevels.map((level) => (
-                  <th key={level.value} className="text-center fw-normal">
+                  <th
+                    key={level.value}
+                    className="text-center fw-normal"
+                    style={CHOICE_CELL_STYLE}
+                  >
                     {level.label}
                   </th>
                 ))}
@@ -1068,7 +1077,7 @@ export default function ApplicationForm({
                 const rowId = id(`topic-${slug(topic)}`);
                 return (
                   <tr key={topic} data-testid={rowId}>
-                    <td>{topic}</td>
+                    <td style={LABEL_CELL_STYLE}>{topic}</td>
                     {topicLevels.map(({ value: level }) => (
                       <td key={level} className="text-center">
                         <Form.Check
@@ -1110,12 +1119,16 @@ export default function ApplicationForm({
               No interests are listed yet.
             </p>
           ) : (
-            <Table size="sm" responsive className="align-middle">
+            <Table size="sm" responsive className={SELECTION_TABLE_CLASS}>
               <thead>
                 <tr>
-                  <th>Interest</th>
+                  <th style={LABEL_CELL_STYLE}>Interest</th>
                   {INTEREST_LEVELS.map((level) => (
-                    <th key={level.value} className="text-center fw-normal">
+                    <th
+                      key={level.value}
+                      className="text-center fw-normal"
+                      style={CHOICE_CELL_STYLE}
+                    >
                       {level.label}
                     </th>
                   ))}
@@ -1126,7 +1139,7 @@ export default function ApplicationForm({
                   const rowId = id(`interest-${slug(interest)}`);
                   return (
                     <tr key={interest} data-testid={rowId}>
-                      <td>{interest}</td>
+                      <td style={LABEL_CELL_STYLE}>{interest}</td>
                       {INTEREST_LEVELS.map(({ value: level }) => (
                         <td key={level} className="text-center">
                           <Form.Check
@@ -1328,18 +1341,23 @@ export default function ApplicationForm({
             No courses are listed for this recruitment yet.
           </p>
         ) : (
-          <Table size="sm" responsive className="align-middle">
+          <Table size="sm" responsive className={SELECTION_TABLE_CLASS}>
             <thead>
               <tr>
                 {!isTa && (
                   <th
                     aria-label="Warnings"
+                    style={LABEL_CELL_STYLE}
                     data-testid={id("courseInterests-warning-header")}
                   />
                 )}
-                <th>Course</th>
+                <th style={LABEL_CELL_STYLE}>Course</th>
                 {COURSE_INTEREST_OPTIONS.map((option) => (
-                  <th key={option.value} className="text-center fw-normal">
+                  <th
+                    key={option.value}
+                    className="text-center fw-normal"
+                    style={CHOICE_CELL_STYLE}
+                  >
                     {option.label}
                   </th>
                 ))}
@@ -1367,7 +1385,13 @@ export default function ApplicationForm({
                         )}
                       </td>
                     )}
-                    <td style={{ fontFamily: "monospace", whiteSpace: "pre" }}>
+                    <td
+                      style={{
+                        ...LABEL_CELL_STYLE,
+                        fontFamily: "monospace",
+                        whiteSpace: "pre",
+                      }}
+                    >
                       {courseLabel(courseId, courseInstructors)}
                     </td>
                     {rank ? (
