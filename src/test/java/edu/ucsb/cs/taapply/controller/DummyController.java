@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
+import edu.ucsb.cs.taapply.errors.UpstreamApiException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +28,11 @@ public class DummyController extends ApiController {
   @GetMapping("/forbidden")
   public String forbidden() {
     throw new ForbiddenException("Forbidden!");
+  }
+
+  @GetMapping("/upstream")
+  public String upstream() {
+    throw new UpstreamApiException("Upstream failed!", new RuntimeException("cause"));
   }
 
   @GetMapping("/illegalArgument")

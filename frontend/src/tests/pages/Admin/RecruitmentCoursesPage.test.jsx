@@ -72,6 +72,10 @@ describe("RecruitmentCoursesPage tests", () => {
       .reply(200, { id: 1 });
     axiosMock.onPut("/api/recruitmentcourses/allocation").reply(200, {});
     axiosMock.onPut("/api/admin/recruitments/totalHiringTarget").reply(200, {});
+    axiosMock.onPost("/api/recruitmentcourses/refresh").reply(200, notRemoved);
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimates")
+      .reply(200, notRemoved);
     // Recruitment 7, refreshed once (issue #124).
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
       {
@@ -188,6 +192,7 @@ describe("RecruitmentCoursesPage tests", () => {
       "RecruitmentCoursesPage-header-room",
       "RecruitmentCoursesPage-header-enrollment",
       "RecruitmentCoursesPage-header-maxEnroll",
+      "RecruitmentCoursesPage-header-enrollmentEstimate",
       "RecruitmentCoursesPage-header-allocation",
       "RecruitmentCoursesPage-header-status",
       "RecruitmentCoursesPage-header-summerSession",
@@ -436,6 +441,23 @@ describe("RecruitmentCoursesPage tests", () => {
     }
   });
 
+  const getsOf = (url) =>
+    axiosMock.history.get.filter((r) => r.url === url).length;
+  /** Waits for the refresh on open (issue #175) to finish, so its re-reads are not counted. */
+  const afterRefresh = async () => {
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("RecruitmentCoursesPage-refreshing"),
+      ).not.toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(getsOf("/api/recruitmentcourses/all")).toBeGreaterThanOrEqual(2),
+    );
+    await waitFor(() =>
+      expect(getsOf("/api/admin/recruitments/all")).toBeGreaterThanOrEqual(2),
+    );
+  };
+
   // ---- hiring target and allocations (issue #174) ----
 
   test("shows the hiring target above the refresh line, with the visible allocations added up", async () => {
@@ -540,6 +562,8 @@ describe("RecruitmentCoursesPage tests", () => {
     const box = await screen.findByTestId(
       "RecruitmentCoursesPage-hiring-target-totalHiringTarget",
     );
+    await afterRefresh();
+    const before = getsOf("/api/admin/recruitments/all");
 
     await userEvent.clear(box);
     await userEvent.type(box, "9");
@@ -557,11 +581,7 @@ describe("RecruitmentCoursesPage tests", () => {
       ).params,
     ).toEqual({ id: 7, totalHiringTarget: 9 });
     await waitFor(() =>
-      expect(
-        axiosMock.history.get.filter(
-          (r) => r.url === "/api/admin/recruitments/all",
-        ).length,
-      ).toBeGreaterThanOrEqual(2),
+      expect(getsOf("/api/admin/recruitments/all")).toBeGreaterThan(before),
     );
   });
 
@@ -570,6 +590,8 @@ describe("RecruitmentCoursesPage tests", () => {
     const box = await screen.findByTestId(
       "RecruitmentCoursesPage-cell-row-0-allocation",
     );
+    await afterRefresh();
+    const before = getsOf("/api/recruitmentcourses/all");
 
     await userEvent.clear(box);
     await userEvent.type(box, "7");
@@ -587,13 +609,149 @@ describe("RecruitmentCoursesPage tests", () => {
       ).params,
     ).toEqual({ id: 1, allocation: 7 });
     await waitFor(() =>
+      expect(getsOf("/api/recruitmentcourses/all")).toBeGreaterThan(before),
+    );
+  });
+
+  test("leaving an estimate box saves it and re-reads the courses", async () => {
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimate")
+      .reply(200, {});
+    renderPage();
+    const box = await screen.findByTestId(
+      "RecruitmentCoursesPage-cell-row-0-enrollmentEstimate",
+    );
+    await afterRefresh();
+    const before = getsOf("/api/recruitmentcourses/all");
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "205");
+    await userEvent.tab();
+
+    const puts = () =>
+      axiosMock.history.put.filter(
+        (r) => r.url === "/api/recruitmentcourses/enrollmentEstimate",
+      );
+    await waitFor(() => expect(puts()).toHaveLength(1));
+    expect(puts()[0].params).toEqual({ id: 1, enrollmentEstimate: 205 });
+    await waitFor(() =>
+      expect(getsOf("/api/recruitmentcourses/all")).toBeGreaterThan(before),
+    );
+  });
+
+  // ---- refresh on open, and the estimate fill buttons (issue #175) ----
+
+  const refreshPosts = () =>
+    axiosMock.history.post.filter(
+      (r) => r.url === "/api/recruitmentcourses/refresh",
+    );
+
+  test("refreshes the courses from the UCSB API once as the page opens", async () => {
+    renderPage();
+
+    const status = await screen.findByTestId(
+      "RecruitmentCoursesPage-refreshing",
+    );
+    expect(status).toHaveTextContent(
+      "Refreshing enrollment from the UCSB API…",
+    );
+    expect(status).toHaveAttribute("role", "status");
+    await waitFor(() => expect(refreshPosts()).toHaveLength(1));
+    expect(refreshPosts()[0].params).toEqual({ recruitmentId: "7" });
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("RecruitmentCoursesPage-refreshing"),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-refresh-failed"),
+    ).not.toBeInTheDocument();
+    // The list and the recruitment (its last-refreshed stamp) are read again afterwards.
+    await waitFor(() =>
       expect(
         axiosMock.history.get.filter(
           (r) => r.url === "/api/recruitmentcourses/all",
         ).length,
       ).toBeGreaterThanOrEqual(2),
     );
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/recruitments/all",
+        ).length,
+      ).toBeGreaterThanOrEqual(2),
+    );
+    // Still just the one refresh.
+    expect(refreshPosts()).toHaveLength(1);
+    expect(mockToast).not.toHaveBeenCalled();
   });
+
+  test("says so, without a toast, when the UCSB API cannot be reached", async () => {
+    axiosMock.onPost("/api/recruitmentcourses/refresh").reply(502, {
+      type: "UpstreamApiException",
+      message:
+        "The UCSB API could not be reached; the stored enrollment figures were kept.",
+    });
+    renderPage();
+
+    const alert = await screen.findByTestId(
+      "RecruitmentCoursesPage-refresh-failed",
+    );
+    expect(alert).toHaveTextContent(
+      "Enrollment could not be refreshed: The UCSB API could not be reached; the stored enrollment figures were kept. The stored figures are shown.",
+    );
+    expect(alert).toHaveAttribute("role", "alert");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-refreshing"),
+    ).not.toBeInTheDocument();
+    // The stored rows are still shown.
+    expect(
+      await screen.findByTestId(
+        "RecruitmentCoursesPage-cell-row-0-enrollmentEstimate",
+      ),
+    ).toHaveValue(220);
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["max", "MAX", "maximum"],
+    ["actual", "ACTUAL", "actual"],
+  ])(
+    "the %s link fills every estimate from the API's figure",
+    async (label, source, word) => {
+      renderPage();
+      const line = await screen.findByTestId(
+        "RecruitmentCoursesPage-fill-estimates",
+      );
+      await afterRefresh();
+      const before = getsOf("/api/recruitmentcourses/all");
+      expect(line.textContent).toBe(
+        "Set enrollment estimates from: max, actual.",
+      );
+
+      const button = screen.getByTestId(
+        `RecruitmentCoursesPage-fill-estimates-${label}`,
+      );
+      expect(button).toHaveTextContent(label);
+      expect(button).toHaveClass("btn-link", "p-0", "align-baseline");
+      await userEvent.click(button);
+
+      const puts = () =>
+        axiosMock.history.put.filter(
+          (r) => r.url === "/api/recruitmentcourses/enrollmentEstimates",
+        );
+      await waitFor(() => expect(puts()).toHaveLength(1));
+      expect(puts()[0].params).toEqual({ recruitmentId: "7", source });
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          `Enrollment estimates set from ${word} enrollment.`,
+        ),
+      );
+      await waitFor(() =>
+        expect(getsOf("/api/recruitmentcourses/all")).toBeGreaterThan(before),
+      );
+    },
+  );
 
   /** Removed rows are hidden until asked for. */
   test("removed courses are hidden by default", async () => {
@@ -733,8 +891,12 @@ describe("RecruitmentCoursesPage tests", () => {
       screen.getByTestId("RecruitmentCoursesPage-populate"),
     );
 
-    await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
-    expect(axiosMock.history.post[0].params).toEqual({ recruitmentId: "7" });
+    const populatePosts = () =>
+      axiosMock.history.post.filter(
+        (r) => r.url === "/api/jobs/launch/populateRecruitmentCourses",
+      );
+    await waitFor(() => expect(populatePosts()).toHaveLength(1));
+    expect(populatePosts()[0].params).toEqual({ recruitmentId: "7" });
     await waitFor(() => expect(mockToast).toHaveBeenCalled());
     expect(mockToast.mock.calls[0][0]).toMatch(/Jobs/);
   });

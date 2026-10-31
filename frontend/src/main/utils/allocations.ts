@@ -11,6 +11,16 @@ export const isValidHiringTarget = (value: string): boolean =>
 export const isValidAllocation = (value: string): boolean =>
   /^\d+$/.test(value);
 
+/**
+ * A whole number of students, or nothing at all: one course's enrollment estimate (issue #175).
+ * An empty box clears the estimate rather than being an error.
+ */
+export const isValidEnrollmentEstimate = (value: string): boolean =>
+  value === "" || /^\d+$/.test(value);
+
+/** How long after the last keystroke an enrollment estimate is saved (issue #175). */
+export const ESTIMATE_SAVE_DELAY_MS = 1000;
+
 /** Shown under the totals when more has been allocated than the target allows. */
 export const OVER_ALLOCATED_MESSAGE =
   "Please either increase the hiring target, or reduce the allocations for one or more courses.";

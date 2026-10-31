@@ -2,12 +2,14 @@ package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJob;
 import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
 import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.RecruitmentCoursesRefreshService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,6 +36,7 @@ public class RecruitmentCoursesController extends ApiController {
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired UCSBCurriculumService ucsbCurriculumService;
+  @Autowired RecruitmentCoursesRefreshService recruitmentCoursesRefreshService;
 
   /**
    * Course id first, then section, so a course's several lectures sit together in order.
@@ -171,5 +174,86 @@ public class RecruitmentCoursesController extends ApiController {
     course.setAllocation(allocation);
     recruitmentCourseRepository.save(course);
     return course;
+  }
+
+  @Operation(
+      summary = "Refresh a recruitment's courses from the UCSB API, now",
+      description =
+          "Rewrites the offering details (enrollment, max enrollment, instructor, times) of every"
+              + " course still in the API, while the caller waits, and returns the current list"
+              + " without removed rows (issue #175). Unlike Populate it adds no rows and marks"
+              + " nothing stale. 404 for an unknown recruitment; 502 if the API cannot be reached,"
+              + " in which case nothing is changed.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/refresh")
+  public List<RecruitmentCourse> refresh(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+
+    int refreshed = recruitmentCoursesRefreshService.refresh(recruitment);
+    log.info("Refreshed {} course(s) of recruitment {}", refreshed, recruitmentId);
+    return allForRecruitment(recruitmentId, false);
+  }
+
+  @Operation(
+      summary = "Set one section's enrollment estimate",
+      description =
+          "The admin's estimate of how many students the section will have, the basis for"
+              + " allocating positions (issue #175). Must not be negative; leave the value out to"
+              + " clear it. A planning figure: not recorded in the audit trail.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PutMapping("/enrollmentEstimate")
+  public RecruitmentCourse setEnrollmentEstimate(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "enrollmentEstimate") @RequestParam(required = false)
+          Integer enrollmentEstimate) {
+
+    if (enrollmentEstimate != null && enrollmentEstimate < 0) {
+      throw new IllegalArgumentException("enrollmentEstimate must not be negative");
+    }
+
+    RecruitmentCourse course =
+        recruitmentCourseRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(RecruitmentCourse.class, id));
+
+    course.setEnrollmentEstimate(enrollmentEstimate);
+    recruitmentCourseRepository.save(course);
+    return course;
+  }
+
+  @Operation(
+      summary = "Fill every section's enrollment estimate from the API's max or actual figure",
+      description =
+          "Copies maxEnroll (source=MAX) or enrollment (source=ACTUAL) into the enrollment"
+              + " estimate of every non-removed row of the recruitment in one step (issue #175). A"
+              + " row whose source figure is null keeps its estimate. Returns the current list"
+              + " without removed rows. 404 for an unknown recruitment.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PutMapping("/enrollmentEstimates")
+  public List<RecruitmentCourse> setEnrollmentEstimates(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
+      @Parameter(name = "source") @RequestParam EnrollmentEstimateSource source) {
+
+    if (!recruitmentRepository.existsById(recruitmentId)) {
+      throw new EntityNotFoundException(Recruitment.class, recruitmentId);
+    }
+
+    for (RecruitmentCourse row : recruitmentCourseRepository.findByRecruitmentId(recruitmentId)) {
+      if (row.isRemoved()) {
+        continue;
+      }
+      Integer value =
+          source == EnrollmentEstimateSource.MAX ? row.getMaxEnroll() : row.getEnrollment();
+      if (value != null) {
+        row.setEnrollmentEstimate(value);
+        recruitmentCourseRepository.save(row);
+      }
+    }
+    return allForRecruitment(recruitmentId, false);
   }
 }

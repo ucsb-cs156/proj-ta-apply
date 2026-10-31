@@ -45,6 +45,15 @@ export default {
         http.put("/api/admin/recruitments/totalHiringTarget", () =>
           HttpResponse.json({}),
         ),
+        http.put("/api/recruitmentcourses/enrollmentEstimate", () =>
+          HttpResponse.json({}),
+        ),
+        http.put("/api/recruitmentcourses/enrollmentEstimates", () =>
+          HttpResponse.json(notRemoved),
+        ),
+        http.post("/api/recruitmentcourses/refresh", () =>
+          HttpResponse.json(notRemoved),
+        ),
         http.post("/api/jobs/launch/populateRecruitmentCourses", () =>
           HttpResponse.json({ id: 1 }),
         ),
@@ -81,3 +90,23 @@ export default {
 const Template = () => <RecruitmentCoursesPage />;
 
 export const Default = Template.bind({});
+
+/** The UCSB API is down: the page says so and shows the stored figures. */
+export const RefreshFails = Template.bind({});
+RefreshFails.parameters = {
+  msw: {
+    handlers: [
+      ...(Default.parameters?.msw?.handlers ?? []),
+      http.post("/api/recruitmentcourses/refresh", () =>
+        HttpResponse.json(
+          {
+            type: "UpstreamApiException",
+            message:
+              "The UCSB API could not be reached; the stored enrollment figures were kept.",
+          },
+          { status: 502 },
+        ),
+      ),
+    ],
+  },
+};

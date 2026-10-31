@@ -30,6 +30,20 @@ public class ApiControllerTests extends ControllerTestCase {
     assertEquals("Forbidden!", json.get("message"));
   }
 
+  /** Issue #175: a failure of the UCSB API is the gateway's fault, not the caller's. */
+  @Test
+  public void upstream_api_exception_returns_502_with_type_and_message() throws Exception {
+    MvcResult response =
+        mockMvc
+            .perform(get("/dummycontroller/upstream"))
+            .andExpect(status().isBadGateway())
+            .andReturn();
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("UpstreamApiException", json.get("type"));
+    assertEquals("Upstream failed!", json.get("message"));
+  }
+
   @Test
   public void illegal_argument_exception_returns_400_with_type_and_message() throws Exception {
     MvcResult response =

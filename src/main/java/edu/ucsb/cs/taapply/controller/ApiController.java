@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
+import edu.ucsb.cs.taapply.errors.UpstreamApiException;
 import edu.ucsb.cs.taapply.model.CurrentUser;
 import edu.ucsb.cs.taapply.services.CurrentUserService;
 import java.util.Map;
@@ -36,6 +37,14 @@ public abstract class ApiController {
   @ExceptionHandler({ForbiddenException.class})
   @ResponseStatus(HttpStatus.FORBIDDEN)
   public Object handleForbiddenException(Throwable e) {
+    return Map.of(
+        "type", e.getClass().getSimpleName(),
+        "message", e.getMessage());
+  }
+
+  @ExceptionHandler({UpstreamApiException.class})
+  @ResponseStatus(HttpStatus.BAD_GATEWAY)
+  public Object handleUpstreamApiException(Throwable e) {
     return Map.of(
         "type", e.getClass().getSimpleName(),
         "message", e.getMessage());

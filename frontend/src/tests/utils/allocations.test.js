@@ -1,5 +1,7 @@
 import {
+  ESTIMATE_SAVE_DELAY_MS,
   isValidAllocation,
+  isValidEnrollmentEstimate,
   isValidHiringTarget,
   OVER_ALLOCATED_MESSAGE,
 } from "main/utils/allocations";
@@ -24,6 +26,20 @@ describe("allocations utilities", () => {
     expect(isValidAllocation("-1")).toBe(false);
     expect(isValidAllocation("2.5")).toBe(false);
     expect(isValidAllocation("x")).toBe(false);
+  });
+
+  test("an enrollment estimate is a whole number of zero or more, or nothing", () => {
+    expect(isValidEnrollmentEstimate("")).toBe(true);
+    expect(isValidEnrollmentEstimate("0")).toBe(true);
+    expect(isValidEnrollmentEstimate("150")).toBe(true);
+    expect(isValidEnrollmentEstimate("-1")).toBe(false);
+    expect(isValidEnrollmentEstimate("1.5")).toBe(false);
+    expect(isValidEnrollmentEstimate("many")).toBe(false);
+    expect(isValidEnrollmentEstimate(" 1")).toBe(false);
+  });
+
+  test("estimates are saved a second after the last keystroke", () => {
+    expect(ESTIMATE_SAVE_DELAY_MS).toBe(1000);
   });
 
   test("the over-allocation message is the one the design asks for", () => {

@@ -1,4 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
@@ -17,9 +24,13 @@ const notRemoved = recruitmentCoursesFixtures.fourCourses.filter(
   (c) => !c.removed,
 );
 
-function renderTable(courses = notRemoved, includeRemoved = false) {
+function renderTable(
+  courses = notRemoved,
+  includeRemoved = false,
+  queryClient = new QueryClient(),
+) {
   return render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <RecruitmentCourseTable
           courses={courses}
@@ -37,7 +48,23 @@ describe("RecruitmentCourseTable tests", () => {
     axiosMock.resetHistory();
     axiosMock.onPut("/api/recruitmentcourses/removed").reply(200, {});
     axiosMock.onPut("/api/recruitmentcourses/allocation").reply(200, {});
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimate")
+      .reply(200, {});
   });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const estimatePuts = () =>
+    axiosMock.history.put.filter(
+      (r) => r.url === "/api/recruitmentcourses/enrollmentEstimate",
+    );
+  const estimateBox = (row) =>
+    screen.getByTestId(
+      `RecruitmentCourseTable-cell-row-${row}-enrollmentEstimate`,
+    );
 
   const allocationPuts = () =>
     axiosMock.history.put.filter(
@@ -57,6 +84,7 @@ describe("RecruitmentCourseTable tests", () => {
       "Room",
       "Enrolled",
       "Max",
+      "Enrollment Estimate",
       "Allocation",
       "Status",
       "Summer Session",
@@ -273,8 +301,9 @@ describe("RecruitmentCourseTable tests", () => {
         .getByTestId("RecruitmentCourseTable")
         .querySelectorAll("thead th"),
     ].map((th) => th.getAttribute("data-testid"));
+    // Max, then (issue #175) Enrollment Estimate, then Allocation.
     expect(headers.indexOf("RecruitmentCourseTable-header-allocation")).toBe(
-      headers.indexOf("RecruitmentCourseTable-header-maxEnroll") + 1,
+      headers.indexOf("RecruitmentCourseTable-header-maxEnroll") + 2,
     );
   });
 
@@ -384,6 +413,269 @@ describe("RecruitmentCourseTable tests", () => {
     expect(
       screen.getByTestId("RecruitmentCourseTable-cell-row-0-allocation"),
     ).toBeEnabled();
+  });
+
+  // ---- enrollment estimate (issue #175) ----
+
+  test("each row has an Enrollment Estimate box between Max and Allocation", () => {
+    renderTable();
+
+    const box = estimateBox(1);
+    expect(box).toHaveValue(140);
+    expect(box).toHaveAttribute("type", "number");
+    expect(box).toHaveAttribute("min", "0");
+    expect(box).toHaveAttribute("step", "1");
+    expect(box.style.width).toBe("6em");
+    expect(box).toHaveClass("form-control-sm");
+    expect(box).toBeEnabled();
+    expect(box).toHaveAttribute(
+      "aria-label",
+      "Enrollment estimate for CMPSC   156 section 0100",
+    );
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-1-col-enrollmentEstimate",
+      ),
+    ).toContainElement(box);
+    // No estimate yet shows as an empty box, not a zero.
+    expect(estimateBox(2)).toHaveValue(null);
+    const headers = [
+      ...screen
+        .getByTestId("RecruitmentCourseTable")
+        .querySelectorAll("thead th"),
+    ].map((th) => th.getAttribute("data-testid"));
+    const estimate = headers.indexOf(
+      "RecruitmentCourseTable-header-enrollmentEstimate",
+    );
+    expect(estimate).toBe(
+      headers.indexOf("RecruitmentCourseTable-header-maxEnroll") + 1,
+    );
+    expect(headers.indexOf("RecruitmentCourseTable-header-allocation")).toBe(
+      estimate + 1,
+    );
+  });
+
+  test("a row without the field at all, or without a section, still shows a box", () => {
+    const { enrollmentEstimate: _omitted, ...legacy } = notRemoved[0];
+    renderTable([{ ...legacy, section: null }]);
+
+    const box = estimateBox(0);
+    expect(box).toHaveValue(null);
+    expect(box).toHaveAttribute(
+      "aria-label",
+      "Enrollment estimate for CMPSC     1A section ",
+    );
+  });
+
+  test("a removed row's estimate box is disabled", () => {
+    renderTable(recruitmentCoursesFixtures.fourCourses, true);
+    expect(estimateBox(3)).toBeDisabled();
+    expect(estimateBox(3)).toHaveValue(95);
+  });
+
+  test("an estimate is saved one second after the last keystroke, with the request's shape", async () => {
+    vi.useFakeTimers();
+    renderTable();
+    const box = estimateBox(0);
+
+    fireEvent.change(box, { target: { value: "15" } });
+    expect(box).toHaveValue(15);
+    expect(box).not.toHaveClass("is-invalid");
+    await act(() => vi.advanceTimersByTimeAsync(500));
+    // Typing again restarts the second.
+    fireEvent.change(box, { target: { value: "150" } });
+    await act(() => vi.advanceTimersByTimeAsync(999));
+    expect(estimatePuts()).toHaveLength(0);
+
+    await act(() => vi.advanceTimersByTimeAsync(1));
+
+    expect(estimatePuts()).toHaveLength(1);
+    expect(estimatePuts()[0].method).toBe("put");
+    expect(estimatePuts()[0].params).toEqual({
+      id: 1,
+      enrollmentEstimate: 150,
+    });
+    // Nothing more is sent later.
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(estimatePuts()).toHaveLength(1);
+  });
+
+  test("clearing the box clears the estimate: the parameter is left out", async () => {
+    vi.useFakeTimers();
+    renderTable();
+
+    fireEvent.change(estimateBox(0), { target: { value: "" } });
+    expect(estimateBox(0)).toHaveValue(null);
+    expect(estimateBox(0)).not.toHaveClass("is-invalid");
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+
+    expect(estimatePuts()).toHaveLength(1);
+    expect(estimatePuts()[0].params).toEqual({ id: 1 });
+  });
+
+  test("leaving the box before the second sends the pending value at once, and only once", async () => {
+    vi.useFakeTimers();
+    renderTable();
+    const box = estimateBox(0);
+
+    fireEvent.change(box, { target: { value: "210" } });
+    await act(() => vi.advanceTimersByTimeAsync(300));
+    fireEvent.blur(box);
+
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(estimatePuts()).toHaveLength(1);
+    expect(estimatePuts()[0].params).toEqual({
+      id: 1,
+      enrollmentEstimate: 210,
+    });
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(estimatePuts()).toHaveLength(1);
+  });
+
+  test("leaving the box after the save sends nothing more", async () => {
+    vi.useFakeTimers();
+    renderTable();
+    const box = estimateBox(0);
+
+    fireEvent.change(box, { target: { value: "210" } });
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+    expect(estimatePuts()).toHaveLength(1);
+    fireEvent.blur(box);
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+
+    expect(estimatePuts()).toHaveLength(1);
+  });
+
+  test("an invalid estimate is flagged, never sent, and reverts on blur", async () => {
+    vi.useFakeTimers();
+    renderTable();
+    const box = estimateBox(1);
+
+    // A number box drops letters itself, so the invalid entries it can hold are a fraction or
+    // a negative number.
+    fireEvent.change(box, { target: { value: "-1" } });
+    expect(box).toHaveClass("is-invalid");
+    fireEvent.change(box, { target: { value: "1.5" } });
+    expect(box).toHaveClass("is-invalid");
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(estimatePuts()).toHaveLength(0);
+
+    fireEvent.blur(box);
+
+    expect(box).toHaveValue(140);
+    expect(box).not.toHaveClass("is-invalid");
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(estimatePuts()).toHaveLength(0);
+  });
+
+  test("a valid entry then an invalid one sends nothing", async () => {
+    vi.useFakeTimers();
+    renderTable();
+    const box = estimateBox(1);
+
+    fireEvent.change(box, { target: { value: "14" } });
+    fireEvent.change(box, { target: { value: "14.5" } });
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    fireEvent.blur(box);
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+
+    expect(estimatePuts()).toHaveLength(0);
+  });
+
+  test("each row's estimate is pending on its own", async () => {
+    vi.useFakeTimers();
+    renderTable();
+
+    fireEvent.change(estimateBox(0), { target: { value: "10" } });
+    await act(() => vi.advanceTimersByTimeAsync(600));
+    fireEvent.change(estimateBox(2), { target: { value: "20" } });
+    await act(() => vi.advanceTimersByTimeAsync(400));
+
+    expect(estimatePuts().map((r) => r.params)).toEqual([
+      { id: 1, enrollmentEstimate: 10 },
+    ]);
+    await act(() => vi.advanceTimersByTimeAsync(600));
+    expect(estimatePuts().map((r) => r.params)).toEqual([
+      { id: 1, enrollmentEstimate: 10 },
+      { id: 3, enrollmentEstimate: 20 },
+    ]);
+  });
+
+  test("leaving the page within the second still sends the pending estimates", async () => {
+    vi.useFakeTimers();
+    const { unmount } = renderTable();
+
+    fireEvent.change(estimateBox(0), { target: { value: "10" } });
+    fireEvent.change(estimateBox(1), { target: { value: "" } });
+    await act(() => vi.advanceTimersByTimeAsync(200));
+    unmount();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    expect(estimatePuts().map((r) => r.params)).toEqual([
+      { id: 1, enrollmentEstimate: 10 },
+      { id: 2 },
+    ]);
+    // The timers were cleared, so nothing is sent twice.
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(estimatePuts()).toHaveLength(2);
+  });
+
+  test("unmounting with nothing pending sends nothing", async () => {
+    vi.useFakeTimers();
+    const { unmount } = renderTable();
+    unmount();
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(estimatePuts()).toHaveLength(0);
+  });
+
+  test("a saved estimate or allocation goes straight into every cached course list", async () => {
+    const saved = { ...notRemoved[0], enrollmentEstimate: 333, allocation: 9 };
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimate")
+      .reply(200, saved);
+    axiosMock.onPut("/api/recruitmentcourses/allocation").reply(200, saved);
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(
+      ["/api/recruitmentcourses/all", false],
+      notRemoved,
+    );
+    queryClient.setQueryData(
+      ["/api/recruitmentcourses/all", true],
+      recruitmentCoursesFixtures.fourCourses,
+    );
+    queryClient.setQueryData(["/api/admin/recruitments/all"], [{ id: 1 }]);
+    vi.useFakeTimers();
+    renderTable(notRemoved, false, queryClient);
+
+    fireEvent.change(estimateBox(0), { target: { value: "333" } });
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    expect(
+      queryClient.getQueryData(["/api/recruitmentcourses/all", false])[0],
+    ).toEqual(saved);
+    expect(
+      queryClient.getQueryData(["/api/recruitmentcourses/all", true])[0],
+    ).toEqual(saved);
+    expect(
+      queryClient.getQueryData(["/api/recruitmentcourses/all", true])[3],
+    ).toEqual(recruitmentCoursesFixtures.fourCourses[3]);
+    expect(queryClient.getQueryData(["/api/admin/recruitments/all"])).toEqual([
+      { id: 1 },
+    ]);
+
+    queryClient.setQueryData(
+      ["/api/recruitmentcourses/all", false],
+      notRemoved,
+    );
+    fireEvent.change(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-allocation"),
+      { target: { value: "9" } },
+    );
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(
+      queryClient.getQueryData(["/api/recruitmentcourses/all", false])[0],
+    ).toEqual(saved);
   });
 
   test("renders an empty table without crashing", () => {

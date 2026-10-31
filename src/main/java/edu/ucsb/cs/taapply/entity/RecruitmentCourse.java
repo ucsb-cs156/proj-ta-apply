@@ -101,6 +101,14 @@ public class RecruitmentCourse {
   @Builder.Default
   private Integer allocation = 0;
 
+  /**
+   * The admin's estimate of how many students the section will have (issue #175), the basis for
+   * allocating positions. Null until entered; the Recruitment Courses page can fill it from {@code
+   * maxEnroll} or {@code enrollment} in one step. A planning figure, so not audited.
+   */
+  @Column(name = "enrollment_estimate")
+  private Integer enrollmentEstimate;
+
   /** The status the UCSB API reports for a section that has been cancelled. */
   public static final String CANCELLED = "cancelled";
 
