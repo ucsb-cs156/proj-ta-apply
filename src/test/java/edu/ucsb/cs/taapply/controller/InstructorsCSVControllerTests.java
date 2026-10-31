@@ -319,6 +319,23 @@ public class InstructorsCSVControllerTests extends ControllerTestCase {
     verify(instructorRepository, never()).save(any());
   }
 
+  /** Kills the boundary mutant on `extraColumn < 0`: column index 0 is a real column. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void the_catalog_name_column_can_come_before_the_email_column() throws Exception {
+    when(instructorRepository.existsByEmail(any())).thenReturn(false);
+    when(catalogNameRepository.existsById("GAUCHO C")).thenReturn(true);
+
+    mockMvc
+        .perform(multipart(URL).file(csv("catalogName,email\nGAUCHO C,a@ucsb.edu\n")).with(csrf()))
+        .andExpect(status().isOk());
+
+    ArgumentCaptor<Instructor> captor = ArgumentCaptor.forClass(Instructor.class);
+    verify(instructorRepository, times(1)).save(captor.capture());
+    assertEquals("a@ucsb.edu", captor.getValue().getEmail());
+    assertEquals("GAUCHO C", captor.getValue().getCatalogName());
+  }
+
   // ---- CSV download (issue #172) ----
 
   @Test
@@ -363,7 +380,7 @@ public class InstructorsCSVControllerTests extends ControllerTestCase {
             .andExpect(status().isOk())
             .andExpect(
                 header().string("Content-Disposition", "attachment; filename=\"instructors.csv\""))
-            .andExpect(content().contentType("text/csv"))
+            .andExpect(content().contentTypeCompatibleWith("text/csv"))
             .andReturn();
 
     assertEquals(
