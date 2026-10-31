@@ -65,6 +65,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#hiddenColumns(java.lang.String,java.lang.Long)" tabindex="0">hiddenColumns(String, Long)</a></li>
 <li><a href="#setHidden(java.lang.String,java.lang.Long,java.lang.String,boolean)" tabindex="0">setHidden(String, Long, String, boolean)</a></li>
+<li><a href="#replaceHidden(java.lang.String,java.lang.Long,java.util.List)" tabindex="0">replaceHidden(String, Long, List)</a></li>
 </ol>
 </li>
 </ol>
@@ -86,9 +87,10 @@ loadScripts(document, 'script');</script>
 @RestController
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">HiddenColumnsController</span>
 <span class="extends-implements">extends <a href="ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></span></div>
-<div class="block">Which columns are hidden on a recruitment's tables (issue #185). The frontend asks for the list
-when a page opens and tells the backend each time a column is hidden or shown; both calls answer
-with the current list of hidden column ids, sorted.</div>
+<div class="block">Which columns are hidden on a recruitment's tables (issues #185 and #189). The frontend asks for
+the list when a page opens and tells the backend each time a column is hidden or shown, or
+replaces the whole set when a table is first opened; every call answers with the current list of
+hidden column ids, sorted.</div>
 </div>
 </section>
 <section class="summary">
@@ -122,11 +124,16 @@ with the current list of hidden column ids, sorted.</div>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setHidden(java.lang.String,java.lang.Long,java.lang.String,boolean)" class="member-name-link">setHidden</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableKey,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#replaceHidden(java.lang.String,java.lang.Long,java.util.List)" class="member-name-link">replaceHidden</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableKey,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;columnIds)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setHidden(java.lang.String,java.lang.Long,java.lang.String,boolean)" class="member-name-link">setHidden</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableKey,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnId,
  boolean&nbsp;hidden)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -190,6 +197,21 @@ with the current list of hidden column ids, sorted.</div>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnId,
  @RequestParam
  boolean&nbsp;hidden)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="replaceHidden(java.lang.String,java.lang.Long,java.util.List)">
+<h3>replaceHidden</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PutMapping("/all")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">replaceHidden</span><wbr><span class="parameters">(@RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableKey,
+ @RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ @RequestParam(defaultValue="")
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;columnIds)</span></div>
 </div>
 </section>
 </li>
