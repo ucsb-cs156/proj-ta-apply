@@ -93,6 +93,14 @@ public class RecruitmentCourse {
    */
   @Builder.Default private boolean manuallyAdded = false;
 
+  /**
+   * How many TAs (or ULAs) the admin has allocated to this section (issue #174). Never negative; 0
+   * until the admin enters a number. A planning figure, so changes to it are not audited.
+   */
+  @Column(nullable = false)
+  @Builder.Default
+  private Integer allocation = 0;
+
   /** The status the UCSB API reports for a section that has been cancelled. */
   public static final String CANCELLED = "cancelled";
 

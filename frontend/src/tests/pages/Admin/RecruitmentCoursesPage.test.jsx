@@ -70,6 +70,8 @@ describe("RecruitmentCoursesPage tests", () => {
     axiosMock
       .onPost("/api/jobs/launch/populateRecruitmentCourses")
       .reply(200, { id: 1 });
+    axiosMock.onPut("/api/recruitmentcourses/allocation").reply(200, {});
+    axiosMock.onPut("/api/admin/recruitments/totalHiringTarget").reply(200, {});
     // Recruitment 7, refreshed once (issue #124).
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
       {
@@ -186,6 +188,7 @@ describe("RecruitmentCoursesPage tests", () => {
       "RecruitmentCoursesPage-header-room",
       "RecruitmentCoursesPage-header-enrollment",
       "RecruitmentCoursesPage-header-maxEnroll",
+      "RecruitmentCoursesPage-header-allocation",
       "RecruitmentCoursesPage-header-status",
       "RecruitmentCoursesPage-header-summerSession",
       "RecruitmentCoursesPage-header-removed",
@@ -431,6 +434,165 @@ describe("RecruitmentCoursesPage tests", () => {
     } finally {
       consoleError.mockRestore();
     }
+  });
+
+  // ---- hiring target and allocations (issue #174) ----
+
+  test("shows the hiring target above the refresh line, with the visible allocations added up", async () => {
+    renderPage();
+
+    const box = await screen.findByTestId(
+      "RecruitmentCoursesPage-hiring-target-totalHiringTarget",
+    );
+    // Recruitment 7 is a ULA recruitment expecting 6; the three visible rows allocate 2 + 3 + 1.
+    expect(box).toHaveValue(6);
+    expect(
+      screen.getByLabelText("Total number of ULAs expected to be hired:"),
+    ).toBe(box);
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("RecruitmentCoursesPage-hiring-target-allocated"),
+      ).toHaveTextContent("Allocated so far: 6"),
+    );
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-hiring-target-left"),
+    ).toHaveTextContent("ULA allocations left to assign: 0");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-hiring-target-over"),
+    ).not.toBeInTheDocument();
+    const panel = screen.getByTestId("RecruitmentCoursesPage-hiring-target");
+    const refreshed = screen.getByTestId(
+      "RecruitmentCoursesPage-last-refreshed",
+    );
+    expect(
+      panel.compareDocumentPosition(refreshed) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("the panel waits for the recruitment", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    renderPage();
+
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-hiring-target"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("warns when the allocations exceed the target", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+      {
+        ...recruitmentsFixtures.threeRecruitments[1],
+        id: 7,
+        totalHiringTarget: 4,
+      },
+    ]);
+    renderPage();
+
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-hiring-target-over"),
+    ).toHaveTextContent(
+      "Please either increase the hiring target, or reduce the allocations for one or more courses.",
+    );
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-hiring-target-left"),
+    ).toHaveTextContent("ULA allocations left to assign: -2");
+  });
+
+  test("removed rows do not count toward the allocation, even when shown", async () => {
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-hiring-target-allocated");
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-show-removed"),
+    );
+
+    // The removed row (allocation 1) appears, disabled, but the sum stays 6.
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-cell-row-3-allocation"),
+    ).toBeDisabled();
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-hiring-target-allocated"),
+    ).toHaveTextContent("Allocated so far: 6");
+  });
+
+  test("a row without an allocation counts as zero", async () => {
+    axiosMock
+      .onGet("/api/recruitmentcourses/all", {
+        params: { recruitmentId: "7", includeRemoved: false },
+      })
+      .reply(
+        200,
+        notRemoved.map(({ allocation: _omitted, ...course }) => course),
+      );
+    renderPage();
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("RecruitmentCoursesPage-hiring-target-allocated"),
+      ).toHaveTextContent("Allocated so far: 0"),
+    );
+  });
+
+  test("typing a hiring target saves it and re-reads the recruitment", async () => {
+    renderPage();
+    const box = await screen.findByTestId(
+      "RecruitmentCoursesPage-hiring-target-totalHiringTarget",
+    );
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "9");
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter(
+          (r) => r.url === "/api/admin/recruitments/totalHiringTarget",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find(
+        (r) => r.url === "/api/admin/recruitments/totalHiringTarget",
+      ).params,
+    ).toEqual({ id: 7, totalHiringTarget: 9 });
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/recruitments/all",
+        ).length,
+      ).toBeGreaterThanOrEqual(2),
+    );
+  });
+
+  test("typing an allocation saves it and re-reads the courses", async () => {
+    renderPage();
+    const box = await screen.findByTestId(
+      "RecruitmentCoursesPage-cell-row-0-allocation",
+    );
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "7");
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter(
+          (r) => r.url === "/api/recruitmentcourses/allocation",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find(
+        (r) => r.url === "/api/recruitmentcourses/allocation",
+      ).params,
+    ).toEqual({ id: 1, allocation: 7 });
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/recruitmentcourses/all",
+        ).length,
+      ).toBeGreaterThanOrEqual(2),
+    );
   });
 
   /** Removed rows are hidden until asked for. */

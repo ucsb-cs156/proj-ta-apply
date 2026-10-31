@@ -170,6 +170,32 @@ public class RecruitmentsController extends ApiController {
     return recruitment;
   }
 
+  @Operation(
+      summary = "Set how many TAs or ULAs a recruitment expects to hire",
+      description =
+          "The total the per-course allocations on the Recruitment Courses page should add up to"
+              + " (issue #174). Must be at least 1. A planning figure: not recorded in the audit"
+              + " trail.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PutMapping("/totalHiringTarget")
+  public Recruitment updateTotalHiringTarget(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "totalHiringTarget") @RequestParam Integer totalHiringTarget) {
+
+    if (totalHiringTarget < 1) {
+      throw new IllegalArgumentException("totalHiringTarget must be at least 1");
+    }
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
+
+    recruitment.setTotalHiringTarget(totalHiringTarget);
+    recruitmentRepository.save(recruitment);
+    return recruitment;
+  }
+
   @Operation(summary = "List all recruitments, most recent quarter first")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/all")

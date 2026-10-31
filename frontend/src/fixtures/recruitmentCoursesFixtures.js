@@ -20,6 +20,7 @@ const recruitmentCoursesFixtures = {
       removed: false,
       stale: false,
       manuallyAdded: false,
+      allocation: 2,
     },
     {
       id: 2,
@@ -39,6 +40,7 @@ const recruitmentCoursesFixtures = {
       removed: false,
       stale: false,
       manuallyAdded: false,
+      allocation: 3,
     },
     {
       id: 3,
@@ -58,6 +60,7 @@ const recruitmentCoursesFixtures = {
       removed: false,
       stale: false,
       manuallyAdded: false,
+      allocation: 1,
     },
     {
       id: 4,
@@ -77,6 +80,7 @@ const recruitmentCoursesFixtures = {
       removed: true,
       stale: false,
       manuallyAdded: false,
+      allocation: 1,
     },
   ],
   rankingSummaries: [

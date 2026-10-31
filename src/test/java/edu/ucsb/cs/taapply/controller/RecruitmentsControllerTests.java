@@ -644,4 +644,116 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .andExpect(status().is(403));
     verify(recruitmentRepository, never()).delete(any());
   }
+
+  // ---- PUT /api/admin/recruitments/totalHiringTarget (issue #174) ----
+
+  @Test
+  public void logged_out_users_cannot_change_the_hiring_target() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=5").with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_change_the_hiring_target() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=5").with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_new_recruitment_expects_to_hire_one() {
+    assertEquals(1, recruitment(1L, "20261", RecruitmentType.TA).getTotalHiringTarget());
+  }
+
+  /** A planning figure: saved, returned, and not written to the audit trail. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_change_the_hiring_target() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=12")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(12, r.getTotalHiringTarget());
+    verify(recruitmentRepository, times(1)).save(r);
+    verify(recruitmentAuditService, never()).snapshot(any());
+    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_hiring_target_of_one_is_allowed() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setTotalHiringTarget(7);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=1").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(1, r.getTotalHiringTarget());
+    verify(recruitmentRepository, times(1)).save(r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_hiring_target_below_one_is_a_400() throws Exception {
+    for (String bad : List.of("0", "-3")) {
+      MvcResult response =
+          mockMvc
+              .perform(
+                  put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=" + bad)
+                      .with(csrf()))
+              .andExpect(status().isBadRequest())
+              .andReturn();
+      Map<String, Object> json = responseToJson(response);
+      assertEquals("totalHiringTarget must be at least 1", json.get("message"));
+    }
+    verify(recruitmentRepository, never()).findById(any());
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_hiring_target_that_is_not_a_number_is_a_400() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=five")
+                .with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void changing_the_hiring_target_of_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/totalHiringTarget?id=99&totalHiringTarget=5")
+                    .with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    verify(recruitmentRepository, never()).save(any());
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("EntityNotFoundException", json.get("type"));
+  }
 }

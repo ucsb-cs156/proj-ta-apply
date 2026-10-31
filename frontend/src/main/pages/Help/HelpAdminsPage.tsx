@@ -198,6 +198,18 @@ export default function HelpAdminsPage(): React.JSX.Element {
           multiple sections. Turn on <em>Show removed courses</em> to include
           removed sections in both the table and reminder list.
         </p>
+        <p id="hiring-target" data-testid="HelpAdminsPage-hiring-target">
+          The top of that page is where the hiring is planned. Enter the{" "}
+          <strong>total number of TAs (or ULAs) expected to be hired</strong>;
+          it is saved as you type, must be at least 1, and an entry that is not
+          a whole number is dropped when you leave the box. Then give each
+          lecture its share in the <strong>Allocation</strong> column, saved the
+          same way. Under the total, the page keeps a running count of how many
+          positions are allocated so far and how many are left to assign, and
+          warns when the allocations add up to more than the target. Removed
+          lectures keep their number but do not count. These are planning
+          figures: changes to them are not recorded in the change history.
+        </p>
 
         <h2 className="my-3 h4" id="quarters">
           Quarters

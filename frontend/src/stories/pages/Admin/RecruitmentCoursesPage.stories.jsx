@@ -39,6 +39,12 @@ export default {
         http.put("/api/recruitmentcourses/removed", () =>
           HttpResponse.json({}),
         ),
+        http.put("/api/recruitmentcourses/allocation", () =>
+          HttpResponse.json({}),
+        ),
+        http.put("/api/admin/recruitments/totalHiringTarget", () =>
+          HttpResponse.json({}),
+        ),
         http.post("/api/jobs/launch/populateRecruitmentCourses", () =>
           HttpResponse.json({ id: 1 }),
         ),

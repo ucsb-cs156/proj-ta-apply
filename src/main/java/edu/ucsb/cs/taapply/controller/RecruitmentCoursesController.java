@@ -147,4 +147,29 @@ public class RecruitmentCoursesController extends ApiController {
     recruitmentCourseRepository.save(course);
     return course;
   }
+
+  @Operation(
+      summary = "Set how many TAs or ULAs are allocated to one section",
+      description =
+          "The per-course share of the recruitment's total hiring target (issue #174). Must not be"
+              + " negative. A planning figure: not recorded in the audit trail.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PutMapping("/allocation")
+  public RecruitmentCourse setAllocation(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "allocation") @RequestParam Integer allocation) {
+
+    if (allocation < 0) {
+      throw new IllegalArgumentException("allocation must not be negative");
+    }
+
+    RecruitmentCourse course =
+        recruitmentCourseRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(RecruitmentCourse.class, id));
+
+    course.setAllocation(allocation);
+    recruitmentCourseRepository.save(course);
+    return course;
+  }
 }

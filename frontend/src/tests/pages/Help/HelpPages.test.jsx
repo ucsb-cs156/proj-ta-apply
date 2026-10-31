@@ -198,6 +198,19 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByRole("link", { name: "CSV Upload/Download Formats" }),
     ).toHaveAttribute("href", "/help/csv");
+    // Issue #174: the hiring target and per-course allocations, in the Courses section.
+    const hiring = screen.getByTestId("HelpAdminsPage-hiring-target");
+    expect(hiring.id).toBe("hiring-target");
+    expect(hiring).toHaveTextContent(
+      "Enter the total number of TAs (or ULAs) expected to be hired; it is saved as you type, must be at least 1,",
+    );
+    expect(hiring).toHaveTextContent(
+      "warns when the allocations add up to more than the target. Removed lectures keep their number but do not count.",
+    );
+    expect(
+      document.getElementById("courses").compareDocumentPosition(hiring) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   /** The words either side of each JSX line break stay separated by a space. */

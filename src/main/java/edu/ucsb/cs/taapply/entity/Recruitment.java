@@ -70,4 +70,13 @@ public class Recruitment {
    * (issue #124); null until the first successful Populate.
    */
   private LocalDateTime lastPopulatedAt;
+
+  /**
+   * How many TAs (or ULAs) this recruitment expects to hire in all (issue #174): the number the
+   * admin spreads across the courses as per-course allocations. Always at least 1. A planning
+   * figure, so changes to it are not audited.
+   */
+  @Column(name = "total_hiring_target", nullable = false)
+  @Builder.Default
+  private Integer totalHiringTarget = 1;
 }
