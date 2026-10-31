@@ -709,6 +709,11 @@ least one quarter the admin has populated from the UCSB API.</div>
 <dd>
 <div class="block">Returns the value of the <code>courseNumber</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#courseNumber(java.lang.String)" class="member-name-link">courseNumber(String)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dd>
+<div class="block">The course number without its subject: everything after the first run of whitespace in the
+stored course id, so "CMPSC 5A" is "5A" and "CMPSC 16" is "16" (issue #188).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/CourseRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">CourseRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.InstructorRecruitment.html#courses()" class="member-name-link">courses()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></dt>
@@ -1520,6 +1525,13 @@ applicant, and anyone in the admin or instructor tables whatever their address.<
 <dd>
 <div class="block">Returns the value of the <code>header</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#headings(java.util.List)" class="member-name-link">headings(List)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dd>
+<div class="block">How each section is headed in the Rankings CSV (issue #188), keyed by recruitment course id:
+the bare course number, plus " (section S)" only when the export has more than one section of
+that course, and ", enroll E" inside the parentheses only in the odd case of two rows with the
+same course and section.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/HealthController.html#healthCheck()" class="member-name-link">healthCheck()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HealthController.html" title="class in edu.ucsb.cs.taapply.controller">HealthController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/HealthController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">HealthController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
@@ -1759,10 +1771,6 @@ stamp createdById/createdByEmail on Job records.</div>
 </dl>
 <h2 class="title" id="I:L">L</h2>
 <dl class="index">
-<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#label(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">label(RecruitmentCourse)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
-<dd>
-<div class="block">"CMPSC 16 (section 0100, enroll 100)": how a section is named in the CSV.</div>
-</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#languageExam()" class="member-name-link">languageExam()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>languageExam</code> record component.</div>
