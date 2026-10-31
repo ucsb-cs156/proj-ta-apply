@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: []
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"assign/177-budget","number":190,"title":"Assignment increment 4: Budget for Quarter page (closes #177)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/190"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"assign/178-show-hide-allocations","number":187,"title":"Assignment increment 5: show or hide allocations on faculty-facing pages (closes #178)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/187"}]
