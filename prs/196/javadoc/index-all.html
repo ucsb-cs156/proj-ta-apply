@@ -1190,6 +1190,10 @@ both Summer and Fall are reachable.</div>
 <dd>
 <div class="block">The changes recorded against one TA application, oldest first.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/HiddenColumnRepository.html#findByTableKeyAndRecruitmentIdAndColumnId(java.lang.String,java.lang.Long,java.lang.String)" class="member-name-link">findByTableKeyAndRecruitmentIdAndColumnId(String, Long, String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/HiddenColumnRepository.html" title="interface in edu.ucsb.cs.taapply.repository">HiddenColumnRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/HiddenColumnRepository.html#findByTableKeyAndRecruitmentIdOrderByColumnIdAsc(java.lang.String,java.lang.Long)" class="member-name-link">findByTableKeyAndRecruitmentIdOrderByColumnIdAsc(String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/HiddenColumnRepository.html" title="interface in edu.ucsb.cs.taapply.repository">HiddenColumnRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/AuditTrailRepository.html#findByUlaApplicationIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByUlaApplicationIdOrderByIdAsc(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/AuditTrailRepository.html" title="interface in edu.ucsb.cs.taapply.repository">AuditTrailRepository</a></dt>
 <dd>
 <div class="block">The changes recorded against one ULA application, oldest first.</div>
@@ -1562,6 +1566,23 @@ same course and section.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/HealthController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">HealthController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/HealthController.html#%3Cinit%3E()" class="member-name-link">HealthController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HealthController.html" title="class in edu.ucsb.cs.taapply.controller">HealthController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/HiddenColumn.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">HiddenColumn</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">One column an admin has hidden on one of a recruitment's tables (issue #185): the Recruitment
+Courses table today, others later.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/HiddenColumn.html#%3Cinit%3E()" class="member-name-link">HiddenColumn()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/HiddenColumn.html" title="class in edu.ucsb.cs.taapply.entity">HiddenColumn</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/HiddenColumnRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">HiddenColumnRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html#hiddenColumns(java.lang.String,java.lang.Long)" class="member-name-link">hiddenColumns(String, Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html" title="class in edu.ucsb.cs.taapply.controller">HiddenColumnsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">HiddenColumnsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">Which columns are hidden on a recruitment's tables (issue #185).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html#%3Cinit%3E()" class="member-name-link">HiddenColumnsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html" title="class in edu.ucsb.cs.taapply.controller">HiddenColumnsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html#HIRED" class="member-name-link">HIRED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a></dt>
 <dd>&nbsp;</dd>
@@ -2665,6 +2686,8 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setEnrollmentEstimate(java.lang.Long,java.lang.Integer)" class="member-name-link">setEnrollmentEstimate(Long, Integer)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setEnrollmentEstimates(java.lang.Long,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource)" class="member-name-link">setEnrollmentEstimates(Long, EnrollmentEstimateSource)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html#setHidden(java.lang.String,java.lang.Long,java.lang.String,boolean)" class="member-name-link">setHidden(String, Long, String, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html" title="class in edu.ucsb.cs.taapply.controller">HiddenColumnsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setRemoved(java.lang.Long,boolean)" class="member-name-link">setRemoved(Long, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
