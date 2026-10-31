@@ -101,6 +101,14 @@ public class RecruitmentCourse {
   @Builder.Default
   private Integer allocation = 0;
 
+  /**
+   * The admin's estimate of how many students the section will have (issue #175), the basis for
+   * allocating positions. Null until entered; the Recruitment Courses page can fill it from {@code
+   * maxEnroll} or {@code enrollment} in one step. A planning figure, so not audited.
+   */
+  @Column(name = &quot;enrollment_estimate&quot;)
+  private Integer enrollmentEstimate;
+
   /** The status the UCSB API reports for a section that has been cancelled. */
   public static final String CANCELLED = &quot;cancelled&quot;;
 
@@ -111,7 +119,7 @@ public class RecruitmentCourse {
    */
   @JsonIgnore
   public boolean isOnOffer() {
-<span class="fc bfc" id="L114" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
+<span class="fc bfc" id="L122" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
