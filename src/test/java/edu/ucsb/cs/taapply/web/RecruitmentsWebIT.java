@@ -241,6 +241,25 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertThat(statusButton).containsText("Open");
     statusButton.click();
 
+    // Issue #186: the button asks first. Nothing changes until Yes is clicked.
+    Locator statusModal = page.getByTestId("HomePageLoggedIn-admin-status-modal");
+    waitFor(statusModal);
+    assertThat(statusModal).containsText("Are you sure?");
+    assertThat(statusModal)
+        .containsText("Applicants will be able to submit applications for this recruitment");
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-status-modal-help"))
+        .hasAttribute("href", "/help/admins#open-close-applications");
+    page.getByTestId("HomePageLoggedIn-admin-status-modal-no").click();
+    assertThat(statusModal).not().isVisible();
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-status-button"))
+        .containsText("Open");
+
+    statusButton.click();
+    waitFor(page.getByTestId("HomePageLoggedIn-admin-status-modal-yes"));
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-status-modal-yes"))
+        .hasText("Yes, Open Applications Now");
+    page.getByTestId("HomePageLoggedIn-admin-status-modal-yes").click();
+
     assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-status-button"))
         .containsText("Close");
     assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-actualOpeningDate")).not().isEmpty();
