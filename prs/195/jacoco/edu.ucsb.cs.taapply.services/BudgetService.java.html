@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BudgetService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">BudgetService.java</span></div><h1>BudgetService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Budget;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.BudgetRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * The figures behind the Budget for Quarter page (issue #177): which quarters have recruitments,
+ * and for one quarter the budget row, each recruitment's hiring target, cost, allocation and
+ * enrollment totals, and the anticipated expenses, funds and bottom line. All money is in dollars
+ * and cents, as {@link BigDecimal}s with two decimal places.
+ */
+@Service
+<span class="fc" id="L28">public class BudgetService {</span>
+
+  @Autowired BudgetRepository budgetRepository;
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+
+  /** A quarter with at least one recruitment, and which types it has. */
+<span class="fc" id="L35">  public record QuarterSummary(String quarter, boolean hasTa, boolean hasUla) {}</span>
+
+  /**
+   * One recruitment's side of the budget.
+   *
+   * @param totalAllocation the sum of the allocations of its non-removed courses
+   * @param totalEnrollmentEstimate the sum of their enrollment estimates, a missing one counting as
+   *     0
+   * @param allocationDifference totalAllocation minus totalHiringTarget; 0 when they agree
+   * @param studentsPerPosition totalEnrollmentEstimate divided by totalHiringTarget, the n of the
+   *     &quot;1:n&quot; ratio; null when there are no estimates
+   * @param anticipatedCost totalHiringTarget times avgCostPerPosition; 0 while the cost is unknown
+   */
+<span class="fc" id="L48">  public record Side(</span>
+      Long recruitmentId,
+      Integer totalHiringTarget,
+      BigDecimal avgCostPerPosition,
+      int totalAllocation,
+      int totalEnrollmentEstimate,
+      int allocationDifference,
+      Double studentsPerPosition,
+      BigDecimal anticipatedCost) {}
+
+  /**
+   * Everything the page shows for one quarter. {@code ta} or {@code ula} is null when the quarter
+   * has no recruitment of that type.
+   *
+   * @param totalExpenses the two anticipated costs added
+   * @param totalFunds the budget's three lines added
+   * @param bottomLine totalFunds minus totalExpenses
+   */
+<span class="fc" id="L66">  public record Summary(</span>
+      String quarter,
+      Budget budget,
+      Side ta,
+      Side ula,
+      BigDecimal totalExpenses,
+      BigDecimal totalFunds,
+      BigDecimal bottomLine) {}
+
+  /** Every quarter with a recruitment, most recent first. */
+  public List&lt;QuarterSummary&gt; quarters() {
+<span class="fc" id="L77">    Map&lt;String, boolean[]&gt; byQuarter = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    for (Recruitment recruitment : recruitmentRepository.findAllByOrderByQuarterDescTypeAsc()) {</span>
+<span class="fc" id="L79">      boolean[] types = byQuarter.computeIfAbsent(recruitment.getQuarter(), q -&gt; new boolean[2]);</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">      if (recruitment.getType() == RecruitmentType.TA) {</span>
+<span class="fc" id="L81">        types[0] = true;</span>
+      } else {
+<span class="fc" id="L83">        types[1] = true;</span>
+      }
+<span class="fc" id="L85">    }</span>
+<span class="fc" id="L86">    List&lt;QuarterSummary&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L87">    byQuarter.forEach(</span>
+<span class="fc" id="L88">        (quarter, types) -&gt; result.add(new QuarterSummary(quarter, types[0], types[1])));</span>
+<span class="fc" id="L89">    return result;</span>
+  }
+
+  /**
+   * The quarter's budget row, created with every line at zero if this is the first time it is asked
+   * for. Only quarters with at least one recruitment have a budget.
+   *
+   * @throws EntityNotFoundException when the quarter has no recruitment
+   */
+  public Budget budgetFor(String quarter) {
+<span class="fc bfc" id="L99" title="All 2 branches covered.">    if (recruitmentRepository.findByQuarterAndType(quarter, RecruitmentType.TA).isEmpty()</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        &amp;&amp; recruitmentRepository.findByQuarterAndType(quarter, RecruitmentType.ULA).isEmpty()) {</span>
+<span class="fc" id="L101">      throw new EntityNotFoundException(&quot;No recruitment for quarter %s&quot;.formatted(quarter));</span>
+    }
+<span class="fc" id="L103">    return budgetRepository</span>
+<span class="fc" id="L104">        .findById(quarter)</span>
+<span class="fc" id="L105">        .orElseGet(() -&gt; budgetRepository.save(Budget.builder().quarter(quarter).build()));</span>
+  }
+
+  /**
+   * The whole picture for one quarter.
+   *
+   * @throws EntityNotFoundException when the quarter has no recruitment
+   */
+  public Summary summary(String quarter) {
+<span class="fc" id="L114">    Budget budget = budgetFor(quarter);</span>
+<span class="fc" id="L115">    Side ta = sideFor(quarter, RecruitmentType.TA);</span>
+<span class="fc" id="L116">    Side ula = sideFor(quarter, RecruitmentType.ULA);</span>
+<span class="fc" id="L117">    BigDecimal totalExpenses = costOf(ta).add(costOf(ula));</span>
+<span class="fc" id="L118">    BigDecimal totalFunds =</span>
+<span class="fc" id="L119">        money(budget.getUnrestrictedBudget())</span>
+<span class="fc" id="L120">            .add(money(budget.getTasOnlyBudget()))</span>
+<span class="fc" id="L121">            .add(money(budget.getUlasOnlyBudget()));</span>
+<span class="fc" id="L122">    return new Summary(</span>
+<span class="fc" id="L123">        quarter, budget, ta, ula, totalExpenses, totalFunds, totalFunds.subtract(totalExpenses));</span>
+  }
+
+  private Side sideFor(String quarter, RecruitmentType type) {
+<span class="fc" id="L127">    Optional&lt;Recruitment&gt; recruitment = recruitmentRepository.findByQuarterAndType(quarter, type);</span>
+<span class="fc" id="L128">    return recruitment.map(this::side).orElse(null);</span>
+  }
+
+  private Side side(Recruitment recruitment) {
+<span class="fc" id="L132">    List&lt;RecruitmentCourse&gt; active =</span>
+<span class="fc" id="L133">        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L135">            .toList();</span>
+<span class="fc" id="L136">    int totalAllocation = active.stream().mapToInt(RecruitmentCourse::getAllocation).sum();</span>
+<span class="fc" id="L137">    int totalEstimate = active.stream().mapToInt(BudgetService::estimateOf).sum();</span>
+<span class="fc" id="L138">    int target = recruitment.getTotalHiringTarget();</span>
+    BigDecimal cost =
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        recruitment.getAvgCostPerPosition() == null</span>
+<span class="fc" id="L141">            ? money(BigDecimal.ZERO)</span>
+<span class="fc" id="L142">            : money(recruitment.getAvgCostPerPosition().multiply(BigDecimal.valueOf(target)));</span>
+<span class="fc" id="L143">    return new Side(</span>
+<span class="fc" id="L144">        recruitment.getId(),</span>
+<span class="fc" id="L145">        target,</span>
+<span class="fc" id="L146">        recruitment.getAvgCostPerPosition(),</span>
+        totalAllocation,
+        totalEstimate,
+        totalAllocation - target,
+<span class="fc bfc" id="L150" title="All 2 branches covered.">        totalEstimate == 0 ? null : (double) totalEstimate / target,</span>
+        cost);
+  }
+
+  private static BigDecimal costOf(Side side) {
+<span class="fc bfc" id="L155" title="All 2 branches covered.">    return side == null ? money(BigDecimal.ZERO) : side.anticipatedCost();</span>
+  }
+
+  private static int estimateOf(RecruitmentCourse row) {
+<span class="fc bfc" id="L159" title="All 2 branches covered.">    return row.getEnrollmentEstimate() == null ? 0 : row.getEnrollmentEstimate();</span>
+  }
+
+  /** Dollars and cents: two decimal places, half up. */
+  public static BigDecimal money(BigDecimal amount) {
+<span class="fc" id="L164">    return amount.setScale(2, RoundingMode.HALF_UP);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
