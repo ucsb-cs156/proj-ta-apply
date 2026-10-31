@@ -180,6 +180,9 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             .primaryConsiderationDate(LocalDate.of(2026, 4, 15))
             .actualOpeningDate(LocalDate.of(2026, 4, 1))
             .actualClosingDate(LocalDate.of(2026, 5, 1))
+            .reviewStatus("Open")
+            .facultyReviewOpeningDate(LocalDate.of(2026, 4, 2))
+            .facultyRankingDeadline(LocalDate.of(2026, 4, 20))
             .build();
     RecruitmentCourse course = row(9L, 3L, "CMPSC    16", "0100", false);
 
@@ -194,6 +197,9 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(LocalDate.of(2026, 4, 15), ir.primaryConsiderationDate());
     assertEquals(LocalDate.of(2026, 4, 1), ir.actualOpeningDate());
     assertEquals(LocalDate.of(2026, 5, 1), ir.actualClosingDate());
+    assertEquals("Open", ir.reviewStatus());
+    assertEquals(LocalDate.of(2026, 4, 2), ir.facultyReviewOpeningDate());
+    assertEquals(LocalDate.of(2026, 4, 20), ir.facultyRankingDeadline());
     assertEquals(List.of(course), ir.courses());
     assertEquals(
         new InstructorRecruitment(
@@ -205,6 +211,9 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             LocalDate.of(2026, 4, 15),
             LocalDate.of(2026, 4, 1),
             LocalDate.of(2026, 5, 1),
+            "Open",
+            LocalDate.of(2026, 4, 2),
+            LocalDate.of(2026, 4, 20),
             List.of(course)),
         ir);
   }

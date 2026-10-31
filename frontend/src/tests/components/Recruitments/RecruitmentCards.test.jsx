@@ -61,6 +61,10 @@ describe("RecruitmentCards tests", () => {
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock.onPut("/api/admin/recruitments/status").reply(200, {});
+    axiosMock.onPut("/api/admin/recruitments/reviewStatus").reply(200, {});
+    axiosMock
+      .onPut("/api/admin/recruitments/facultyRankingDeadline")
+      .reply(200, {});
   });
 
   test("shows one card per recruitment, newest quarter first, TA before ULA", () => {
@@ -69,7 +73,7 @@ describe("RecruitmentCards tests", () => {
     expect(screen.queryByTestId("Cards-empty")).toBeNull();
   });
 
-  test("a card has the quarter, type and status in its header and the four dates in its body", () => {
+  test("a card has both statuses in its header and the dates in its body", () => {
     renderCards();
     // Card 2 is W26 ULA, OPEN (id 2).
     expect(screen.getByTestId("Cards-card-2-quarter")).toHaveTextContent("W26");
@@ -96,6 +100,15 @@ describe("RecruitmentCards tests", () => {
     expect(
       screen.getByTestId("Cards-card-2-actualClosingDate").textContent,
     ).toBe("");
+    expect(screen.getByTestId("Cards-card-2-reviewStatus")).toHaveTextContent(
+      "Faculty Reviews: Open",
+    );
+    expect(
+      screen.getByTestId("Cards-card-2-facultyReviewOpeningDate"),
+    ).toHaveTextContent("2026-01-08");
+    expect(
+      screen.getByTestId("Cards-card-2-facultyRankingDeadline"),
+    ).toHaveTextContent("2026-02-15");
     // The labels sit beside the dates.
     const body = screen.getByTestId("Cards-card-2-card").querySelector("dl");
     expect(
@@ -105,6 +118,8 @@ describe("RecruitmentCards tests", () => {
       "Primary Consideration:",
       "Actually Opened:",
       "Actually Closed:",
+      "Faculty Reviews Opened:",
+      "Faculty Ranking Deadline:",
     ]);
     expect(screen.getByTestId("Cards-card-2-card")).toHaveClass("card", "mb-3");
     expect(screen.getByTestId("Cards-card-2-card").style.maxWidth).toBe(
@@ -275,10 +290,158 @@ describe("RecruitmentCards tests", () => {
       .getByTestId("Cards-card-2-card")
       .querySelector(".card-footer");
     expect(footer).toHaveClass("d-flex", "flex-wrap", "gap-2");
-    expect(footer.children).toHaveLength(5);
+    expect(footer.children).toHaveLength(6);
     expect(footer).not.toContainElement(
       screen.getByTestId("Cards-card-2-delete-button"),
     );
+  });
+
+  test("opening reviews requires and submits a deadline; canceling does not save", async () => {
+    renderCards();
+
+    expect(
+      screen.getByTestId("Cards-card-1-review-status-button"),
+    ).toHaveTextContent("Open Faculty Reviews");
+    await userEvent.click(
+      screen.getByTestId("Cards-card-0-review-status-button"),
+    );
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "Open Faculty Reviews",
+    );
+    const dateInput = screen.getByTestId(
+      "Cards-faculty-ranking-deadline-input",
+    );
+    expect(dateInput).toBeRequired();
+
+    const formClosingWithModal = dateInput.closest("form");
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    if (formClosingWithModal.isConnected) {
+      fireEvent.submit(formClosingWithModal);
+    }
+    expect(axiosMock.history.put).toHaveLength(0);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await userEvent.click(
+      screen.getByTestId("Cards-card-0-review-status-button"),
+    );
+    const reopenedDateInput = screen.getByTestId(
+      "Cards-faculty-ranking-deadline-input",
+    );
+    fireEvent.submit(reopenedDateInput.closest("form"));
+    expect(axiosMock.history.put).toHaveLength(0);
+    expect(screen.getByText("Enter a valid deadline.")).toBeInTheDocument();
+
+    await userEvent.type(reopenedDateInput, "2026-03-01");
+    await userEvent.click(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+    );
+    await userEvent.click(screen.getByTestId("Cards-faculty-review-cancel"));
+    expect(axiosMock.history.put).toHaveLength(0);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-0-review-status-button"),
+    );
+    await userEvent.type(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+      "2026-03-01",
+    );
+    await userEvent.click(screen.getByTestId("Cards-faculty-review-save"));
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    expect(axiosMock.history.put[0].url).toBe(
+      "/api/admin/recruitments/reviewStatus",
+    );
+    expect(axiosMock.history.put[0].params).toEqual({
+      id: 3,
+      status: "Open",
+      facultyRankingDeadline: "2026-03-01",
+    });
+  });
+
+  test("admins can close reviews and edit the deadline beside its date", async () => {
+    renderCards();
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-review-status-button"),
+    );
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    expect(axiosMock.history.put[0].url).toBe(
+      "/api/admin/recruitments/reviewStatus",
+    );
+    expect(axiosMock.history.put[0].params).toEqual({
+      id: 2,
+      status: "Closed",
+    });
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-edit-faculty-ranking-deadline"),
+    );
+    const dateInput = screen.getByTestId(
+      "Cards-faculty-ranking-deadline-input",
+    );
+    expect(dateInput).toHaveValue("2026-02-15");
+    await userEvent.clear(dateInput);
+    await userEvent.type(dateInput, "2026-02-20");
+    await userEvent.click(screen.getByTestId("Cards-faculty-review-save"));
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(2));
+    expect(axiosMock.history.put[1].url).toBe(
+      "/api/admin/recruitments/facultyRankingDeadline",
+    );
+    expect(axiosMock.history.put[1].params).toEqual({
+      id: 2,
+      facultyRankingDeadline: "2026-02-20",
+    });
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await userEvent.click(
+      screen.getByTestId("Cards-card-0-edit-faculty-ranking-deadline"),
+    );
+    expect(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+    ).toHaveValue("");
+    await userEvent.click(screen.getByTestId("Cards-faculty-review-cancel"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  test("the review modal stays open on save failure and disables duplicate saves while pending", async () => {
+    let resolveRequest;
+    axiosMock.onPut("/api/admin/recruitments/reviewStatus").reply(
+      () =>
+        new Promise((resolve) => {
+          resolveRequest = () => resolve([200, {}]);
+        }),
+    );
+    renderCards();
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-0-review-status-button"),
+    );
+    fireEvent.change(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+      {
+        target: { value: "2026-03-01" },
+      },
+    );
+    const saveButton = screen.getByTestId("Cards-faculty-review-save");
+    await userEvent.click(saveButton);
+    await waitFor(() => expect(saveButton).toBeDisabled());
+    resolveRequest();
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    axiosMock
+      .onPut("/api/admin/recruitments/reviewStatus")
+      .reply(500, "unable to save");
+    await userEvent.click(
+      screen.getByTestId("Cards-card-0-review-status-button"),
+    );
+    fireEvent.change(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+      {
+        target: { value: "2026-03-02" },
+      },
+    );
+    await userEvent.click(screen.getByTestId("Cards-faculty-review-save"));
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(2));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 
   /** Issue #108: the count beside the status badge, and a trash icon at the right. */

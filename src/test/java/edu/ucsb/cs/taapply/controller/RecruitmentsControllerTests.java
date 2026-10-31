@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
@@ -106,6 +107,9 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     // Applications never open themselves.
     assertEquals(ApplicationStatus.CLOSED, captor.getValue().getApplicationStatus());
     assertNull(captor.getValue().getActualOpeningDate());
+    assertEquals("NotStarted", captor.getValue().getReviewStatus());
+    assertNull(captor.getValue().getFacultyReviewOpeningDate());
+    assertNull(captor.getValue().getFacultyRankingDeadline());
 
     verify(jobService, times(1)).runAsJob(populateJob);
     // Issue #139: the creation goes in the recruitment audit trail.
@@ -255,6 +259,313 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(put("/api/admin/recruitments/status?id=1&status=OPEN").with(csrf()))
         .andExpect(status().is(403));
+  }
+
+  // ---- faculty review lifecycle ----
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void opening_faculty_reviews_requires_a_deadline_and_records_the_first_opening()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("reviewStatus", "NotStarted"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/reviewStatus?id=1&status=Open"
+                        + "&facultyRankingDeadline=2026-03-01")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals("Open", r.getReviewStatus());
+    assertEquals(LocalDate.now(), r.getFacultyReviewOpeningDate());
+    assertEquals(LocalDate.of(2026, 3, 1), r.getFacultyRankingDeadline());
+    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
+    inOrder.verify(recruitmentAuditService).snapshot(r);
+    inOrder.verify(recruitmentRepository).save(r);
+    inOrder.verify(recruitmentAuditService).recordChanges(before, r);
+    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void reopening_reviews_preserves_the_first_opening_date_and_updates_deadline()
+      throws Exception {
+    LocalDate originalOpeningDate = LocalDate.of(2026, 1, 10);
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setReviewStatus("Closed");
+    r.setFacultyReviewOpeningDate(originalOpeningDate);
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 1));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("reviewStatus", "Closed"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/reviewStatus?id=1&status=Open"
+                    + "&facultyRankingDeadline=2026-04-01")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals("Open", r.getReviewStatus());
+    assertEquals(originalOpeningDate, r.getFacultyReviewOpeningDate());
+    assertEquals(LocalDate.of(2026, 4, 1), r.getFacultyRankingDeadline());
+    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).recordChanges(before, r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void closing_reviews_does_not_clear_dates_and_is_audited() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setReviewStatus("Open");
+    r.setFacultyReviewOpeningDate(LocalDate.of(2026, 1, 10));
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 1));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("reviewStatus", "Open"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    mockMvc
+        .perform(put("/api/admin/recruitments/reviewStatus?id=1&status=Closed").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals("Closed", r.getReviewStatus());
+    assertEquals(LocalDate.of(2026, 1, 10), r.getFacultyReviewOpeningDate());
+    assertEquals(LocalDate.of(2026, 2, 1), r.getFacultyRankingDeadline());
+    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).recordChanges(before, r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void setting_the_review_status_to_not_started_keeps_existing_review_dates()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setReviewStatus("Closed");
+    r.setFacultyReviewOpeningDate(LocalDate.of(2026, 1, 10));
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 1));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("reviewStatus", "Closed"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    mockMvc
+        .perform(put("/api/admin/recruitments/reviewStatus?id=1&status=NotStarted").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals("NotStarted", r.getReviewStatus());
+    assertEquals(LocalDate.of(2026, 1, 10), r.getFacultyReviewOpeningDate());
+    assertEquals(LocalDate.of(2026, 2, 1), r.getFacultyRankingDeadline());
+    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).recordChanges(before, r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_open_review_with_a_missing_first_open_date_is_repaired() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setReviewStatus("Open");
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 1));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("reviewStatus", "Open"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/reviewStatus?id=1&status=Open"
+                    + "&facultyRankingDeadline=2026-02-01")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(LocalDate.now(), r.getFacultyReviewOpeningDate());
+    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).recordChanges(before, r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_open_review_can_change_its_deadline_without_changing_its_opening_date()
+      throws Exception {
+    LocalDate openingDate = LocalDate.of(2026, 1, 10);
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setReviewStatus("Open");
+    r.setFacultyReviewOpeningDate(openingDate);
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 1));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("facultyRankingDeadline", "2026-02-01"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/reviewStatus?id=1&status=Open"
+                    + "&facultyRankingDeadline=2026-02-15")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals("Open", r.getReviewStatus());
+    assertEquals(openingDate, r.getFacultyReviewOpeningDate());
+    assertEquals(LocalDate.of(2026, 2, 15), r.getFacultyRankingDeadline());
+    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).recordChanges(before, r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void opening_reviews_without_a_deadline_is_a_400() throws Exception {
+    mockMvc
+        .perform(put("/api/admin/recruitments/reviewStatus?id=1&status=Open").with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentRepository, never()).findById(any());
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void changing_a_deadline_without_a_date_is_a_400() throws Exception {
+    mockMvc
+        .perform(put("/api/admin/recruitments/facultyRankingDeadline?id=1").with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentRepository, never()).findById(any());
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_unknown_review_status_is_a_400() throws Exception {
+    mockMvc
+        .perform(put("/api/admin/recruitments/reviewStatus?id=1&status=open").with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentRepository, never()).findById(any());
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void opening_reviews_with_an_invalid_date_is_a_400() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/reviewStatus?id=1&status=Open"
+                    + "&facultyRankingDeadline=not-a-date")
+                .with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void unchanged_review_status_and_deadline_do_not_save_or_audit() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setReviewStatus("Open");
+    r.setFacultyReviewOpeningDate(LocalDate.of(2026, 1, 10));
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 1));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/reviewStatus?id=1&status=Open"
+                    + "&facultyRankingDeadline=2026-02-01")
+                .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.reviewStatus").value("Open"))
+        .andExpect(jsonPath("$.facultyRankingDeadline").value("2026-02-01"));
+
+    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).snapshot(any());
+    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void changing_the_deadline_is_audited_but_an_unchanged_date_is_not() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 1));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("facultyRankingDeadline", "2026-02-01"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/facultyRankingDeadline?id=1"
+                    + "&facultyRankingDeadline=2026-02-15")
+                .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.facultyRankingDeadline").value("2026-02-15"));
+    assertEquals(LocalDate.of(2026, 2, 15), r.getFacultyRankingDeadline());
+    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).recordChanges(before, r);
+
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/facultyRankingDeadline?id=1"
+                    + "&facultyRankingDeadline=2026-02-15")
+                .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.facultyRankingDeadline").value("2026-02-15"));
+    verify(recruitmentRepository, times(1)).save(any());
+    verify(recruitmentAuditService, times(1)).snapshot(any());
+    verify(recruitmentAuditService, times(1)).recordChanges(any(), any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void review_status_and_deadline_updates_of_a_missing_recruitment_are_404s()
+      throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(put("/api/admin/recruitments/reviewStatus?id=99&status=Closed").with(csrf()))
+        .andExpect(status().isNotFound());
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/facultyRankingDeadline?id=99"
+                    + "&facultyRankingDeadline=2026-02-15")
+                .with(csrf()))
+        .andExpect(status().isNotFound());
+    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).snapshot(any());
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void regular_users_cannot_change_faculty_review_status_or_deadline() throws Exception {
+    mockMvc
+        .perform(put("/api/admin/recruitments/reviewStatus?id=1&status=Closed").with(csrf()))
+        .andExpect(status().is(403));
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/facultyRankingDeadline?id=1"
+                    + "&facultyRankingDeadline=2026-02-15")
+                .with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @Test
+  public void non_admin_users_cannot_change_faculty_review_status_or_deadline() throws Exception {
+    mockMvc
+        .perform(put("/api/admin/recruitments/reviewStatus?id=1&status=Closed").with(csrf()))
+        .andExpect(status().is(403));
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/facultyRankingDeadline?id=1"
+                    + "&facultyRankingDeadline=2026-02-15")
+                .with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentRepository, never()).save(any());
   }
 
   // ---- delete ----

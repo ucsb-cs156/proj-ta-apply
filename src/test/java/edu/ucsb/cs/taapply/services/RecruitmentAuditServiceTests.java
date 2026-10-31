@@ -45,14 +45,17 @@ public class RecruitmentAuditServiceTests {
   }
 
   @Test
-  public void the_audited_fields_are_the_status_and_the_four_dates_in_order() {
+  public void the_audited_fields_include_both_lifecycles_and_all_dates_in_order() {
     assertEquals(
         List.of(
             "applicationStatus",
             "tentativeOpeningDate",
             "primaryConsiderationDate",
             "actualOpeningDate",
-            "actualClosingDate"),
+            "actualClosingDate",
+            "reviewStatus",
+            "facultyReviewOpeningDate",
+            "facultyRankingDeadline"),
         new ArrayList<>(RecruitmentAuditService.FIELDS.keySet()));
   }
 
@@ -71,7 +74,10 @@ public class RecruitmentAuditServiceTests {
             "tentativeOpeningDate",
             "primaryConsiderationDate",
             "actualOpeningDate",
-            "actualClosingDate"),
+            "actualClosingDate",
+            "reviewStatus",
+            "facultyReviewOpeningDate",
+            "facultyRankingDeadline"),
         new ArrayList<>(fields.keySet()));
     assertEquals("CLOSED", fields.get("applicationStatus"));
     assertEquals("2026-01-05", fields.get("tentativeOpeningDate"));
@@ -79,6 +85,47 @@ public class RecruitmentAuditServiceTests {
     assertNull(fields.get("actualOpeningDate"));
     assertTrue(fields.containsKey("actualOpeningDate"));
     assertEquals("2026-02-01", fields.get("actualClosingDate"));
+    assertEquals("NotStarted", fields.get("reviewStatus"));
+    assertNull(fields.get("facultyReviewOpeningDate"));
+    assertNull(fields.get("facultyRankingDeadline"));
+  }
+
+  @Test
+  public void opening_reviews_records_status_first_open_date_and_ranking_deadline() {
+    Recruitment r = recruitment();
+    RecruitmentAuditService.Snapshot before = service.snapshot(r);
+    r.setReviewStatus("Open");
+    r.setFacultyReviewOpeningDate(LocalDate.of(2026, 1, 21));
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 15));
+
+    List<RecruitmentAuditTrail> changes = service.recordChanges(before, r);
+
+    assertEquals(
+        List.of("reviewStatus", "facultyReviewOpeningDate", "facultyRankingDeadline"),
+        changes.stream().map(RecruitmentAuditTrail::getWhatChanged).toList());
+    assertEquals("NotStarted", changes.get(0).getOldValue());
+    assertEquals("Open", changes.get(0).getNewValue());
+    assertNull(changes.get(1).getOldValue());
+    assertEquals("2026-01-21", changes.get(1).getNewValue());
+    assertNull(changes.get(2).getOldValue());
+    assertEquals("2026-02-15", changes.get(2).getNewValue());
+    verify(repository).saveAll(changes);
+  }
+
+  @Test
+  public void editing_the_ranking_deadline_records_its_old_and_new_dates() {
+    Recruitment r = recruitment();
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 1));
+    RecruitmentAuditService.Snapshot before = service.snapshot(r);
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 15));
+
+    List<RecruitmentAuditTrail> changes = service.recordChanges(before, r);
+
+    assertEquals(1, changes.size());
+    assertEquals("facultyRankingDeadline", changes.get(0).getWhatChanged());
+    assertEquals("2026-02-01", changes.get(0).getOldValue());
+    assertEquals("2026-02-15", changes.get(0).getNewValue());
+    verify(repository).saveAll(changes);
   }
 
   @Test

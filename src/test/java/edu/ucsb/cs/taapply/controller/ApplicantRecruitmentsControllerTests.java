@@ -18,6 +18,7 @@ import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.models.ApplicantRecruitmentDto;
 import edu.ucsb.cs.taapply.models.CourseSections;
 import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
 import edu.ucsb.cs.taapply.models.UcsbInstructor;
@@ -113,6 +114,24 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     return response.getResponse().getContentAsString();
   }
 
+  private String applicantJson(List<Recruitment> recruitments) throws Exception {
+    return mapper.writeValueAsString(
+        recruitments.stream()
+            .map(
+                r ->
+                    new ApplicantRecruitmentDto(
+                        r.getId(),
+                        r.getQuarter(),
+                        r.getType(),
+                        r.getApplicationStatus(),
+                        r.getTentativeOpeningDate(),
+                        r.getPrimaryConsiderationDate(),
+                        r.getActualOpeningDate(),
+                        r.getActualClosingDate(),
+                        r.getLastPopulatedAt()))
+            .toList());
+  }
+
   // ---- authorization ----
 
   @Test
@@ -130,8 +149,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   public void a_signed_in_user_sees_every_open_recruitment_of_either_type() throws Exception {
     seedAll();
 
-    assertEquals(
-        mapper.writeValueAsString(List.of(OPEN_TA, OPEN_ULA)), getJson("/api/recruitments/open"));
+    assertEquals(applicantJson(List.of(OPEN_TA, OPEN_ULA)), getJson("/api/recruitments/open"));
   }
 
   /** Admins and instructors hold ROLE_USER too, so the same answer comes back for them. */
@@ -140,8 +158,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   public void an_admin_or_instructor_sees_the_same_recruitments() throws Exception {
     seedAll();
 
-    assertEquals(
-        mapper.writeValueAsString(List.of(OPEN_TA, OPEN_ULA)), getJson("/api/recruitments/open"));
+    assertEquals(applicantJson(List.of(OPEN_TA, OPEN_ULA)), getJson("/api/recruitments/open"));
   }
 
   @WithMockUser(roles = {"USER"})
@@ -161,8 +178,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   public void upcoming_is_the_closed_recruitment_that_has_never_opened() throws Exception {
     seedAll();
 
-    assertEquals(
-        mapper.writeValueAsString(List.of(UPCOMING_TA)), getJson("/api/recruitments/upcoming"));
+    assertEquals(applicantJson(List.of(UPCOMING_TA)), getJson("/api/recruitments/upcoming"));
   }
 
   @WithMockUser(roles = {"USER"})
@@ -181,8 +197,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
   public void recently_closed_reports_only_the_most_recent() throws Exception {
     seedAll();
 
-    assertEquals(
-        mapper.writeValueAsString(List.of(CLOSED_TA)), getJson("/api/recruitments/recentlyClosed"));
+    assertEquals(applicantJson(List.of(CLOSED_TA)), getJson("/api/recruitments/recentlyClosed"));
   }
 
   /** One per type: the last TA round and the last ULA round, each the most recent of its kind. */
@@ -209,8 +224,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
         .thenReturn(List.of(CLOSED_TA, OLDER_CLOSED_TA, closedUla, olderClosedUla));
 
     assertEquals(
-        mapper.writeValueAsString(List.of(CLOSED_TA, closedUla)),
-        getJson("/api/recruitments/recentlyClosed"));
+        applicantJson(List.of(CLOSED_TA, closedUla)), getJson("/api/recruitments/recentlyClosed"));
   }
 
   /** A recruitment that has never opened has never closed either. */
@@ -260,8 +274,7 @@ public class ApplicantRecruitmentsControllerTests extends ControllerTestCase {
     seedAll();
 
     assertEquals(
-        mapper.writeValueAsString(
-            List.of(UPCOMING_TA, OPEN_TA, OPEN_ULA, CLOSED_TA, OLDER_CLOSED_TA)),
+        applicantJson(List.of(UPCOMING_TA, OPEN_TA, OPEN_ULA, CLOSED_TA, OLDER_CLOSED_TA)),
         getJson("/api/recruitments/applicable"));
   }
 

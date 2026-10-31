@@ -70,6 +70,9 @@ describe("StudentRecruitmentCards tests", () => {
       "Actually Closed:",
     ]);
     expect(screen.getByTestId("S-card-2-card").style.maxWidth).toBe("48rem");
+    expect(screen.queryByTestId("S-card-2-reviewStatus")).toBeNull();
+    expect(screen.queryByText(/Faculty Review/)).toBeNull();
+    expect(screen.queryByText(/Faculty Ranking Deadline/)).toBeNull();
   });
 
   test("without an application: a grey badge, and Apply Now live only when open", async () => {

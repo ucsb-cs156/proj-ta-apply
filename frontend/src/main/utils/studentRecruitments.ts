@@ -1,5 +1,5 @@
 import type { Application } from "main/components/Applications/ApplicationTable";
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import { isRecentlyClosed, todayIso } from "main/utils/applicationAccess";
 import { sortRecruitments } from "main/utils/recruitmentSort";
 
@@ -31,11 +31,11 @@ export const applicationFor = (
 
 export type StudentRecruitments = {
   /** Not yet opened, soonest tentative opening first. */
-  upcoming: Recruitment[];
+  upcoming: StudentRecruitment[];
   /** Open, or closed within the last six months; newest quarter first. */
-  current: Recruitment[];
+  current: StudentRecruitment[];
   /** Closed longer ago than that, and only those the student applied to; newest first. */
-  past: Recruitment[];
+  past: StudentRecruitment[];
 };
 
 /**
@@ -44,7 +44,7 @@ export type StudentRecruitments = {
  * disjoint; a past recruitment the student never applied to is left out altogether.
  */
 export function classifyRecruitments(
-  recruitments: Recruitment[],
+  recruitments: StudentRecruitment[],
   applications: Application[],
   today: string = todayIso(),
 ): StudentRecruitments {

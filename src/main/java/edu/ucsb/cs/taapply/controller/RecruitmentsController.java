@@ -16,11 +16,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +40,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Slf4j
 public class RecruitmentsController extends ApiController {
+
+  private static final Set<String> REVIEW_STATUSES = Set.of("NotStarted", "Open", "Closed");
 
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired ApplicationRepository applicationRepository;
@@ -84,6 +88,85 @@ public class RecruitmentsController extends ApiController {
     recruitmentAuditService.recordCreated(recruitment);
 
     jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));
+    return recruitment;
+  }
+
+  @Operation(
+      summary = "Open or close faculty reviews for a recruitment",
+      description =
+          "Opening requires a facultyRankingDeadline. The first opening stamps"
+              + " facultyReviewOpeningDate; later openings preserve that original date.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @Transactional
+  @PutMapping("/reviewStatus")
+  public Recruitment updateReviewStatus(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "status") @RequestParam String status,
+      @Parameter(name = "facultyRankingDeadline")
+          @RequestParam(required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate facultyRankingDeadline) {
+
+    if (!REVIEW_STATUSES.contains(status)) {
+      throw new IllegalArgumentException(
+          "reviewStatus must be exactly NotStarted, Open, or Closed");
+    }
+    if ("Open".equals(status) && facultyRankingDeadline == null) {
+      throw new IllegalArgumentException("facultyRankingDeadline is required when opening reviews");
+    }
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
+
+    boolean statusChanged = !status.equals(recruitment.getReviewStatus());
+    boolean openingDateMissing =
+        "Open".equals(status) && recruitment.getFacultyReviewOpeningDate() == null;
+    boolean deadlineChanged =
+        "Open".equals(status)
+            && !facultyRankingDeadline.equals(recruitment.getFacultyRankingDeadline());
+    if (!statusChanged && !openingDateMissing && !deadlineChanged) {
+      return recruitment;
+    }
+
+    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
+    if ("Open".equals(status) && recruitment.getFacultyReviewOpeningDate() == null) {
+      recruitment.setFacultyReviewOpeningDate(LocalDate.now());
+    }
+    recruitment.setReviewStatus(status);
+    if ("Open".equals(status)) {
+      recruitment.setFacultyRankingDeadline(facultyRankingDeadline);
+    }
+
+    recruitmentRepository.save(recruitment);
+    recruitmentAuditService.recordChanges(before, recruitment);
+    return recruitment;
+  }
+
+  @Operation(summary = "Change the faculty ranking deadline for a recruitment")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @Transactional
+  @PutMapping("/facultyRankingDeadline")
+  public Recruitment updateFacultyRankingDeadline(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "facultyRankingDeadline")
+          @RequestParam
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate facultyRankingDeadline) {
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
+    if (facultyRankingDeadline.equals(recruitment.getFacultyRankingDeadline())) {
+      return recruitment;
+    }
+
+    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
+    recruitment.setFacultyRankingDeadline(facultyRankingDeadline);
+    recruitmentRepository.save(recruitment);
+    recruitmentAuditService.recordChanges(before, recruitment);
     return recruitment;
   }
 

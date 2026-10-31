@@ -1,0 +1,40 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "028-add-faculty-review-lifecycle-to-recruitments",
+        "author": "pc",
+        "comment": "Add the faculty review lifecycle and ranking deadlines (issue #161).",
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [
+                {
+                  "column": {
+                    "name": "review_status",
+                    "type": "VARCHAR(16)",
+                    "defaultValue": "NotStarted",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "faculty_review_opening_date",
+                    "type": "DATE"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "faculty_ranking_deadline",
+                    "type": "DATE"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

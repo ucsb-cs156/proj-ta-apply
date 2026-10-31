@@ -13,7 +13,9 @@ import lombok.*;
  * <p>The two "actual" dates record what happened rather than what was planned: {@code
  * actualOpeningDate} is stamped the first time applications open and never overwritten, so it keeps
  * the date applicants were actually able to start; {@code actualClosingDate} is stamped on each
- * close, so it reflects when applications last stopped being accepted.
+ * close, so it reflects when applications last stopped being accepted. Faculty review dates follow
+ * the same first-opening rule: {@code facultyReviewOpeningDate} is preserved if reviews reopen,
+ * while {@code facultyRankingDeadline} can be changed for each opening.
  */
 @Data
 @AllArgsConstructor
@@ -40,6 +42,11 @@ public class Recruitment {
   @Builder.Default
   private ApplicationStatus applicationStatus = ApplicationStatus.CLOSED;
 
+  /** Faculty ranking lifecycle: NotStarted, Open or Closed. */
+  @Column(nullable = false, length = 16)
+  @Builder.Default
+  private String reviewStatus = "NotStarted";
+
   /** Required; shown to users before applications open. */
   private LocalDate tentativeOpeningDate;
 
@@ -51,6 +58,12 @@ public class Recruitment {
 
   /** Null until it has been closed at least once; overwritten on each close. */
   private LocalDate actualClosingDate;
+
+  /** Null until reviews are first opened; preserved on subsequent openings. */
+  private LocalDate facultyReviewOpeningDate;
+
+  /** The required-by date for faculty rankings while reviews are open. */
+  private LocalDate facultyRankingDeadline;
 
   /**
    * When the course list was last filled from the UCSB API, by hand or by the nightly refresh
