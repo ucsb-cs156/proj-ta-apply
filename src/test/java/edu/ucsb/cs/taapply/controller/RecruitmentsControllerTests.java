@@ -755,6 +755,141 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     verify(recruitmentRepository, never()).save(any());
   }
 
+  // ---- PUT /api/admin/recruitments/assignmentsPublished (issue #180) ----
+
+  @Test
+  public void logged_out_users_cannot_publish_assignments() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/assignmentsPublished?id=1&published=true").with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_publish_assignments() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/assignmentsPublished?id=1&published=true").with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_new_recruitment_has_unpublished_assignments() {
+    assertEquals(false, recruitment(1L, "20261", RecruitmentType.TA).getAssignmentsPublished());
+  }
+
+  /** A lifecycle change faculty see: snapshot, save, then the audit row. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_publish_assignments_and_it_is_audited() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("assignmentsPublished", "false"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/assignmentsPublished?id=1&published=true")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(true, r.getAssignmentsPublished());
+    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
+    inOrder.verify(recruitmentAuditService).snapshot(r);
+    inOrder.verify(recruitmentRepository).save(r);
+    inOrder.verify(recruitmentAuditService).recordChanges(before, r);
+    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_take_published_assignments_back() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.ULA);
+    r.setAssignmentsPublished(true);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    RecruitmentAuditService.Snapshot before =
+        new RecruitmentAuditService.Snapshot(1L, Map.of("assignmentsPublished", "true"));
+    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/assignmentsPublished?id=1&published=false").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(false, r.getAssignmentsPublished());
+    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).recordChanges(before, r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void publishing_what_is_already_published_changes_and_records_nothing() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAssignmentsPublished(true);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/assignmentsPublished?id=1&published=true")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(true, r.getAssignmentsPublished());
+    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).snapshot(any());
+    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_unset_published_flag_counts_as_unpublished() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAssignmentsPublished(null);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/assignmentsPublished?id=1&published=false").with(csrf()))
+        .andExpect(status().isOk());
+    verify(recruitmentRepository, never()).save(any());
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/assignmentsPublished?id=1&published=true").with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals(true, r.getAssignmentsPublished());
+    verify(recruitmentRepository).save(r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void publishing_an_unknown_recruitment_is_a_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/assignmentsPublished?id=99&published=true")
+                    .with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("EntityNotFoundException", json.get("type"));
+    assertEquals("Recruitment with id 99 not found", json.get("message"));
+    verify(recruitmentRepository, never()).save(any());
+  }
+
   // ---- PUT /api/admin/recruitments/totalHiringTarget (issue #174) ----
 
   @Test

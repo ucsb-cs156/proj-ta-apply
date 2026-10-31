@@ -235,4 +235,48 @@ describe("InstructorRecruitmentCards tests", () => {
       screen.getByTestId("I-card-1-course-2-allocation"),
     ).toHaveTextContent("TAs allocated to this course: 0");
   });
+
+  // Issue #180: published assignments.
+  test("without published assignments there is no badge and no Assignments button", () => {
+    renderCards();
+
+    expect(
+      screen.queryByTestId("I-card-1-assignmentsPublished"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("I-card-1-assignments-button"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Assignments Published")).not.toBeInTheDocument();
+  });
+
+  test("published assignments add a badge and an Assignments button above the courses", () => {
+    renderCards([
+      { ...closedTa, assignmentsPublished: true },
+      { ...openUla, assignmentsPublished: false },
+    ]);
+
+    const badge = screen.getByTestId("I-card-1-assignmentsPublished");
+    expect(badge).toHaveTextContent("Assignments Published");
+    expect(badge).toHaveClass("badge", "bg-info");
+    expect(badge.previousElementSibling).toBe(
+      screen.getByTestId("I-card-1-reviewStatus"),
+    );
+    expect(badge.closest(".card-header")).not.toBeNull();
+
+    const button = screen.getByTestId("I-card-1-assignments-button");
+    expect(button).toHaveTextContent("Assignments");
+    expect(button).toHaveAttribute("href", "/recruitments/1/assignments");
+    expect(button).toHaveClass("btn", "btn-dark", "mb-2");
+    expect(button.closest(".card-footer")).not.toBeNull();
+    expect(button.nextElementSibling).toBe(
+      screen.getByTestId("I-card-1-courses"),
+    );
+
+    expect(
+      screen.queryByTestId("I-card-2-assignmentsPublished"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("I-card-2-assignments-button"),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -56,7 +56,8 @@ public class RecruitmentAuditServiceTests {
             "reviewStatus",
             "facultyReviewOpeningDate",
             "facultyRankingDeadline",
-            "allocationsVisibleToFaculty"),
+            "allocationsVisibleToFaculty",
+            "assignmentsPublished"),
         new ArrayList<>(RecruitmentAuditService.FIELDS.keySet()));
   }
 
@@ -79,7 +80,8 @@ public class RecruitmentAuditServiceTests {
             "reviewStatus",
             "facultyReviewOpeningDate",
             "facultyRankingDeadline",
-            "allocationsVisibleToFaculty"),
+            "allocationsVisibleToFaculty",
+            "assignmentsPublished"),
         new ArrayList<>(fields.keySet()));
     assertEquals("CLOSED", fields.get("applicationStatus"));
     assertEquals("2026-01-05", fields.get("tentativeOpeningDate"));
@@ -91,6 +93,7 @@ public class RecruitmentAuditServiceTests {
     assertNull(fields.get("facultyReviewOpeningDate"));
     assertNull(fields.get("facultyRankingDeadline"));
     assertEquals("false", fields.get("allocationsVisibleToFaculty"));
+    assertEquals("false", fields.get("assignmentsPublished"));
   }
 
   @Test
@@ -250,5 +253,20 @@ public class RecruitmentAuditServiceTests {
 
     assertEquals(1, changes.size());
     assertEquals(99L, changes.get(0).getRecruitmentId());
+  }
+
+  @Test
+  public void publishing_assignments_records_false_to_true() {
+    Recruitment r = recruitment();
+    RecruitmentAuditService.Snapshot before = service.snapshot(r);
+    r.setAssignmentsPublished(true);
+
+    List<RecruitmentAuditTrail> changes = service.recordChanges(before, r);
+
+    assertEquals(1, changes.size());
+    assertEquals("assignmentsPublished", changes.get(0).getWhatChanged());
+    assertEquals("false", changes.get(0).getOldValue());
+    assertEquals("true", changes.get(0).getNewValue());
+    verify(repository).saveAll(changes);
   }
 }

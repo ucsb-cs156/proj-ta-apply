@@ -61,6 +61,19 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           name to open the full, read-only application in a new tab, without
           staff-only notes or editing controls.
         </p>
+        <p data-testid="HelpInstructorsPage-assignments">
+          When the admins have settled who is hired, the recruitment card gains
+          an <strong>Assignments Published</strong> badge and an{" "}
+          <strong>Assignments</strong> button. The page it opens is read-only
+          and covers every course in the recruitment, not just yours: choose{" "}
+          <strong>One Row per course</strong> to see each course with its
+          instructor and the TAs (or ULAs) assigned to it, or{" "}
+          <strong>One Row per TA/ULA</strong> to see each person with their
+          course. Either view can be saved as a CSV file with the{" "}
+          <strong>Download CSV</strong> buttons. Admins may still adjust
+          assignments after publishing, so check back if something looks wrong,
+          or contact an admin.
+        </p>
       </div>
     </BasicLayout>
   );

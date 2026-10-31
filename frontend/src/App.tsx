@@ -43,6 +43,7 @@ import LegacyTaApplicationPage from "main/pages/Admin/LegacyTaApplicationPage";
 import AuditTrailPage from "main/pages/Admin/AuditTrailPage";
 import CandidateRankingPage from "main/pages/Instructor/CandidateRankingPage";
 import CandidateApplicationPage from "main/pages/Instructor/CandidateApplicationPage";
+import PublishedAssignmentsPage from "main/pages/Assignments/PublishedAssignmentsPage";
 
 /** Any signed-in user may apply; there is no separate applicant role. */
 const APPLICANT_ROLES = ["ROLE_USER"];
@@ -226,6 +227,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<CandidateApplicationPage />}
+              enforceRole={["ROLE_INSTRUCTOR", "ROLE_ADMIN"]}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/recruitments/:recruitmentId/assignments"
+          element={
+            <ProtectedPage
+              component={<PublishedAssignmentsPage />}
               enforceRole={["ROLE_INSTRUCTOR", "ROLE_ADMIN"]}
               currentUser={currentUser}
             />

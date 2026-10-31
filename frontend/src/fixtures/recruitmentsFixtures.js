@@ -15,6 +15,7 @@ const recruitmentsFixtures = {
       lastPopulatedAt: null,
       totalHiringTarget: 1,
       allocationsVisibleToFaculty: false,
+      assignmentsPublished: false,
     },
     {
       id: 2,
@@ -31,6 +32,7 @@ const recruitmentsFixtures = {
       lastPopulatedAt: null,
       totalHiringTarget: 6,
       allocationsVisibleToFaculty: false,
+      assignmentsPublished: false,
     },
     {
       // Opened, closed, and re-opened: the original opening date is preserved.
@@ -48,6 +50,7 @@ const recruitmentsFixtures = {
       lastPopulatedAt: null,
       totalHiringTarget: 10,
       allocationsVisibleToFaculty: false,
+      assignmentsPublished: false,
     },
   ],
 };

@@ -23,6 +23,16 @@ export default {
 
 const Template = (args) => <RecruitmentCards {...args} />;
 
+/** The W26 TA recruitment's assignments are published (issue #180). */
+export const OnePublished = Template.bind({});
+OnePublished.args = {
+  recruitments: recruitmentsFixtures.threeRecruitments.map((r) =>
+    r.id === 1 ? { ...r, assignmentsPublished: true } : r,
+  ),
+  applicationCounts: { 1: 15, 2: 1, 3: 0 },
+  onDeleteRequested: () => {},
+};
+
 export const ThreeRecruitments = Template.bind({});
 ThreeRecruitments.args = {
   recruitments: recruitmentsFixtures.threeRecruitments,

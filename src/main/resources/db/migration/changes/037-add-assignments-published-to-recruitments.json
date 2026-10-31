@@ -1,0 +1,39 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "037-add-assignments-published-to-recruitments",
+        "author": "pc",
+        "comment": "Whether the admin has published the recruitment's assignments to admins and faculty (issue #180).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "recruitments",
+                "columnName": "assignments_published"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [
+                {
+                  "column": {
+                    "name": "assignments_published",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

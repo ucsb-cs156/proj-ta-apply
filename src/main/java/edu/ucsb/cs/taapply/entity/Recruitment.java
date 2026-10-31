@@ -97,4 +97,13 @@ public class Recruitment {
   @Column(name = "allocations_visible_to_faculty", nullable = false)
   @Builder.Default
   private Boolean allocationsVisibleToFaculty = false;
+
+  /**
+   * Whether the admin has published the assignments (issue #180): once true, admins and faculty can
+   * open the read-only assignments page and download its CSVs. A lifecycle change seen by faculty,
+   * so it is audited like opening reviews.
+   */
+  @Column(name = "assignments_published", nullable = false)
+  @Builder.Default
+  private Boolean assignmentsPublished = false;
 }

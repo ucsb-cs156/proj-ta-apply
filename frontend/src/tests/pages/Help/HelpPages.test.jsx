@@ -142,6 +142,43 @@ describe("Help pages (issue #140)", () => {
       "Please rank at least that many candidates, and preferably twice as many. Until then no allocation is shown.",
     );
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
+    // Issue #180: the published assignments page.
+    const assignments = screen.getByTestId("HelpInstructorsPage-assignments");
+    expect(assignments).toHaveTextContent(
+      "the recruitment card gains an Assignments Published badge and an Assignments button. The page it opens is read-only and covers every course in the recruitment, not just yours",
+    );
+    expect(assignments).toHaveTextContent(
+      "not just yours: choose One Row per course to see each course with its instructor and the TAs (or ULAs) assigned to it, or One Row per TA/ULA to see each person with their course. Either view can be saved as a CSV file with the Download CSV buttons.",
+    );
+  });
+
+  test("the admins page explains publishing assignments (issue #180)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const publish = screen.getByTestId("HelpAdminsPage-publish-assignments");
+    expect(publish.id).toBe("publish-assignments");
+    expect(publish).toHaveTextContent(
+      "the very bottom of the recruitment's Courses page has Publish Assignments. It asks you to confirm: publishing creates a read-only Assignments page for admins and faculty",
+    );
+    expect(publish).toHaveTextContent(
+      "Assignments can still be changed afterwards, and the page always shows the current ones, but it is best to wait until most are settled.",
+    );
+    expect(publish).toHaveTextContent("Download CSV (row per student)");
+    expect(
+      document.getElementById("assignments").compareDocumentPosition(publish) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const buttons = screen.getByTestId("HelpAdminsPage-recruitment-buttons");
+    const published = [...buttons.querySelectorAll("li")].find((li) =>
+      li.textContent.startsWith("Published Assignments."),
+    );
+    expect(published).toHaveTextContent(
+      "Shown once Publish Assignments has been clicked at the bottom of the Courses page",
+    );
+    expect(
+      within(published).getByRole("link", { name: "publishing" }),
+    ).toHaveAttribute("href", "#publish-assignments");
   });
 
   test("the admins page explains the Budget for Quarter page and its three lines", async () => {
@@ -217,7 +254,7 @@ describe("Help pages (issue #140)", () => {
       screen
         .getByTestId("HelpAdminsPage-recruitment-buttons")
         .querySelectorAll("li"),
-    ).toHaveLength(8);
+    ).toHaveLength(9);
     expect(
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
@@ -405,7 +442,10 @@ describe("Help pages (issue #140)", () => {
     expect(buttons[6]).toMatch(
       /^Assignments\. The faculty rankings of every real applicant side by side, one column per lecture, with a Tentative Assignment dropdown on each row/,
     );
-    expect(buttons[7]).toMatch(/^Delete\. Removes the recruitment/);
+    expect(buttons[7]).toMatch(
+      /^Published Assignments\. Shown once Publish Assignments has been clicked at the bottom of the Courses page: the read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\./,
+    );
+    expect(buttons[8]).toMatch(/^Delete\. Removes the recruitment/);
     expect(
       document.getElementById("ta-app-settings").nextElementSibling.textContent,
     ).toMatch(/the Majors list and the Topics list \(the areas/);

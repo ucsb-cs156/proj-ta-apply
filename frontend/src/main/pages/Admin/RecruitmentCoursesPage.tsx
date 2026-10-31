@@ -15,6 +15,7 @@ import {
   isSummerQuarter,
 } from "main/utils/courseColumns";
 import AllocationVisibilityPanel from "main/components/Recruitments/AllocationVisibilityPanel";
+import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
@@ -510,6 +511,12 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
               </span>
             )}
           </div>
+        )}
+        {recruitment && (
+          <PublishAssignmentsPanel
+            recruitment={recruitment}
+            testIdPrefix="RecruitmentCoursesPage-publish"
+          />
         )}
       </div>
     </BasicLayout>

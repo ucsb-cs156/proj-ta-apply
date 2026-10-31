@@ -754,4 +754,57 @@ describe("RecruitmentCards tests", () => {
     );
     expect(axiosMock.history.delete.length).toBe(0);
   });
+
+  // Issue #180: published assignments.
+  test("an unpublished recruitment has no Assignments Published badge or button", () => {
+    renderCards();
+
+    expect(
+      screen.queryByTestId("Cards-card-0-assignmentsPublished"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("Cards-card-0-published-assignments-button"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Assignments Published")).not.toBeInTheDocument();
+    expect(screen.queryByText("Published Assignments")).not.toBeInTheDocument();
+  });
+
+  test("a published recruitment shows the badge and the Published Assignments button", () => {
+    renderCards([
+      { ...three[2], assignmentsPublished: true },
+      { ...three[1], assignmentsPublished: false },
+    ]);
+
+    const badge = screen.getByTestId("Cards-card-0-assignmentsPublished");
+    expect(badge).toHaveTextContent("Assignments Published");
+    expect(badge).toHaveClass("badge", "bg-info");
+    expect(badge.closest(".card-header")).not.toBeNull();
+    // Right after the faculty reviews badge, before the application count.
+    expect(badge.previousElementSibling).toBe(
+      screen.getByTestId("Cards-card-0-reviewStatus"),
+    );
+    expect(badge.nextElementSibling).toBe(
+      screen.getByTestId("Cards-card-0-applications"),
+    );
+
+    const button = screen.getByTestId(
+      "Cards-card-0-published-assignments-button",
+    );
+    expect(button).toHaveTextContent("Published Assignments");
+    expect(button).toHaveAttribute("href", "/recruitments/1/assignments");
+    expect(button).toHaveClass("btn", "btn-outline-dark");
+    expect(button.closest(".card-footer")).not.toBeNull();
+    // The last button in the footer, after the admin Assignments page button.
+    expect(button.previousElementSibling).toBe(
+      screen.getByTestId("Cards-card-0-assignments-button"),
+    );
+    expect(button.closest(".card-footer").children).toHaveLength(9);
+
+    expect(
+      screen.queryByTestId("Cards-card-1-assignmentsPublished"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("Cards-card-1-published-assignments-button"),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -25,6 +25,8 @@ export type Recruitment = {
   avgCostPerPosition?: number | null;
   /** Whether faculty see the per-course allocations on their pages (issue #178); hidden by default. */
   allocationsVisibleToFaculty?: boolean;
+  /** Whether the assignments page and its CSVs are open to admins and faculty (issue #180). */
+  assignmentsPublished?: boolean;
 };
 
 /** The applicant-facing recruitment shape deliberately excludes faculty review fields. */

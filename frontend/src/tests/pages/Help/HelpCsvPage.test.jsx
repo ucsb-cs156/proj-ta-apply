@@ -248,4 +248,28 @@ describe("HelpCsvPage tests", () => {
       csvFixtures.legacyUlaResponses,
     );
   });
+
+  test("describes the two published-assignments downloads (issue #180)", async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <HelpCsvPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await screen.findByRole("heading", { level: 1 });
+
+    const description = screen.getByTestId("assignmentsCsvDescription");
+    expect(description).toHaveTextContent(
+      "Download CSV (row per course) has Course (for example CMPSC 8), Instructor, Instructor email (Not mapped when no single instructor record has that catalog name), then one column per assigned person headed TA or ULA holding First Last (email)",
+    );
+    expect(description).toHaveTextContent(
+      "Download CSV (row per student) has First name, Last name, Email, Course assignment, Course instructor, Course instructor email and, for a ULA recruitment, First time ULA",
+    );
+    expect(
+      description.compareDocumentPosition(
+        screen.getByTestId("downloadsSummary"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });

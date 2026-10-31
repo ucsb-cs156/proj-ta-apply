@@ -61,6 +61,11 @@ export default function InstructorRecruitmentCards({
               >
                 Faculty Reviews: {recruitment.reviewStatus}
               </Badge>
+              {recruitment.assignmentsPublished === true && (
+                <Badge bg="info" data-testid={id("assignmentsPublished")}>
+                  Assignments Published
+                </Badge>
+              )}
             </Card.Header>
             <Card.Body>
               <dl className="row mb-0">
@@ -95,6 +100,15 @@ export default function InstructorRecruitmentCards({
               </dl>
             </Card.Body>
             <Card.Footer>
+              {recruitment.assignmentsPublished === true && (
+                <Link
+                  className="btn btn-dark mb-2"
+                  to={`/recruitments/${recruitment.id}/assignments`}
+                  data-testid={id("assignments-button")}
+                >
+                  Assignments
+                </Link>
+              )}
               <Accordion alwaysOpen data-testid={id("courses")}>
                 {courses.map((course) => (
                   <Accordion.Item

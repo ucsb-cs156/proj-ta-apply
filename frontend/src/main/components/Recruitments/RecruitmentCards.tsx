@@ -233,6 +233,11 @@ export default function RecruitmentCards({
               >
                 Faculty Reviews: {recruitment.reviewStatus}
               </Badge>
+              {recruitment.assignmentsPublished === true && (
+                <Badge bg="info" data-testid={id("assignmentsPublished")}>
+                  Assignments Published
+                </Badge>
+              )}
               <span data-testid={id("applications")}>
                 {applicationsText(applicationCounts[recruitment.id] ?? 0)}
               </span>
@@ -390,6 +395,15 @@ export default function RecruitmentCards({
               >
                 Assignments
               </Link>
+              {recruitment.assignmentsPublished === true && (
+                <Link
+                  className="btn btn-outline-dark"
+                  to={`/recruitments/${recruitment.id}/assignments`}
+                  data-testid={id("published-assignments-button")}
+                >
+                  Published Assignments
+                </Link>
+              )}
             </Card.Footer>
           </Card>
         );

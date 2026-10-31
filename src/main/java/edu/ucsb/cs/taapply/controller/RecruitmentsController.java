@@ -257,6 +257,35 @@ public class RecruitmentsController extends ApiController {
     return recruitment;
   }
 
+  @Operation(
+      summary = "Publish a recruitment's assignments, or take them back",
+      description =
+          "Publishing opens the read-only assignments page and its CSV downloads to admins and"
+              + " faculty (issue #180). Tentative assignments can still be changed afterwards; the"
+              + " page always shows the current ones. Recorded in the audit trail. Setting the"
+              + " value already stored changes and records nothing.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PutMapping("/assignmentsPublished")
+  public Recruitment updateAssignmentsPublished(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "published") @RequestParam boolean published) {
+
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
+
+    if (Boolean.TRUE.equals(recruitment.getAssignmentsPublished()) == published) {
+      return recruitment;
+    }
+
+    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
+    recruitment.setAssignmentsPublished(published);
+    recruitmentRepository.save(recruitment);
+    recruitmentAuditService.recordChanges(before, recruitment);
+    return recruitment;
+  }
+
   @Operation(summary = "List all recruitments, most recent quarter first")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/all")
