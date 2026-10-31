@@ -10,6 +10,7 @@ import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
 import { AUDIT_PAGE_SIZES } from "main/utils/recruitmentAuditTrail";
+import { defaultHiddenColumns } from "main/utils/applicationColumns";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -60,6 +61,206 @@ describe("RecruitmentApplicationsPage tests", () => {
     axiosMock
       .onGet("/api/admin/recruitmentaudittrail/all")
       .reply(200, recruitmentAuditTrailFixtures.onePage);
+    // Issue #189: the defaults are already on file for both recruitments.
+    axiosMock
+      .onGet("/api/admin/hiddencolumns", {
+        params: { tableKey: "recruitmentApplications", recruitmentId: "1" },
+      })
+      .reply(200, defaultHiddenColumns("TA"));
+    axiosMock
+      .onGet("/api/admin/hiddencolumns", {
+        params: { tableKey: "recruitmentApplications", recruitmentId: "2" },
+      })
+      .reply(200, defaultHiddenColumns("ULA"));
+    axiosMock.onPut("/api/admin/hiddencolumns/all").reply(200, []);
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, []);
+  });
+
+  const hiddenColumnGets = () =>
+    axiosMock.history.get.filter((r) => r.url === "/api/admin/hiddencolumns");
+  const seedPuts = () =>
+    axiosMock.history.put.filter(
+      (r) => r.url === "/api/admin/hiddencolumns/all",
+    );
+  const togglePuts = () =>
+    axiosMock.history.put.filter((r) => r.url === "/api/admin/hiddencolumns");
+
+  // ---- issue #189: column order, hiding and showing ----
+
+  test("asks for the hidden columns, leaves them out, and writes nothing when the defaults are on file", async () => {
+    renderPage(1);
+    await screen.findByTestId(
+      "RecruitmentApplicationsPage-applications-cell-row-0-col-id-link",
+    );
+
+    await waitFor(() => expect(hiddenColumnGets()).toHaveLength(1));
+    expect(hiddenColumnGets()[0].params).toEqual({
+      tableKey: "recruitmentApplications",
+      recruitmentId: "1",
+    });
+    const headers = [
+      ...screen
+        .getByTestId("RecruitmentApplicationsPage-applications")
+        .querySelectorAll("thead th"),
+    ].map((th) =>
+      th
+        .getAttribute("data-testid")
+        .replace("RecruitmentApplicationsPage-applications-header-", ""),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId(
+          "RecruitmentApplicationsPage-applications-header-gpaMajor",
+        ),
+      ).toBeNull(),
+    );
+    expect(headers).toEqual([
+      "id",
+      "view",
+      "edit",
+      "name",
+      "submittedAt",
+      "email",
+      "major",
+      "classLevel",
+    ]);
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-applications"),
+    ).toHaveClass("w-auto");
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-toggle"),
+    ).toHaveTextContent(
+      `Columns (${defaultHiddenColumns("TA").length - 1} hidden)`,
+    );
+    // The marker is on file, so the defaults are not written again.
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/applications/all",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(seedPuts()).toHaveLength(0);
+  });
+
+  test("the first time a recruitment's table is opened, the default-hidden columns are written once", async () => {
+    axiosMock
+      .onGet("/api/admin/hiddencolumns", {
+        params: { tableKey: "recruitmentApplications", recruitmentId: "2" },
+      })
+      .reply(200, []);
+    renderPage(2);
+
+    await waitFor(() => expect(seedPuts()).toHaveLength(1));
+    expect(seedPuts()[0].params).toEqual({
+      tableKey: "recruitmentApplications",
+      recruitmentId: "2",
+      columnIds: defaultHiddenColumns("ULA").join(","),
+    });
+    expect(seedPuts()[0].params.columnIds).toContain("_defaultsApplied");
+    expect(seedPuts()[0].params.columnIds).not.toContain("graduationDate");
+    expect(seedPuts()[0].params.columnIds).toContain("permNumber");
+    // Nothing hidden yet in this answer, so every ULA column shows meanwhile.
+    expect(
+      screen.getByTestId(
+        "RecruitmentApplicationsPage-applications-header-permNumber",
+      ),
+    ).toBeInTheDocument();
+    // The seeding re-reads the list, and does not run a second time.
+    await waitFor(() => expect(hiddenColumnGets().length).toBeGreaterThan(1));
+    expect(seedPuts()).toHaveLength(1);
+  });
+
+  test("the defaults wait for the recruitment, since TA and ULA tables differ", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    axiosMock
+      .onGet("/api/admin/hiddencolumns", {
+        params: { tableKey: "recruitmentApplications", recruitmentId: "1" },
+      })
+      .reply(200, []);
+    renderPage(1);
+
+    await waitFor(() => expect(hiddenColumnGets()).toHaveLength(1));
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/recruitments/all",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(seedPuts()).toHaveLength(0);
+  });
+
+  test("an admin who showed every column but kept the marker is not given the defaults again", async () => {
+    axiosMock
+      .onGet("/api/admin/hiddencolumns", {
+        params: { tableKey: "recruitmentApplications", recruitmentId: "1" },
+      })
+      .reply(200, ["_defaultsApplied"]);
+    renderPage(1);
+
+    await screen.findByTestId(
+      "RecruitmentApplicationsPage-applications-header-gpaMajor",
+    );
+    await waitFor(() => expect(hiddenColumnGets()).toHaveLength(1));
+    expect(seedPuts()).toHaveLength(0);
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-toggle"),
+    ).toHaveTextContent("Columns");
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-toggle"),
+    ).not.toHaveTextContent("hidden");
+  });
+
+  test("unticking a column in the Columns menu hides it on the backend and re-reads the list", async () => {
+    renderPage(1);
+    await screen.findByTestId(
+      "RecruitmentApplicationsPage-applications-cell-row-0-col-id-link",
+    );
+    await waitFor(() => expect(hiddenColumnGets()).toHaveLength(1));
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-toggle"),
+    );
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-columns-id"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-columns-name"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-residencyStatus"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-columns-permNumber"),
+    ).toBeNull();
+    await userEvent.click(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-major"),
+    );
+
+    await waitFor(() => expect(togglePuts()).toHaveLength(1));
+    expect(togglePuts()[0].params).toEqual({
+      tableKey: "recruitmentApplications",
+      recruitmentId: "1",
+      columnId: "major",
+      hidden: true,
+    });
+    await waitFor(() => expect(hiddenColumnGets().length).toBeGreaterThan(1));
+  });
+
+  test("a ULA recruitment offers the ULA columns in the menu", async () => {
+    renderPage(2);
+    await screen.findByText("Expected Graduation");
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-toggle"),
+    );
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-permNumber"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-columns-classLevel"),
+    ).toBeNull();
   });
 
   // The audit trail requests made so far, as their params.
@@ -182,8 +383,17 @@ describe("RecruitmentApplicationsPage tests", () => {
         "RecruitmentApplicationsPage-recruitment-cell-row-0-col-quarter",
       ),
     ).toBeNull();
-    // With no recruitment known, the TA columns are the default.
+    // With no recruitment known, the TA columns are the default, in the menu too.
     expect(screen.getByText("Level")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-toggle"),
+    );
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-classLevel"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-columns-permNumber"),
+    ).toBeNull();
   });
 
   // ---- issue #139: the recruitment's own audit trail, at the bottom, paged ----

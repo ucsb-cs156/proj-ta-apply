@@ -7,8 +7,38 @@ import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
+import { defaultHiddenColumns } from "main/utils/applicationColumns";
+
+// Issue #189: the hidden columns, as if the defaults were already on file; a ULA round's
+// defaults differ from a TA round's. Hiding or showing answers with the current list.
+const hiddenColumnHandlers = [
+  http.get("/api/admin/hiddencolumns", ({ request }) =>
+    HttpResponse.json(
+      defaultHiddenColumns(
+        new URL(request.url).searchParams.get("recruitmentId") === "2"
+          ? "ULA"
+          : "TA",
+      ),
+    ),
+  ),
+  http.put("/api/admin/hiddencolumns/all", ({ request }) =>
+    HttpResponse.json(
+      (new URL(request.url).searchParams.get("columnIds") ?? "")
+        .split(",")
+        .filter((id) => id !== ""),
+    ),
+  ),
+  http.put("/api/admin/hiddencolumns", ({ request }) =>
+    HttpResponse.json(
+      new URL(request.url).searchParams.get("hidden") === "true"
+        ? [new URL(request.url).searchParams.get("columnId")]
+        : [],
+    ),
+  ),
+];
 
 const common = [
+  ...hiddenColumnHandlers,
   http.get("/api/currentUser", () =>
     HttpResponse.json(apiCurrentUserFixtures.adminUser),
   ),

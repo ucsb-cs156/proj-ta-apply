@@ -336,6 +336,20 @@ describe("Help pages (issue #140)", () => {
       document.getElementById("courses").compareDocumentPosition(columns) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    // Issue #189: the applications table's column order and Columns menu, under Review Applications.
+    const applicationColumns = screen.getByTestId(
+      "HelpAdminsPage-application-columns",
+    );
+    expect(applicationColumns.id).toBe("application-columns");
+    expect(applicationColumns).toHaveTextContent(
+      "The table shows the id, View, Edit and Name first, then Submitted and the other answers, and takes only the width it needs.",
+    );
+    expect(applicationColumns).toHaveTextContent(
+      "the columns the table has always had start shown and the rest start hidden, and the choice is kept for that recruitment, for all admins.",
+    );
+    expect(applicationColumns.closest("li")).toHaveTextContent(
+      "Review Applications.",
+    );
     // Issue #174: the hiring target and per-course allocations, in the Courses section.
     const hiring = screen.getByTestId("HelpAdminsPage-hiring-target");
     expect(hiring.id).toBe("hiring-target");

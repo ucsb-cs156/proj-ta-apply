@@ -469,7 +469,20 @@ export default function HelpAdminsPage(): React.JSX.Element {
             page (everything the applicant wrote, read-only, plus a box for the
             admin&apos;s own comments) and an <em>Edit</em> page, the same form
             the applicant filled in, for correcting an answer on their behalf;
-            every field changed that way goes into the Audit Trail.
+            every field changed that way goes into the Audit Trail.{" "}
+            <span
+              id="application-columns"
+              data-testid="HelpAdminsPage-application-columns"
+            >
+              The table shows the id, View, Edit and Name first, then Submitted
+              and the other answers, and takes only the width it needs. Every
+              column but the first four can be hidden or shown from the{" "}
+              <strong>Columns</strong> menu above it, which lists every answer
+              on the form for that recruitment&apos;s type (TA or ULA); the
+              columns the table has always had start shown and the rest start
+              hidden, and the choice is kept for that recruitment, for all
+              admins.
+            </span>
           </li>
           <li>
             <strong>Assignments.</strong> The faculty rankings of every real
