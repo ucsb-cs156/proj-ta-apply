@@ -9,16 +9,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
+import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.CandidateRankingPage;
+import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.CourseDetails;
 import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.InstructorRecruitment;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.model.CurrentUser;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.CurrentUserService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +31,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
@@ -38,6 +44,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean UserRepository userRepository;
+  @MockitoBean CurrentUserService currentUserService;
 
   private static final String EMAIL = "pconrad@ucsb.edu";
   private static final String URL = "/api/instructor/recruitments?email=" + EMAIL;
@@ -73,6 +80,18 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     when(instructorRepository.findByEmail(EMAIL))
         .thenReturn(
             Optional.of(Instructor.builder().email(EMAIL).catalogName(catalogName).build()));
+  }
+
+  private void currentUser(String email, boolean admin) {
+    when(currentUserService.getCurrentUser())
+        .thenReturn(
+            CurrentUser.builder()
+                .user(User.builder().email(email).build())
+                .roles(
+                    admin
+                        ? List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                        : List.of(new SimpleGrantedAuthority("ROLE_INSTRUCTOR")))
+                .build());
   }
 
   @Test
@@ -233,5 +252,303 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(
         mapper.writeValueAsString(List.of(InstructorRecruitment.of(ta, List.of(one)))),
         response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructor_can_read_course_metadata_and_only_their_other_courses() throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setTentativeOpeningDate(LocalDate.of(2025, 12, 1));
+    recruitment.setPrimaryConsiderationDate(LocalDate.of(2026, 1, 20));
+    recruitment.setActualOpeningDate(LocalDate.of(2026, 1, 6));
+    recruitment.setReviewStatus("Open");
+    recruitment.setFacultyReviewOpeningDate(LocalDate.of(2026, 1, 25));
+    recruitment.setFacultyRankingDeadline(LocalDate.of(2026, 2, 15));
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    RecruitmentCourse course = row(1L, 10L, "CMPSC   156", "0100", false);
+    RecruitmentCourse sibling = row(2L, 10L, "CMPSC   156", "0200", false);
+    sibling.setInstructor("CONRAD P");
+    RecruitmentCourse earlierSibling = row(4L, 10L, "CMPSC     8", "0100", false);
+    earlierSibling.setInstructor("CONRAD P");
+    RecruitmentCourse anotherInstructor = row(3L, 10L, "CMPSC     8", "0100", false);
+    anotherInstructor.setInstructor("SOMEONE ELSE");
+    RecruitmentCourse removedSibling = row(5L, 10L, "CMPSC   157", "0100", true);
+    removedSibling.setInstructor("CONRAD P");
+    RecruitmentCourse staleSibling = row(6L, 10L, "CMPSC   158", "0100", false);
+    staleSibling.setInstructor("CONRAD P");
+    staleSibling.setStale(true);
+    RecruitmentCourse cancelledSibling = row(7L, 10L, "CMPSC   159", "0100", false);
+    cancelledSibling.setInstructor("CONRAD P");
+    cancelledSibling.setStatus(RecruitmentCourse.CANCELLED);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+    when(recruitmentCourseRepository.findByRecruitmentId(10L))
+        .thenReturn(
+            List.of(
+                course,
+                sibling,
+                earlierSibling,
+                anotherInstructor,
+                removedSibling,
+                staleSibling,
+                cancelledSibling));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                get("/api/instructor/recruitments/10/courses/1/ranking")
+                    .param("email", "attacker@example.com"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    CandidateRankingPage expected =
+        new CandidateRankingPage(
+            10L,
+            "20261",
+            RecruitmentType.TA,
+            LocalDate.of(2025, 12, 1),
+            LocalDate.of(2026, 1, 20),
+            LocalDate.of(2026, 1, 6),
+            null,
+            "Open",
+            LocalDate.of(2026, 1, 25),
+            LocalDate.of(2026, 2, 15),
+            new CourseDetails(1L, "CMPSC   156", "0100", "TITLE 1", "CONRAD P"),
+            List.of(
+                new CourseDetails(4L, "CMPSC     8", "0100", "TITLE 4", "CONRAD P"),
+                new CourseDetails(2L, "CMPSC   156", "0200", "TITLE 2", "CONRAD P")));
+    assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+    verify(instructorRepository).findByEmail(EMAIL);
+    verify(instructorRepository, never()).findByEmail("attacker@example.com");
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void closed_review_metadata_is_available_to_the_course_instructor() throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.ULA);
+    recruitment.setReviewStatus("Closed");
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    when(recruitmentCourseRepository.findById(1L))
+        .thenReturn(Optional.of(row(1L, 10L, "CMPSC   156", "0100", false)));
+    when(recruitmentCourseRepository.findByRecruitmentId(10L)).thenReturn(List.of());
+
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isOk())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.type")
+                .value("ULA"))
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.reviewStatus")
+                .value("Closed"));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructor_cannot_read_another_instructors_course() throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setReviewStatus("Open");
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    RecruitmentCourse course = row(1L, 10L, "CMPSC   156", "0100", false);
+    course.setInstructor("SOMEONE ELSE");
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.message")
+                .value("This recruitment course is not assigned to the authenticated instructor."));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admins_can_read_any_course_without_an_instructor_mapping() throws Exception {
+    currentUser(EMAIL, true);
+    when(instructorRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setReviewStatus("Closed");
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    when(recruitmentCourseRepository.findById(1L))
+        .thenReturn(Optional.of(row(1L, 10L, "CMPSC   156", "0100", false)));
+
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isOk())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.otherCourses")
+                .isEmpty());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void not_started_reviews_are_unavailable_with_an_explicit_error() throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    when(recruitmentRepository.findById(10L))
+        .thenReturn(Optional.of(recruitment(10L, "20261", RecruitmentType.TA)));
+    when(recruitmentCourseRepository.findById(1L))
+        .thenReturn(Optional.of(row(1L, 10L, "CMPSC   156", "0100", false)));
+
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.message")
+                .value(
+                    "Candidate rankings are unavailable because faculty reviews have not started."));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void course_from_another_recruitment_is_rejected() throws Exception {
+    currentUser(EMAIL, false);
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setReviewStatus("Open");
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    when(recruitmentCourseRepository.findById(1L))
+        .thenReturn(Optional.of(row(1L, 11L, "CMPSC   156", "0100", false)));
+
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isBadRequest())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.message")
+                .value("Recruitment course 1 does not belong to recruitment 10"));
+    verify(instructorRepository, never()).findByEmail(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void removed_course_is_unavailable_with_an_explicit_error() throws Exception {
+    currentUser(EMAIL, false);
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setReviewStatus("Open");
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    when(recruitmentCourseRepository.findById(1L))
+        .thenReturn(Optional.of(row(1L, 10L, "CMPSC   156", "0100", true)));
+
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.message")
+                .value("This recruitment course has been removed or is no longer available."));
+    verify(instructorRepository, never()).findByEmail(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void stale_course_is_unavailable_with_an_explicit_error() throws Exception {
+    currentUser(EMAIL, false);
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setReviewStatus("Open");
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    RecruitmentCourse stale = row(1L, 10L, "CMPSC   156", "0100", false);
+    stale.setStale(true);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(stale));
+
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.message")
+                .value("This recruitment course has been removed or is no longer available."));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void missing_course_returns_an_explicit_not_found_error() throws Exception {
+    when(recruitmentRepository.findById(10L))
+        .thenReturn(Optional.of(recruitment(10L, "20261", RecruitmentType.TA)));
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isNotFound())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.message")
+                .value("RecruitmentCourse with id 1 not found"));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void missing_recruitment_returns_an_explicit_not_found_error() throws Exception {
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isNotFound())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.message")
+                .value("Recruitment with id 10 not found"));
+    verify(recruitmentCourseRepository, never()).findById(any());
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void students_cannot_read_candidate_ranking_metadata() throws Exception {
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
+    verify(recruitmentRepository, never()).findById(any());
+  }
+
+  private void seedOpenRankingCourse() {
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setReviewStatus("Open");
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    when(recruitmentCourseRepository.findById(1L))
+        .thenReturn(Optional.of(row(1L, 10L, "CMPSC   156", "0100", false)));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void missing_current_user_or_user_record_is_rejected() throws Exception {
+    seedOpenRankingCourse();
+    when(currentUserService.getCurrentUser()).thenReturn(null);
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
+
+    when(currentUserService.getCurrentUser()).thenReturn(CurrentUser.builder().build());
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
+    verify(instructorRepository, never()).findByEmail(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void missing_instructor_mapping_cannot_grant_course_access() throws Exception {
+    seedOpenRankingCourse();
+    currentUser(EMAIL, false);
+    when(instructorRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
+    instructorWithCatalogName(null);
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void absent_authorities_do_not_grant_admin_bypass() throws Exception {
+    seedOpenRankingCourse();
+    when(currentUserService.getCurrentUser())
+        .thenReturn(CurrentUser.builder().user(User.builder().email(EMAIL).build()).build());
+    when(instructorRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+        .andExpect(status().isForbidden());
   }
 }

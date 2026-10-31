@@ -38,6 +38,7 @@ import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
 import LegacyTaApplicationPage from "main/pages/Admin/LegacyTaApplicationPage";
 import AuditTrailPage from "main/pages/Admin/AuditTrailPage";
+import CandidateRankingPage from "main/pages/Instructor/CandidateRankingPage";
 
 /** Any signed-in user may apply; there is no separate applicant role. */
 const APPLICANT_ROLES = ["ROLE_USER"];
@@ -192,6 +193,16 @@ export default function App() {
             <ProtectedPage
               component={<RecruitmentCoursesPage />}
               enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/recruitments/:recruitmentId/courses/:recruitmentCourseId/ranking"
+          element={
+            <ProtectedPage
+              component={<CandidateRankingPage />}
+              enforceRole={["ROLE_INSTRUCTOR", "ROLE_ADMIN"]}
               currentUser={currentUser}
             />
           }
