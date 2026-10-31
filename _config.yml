@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"review/161-faculty-review-lifecycle","number":167,"title":"Review iteration 1: faculty review lifecycle, deadlines and audit trail","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/167"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"review/162-candidate-ranking-pages","number":168,"title":"Review iteration 2: course-scoped faculty ranking pages","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/168"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"review/161-faculty-review-lifecycle","number":167,"title":"Review iteration 1: faculty review lifecycle, deadlines and audit trail","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/167"}]
