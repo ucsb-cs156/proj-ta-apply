@@ -2701,6 +2701,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void mine_and_one_and_prefill_leave_out_the_admin_comments() throws Exception {
     Application mine = withAdminComments(application(5L, 1L, GRAD_EMAIL));
+    mine.setTentativeAssignmentId(20L);
     when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL)).thenReturn(List.of(mine));
     when(applicationRepository.findById(5L)).thenReturn(Optional.of(mine));
     when(recruitmentRepository.findAllById(List.of(1L)))
@@ -2711,13 +2712,17 @@ public class ApplicationsControllerTests extends ControllerTestCase {
       MvcResult response = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
       assertEquals("[" + expected + "]", response.getResponse().getContentAsString());
       assertEquals(-1, response.getResponse().getContentAsString().indexOf("Interview"));
+      // Nor the admin's tentative assignment (issue #179), which the student must not see yet.
+      assertEquals(-1, response.getResponse().getContentAsString().indexOf("entativeAssignment"));
     }
     MvcResult response =
         mockMvc.perform(get("/api/applications?id=5")).andExpect(status().isOk()).andReturn();
     assertEquals(expected, response.getResponse().getContentAsString());
     assertEquals(-1, response.getResponse().getContentAsString().indexOf("Interview"));
+    assertEquals(-1, response.getResponse().getContentAsString().indexOf("entativeAssignment"));
     // The row itself is untouched.
     assertEquals("Interview Tuesday; strong candidate", mine.getAdminComments());
+    assertEquals(20L, mine.getTentativeAssignmentId());
   }
 
   @WithMockUser(

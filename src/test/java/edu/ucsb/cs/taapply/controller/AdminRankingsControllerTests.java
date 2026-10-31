@@ -21,6 +21,7 @@ import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.RankingsCsvService;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -35,7 +36,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(controllers = AdminRankingsController.class)
-@Import(RankingsCsvService.class)
+@Import({RankingsCsvService.class, AssignmentsService.class})
 class AdminRankingsControllerTests extends ControllerTestCase {
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean ApplicationRepository applicationRepository;
@@ -129,7 +130,12 @@ class AdminRankingsControllerTests extends ControllerTestCase {
                     .adminComments("PRIVATE")
                     .build(),
                 Application.builder().id(2L).recruitmentId(7L).testApplication(true).build(),
-                Application.builder().id(3L).recruitmentId(7L).email("unranked@ucsb.edu").build()));
+                Application.builder()
+                    .id(3L)
+                    .recruitmentId(7L)
+                    .email("unranked@ucsb.edu")
+                    .tentativeAssignmentId(10L)
+                    .build()));
     MvcResult result =
         mockMvc
             .perform(get("/api/admin/rankings/csv?recruitmentId=7"))
@@ -151,9 +157,22 @@ class AdminRankingsControllerTests extends ControllerTestCase {
                   "classLevel",
                   "yearInProgram",
                   "graduationDate",
+                  "tentativeAssignment",
                   "CMPSC 16 (section 0100, enroll 100)"),
-              List.of("Zoë,\"星\"\nAda", "雪", "a@ucsb.edu", "CS", "MS", "1", "Spring 2027", "3"),
-              List.of("", "", "unranked@ucsb.edu", "", "", "", "", "")),
+              List.of("Allocation", "", "", "", "", "", "", "", "0"),
+              List.of("Assigned", "", "", "", "", "", "", "", "1"),
+              List.of("Left to assign", "", "", "", "", "", "", "", "-1"),
+              List.of("Zoë,\"星\"\nAda", "雪", "a@ucsb.edu", "CS", "MS", "1", "Spring 2027", "", "3"),
+              List.of(
+                  "",
+                  "",
+                  "unranked@ucsb.edu",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "CMPSC 16 (section 0100, enroll 100)",
+                  "")),
           reader.readAll().stream().map(Arrays::asList).toList());
     }
     verify(applicationRepository).findByRecruitmentIdOrderByIdAsc(7L);
@@ -177,7 +196,10 @@ class AdminRankingsControllerTests extends ControllerTestCase {
             .andReturn();
     assertEquals(
         "\"firstName\",\"lastName\",\"email\",\"major\",\"yearInProgram\",\"graduationDate\","
-            + "\"gpaMajor\",\"gpaOverall\",\"previousServiceAsUla\"\n",
+            + "\"gpaMajor\",\"gpaOverall\",\"previousServiceAsUla\",\"tentativeAssignment\"\n"
+            + "\"Allocation\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"\n"
+            + "\"Assigned\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"\n"
+            + "\"Left to assign\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"\n",
         result.getResponse().getContentAsString());
   }
 }

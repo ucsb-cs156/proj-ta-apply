@@ -34,6 +34,7 @@ import ApplyPage from "main/pages/Applications/ApplyPage";
 import ApplicationPage from "main/pages/Applications/ApplicationPage";
 import TestApplicationPage from "main/pages/Admin/TestApplicationPage";
 import RecruitmentApplicationsPage from "main/pages/Admin/RecruitmentApplicationsPage";
+import AdminAssignmentsPage from "main/pages/Admin/AdminAssignmentsPage";
 import AdminApplicationPage from "main/pages/Admin/AdminApplicationPage";
 import AdminApplicationEditPage from "main/pages/Admin/AdminApplicationEditPage";
 import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
@@ -245,6 +246,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<RecruitmentApplicationsPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/recruitments/:recruitmentId/assignments"
+          element={
+            <ProtectedPage
+              component={<AdminAssignmentsPage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

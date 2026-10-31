@@ -351,6 +351,13 @@ export default function RecruitmentCards({
               >
                 Review Applications
               </Link>
+              <Link
+                className="btn btn-dark"
+                to={`/admin/recruitments/${recruitment.id}/assignments`}
+                data-testid={id("assignments-button")}
+              >
+                Assignments
+              </Link>
             </Card.Footer>
           </Card>
         );

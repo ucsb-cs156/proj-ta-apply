@@ -230,6 +230,20 @@ export default function HelpCsvPage() {
           be moved from one deployment to another; the name columns are blank
           for an instructor who has not logged in yet.
         </p>
+        <p data-testid="rankingsCsvDescription">
+          <b>Download Rankings CSV</b> on a recruitment card saves the faculty
+          rankings: the applicant identity columns for the recruitment&apos;s
+          type, then <code>tentativeAssignment</code> (the lecture the admin has
+          pencilled the applicant into on the Assignments page, written as the
+          lecture&apos;s column heading, blank if none), then one column per
+          lecture headed <code>COURSE (section S, enroll E)</code> holding that
+          lecture&apos;s rank for the applicant. Directly under the header come
+          three planning rows labelled <code>Allocation</code>,{" "}
+          <code>Assigned</code> and <code>Left to assign</code> in the first
+          column, with each lecture&apos;s numbers under its column and every
+          other cell blank; applicant rows follow. Test applications are left
+          out; the full layout is described on the For Admins help page.
+        </p>
         <p data-testid="downloadsSummary">
           Besides the App Settings lists described above, the{" "}
           <i>Recruitments</i> admin page offers a <b>CSV</b> button per

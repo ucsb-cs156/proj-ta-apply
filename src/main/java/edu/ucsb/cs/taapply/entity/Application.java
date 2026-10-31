@@ -1,5 +1,6 @@
 package edu.ucsb.cs.taapply.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -251,4 +252,16 @@ public class Application {
 
   /** When the applicant cancelled; null unless the status is CANCELLED. */
   private LocalDateTime cancelledAt;
+
+  // ---- assignment phase (issue #179) ----
+
+  /**
+   * The recruitment course an admin has tentatively assigned this applicant to, or null. Admin
+   * planning only at this stage: never serialised, so no applicant-, instructor- or admin-facing
+   * endpoint that returns an Application can show it. The admin assignments endpoint reports it in
+   * its own rows. Cleared by the database if that course row is deleted.
+   */
+  @JsonIgnore
+  @Column(name = "tentative_assignment_id")
+  private Long tentativeAssignmentId;
 }

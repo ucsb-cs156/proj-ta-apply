@@ -641,19 +641,22 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
   void nullable_applicant_follow_up_comments_are_returned_without_admin_comments()
       throws Exception {
     application.setPostApplicationComments(null);
-    var response =
-        mapper.readTree(
-            mockMvc
-                .perform(get(BASE + "/30"))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString());
+    application.setTentativeAssignmentId(20L);
+    String body =
+        mockMvc
+            .perform(get(BASE + "/30"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    var response = mapper.readTree(body);
     assertTrue(response.has("postApplicationComments"));
     assertTrue(response.get("postApplicationComments").isNull());
     assertFalse(response.has("adminComments"));
     assertFalse(response.get("answers").has("adminComments"));
     assertFalse(response.get("answers").has("postApplicationComments"));
+    // The admin's tentative assignment (issue #179) is not for faculty eyes at this stage.
+    assertEquals(-1, body.indexOf("entativeAssignment"));
   }
 
   @Test

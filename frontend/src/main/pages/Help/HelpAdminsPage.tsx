@@ -59,6 +59,41 @@ export default function HelpAdminsPage(): React.JSX.Element {
           and cancelled sections remain in this historical export so saved
           rankings are not lost when offerings change.
         </p>
+        <p data-testid="HelpAdminsPage-rankings-csv-planning">
+          The file also carries the planning from the Assignments page: a{" "}
+          <code>tentativeAssignment</code> column after the identity columns
+          (the lecture each applicant is pencilled into, blank if none), and
+          three rows directly under the header, labelled{" "}
+          <strong>Allocation</strong>, <strong>Assigned</strong> and{" "}
+          <strong>Left to assign</strong> in the first column, with the numbers
+          under each lecture&apos;s column.
+        </p>
+
+        <h2 className="my-3 h4" id="assignments">
+          Assignments
+        </h2>
+        <p data-testid="HelpAdminsPage-assignments">
+          <strong>Assignments</strong> on a recruitment card opens a table with
+          the same fields as the rankings CSV: who each applicant is, a{" "}
+          <strong>Tentative Assignment</strong> dropdown, then one column per
+          lecture holding that lecture&apos;s faculty ranking of the applicant.
+          Test applications and applications the student cancelled are left out.
+          Every column sorts; sorting by a lecture puts the ranked applicants
+          first (in either direction) and the unranked ones after them. Under
+          each lecture&apos;s name the heading shows its{" "}
+          <strong>Allocation</strong>, how many applicants are{" "}
+          <strong>Assigned</strong> to it so far, and how many places are{" "}
+          <strong>Left</strong>, in red when more have been assigned than
+          allocated; those numbers stay put when you sort.
+        </p>
+        <p data-testid="HelpAdminsPage-tentative-assignment">
+          Choosing a lecture in the dropdown (or the blank entry to clear it)
+          saves at once and updates the counts. A tentative assignment is
+          planning only: it is not shown to applicants or to faculty at this
+          stage, and it is not written to the Audit Trail. A lecture removed
+          from the recruitment stays in the table while it still has rankings or
+          an assignee, marked as no longer offered.
+        </p>
 
         <h2 className="my-3 h4" id="flow">
           The flow of a recruitment
@@ -374,6 +409,14 @@ export default function HelpAdminsPage(): React.JSX.Element {
             admin&apos;s own comments) and an <em>Edit</em> page, the same form
             the applicant filled in, for correcting an answer on their behalf;
             every field changed that way goes into the Audit Trail.
+          </li>
+          <li>
+            <strong>Assignments.</strong> The faculty rankings of every real
+            applicant side by side, one column per lecture, with a{" "}
+            <em>Tentative Assignment</em> dropdown on each row for pencilling
+            the applicant into a lecture; the{" "}
+            <a href="#assignments">Assignments</a> section below has the
+            details.
           </li>
           <li>
             <strong>Delete.</strong> Removes the recruitment, its course list
