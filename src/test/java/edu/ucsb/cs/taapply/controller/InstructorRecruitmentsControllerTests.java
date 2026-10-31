@@ -1,6 +1,9 @@
 package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -8,6 +11,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.CandidateRankingPage;
 import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.CourseDetails;
@@ -204,8 +208,11 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             .reviewStatus("Open")
             .facultyReviewOpeningDate(LocalDate.of(2026, 4, 2))
             .facultyRankingDeadline(LocalDate.of(2026, 4, 20))
+            .allocationsVisibleToFaculty(true)
             .build();
     RecruitmentCourse course = row(9L, 3L, "CMPSC    16", "0100", false);
+    course.setAllocation(2);
+    course.setEnrollmentEstimate(150);
 
     InstructorRecruitment ir = InstructorRecruitment.of(r, List.of(course));
 
@@ -319,7 +326,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             new CourseDetails(1L, "CMPSC   156", "0100", "TITLE 1", "CONRAD P"),
             List.of(
                 new CourseDetails(4L, "CMPSC     8", "0100", "TITLE 4", "CONRAD P"),
-                new CourseDetails(2L, "CMPSC   156", "0200", "TITLE 2", "CONRAD P")));
+                new CourseDetails(2L, "CMPSC   156", "0200", "TITLE 2", "CONRAD P")),
+            null);
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
     verify(instructorRepository).findByEmail(EMAIL);
     verify(instructorRepository, never()).findByEmail("attacker@example.com");
@@ -552,5 +560,194 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
         .andExpect(status().isForbidden());
+  }
+
+  // ---- allocations hidden from or shown to faculty (issue #178) ----
+
+  private static RecruitmentCourse rowWithFigures(long id, long recruitmentId) {
+    RecruitmentCourse course = row(id, recruitmentId, "CMPSC   156", "0100", false);
+    course.setAllocation(3);
+    course.setEnrollmentEstimate(120);
+    course.setUnroundedAllocation(2.5);
+    course.setEnrollment(100);
+    course.setMaxEnroll(150);
+    return course;
+  }
+
+  @Test
+  public void withoutAllocation_blanks_only_the_planning_figures() {
+    RecruitmentCourse course = rowWithFigures(9L, 3L);
+    course.setStale(true);
+    course.setManuallyAdded(true);
+
+    RecruitmentCourse copy = InstructorRecruitment.withoutAllocation(course);
+
+    assertNull(copy.getAllocation());
+    assertNull(copy.getEnrollmentEstimate());
+    assertNull(copy.getUnroundedAllocation());
+    assertEquals(3, course.getAllocation());
+    assertEquals(120, course.getEnrollmentEstimate());
+    assertEquals(2.5, course.getUnroundedAllocation());
+    assertEquals(
+        course.toBuilder()
+            .allocation(null)
+            .enrollmentEstimate(null)
+            .unroundedAllocation(null)
+            .build(),
+        copy);
+    assertEquals(9L, copy.getId());
+    assertEquals(3L, copy.getRecruitmentId());
+    assertEquals("CMPSC   156", copy.getCourseId());
+    assertEquals("0100", copy.getSection());
+    assertEquals("09", copy.getEnrollCode());
+    assertEquals("TITLE 9", copy.getTitle());
+    assertEquals("CONRAD P", copy.getInstructor());
+    assertEquals(100, copy.getEnrollment());
+    assertEquals(150, copy.getMaxEnroll());
+    assertTrue(copy.isStale());
+    assertTrue(copy.isManuallyAdded());
+    assertFalse(copy.isRemoved());
+  }
+
+  @Test
+  public void allocationsVisible_is_true_only_for_an_explicit_true() {
+    Recruitment r = recruitment(3L, "20261", RecruitmentType.TA);
+    assertFalse(InstructorRecruitmentsController.allocationsVisible(r));
+    r.setAllocationsVisibleToFaculty(null);
+    assertFalse(InstructorRecruitmentsController.allocationsVisible(r));
+    r.setAllocationsVisibleToFaculty(true);
+    assertTrue(InstructorRecruitmentsController.allocationsVisible(r));
+  }
+
+  @Test
+  public void the_record_blanks_the_allocation_of_every_course_while_hidden() {
+    Recruitment r = recruitment(3L, "20261", RecruitmentType.TA);
+    RecruitmentCourse a = rowWithFigures(9L, 3L);
+    RecruitmentCourse b = rowWithFigures(10L, 3L);
+    b.setSection("0200");
+
+    InstructorRecruitment ir = InstructorRecruitment.of(r, List.of(a, b));
+
+    assertEquals(
+        List.of(
+            InstructorRecruitment.withoutAllocation(a), InstructorRecruitment.withoutAllocation(b)),
+        ir.courses());
+    assertNull(ir.courses().get(0).getAllocation());
+    assertNull(ir.courses().get(1).getAllocation());
+    assertEquals("0200", ir.courses().get(1).getSection());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void while_hidden_the_instructor_endpoint_leaves_out_allocation_and_estimate()
+      throws Exception {
+    instructorWithCatalogName("CONRAD P");
+    RecruitmentCourse course = rowWithFigures(1L, 11L);
+    when(recruitmentCourseRepository.findByInstructor("CONRAD P")).thenReturn(List.of(course));
+    Recruitment ta = recruitment(11L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findAllById(Set.of(11L))).thenReturn(List.of(ta));
+
+    MvcResult response = mockMvc.perform(get(URL)).andExpect(status().isOk()).andReturn();
+
+    String body = response.getResponse().getContentAsString();
+    JsonNode courseJson = mapper.readTree(body).get(0).get("courses").get(0);
+    assertTrue(courseJson.get("allocation").isNull());
+    assertTrue(courseJson.get("enrollmentEstimate").isNull());
+    assertTrue(courseJson.get("unroundedAllocation").isNull());
+    assertEquals(1L, courseJson.get("id").asLong());
+    assertEquals("CMPSC   156", courseJson.get("courseId").asText());
+    assertEquals(100, courseJson.get("enrollment").asInt());
+    assertFalse(body.contains("\"allocation\":3"));
+    assertFalse(body.contains("120"));
+    assertFalse(body.contains("2.5"));
+    assertEquals(
+        mapper.writeValueAsString(List.of(InstructorRecruitment.of(ta, List.of(course)))), body);
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void once_shown_the_instructor_endpoint_carries_the_allocation() throws Exception {
+    instructorWithCatalogName("CONRAD P");
+    RecruitmentCourse course = rowWithFigures(1L, 11L);
+    when(recruitmentCourseRepository.findByInstructor("CONRAD P")).thenReturn(List.of(course));
+    Recruitment ta = recruitment(11L, "20261", RecruitmentType.TA);
+    ta.setAllocationsVisibleToFaculty(true);
+    when(recruitmentRepository.findAllById(Set.of(11L))).thenReturn(List.of(ta));
+
+    MvcResult response = mockMvc.perform(get(URL)).andExpect(status().isOk()).andReturn();
+
+    String body = response.getResponse().getContentAsString();
+    JsonNode courseJson = mapper.readTree(body).get(0).get("courses").get(0);
+    assertEquals(3, courseJson.get("allocation").asInt());
+    assertEquals(120, courseJson.get("enrollmentEstimate").asInt());
+    assertEquals(2.5, courseJson.get("unroundedAllocation").asDouble());
+    assertEquals(
+        mapper.writeValueAsString(List.of(InstructorRecruitment.of(ta, List.of(course)))), body);
+  }
+
+  private RecruitmentCourse rankingPageSetup(boolean visible) {
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setReviewStatus("Open");
+    recruitment.setAllocationsVisibleToFaculty(visible);
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    RecruitmentCourse course = rowWithFigures(1L, 10L);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+    when(recruitmentCourseRepository.findByRecruitmentId(10L)).thenReturn(List.of(course));
+    return course;
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void the_ranking_page_hides_the_allocation_from_the_instructor_until_shown()
+      throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    rankingPageSetup(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    String body = response.getResponse().getContentAsString();
+    assertTrue(mapper.readTree(body).get("allocation").isNull());
+    assertFalse(body.contains("\"allocation\":3"), body);
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void the_ranking_page_shows_the_allocation_to_the_instructor_once_shown()
+      throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    rankingPageSetup(true);
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(
+        3, mapper.readTree(response.getResponse().getContentAsString()).get("allocation").asInt());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void the_ranking_page_shows_the_allocation_to_an_admin_even_while_hidden()
+      throws Exception {
+    currentUser(EMAIL, true);
+    rankingPageSetup(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    JsonNode json = mapper.readTree(response.getResponse().getContentAsString());
+    assertEquals(3, json.get("allocation").asInt());
+    assertEquals(1L, json.get("course").get("id").asLong());
   }
 }

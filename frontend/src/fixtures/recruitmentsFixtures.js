@@ -14,6 +14,7 @@ const recruitmentsFixtures = {
       facultyRankingDeadline: null,
       lastPopulatedAt: null,
       totalHiringTarget: 1,
+      allocationsVisibleToFaculty: false,
     },
     {
       id: 2,
@@ -29,6 +30,7 @@ const recruitmentsFixtures = {
       facultyRankingDeadline: "2026-02-15",
       lastPopulatedAt: null,
       totalHiringTarget: 6,
+      allocationsVisibleToFaculty: false,
     },
     {
       // Opened, closed, and re-opened: the original opening date is preserved.
@@ -45,6 +47,7 @@ const recruitmentsFixtures = {
       facultyRankingDeadline: "2026-02-01",
       lastPopulatedAt: null,
       totalHiringTarget: 10,
+      allocationsVisibleToFaculty: false,
     },
   ],
 };

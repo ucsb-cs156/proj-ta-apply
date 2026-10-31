@@ -79,4 +79,13 @@ public class Recruitment {
   @Column(name = "total_hiring_target", nullable = false)
   @Builder.Default
   private Integer totalHiringTarget = 1;
+
+  /**
+   * Whether the per-course allocations are shown on the faculty-facing pages, the home page cards
+   * and the candidate ranking page (issue #178). Hidden by default. Faculty see this, so changes
+   * are recorded in the audit trail like opening reviews.
+   */
+  @Column(name = "allocations_visible_to_faculty", nullable = false)
+  @Builder.Default
+  private Boolean allocationsVisibleToFaculty = false;
 }

@@ -133,6 +133,14 @@ describe("Help pages (issue #140)", () => {
       screen.getByText(/Instructor/, { selector: "strong" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/CONRAD P/)).toBeInTheDocument();
+    // Issue #178: what an instructor sees once allocations are shown.
+    const allocations = screen.getByTestId("HelpInstructorsPage-allocations");
+    expect(allocations).toHaveTextContent(
+      "Once an admin chooses to show them, each of your courses also says how many TAs (or ULAs) have been allocated to it, both on the card and at the top of its ranking page.",
+    );
+    expect(allocations).toHaveTextContent(
+      "Please rank at least that many candidates, and preferably twice as many. Until then no allocation is shown.",
+    );
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
   });
 
@@ -238,6 +246,24 @@ describe("Help pages (issue #140)", () => {
     );
     expect(
       estimates.compareDocumentPosition(auto) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Issue #178: showing or hiding allocations to faculty.
+    const visibility = screen.getByTestId(
+      "HelpAdminsPage-allocation-visibility",
+    );
+    expect(visibility.id).toBe("allocation-visibility");
+    expect(visibility).toHaveTextContent(
+      "Allocations are hidden from faculty until you choose otherwise.",
+    );
+    expect(visibility).toHaveTextContent(
+      "Show Allocations to Faculty puts each lecture's allocation on the instructor's home page card and at the top of its ranking page",
+    );
+    expect(visibility).toHaveTextContent(
+      "Hide Allocations from Faculty takes it away again. Showing or hiding is recorded in the recruitment's change history.",
+    );
+    expect(
+      auto.compareDocumentPosition(visibility) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
