@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"ux/189-applications-table","number":200,"title":"Applications table UX: natural widths, id/View/Edit/Name/Submitted first, hideable and additional columns (closes #189)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/200"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"assign/180-publish-assignments","number":196,"title":"Assignment increment 7: publish assignments, read-only assignments page and CSV downloads (closes #180)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/196"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"ux/189-applications-table","number":200,"title":"Applications table UX: natural widths, id/View/Edit/Name/Submitted first, hideable and additional columns (closes #189)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/200"}]
