@@ -52,6 +52,21 @@ export default {
               : notRemoved,
           );
         }),
+        http.get(
+          "/api/instructor/recruitments/7/admin-course-rankings",
+          ({ request }) => {
+            const includeRemoved = new URL(request.url).searchParams.get(
+              "includeRemoved",
+            );
+            return HttpResponse.json(
+              includeRemoved === "true"
+                ? recruitmentCoursesFixtures.rankingSummaries
+                : recruitmentCoursesFixtures.rankingSummaries.filter(
+                    (summary) => summary.recruitmentCourseId !== 4,
+                  ),
+            );
+          },
+        ),
       ],
     },
   },

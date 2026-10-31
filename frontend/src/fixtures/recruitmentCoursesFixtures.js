@@ -79,6 +79,28 @@ const recruitmentCoursesFixtures = {
       manuallyAdded: false,
     },
   ],
+  rankingSummaries: [
+    {
+      recruitmentCourseId: 1,
+      rankingCount: 0,
+      instructorEmail: "pconrad@ucsb.edu",
+    },
+    {
+      recruitmentCourseId: 2,
+      rankingCount: 2,
+      instructorEmail: "another@ucsb.edu",
+    },
+    {
+      recruitmentCourseId: 3,
+      rankingCount: 0,
+      instructorEmail: "pconrad@ucsb.edu",
+    },
+    {
+      recruitmentCourseId: 4,
+      rankingCount: 0,
+      instructorEmail: "turing@ucsb.edu",
+    },
+  ],
 };
 
 /** The second lecture of 156 as the last Populate no longer found it (issue #122). */

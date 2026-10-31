@@ -119,6 +119,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     mockMvc.perform(get(BASE)).andExpect(status().isForbidden());
     mockMvc.perform(get(BASE + "/30")).andExpect(status().isForbidden());
     mockMvc
+        .perform(get("/api/instructor/recruitments/10/admin-course-rankings"))
+        .andExpect(status().isForbidden());
+    mockMvc
         .perform(
             put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
@@ -130,6 +133,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
   void students_cannot_read_or_write_even_with_an_instructor_mapping() throws Exception {
     mockMvc.perform(get(BASE)).andExpect(status().isForbidden());
     mockMvc.perform(get(BASE + "/30")).andExpect(status().isForbidden());
+    mockMvc
+        .perform(get("/api/instructor/recruitments/10/admin-course-rankings"))
+        .andExpect(status().isForbidden());
     mockMvc
         .perform(
             put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
@@ -349,6 +355,178 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     mockMvc.perform(get(BASE)).andExpect(status().isOk());
     mockMvc.perform(get(BASE + "/30")).andExpect(status().isOk());
     recruitment.setReviewStatus("Open");
+    mockMvc
+        .perform(
+            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+        .andExpect(status().isForbidden());
+    verify(candidateRankingRepository, never()).save(any());
+  }
+
+  @Test
+  @WithMockUser(roles = {"ADMIN"})
+  void admin_counts_only_entered_ranks_for_real_eligible_applications_in_visible_course_scope()
+      throws Exception {
+    application.setRecruitmentId(10L);
+    application.setFirstChoiceCourse("CMPSC   156");
+    Application otherCourseApplication =
+        application.toBuilder().id(31L).firstChoiceCourse("OTHER").build();
+    Application testApplication = application.toBuilder().id(32L).testApplication(true).build();
+    Application ineligibleApplication =
+        application.toBuilder().id(33L).firstChoiceCourse("OTHER").build();
+    Application otherRecruitmentApplication =
+        application.toBuilder().id(34L).recruitmentId(11L).build();
+    RecruitmentCourse removedCourse =
+        RecruitmentCourse.builder()
+            .id(21L)
+            .recruitmentId(10L)
+            .courseId("OTHER")
+            .section("0100")
+            .instructor("UNMAPPED")
+            .removed(true)
+            .build();
+    RecruitmentCourse zeroRankingCourse =
+        RecruitmentCourse.builder()
+            .id(22L)
+            .recruitmentId(10L)
+            .courseId("ZZZZ    100")
+            .section("0100")
+            .build();
+    RecruitmentCourse otherRecruitmentCourse =
+        RecruitmentCourse.builder()
+            .id(23L)
+            .recruitmentId(11L)
+            .courseId("AAAA    100")
+            .section("0100")
+            .build();
+    when(recruitmentCourseRepository.findByRecruitmentId(10L))
+        .thenReturn(List.of(course, removedCourse, zeroRankingCourse, otherRecruitmentCourse));
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(10L))
+        .thenReturn(
+            List.of(
+                application,
+                otherCourseApplication,
+                testApplication,
+                ineligibleApplication,
+                otherRecruitmentApplication));
+    when(candidateRankingRepository.findByRecruitmentCourseId(20L))
+        .thenReturn(
+            List.of(
+                CandidateRanking.builder().applicationId(30L).rank(2).build(),
+                CandidateRanking.builder().applicationId(32L).rank(1).build(),
+                CandidateRanking.builder().applicationId(33L).rank(1).build(),
+                CandidateRanking.builder().applicationId(30L).rank(null).build(),
+                CandidateRanking.builder().applicationId(999L).rank(1).build(),
+                CandidateRanking.builder().applicationId(null).rank(1).build(),
+                CandidateRanking.builder().applicationId(34L).rank(1).build()));
+    when(candidateRankingRepository.findByRecruitmentCourseId(21L))
+        .thenReturn(List.of(CandidateRanking.builder().applicationId(31L).rank(1).build()));
+    when(candidateRankingRepository.findByRecruitmentCourseId(22L)).thenReturn(List.of());
+    when(candidateRankingRepository.findByRecruitmentCourseId(23L))
+        .thenReturn(List.of(CandidateRanking.builder().applicationId(34L).rank(1).build()));
+    Instructor mapped =
+        Instructor.builder().email("faculty@ucsb.edu").catalogName("CONRAD P").build();
+    Instructor withoutCatalogName =
+        Instructor.builder().email("unmapped@ucsb.edu").catalogName(null).build();
+    Instructor duplicate =
+        Instructor.builder().email("another@ucsb.edu").catalogName("CONRAD P").build();
+    when(instructorRepository.findAll())
+        .thenReturn(
+            List.of(mapped, withoutCatalogName),
+            List.of(mapped, withoutCatalogName),
+            List.of(mapped, duplicate, withoutCatalogName));
+
+    String visible =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/admin-course-rankings"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    assertJson(
+        """
+        [
+          {"recruitmentCourseId":20,"rankingCount":1,"instructorEmail":"faculty@ucsb.edu"},
+          {"recruitmentCourseId":22,"rankingCount":0,"instructorEmail":null}
+        ]
+        """,
+        visible);
+    verify(recruitmentCourseRepository).findByRecruitmentId(10L);
+    verify(applicationRepository).findByRecruitmentIdOrderByIdAsc(10L);
+    verify(candidateRankingRepository).findByRecruitmentCourseId(20L);
+    verify(candidateRankingRepository).findByRecruitmentCourseId(22L);
+    verify(candidateRankingRepository, never()).findByRecruitmentCourseId(21L);
+    verify(candidateRankingRepository, never()).findByRecruitmentCourseId(23L);
+
+    String withRemoved =
+        mockMvc
+            .perform(
+                get("/api/instructor/recruitments/10/admin-course-rankings")
+                    .param("includeRemoved", "true"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    assertJson(
+        """
+        [
+          {"recruitmentCourseId":20,"rankingCount":1,"instructorEmail":"faculty@ucsb.edu"},
+          {"recruitmentCourseId":21,"rankingCount":1,"instructorEmail":null},
+          {"recruitmentCourseId":22,"rankingCount":0,"instructorEmail":null}
+        ]
+        """,
+        withRemoved);
+
+    String ambiguousMapping =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/admin-course-rankings"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    assertJson(
+        """
+        [
+          {"recruitmentCourseId":20,"rankingCount":1,"instructorEmail":null},
+          {"recruitmentCourseId":22,"rankingCount":0,"instructorEmail":null}
+        ]
+        """,
+        ambiguousMapping);
+  }
+
+  @Test
+  @WithMockUser(roles = {"ADMIN"})
+  void admin_ranking_summary_requires_an_existing_recruitment() throws Exception {
+    when(recruitmentRepository.findById(999L)).thenReturn(Optional.empty());
+    mockMvc
+        .perform(get("/api/instructor/recruitments/999/admin-course-rankings"))
+        .andExpect(status().isNotFound());
+    verifyNoInteractions(applicationRepository, candidateRankingRepository);
+    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+  }
+
+  @Test
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  void instructors_cannot_open_removed_or_stale_courses() throws Exception {
+    course.setStale(true);
+    mockMvc.perform(get(BASE)).andExpect(status().isForbidden());
+    verifyNoInteractions(applicationRepository, candidateRankingRepository);
+  }
+
+  @Test
+  @WithMockUser(roles = {"ADMIN"})
+  void admins_can_read_historical_unavailable_courses_but_cannot_edit_them() throws Exception {
+    course.setStale(true);
+    recruitment.setReviewStatus("Closed");
+    when(currentUserService.getCurrentUser())
+        .thenReturn(
+            CurrentUser.builder()
+                .user(User.builder().email("admin@ucsb.edu").build())
+                .roles(List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                .build());
+    application.setFirstChoiceCourse("CMPSC   156");
+
+    mockMvc.perform(get(BASE)).andExpect(status().isOk());
+    mockMvc.perform(get(BASE + "/30")).andExpect(status().isOk());
     mockMvc
         .perform(
             put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
