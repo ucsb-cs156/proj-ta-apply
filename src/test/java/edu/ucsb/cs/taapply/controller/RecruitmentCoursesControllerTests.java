@@ -417,4 +417,103 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     Map<String, Object> json = responseToJson(response);
     assertEquals("EntityNotFoundException", json.get("type"));
   }
+
+  // ---- PUT /api/recruitmentcourses/allocation (issue #174) ----
+
+  @Test
+  public void logged_out_users_cannot_change_an_allocation() throws Exception {
+    mockMvc
+        .perform(put("/api/recruitmentcourses/allocation?id=1&allocation=2").with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_change_an_allocation() throws Exception {
+    mockMvc
+        .perform(put("/api/recruitmentcourses/allocation?id=1&allocation=2").with(csrf()))
+        .andExpect(status().is(403));
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  @Test
+  public void a_new_row_has_no_allocation_yet() {
+    assertEquals(0, rc(1L, "CMPSC   156", "0100", false).getAllocation());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_set_an_allocation() throws Exception {
+    RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/recruitmentcourses/allocation?id=1&allocation=3").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    ArgumentCaptor<RecruitmentCourse> captor = ArgumentCaptor.forClass(RecruitmentCourse.class);
+    verify(recruitmentCourseRepository, times(1)).save(captor.capture());
+    assertEquals(3, captor.getValue().getAllocation());
+    RecruitmentCourse expected = rc(1L, "CMPSC   156", "0100", false);
+    expected.setAllocation(3);
+    assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_allocation_can_be_set_back_to_zero() throws Exception {
+    RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
+    course.setAllocation(4);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+
+    mockMvc
+        .perform(put("/api/recruitmentcourses/allocation?id=1&allocation=0").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(0, course.getAllocation());
+    verify(recruitmentCourseRepository, times(1)).save(course);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_negative_allocation_is_a_400() throws Exception {
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/recruitmentcourses/allocation?id=1&allocation=-1").with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    verify(recruitmentCourseRepository, never()).findById(any());
+    verify(recruitmentCourseRepository, never()).save(any());
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("allocation must not be negative", json.get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_allocation_that_is_not_a_number_is_a_400() throws Exception {
+    mockMvc
+        .perform(put("/api/recruitmentcourses/allocation?id=1&allocation=two").with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void changing_the_allocation_of_an_unknown_course_is_a_404() throws Exception {
+    when(recruitmentCourseRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/recruitmentcourses/allocation?id=99&allocation=1").with(csrf()))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    verify(recruitmentCourseRepository, never()).save(any());
+    Map<String, Object> json = responseToJson(response);
+    assertEquals("EntityNotFoundException", json.get("type"));
+  }
 }

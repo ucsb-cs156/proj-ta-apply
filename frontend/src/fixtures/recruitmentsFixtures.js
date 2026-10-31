@@ -13,6 +13,7 @@ const recruitmentsFixtures = {
       facultyReviewOpeningDate: null,
       facultyRankingDeadline: null,
       lastPopulatedAt: null,
+      totalHiringTarget: 1,
     },
     {
       id: 2,
@@ -27,6 +28,7 @@ const recruitmentsFixtures = {
       facultyReviewOpeningDate: "2026-01-08",
       facultyRankingDeadline: "2026-02-15",
       lastPopulatedAt: null,
+      totalHiringTarget: 6,
     },
     {
       // Opened, closed, and re-opened: the original opening date is preserved.
@@ -42,6 +44,7 @@ const recruitmentsFixtures = {
       facultyReviewOpeningDate: "2026-01-10",
       facultyRankingDeadline: "2026-02-01",
       lastPopulatedAt: null,
+      totalHiringTarget: 10,
     },
   ],
 };

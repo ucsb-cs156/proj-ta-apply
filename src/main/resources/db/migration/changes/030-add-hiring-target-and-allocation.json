@@ -1,0 +1,51 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "030-add-hiring-target-and-allocation",
+        "author": "pc",
+        "comment": "The total number of TAs or ULAs a recruitment expects to hire, and how many of them each course is allocated (issue #174).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "recruitments", "columnName": "total_hiring_target" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [
+                {
+                  "column": {
+                    "name": "total_hiring_target",
+                    "type": "INT",
+                    "defaultValueNumeric": 1,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addColumn": {
+              "tableName": "recruitment_courses",
+              "columns": [
+                {
+                  "column": {
+                    "name": "allocation",
+                    "type": "INT",
+                    "defaultValueNumeric": 0,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

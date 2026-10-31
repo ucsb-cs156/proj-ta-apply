@@ -7,6 +7,7 @@ import RecruitmentCourseTable, {
   type RecruitmentCourse,
   type RecruitmentCourseRankingSummary,
 } from "main/components/Recruitments/RecruitmentCourseTable";
+import HiringTargetPanel from "main/components/Recruitments/HiringTargetPanel";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
@@ -47,6 +48,13 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
   const showRankings =
     recruitment?.reviewStatus !== undefined &&
     recruitment.reviewStatus !== "NotStarted";
+
+  // Issue #174: what the per-course allocations add up to. Removed rows are hidden by default
+  // and never count, even when the toggle shows them.
+  // Stryker disable next-line all : the query's initial data is an empty list, never undefined
+  const allocatedSoFar = (courses ?? [])
+    .filter((course) => !course.removed)
+    .reduce((sum, course) => sum + (course.allocation ?? 0), 0);
 
   const {
     data: rankingSummaries,
@@ -163,6 +171,14 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           flagged course or not; Populate keeps refreshing it for as long as the
           schedule lists it.
         </p>
+
+        {recruitment && (
+          <HiringTargetPanel
+            recruitment={recruitment}
+            allocatedSoFar={allocatedSoFar}
+            testIdPrefix="RecruitmentCoursesPage-hiring-target"
+          />
+        )}
 
         <p data-testid="RecruitmentCoursesPage-last-refreshed">
           {lastRefreshedText(recruitment?.lastPopulatedAt)} Open, upcoming and

@@ -1,6 +1,8 @@
+import { useState, type CSSProperties } from "react";
 import OurTable from "main/components/Common/OurTable";
 import { useBackendMutation } from "main/utils/useBackend";
-import { Badge, Button } from "react-bootstrap";
+import { isValidAllocation } from "main/utils/allocations";
+import { Badge, Button, Form } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 import { Link } from "react-router";
@@ -25,6 +27,8 @@ export type RecruitmentCourse = {
   stale?: boolean;
   /** Added by an admin by enroll code rather than by Populate (issue #125). */
   manuallyAdded?: boolean;
+  /** How many TAs or ULAs the admin has allocated to this section (issue #174); 0 until set. */
+  allocation?: number;
 };
 
 export type RecruitmentCourseRankingSummary = {
@@ -46,6 +50,50 @@ export const STALE_LABEL = "Stale / not in API";
 
 /** The status the UCSB API reports for a cancelled section; applicants are not offered it. */
 export const CANCELLED = "cancelled";
+
+/** What the Allocation column's cells need, handed to them through the column's meta. */
+type AllocationColumnMeta = {
+  style: CSSProperties;
+  testIdPrefix: string;
+  /** What is in each row's box while it has focus, by row id; an absent row shows its value. */
+  drafts: Record<number, string>;
+  onChange: (course: RecruitmentCourse, value: string) => void;
+  onBlur: () => void;
+};
+
+/**
+ * One row's Allocation box (issue #174). Defined once, at module level, rather than inline in the
+ * column list: TanStack renders a function cell as a component, so an inline closure would be a
+ * new component type on every render and the box would be remounted, losing focus, each time a
+ * keystroke updated the drafts. Saved as soon as a valid number is typed. A removed row keeps its
+ * number but cannot be edited, and it is left out of the totals above the table.
+ */
+function AllocationCell({
+  cell,
+}: {
+  cell: Cell<RecruitmentCourse, unknown>;
+}): React.JSX.Element {
+  const meta = cell.column.columnDef.meta as AllocationColumnMeta;
+  const course = cell.row.original;
+  const draft = meta.drafts[course.id];
+  const value = draft ?? String(course.allocation ?? 0);
+  return (
+    <Form.Control
+      type="number"
+      min={0}
+      step={1}
+      size="sm"
+      style={{ width: "5em" }}
+      aria-label={`Allocation for ${course.courseId.trim()} section ${course.section ?? ""}`}
+      value={value}
+      isInvalid={draft !== undefined && !isValidAllocation(draft)}
+      disabled={course.removed}
+      onChange={(e) => meta.onChange(course, e.target.value)}
+      onBlur={meta.onBlur}
+      data-testid={`${meta.testIdPrefix}-cell-row-${cell.row.index}-allocation`}
+    />
+  );
+}
 
 type RecruitmentCourseTableProps = {
   courses: RecruitmentCourse[];
@@ -83,6 +131,34 @@ export default function RecruitmentCourseTable({
       "/api/instructor/recruitments/admin-course-rankings",
     ],
   );
+
+  // What is in each row's Allocation box while it has focus, by row id (issue #174); a row that
+  // is absent shows its stored value. Cleared on blur, so an invalid entry reverts and a saved
+  // one is simply the stored value again.
+  const [allocationDrafts, setAllocationDrafts] = useState<
+    Record<number, string>
+  >({});
+  const allocationMutation = useBackendMutation<
+    { id: number; allocation: number },
+    RecruitmentCourse
+  >(
+    ({ id, allocation }) => ({
+      url: "/api/recruitmentcourses/allocation",
+      method: "PUT",
+      params: { id, allocation },
+    }),
+    {},
+    ["/api/recruitmentcourses/all", includeRemoved],
+  );
+  const onAllocationChange = (course: RecruitmentCourse, value: string) => {
+    setAllocationDrafts((previous) => ({ ...previous, [course.id]: value }));
+    if (isValidAllocation(value)) {
+      allocationMutation.mutate({ id: course.id, allocation: Number(value) });
+    }
+  };
+  // Only the focused box can have a draft, since leaving a box clears it, so clearing them all
+  // on blur is the same as clearing the one.
+  const onAllocationBlur = () => setAllocationDrafts({});
 
   const shrinkToContent = {
     style: { width: "1%", whiteSpace: "nowrap" as const },
@@ -209,6 +285,18 @@ export default function RecruitmentCourseTable({
     { header: "Room", accessorKey: "room", meta: shrinkToContent },
     { header: "Enrolled", accessorKey: "enrollment", meta: shrinkToContent },
     { header: "Max", accessorKey: "maxEnroll", meta: shrinkToContent },
+    {
+      header: "Allocation",
+      accessorKey: "allocation",
+      meta: {
+        ...shrinkToContent,
+        testIdPrefix,
+        drafts: allocationDrafts,
+        onChange: onAllocationChange,
+        onBlur: onAllocationBlur,
+      } satisfies AllocationColumnMeta,
+      cell: AllocationCell,
+    },
     {
       header: "Status",
       accessorKey: "status",

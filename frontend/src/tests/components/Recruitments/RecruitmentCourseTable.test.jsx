@@ -36,7 +36,13 @@ describe("RecruitmentCourseTable tests", () => {
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock.onPut("/api/recruitmentcourses/removed").reply(200, {});
+    axiosMock.onPut("/api/recruitmentcourses/allocation").reply(200, {});
   });
+
+  const allocationPuts = () =>
+    axiosMock.history.put.filter(
+      (r) => r.url === "/api/recruitmentcourses/allocation",
+    );
 
   test("renders the offering details for each primary section", () => {
     renderTable();
@@ -51,6 +57,7 @@ describe("RecruitmentCourseTable tests", () => {
       "Room",
       "Enrolled",
       "Max",
+      "Allocation",
       "Status",
       "Summer Session",
     ].forEach((header) => {
@@ -237,6 +244,146 @@ describe("RecruitmentCourseTable tests", () => {
     expect(
       screen.queryByTestId("RecruitmentCourseTable-cell-row-0-stale"),
     ).toBeNull();
+  });
+
+  // ---- allocation (issue #174) ----
+
+  test("each row has an Allocation box showing its stored number, after Max", () => {
+    renderTable();
+
+    const box = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-1-allocation",
+    );
+    expect(box).toHaveValue(3);
+    expect(box).toHaveAttribute("type", "number");
+    expect(box).toHaveAttribute("min", "0");
+    expect(box).toHaveAttribute("step", "1");
+    expect(box.style.width).toBe("5em");
+    expect(box).toHaveClass("form-control-sm");
+    expect(box).toBeEnabled();
+    expect(box).toHaveAttribute(
+      "aria-label",
+      "Allocation for CMPSC   156 section 0100",
+    );
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-1-col-allocation"),
+    ).toContainElement(box);
+    const headers = [
+      ...screen
+        .getByTestId("RecruitmentCourseTable")
+        .querySelectorAll("thead th"),
+    ].map((th) => th.getAttribute("data-testid"));
+    expect(headers.indexOf("RecruitmentCourseTable-header-allocation")).toBe(
+      headers.indexOf("RecruitmentCourseTable-header-maxEnroll") + 1,
+    );
+  });
+
+  test("a row without an allocation yet, or without a section, still shows a box", () => {
+    const { allocation: _omitted, ...legacy } = notRemoved[0];
+    renderTable([{ ...legacy, section: null }]);
+
+    const box = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-0-allocation",
+    );
+    expect(box).toHaveValue(0);
+    expect(box).toHaveAttribute(
+      "aria-label",
+      "Allocation for CMPSC     1A section ",
+    );
+  });
+
+  test("typing a valid allocation saves it at once", async () => {
+    renderTable();
+    const box = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-0-allocation",
+    );
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+
+    await waitFor(() => expect(allocationPuts()).toHaveLength(1));
+    expect(allocationPuts()[0].params).toEqual({ id: 1, allocation: 4 });
+    expect(allocationPuts()[0].method).toBe("put");
+    expect(box).toHaveValue(4);
+    expect(box).not.toHaveClass("is-invalid");
+  });
+
+  test("each row's box is independent", async () => {
+    renderTable();
+
+    await userEvent.clear(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-2-allocation"),
+    );
+    await userEvent.type(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-2-allocation"),
+      "5",
+    );
+
+    await waitFor(() => expect(allocationPuts()).toHaveLength(1));
+    expect(allocationPuts()[0].params).toEqual({ id: 3, allocation: 5 });
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-allocation"),
+    ).toHaveValue(2);
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-1-allocation"),
+    ).toHaveValue(3);
+  });
+
+  test("an invalid allocation is flagged, never sent, and reverts on blur", async () => {
+    renderTable();
+    const box = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-0-allocation",
+    );
+
+    await userEvent.clear(box);
+    expect(box).toHaveValue(null);
+    expect(box).toHaveClass("is-invalid");
+    await userEvent.type(box, "-");
+    expect(allocationPuts()).toHaveLength(0);
+
+    await userEvent.tab();
+
+    expect(box).toHaveValue(2);
+    expect(box).not.toHaveClass("is-invalid");
+    expect(allocationPuts()).toHaveLength(0);
+  });
+
+  test("moving to another row's box reverts the one left behind", async () => {
+    renderTable();
+    const first = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-0-allocation",
+    );
+    const second = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-1-allocation",
+    );
+
+    await userEvent.clear(first);
+    expect(first).toHaveValue(null);
+    // Focusing the second box blurs the first, which reverts.
+    await userEvent.clear(second);
+    expect(first).toHaveValue(2);
+    expect(first).not.toHaveClass("is-invalid");
+    expect(second).toHaveValue(null);
+    expect(second).toHaveClass("is-invalid");
+
+    await userEvent.tab();
+
+    expect(second).toHaveValue(3);
+    expect(allocationPuts()).toHaveLength(0);
+  });
+
+  test("a removed row's box is disabled", () => {
+    renderTable(recruitmentCoursesFixtures.fourCourses, true);
+
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-3-allocation"),
+    ).toBeDisabled();
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-3-allocation"),
+    ).toHaveValue(1);
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-allocation"),
+    ).toBeEnabled();
   });
 
   test("renders an empty table without crashing", () => {

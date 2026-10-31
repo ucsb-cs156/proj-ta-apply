@@ -16,6 +16,8 @@ export type Recruitment = {
   facultyRankingDeadline: string | null;
   /** When the course list was last filled from the UCSB API (issue #124); null until it has been. */
   lastPopulatedAt?: string | null;
+  /** How many TAs or ULAs the recruitment expects to hire in all (issue #174); at least 1. */
+  totalHiringTarget?: number;
 };
 
 /** The applicant-facing recruitment shape deliberately excludes faculty review fields. */
