@@ -65,6 +65,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#forInstructor(java.lang.String)" tabindex="0">forInstructor(String)</a></li>
+<li><a href="#candidateRankingPage(java.lang.Long,java.lang.Long)" tabindex="0">candidateRankingPage(Long, Long)</a></li>
 </ol>
 </li>
 </ol>
@@ -106,6 +107,16 @@ name of its instructor of record. An instructor with no catalog name yet matches
 <div class="table-header col-second">Class</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="InstructorRecruitmentsController.CandidateRankingPage.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateRankingPage</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">The read-only, course-scoped data needed by the second-iteration ranking placeholder.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="InstructorRecruitmentsController.CourseDetails.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CourseDetails</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Course identity and catalog display fields; section rows remain distinct by id.</div>
+</div>
+<div class="col-first even-row-color"><code>static final record&nbsp;</code></div>
 <div class="col-second even-row-color"><code><a href="InstructorRecruitmentsController.InstructorRecruitment.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></code></div>
 <div class="col-last even-row-color">
 <div class="block">A recruitment as the admin's and student's cards know it, plus the instructor's courses.</div>
@@ -137,9 +148,15 @@ name of its instructor of record. An instructor with no catalog name yet matches
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#forInstructor(java.lang.String)" class="member-name-link">forInstructor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="InstructorRecruitmentsController.CandidateRankingPage.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateRankingPage</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#candidateRankingPage(java.lang.Long,java.lang.Long)" class="member-name-link">candidateRankingPage</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Read-only candidate-ranking page metadata.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#forInstructor(java.lang.String)" class="member-name-link">forInstructor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -184,6 +201,21 @@ name of its instructor of record. An instructor with no catalog name yet matches
 @GetMapping("")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a>&gt;</span>&nbsp;<span class="element-name">forInstructor</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="candidateRankingPage(java.lang.Long,java.lang.Long)">
+<h3>candidateRankingPage</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
+@GetMapping("/{recruitmentId}/courses/{recruitmentCourseId}/ranking")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="InstructorRecruitmentsController.CandidateRankingPage.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateRankingPage</a></span>&nbsp;<span class="element-name">candidateRankingPage</span><wbr><span class="parameters">(@PathVariable
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ @PathVariable
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId)</span></div>
+<div class="block">Read-only candidate-ranking page metadata. Instructor access is derived from the authenticated
+user's email and admin-managed catalog-name mapping; no caller-supplied identity is trusted.</div>
 </div>
 </section>
 </li>
