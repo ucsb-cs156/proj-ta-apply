@@ -203,6 +203,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
             application(1L, 7L, "a@ucsb.edu", false),
             application(2L, 7L, "admin@ucsb.edu", true),
             application(3L, 7L, "b@ucsb.edu", false));
+    applications.get(0).setTentativeAssignmentId(20L);
     when(recruitmentRepository.existsById(7L)).thenReturn(true);
     when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L)).thenReturn(applications);
 
@@ -214,6 +215,8 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
 
     assertEquals(
         mapper.writeValueAsString(applications), response.getResponse().getContentAsString());
+    // The tentative assignment (issue #179) is reported only by the admin assignments endpoint.
+    assertEquals(-1, response.getResponse().getContentAsString().indexOf("entativeAssignment"));
     verify(applicationRepository, times(1)).findByRecruitmentIdOrderByIdAsc(7L);
   }
 

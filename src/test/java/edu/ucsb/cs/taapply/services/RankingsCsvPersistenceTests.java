@@ -26,7 +26,7 @@ import org.springframework.test.context.ActiveProfiles;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@Import(RankingsCsvService.class)
+@Import({RankingsCsvService.class, AssignmentsService.class})
 class RankingsCsvPersistenceTests {
   @Autowired RankingsCsvService service;
   @Autowired RecruitmentRepository recruitments;
@@ -77,11 +77,17 @@ class RankingsCsvPersistenceTests {
     secondSection.setRemoved(true);
     courses.save(secondSection);
     RecruitmentCourse firstSection = course(selected, "0100", "100");
+    firstSection.setAllocation(2);
+    courses.save(firstSection);
     RecruitmentCourse otherCourse = course(other, "0100", "100");
     Application first = applicant(selected, "first@ucsb.edu", false);
     Application test = applicant(selected, "test@ucsb.edu", true);
+    test.setTentativeAssignmentId(firstSection.getId());
+    applications.save(test);
     Application unranked = applicant(selected, "unranked@ucsb.edu", false);
     Application last = applicant(selected, "last@ucsb.edu", false);
+    last.setTentativeAssignmentId(firstSection.getId());
+    applications.save(last);
     Application otherApplicant = applicant(other, "other@ucsb.edu", false);
     rank(firstSection, first, 3);
     rank(firstSection, last, 3);
@@ -107,11 +113,25 @@ class RankingsCsvPersistenceTests {
                   "classLevel",
                   "yearInProgram",
                   "graduationDate",
+                  "tentativeAssignment",
                   "CMPSC 16 (section 0100, enroll 100)",
                   "CMPSC 16 (section 0200, enroll 200)"),
-              List.of("", "", "first@ucsb.edu", "", "", "", "", "3", ""),
-              List.of("", "", "unranked@ucsb.edu", "", "", "", "", "", ""),
-              List.of("", "", "last@ucsb.edu", "", "", "", "", "3", "8")),
+              List.of("Allocation", "", "", "", "", "", "", "", "2", "0"),
+              List.of("Assigned", "", "", "", "", "", "", "", "1", "0"),
+              List.of("Left to assign", "", "", "", "", "", "", "", "1", "0"),
+              List.of("", "", "first@ucsb.edu", "", "", "", "", "", "3", ""),
+              List.of("", "", "unranked@ucsb.edu", "", "", "", "", "", "", ""),
+              List.of(
+                  "",
+                  "",
+                  "last@ucsb.edu",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "CMPSC 16 (section 0100, enroll 100)",
+                  "3",
+                  "8")),
           reader.readAll().stream().map(Arrays::asList).toList());
     }
     assertEquals(csv, service.write(selected));
@@ -126,8 +146,12 @@ class RankingsCsvPersistenceTests {
                   "classLevel",
                   "yearInProgram",
                   "graduationDate",
+                  "tentativeAssignment",
                   "CMPSC 16 (section 0100, enroll 100)"),
-              List.of("", "", "other@ucsb.edu", "", "", "", "", "2")),
+              List.of("Allocation", "", "", "", "", "", "", "", "0"),
+              List.of("Assigned", "", "", "", "", "", "", "", "0"),
+              List.of("Left to assign", "", "", "", "", "", "", "", "0"),
+              List.of("", "", "other@ucsb.edu", "", "", "", "", "", "2")),
           reader.readAll().stream().map(Arrays::asList).toList());
     }
   }

@@ -185,10 +185,37 @@ describe("Help pages (issue #140)", () => {
       screen
         .getByTestId("HelpAdminsPage-recruitment-buttons")
         .querySelectorAll("li"),
-    ).toHaveLength(6);
+    ).toHaveLength(7);
     expect(
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
+    // Issue #179: the Assignments page and the planning rows of the rankings CSV.
+    const assignments = screen.getByTestId("HelpAdminsPage-assignments");
+    expect(document.getElementById("assignments").tagName).toBe("H2");
+    expect(assignments).toHaveTextContent(
+      "Assignments on a recruitment card opens a table with the same fields as the rankings CSV",
+    );
+    expect(assignments).toHaveTextContent(
+      "sorting by a lecture puts the ranked applicants first (in either direction) and the unranked ones after them.",
+    );
+    expect(assignments).toHaveTextContent(
+      "Allocation, how many applicants are Assigned to it so far, and how many places are Left, in red when more have been assigned than allocated; those numbers stay put when you sort.",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-tentative-assignment"),
+    ).toHaveTextContent(
+      "saves at once and updates the counts. A tentative assignment is planning only: it is not shown to applicants or to faculty at this stage",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-rankings-csv-planning"),
+    ).toHaveTextContent(
+      "a tentativeAssignment column after the identity columns (the lecture each applicant is pencilled into, blank if none), and three rows directly under the header, labelled Allocation, Assigned and Left to assign in the first column",
+    );
+    expect(
+      within(
+        screen.getByTestId("HelpAdminsPage-recruitment-buttons"),
+      ).getByRole("link", { name: "Assignments" }),
+    ).toHaveAttribute("href", "#assignments");
     expect(screen.getByText(/ADMIN_EMAILS/)).toBeInTheDocument();
     // Issues #150 and #153: a pointer to the Notices Fields page, which has the details.
     const pointer = screen.getByTestId("HelpAdminsPage-notice-fields");
@@ -299,6 +326,10 @@ describe("Help pages (issue #140)", () => {
     expect(buttons[1]).toMatch(/from the schedule\. Populate re-runs the job/);
     expect(buttons[1]).toMatch(/finds it again\. Remove takes a lecture out/);
     expect(buttons[4]).toMatch(/Each has a View page \(everything/);
+    expect(buttons[5]).toMatch(
+      /^Assignments\. The faculty rankings of every real applicant side by side, one column per lecture, with a Tentative Assignment dropdown on each row/,
+    );
+    expect(buttons[6]).toMatch(/^Delete\. Removes the recruitment/);
     expect(
       document.getElementById("ta-app-settings").nextElementSibling.textContent,
     ).toMatch(/the Majors list and the Topics list \(the areas/);

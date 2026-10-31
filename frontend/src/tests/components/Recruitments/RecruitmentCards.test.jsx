@@ -303,12 +303,30 @@ describe("RecruitmentCards tests", () => {
     );
     expect(review).toHaveClass("btn", "btn-info");
 
+    // Issue #179: the admin Assignments page, one per recruitment.
+    for (const [index, id] of [
+      [0, 3],
+      [1, 1],
+      [2, 2],
+    ]) {
+      const assignments = screen.getByTestId(
+        `Cards-card-${index}-assignments-button`,
+      );
+      expect(assignments).toHaveTextContent("Assignments");
+      expect(assignments).toHaveAttribute(
+        "href",
+        `/admin/recruitments/${id}/assignments`,
+      );
+      expect(assignments).toHaveClass("btn", "btn-dark");
+      expect(assignments.closest(".card-footer")).not.toBeNull();
+    }
+
     // Actions sit in the footer; Delete moved to the header (issue #108).
     const footer = screen
       .getByTestId("Cards-card-2-card")
       .querySelector(".card-footer");
     expect(footer).toHaveClass("d-flex", "flex-wrap", "gap-2");
-    expect(footer.children).toHaveLength(7);
+    expect(footer.children).toHaveLength(8);
     expect(footer).not.toContainElement(
       screen.getByTestId("Cards-card-2-delete-button"),
     );
