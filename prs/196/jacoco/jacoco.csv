@@ -68,6 +68,7 @@ taapply,edu.ucsb.cs.taapply.enums,RecruitmentType,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,OtherCampusJob,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,EnrollmentEstimateSource,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,NoticesController,0,66,0,4,0,12,0,9,0,7
+taapply,edu.ucsb.cs.taapply.controller,HiddenColumnsController,0,80,0,8,0,25,0,10,0,6
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CourseDetails,0,32,0,0,0,7,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController.ApplicationOptions,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController,0,323,0,26,0,77,0,36,0,23

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HiddenColumnsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">HiddenColumnsController.java</span></div><h1>HiddenColumnsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.HiddenColumn;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.HiddenColumnRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Which columns are hidden on a recruitment's tables (issue #185). The frontend asks for the list
+ * when a page opens and tells the backend each time a column is hidden or shown; both calls answer
+ * with the current list of hidden column ids, sorted.
+ */
+@Tag(name = &quot;Hidden columns&quot;)
+@RequestMapping(&quot;/api/admin/hiddencolumns&quot;)
+@RestController
+<span class="fc" id="L29">public class HiddenColumnsController extends ApiController {</span>
+
+  @Autowired HiddenColumnRepository hiddenColumnRepository;
+  @Autowired RecruitmentRepository recruitmentRepository;
+
+  @Operation(summary = &quot;The ids of the columns hidden on one of a recruitment's tables&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;&quot;)
+  public List&lt;String&gt; hiddenColumns(
+      @Parameter(name = &quot;tableKey&quot;) @RequestParam String tableKey,
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
+<span class="fc" id="L40">    requireRecruitment(recruitmentId);</span>
+<span class="fc" id="L41">    return columnIds(tableKey, recruitmentId);</span>
+  }
+
+  @Operation(
+      summary = &quot;Hide or show one column on one of a recruitment's tables&quot;,
+      description =
+          &quot;Hiding a column that is already hidden, or showing one that is shown, changes nothing.&quot;
+              + &quot; Returns the ids of the columns now hidden.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;&quot;)
+  public List&lt;String&gt; setHidden(
+      @Parameter(name = &quot;tableKey&quot;) @RequestParam String tableKey,
+      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
+      @Parameter(name = &quot;columnId&quot;) @RequestParam String columnId,
+      @Parameter(name = &quot;hidden&quot;) @RequestParam boolean hidden) {
+<span class="fc" id="L56">    requireRecruitment(recruitmentId);</span>
+<span class="fc" id="L57">    Optional&lt;HiddenColumn&gt; existing =</span>
+<span class="fc" id="L58">        hiddenColumnRepository.findByTableKeyAndRecruitmentIdAndColumnId(</span>
+            tableKey, recruitmentId, columnId);
+<span class="fc bfc" id="L60" title="All 4 branches covered.">    if (hidden &amp;&amp; existing.isEmpty()) {</span>
+<span class="fc" id="L61">      hiddenColumnRepository.save(</span>
+<span class="fc" id="L62">          HiddenColumn.builder()</span>
+<span class="fc" id="L63">              .tableKey(tableKey)</span>
+<span class="fc" id="L64">              .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L65">              .columnId(columnId)</span>
+<span class="fc" id="L66">              .build());</span>
+<span class="fc bfc" id="L67" title="All 4 branches covered.">    } else if (!hidden &amp;&amp; existing.isPresent()) {</span>
+<span class="fc" id="L68">      hiddenColumnRepository.delete(existing.get());</span>
+    }
+<span class="fc" id="L70">    return columnIds(tableKey, recruitmentId);</span>
+  }
+
+  private void requireRecruitment(Long recruitmentId) {
+<span class="fc" id="L74">    recruitmentRepository</span>
+<span class="fc" id="L75">        .findById(recruitmentId)</span>
+<span class="fc" id="L76">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L77">  }</span>
+
+  private List&lt;String&gt; columnIds(String tableKey, Long recruitmentId) {
+<span class="fc" id="L80">    return hiddenColumnRepository</span>
+<span class="fc" id="L81">        .findByTableKeyAndRecruitmentIdOrderByColumnIdAsc(tableKey, recruitmentId)</span>
+<span class="fc" id="L82">        .stream()</span>
+<span class="fc" id="L83">        .map(HiddenColumn::getColumnId)</span>
+<span class="fc" id="L84">        .toList();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
