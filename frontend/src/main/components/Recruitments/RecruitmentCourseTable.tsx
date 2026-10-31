@@ -4,11 +4,16 @@ import axios from "axios";
 import OurTable from "main/components/Common/OurTable";
 import { useBackendMutation } from "main/utils/useBackend";
 import {
+  allocationDelta,
+  deltaDisplay,
   ESTIMATE_SAVE_DELAY_MS,
   isValidAllocation,
   isValidEnrollmentEstimate,
+  oneDecimal,
+  ratioDisplay,
+  unroundedTooltip,
 } from "main/utils/allocations";
-import { Badge, Button, Form } from "react-bootstrap";
+import { Badge, Button, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 import { Link } from "react-router";
@@ -40,6 +45,8 @@ export type RecruitmentCourse = {
   allocation?: number | null;
   /** The admin's estimate of the section's enrollment (issue #175); null until entered. */
   enrollmentEstimate?: number | null;
+  /** Its fractional share of the hiring target by estimate (issue #176); null until computed. */
+  unroundedAllocation?: number | null;
 };
 
 export type RecruitmentCourseRankingSummary = {
@@ -156,8 +163,21 @@ const estimateRequest = (id: number, value: string) => ({
   params: value === "" ? { id } : { id, enrollmentEstimate: Number(value) },
 });
 
+/**
+ * A heading on two lines, so a column is no wider than its values. The space before the break
+ * keeps the heading's text whole for screen readers and tests.
+ */
+const stacked = (top: string, bottom: string): React.JSX.Element => (
+  <>
+    {top} <br />
+    {bottom}
+  </>
+);
+
 type RecruitmentCourseTableProps = {
   courses: RecruitmentCourse[];
+  /** The recruitment's type, for the headings and tooltips that name it (issue #176). */
+  type?: "TA" | "ULA";
   rankingSummaries?: RecruitmentCourseRankingSummary[];
   showRankings?: boolean;
   onCopyEmail?: (email: string) => void;
@@ -168,6 +188,7 @@ type RecruitmentCourseTableProps = {
 
 export default function RecruitmentCourseTable({
   courses,
+  type = "TA",
   rankingSummaries = [],
   showRankings = false,
   onCopyEmail = () => {},
@@ -298,6 +319,15 @@ export default function RecruitmentCourseTable({
   const rankingSummaryByCourse = new Map(
     rankingSummaries.map((summary) => [summary.recruitmentCourseId, summary]),
   );
+  // The totals row (issue #176) adds up the rows that count: removed ones are left out even
+  // when the toggle shows them, as they are everywhere else on the page.
+  const counted = (Array.isArray(courses) ? courses : []).filter(
+    (course) => !course.removed,
+  );
+  const sumOf = (
+    pick: (course: RecruitmentCourse) => number | null | undefined,
+  ) => counted.reduce((sum, course) => sum + (pick(course) ?? 0), 0);
+
   const rows = (Array.isArray(courses) ? courses : []).map((course) => ({
     ...course,
     rankingCount: rankingSummaryByCourse.get(course.id)?.rankingCount ?? null,
@@ -343,6 +373,7 @@ export default function RecruitmentCourseTable({
       header: "Course Number",
       accessorKey: "courseId",
       meta: shrinkToContent,
+      footer: `Total Course Count: ${counted.length}`,
       // Padded and monospaced, exactly as Admin/Courses renders it, so the sort order is legible.
       cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => (
         <>
@@ -415,11 +446,22 @@ export default function RecruitmentCourseTable({
     { header: "Days", accessorKey: "days", meta: shrinkToContent },
     { header: "Time", accessorKey: "time", meta: shrinkToContent },
     { header: "Room", accessorKey: "room", meta: shrinkToContent },
-    { header: "Enrolled", accessorKey: "enrollment", meta: shrinkToContent },
-    { header: "Max", accessorKey: "maxEnroll", meta: shrinkToContent },
+    {
+      header: "Enrolled",
+      accessorKey: "enrollment",
+      meta: shrinkToContent,
+      footer: String(sumOf((course) => course.enrollment)),
+    },
+    {
+      header: "Max",
+      accessorKey: "maxEnroll",
+      meta: shrinkToContent,
+      footer: String(sumOf((course) => course.maxEnroll)),
+    },
     {
       header: "Enrollment Estimate",
       accessorKey: "enrollmentEstimate",
+      footer: String(sumOf((course) => course.enrollmentEstimate)),
       meta: {
         ...shrinkToContent,
         testIdPrefix,
@@ -440,6 +482,59 @@ export default function RecruitmentCourseTable({
         onBlur: onAllocationBlur,
       } satisfies AllocationColumnMeta,
       cell: AllocationCell,
+    },
+    {
+      header: (
+        <OverlayTrigger
+          placement="top"
+          overlay={
+            <Tooltip id={`${testIdPrefix}-unrounded-tooltip`}>
+              {unroundedTooltip(type)}
+            </Tooltip>
+          }
+        >
+          <span
+            style={{ textDecoration: "underline dotted" }}
+            data-testid={`${testIdPrefix}-unrounded-heading`}
+          >
+            {stacked("Unrounded", "Allocation")}
+          </span>
+        </OverlayTrigger>
+      ),
+      accessorKey: "unroundedAllocation",
+      meta: shrinkToContent,
+      // Always one decimal place (issue #176); a dash until the backend has computed it.
+      cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) =>
+        cell.row.original.unroundedAllocation == null
+          ? "\u2014"
+          : oneDecimal(cell.row.original.unroundedAllocation),
+    },
+    {
+      header: "Delta",
+      id: "delta",
+      accessorFn: (course: RecruitmentCourse) => allocationDelta(course),
+      meta: shrinkToContent,
+      // Share minus allocation: green with a plus sign when the course is owed positions, red
+      // when it has more than its share, black 0.0 when it is about right (issue #176).
+      cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => {
+        const { text, className } = deltaDisplay(
+          allocationDelta(cell.row.original),
+        );
+        return (
+          <span
+            className={className}
+            data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-delta`}
+          >
+            {text}
+          </span>
+        );
+      },
+    },
+    {
+      header: stacked(`${type}:student`, "ratio"),
+      id: "ratio",
+      accessorFn: (course: RecruitmentCourse) => ratioDisplay(course),
+      meta: shrinkToContent,
     },
     {
       header: "Status",

@@ -229,6 +229,26 @@ export default function HelpAdminsPage(): React.JSX.Element {
           fills every lecture&apos;s estimate from its maximum or current
           enrollment in one step.
         </p>
+        <p id="auto-assign" data-testid="HelpAdminsPage-auto-assign">
+          The table ends with a totals row, and three columns guide the
+          allocation: <strong>Unrounded Allocation</strong> is how many
+          positions each lecture would get if positions could be split into
+          fractions and were shared out by enrollment estimate alone;{" "}
+          <strong>Delta</strong> is that share minus the allocation, green with
+          a plus sign when a lecture is owed positions and red when it has more
+          than its share; and the <strong>TA:student ratio</strong> is the
+          estimated students per position. <em>Auto assign TA allocations</em>{" "}
+          (or ULA) fills the Allocation column from those shares, after a
+          warning that it overwrites every allocation: each lecture gets its
+          share rounded, then positions are taken from the lectures furthest
+          over their share, or given to those furthest under it, one at a time
+          until the total is exactly the hiring target. The purpose of this
+          feature is to give admins a way to make a first-cut allocation based
+          on enrollment, as close to fair as the numbers allow; it should not
+          necessarily be considered the final allocation. Admins have the
+          flexibility to adjust it up or down based on the particular needs of
+          specific courses and other relevant factors.
+        </p>
         <p
           id="allocation-visibility"
           data-testid="HelpAdminsPage-allocation-visibility"

@@ -65,8 +65,8 @@ public class InstructorRecruitmentsController extends ApiController {
    * A recruitment as the admin's and student's cards know it, plus the instructor's courses.
    *
    * <p>While the recruitment's allocations are hidden from faculty (issue #178), each course is a
-   * copy with its allocation and enrollment estimate blanked, so the number never leaves the
-   * server; when shown, the rows go out as stored.
+   * copy with its allocation, enrollment estimate and unrounded allocation blanked, so the numbers
+   * never leave the server; when shown, the rows go out as stored.
    */
   public static record InstructorRecruitment(
       Long id,
@@ -103,7 +103,11 @@ public class InstructorRecruitmentsController extends ApiController {
 
     /** The row with the planning figures an instructor may not see yet blanked. */
     static RecruitmentCourse withoutAllocation(RecruitmentCourse row) {
-      return row.toBuilder().allocation(null).enrollmentEstimate(null).build();
+      return row.toBuilder()
+          .allocation(null)
+          .enrollmentEstimate(null)
+          .unroundedAllocation(null)
+          .build();
     }
   }
 

@@ -28,6 +28,7 @@ function renderTable(
   courses = notRemoved,
   includeRemoved = false,
   queryClient = new QueryClient(),
+  type = undefined,
 ) {
   return render(
     <QueryClientProvider client={queryClient}>
@@ -36,6 +37,7 @@ function renderTable(
           courses={courses}
           includeRemoved={includeRemoved}
           testIdPrefix="RecruitmentCourseTable"
+          type={type}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -86,6 +88,7 @@ describe("RecruitmentCourseTable tests", () => {
       "Max",
       "Enrollment Estimate",
       "Allocation",
+      "Delta",
       "Status",
       "Summer Session",
     ].forEach((header) => {
@@ -676,6 +679,199 @@ describe("RecruitmentCourseTable tests", () => {
     expect(
       queryClient.getQueryData(["/api/recruitmentcourses/all", false])[0],
     ).toEqual(saved);
+  });
+
+  // ---- totals row and the allocation guide columns (issue #176) ----
+
+  test("ends with a totals row over the rows that count", () => {
+    renderTable(recruitmentCoursesFixtures.fourCourses, true);
+
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-courseId"),
+    ).toHaveTextContent("Total Course Count: 3");
+    // 200 + 120 + 60; the removed row's 90 is left out.
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-enrollment"),
+    ).toHaveTextContent("380");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-maxEnroll"),
+    ).toHaveTextContent("480");
+    // 220 + 140 + nothing.
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-enrollmentEstimate"),
+    ).toHaveTextContent("360");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-allocation"),
+    ).toBeEmptyDOMElement();
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-ratio"),
+    ).toBeEmptyDOMElement();
+  });
+
+  test("the totals of an empty table are zero", () => {
+    renderTable([]);
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-courseId"),
+    ).toHaveTextContent("Total Course Count: 0");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-enrollment"),
+    ).toHaveTextContent(/^0$/);
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-enrollmentEstimate"),
+    ).toHaveTextContent(/^0$/);
+  });
+
+  test("a row with no enrollment figures counts as zero in the totals", () => {
+    renderTable([{ ...notRemoved[0], enrollment: null, maxEnroll: null }]);
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-enrollment"),
+    ).toHaveTextContent(/^0$/);
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-footer-maxEnroll"),
+    ).toHaveTextContent(/^0$/);
+  });
+
+  test("Unrounded Allocation shows one decimal place, or a dash, under a stacked heading with a tooltip", async () => {
+    renderTable([
+      ...notRemoved,
+      { ...notRemoved[0], id: 9, unroundedAllocation: null },
+    ]);
+
+    const heading = screen.getByTestId(
+      "RecruitmentCourseTable-unrounded-heading",
+    );
+    expect(heading).toHaveTextContent("Unrounded Allocation");
+    expect(heading.querySelector("br")).not.toBeNull();
+    expect(heading).toHaveStyle({ textDecoration: "underline dotted" });
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-header-unroundedAllocation"),
+    ).toContainElement(heading);
+    await userEvent.hover(heading);
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent(
+      'unroundedAllocation is how many TAs the course would receive if TAs could be divided into "fractional bits", and were divided based only on estimatedEnrollment. In reality, one must round up or round down, but this number provides a guide for approaching a fair allocation.',
+    );
+    expect(tooltip).toHaveAttribute(
+      "id",
+      "RecruitmentCourseTable-unrounded-tooltip",
+    );
+
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-0-col-unroundedAllocation",
+      ),
+    ).toHaveTextContent(/^3\.7$/);
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-1-col-unroundedAllocation",
+      ),
+    ).toHaveTextContent(/^2\.3$/);
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-2-col-unroundedAllocation",
+      ),
+    ).toHaveTextContent(/^0\.0$/);
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-3-col-unroundedAllocation",
+      ),
+    ).toHaveTextContent("\u2014");
+  });
+
+  test("the tooltip and the ratio heading say ULAs for a ULA recruitment", async () => {
+    renderTable(notRemoved, false, new QueryClient(), "ULA");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-header-ratio"),
+    ).toHaveTextContent("ULA:student ratio");
+    await userEvent.hover(
+      screen.getByTestId("RecruitmentCourseTable-unrounded-heading"),
+    );
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      /how many ULAs the course would receive if ULAs could/,
+    );
+  });
+
+  test("Delta is share minus allocation, coloured and signed", () => {
+    renderTable();
+
+    // 3.67 - 2 = +1.7; 2.33 - 3 = -0.7; 0.0 - 1 = -1.0.
+    const first = screen.getByTestId("RecruitmentCourseTable-cell-row-0-delta");
+    expect(first).toHaveTextContent(/^\+1\.7$/);
+    expect(first).toHaveClass("text-success");
+    const second = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-1-delta",
+    );
+    expect(second).toHaveTextContent(/^-0\.7$/);
+    expect(second).toHaveClass("text-danger");
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-col-delta"),
+    ).toContainElement(first);
+  });
+
+  test("a Delta that rounds to zero is a plain 0.0", () => {
+    renderTable([
+      { ...notRemoved[0], unroundedAllocation: 2.04, allocation: 2 },
+    ]);
+    const delta = screen.getByTestId("RecruitmentCourseTable-cell-row-0-delta");
+    expect(delta).toHaveTextContent(/^0\.0$/);
+    expect(delta.className).toBe("");
+  });
+
+  test("the ratio is 1:n, rounded, or a dash", () => {
+    renderTable(notRemoved);
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-header-ratio"),
+    ).toHaveTextContent("TA:student ratio");
+    expect(
+      screen
+        .getByTestId("RecruitmentCourseTable-header-ratio")
+        .querySelector("br"),
+    ).not.toBeNull();
+    // 220 / 2, 140 / 3 = 46.67, and no estimate.
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-0-col-ratio"),
+    ).toHaveTextContent(/^1:110$/);
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-1-col-ratio"),
+    ).toHaveTextContent(/^1:47$/);
+    expect(
+      screen.getByTestId("RecruitmentCourseTable-cell-row-2-col-ratio"),
+    ).toHaveTextContent("\u2014");
+  });
+
+  test("the guide columns sit after Allocation and before Status, and sort by their values", async () => {
+    renderTable();
+    const headers = [
+      ...screen
+        .getByTestId("RecruitmentCourseTable")
+        .querySelectorAll("thead th"),
+    ].map((th) => th.getAttribute("data-testid"));
+    const allocation = headers.indexOf(
+      "RecruitmentCourseTable-header-allocation",
+    );
+    expect(headers.slice(allocation + 1, allocation + 5)).toEqual([
+      "RecruitmentCourseTable-header-unroundedAllocation",
+      "RecruitmentCourseTable-header-delta",
+      "RecruitmentCourseTable-header-ratio",
+      "RecruitmentCourseTable-header-status",
+    ]);
+
+    // Row test ids keep their original index, so read the body in document order. A numeric
+    // column sorts descending first: +1.7, -0.7, -1.0; a second click sorts ascending.
+    const deltasInOrder = () =>
+      [
+        ...screen
+          .getByTestId("RecruitmentCourseTable")
+          .querySelectorAll("tbody tr span[data-testid$='-delta']"),
+      ].map((span) => span.textContent);
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCourseTable-header-delta-sort-header"),
+    );
+    expect(deltasInOrder()).toEqual(["+1.7", "-0.7", "-1.0"]);
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCourseTable-header-delta-sort-header"),
+    );
+    expect(deltasInOrder()).toEqual(["-1.0", "-0.7", "+1.7"]);
   });
 
   test("renders an empty table without crashing", () => {

@@ -568,6 +568,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     RecruitmentCourse course = row(id, recruitmentId, "CMPSC   156", "0100", false);
     course.setAllocation(3);
     course.setEnrollmentEstimate(120);
+    course.setUnroundedAllocation(2.5);
     course.setEnrollment(100);
     course.setMaxEnroll(150);
     return course;
@@ -583,9 +584,17 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
 
     assertNull(copy.getAllocation());
     assertNull(copy.getEnrollmentEstimate());
+    assertNull(copy.getUnroundedAllocation());
     assertEquals(3, course.getAllocation());
     assertEquals(120, course.getEnrollmentEstimate());
-    assertEquals(course.toBuilder().allocation(null).enrollmentEstimate(null).build(), copy);
+    assertEquals(2.5, course.getUnroundedAllocation());
+    assertEquals(
+        course.toBuilder()
+            .allocation(null)
+            .enrollmentEstimate(null)
+            .unroundedAllocation(null)
+            .build(),
+        copy);
     assertEquals(9L, copy.getId());
     assertEquals(3L, copy.getRecruitmentId());
     assertEquals("CMPSC   156", copy.getCourseId());
@@ -644,11 +653,13 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     JsonNode courseJson = mapper.readTree(body).get(0).get("courses").get(0);
     assertTrue(courseJson.get("allocation").isNull());
     assertTrue(courseJson.get("enrollmentEstimate").isNull());
+    assertTrue(courseJson.get("unroundedAllocation").isNull());
     assertEquals(1L, courseJson.get("id").asLong());
     assertEquals("CMPSC   156", courseJson.get("courseId").asText());
     assertEquals(100, courseJson.get("enrollment").asInt());
     assertFalse(body.contains("\"allocation\":3"));
     assertFalse(body.contains("120"));
+    assertFalse(body.contains("2.5"));
     assertEquals(
         mapper.writeValueAsString(List.of(InstructorRecruitment.of(ta, List.of(course)))), body);
   }
@@ -669,6 +680,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     JsonNode courseJson = mapper.readTree(body).get(0).get("courses").get(0);
     assertEquals(3, courseJson.get("allocation").asInt());
     assertEquals(120, courseJson.get("enrollmentEstimate").asInt());
+    assertEquals(2.5, courseJson.get("unroundedAllocation").asDouble());
     assertEquals(
         mapper.writeValueAsString(List.of(InstructorRecruitment.of(ta, List.of(course)))), body);
   }

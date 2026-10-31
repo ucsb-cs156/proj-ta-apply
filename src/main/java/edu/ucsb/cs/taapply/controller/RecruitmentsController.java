@@ -8,6 +8,7 @@ import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
 import edu.ucsb.cs.taapply.models.Quarter;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.AllocationService;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,6 +49,7 @@ public class RecruitmentsController extends ApiController {
   @Autowired JobService jobService;
   @Autowired PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
   @Autowired RecruitmentAuditService recruitmentAuditService;
+  @Autowired AllocationService allocationService;
 
   @Operation(
       summary = "Create a recruitment",
@@ -193,6 +195,8 @@ public class RecruitmentsController extends ApiController {
 
     recruitment.setTotalHiringTarget(totalHiringTarget);
     recruitmentRepository.save(recruitment);
+    // Every section's fractional share depends on the target (issue #176).
+    allocationService.recompute(recruitment);
     return recruitment;
   }
 

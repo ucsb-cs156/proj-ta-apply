@@ -74,6 +74,9 @@ describe("RecruitmentCoursesPage tests", () => {
     axiosMock.onPut("/api/admin/recruitments/totalHiringTarget").reply(200, {});
     axiosMock.onPost("/api/recruitmentcourses/refresh").reply(200, notRemoved);
     axiosMock
+      .onPost("/api/recruitmentcourses/autoAllocate")
+      .reply(200, notRemoved);
+    axiosMock
       .onPut("/api/recruitmentcourses/enrollmentEstimates")
       .reply(200, notRemoved);
     // Recruitment 7, refreshed once (issue #124).
@@ -194,6 +197,9 @@ describe("RecruitmentCoursesPage tests", () => {
       "RecruitmentCoursesPage-header-maxEnroll",
       "RecruitmentCoursesPage-header-enrollmentEstimate",
       "RecruitmentCoursesPage-header-allocation",
+      "RecruitmentCoursesPage-header-unroundedAllocation",
+      "RecruitmentCoursesPage-header-delta",
+      "RecruitmentCoursesPage-header-ratio",
       "RecruitmentCoursesPage-header-status",
       "RecruitmentCoursesPage-header-summerSession",
       "RecruitmentCoursesPage-header-removed",
@@ -752,6 +758,168 @@ describe("RecruitmentCoursesPage tests", () => {
       );
     },
   );
+
+  // ---- auto assign (issue #176) ----
+
+  const autoAllocatePosts = () =>
+    axiosMock.history.post.filter(
+      (r) => r.url === "/api/recruitmentcourses/autoAllocate",
+    );
+
+  test("the Auto assign button names the type, carries the tooltip, and waits for the recruitment", async () => {
+    renderPage();
+
+    const button = await screen.findByTestId(
+      "RecruitmentCoursesPage-auto-assign",
+    );
+    expect(button).toHaveTextContent("Auto assign ULA allocations");
+    expect(button).toHaveClass("btn-outline-primary");
+    await userEvent.hover(button);
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent(
+      "Automatically allocate the 6 ULAs across courses based on enrollment",
+    );
+    expect(tooltip).toHaveAttribute(
+      "id",
+      "RecruitmentCoursesPage-auto-assign-tooltip",
+    );
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-auto-assign-modal"),
+    ).not.toBeInTheDocument();
+    // The table's headings follow the type too.
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-header-ratio"),
+    ).toHaveTextContent("ULA:student ratio");
+  });
+
+  test("no button until the recruitment is known", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-auto-assign"),
+    ).not.toBeInTheDocument();
+    // Without a type the table assumes TA.
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-header-ratio"),
+    ).toHaveTextContent("TA:student ratio");
+  });
+
+  test("a recruitment without a target yet is described as expecting one", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+      {
+        ...recruitmentsFixtures.threeRecruitments[0],
+        id: 7,
+        totalHiringTarget: undefined,
+      },
+    ]);
+    renderPage();
+    await userEvent.hover(
+      await screen.findByTestId("RecruitmentCoursesPage-auto-assign"),
+    );
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Automatically allocate the 1 TAs across courses based on enrollment",
+    );
+  });
+
+  test("confirming the modal posts, closes it, toasts and re-reads the courses", async () => {
+    renderPage();
+    await afterRefresh();
+    const before = getsOf("/api/recruitmentcourses/all");
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-auto-assign"),
+    );
+    const modal = await screen.findByTestId(
+      "RecruitmentCoursesPage-auto-assign-modal",
+    );
+    expect(modal).toHaveTextContent(
+      "You have requested an automatic allocation based on estimated enrollment.",
+    );
+    expect(modal).toHaveTextContent(
+      "This will overwrite all values currently in the allocation fields. This cannot be undone.",
+    );
+    expect(modal).toHaveTextContent("Are you sure?");
+    expect(screen.getByText("Auto assign allocations")).toHaveClass(
+      "modal-title",
+    );
+    const confirm = screen.getByTestId(
+      "RecruitmentCoursesPage-auto-assign-confirm",
+    );
+    expect(confirm).toHaveTextContent("Yes, overwrite allocations");
+    expect(confirm).toHaveClass("btn-danger");
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-auto-assign-cancel"),
+    ).toHaveTextContent("No, keep my current allocations");
+    expect(autoAllocatePosts()).toHaveLength(0);
+
+    await userEvent.click(confirm);
+
+    await waitFor(() => expect(autoAllocatePosts()).toHaveLength(1));
+    expect(autoAllocatePosts()[0].params).toEqual({ recruitmentId: "7" });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Allocations assigned from the enrollment estimates.",
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("RecruitmentCoursesPage-auto-assign-modal"),
+      ).not.toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(getsOf("/api/recruitmentcourses/all")).toBeGreaterThan(before),
+    );
+  });
+
+  test("declining the modal, or closing it, posts nothing", async () => {
+    renderPage();
+    await userEvent.click(
+      await screen.findByTestId("RecruitmentCoursesPage-auto-assign"),
+    );
+    await screen.findByTestId("RecruitmentCoursesPage-auto-assign-modal");
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-auto-assign-cancel"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("RecruitmentCoursesPage-auto-assign-modal"),
+      ).not.toBeInTheDocument(),
+    );
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-auto-assign"),
+    );
+    await screen.findByTestId("RecruitmentCoursesPage-auto-assign-modal");
+    await userEvent.click(screen.getByLabelText("Close"));
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("RecruitmentCoursesPage-auto-assign-modal"),
+      ).not.toBeInTheDocument(),
+    );
+    expect(autoAllocatePosts()).toHaveLength(0);
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  test("a failed auto assign keeps the modal open and reports the error", async () => {
+    axiosMock
+      .onPost("/api/recruitmentcourses/autoAllocate")
+      .reply(500, { message: "boom" });
+    renderPage();
+    await userEvent.click(
+      await screen.findByTestId("RecruitmentCoursesPage-auto-assign"),
+    );
+    await userEvent.click(
+      await screen.findByTestId("RecruitmentCoursesPage-auto-assign-confirm"),
+    );
+
+    await waitFor(() => expect(mockToast).toHaveBeenCalled());
+    expect(mockToast.mock.calls[0][0]).toMatch(/500/);
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-auto-assign-modal"),
+    ).toBeInTheDocument();
+  });
 
   /** Removed rows are hidden until asked for. */
   test("removed courses are hidden by default", async () => {

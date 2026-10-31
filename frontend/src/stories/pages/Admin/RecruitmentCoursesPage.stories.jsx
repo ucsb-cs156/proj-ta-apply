@@ -54,6 +54,9 @@ export default {
         http.post("/api/recruitmentcourses/refresh", () =>
           HttpResponse.json(notRemoved),
         ),
+        http.post("/api/recruitmentcourses/autoAllocate", () =>
+          HttpResponse.json(notRemoved),
+        ),
         http.post("/api/jobs/launch/populateRecruitmentCourses", () =>
           HttpResponse.json({ id: 1 }),
         ),
