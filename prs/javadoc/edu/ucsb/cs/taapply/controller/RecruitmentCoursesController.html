@@ -66,6 +66,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#allForRecruitment(java.lang.Long,boolean)" tabindex="0">allForRecruitment(Long, boolean)</a></li>
 <li><a href="#addByEnrollCode(java.lang.Long,java.lang.String)" tabindex="0">addByEnrollCode(Long, String)</a></li>
 <li><a href="#setRemoved(java.lang.Long,boolean)" tabindex="0">setRemoved(Long, boolean)</a></li>
+<li><a href="#setAllocation(java.lang.Long,java.lang.Integer)" tabindex="0">setAllocation(Long, Integer)</a></li>
 </ol>
 </li>
 </ol>
@@ -125,9 +126,13 @@ loadScripts(document, 'script');</script>
  boolean&nbsp;includeRemoved)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setRemoved(java.lang.Long,boolean)" class="member-name-link">setRemoved</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- boolean&nbsp;removed)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setAllocation(java.lang.Long,java.lang.Integer)" class="member-name-link">setAllocation</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;allocation)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setRemoved(java.lang.Long,boolean)" class="member-name-link">setRemoved</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ boolean&nbsp;removed)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -200,6 +205,19 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  @RequestParam
  boolean&nbsp;removed)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setAllocation(java.lang.Long,java.lang.Integer)">
+<h3>setAllocation</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PutMapping("/allocation")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span>&nbsp;<span class="element-name">setAllocation</span><wbr><span class="parameters">(@RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ @RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;allocation)</span></div>
 </div>
 </section>
 </li>
