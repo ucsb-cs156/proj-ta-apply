@@ -327,10 +327,103 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             List.of(
                 new CourseDetails(4L, "CMPSC     8", "0100", "TITLE 4", "CONRAD P"),
                 new CourseDetails(2L, "CMPSC   156", "0200", "TITLE 2", "CONRAD P")),
-            null);
+            null,
+            true);
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
     verify(instructorRepository).findByEmail(EMAIL);
     verify(instructorRepository, never()).findByEmail("attacker@example.com");
+  }
+
+  // ---- canRank (issue #202) ----
+
+  private void rankingPageSetup(String reviewStatus) {
+    Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
+    recruitment.setReviewStatus(reviewStatus);
+    when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
+    RecruitmentCourse course = row(1L, 10L, "CMPSC   156", "0100", false);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+    when(recruitmentCourseRepository.findByRecruitmentId(10L)).thenReturn(List.of(course));
+  }
+
+  private void adminWhoIsAlsoInstructor() {
+    when(currentUserService.getCurrentUser())
+        .thenReturn(
+            CurrentUser.builder()
+                .user(User.builder().email(EMAIL).build())
+                .roles(
+                    List.of(
+                        new SimpleGrantedAuthority("ROLE_ADMIN"),
+                        new SimpleGrantedAuthority("ROLE_INSTRUCTOR")))
+                .build());
+  }
+
+  private boolean canRankFrom(MvcResult response) throws Exception {
+    return mapper.readTree(response.getResponse().getContentAsString()).get("canRank").asBoolean();
+  }
+
+  /** The bug of issue #202: the admin role must not hide the ranking boxes from the instructor. */
+  @WithMockUser(roles = {"ADMIN", "INSTRUCTOR"})
+  @Test
+  public void an_admin_who_teaches_the_course_can_rank_while_reviews_are_open() throws Exception {
+    adminWhoIsAlsoInstructor();
+    instructorWithCatalogName("CONRAD P");
+    rankingPageSetup("Open");
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertTrue(canRankFrom(response));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_who_does_not_teach_the_course_cannot_rank() throws Exception {
+    currentUser(EMAIL, true);
+    instructorWithCatalogName("SOMEONE ELSE");
+    rankingPageSetup("Open");
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertFalse(canRankFrom(response));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_with_no_catalog_name_cannot_rank() throws Exception {
+    currentUser(EMAIL, true);
+    when(instructorRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+    rankingPageSetup("Open");
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertFalse(canRankFrom(response));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void the_instructor_cannot_rank_once_reviews_are_closed() throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    rankingPageSetup("Closed");
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertFalse(canRankFrom(response));
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
