@@ -53,30 +53,36 @@ import org.springframework.web.bind.annotation.RestController;
       LocalDate primaryConsiderationDate,
       LocalDate actualOpeningDate,
       LocalDate actualClosingDate,
+      String reviewStatus,
+      LocalDate facultyReviewOpeningDate,
+      LocalDate facultyRankingDeadline,
       List&lt;RecruitmentCourse&gt; courses) {
     public static InstructorRecruitment of(Recruitment r, List&lt;RecruitmentCourse&gt; courses) {
-<span class="fc" id="L58">      return new InstructorRecruitment(</span>
-<span class="fc" id="L59">          r.getId(),</span>
-<span class="fc" id="L60">          r.getQuarter(),</span>
-<span class="fc" id="L61">          r.getType(),</span>
-<span class="fc" id="L62">          r.getApplicationStatus(),</span>
-<span class="fc" id="L63">          r.getTentativeOpeningDate(),</span>
-<span class="fc" id="L64">          r.getPrimaryConsiderationDate(),</span>
-<span class="fc" id="L65">          r.getActualOpeningDate(),</span>
-<span class="fc" id="L66">          r.getActualClosingDate(),</span>
+<span class="fc" id="L61">      return new InstructorRecruitment(</span>
+<span class="fc" id="L62">          r.getId(),</span>
+<span class="fc" id="L63">          r.getQuarter(),</span>
+<span class="fc" id="L64">          r.getType(),</span>
+<span class="fc" id="L65">          r.getApplicationStatus(),</span>
+<span class="fc" id="L66">          r.getTentativeOpeningDate(),</span>
+<span class="fc" id="L67">          r.getPrimaryConsiderationDate(),</span>
+<span class="fc" id="L68">          r.getActualOpeningDate(),</span>
+<span class="fc" id="L69">          r.getActualClosingDate(),</span>
+<span class="fc" id="L70">          r.getReviewStatus(),</span>
+<span class="fc" id="L71">          r.getFacultyReviewOpeningDate(),</span>
+<span class="fc" id="L72">          r.getFacultyRankingDeadline(),</span>
           courses);
     }
   }
 
   /** Newest quarter first, TA before ULA within a quarter: the order the other lists use. */
-<span class="fc" id="L72">  private static final Comparator&lt;Recruitment&gt; NEWEST_FIRST =</span>
-<span class="fc" id="L73">      Comparator.comparing(Recruitment::getQuarter).reversed().thenComparing(Recruitment::getType);</span>
+<span class="fc" id="L78">  private static final Comparator&lt;Recruitment&gt; NEWEST_FIRST =</span>
+<span class="fc" id="L79">      Comparator.comparing(Recruitment::getQuarter).reversed().thenComparing(Recruitment::getType);</span>
 
   /** Course id first, then section, so a course's several lectures sit together in order. */
-<span class="fc" id="L76">  private static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_THEN_SECTION =</span>
-<span class="fc" id="L77">      Comparator.comparing(RecruitmentCourse::getCourseId)</span>
-<span class="fc" id="L78">          .thenComparing(</span>
-<span class="fc" id="L79">              RecruitmentCourse::getSection, Comparator.nullsFirst(Comparator.naturalOrder()));</span>
+<span class="fc" id="L82">  private static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_THEN_SECTION =</span>
+<span class="fc" id="L83">      Comparator.comparing(RecruitmentCourse::getCourseId)</span>
+<span class="fc" id="L84">          .thenComparing(</span>
+<span class="fc" id="L85">              RecruitmentCourse::getSection, Comparator.nullsFirst(Comparator.naturalOrder()));</span>
 
   @Operation(
       summary = &quot;The recruitments that include a course this instructor teaches&quot;,
@@ -90,29 +96,29 @@ import org.springframework.web.bind.annotation.RestController;
   public List&lt;InstructorRecruitment&gt; forInstructor(
       @Parameter(name = &quot;email&quot;) @RequestParam String email) {
 
-<span class="fc" id="L93">    String catalogName =</span>
-<span class="fc" id="L94">        instructorRepository.findByEmail(email).map(Instructor::getCatalogName).orElse(null);</span>
-<span class="fc bfc" id="L95" title="All 2 branches covered.">    if (catalogName == null) {</span>
-<span class="fc" id="L96">      return List.of();</span>
+<span class="fc" id="L99">    String catalogName =</span>
+<span class="fc" id="L100">        instructorRepository.findByEmail(email).map(Instructor::getCatalogName).orElse(null);</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">    if (catalogName == null) {</span>
+<span class="fc" id="L102">      return List.of();</span>
     }
 
-<span class="fc" id="L99">    Map&lt;Long, List&lt;RecruitmentCourse&gt;&gt; byRecruitment =</span>
-<span class="fc" id="L100">        recruitmentCourseRepository.findByInstructor(catalogName).stream()</span>
-<span class="fc bfc" id="L101" title="All 2 branches covered.">            .filter(row -&gt; !row.isRemoved())</span>
-<span class="fc" id="L102">            .collect(Collectors.groupingBy(RecruitmentCourse::getRecruitmentId));</span>
-<span class="fc bfc" id="L103" title="All 2 branches covered.">    if (byRecruitment.isEmpty()) {</span>
-<span class="fc" id="L104">      return List.of();</span>
+<span class="fc" id="L105">    Map&lt;Long, List&lt;RecruitmentCourse&gt;&gt; byRecruitment =</span>
+<span class="fc" id="L106">        recruitmentCourseRepository.findByInstructor(catalogName).stream()</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">            .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L108">            .collect(Collectors.groupingBy(RecruitmentCourse::getRecruitmentId));</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">    if (byRecruitment.isEmpty()) {</span>
+<span class="fc" id="L110">      return List.of();</span>
     }
 
-<span class="fc" id="L107">    return StreamSupport.stream(</span>
-<span class="fc" id="L108">            recruitmentRepository.findAllById(byRecruitment.keySet()).spliterator(), false)</span>
-<span class="fc" id="L109">        .sorted(NEWEST_FIRST)</span>
-<span class="fc" id="L110">        .map(</span>
+<span class="fc" id="L113">    return StreamSupport.stream(</span>
+<span class="fc" id="L114">            recruitmentRepository.findAllById(byRecruitment.keySet()).spliterator(), false)</span>
+<span class="fc" id="L115">        .sorted(NEWEST_FIRST)</span>
+<span class="fc" id="L116">        .map(</span>
             r -&gt;
-<span class="fc" id="L112">                InstructorRecruitment.of(</span>
+<span class="fc" id="L118">                InstructorRecruitment.of(</span>
                     r,
-<span class="fc" id="L114">                    byRecruitment.get(r.getId()).stream().sorted(BY_COURSE_THEN_SECTION).toList()))</span>
-<span class="fc" id="L115">        .toList();</span>
+<span class="fc" id="L120">                    byRecruitment.get(r.getId()).stream().sorted(BY_COURSE_THEN_SECTION).toList()))</span>
+<span class="fc" id="L121">        .toList();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -10,6 +10,7 @@ import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.models.ApplicantRecruitmentDto;
 import edu.ucsb.cs.taapply.models.CourseSections;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -50,8 +51,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = &quot;ApplicantRecruitments&quot;)
 @RequestMapping(&quot;/api/recruitments&quot;)
 @RestController
-<span class="fc" id="L53">@Slf4j</span>
-<span class="fc" id="L54">public class ApplicantRecruitmentsController extends ApiController {</span>
+<span class="fc" id="L54">@Slf4j</span>
+<span class="fc" id="L55">public class ApplicantRecruitmentsController extends ApiController {</span>
 
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
@@ -67,12 +68,12 @@ import org.springframework.web.bind.annotation.RestController;
    * The admin-maintained lists the application form for one recruitment offers. The interests are a
    * ULA question only, so a TA recruitment's list is empty.
    */
-<span class="fc" id="L70">  public static record ApplicationOptions(</span>
+<span class="fc" id="L71">  public static record ApplicationOptions(</span>
       List&lt;String&gt; majors, List&lt;String&gt; topics, List&lt;String&gt; interests) {}
 
   /** Every recruitment, most recent quarter first, TA before ULA within a quarter. */
   private List&lt;Recruitment&gt; all() {
-<span class="fc" id="L75">    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();</span>
+<span class="fc" id="L76">    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();</span>
   }
 
   @Operation(
@@ -80,8 +81,11 @@ import org.springframework.web.bind.annotation.RestController;
       description = &quot;Each carries its type, so the page can say which positions it is for.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;/open&quot;)
-  public List&lt;Recruitment&gt; openRecruitments() {
-<span class="fc" id="L84">    return all().stream().filter(applicationAccessService::acceptingApplications).toList();</span>
+  public List&lt;ApplicantRecruitmentDto&gt; openRecruitments() {
+<span class="fc" id="L85">    return all().stream()</span>
+<span class="fc" id="L86">        .filter(applicationAccessService::acceptingApplications)</span>
+<span class="fc" id="L87">        .map(ApplicantRecruitmentDto::from)</span>
+<span class="fc" id="L88">        .toList();</span>
   }
 
   @Operation(
@@ -89,10 +93,13 @@ import org.springframework.web.bind.annotation.RestController;
       description = &quot;So the home page can show when applications are expected to open.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;/upcoming&quot;)
-  public List&lt;Recruitment&gt; upcomingRecruitments() {
+  public List&lt;ApplicantRecruitmentDto&gt; upcomingRecruitments() {
     // Never opened is the whole test: actualOpeningDate is stamped the first time a recruitment
     // opens and never cleared, so a null one has not opened yet and is necessarily still closed.
-<span class="fc bfc" id="L95" title="All 2 branches covered.">    return all().stream().filter(r -&gt; r.getActualOpeningDate() == null).toList();</span>
+<span class="fc" id="L99">    return all().stream()</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        .filter(r -&gt; r.getActualOpeningDate() == null)</span>
+<span class="fc" id="L101">        .map(ApplicantRecruitmentDto::from)</span>
+<span class="fc" id="L102">        .toList();</span>
   }
 
   @Operation(
@@ -100,16 +107,17 @@ import org.springframework.web.bind.annotation.RestController;
       description = &quot;So the home page can say when the last TA round and the last ULA round ran.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;/recentlyClosed&quot;)
-  public List&lt;Recruitment&gt; recentlyClosed() {
+  public List&lt;ApplicantRecruitmentDto&gt; recentlyClosed() {
     // Both conditions matter: a reopened recruitment keeps the closing date of its earlier round,
     // so having closed once is not enough; it has to be closed now.
     // Already sorted most recent quarter first, so the first match of each type is the one to show.
-<span class="fc" id="L107">    Set&lt;RecruitmentType&gt; seen = new HashSet&lt;&gt;();</span>
-<span class="fc" id="L108">    return all().stream()</span>
-<span class="fc bfc" id="L109" title="All 2 branches covered.">        .filter(r -&gt; r.getApplicationStatus() == ApplicationStatus.CLOSED)</span>
-<span class="fc bfc" id="L110" title="All 2 branches covered.">        .filter(r -&gt; r.getActualClosingDate() != null)</span>
-<span class="fc" id="L111">        .filter(r -&gt; seen.add(r.getType()))</span>
-<span class="fc" id="L112">        .toList();</span>
+<span class="fc" id="L114">    Set&lt;RecruitmentType&gt; seen = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L115">    return all().stream()</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        .filter(r -&gt; r.getApplicationStatus() == ApplicationStatus.CLOSED)</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        .filter(r -&gt; r.getActualClosingDate() != null)</span>
+<span class="fc" id="L118">        .filter(r -&gt; seen.add(r.getType()))</span>
+<span class="fc" id="L119">        .map(ApplicantRecruitmentDto::from)</span>
+<span class="fc" id="L120">        .toList();</span>
   }
 
   @Operation(
@@ -119,8 +127,8 @@ import org.springframework.web.bind.annotation.RestController;
               + &quot; one.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;/applicable&quot;)
-  public List&lt;Recruitment&gt; applicableRecruitments() {
-<span class="fc" id="L123">    return all();</span>
+  public List&lt;ApplicantRecruitmentDto&gt; applicableRecruitments() {
+<span class="fc" id="L131">    return all().stream().map(ApplicantRecruitmentDto::from).toList();</span>
   }
 
   @Operation(
@@ -135,16 +143,16 @@ import org.springframework.web.bind.annotation.RestController;
   public List&lt;String&gt; courseChoices(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
 
-<span class="fc bfc" id="L138" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
-<span class="fc" id="L139">      return List.of();</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
+<span class="fc" id="L147">      return List.of();</span>
     }
 
-<span class="fc" id="L142">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
-<span class="fc" id="L143">        .filter(RecruitmentCourse::isOnOffer)</span>
-<span class="fc" id="L144">        .map(c -&gt; c.getCourseId())</span>
-<span class="fc" id="L145">        .distinct()</span>
-<span class="fc" id="L146">        .sorted()</span>
-<span class="fc" id="L147">        .toList();</span>
+<span class="fc" id="L150">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc" id="L151">        .filter(RecruitmentCourse::isOnOffer)</span>
+<span class="fc" id="L152">        .map(c -&gt; c.getCourseId())</span>
+<span class="fc" id="L153">        .distinct()</span>
+<span class="fc" id="L154">        .sorted()</span>
+<span class="fc" id="L155">        .toList();</span>
   }
 
   @Operation(
@@ -159,10 +167,10 @@ import org.springframework.web.bind.annotation.RestController;
   public Map&lt;String, String&gt; courseInstructors(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
 
-<span class="fc bfc" id="L162" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
-<span class="fc" id="L163">      return Map.of();</span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
+<span class="fc" id="L171">      return Map.of();</span>
     }
-<span class="fc" id="L165">    return instructorsByCourse(recruitmentCourseRepository.findByRecruitmentId(recruitmentId));</span>
+<span class="fc" id="L173">    return instructorsByCourse(recruitmentCourseRepository.findByRecruitmentId(recruitmentId));</span>
   }
 
   /**
@@ -170,17 +178,17 @@ import org.springframework.web.bind.annotation.RestController;
    * by course too, so the JSON is stable.
    */
   static Map&lt;String, String&gt; instructorsByCourse(List&lt;RecruitmentCourse&gt; rows) {
-<span class="fc" id="L173">    Map&lt;String, TreeSet&lt;String&gt;&gt; names = new TreeMap&lt;&gt;();</span>
-<span class="fc bfc" id="L174" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
-<span class="fc bfc" id="L175" title="All 2 branches covered.">      String instructor = row.getInstructor() == null ? &quot;&quot; : row.getInstructor().strip();</span>
-<span class="fc bfc" id="L176" title="All 4 branches covered.">      if (row.isRemoved() || instructor.isEmpty()) {</span>
-<span class="fc" id="L177">        continue;</span>
+<span class="fc" id="L181">    Map&lt;String, TreeSet&lt;String&gt;&gt; names = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L182" title="All 2 branches covered.">    for (RecruitmentCourse row : rows) {</span>
+<span class="fc bfc" id="L183" title="All 2 branches covered.">      String instructor = row.getInstructor() == null ? &quot;&quot; : row.getInstructor().strip();</span>
+<span class="fc bfc" id="L184" title="All 4 branches covered.">      if (row.isRemoved() || instructor.isEmpty()) {</span>
+<span class="fc" id="L185">        continue;</span>
       }
-<span class="fc" id="L179">      names.computeIfAbsent(row.getCourseId(), k -&gt; new TreeSet&lt;&gt;()).add(instructor);</span>
-<span class="fc" id="L180">    }</span>
-<span class="fc" id="L181">    Map&lt;String, String&gt; result = new TreeMap&lt;&gt;();</span>
-<span class="fc" id="L182">    names.forEach((courseId, set) -&gt; result.put(courseId, String.join(&quot;, &quot;, set)));</span>
-<span class="fc" id="L183">    return result;</span>
+<span class="fc" id="L187">      names.computeIfAbsent(row.getCourseId(), k -&gt; new TreeSet&lt;&gt;()).add(instructor);</span>
+<span class="fc" id="L188">    }</span>
+<span class="fc" id="L189">    Map&lt;String, String&gt; result = new TreeMap&lt;&gt;();</span>
+<span class="fc" id="L190">    names.forEach((courseId, set) -&gt; result.put(courseId, String.join(&quot;, &quot;, set)));</span>
+<span class="fc" id="L191">    return result;</span>
   }
 
   @Operation(
@@ -199,31 +207,31 @@ import org.springframework.web.bind.annotation.RestController;
           String courseId)
       throws Exception {
 
-<span class="fc" id="L202">    Recruitment recruitment =</span>
+<span class="fc" id="L210">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L204">            .findById(recruitmentId)</span>
-<span class="fc" id="L205">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L212">            .findById(recruitmentId)</span>
+<span class="fc" id="L213">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
 
     // Any one lecture's enroll code finds the whole offering, every section included, so the
     // lowest is as good as any and keeps the request the same from one call to the next.
-<span class="fc" id="L209">    Optional&lt;String&gt; enrollCode =</span>
-<span class="fc" id="L210">        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
-<span class="fc bfc" id="L211" title="All 4 branches covered.">            .filter(c -&gt; c.isOnOffer() &amp;&amp; courseId.equals(c.getCourseId()))</span>
-<span class="fc" id="L212">            .map(RecruitmentCourse::getEnrollCode)</span>
-<span class="fc" id="L213">            .sorted()</span>
-<span class="fc" id="L214">            .findFirst();</span>
-<span class="fc bfc" id="L215" title="All 2 branches covered.">    if (enrollCode.isEmpty()) {</span>
-<span class="fc" id="L216">      return CourseSections.none(courseId, recruitment.getQuarter());</span>
+<span class="fc" id="L217">    Optional&lt;String&gt; enrollCode =</span>
+<span class="fc" id="L218">        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc bfc" id="L219" title="All 4 branches covered.">            .filter(c -&gt; c.isOnOffer() &amp;&amp; courseId.equals(c.getCourseId()))</span>
+<span class="fc" id="L220">            .map(RecruitmentCourse::getEnrollCode)</span>
+<span class="fc" id="L221">            .sorted()</span>
+<span class="fc" id="L222">            .findFirst();</span>
+<span class="fc bfc" id="L223" title="All 2 branches covered.">    if (enrollCode.isEmpty()) {</span>
+<span class="fc" id="L224">      return CourseSections.none(courseId, recruitment.getQuarter());</span>
     }
 
-<span class="fc" id="L219">    return CourseSections.from(</span>
+<span class="fc" id="L227">    return CourseSections.from(</span>
         courseId,
-<span class="fc" id="L221">        recruitment.getQuarter(),</span>
-<span class="fc" id="L222">        ucsbCurriculumService.getOffering(recruitment.getQuarter(), enrollCode.get()));</span>
+<span class="fc" id="L229">        recruitment.getQuarter(),</span>
+<span class="fc" id="L230">        ucsbCurriculumService.getOffering(recruitment.getQuarter(), enrollCode.get()));</span>
   }
 
   private static List&lt;String&gt; sorted(Stream&lt;String&gt; names) {
-<span class="fc" id="L226">    return names.sorted(String.CASE_INSENSITIVE_ORDER).toList();</span>
+<span class="fc" id="L234">    return names.sorted(String.CASE_INSENSITIVE_ORDER).toList();</span>
   }
 
   @Operation(
@@ -235,31 +243,31 @@ import org.springframework.web.bind.annotation.RestController;
   @GetMapping(&quot;/options&quot;)
   public ApplicationOptions applicationOptions(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc" id="L238">    Recruitment recruitment =</span>
+<span class="fc" id="L246">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L240">            .findById(recruitmentId)</span>
-<span class="fc" id="L241">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L248">            .findById(recruitmentId)</span>
+<span class="fc" id="L249">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
 
-<span class="fc bfc" id="L243" title="All 2 branches covered.">    if (recruitment.getType() == RecruitmentType.TA) {</span>
-<span class="fc" id="L244">      return new ApplicationOptions(</span>
-<span class="fc" id="L245">          sorted(</span>
-<span class="fc" id="L246">              StreamSupport.stream(taMajorRepository.findAll().spliterator(), false)</span>
-<span class="fc" id="L247">                  .map(TaMajor::getName)),</span>
-<span class="fc" id="L248">          sorted(</span>
-<span class="fc" id="L249">              StreamSupport.stream(taTopicRepository.findAll().spliterator(), false)</span>
-<span class="fc" id="L250">                  .map(TaTopic::getName)),</span>
-<span class="fc" id="L251">          List.of());</span>
+<span class="fc bfc" id="L251" title="All 2 branches covered.">    if (recruitment.getType() == RecruitmentType.TA) {</span>
+<span class="fc" id="L252">      return new ApplicationOptions(</span>
+<span class="fc" id="L253">          sorted(</span>
+<span class="fc" id="L254">              StreamSupport.stream(taMajorRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L255">                  .map(TaMajor::getName)),</span>
+<span class="fc" id="L256">          sorted(</span>
+<span class="fc" id="L257">              StreamSupport.stream(taTopicRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L258">                  .map(TaTopic::getName)),</span>
+<span class="fc" id="L259">          List.of());</span>
     }
-<span class="fc" id="L253">    return new ApplicationOptions(</span>
-<span class="fc" id="L254">        sorted(</span>
-<span class="fc" id="L255">            StreamSupport.stream(ulaMajorRepository.findAll().spliterator(), false)</span>
-<span class="fc" id="L256">                .map(UlaMajor::getName)),</span>
-<span class="fc" id="L257">        sorted(</span>
-<span class="fc" id="L258">            StreamSupport.stream(ulaTopicRepository.findAll().spliterator(), false)</span>
-<span class="fc" id="L259">                .map(UlaTopic::getName)),</span>
-<span class="fc" id="L260">        sorted(</span>
-<span class="fc" id="L261">            StreamSupport.stream(ulaInterestRepository.findAll().spliterator(), false)</span>
-<span class="fc" id="L262">                .map(UlaInterest::getName)));</span>
+<span class="fc" id="L261">    return new ApplicationOptions(</span>
+<span class="fc" id="L262">        sorted(</span>
+<span class="fc" id="L263">            StreamSupport.stream(ulaMajorRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L264">                .map(UlaMajor::getName)),</span>
+<span class="fc" id="L265">        sorted(</span>
+<span class="fc" id="L266">            StreamSupport.stream(ulaTopicRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L267">                .map(UlaTopic::getName)),</span>
+<span class="fc" id="L268">        sorted(</span>
+<span class="fc" id="L269">            StreamSupport.stream(ulaInterestRepository.findAll().spliterator(), false)</span>
+<span class="fc" id="L270">                .map(UlaInterest::getName)));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
