@@ -54,10 +54,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           name, email, major, year in program, expected graduation, GPA in
           major, overall GPA and quarters of previous ULA service. No video
           links or admin comments are exported. Course columns follow in course
-          ID and section order, with section and enrollment code in every
-          heading to distinguish independent faculty rankings. Removed, stale
-          and cancelled sections remain in this historical export so saved
-          rankings are not lost when offerings change.
+          ID and section order, each headed by the bare course number (16, 5A);
+          the section is added only when the recruitment has more than one
+          section of that course (16 (section 0100), 16 (section 0200)), so
+          independent faculty rankings stay distinct. Removed, stale and
+          cancelled sections remain in this historical export so saved rankings
+          are not lost when offerings change.
         </p>
         <p data-testid="HelpAdminsPage-rankings-csv-planning">
           The file also carries the planning from the Assignments page: a{" "}

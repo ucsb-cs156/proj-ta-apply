@@ -155,8 +155,8 @@ class RankingsCsvServiceTests {
     assertEquals(
         plus(
             TA_IDENTITY,
-            List.of("CMPSC 16 (section 0100, enroll 900)", "0", "0", "0"),
-            List.of("CMPSC 16 (section 0200, enroll 100)", "0", "0", "0")),
+            List.of("16 (section 0100)", "0", "0", "0"),
+            List.of("16 (section 0200)", "0", "0", "0")),
         parse(service.write(recruitment(RecruitmentType.TA))));
   }
 
@@ -204,10 +204,10 @@ class RankingsCsvServiceTests {
         rows(
             plus(
                 TA_IDENTITY,
-                List.of("CMPSC 16 (section 0100, enroll 100)", "2", "1", "1"),
-                List.of("CMPSC 16 (section 0100, enroll 101)", "3", "1", "2"),
-                List.of("CMPSC 16 (section 0200, enroll 200)", "0", "0", "0"),
-                List.of("CMPSC 24 (section 0100, enroll 300)", "0", "0", "0")),
+                List.of("16 (section 0100, enroll 100)", "2", "1", "1"),
+                List.of("16 (section 0100, enroll 101)", "3", "1", "2"),
+                List.of("16 (section 0200)", "0", "0", "0"),
+                List.of("24", "0", "0", "0")),
             List.of(
                 "Zoë, \"星\"\nAda",
                 "O’Connor",
@@ -216,7 +216,7 @@ class RankingsCsvServiceTests {
                 "PHD",
                 "2",
                 "Spring 2027",
-                "CMPSC 16 (section 0100, enroll 101)",
+                "16 (section 0100, enroll 101)",
                 "2",
                 "5",
                 "9",
@@ -243,7 +243,7 @@ class RankingsCsvServiceTests {
                 "MS",
                 "2",
                 "Spring 2027",
-                "CMPSC 16 (section 0100, enroll 100)",
+                "16 (section 0100, enroll 100)",
                 "",
                 "",
                 "",
@@ -256,7 +256,7 @@ class RankingsCsvServiceTests {
                 "PHD",
                 "2",
                 "Spring 2027",
-                "CMPSC 16 (section 0100, enroll 100)",
+                "16 (section 0100, enroll 100)",
                 "",
                 "",
                 "",
@@ -293,7 +293,7 @@ class RankingsCsvServiceTests {
     when(candidateRankingRepository.findByRecruitmentCourseId(10L))
         .thenReturn(List.of(rank(10, 1, 12), rank(10, 2, null), rank(10, 3, 0)));
     String csv = service.write(recruitment(RecruitmentType.ULA));
-    String label = "\"CMPSC \"\"8\"\",\n星 (section 0100, enroll 100)\"";
+    String label = "\"\"\"8\"\",\n星\"";
     assertEquals(
         "\"firstName\",\"lastName\",\"email\",\"major\",\"yearInProgram\",\"graduationDate\","
             + "\"gpaMajor\",\"gpaOverall\",\"previousServiceAsUla\",\"tentativeAssignment\","
@@ -311,9 +311,7 @@ class RankingsCsvServiceTests {
         csv);
     assertEquals(
         rows(
-            plus(
-                ULA_IDENTITY,
-                List.of("CMPSC \"8\",\n星 (section 0100, enroll 100)", "0", "1", "-1")),
+            plus(ULA_IDENTITY, List.of("\"8\",\n星", "0", "1", "-1")),
             List.of(
                 "Zoë, \"星\"\nAda",
                 "O’Connor",
@@ -324,7 +322,7 @@ class RankingsCsvServiceTests {
                 "3.75",
                 "3.5",
                 "2",
-                "CMPSC \"8\",\n星 (section 0100, enroll 100)",
+                "\"8\",\n星",
                 "12"),
             List.of("", "", "", "", "", "", "", "", "", "", ""),
             List.of("", "", "", "", "", "", "0.0", "0.0", "0", "", "0")),
@@ -346,10 +344,7 @@ class RankingsCsvServiceTests {
         .thenReturn(List.of(allocated, course(20, null, null, null)));
     when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L)).thenReturn(List.of());
     assertEquals(
-        plus(
-            ULA_IDENTITY,
-            List.of(" (section , enroll )", "0", "0", "0"),
-            List.of("CMPSC 8 (section , enroll )", "4", "0", "4")),
+        plus(ULA_IDENTITY, List.of("", "0", "0", "0"), List.of("8", "4", "0", "4")),
         parse(service.write(recruitment(RecruitmentType.ULA))));
   }
 

@@ -97,6 +97,10 @@ describe("HelpCsvPage tests", () => {
     expect(screen.getByTestId("rankingsCsvDescription")).toHaveTextContent(
       "three planning rows labelled Allocation, Assigned and Left to assign in the first column, with each lecture's numbers under its column and every other cell blank; applicant rows follow.",
     );
+    // Issue #188: course headings are the bare number, with the section only when needed.
+    expect(screen.getByTestId("rankingsCsvDescription")).toHaveTextContent(
+      "then one column per lecture, headed by the bare course number (16), or 16 (section 0100) when the recruitment has more than one section of that course, holding that lecture's rank for the applicant.",
+    );
 
     expect(screen.getByTestId("downloadsSummary")).toHaveTextContent(
       "the Recruitments admin page offers a CSV button per recruitment that downloads every application to it",
