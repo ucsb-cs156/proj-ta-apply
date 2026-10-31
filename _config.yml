@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"bug/202-admin-instructor-ranking","number":206,"title":"Ranking page: the course's instructor may rank while reviews are Open, admin or not (closes #202)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/206"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"ux/194-ula-form-tweaks","number":207,"title":"ULA application: shorter graduate-status warning and natural-width selection tables (closes #194)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/207"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"bug/202-admin-instructor-ranking","number":206,"title":"Ranking page: the course's instructor may rank while reviews are Open, admin or not (closes #202)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/206"}]
