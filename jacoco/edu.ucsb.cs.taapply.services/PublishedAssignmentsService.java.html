@@ -43,15 +43,16 @@ import org.springframework.stereotype.Service;
       RecruitmentType type,
       String layout,
       List&lt;String&gt; headers,
-      List&lt;List&lt;String&gt;&gt; rows) {}
+      List&lt;List&lt;String&gt;&gt; rows,
+      boolean tentative) {}
 
   /** Last name, then first name, case-insensitively, a null reading as &quot;&quot;. */
-<span class="fc" id="L49">  static final Comparator&lt;Application&gt; BY_NAME =</span>
-<span class="fc" id="L50">      Comparator.comparing(</span>
-<span class="fc" id="L51">              (Application a) -&gt; ApplicationCsvService.text(a.getLastName()),</span>
+<span class="fc" id="L50">  static final Comparator&lt;Application&gt; BY_NAME =</span>
+<span class="fc" id="L51">      Comparator.comparing(</span>
+<span class="fc" id="L52">              (Application a) -&gt; ApplicationCsvService.text(a.getLastName()),</span>
               String.CASE_INSENSITIVE_ORDER)
-<span class="fc" id="L53">          .thenComparing(</span>
-<span class="fc" id="L54">              a -&gt; ApplicationCsvService.text(a.getFirstName()), String.CASE_INSENSITIVE_ORDER);</span>
+<span class="fc" id="L54">          .thenComparing(</span>
+<span class="fc" id="L55">              a -&gt; ApplicationCsvService.text(a.getFirstName()), String.CASE_INSENSITIVE_ORDER);</span>
 
   /**
    * The table for one layout.
@@ -60,141 +61,147 @@ import org.springframework.stereotype.Service;
    *     recruitment's assignments are not published
    */
   public Table table(Recruitment recruitment, String layout) {
-<span class="fc bfc" id="L63" title="All 4 branches covered.">    if (!LAYOUT_COURSE.equals(layout) &amp;&amp; !LAYOUT_STUDENT.equals(layout)) {</span>
-<span class="fc" id="L64">      throw new IllegalArgumentException(&quot;layout must be course or student&quot;);</span>
+<span class="fc bfc" id="L64" title="All 4 branches covered.">    if (!LAYOUT_COURSE.equals(layout) &amp;&amp; !LAYOUT_STUDENT.equals(layout)) {</span>
+<span class="fc" id="L65">      throw new IllegalArgumentException(&quot;layout must be course or student&quot;);</span>
     }
-<span class="fc bfc" id="L66" title="All 2 branches covered.">    if (!Boolean.TRUE.equals(recruitment.getAssignmentsPublished())) {</span>
-<span class="fc" id="L67">      throw new IllegalArgumentException(</span>
-<span class="fc" id="L68">          &quot;Assignments for recruitment %d have not been published&quot;.formatted(recruitment.getId()));</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">    if (!Boolean.TRUE.equals(recruitment.getAssignmentsPublished())) {</span>
+<span class="fc" id="L68">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L69">          &quot;Assignments for recruitment %d have not been published&quot;.formatted(recruitment.getId()));</span>
     }
-<span class="fc" id="L70">    List&lt;RecruitmentCourse&gt; courses =</span>
-<span class="fc" id="L71">        new ArrayList&lt;&gt;(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));</span>
-<span class="fc" id="L72">    courses.sort(AssignmentsService.BY_COURSE_SECTION_ENROLL);</span>
-<span class="fc" id="L73">    Map&lt;Long, RecruitmentCourse&gt; byId = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L74" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
-<span class="fc" id="L75">      byId.put(course.getId(), course);</span>
-<span class="fc" id="L76">    }</span>
-<span class="fc" id="L77">    List&lt;Application&gt; assigned =</span>
-<span class="fc" id="L78">        assignmentsService.realApplications(recruitment.getId()).stream()</span>
-<span class="fc" id="L79">            .filter(a -&gt; byId.containsKey(a.getTentativeAssignmentId()))</span>
-<span class="fc" id="L80">            .sorted(BY_NAME)</span>
-<span class="fc" id="L81">            .toList();</span>
-<span class="fc" id="L82">    Map&lt;String, String&gt; emails = emailsByCatalogName();</span>
+<span class="fc" id="L71">    List&lt;RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L72">        new ArrayList&lt;&gt;(recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()));</span>
+<span class="fc" id="L73">    courses.sort(AssignmentsService.BY_COURSE_SECTION_ENROLL);</span>
+<span class="fc" id="L74">    Map&lt;Long, RecruitmentCourse&gt; byId = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L76">      byId.put(course.getId(), course);</span>
+<span class="fc" id="L77">    }</span>
+<span class="fc" id="L78">    List&lt;Application&gt; assigned =</span>
+<span class="fc" id="L79">        assignmentsService.realApplications(recruitment.getId()).stream()</span>
+<span class="fc" id="L80">            .filter(a -&gt; byId.containsKey(a.getTentativeAssignmentId()))</span>
+<span class="fc" id="L81">            .sorted(BY_NAME)</span>
+<span class="fc" id="L82">            .toList();</span>
+<span class="fc" id="L83">    Map&lt;String, String&gt; emails = emailsByCatalogName();</span>
 
     List&lt;String&gt; headers;
-<span class="fc" id="L85">    List&lt;List&lt;String&gt;&gt; rows = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L86" title="All 2 branches covered.">    if (LAYOUT_COURSE.equals(layout)) {</span>
-<span class="fc" id="L87">      Map&lt;Long, List&lt;Application&gt;&gt; byCourse =</span>
-<span class="fc" id="L88">          assigned.stream().collect(Collectors.groupingBy(Application::getTentativeAssignmentId));</span>
-<span class="fc" id="L89">      int width = 0;</span>
-<span class="fc bfc" id="L90" title="All 2 branches covered.">      for (RecruitmentCourse course : courses) {</span>
-<span class="fc" id="L91">        List&lt;Application&gt; people = byCourse.getOrDefault(course.getId(), List.of());</span>
+<span class="fc" id="L86">    List&lt;List&lt;String&gt;&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">    if (LAYOUT_COURSE.equals(layout)) {</span>
+<span class="fc" id="L88">      Map&lt;Long, List&lt;Application&gt;&gt; byCourse =</span>
+<span class="fc" id="L89">          assigned.stream().collect(Collectors.groupingBy(Application::getTentativeAssignmentId));</span>
+<span class="fc" id="L90">      int width = 0;</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">      for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L92">        List&lt;Application&gt; people = byCourse.getOrDefault(course.getId(), List.of());</span>
         // A removed section only while someone is still assigned to it.
-<span class="fc bfc" id="L93" title="All 4 branches covered.">        if (course.isRemoved() &amp;&amp; people.isEmpty()) {</span>
-<span class="fc" id="L94">          continue;</span>
+<span class="fc bfc" id="L94" title="All 4 branches covered.">        if (course.isRemoved() &amp;&amp; people.isEmpty()) {</span>
+<span class="fc" id="L95">          continue;</span>
         }
-<span class="fc" id="L96">        width = Math.max(width, people.size());</span>
-<span class="fc" id="L97">        List&lt;String&gt; row = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L98">        row.add(courseNumber(course));</span>
-<span class="fc" id="L99">        row.add(ApplicationCsvService.text(course.getInstructor()));</span>
-<span class="fc" id="L100">        row.add(emailFor(course, emails));</span>
-<span class="fc bfc" id="L101" title="All 2 branches covered.">        for (Application person : people) {</span>
-<span class="fc" id="L102">          row.add(</span>
+<span class="fc" id="L97">        width = Math.max(width, people.size());</span>
+<span class="fc" id="L98">        List&lt;String&gt; row = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L99">        row.add(courseNumber(course));</span>
+<span class="fc" id="L100">        row.add(ApplicationCsvService.text(course.getInstructor()));</span>
+<span class="fc" id="L101">        row.add(emailFor(course, emails));</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        for (Application person : people) {</span>
+<span class="fc" id="L103">          row.add(</span>
               &quot;%s %s (%s)&quot;
-<span class="fc" id="L104">                  .formatted(</span>
-<span class="fc" id="L105">                      ApplicationCsvService.text(person.getFirstName()),</span>
-<span class="fc" id="L106">                      ApplicationCsvService.text(person.getLastName()),</span>
-<span class="fc" id="L107">                      ApplicationCsvService.text(person.getEmail())));</span>
-<span class="fc" id="L108">        }</span>
-<span class="fc" id="L109">        rows.add(row);</span>
-<span class="fc" id="L110">      }</span>
-<span class="fc" id="L111">      headers = new ArrayList&lt;&gt;(List.of(&quot;Course&quot;, &quot;Instructor&quot;, &quot;Instructor email&quot;));</span>
-<span class="fc bfc" id="L112" title="All 2 branches covered.">      for (int i = 0; i &lt; width; i++) {</span>
-<span class="fc" id="L113">        headers.add(recruitment.getType().name());</span>
+<span class="fc" id="L105">                  .formatted(</span>
+<span class="fc" id="L106">                      ApplicationCsvService.text(person.getFirstName()),</span>
+<span class="fc" id="L107">                      ApplicationCsvService.text(person.getLastName()),</span>
+<span class="fc" id="L108">                      ApplicationCsvService.text(person.getEmail())));</span>
+<span class="fc" id="L109">        }</span>
+<span class="fc" id="L110">        rows.add(row);</span>
+<span class="fc" id="L111">      }</span>
+<span class="fc" id="L112">      headers = new ArrayList&lt;&gt;(List.of(&quot;Course&quot;, &quot;Instructor&quot;, &quot;Instructor email&quot;));</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">      for (int i = 0; i &lt; width; i++) {</span>
+<span class="fc" id="L114">        headers.add(recruitment.getType().name());</span>
       }
-<span class="fc bfc" id="L115" title="All 2 branches covered.">      for (List&lt;String&gt; row : rows) {</span>
-<span class="fc bfc" id="L116" title="All 2 branches covered.">        while (row.size() &lt; headers.size()) {</span>
-<span class="fc" id="L117">          row.add(&quot;&quot;);</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">      for (List&lt;String&gt; row : rows) {</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        while (row.size() &lt; headers.size()) {</span>
+<span class="fc" id="L118">          row.add(&quot;&quot;);</span>
         }
-<span class="fc" id="L119">      }</span>
-<span class="fc" id="L120">    } else {</span>
-<span class="fc bfc" id="L121" title="All 2 branches covered.">      boolean ula = recruitment.getType() == RecruitmentType.ULA;</span>
-<span class="fc" id="L122">      headers =</span>
+<span class="fc" id="L120">      }</span>
+<span class="fc" id="L121">    } else {</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">      boolean ula = recruitment.getType() == RecruitmentType.ULA;</span>
+<span class="fc" id="L123">      headers =</span>
           new ArrayList&lt;&gt;(
-<span class="fc" id="L124">              List.of(</span>
+<span class="fc" id="L125">              List.of(</span>
                   &quot;First name&quot;,
                   &quot;Last name&quot;,
                   &quot;Email&quot;,
                   &quot;Course assignment&quot;,
                   &quot;Course instructor&quot;,
                   &quot;Course instructor email&quot;));
-<span class="fc bfc" id="L131" title="All 2 branches covered.">      if (ula) {</span>
-<span class="fc" id="L132">        headers.add(&quot;First time ULA&quot;);</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">      if (ula) {</span>
+<span class="fc" id="L133">        headers.add(&quot;First time ULA&quot;);</span>
       }
-<span class="fc bfc" id="L134" title="All 2 branches covered.">      for (Application person : assigned) {</span>
-<span class="fc" id="L135">        RecruitmentCourse course = byId.get(person.getTentativeAssignmentId());</span>
-<span class="fc" id="L136">        List&lt;String&gt; row = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L137">        row.add(ApplicationCsvService.text(person.getFirstName()));</span>
-<span class="fc" id="L138">        row.add(ApplicationCsvService.text(person.getLastName()));</span>
-<span class="fc" id="L139">        row.add(ApplicationCsvService.text(person.getEmail()));</span>
-<span class="fc" id="L140">        row.add(courseNumber(course));</span>
-<span class="fc" id="L141">        row.add(ApplicationCsvService.text(course.getInstructor()));</span>
-<span class="fc" id="L142">        row.add(emailFor(course, emails));</span>
-<span class="fc bfc" id="L143" title="All 2 branches covered.">        if (ula) {</span>
-<span class="fc" id="L144">          row.add(firstTimeUla(person));</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">      for (Application person : assigned) {</span>
+<span class="fc" id="L136">        RecruitmentCourse course = byId.get(person.getTentativeAssignmentId());</span>
+<span class="fc" id="L137">        List&lt;String&gt; row = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L138">        row.add(ApplicationCsvService.text(person.getFirstName()));</span>
+<span class="fc" id="L139">        row.add(ApplicationCsvService.text(person.getLastName()));</span>
+<span class="fc" id="L140">        row.add(ApplicationCsvService.text(person.getEmail()));</span>
+<span class="fc" id="L141">        row.add(courseNumber(course));</span>
+<span class="fc" id="L142">        row.add(ApplicationCsvService.text(course.getInstructor()));</span>
+<span class="fc" id="L143">        row.add(emailFor(course, emails));</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        if (ula) {</span>
+<span class="fc" id="L145">          row.add(firstTimeUla(person));</span>
         }
-<span class="fc" id="L146">        rows.add(row);</span>
-<span class="fc" id="L147">      }</span>
+<span class="fc" id="L147">        rows.add(row);</span>
+<span class="fc" id="L148">      }</span>
     }
-<span class="fc" id="L149">    return new Table(recruitment.getId(), recruitment.getType(), layout, headers, rows);</span>
+<span class="fc" id="L150">    return new Table(</span>
+<span class="fc" id="L151">        recruitment.getId(),</span>
+<span class="fc" id="L152">        recruitment.getType(),</span>
+        layout,
+        headers,
+        rows,
+<span class="fc" id="L156">        HiringDecisions.isTentative(recruitment));</span>
   }
 
   /** The table as CSV: the header row, then the rows, every cell quoted. */
   public String csv(Recruitment recruitment, String layout) {
-<span class="fc" id="L154">    Table table = table(recruitment, layout);</span>
-<span class="fc" id="L155">    StringWriter out = new StringWriter();</span>
-<span class="fc" id="L156">    CSVWriter writer = new CSVWriter(out);</span>
-<span class="fc" id="L157">    writer.writeNext(table.headers().toArray(String[]::new));</span>
-<span class="fc bfc" id="L158" title="All 2 branches covered.">    for (List&lt;String&gt; row : table.rows()) {</span>
-<span class="fc" id="L159">      writer.writeNext(row.toArray(String[]::new));</span>
-<span class="fc" id="L160">    }</span>
-<span class="fc" id="L161">    return out.toString();</span>
+<span class="fc" id="L161">    Table table = table(recruitment, layout);</span>
+<span class="fc" id="L162">    StringWriter out = new StringWriter();</span>
+<span class="fc" id="L163">    CSVWriter writer = new CSVWriter(out);</span>
+<span class="fc" id="L164">    writer.writeNext(table.headers().toArray(String[]::new));</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">    for (List&lt;String&gt; row : table.rows()) {</span>
+<span class="fc" id="L166">      writer.writeNext(row.toArray(String[]::new));</span>
+<span class="fc" id="L167">    }</span>
+<span class="fc" id="L168">    return out.toString();</span>
   }
 
   /** &quot;CMPSC 8&quot; as the catalog pads it reads &quot;CMPSC 8&quot;. */
   static String courseNumber(RecruitmentCourse course) {
-<span class="fc" id="L166">    return ApplicationCsvService.text(course.getCourseId()).trim().replaceAll(&quot;\\s+&quot;, &quot; &quot;);</span>
+<span class="fc" id="L173">    return ApplicationCsvService.text(course.getCourseId()).trim().replaceAll(&quot;\\s+&quot;, &quot; &quot;);</span>
   }
 
   /** &quot;yes&quot; for someone who reports no previous quarters as a ULA, &quot;no&quot; otherwise. */
   static String firstTimeUla(Application application) {
-<span class="fc" id="L171">    Integer quarters = application.getPreviousServiceAsUla();</span>
-<span class="fc bfc" id="L172" title="All 4 branches covered.">    return quarters == null || quarters == 0 ? &quot;yes&quot; : &quot;no&quot;;</span>
+<span class="fc" id="L178">    Integer quarters = application.getPreviousServiceAsUla();</span>
+<span class="fc bfc" id="L179" title="All 4 branches covered.">    return quarters == null || quarters == 0 ? &quot;yes&quot; : &quot;no&quot;;</span>
   }
 
   /** Each catalog name that exactly one instructor goes by, with that instructor's email. */
   private Map&lt;String, String&gt; emailsByCatalogName() {
-<span class="fc" id="L177">    Map&lt;String, List&lt;String&gt;&gt; all =</span>
-<span class="fc" id="L178">        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)</span>
-<span class="fc bfc" id="L179" title="All 2 branches covered.">            .filter(instructor -&gt; instructor.getCatalogName() != null)</span>
-<span class="fc" id="L180">            .collect(</span>
-<span class="fc" id="L181">                Collectors.groupingBy(</span>
+<span class="fc" id="L184">    Map&lt;String, List&lt;String&gt;&gt; all =</span>
+<span class="fc" id="L185">        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">            .filter(instructor -&gt; instructor.getCatalogName() != null)</span>
+<span class="fc" id="L187">            .collect(</span>
+<span class="fc" id="L188">                Collectors.groupingBy(</span>
                     Instructor::getCatalogName,
-<span class="fc" id="L183">                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));</span>
-<span class="fc" id="L184">    Map&lt;String, String&gt; unique = new HashMap&lt;&gt;();</span>
-<span class="fc" id="L185">    all.forEach(</span>
+<span class="fc" id="L190">                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));</span>
+<span class="fc" id="L191">    Map&lt;String, String&gt; unique = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L192">    all.forEach(</span>
         (name, emails) -&gt; {
-<span class="fc bfc" id="L187" title="All 2 branches covered.">          if (emails.size() == 1) {</span>
-<span class="fc" id="L188">            unique.put(name, emails.get(0));</span>
+<span class="fc bfc" id="L194" title="All 2 branches covered.">          if (emails.size() == 1) {</span>
+<span class="fc" id="L195">            unique.put(name, emails.get(0));</span>
           }
-<span class="fc" id="L190">        });</span>
-<span class="fc" id="L191">    return unique;</span>
+<span class="fc" id="L197">        });</span>
+<span class="fc" id="L198">    return unique;</span>
   }
 
   private static String emailFor(RecruitmentCourse course, Map&lt;String, String&gt; emails) {
     // A null instructor is simply absent from the map.
-<span class="fc" id="L196">    String email = emails.get(course.getInstructor());</span>
-<span class="fc bfc" id="L197" title="All 2 branches covered.">    return email == null ? NOT_MAPPED : email;</span>
+<span class="fc" id="L203">    String email = emails.get(course.getInstructor());</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">    return email == null ? NOT_MAPPED : email;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

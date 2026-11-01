@@ -40,9 +40,11 @@ import org.springframework.stereotype.Service;
    * @param secondaryLink steps 7 and 9: the &quot;(see rankings)&quot; / &quot;(see assignments)&quot; link
    * @param tentative step 9 only: hiring decisions are released but applications or faculty ranking
    *     have been reopened
+   * @param blockedReason step 9 only, while not released: the message naming the first prerequisite
+   *     of releasing hiring decisions that is not met (issue #237); null when all are
    */
   @JsonInclude(JsonInclude.Include.NON_NULL)
-<span class="fc" id="L45">  public record Step(</span>
+<span class="fc" id="L47">  public record Step(</span>
       int number,
       boolean done,
       String label,
@@ -50,49 +52,64 @@ import org.springframework.stereotype.Service;
       String action,
       List&lt;Link&gt; titleLinks,
       Link secondaryLink,
-      Boolean tentative) {}
+      Boolean tentative,
+      String blockedReason) {
 
-<span class="fc" id="L55">  public record Steps(Long recruitmentId, RecruitmentType type, List&lt;Step&gt; steps) {}</span>
+    /** A step with no blocked reason, which is every step but an unreleased step 9. */
+    public Step(
+        int number,
+        boolean done,
+        String label,
+        String href,
+        String action,
+        List&lt;Link&gt; titleLinks,
+        Link secondaryLink,
+        Boolean tentative) {
+<span class="fc" id="L68">      this(number, done, label, href, action, titleLinks, secondaryLink, tentative, null);</span>
+<span class="fc" id="L69">    }</span>
+  }
+
+<span class="fc" id="L72">  public record Steps(Long recruitmentId, RecruitmentType type, List&lt;Step&gt; steps) {}</span>
 
   /** The status of all nine steps of the recruitment, in order. */
   public Steps stepsFor(Recruitment recruitment) {
-<span class="fc" id="L59">    Long id = recruitment.getId();</span>
-<span class="fc" id="L60">    String courses = &quot;/admin/recruitments/&quot; + id + &quot;/courses&quot;;</span>
-<span class="fc bfc" id="L61" title="All 2 branches covered.">    boolean applicationsOpen = recruitment.getApplicationStatus() == ApplicationStatus.OPEN;</span>
-<span class="fc" id="L62">    boolean reviewsOpen = &quot;Open&quot;.equals(recruitment.getReviewStatus());</span>
-<span class="fc" id="L63">    int target = recruitment.getTotalHiringTarget();</span>
-<span class="fc" id="L64">    int allocated =</span>
-<span class="fc" id="L65">        recruitmentCourseRepository.findByRecruitmentId(id).stream()</span>
-<span class="fc bfc" id="L66" title="All 2 branches covered.">            .filter(course -&gt; !course.isRemoved())</span>
-<span class="fc" id="L67">            .mapToInt(RecruitmentCourse::getAllocation)</span>
-<span class="fc" id="L68">            .sum();</span>
-<span class="fc" id="L69">    int assigned =</span>
-<span class="fc" id="L70">        AssignmentsService.assignedCounts(assignmentsService.realApplications(id)).values().stream()</span>
-<span class="fc" id="L71">            .mapToInt(Integer::intValue)</span>
-<span class="fc" id="L72">            .sum();</span>
-<span class="fc" id="L73">    boolean published = Boolean.TRUE.equals(recruitment.getAssignmentsPublished());</span>
+<span class="fc" id="L76">    Long id = recruitment.getId();</span>
+<span class="fc" id="L77">    String courses = &quot;/admin/recruitments/&quot; + id + &quot;/courses&quot;;</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    boolean applicationsOpen = recruitment.getApplicationStatus() == ApplicationStatus.OPEN;</span>
+<span class="fc" id="L79">    boolean reviewsOpen = &quot;Open&quot;.equals(recruitment.getReviewStatus());</span>
+<span class="fc" id="L80">    int target = recruitment.getTotalHiringTarget();</span>
+<span class="fc" id="L81">    int allocated =</span>
+<span class="fc" id="L82">        recruitmentCourseRepository.findByRecruitmentId(id).stream()</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">            .filter(course -&gt; !course.isRemoved())</span>
+<span class="fc" id="L84">            .mapToInt(RecruitmentCourse::getAllocation)</span>
+<span class="fc" id="L85">            .sum();</span>
+<span class="fc" id="L86">    int assigned =</span>
+<span class="fc" id="L87">        AssignmentsService.assignedCounts(assignmentsService.realApplications(id)).values().stream()</span>
+<span class="fc" id="L88">            .mapToInt(Integer::intValue)</span>
+<span class="fc" id="L89">            .sum();</span>
+<span class="fc" id="L90">    boolean published = Boolean.TRUE.equals(recruitment.getAssignmentsPublished());</span>
 
-<span class="fc bfc" id="L75" title="All 2 branches covered.">    boolean opened = recruitment.getActualOpeningDate() != null;</span>
-<span class="fc bfc" id="L76" title="All 4 branches covered.">    boolean closed = recruitment.getActualClosingDate() != null &amp;&amp; !applicationsOpen;</span>
-<span class="fc bfc" id="L77" title="All 2 branches covered.">    boolean released = recruitment.getAllocationVisibility() != AllocationVisibility.ADMINS_ONLY;</span>
-<span class="fc bfc" id="L78" title="All 2 branches covered.">    boolean reviewOpened = recruitment.getFacultyReviewOpeningDate() != null;</span>
-<span class="fc" id="L79">    boolean reviewClosed = &quot;Closed&quot;.equals(recruitment.getReviewStatus());</span>
-<span class="fc bfc" id="L80" title="All 2 branches covered.">    boolean assignmentComplete = assigned &gt;= target;</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">    boolean opened = recruitment.getActualOpeningDate() != null;</span>
+<span class="fc bfc" id="L93" title="All 4 branches covered.">    boolean closed = recruitment.getActualClosingDate() != null &amp;&amp; !applicationsOpen;</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">    boolean released = recruitment.getAllocationVisibility() != AllocationVisibility.ADMINS_ONLY;</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">    boolean reviewOpened = recruitment.getFacultyReviewOpeningDate() != null;</span>
+<span class="fc" id="L96">    boolean reviewClosed = &quot;Closed&quot;.equals(recruitment.getReviewStatus());</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">    boolean assignmentComplete = assigned &gt;= target;</span>
 
     // Steps 2 and 4 open the same modal, whichever way the applications are going; so do 6 and 7.
-<span class="fc bfc" id="L83" title="All 2 branches covered.">    String applicationsAction = applicationsOpen ? &quot;closeApplications&quot; : &quot;openApplications&quot;;</span>
-<span class="fc bfc" id="L84" title="All 2 branches covered.">    String reviewsAction = reviewsOpen ? &quot;closeReviews&quot; : &quot;openReviews&quot;;</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">    String applicationsAction = applicationsOpen ? &quot;closeApplications&quot; : &quot;openApplications&quot;;</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">    String reviewsAction = reviewsOpen ? &quot;closeReviews&quot; : &quot;openReviews&quot;;</span>
 
-<span class="fc" id="L86">    return new Steps(</span>
+<span class="fc" id="L103">    return new Steps(</span>
         id,
-<span class="fc" id="L88">        recruitment.getType(),</span>
-<span class="fc" id="L89">        List.of(</span>
+<span class="fc" id="L105">        recruitment.getType(),</span>
+<span class="fc" id="L106">        List.of(</span>
             new Step(
                 1,
                 true,
-<span class="fc bfc" id="L93" title="All 2 branches covered.">                recruitment.getCreatedAt() == null</span>
-<span class="fc" id="L94">                    ? &quot;Created&quot;</span>
-<span class="fc" id="L95">                    : &quot;Created: &quot; + dateOf(recruitment.getCreatedAt()),</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">                recruitment.getCreatedAt() == null</span>
+<span class="fc" id="L111">                    ? &quot;Created&quot;</span>
+<span class="fc" id="L112">                    : &quot;Created: &quot; + dateOf(recruitment.getCreatedAt()),</span>
                 null,
                 null,
                 null,
@@ -101,9 +118,9 @@ import org.springframework.stereotype.Service;
             new Step(
                 2,
                 opened,
-<span class="fc bfc" id="L104" title="All 2 branches covered.">                opened</span>
-<span class="fc" id="L105">                    ? &quot;Opened: &quot; + recruitment.getActualOpeningDate()</span>
-<span class="fc bfc" id="L106" title="All 2 branches covered.">                    : &quot;Tentative: &quot; + orNotSet(recruitment.getTentativeOpeningDate()),</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">                opened</span>
+<span class="fc" id="L122">                    ? &quot;Opened: &quot; + recruitment.getActualOpeningDate()</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">                    : &quot;Tentative: &quot; + orNotSet(recruitment.getTentativeOpeningDate()),</span>
                 null,
                 applicationsAction,
                 null,
@@ -115,17 +132,17 @@ import org.springframework.stereotype.Service;
                 &quot;Hiring Target: &quot; + target,
                 null,
                 null,
-<span class="fc" id="L118">                List.of(</span>
-<span class="fc" id="L119">                    new Link(&quot;Budget&quot;, &quot;/admin/budget/&quot; + qyy(recruitment.getQuarter())),</span>
+<span class="fc" id="L135">                List.of(</span>
+<span class="fc" id="L136">                    new Link(&quot;Budget&quot;, &quot;/admin/budget/&quot; + qyy(recruitment.getQuarter())),</span>
                     new Link(&quot;Allocations&quot;, courses)),
                 null,
                 null),
             new Step(
                 4,
                 closed,
-<span class="fc bfc" id="L126" title="All 2 branches covered.">                closed</span>
-<span class="fc" id="L127">                    ? &quot;Closed: &quot; + recruitment.getActualClosingDate()</span>
-<span class="fc" id="L128">                    : &quot;Prim. Consid: &quot; + orNotSet(recruitment.getPrimaryConsiderationDate()),</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">                closed</span>
+<span class="fc" id="L144">                    ? &quot;Closed: &quot; + recruitment.getActualClosingDate()</span>
+<span class="fc" id="L145">                    : &quot;Prim. Consid: &quot; + orNotSet(recruitment.getPrimaryConsiderationDate()),</span>
                 null,
                 applicationsAction,
                 null,
@@ -134,9 +151,9 @@ import org.springframework.stereotype.Service;
             new Step(
                 5,
                 released,
-<span class="fc bfc" id="L137" title="All 2 branches covered.">                released</span>
-<span class="fc" id="L138">                    ? &quot;Released&quot; + datedSuffix(recruitment.getAllocationsReleasedAt())</span>
-<span class="fc" id="L139">                    : &quot;Not released yet&quot;,</span>
+<span class="fc bfc" id="L154" title="All 2 branches covered.">                released</span>
+<span class="fc" id="L155">                    ? &quot;Released&quot; + datedSuffix(recruitment.getAllocationsReleasedAt())</span>
+<span class="fc" id="L156">                    : &quot;Not released yet&quot;,</span>
                 null,
                 &quot;allocationVisibility&quot;,
                 null,
@@ -145,9 +162,9 @@ import org.springframework.stereotype.Service;
             new Step(
                 6,
                 reviewOpened,
-<span class="fc bfc" id="L148" title="All 2 branches covered.">                reviewOpened</span>
-<span class="fc" id="L149">                    ? &quot;Opened: &quot; + recruitment.getFacultyReviewOpeningDate()</span>
-<span class="fc" id="L150">                    : &quot;Not opened yet&quot;,</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">                reviewOpened</span>
+<span class="fc" id="L166">                    ? &quot;Opened: &quot; + recruitment.getFacultyReviewOpeningDate()</span>
+<span class="fc" id="L167">                    : &quot;Not opened yet&quot;,</span>
                 null,
                 reviewsAction,
                 null,
@@ -156,11 +173,11 @@ import org.springframework.stereotype.Service;
             new Step(
                 7,
                 reviewClosed,
-<span class="fc bfc" id="L159" title="All 2 branches covered.">                reviewClosed</span>
-<span class="fc" id="L160">                    ? &quot;Closed&quot; + datedSuffix(recruitment.getFacultyReviewClosedAt())</span>
-<span class="fc bfc" id="L161" title="All 2 branches covered.">                    : recruitment.getFacultyRankingDeadline() == null</span>
-<span class="fc" id="L162">                        ? &quot;Not closed yet&quot;</span>
-<span class="fc" id="L163">                        : &quot;Deadline: &quot; + recruitment.getFacultyRankingDeadline(),</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">                reviewClosed</span>
+<span class="fc" id="L177">                    ? &quot;Closed&quot; + datedSuffix(recruitment.getFacultyReviewClosedAt())</span>
+<span class="fc bfc" id="L178" title="All 2 branches covered.">                    : recruitment.getFacultyRankingDeadline() == null</span>
+<span class="fc" id="L179">                        ? &quot;Not closed yet&quot;</span>
+<span class="fc" id="L180">                        : &quot;Deadline: &quot; + recruitment.getFacultyRankingDeadline(),</span>
                 null,
                 reviewsAction,
                 null,
@@ -169,9 +186,9 @@ import org.springframework.stereotype.Service;
             new Step(
                 8,
                 assignmentComplete,
-<span class="fc bfc" id="L172" title="All 2 branches covered.">                assignmentComplete</span>
-<span class="fc" id="L173">                    ? &quot;Assignment complete&quot;</span>
-<span class="fc" id="L174">                    : &quot;Still to assign: &quot; + (target - assigned),</span>
+<span class="fc bfc" id="L189" title="All 2 branches covered.">                assignmentComplete</span>
+<span class="fc" id="L190">                    ? &quot;Assignment complete&quot;</span>
+<span class="fc" id="L191">                    : &quot;Still to assign: &quot; + (target - assigned),</span>
                 &quot;/admin/recruitments/&quot; + id + &quot;/assignments&quot;,
                 null,
                 null,
@@ -180,28 +197,29 @@ import org.springframework.stereotype.Service;
             new Step(
                 9,
                 published,
-<span class="fc bfc" id="L183" title="All 2 branches covered.">                published</span>
-<span class="fc" id="L184">                    ? &quot;Released&quot; + datedSuffix(recruitment.getAssignmentsPublishedAt())</span>
-<span class="fc" id="L185">                    : &quot;Not released yet&quot;,</span>
-<span class="fc bfc" id="L186" title="All 2 branches covered.">                published ? &quot;/recruitments/&quot; + id + &quot;/assignments&quot; : null,</span>
-<span class="fc bfc" id="L187" title="All 8 branches covered.">                published ? null : &quot;publishAssignments&quot;,</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">                published</span>
+<span class="fc" id="L201">                    ? &quot;Released&quot; + datedSuffix(recruitment.getAssignmentsPublishedAt())</span>
+<span class="fc" id="L202">                    : &quot;Not released yet&quot;,</span>
+<span class="fc bfc" id="L203" title="All 2 branches covered.">                published ? &quot;/recruitments/&quot; + id + &quot;/assignments&quot; : null,</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">                published ? null : &quot;publishAssignments&quot;,</span>
                 null,
                 new Link(&quot;(see assignments)&quot;, courses),
-<span class="fc" id="L190">                published &amp;&amp; (applicationsOpen || reviewsOpen))));</span>
+<span class="fc" id="L207">                HiringDecisions.isTentative(recruitment),</span>
+<span class="fc bfc" id="L208" title="All 4 branches covered.">                published ? null : HiringDecisions.unmetPrerequisite(recruitment, assigned &gt; 0))));</span>
   }
 
   /** &quot;Tentative: not set&quot; rather than &quot;Tentative: null&quot; for a date nobody entered. */
   private static String orNotSet(Object date) {
-<span class="fc bfc" id="L195" title="All 2 branches covered.">    return date == null ? &quot;not set&quot; : date.toString();</span>
+<span class="fc bfc" id="L213" title="All 2 branches covered.">    return date == null ? &quot;not set&quot; : date.toString();</span>
   }
 
   /** &quot;: 2026-02-03&quot; for a stamped date, or nothing for a legacy row that was never stamped. */
   private static String datedSuffix(LocalDateTime stamp) {
-<span class="fc bfc" id="L200" title="All 2 branches covered.">    return stamp == null ? &quot;&quot; : &quot;: &quot; + dateOf(stamp);</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">    return stamp == null ? &quot;&quot; : &quot;: &quot; + dateOf(stamp);</span>
   }
 
   private static String dateOf(LocalDateTime stamp) {
-<span class="fc" id="L204">    return stamp.toLocalDate().toString();</span>
+<span class="fc" id="L222">    return stamp.toLocalDate().toString();</span>
   }
 
   /**
@@ -209,8 +227,8 @@ import org.springframework.stereotype.Service;
    * The frontend has the same conversion; the backend needs it for the Budget page link.
    */
   static String qyy(String yyyyq) {
-<span class="fc" id="L212">    String letters = &quot;WSMF&quot;;</span>
-<span class="fc" id="L213">    return letters.charAt(Character.digit(yyyyq.charAt(4), 10) - 1) + yyyyq.substring(2, 4);</span>
+<span class="fc" id="L230">    String letters = &quot;WSMF&quot;;</span>
+<span class="fc" id="L231">    return letters.charAt(Character.digit(yyyyq.charAt(4), 10) - 1) + yyyyq.substring(2, 4);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
