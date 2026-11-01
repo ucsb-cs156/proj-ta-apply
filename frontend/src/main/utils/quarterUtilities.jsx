@@ -69,6 +69,16 @@ const toNumericYYYYQ = (yyyyqStr) => {
   return parseInt(yyyyqStr);
 };
 
+/**
+ * The quarter a date falls in, as a YYYYQ string: January to March is Winter (1), April to June
+ * Spring (2), July and August Summer (3), September to December Fall (4).
+ */
+const quarterOfDate = (date) => {
+  const month = date.getMonth() + 1;
+  const q = month <= 3 ? 1 : month <= 6 ? 2 : month <= 8 ? 3 : 4;
+  return `${date.getFullYear()}${q}`;
+};
+
 const nextQuarter = (yyyyqInt) => {
   const _yyyyqStr = fromNumericYYYYQ(yyyyqInt); // just for type/format checking
   const qInt = yyyyqInt % 10;
@@ -105,6 +115,7 @@ export {
   fromNumericYYYYQ,
   toNumericYYYYQ,
   nextQuarter,
+  quarterOfDate,
   quarterRange,
   qtrNumToQuarter,
 };

@@ -6,6 +6,11 @@ import {
   NOTICE_FIELD_EXAMPLES,
   NOTICE_FIELDS,
   NOTICE_FIELDS_HINT,
+  KNOWN_NOTICE_FIELDS,
+  defaultPreviewQuarter,
+  findUnknownFields,
+  markUnknownFields,
+  UNKNOWN_FIELD_TITLE,
   QUARTER_NAME_FIELDS,
   QUARTER_NOTICE_FIELDS,
   quarterName,
@@ -133,11 +138,66 @@ describe("noticeFields (issue #150)", () => {
   test("the field names, the hint and the issue's two examples", () => {
     expect(NOTICE_FIELDS).toEqual(["quarter", "primaryConsiderationDate"]);
     expect(NOTICE_FIELDS_HINT).toBe(
-      "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place; the various dates of that quarter, such as ${firstDayOfClasses}, can be inserted the same way. The preview shows them as written.",
+      "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place; the various dates of that quarter, such as ${firstDayOfClasses}, can be inserted the same way. The preview fills them in for the quarter chosen above it.",
     );
     expect(NOTICE_FIELD_EXAMPLES).toEqual([
       "If you are a BS/MS student, and you will be in graduate status during ${quarter}, please apply to be a TA instead of applying to be a ULA.",
       "Applications received by ${primaryConsiderationDate} will be given full consideration.  Applications received after that date are not guaranteed to be considered, but may be reviewed if time permits and/or positions remain unfilled.",
     ]);
+  });
+
+  // ---- Issue #192: unknown fields ----
+
+  test("the known fields are the recruitment's two and every calendar field", () => {
+    expect(KNOWN_NOTICE_FIELDS.slice(0, 6)).toEqual([
+      "quarter",
+      "primaryConsiderationDate",
+      "qyy",
+      "name",
+      "category",
+      "academicYear",
+    ]);
+    expect(KNOWN_NOTICE_FIELDS).toContain("firstDayOfClasses");
+    expect(KNOWN_NOTICE_FIELDS).toContain("lastDayThirdWeek");
+    expect(KNOWN_NOTICE_FIELDS).toHaveLength(2 + 4 + 13);
+  });
+
+  test("defaultPreviewQuarter is the quarter after the one the date falls in", () => {
+    expect(defaultPreviewQuarter(new Date(2026, 1, 10))).toBe("20262");
+    expect(defaultPreviewQuarter(new Date(2026, 4, 1))).toBe("20263");
+    expect(defaultPreviewQuarter(new Date(2026, 6, 4))).toBe("20264");
+    expect(defaultPreviewQuarter(new Date(2026, 10, 30))).toBe("20271");
+    // Today, whatever it is, gives a five-digit quarter code one quarter on.
+    expect(defaultPreviewQuarter()).toMatch(/^\d{4}[1-4]$/);
+  });
+
+  test("findUnknownFields lists each unknown name once, in order, and ignores known ones", () => {
+    expect(
+      findUnknownFields(
+        "Due ${deadline} in ${quarter}; see ${Deadline} and ${deadline} and ${firstDayOfClasses} and ${}.",
+      ),
+    ).toEqual(["deadline", "Deadline", ""]);
+    expect(
+      findUnknownFields("Nothing here, not even $quarter or {quarter}."),
+    ).toEqual([]);
+    expect(findUnknownFields("")).toEqual([]);
+    // A brace left open, or a break inside, is not a field.
+    expect(findUnknownFields("${unclosed and ${a\nb}")).toEqual([]);
+  });
+
+  test("markUnknownFields wraps unknown fields in a titled link and leaves known ones alone", () => {
+    expect(UNKNOWN_FIELD_TITLE).toBe("unknown-notice-field");
+    expect(markUnknownFields("Due ${deadline} in ${quarter}.")).toBe(
+      'Due [${deadline}](# "unknown-notice-field") in ${quarter}.',
+    );
+    expect(markUnknownFields("${a} ${a}")).toBe(
+      '[${a}](# "unknown-notice-field") [${a}](# "unknown-notice-field")',
+    );
+    expect(markUnknownFields("${}")).toBe('[${}](# "unknown-notice-field")');
+    // Brackets and backslashes inside the name are escaped so the link text survives Markdown.
+    expect(markUnknownFields("${a[b]c\\d}")).toBe(
+      '[${a\\[b\\]c\\\\d}](# "unknown-notice-field")',
+    );
+    expect(markUnknownFields("plain")).toBe("plain");
   });
 });

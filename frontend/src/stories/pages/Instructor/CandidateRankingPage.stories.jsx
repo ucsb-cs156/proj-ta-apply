@@ -81,3 +81,20 @@ NoCancelledApplications.parameters = {
     ],
   },
 };
+
+/** Reviews are open and this user teaches the course: the ranking boxes are editable (issue #202). */
+export const Rankable = Template.bind({});
+Rankable.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/instructor/recruitments/1/courses/2/ranking", () =>
+        HttpResponse.json({
+          ...instructorRecruitmentsFixtures.candidateRankingPage,
+          reviewStatus: "Open",
+          canRank: true,
+        }),
+      ),
+      ...handlers,
+    ],
+  },
+};

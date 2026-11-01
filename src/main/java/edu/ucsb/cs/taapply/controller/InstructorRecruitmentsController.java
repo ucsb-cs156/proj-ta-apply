@@ -120,6 +120,8 @@ public class InstructorRecruitmentsController extends ApiController {
    * Course-scoped metadata shared by rankings and the read-only application page. {@code
    * allocation} is how many TAs or ULAs the course was allocated: present for admins, and for
    * instructors only once the admin shows allocations to faculty (issue #178); otherwise null.
+   * {@code canRank} is whether this user may enter rankings here: the course's instructor of record
+   * while reviews are Open, whether or not they are also an admin (issue #202).
    */
   public static record CandidateRankingPage(
       Long recruitmentId,
@@ -134,7 +136,8 @@ public class InstructorRecruitmentsController extends ApiController {
       LocalDate facultyRankingDeadline,
       CourseDetails course,
       List<CourseDetails> otherCourses,
-      Integer allocation) {}
+      Integer allocation,
+      boolean canRank) {}
 
   /** Course identity and catalog display fields; section rows remain distinct by id. */
   public static record CourseDetails(
@@ -240,7 +243,8 @@ public class InstructorRecruitmentsController extends ApiController {
         recruitment.getFacultyRankingDeadline(),
         CourseDetails.of(course),
         otherCourses,
-        scope.isAdmin() || allocationsVisible(recruitment) ? course.getAllocation() : null);
+        scope.isAdmin() || allocationsVisible(recruitment) ? course.getAllocation() : null,
+        scope.canRank());
   }
 
   /**
@@ -294,8 +298,22 @@ public class InstructorRecruitmentsController extends ApiController {
         .toList();
   }
 
+  /**
+   * Who is looking at a course's rankings and what they may do. {@code isInstructor} is whether the
+   * user's catalog name is the course's instructor of record; that, not the absence of the admin
+   * role, is what allows ranking (issue #202): an admin who also teaches the course ranks it like
+   * any other instructor, while an admin who does not sees it read-only.
+   */
   private record RankingScope(
-      Recruitment recruitment, RecruitmentCourse course, String catalogName, boolean isAdmin) {}
+      Recruitment recruitment,
+      RecruitmentCourse course,
+      String catalogName,
+      boolean isAdmin,
+      boolean isInstructor) {
+    boolean canRank() {
+      return isInstructor && "Open".equals(recruitment.getReviewStatus());
+    }
+  }
 
   private RankingScope rankingScope(Long recruitmentId, Long recruitmentCourseId, boolean editing) {
     Recruitment recruitment =
@@ -337,15 +355,17 @@ public class InstructorRecruitmentsController extends ApiController {
 
     String catalogName =
         instructorRepository.findByEmail(email).map(Instructor::getCatalogName).orElse(null);
-    if (!isAdmin && (catalogName == null || !catalogName.equals(course.getInstructor()))) {
+    boolean isInstructor = catalogName != null && catalogName.equals(course.getInstructor());
+    if (!isAdmin && !isInstructor) {
       throw new ForbiddenException(
           "This recruitment course is not assigned to the authenticated instructor.");
     }
-    if (editing && (isAdmin || !"Open".equals(recruitment.getReviewStatus()))) {
+    RankingScope scope = new RankingScope(recruitment, course, catalogName, isAdmin, isInstructor);
+    if (editing && !scope.canRank()) {
       throw new ForbiddenException(
           "Only assigned instructors may rank candidates while reviews are Open.");
     }
-    return new RankingScope(recruitment, course, catalogName, isAdmin);
+    return scope;
   }
 
   public static record Candidate(

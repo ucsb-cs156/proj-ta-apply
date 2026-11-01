@@ -3,6 +3,7 @@ import { HttpResponse, http } from "msw";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
 import appSettingsFixtures from "fixtures/appSettingsFixtures";
 import noticesFixtures from "fixtures/noticesFixtures";
+import quartersFixtures from "fixtures/quartersFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
@@ -13,6 +14,9 @@ const common = [
   ),
   http.get("/api/systemInfo", () =>
     HttpResponse.json(systemInfoFixtures.showingNeither),
+  ),
+  http.get("/api/admin/quarters/all", () =>
+    HttpResponse.json(quartersFixtures.threeNewestFirst),
   ),
   http.get("/api/admin/notices/all", () => HttpResponse.json([])),
   http.get("/api/admin/recruitments/all", () =>

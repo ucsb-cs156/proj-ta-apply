@@ -338,6 +338,38 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     verify(candidateRankingRepository, never()).save(any());
   }
 
+  /** Issue #202: the admin role does not stop the course's own instructor from ranking. */
+  @Test
+  @WithMockUser(roles = {"ADMIN", "INSTRUCTOR"})
+  void an_admin_who_teaches_the_course_ranks_like_any_instructor() throws Exception {
+    when(currentUserService.getCurrentUser())
+        .thenReturn(
+            CurrentUser.builder()
+                .user(User.builder().email("faculty@ucsb.edu").build())
+                .roles(
+                    List.of(
+                        new SimpleGrantedAuthority("ROLE_ADMIN"),
+                        new SimpleGrantedAuthority("ROLE_INSTRUCTOR")))
+                .build());
+    when(candidateRankingRepository.findByRecruitmentCourseIdAndApplicationId(20L, 30L))
+        .thenReturn(Optional.empty());
+    when(candidateRankingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    mockMvc
+        .perform(
+            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+        .andExpect(status().isOk());
+    verify(candidateRankingRepository).save(any());
+
+    // Still only while reviews are Open.
+    recruitment.setReviewStatus("Closed");
+    mockMvc
+        .perform(
+            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(get(BASE)).andExpect(status().isOk());
+  }
+
   @Test
   @WithMockUser(roles = {"ADMIN", "INSTRUCTOR"})
   void admins_read_closed_pages_but_never_edit_even_with_dual_role() throws Exception {

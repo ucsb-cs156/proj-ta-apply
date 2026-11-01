@@ -42,6 +42,8 @@ describe("UlaAppSettingsPage tests", () => {
       .onGet("/api/admin/settings/ula-interests/all")
       .reply(200, appSettingsFixtures.twoInterests);
     axiosMock.onGet("/api/admin/notices/all").reply(200, []);
+    axiosMock.onGet("/api/admin/quarters/all").reply(200, []);
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
     axiosMock
       .onGet("/api/admin/recruitments/all")
       .reply(200, recruitmentsFixtures.threeRecruitments);

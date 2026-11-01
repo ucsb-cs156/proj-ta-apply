@@ -1,8 +1,17 @@
-import { useMemo, useState } from "react";
-import { Button, Card, Col, Row, Table } from "react-bootstrap";
+import { useMemo, useState, type ComponentProps } from "react";
+import { Button, Card, Col, Form, Row, Table } from "react-bootstrap";
 import ReactMarkdown from "react-markdown";
-import { NOTICE_FIELDS_HINT } from "main/utils/noticeFields";
-import { Link } from "react-router";
+import {
+  defaultPreviewQuarter,
+  fillNoticeFields,
+  findUnknownFields,
+  markUnknownFields,
+  NOTICE_FIELDS_HINT,
+  UNKNOWN_FIELD_TITLE,
+} from "main/utils/noticeFields";
+import type { UcsbApiQuarter } from "main/utils/quarterCalendar";
+import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import remarkGfm from "remark-gfm";
 import SimpleMdeReact from "react-simplemde-editor";
 import "easymde/dist/easymde.min.css";
@@ -32,6 +41,25 @@ const EASYMDE_TOOLBAR = [
   "undo",
   "redo",
 ] as const;
+
+/**
+ * In the preview, a link titled {@link UNKNOWN_FIELD_TITLE} is an unknown ${field} (issue #192):
+ * drawn in red, not as a link. Any other link is rendered as usual.
+ */
+function PreviewLink({
+  title,
+  children,
+  ...rest
+}: ComponentProps<"a">): React.JSX.Element {
+  if (title === UNKNOWN_FIELD_TITLE) {
+    return <span className="text-danger fw-bold">{children}</span>;
+  }
+  return (
+    <a title={title} {...rest}>
+      {children}
+    </a>
+  );
+}
 
 /**
  * The admin's editor for the "Notices, Terms and Conditions" text of one form type. Saving never
@@ -93,6 +121,51 @@ export default function NoticeEditorCard({
 
   const id = (suffix: string) => `${testIdPrefix}-${suffix}`;
 
+  // Issue #192: the preview is filled in for a chosen quarter, by default the one after today's,
+  // from the quarter calendar on file and that quarter's recruitment of this type, if any.
+  const { data: calendarRows } = useBackend<UcsbApiQuarter[]>(
+    // Stryker disable next-line all : the query key is only observable through invalidation
+    ["/api/admin/quarters/all", "desc"],
+    {
+      // Stryker disable next-line all : GET is axios's default method
+      method: "GET",
+      url: "/api/admin/quarters/all",
+      params: { direction: "desc" },
+    },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+  const { data: recruitments } = useBackend<Recruitment[]>(
+    // Stryker disable next-line all : the query key is only observable through invalidation
+    ["/api/admin/recruitments/all"],
+    // Stryker disable next-line all : GET is axios's default method
+    { method: "GET", url: "/api/admin/recruitments/all" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+  const [previewQuarter, setPreviewQuarter] = useState(() =>
+    defaultPreviewQuarter(),
+  );
+  // Stryker disable next-line all : the query's initial data is an empty list, never undefined
+  const calendars = calendarRows ?? [];
+  // The quarters on file, plus the chosen one if it is not among them, so the box always shows it.
+  const quarterOptions = calendars.some((row) => row.quarter === previewQuarter)
+    ? calendars.map((row) => row.quarter)
+    : [previewQuarter, ...calendars.map((row) => row.quarter)];
+  const calendar =
+    calendars.find((row) => row.quarter === previewQuarter) ?? null;
+  // Stryker disable next-line all : the query's initial data is an empty list, never undefined
+  const recruitment = (recruitments ?? []).find(
+    (r) => r.quarter === previewQuarter && r.type === type,
+  );
+  const filled = fillNoticeFields(text, {
+    quarter: previewQuarter,
+    primaryConsiderationDate: recruitment?.primaryConsiderationDate,
+    calendar,
+  });
+  const unknownFields = findUnknownFields(text);
+  const previewQyy = yyyyqToQyy(previewQuarter);
+
   return (
     <Card className="mb-4" data-testid={testIdPrefix}>
       <Card.Header as="h2" className="h5 mb-0">
@@ -101,14 +174,63 @@ export default function NoticeEditorCard({
       <Card.Body>
         <p className="text-muted small">
           Shown to every {type} applicant above a required &ldquo;I agree&rdquo;
-          box. Written in Markdown; the preview on the right is what applicants
-          see. Each save is kept as a new version, so an application can always
-          show the exact text its applicant agreed to.
+          box. Written in{" "}
+          <a
+            href="/help/admins#markdown"
+            target="_blank"
+            rel="noreferrer"
+            data-testid={id("markdown-link")}
+          >
+            Markdown
+          </a>
+          ; the preview on the right is what applicants see. Each save is kept
+          as a new version, so an application can always show the exact text its
+          applicant agreed to.
         </p>
         <p className="text-muted small" data-testid={id("fields-hint")}>
           {NOTICE_FIELDS_HINT}{" "}
-          <Link to="/help/notice-fields">All the fields, with examples</Link>.
+          <a href="/help/notice-fields" target="_blank" rel="noreferrer">
+            All the fields, with examples
+          </a>
+          .
         </p>
+        <Form.Group
+          className="d-flex align-items-center gap-2 mb-2"
+          controlId={id("preview-quarter")}
+        >
+          <Form.Label className="mb-0">Preview for quarter:</Form.Label>
+          <Form.Select
+            size="sm"
+            style={{ width: "8em" }}
+            value={previewQuarter}
+            onChange={(event) => setPreviewQuarter(event.target.value)}
+            data-testid={id("preview-quarter")}
+          >
+            {quarterOptions.map((quarter) => (
+              <option key={quarter} value={quarter}>
+                {yyyyqToQyy(quarter)}
+              </option>
+            ))}
+          </Form.Select>
+          {calendar === null && (
+            <span
+              className="text-muted small"
+              data-testid={id("preview-no-calendar")}
+            >
+              The quarter calendar for {previewQyy} is not on file (see Admin
+              &rarr; Quarters), so its dates are shown as written.
+            </span>
+          )}
+          {recruitment === undefined && (
+            <span
+              className="text-muted small"
+              data-testid={id("preview-no-recruitment")}
+            >
+              No {type} recruitment for {previewQyy} yet, so{" "}
+              <code>{"${primaryConsiderationDate}"}</code> is shown as written.
+            </span>
+          )}
+        </Form.Group>
         <Row>
           <Col md={6} data-testid={id("editor")}>
             <SimpleMdeReact
@@ -127,11 +249,31 @@ export default function NoticeEditorCard({
                   Nothing written yet.
                 </span>
               ) : (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {text}
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{ a: PreviewLink }}
+                >
+                  {markUnknownFields(filled)}
                 </ReactMarkdown>
               )}
             </div>
+            {unknownFields.map((key) => (
+              <div
+                className="text-danger small mt-1"
+                key={key}
+                data-testid={id(`unknown-field-${key}`)}
+              >
+                Unknown {"${" + key + "}"}; see{" "}
+                <a
+                  href="/help/notice-fields"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-danger"
+                >
+                  documentation
+                </a>
+              </div>
+            ))}
           </Col>
         </Row>
         <div className="d-flex align-items-center gap-3 mt-3">

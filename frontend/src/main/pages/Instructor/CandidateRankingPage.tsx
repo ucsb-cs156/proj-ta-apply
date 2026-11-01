@@ -16,7 +16,6 @@ import { Link, useParams } from "react-router";
 import CandidateTable, {
   type Candidate,
 } from "main/components/Instructor/CandidateTable";
-import { useCurrentUser, hasRole } from "main/utils/currentUser";
 import { rankingAllocationNotice } from "main/utils/allocations";
 
 type CourseDetails = {
@@ -41,6 +40,12 @@ export type CandidateRankingPageData = {
   course: CourseDetails;
   otherCourses: CourseDetails[];
   /**
+   * Whether this user may enter rankings (issue #202): the course's instructor of record while
+   * reviews are Open, admin or not. Anyone else, including an admin who does not teach the
+   * course, sees the rankings read-only.
+   */
+  canRank?: boolean;
+  /**
    * How many TAs or ULAs the course was allocated (issue #178): null or absent while the admin
    * hides allocations from faculty; admins always get it.
    */
@@ -58,7 +63,6 @@ export default function CandidateRankingPage(): React.JSX.Element {
   const url = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/ranking`;
   const candidatesUrl = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/candidates`;
   const cancelledUrl = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/cancelled`;
-  const currentUser = useCurrentUser();
   // Issue #199: candidates who marked the course Not Interested are listed only on request.
   const [includeNotInterested, setIncludeNotInterested] = useState(false);
   const candidates = useBackend<Candidate[] | null>(
@@ -240,11 +244,7 @@ export default function CandidateRankingPage(): React.JSX.Element {
                   key={`${candidatesUrl}?${includeNotInterested}`}
                   candidates={candidates.data}
                   type={data.type}
-                  editable={
-                    data.reviewStatus === "Open" &&
-                    hasRole(currentUser, "ROLE_INSTRUCTOR") &&
-                    !hasRole(currentUser, "ROLE_ADMIN")
-                  }
+                  editable={data.canRank === true}
                   apiUrl={candidatesUrl}
                   applicationUrl={`/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/applications`}
                 />

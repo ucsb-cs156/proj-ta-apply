@@ -267,15 +267,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           On a recruitment&apos;s own <strong>Courses</strong> page, after
           faculty reviews have started, the leftmost <strong>Rankings</strong>{" "}
           column shows how many eligible applications have an entered ranking
-          for each section. The number links to the read-only ranking page;
-          sections with no entered rankings link with a zero. The{" "}
-          <strong>Email</strong> column uses the instructor&apos;s catalog-name
-          mapping from the Instructors page. Use its <em>Copy</em> control for
-          one address, or <em>Copy emails of faculty with zero rankings</em> to
-          prepare a reminder. Bulk reminders include only mapped addresses for
-          the courses currently visible, deduplicated when an instructor has
-          multiple sections. Turn on <em>Show removed courses</em> to include
-          removed sections in both the table and reminder list.
+          for each section. The number links to the ranking page, read-only for
+          you unless you are that course&apos;s instructor of record; sections
+          with no entered rankings link with a zero. The <strong>Email</strong>{" "}
+          column uses the instructor&apos;s catalog-name mapping from the
+          Instructors page. Use its <em>Copy</em> control for one address, or{" "}
+          <em>Copy emails of faculty with zero rankings</em> to prepare a
+          reminder. Bulk reminders include only mapped addresses for the courses
+          currently visible, deduplicated when an instructor has multiple
+          sections. Turn on <em>Show removed courses</em> to include removed
+          sections in both the table and reminder list.
         </p>
         <p id="course-columns" data-testid="HelpAdminsPage-course-columns">
           The table can be trimmed to what you need: the{" "}
@@ -532,9 +533,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
         </p>
         <p>
           The <strong>Notices, Terms and Conditions</strong> card is the text
-          every TA applicant must agree to before submitting. It is written in
-          Markdown with a live preview; each save is kept as a new version, and
-          each application records which version its applicant agreed to.
+          every TA applicant must agree to before submitting. It is written in{" "}
+          <a href="#markdown">Markdown</a> with a live preview, filled in for
+          the quarter chosen above the editor (by default the quarter after the
+          current one); each save is kept as a new version, and each application
+          records which version its applicant agreed to. A field the preview
+          does not recognise is shown in red, with a note under the preview.
         </p>
         <p id="notice-fields" data-testid="HelpAdminsPage-notice-fields">
           The text can carry fields that are filled in for each applicant from
@@ -559,6 +563,26 @@ export default function HelpAdminsPage(): React.JSX.Element {
           rates their interest in), the ULA notices, terms and conditions (with
           the same <a href="#notice-fields">fields</a> available), and the
           import of the old ULA Google Form&apos;s response sheet.
+        </p>
+
+        <h2 className="my-3 h4" id="markdown">
+          Markdown
+        </h2>
+        <p data-testid="HelpAdminsPage-markdown">
+          The Notices, Terms and Conditions text on the TA and ULA App Settings
+          pages is written in Markdown, a plain-text way of marking up
+          formatting, and rendered for applicants (and in the editor&apos;s
+          preview) with GitHub-flavoured Markdown. The basics: a line starting
+          with <code># </code> is a heading (<code>## </code> a smaller one);{" "}
+          <code>*emphasis*</code> is italic and <code>**strong**</code> is bold;
+          lines starting with <code>- </code> make a bulleted list and with{" "}
+          <code>1. </code> a numbered one;{" "}
+          <code>[text](https://example.com)</code> makes a link; a blank line
+          starts a new paragraph, and a line starting with <code>&gt; </code> is
+          a quotation. Tables are written with <code>|</code> between the cells.
+          The editor&apos;s toolbar inserts each of these for you; the fields
+          such as <code>{"${quarter}"}</code> are described under{" "}
+          <Link to="/help/notice-fields">Help &rarr; Notices Fields</Link>.
         </p>
 
         <h2 className="my-3 h4" id="legacy-ta-application">
