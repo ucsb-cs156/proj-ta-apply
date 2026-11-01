@@ -67,12 +67,15 @@ with three additions:
 | 1 | `Created: {date the recruitment was created}` | always | none |
 | 2 | `Opened: {actualOpeningDate}` once opened; before that `Tentative: {tentativeOpeningDate}` | actualOpeningDate is set | the Open Applications modal |
 | 3 | `Closed: {actualClosingDate}` once closed; before that `Prim. Consid: {primaryConsiderationDate}` | actualClosingDate is set and applications are closed | the Close Applications modal |
-| 4 | `Hiring Target: {n}`, or `Not Set Yet` when no target has been set | target set and allocations add up to it | the word **Budget** → the Budget for Quarter page for the recruitment's quarter; the word **Allocations** → the Recruitment Courses page |
+| 4 | `Hiring Target: {n}` (the target is never unset: it defaults to 1, which is obviously wrong in practice and signals that action is needed) | the allocations add up to the target | the word **Budget** → the Budget for Quarter page for the recruitment's quarter; the word **Allocations** → the Recruitment Courses page |
 | 5 | `Released: {date}` or `Not released yet` | released (all courses, or the all-courses switch) | the Release Allocations modal |
 | 6 | `Opened: {date faculty rankings opened}` or `Not opened yet` | faculty review opening date set | the Open Faculty Rankings modal |
 | 7 | `Closed: {date faculty rankings closed}`; before that `Deadline: {facultyRankingDeadline}` if a deadline is set, else `Not closed yet` | reviews closed after having been open | the Close Faculty Rankings modal; and a separate link **(see rankings)** → the Courses page |
-| 8 | `No hiring target` if unset; `Still to assign: n` while assignments < target; `Assignment complete` otherwise | assignments ≥ target | the Assignments page |
-| 9 | `Released: {date hiring decisions released}` or `Not released yet` | assignments published | the Release Assignments (publish) modal; and a separate link **(see assignments)** → the Courses page |
+| 8 | `Still to assign: n` while tentative assignments < target; `Assignment complete` otherwise | assignments ≥ target | the Assignments page |
+| 9 | `Released: {date hiring decisions released}` or `Not released yet` | assignments published | before publishing, the Release Assignments (publish) modal; after publishing, the published Assignments page; and a separate link **(see assignments)** → the Courses page |
+
+The hiring target keeps its default of 1 (it is a divisor in the budget and ratio figures, so it is
+never null); the diagram therefore always shows `Hiring Target: n`.
 
 The dates for steps 1, 5, 7 and 9 are not stored today; the backend will store them (created
 at, allocations released at, faculty review closed at, assignments published at) and stamp them
@@ -86,7 +89,10 @@ The card becomes much wider to hold the diagram. From top to bottom:
 1. **Header**: quarter, type and the status badges, as today.
 2. **Dates panel**: as today, including the **Change** button beside the Faculty Ranking
    Deadline.
-3. **The live Recruitment Steps diagram** for this recruitment.
+3. **The live Recruitment Steps diagram** for this recruitment, in a collapsible panel whose
+   collapsed form is a one-line summary such as "Step 6 of 9: Open Faculty Ranking". The most
+   recent TA recruitment and the most recent ULA recruitment are expanded by default; every
+   other recruitment's panel starts collapsed.
 4. **A compressed set of buttons**: **Courses** and **Applications** (renamed from "Review
    Applications"). Everything else the card offered moves:
    - **Test Application** moves to the Applications page.
