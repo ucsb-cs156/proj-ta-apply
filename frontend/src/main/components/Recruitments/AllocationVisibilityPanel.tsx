@@ -1,12 +1,10 @@
+import { useState } from "react";
 import { Button } from "react-bootstrap";
-import { toast } from "react-toastify";
+import AllocationVisibilityModal from "main/components/Recruitments/AllocationVisibilityModal";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
-import { useBackendMutation } from "main/utils/useBackend";
 import {
-  ALLOCATIONS_HIDDEN_MESSAGE,
-  ALLOCATIONS_SHOWN_MESSAGE,
-  HIDE_ALLOCATIONS_LABEL,
-  SHOW_ALLOCATIONS_LABEL,
+  allocationVisibilityName,
+  allocationVisibilityOf,
 } from "main/utils/allocations";
 
 type AllocationVisibilityPanelProps = {
@@ -15,50 +13,41 @@ type AllocationVisibilityPanelProps = {
 };
 
 /**
- * Under the hiring target on the Recruitment Courses page (issue #178): whether the per-course
- * allocations are currently hidden from or shown to faculty, and a button that flips it. The
- * backend records the flip in the recruitment's audit trail, and re-reading the recruitment list
- * updates this panel and the admin cards.
+ * The line under the hiring target on the Recruitment Courses page (issues #178 and #224) that says
+ * who may see the allocations, with a Change button that opens the Allocation Visibility modal.
  */
 export default function AllocationVisibilityPanel({
   recruitment,
   testIdPrefix = "AllocationVisibilityPanel",
 }: AllocationVisibilityPanelProps): React.JSX.Element {
-  const visible = recruitment.allocationsVisibleToFaculty === true;
-
-  const mutation = useBackendMutation<boolean, Recruitment>(
-    (nextVisible) => ({
-      url: "/api/admin/recruitments/allocationsVisibleToFaculty",
-      method: "PUT",
-      params: { id: recruitment.id, visible: nextVisible },
-    }),
-    {
-      onSuccess: (_data, nextVisible) =>
-        toast(
-          nextVisible
-            ? "Allocations are now shown to faculty."
-            : "Allocations are now hidden from faculty.",
-        ),
-    },
-    ["/api/admin/recruitments/all"],
-  );
+  const [showModal, setShowModal] = useState(false);
 
   return (
     <div
-      className="mb-3 d-flex align-items-center flex-wrap gap-2"
+      className="d-flex align-items-center flex-wrap gap-2 mb-3"
       data-testid={testIdPrefix}
     >
       <span data-testid={`${testIdPrefix}-message`}>
-        {visible ? ALLOCATIONS_SHOWN_MESSAGE : ALLOCATIONS_HIDDEN_MESSAGE}
+        Allocation visibility:{" "}
+        <strong>
+          {allocationVisibilityName(allocationVisibilityOf(recruitment))}
+        </strong>
+        .
       </span>
       <Button
         size="sm"
-        variant={visible ? "outline-secondary" : "outline-primary"}
-        onClick={() => mutation.mutate(!visible)}
-        data-testid={`${testIdPrefix}-toggle`}
+        variant="outline-primary"
+        onClick={() => setShowModal(true)}
+        data-testid={`${testIdPrefix}-change`}
       >
-        {visible ? HIDE_ALLOCATIONS_LABEL : SHOW_ALLOCATIONS_LABEL}
+        Change
       </Button>
+      <AllocationVisibilityModal
+        recruitment={recruitment}
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        testIdPrefix={`${testIdPrefix}-modal`}
+      />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
@@ -56,7 +57,7 @@ public class RecruitmentAuditServiceTests {
             "reviewStatus",
             "facultyReviewOpeningDate",
             "facultyRankingDeadline",
-            "allocationsVisibleToFaculty",
+            "allocationVisibility",
             "assignmentsPublished"),
         new ArrayList<>(RecruitmentAuditService.FIELDS.keySet()));
   }
@@ -80,7 +81,7 @@ public class RecruitmentAuditServiceTests {
             "reviewStatus",
             "facultyReviewOpeningDate",
             "facultyRankingDeadline",
-            "allocationsVisibleToFaculty",
+            "allocationVisibility",
             "assignmentsPublished"),
         new ArrayList<>(fields.keySet()));
     assertEquals("CLOSED", fields.get("applicationStatus"));
@@ -92,22 +93,22 @@ public class RecruitmentAuditServiceTests {
     assertEquals("NotStarted", fields.get("reviewStatus"));
     assertNull(fields.get("facultyReviewOpeningDate"));
     assertNull(fields.get("facultyRankingDeadline"));
-    assertEquals("false", fields.get("allocationsVisibleToFaculty"));
+    assertEquals("ADMINS_ONLY", fields.get("allocationVisibility"));
     assertEquals("false", fields.get("assignmentsPublished"));
   }
 
   @Test
-  public void showing_allocations_to_faculty_records_one_change() {
+  public void changing_allocation_visibility_records_one_change() {
     Recruitment r = recruitment();
     RecruitmentAuditService.Snapshot before = service.snapshot(r);
-    r.setAllocationsVisibleToFaculty(true);
+    r.setAllocationVisibility(AllocationVisibility.OWN_COURSES);
 
     List<RecruitmentAuditTrail> changes = service.recordChanges(before, r);
 
     assertEquals(1, changes.size());
-    assertEquals("allocationsVisibleToFaculty", changes.get(0).getWhatChanged());
-    assertEquals("false", changes.get(0).getOldValue());
-    assertEquals("true", changes.get(0).getNewValue());
+    assertEquals("allocationVisibility", changes.get(0).getWhatChanged());
+    assertEquals("ADMINS_ONLY", changes.get(0).getOldValue());
+    assertEquals("OWN_COURSES", changes.get(0).getNewValue());
   }
 
   @Test

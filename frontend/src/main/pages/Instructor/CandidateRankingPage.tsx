@@ -20,6 +20,7 @@ import CandidateTable, {
   type Candidate,
 } from "main/components/Instructor/CandidateTable";
 import { rankingAllocationNotice } from "main/utils/allocations";
+import { targetsColumns, type CourseTargets } from "main/utils/courseTargets";
 
 type CourseDetails = {
   id: number;
@@ -64,6 +65,11 @@ export type CandidateRankingPageData = {
    * hides allocations from faculty; admins always get it.
    */
   allocation?: number | null;
+  /**
+   * The course's hiring figures (issue #224): present on the same terms as `allocation`; null or
+   * absent while the admin withholds hiring targets from faculty.
+   */
+  targets?: CourseTargets | null;
 };
 
 /** The course-scoped instructor ranking workspace. */
@@ -126,6 +132,12 @@ export default function CandidateRankingPage(): React.JSX.Element {
           <p role="alert">No candidate-ranking details were returned.</p>
         ) : (
           <>
+            {data.targets != null && (
+              <DetailsTable
+                testIdPrefix="CandidateRankingPage-targets"
+                columns={targetsColumns(data.targets, "CandidateRankingPage")}
+              />
+            )}
             {data.allocation != null && (
               <p
                 className="lead"

@@ -1,0 +1,50 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "040-replace-allocations-visible-with-allocation-visibility",
+        "author": "pc",
+        "comment": "Who may see a recruitment's allocations: ADMINS_ONLY, OWN_COURSES or ALL_COURSES, replacing the true/false switch of issue #178 (issue #224). True becomes OWN_COURSES, false ADMINS_ONLY.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "recruitments",
+                "columnName": "allocation_visibility"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [
+                {
+                  "column": {
+                    "name": "allocation_visibility",
+                    "type": "VARCHAR(16)",
+                    "defaultValue": "ADMINS_ONLY",
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "sql": {
+              "sql": "UPDATE recruitments SET allocation_visibility = CASE WHEN allocations_visible_to_faculty THEN 'OWN_COURSES' ELSE 'ADMINS_ONLY' END"
+            }
+          },
+          {
+            "dropColumn": {
+              "tableName": "recruitments",
+              "columnName": "allocations_visible_to_faculty"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

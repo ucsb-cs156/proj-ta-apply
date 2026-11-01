@@ -47,11 +47,14 @@ const instructorRecruitmentsFixtures = {
       ],
     },
   ],
-  /** The same two recruitments once the admin shows allocations to faculty (issue #178). */
+  /**
+   * The same two recruitments once the admin releases hiring targets to faculty (issues #178 and
+   * #224): each course carries its allocation, and `targets` holds its figures by course id.
+   */
   twoRecruitmentsWithAllocations: [
     {
       ...closedTa,
-      allocationsVisibleToFaculty: true,
+      allocationVisibility: "ALL_COURSES",
       courses: [
         { ...lecture156a, recruitmentId: 1, allocation: 2 },
         {
@@ -62,11 +65,40 @@ const instructorRecruitmentsFixtures = {
           allocation: 3,
         },
       ],
+      targets: {
+        2: {
+          recruitmentCourseId: 2,
+          allocation: 2,
+          candidateCount: 7,
+          rankingTarget: 4,
+          rankedCount: 1,
+          stillNeeded: 3,
+        },
+        // Only 5 interested candidates, so the target is capped below 2 × 3; all ranked already.
+        3: {
+          recruitmentCourseId: 3,
+          allocation: 3,
+          candidateCount: 5,
+          rankingTarget: 5,
+          rankedCount: 6,
+          stillNeeded: 0,
+        },
+      },
     },
     {
       ...openUla,
-      allocationsVisibleToFaculty: true,
+      allocationVisibility: "ALL_COURSES",
       courses: [{ ...oneA, recruitmentId: 2, allocation: 1 }],
+      targets: {
+        1: {
+          recruitmentCourseId: 1,
+          allocation: 1,
+          candidateCount: 4,
+          rankingTarget: 2,
+          rankedCount: 0,
+          stillNeeded: 2,
+        },
+      },
     },
   ],
   candidateRankingPage: {
@@ -101,10 +133,49 @@ const instructorRecruitmentsFixtures = {
   },
 };
 
-/** The ranking page once the admin shows allocations: this lecture has two TAs (issue #178). */
+/**
+ * The ranking page once the admin releases hiring targets: this lecture has two TAs (issue #178)
+ * and its figures (issue #224).
+ */
 instructorRecruitmentsFixtures.candidateRankingPageWithAllocation = {
   ...instructorRecruitmentsFixtures.candidateRankingPage,
   allocation: 2,
+  targets: {
+    recruitmentCourseId: 2,
+    allocation: 2,
+    candidateCount: 7,
+    rankingTarget: 4,
+    rankedCount: 1,
+    stillNeeded: 3,
+  },
 };
+
+/**
+ * Every course's allocation, as /api/instructor/recruitments/1/allocations returns it once the admin
+ * shows all allocations to all faculty (issue #224).
+ */
+instructorRecruitmentsFixtures.allAllocations = [
+  {
+    id: 4,
+    courseId: "CMPSC     8",
+    section: "0100",
+    instructor: "MIRZA D",
+    allocation: 1,
+  },
+  {
+    id: 2,
+    courseId: "CMPSC   156",
+    section: "0100",
+    instructor: "CONRAD P",
+    allocation: 2,
+  },
+  {
+    id: 3,
+    courseId: "CMPSC   156",
+    section: "0200",
+    instructor: "CONRAD P",
+    allocation: 3,
+  },
+];
 
 export default instructorRecruitmentsFixtures;

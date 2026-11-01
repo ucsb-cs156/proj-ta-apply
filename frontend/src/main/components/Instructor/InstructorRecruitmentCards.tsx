@@ -4,11 +4,17 @@ import type { Recruitment } from "main/components/Recruitments/RecruitmentTable"
 import type { RecruitmentCourse } from "main/components/Recruitments/RecruitmentCourseTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { DATE_KEYS } from "main/utils/recruitmentSort";
-import { courseAllocationText } from "main/utils/allocations";
+import DetailsTable from "main/components/Common/DetailsTable";
+import { targetsColumns, type CourseTargets } from "main/utils/courseTargets";
 
-/** A recruitment as /api/instructor/recruitments returns it: with the instructor's courses in it. */
+/**
+ * A recruitment as /api/instructor/recruitments returns it: with the instructor's courses in it,
+ * and, once the admin has released hiring targets (issue #224), each course's figures keyed by
+ * course id; null or absent while withheld.
+ */
 export type InstructorRecruitment = Recruitment & {
   courses: RecruitmentCourse[];
+  targets?: Record<string, CourseTargets> | null;
 };
 
 type InstructorRecruitmentCardsProps = {
@@ -109,6 +115,15 @@ export default function InstructorRecruitmentCards({
                   Assignments
                 </Link>
               )}
+              {recruitment.allocationVisibility === "ALL_COURSES" && (
+                <Link
+                  className="btn btn-outline-primary mb-2 ms-2"
+                  to={`/recruitments/${recruitment.id}/allocations`}
+                  data-testid={id("all-allocations-button")}
+                >
+                  All allocations
+                </Link>
+              )}
               <Accordion alwaysOpen data-testid={id("courses")}>
                 {courses.map((course) => (
                   <Accordion.Item
@@ -132,16 +147,21 @@ export default function InstructorRecruitmentCards({
                     <Accordion.Body
                       data-testid={id(`course-${course.id}-body`)}
                     >
-                      {course.allocation != null && (
-                        <p
+                      {recruitment.targets?.[String(course.id)] && (
+                        <div
                           className="mb-2"
-                          data-testid={id(`course-${course.id}-allocation`)}
+                          data-testid={id(`course-${course.id}-targets`)}
                         >
-                          {courseAllocationText(
-                            recruitment.type,
-                            course.allocation,
-                          )}
-                        </p>
+                          <DetailsTable
+                            testIdPrefix={id(
+                              `course-${course.id}-targets-table`,
+                            )}
+                            columns={targetsColumns(
+                              recruitment.targets[String(course.id)],
+                              id(`course-${course.id}`),
+                            )}
+                          />
+                        </div>
                       )}
                       {recruitment.reviewStatus === "Open" && (
                         <Link

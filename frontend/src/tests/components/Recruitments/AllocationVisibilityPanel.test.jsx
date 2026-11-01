@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import axios from "axios";
@@ -8,21 +8,14 @@ import { vi } from "vitest";
 import AllocationVisibilityPanel from "main/components/Recruitments/AllocationVisibilityPanel";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 
-const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
   ...(await importOriginal()),
-  toast: (x) => mockToast(x),
+  toast: vi.fn(),
 }));
 
 const axiosMock = new AxiosMockAdapter(axios);
-const URL = "/api/admin/recruitments/allocationsVisibleToFaculty";
 
-const hidden = {
-  ...recruitmentsFixtures.threeRecruitments[2],
-  id: 7,
-  allocationsVisibleToFaculty: false,
-};
-const shown = { ...hidden, allocationsVisibleToFaculty: true };
+const base = { ...recruitmentsFixtures.threeRecruitments[2], id: 7 };
 
 function renderPanel(recruitment, props = {}) {
   return render(
@@ -36,105 +29,63 @@ function renderPanel(recruitment, props = {}) {
   );
 }
 
-const puts = () => axiosMock.history.put.filter((r) => r.url === URL);
-
 describe("AllocationVisibilityPanel tests", () => {
   beforeEach(() => {
-    mockToast.mockClear();
     axiosMock.reset();
     axiosMock.resetHistory();
-    axiosMock.onPut(URL).reply(200, {});
   });
 
-  test("while hidden it says so and offers to show, with the default test id", () => {
-    renderPanel(hidden);
+  test("says who sees the allocations, with a Change button and the default test id", () => {
+    renderPanel(base);
 
     const panel = screen.getByTestId("AllocationVisibilityPanel");
-    expect(panel).toHaveClass(
-      "mb-3",
-      "d-flex",
-      "align-items-center",
-      "flex-wrap",
-      "gap-2",
-    );
+    expect(panel).toHaveClass("d-flex", "mb-3");
     expect(
       screen.getByTestId("AllocationVisibilityPanel-message"),
-    ).toHaveTextContent(
-      "Allocations of TAs/ULAs per course are currently hidden from faculty.",
-    );
-    const button = screen.getByTestId("AllocationVisibilityPanel-toggle");
-    expect(button).toHaveTextContent("Show Allocations to Faculty");
+    ).toHaveTextContent("Allocation visibility: Admins only.");
     expect(
-      screen.getByRole("button", { name: "Show Allocations to Faculty" }),
-    ).toBe(button);
-    expect(button).toHaveClass("btn-outline-primary", "btn-sm");
+      screen
+        .getByTestId("AllocationVisibilityPanel-message")
+        .querySelector("strong"),
+    ).toHaveTextContent("Admins only");
+    const change = screen.getByTestId("AllocationVisibilityPanel-change");
+    expect(change).toHaveTextContent("Change");
+    expect(change).toHaveClass("btn-outline-primary", "btn-sm");
+    // There is nothing per course here, and no old switch.
+    expect(screen.queryByText(/Release all/)).toBeNull();
+    expect(screen.queryByText(/Withdraw all/)).toBeNull();
+    expect(screen.queryByText(/Show All Allocations/)).toBeNull();
   });
 
-  test("a missing flag counts as hidden", () => {
-    const { allocationsVisibleToFaculty, ...withoutFlag } = hidden;
-    expect(allocationsVisibleToFaculty).toBe(false);
-    renderPanel(withoutFlag, { testIdPrefix: "P" });
-
-    expect(screen.getByTestId("P-message")).toHaveTextContent(
-      "currently hidden from faculty.",
-    );
-    expect(screen.getByTestId("P-toggle")).toHaveTextContent(
-      "Show Allocations to Faculty",
-    );
+  test.each([
+    ["ADMINS_ONLY", "Admins only"],
+    ["OWN_COURSES", "Faculty see their own courses"],
+    ["ALL_COURSES", "Faculty see all courses"],
+  ])("names the %s state", (visibility, name) => {
+    renderPanel({ ...base, allocationVisibility: visibility });
+    expect(
+      screen.getByTestId("AllocationVisibilityPanel-message"),
+    ).toHaveTextContent(`Allocation visibility: ${name}.`);
   });
 
-  test("while shown it says so and offers to hide", () => {
-    renderPanel(shown, { testIdPrefix: "P" });
-
-    expect(screen.getByTestId("P-message")).toHaveTextContent(
-      "Allocations of TAs/ULAs per course are currently shown to faculty (though only for their own courses)",
-    );
-    const button = screen.getByTestId("P-toggle");
-    expect(button).toHaveTextContent("Hide Allocations from Faculty");
-    expect(button).toHaveClass("btn-outline-secondary", "btn-sm");
+  test("a recruitment with no setting yet is admins only", () => {
+    const { allocationVisibility: _omitted, ...without } = base;
+    renderPanel(without);
+    expect(
+      screen.getByTestId("AllocationVisibilityPanel-message"),
+    ).toHaveTextContent("Allocation visibility: Admins only.");
   });
 
-  test("clicking Show sends visible=true for this recruitment and toasts", async () => {
-    renderPanel(hidden, { testIdPrefix: "P" });
+  test("Change opens the Allocation Visibility modal, and Cancel closes it without sending anything", async () => {
+    renderPanel(base, { testIdPrefix: "P" });
 
-    await userEvent.click(screen.getByTestId("P-toggle"));
+    expect(screen.queryByTestId("P-modal")).toBeNull();
+    await userEvent.click(screen.getByTestId("P-change"));
+    expect(await screen.findByTestId("P-modal")).toBeInTheDocument();
+    expect(screen.getByText("Allocation Visibility")).toBeInTheDocument();
 
-    await waitFor(() => expect(puts()).toHaveLength(1));
-    expect(puts()[0].params).toEqual({ id: 7, visible: true });
-    await waitFor(() =>
-      expect(mockToast).toHaveBeenCalledWith(
-        "Allocations are now shown to faculty.",
-      ),
-    );
-    expect(mockToast).toHaveBeenCalledTimes(1);
-  });
-
-  test("clicking Hide sends visible=false and toasts", async () => {
-    renderPanel(shown, { testIdPrefix: "P" });
-
-    await userEvent.click(screen.getByTestId("P-toggle"));
-
-    await waitFor(() => expect(puts()).toHaveLength(1));
-    expect(puts()[0].params).toEqual({ id: 7, visible: false });
-    await waitFor(() =>
-      expect(mockToast).toHaveBeenCalledWith(
-        "Allocations are now hidden from faculty.",
-      ),
-    );
-    expect(mockToast).toHaveBeenCalledTimes(1);
-  });
-
-  test("a failed save toasts the error and not the success message", async () => {
-    axiosMock
-      .onPut(URL)
-      .reply(404, { message: "Recruitment with id 7 not found" });
-    renderPanel(hidden, { testIdPrefix: "P" });
-
-    await userEvent.click(screen.getByTestId("P-toggle"));
-
-    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1));
-    expect(mockToast).not.toHaveBeenCalledWith(
-      "Allocations are now shown to faculty.",
-    );
+    await userEvent.click(screen.getByTestId("P-modal-cancel"));
+    await vi.waitFor(() => expect(screen.queryByTestId("P-modal")).toBeNull());
+    expect(axiosMock.history.put).toHaveLength(0);
   });
 });

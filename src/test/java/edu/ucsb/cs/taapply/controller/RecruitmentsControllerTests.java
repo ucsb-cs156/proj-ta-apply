@@ -1,7 +1,6 @@
 package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJob;
@@ -1006,46 +1006,51 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals("EntityNotFoundException", json.get("type"));
   }
 
-  // ---- PUT /api/admin/recruitments/allocationsVisibleToFaculty (issue #178) ----
+  // ---- PUT /api/admin/recruitments/allocationVisibility (issues #178 and #224) ----
 
-  private static final String VISIBILITY_URL =
-      "/api/admin/recruitments/allocationsVisibleToFaculty";
+  private static final String VISIBILITY_URL = "/api/admin/recruitments/allocationVisibility";
 
   @Test
-  public void logged_out_users_cannot_show_or_hide_allocations() throws Exception {
+  public void logged_out_users_cannot_change_the_allocation_visibility() throws Exception {
     mockMvc
-        .perform(put(VISIBILITY_URL + "?id=1&visible=true").with(csrf()))
+        .perform(put(VISIBILITY_URL + "?id=1&visibility=OWN_COURSES").with(csrf()))
         .andExpect(status().is(403));
     verify(recruitmentRepository, never()).findById(any());
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
   @Test
-  public void instructors_cannot_show_or_hide_allocations() throws Exception {
+  public void instructors_cannot_change_the_allocation_visibility() throws Exception {
     mockMvc
-        .perform(put(VISIBILITY_URL + "?id=1&visible=true").with(csrf()))
+        .perform(put(VISIBILITY_URL + "?id=1&visibility=ALL_COURSES").with(csrf()))
         .andExpect(status().is(403));
     verify(recruitmentRepository, never()).findById(any());
   }
 
-  @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void showing_allocations_saves_the_flag_and_records_it_in_the_audit_trail()
-      throws Exception {
-    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
-    assertFalse(r.getAllocationsVisibleToFaculty());
+  public void a_new_recruitment_shows_allocations_to_admins_only() {
+    assertEquals(
+        AllocationVisibility.ADMINS_ONLY,
+        recruitment(1L, "20261", RecruitmentType.TA).getAllocationVisibility());
+  }
+
+  /** Each change is saved and then recorded in the audit trail, in that order. */
+  private void assertVisibilityChange(
+      AllocationVisibility from, AllocationVisibility to, RecruitmentType type) throws Exception {
+    Recruitment r = recruitment(1L, "20261", type);
+    r.setAllocationVisibility(from);
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
     RecruitmentAuditService.Snapshot before =
-        new RecruitmentAuditService.Snapshot(1L, Map.of("allocationsVisibleToFaculty", "false"));
+        new RecruitmentAuditService.Snapshot(1L, Map.of("allocationVisibility", from.name()));
     when(recruitmentAuditService.snapshot(r)).thenReturn(before);
 
     MvcResult response =
         mockMvc
-            .perform(put(VISIBILITY_URL + "?id=1&visible=true").with(csrf()))
+            .perform(put(VISIBILITY_URL + "?id=1&visibility=" + to.name()).with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
 
-    assertTrue(r.getAllocationsVisibleToFaculty());
+    assertEquals(to, r.getAllocationVisibility());
     InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
     inOrder.verify(recruitmentAuditService).snapshot(r);
     inOrder.verify(recruitmentRepository).save(r);
@@ -1055,47 +1060,44 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         response
             .getResponse()
             .getContentAsString()
-            .contains("\"allocationsVisibleToFaculty\":true"));
+            .contains("\"allocationVisibility\":\"" + to.name() + "\""));
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void hiding_allocations_saves_the_flag_and_records_it_in_the_audit_trail()
-      throws Exception {
-    Recruitment r = recruitment(1L, "20261", RecruitmentType.ULA);
-    r.setAllocationsVisibleToFaculty(true);
-    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
-    RecruitmentAuditService.Snapshot before =
-        new RecruitmentAuditService.Snapshot(1L, Map.of("allocationsVisibleToFaculty", "true"));
-    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
-
-    MvcResult response =
-        mockMvc
-            .perform(put(VISIBILITY_URL + "?id=1&visible=false").with(csrf()))
-            .andExpect(status().isOk())
-            .andReturn();
-
-    assertFalse(r.getAllocationsVisibleToFaculty());
-    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
-    inOrder.verify(recruitmentAuditService).snapshot(r);
-    inOrder.verify(recruitmentRepository).save(r);
-    inOrder.verify(recruitmentAuditService).recordChanges(before, r);
-    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+  public void releasing_allocations_to_each_faculty_member_is_saved_and_audited() throws Exception {
+    assertVisibilityChange(
+        AllocationVisibility.ADMINS_ONLY, AllocationVisibility.OWN_COURSES, RecruitmentType.TA);
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void setting_the_visibility_it_already_has_neither_saves_nor_audits() throws Exception {
+  public void showing_all_allocations_to_all_faculty_is_saved_and_audited() throws Exception {
+    assertVisibilityChange(
+        AllocationVisibility.OWN_COURSES, AllocationVisibility.ALL_COURSES, RecruitmentType.ULA);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void withdrawing_allocations_from_faculty_is_saved_and_audited() throws Exception {
+    assertVisibilityChange(
+        AllocationVisibility.ALL_COURSES, AllocationVisibility.ADMINS_ONLY, RecruitmentType.TA);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void choosing_the_visibility_it_already_has_neither_saves_nor_audits() throws Exception {
     Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAllocationVisibility(AllocationVisibility.OWN_COURSES);
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
 
     MvcResult response =
         mockMvc
-            .perform(put(VISIBILITY_URL + "?id=1&visible=false").with(csrf()))
+            .perform(put(VISIBILITY_URL + "?id=1&visibility=OWN_COURSES").with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
 
-    assertFalse(r.getAllocationsVisibleToFaculty());
+    assertEquals(AllocationVisibility.OWN_COURSES, r.getAllocationVisibility());
     verify(recruitmentRepository, never()).save(any());
     verify(recruitmentAuditService, never()).snapshot(any());
     verify(recruitmentAuditService, never()).recordChanges(any(), any());
@@ -1104,30 +1106,12 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void a_null_visibility_flag_counts_as_hidden_when_showing() throws Exception {
-    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
-    r.setAllocationsVisibleToFaculty(null);
-    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
-    RecruitmentAuditService.Snapshot before = new RecruitmentAuditService.Snapshot(1L, Map.of());
-    when(recruitmentAuditService.snapshot(r)).thenReturn(before);
-
-    mockMvc
-        .perform(put(VISIBILITY_URL + "?id=1&visible=true").with(csrf()))
-        .andExpect(status().isOk());
-
-    assertTrue(r.getAllocationsVisibleToFaculty());
-    verify(recruitmentRepository).save(r);
-    verify(recruitmentAuditService).recordChanges(before, r);
-  }
-
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void showing_allocations_for_an_unknown_recruitment_is_a_404() throws Exception {
+  public void changing_the_visibility_of_an_unknown_recruitment_is_a_404() throws Exception {
     when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
 
     MvcResult response =
         mockMvc
-            .perform(put(VISIBILITY_URL + "?id=99&visible=true").with(csrf()))
+            .perform(put(VISIBILITY_URL + "?id=99&visibility=OWN_COURSES").with(csrf()))
             .andExpect(status().isNotFound())
             .andReturn();
 
@@ -1140,7 +1124,17 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void showing_allocations_without_saying_which_way_is_a_400() throws Exception {
+  public void a_visibility_that_is_not_one_of_the_three_is_a_400() throws Exception {
+    mockMvc
+        .perform(put(VISIBILITY_URL + "?id=1&visibility=EVERYONE").with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(recruitmentRepository, never()).findById(any());
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_missing_visibility_is_a_400() throws Exception {
     mockMvc.perform(put(VISIBILITY_URL + "?id=1").with(csrf())).andExpect(status().isBadRequest());
     verify(recruitmentRepository, never()).findById(any());
     verify(recruitmentRepository, never()).save(any());

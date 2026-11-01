@@ -10,11 +10,11 @@ import {
   isValidEnrollmentEstimate,
   isValidHiringTarget,
   OVER_ALLOCATED_MESSAGE,
-  ALLOCATIONS_HIDDEN_MESSAGE,
-  ALLOCATIONS_SHOWN_MESSAGE,
-  SHOW_ALLOCATIONS_LABEL,
-  HIDE_ALLOCATIONS_LABEL,
-  courseAllocationText,
+  ALLOCATION_VISIBILITY_NOTE,
+  ALLOCATION_VISIBILITY_OPTIONS,
+  allocationVisibilityName,
+  allocationVisibilityOf,
+  allocationVisibilityToast,
   rankingAllocationNotice,
 } from "main/utils/allocations";
 
@@ -150,26 +150,49 @@ describe("allocations utilities", () => {
 
   // ---- issue #178 ----
 
-  test("the visibility messages and button labels are the ones the design asks for", () => {
-    expect(ALLOCATIONS_HIDDEN_MESSAGE).toBe(
-      "Allocations of TAs/ULAs per course are currently hidden from faculty.",
+  test("the three allocation visibility states and their plain-language explanations", () => {
+    expect(ALLOCATION_VISIBILITY_OPTIONS).toEqual([
+      {
+        value: "ADMINS_ONLY",
+        name: "Admins only",
+        explanation: "No faculty member sees any allocation.",
+      },
+      {
+        value: "OWN_COURSES",
+        name: "Faculty see their own courses",
+        explanation:
+          "Each faculty member sees the allocations for the courses they teach. This is what Release Allocations to Faculty means.",
+      },
+      {
+        value: "ALL_COURSES",
+        name: "Faculty see all courses",
+        explanation:
+          "Every faculty member teaching in this recruitment sees the allocations of all its courses.",
+      },
+    ]);
+    expect(ALLOCATION_VISIBILITY_NOTE).toBe(
+      "You can still change allocations afterwards; faculty see changes immediately.",
     );
-    expect(ALLOCATIONS_SHOWN_MESSAGE).toBe(
-      "Allocations of TAs/ULAs per course are currently shown to faculty (though only for their own courses)",
-    );
-    expect(SHOW_ALLOCATIONS_LABEL).toBe("Show Allocations to Faculty");
-    expect(HIDE_ALLOCATIONS_LABEL).toBe("Hide Allocations from Faculty");
   });
 
-  test("the card line names the type and the number", () => {
-    expect(courseAllocationText("TA", 2)).toBe(
-      "TAs allocated to this course: 2",
+  test("a recruitment's visibility defaults to admins only, and each state has its name and toast", () => {
+    expect(allocationVisibilityOf({})).toBe("ADMINS_ONLY");
+    expect(allocationVisibilityOf({ allocationVisibility: null })).toBe(
+      "ADMINS_ONLY",
     );
-    expect(courseAllocationText("ULA", 1)).toBe(
-      "ULAs allocated to this course: 1",
+    expect(
+      allocationVisibilityOf({ allocationVisibility: "OWN_COURSES" }),
+    ).toBe("OWN_COURSES");
+    expect(allocationVisibilityName("ADMINS_ONLY")).toBe("Admins only");
+    expect(allocationVisibilityName("OWN_COURSES")).toBe(
+      "Faculty see their own courses",
     );
-    expect(courseAllocationText("TA", 0)).toBe(
-      "TAs allocated to this course: 0",
+    expect(allocationVisibilityName("ALL_COURSES")).toBe(
+      "Faculty see all courses",
+    );
+    expect(allocationVisibilityName("SOMETHING_ELSE")).toBe("");
+    expect(allocationVisibilityToast("ALL_COURSES")).toBe(
+      "Allocation visibility is now: Faculty see all courses.",
     );
   });
 

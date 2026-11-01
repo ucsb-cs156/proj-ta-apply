@@ -40,7 +40,7 @@ public class RecruitmentAuditService {
     FIELDS.put("reviewStatus", Recruitment::getReviewStatus);
     FIELDS.put("facultyReviewOpeningDate", Recruitment::getFacultyReviewOpeningDate);
     FIELDS.put("facultyRankingDeadline", Recruitment::getFacultyRankingDeadline);
-    FIELDS.put("allocationsVisibleToFaculty", Recruitment::getAllocationsVisibleToFaculty);
+    FIELDS.put("allocationVisibility", Recruitment::getAllocationVisibility);
     FIELDS.put("assignmentsPublished", Recruitment::getAssignmentsPublished);
   }
 

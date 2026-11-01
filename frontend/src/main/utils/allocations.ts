@@ -82,22 +82,61 @@ export const autoAssignTooltip = (
 ): string =>
   `Automatically allocate the ${totalHiringTarget} ${type}s across courses based on enrollment`;
 
-/** Issue #178: the two states of the show/hide control on the Recruitment Courses page. */
-export const ALLOCATIONS_HIDDEN_MESSAGE =
-  "Allocations of TAs/ULAs per course are currently hidden from faculty.";
-export const ALLOCATIONS_SHOWN_MESSAGE =
-  "Allocations of TAs/ULAs per course are currently shown to faculty (though only for their own courses)";
-export const SHOW_ALLOCATIONS_LABEL = "Show Allocations to Faculty";
-export const HIDE_ALLOCATIONS_LABEL = "Hide Allocations from Faculty";
+/**
+ * Issues #178 and #224: who may see a recruitment's allocations. One setting per recruitment with
+ * three states, chosen in the Allocation Visibility modal on the Recruitment Courses page; there is
+ * nothing about it on a course's row.
+ */
+export type AllocationVisibility =
+  "ADMINS_ONLY" | "OWN_COURSES" | "ALL_COURSES";
 
-/** The line under a course on an instructor's home page card once allocations are shown. */
-export const courseAllocationText = (
-  type: "TA" | "ULA",
-  allocation: number,
-): string => `${type}s allocated to this course: ${allocation}`;
+export const ALLOCATION_VISIBILITY_OPTIONS: {
+  value: AllocationVisibility;
+  name: string;
+  explanation: string;
+}[] = [
+  {
+    value: "ADMINS_ONLY",
+    name: "Admins only",
+    explanation: "No faculty member sees any allocation.",
+  },
+  {
+    value: "OWN_COURSES",
+    name: "Faculty see their own courses",
+    explanation:
+      "Each faculty member sees the allocations for the courses they teach. This is what Release Allocations to Faculty means.",
+  },
+  {
+    value: "ALL_COURSES",
+    name: "Faculty see all courses",
+    explanation:
+      "Every faculty member teaching in this recruitment sees the allocations of all its courses.",
+  },
+];
+
+/** A recruitment's setting; one that has none yet (an older response) is admins only. */
+export const allocationVisibilityOf = (recruitment: {
+  allocationVisibility?: AllocationVisibility | null;
+}): AllocationVisibility => recruitment.allocationVisibility ?? "ADMINS_ONLY";
+
+/** The short name of a state, as the panel and the toast say it. */
+export const allocationVisibilityName = (
+  visibility: AllocationVisibility,
+): string =>
+  ALLOCATION_VISIBILITY_OPTIONS.find((option) => option.value === visibility)
+    ?.name ?? "";
+
+export const ALLOCATION_VISIBILITY_NOTE =
+  "You can still change allocations afterwards; faculty see changes immediately.";
+
+export const allocationVisibilityToast = (
+  visibility: AllocationVisibility,
+): string =>
+  `Allocation visibility is now: ${allocationVisibilityName(visibility)}.`;
 
 /**
- * The notice at the top of the candidate ranking page once allocations are shown (issue #178):
+ * The notice at the top of the candidate ranking page once allocations are shown (issue #178; the
+ * targets table shown with it is in courseTargets.ts, issue #224):
  * how many positions the course has, and that the instructor should rank at least that many
  * candidates and preferably twice as many.
  */

@@ -136,10 +136,10 @@ describe("Help pages (issue #140)", () => {
     // Issue #178: what an instructor sees once allocations are shown.
     const allocations = screen.getByTestId("HelpInstructorsPage-allocations");
     expect(allocations).toHaveTextContent(
-      "Once an admin chooses to show them, each of your courses also says how many TAs (or ULAs) have been allocated to it, both on the card and at the top of its ranking page.",
+      "Once an admin lets faculty see the allocations, each of your courses shows a small table, both on the card and at the top of its ranking page: the Hiring Target (how many TAs or ULAs were allocated to the course), the Ranking Target (how many candidates you are asked to rank: twice the hiring target, or every interested candidate if there are fewer), Candidates Ranked so far and Rankings Still Needed.",
     );
     expect(allocations).toHaveTextContent(
-      "Please rank at least that many candidates, and preferably twice as many. Until then no allocation is shown.",
+      "If you have concerns about your course's target, raise them with the admin once you see it. Until the admin does, nothing about it is shown. If the admin chooses to show all courses to all faculty, your cards also offer All allocations, a read-only list of every course's number; otherwise that page does not exist.",
     );
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
     // Issue #199: interest colours, the not-interested opt-in and cancelled applications.
@@ -494,13 +494,13 @@ describe("Help pages (issue #140)", () => {
     );
     expect(visibility.id).toBe("allocation-visibility");
     expect(visibility).toHaveTextContent(
-      "Allocations are hidden from faculty until you choose otherwise.",
+      "Who may see the allocations is one setting for the recruitment, shown under the hiring target as Allocation visibility; choose Change to pick one of three states. Admins only is where every recruitment starts: no faculty member sees any allocation.",
     );
     expect(visibility).toHaveTextContent(
-      "Show Allocations to Faculty puts each lecture's allocation on the instructor's home page card and at the top of its ranking page",
+      "Faculty see their own courses is what Release Allocations to Faculty means: each faculty member sees the allocations for the courses they teach, as a small table on their home page card and at the top of each ranking page: the Hiring Target (the allocation), the Ranking Target (twice the allocation, but never more than the candidates who expressed interest in the course), Candidates Ranked so far and Rankings Still Needed.",
     );
     expect(visibility).toHaveTextContent(
-      "Hide Allocations from Faculty takes it away again. Showing or hiding is recorded in the recruitment's change history.",
+      "Faculty see all courses goes further, for when the whole plan is public: every faculty member teaching in the recruitment also gets an All allocations page listing every course's number. Move off Admins only once the numbers are mostly final; you can still change an allocation afterwards, and faculty see the change immediately. Every change of state is recorded in the recruitment's change history.",
     );
     expect(
       auto.compareDocumentPosition(visibility) &
@@ -690,5 +690,18 @@ describe("Help pages (issue #140)", () => {
       await screen.findByRole("heading", { level: 1, name: "For Admins" }),
     ).toBeInTheDocument();
     expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  test("the admins page's recruitment flow mentions releasing allocations before opening reviews (issue #224)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const steps = screen
+      .getByTestId("HelpAdminsPage-flow")
+      .querySelectorAll("li");
+    expect(steps).toHaveLength(4);
+    expect(steps[3]).toHaveTextContent(
+      "Afterwards: Close Applications, plan the hiring on the Courses and Budget for Quarter pages, release each lecture's allocation to its instructor, then Open Faculty Reviews.",
+    );
   });
 });

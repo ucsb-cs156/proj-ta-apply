@@ -1,6 +1,7 @@
 import OurTable from "main/components/Common/OurTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { Cell } from "@tanstack/react-table";
+import type { AllocationVisibility } from "main/utils/allocations";
 
 export type Recruitment = {
   id: number;
@@ -23,8 +24,8 @@ export type Recruitment = {
    * entered on the Budget for Quarter page.
    */
   avgCostPerPosition?: number | null;
-  /** Whether faculty see the per-course allocations on their pages (issue #178); hidden by default. */
-  allocationsVisibleToFaculty?: boolean;
+  /** Who may see the allocations (issues #178 and #224); admins only by default. */
+  allocationVisibility?: AllocationVisibility;
   /** Whether the assignments page and its CSVs are open to admins and faculty (issue #180). */
   assignmentsPublished?: boolean;
 };

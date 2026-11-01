@@ -1,5 +1,6 @@
 package edu.ucsb.cs.taapply.entity;
 
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import jakarta.persistence.*;
@@ -90,13 +91,14 @@ public class Recruitment {
   private BigDecimal avgCostPerPosition;
 
   /**
-   * Whether the per-course allocations are shown on the faculty-facing pages, the home page cards
-   * and the candidate ranking page (issue #178). Hidden by default. Faculty see this, so changes
-   * are recorded in the audit trail like opening reviews.
+   * Who may see the allocations of this recruitment's courses (issue #224): admins only (the
+   * default), each faculty member for their own courses, or all faculty for all courses. Faculty
+   * see the result, so changes are recorded in the audit trail like opening reviews.
    */
-  @Column(name = "allocations_visible_to_faculty", nullable = false)
+  @Enumerated(EnumType.STRING)
+  @Column(name = "allocation_visibility", nullable = false, length = 16)
   @Builder.Default
-  private Boolean allocationsVisibleToFaculty = false;
+  private AllocationVisibility allocationVisibility = AllocationVisibility.ADMINS_ONLY;
 
   /**
    * Whether the admin has published the assignments (issue #180): once true, admins and faculty can
