@@ -89,7 +89,7 @@ taapply,edu.ucsb.cs.taapply.controller,JobsController,0,79,0,2,0,13,0,7,0,6
 taapply,edu.ucsb.cs.taapply.controller,HealthController,0,7,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController.PriorCourseworkFields,0,21,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,AuditTrailController.AuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
-taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,1079,0,122,0,245,0,99,0,38
+taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,1104,0,128,0,250,0,102,0,38
 taapply,edu.ucsb.cs.taapply.controller,AdminApplicationsController,0,264,0,2,0,61,0,17,0,16
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.Candidate,0,45,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,0,445,0,24,0,95,0,35,0,23
