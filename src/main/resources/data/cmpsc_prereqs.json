@@ -1,0 +1,1092 @@
+{
+  "source": "https://catalog.ucsb.edu/courses?departments=CMPSC (retrieved 2026-11-01)",
+  "notes": {
+    "format": "requirement is a CMPSC course number, {'and': [...]}, {'or': [...]}, or null; prereqs is the flat list of CMPSC courses mentioned",
+    "excluded": "Non-CMPSC prerequisites (MATH, PSTAT, ECE, ENGR, etc.), grade minimums, class standing, major restrictions, and instructor consent are omitted",
+    "nonCmpscAlternativeDropped": {
+      "5B": "ECE 3",
+      "9": "ENGR 3 / ECE 3",
+      "16": "ENGR 3 / ECE 3 / significant prior programming experience",
+      "130A": "MATH 8 (alternative to CMPSC 40/41)",
+      "160": "EE 154 / EE 154A (alternative to CMPSC 64)",
+      "170": "ECE 154A (alternative to CMPSC 154)",
+      "216": "CH E 211C / ECE 210C / ME 210C",
+      "254": "ECE 154",
+      "281": "ECE 181",
+      "281B": "ECE 181"
+    },
+    "referencedButNotInCatalog": [
+      "20",
+      "48",
+      "56",
+      "60"
+    ]
+  },
+  "courses": {
+    "1": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "1A": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "2": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "4": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "5A": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "5B": {
+      "prereqs": [
+        "5A"
+      ],
+      "requirement": "5A"
+    },
+    "8": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "9": {
+      "prereqs": [
+        "8"
+      ],
+      "requirement": "8"
+    },
+    "11": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "11AD": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "11AP": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "11C": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "11CO": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "11FO": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "11JA": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "11LI": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "11PA": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "11PL": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "11SN": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "16": {
+      "prereqs": [
+        "8"
+      ],
+      "requirement": "8"
+    },
+    "24": {
+      "prereqs": [
+        "16"
+      ],
+      "requirement": "16"
+    },
+    "24A": {
+      "prereqs": [
+        "16"
+      ],
+      "requirement": "16"
+    },
+    "25": {
+      "prereqs": [
+        "9",
+        "24"
+      ],
+      "requirement": {
+        "or": [
+          "9",
+          "24"
+        ]
+      }
+    },
+    "32": {
+      "prereqs": [
+        "24"
+      ],
+      "requirement": "24"
+    },
+    "40": {
+      "prereqs": [
+        "16"
+      ],
+      "requirement": "16"
+    },
+    "41": {
+      "prereqs": [
+        "16"
+      ],
+      "requirement": "16"
+    },
+    "42": {
+      "prereqs": [
+        "41"
+      ],
+      "requirement": "41"
+    },
+    "64": {
+      "prereqs": [
+        "16"
+      ],
+      "requirement": "16"
+    },
+    "90": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "90DA": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "90DB": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "95": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "96": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "99": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "100": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "110": {
+      "prereqs": [
+        "32",
+        "40"
+      ],
+      "requirement": {
+        "and": [
+          "40",
+          "32"
+        ]
+      }
+    },
+    "111": {
+      "prereqs": [
+        "24"
+      ],
+      "requirement": "24"
+    },
+    "123": {
+      "prereqs": [
+        "20",
+        "32",
+        "60"
+      ],
+      "requirement": {
+        "or": [
+          "32",
+          {
+            "and": [
+              "20",
+              "60"
+            ]
+          }
+        ]
+      }
+    },
+    "130A": {
+      "prereqs": [
+        "24",
+        "25",
+        "40",
+        "41"
+      ],
+      "requirement": {
+        "and": [
+          {
+            "or": [
+              "40",
+              "41"
+            ]
+          },
+          {
+            "or": [
+              "24",
+              "25"
+            ]
+          }
+        ]
+      }
+    },
+    "130B": {
+      "prereqs": [
+        "130A"
+      ],
+      "requirement": "130A"
+    },
+    "132": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "134": {
+      "prereqs": [
+        "130B"
+      ],
+      "requirement": "130B"
+    },
+    "135": {
+      "prereqs": [
+        "24",
+        "25"
+      ],
+      "requirement": {
+        "or": [
+          "25",
+          "24"
+        ]
+      }
+    },
+    "138": {
+      "prereqs": [
+        "40",
+        "41"
+      ],
+      "requirement": {
+        "or": [
+          "40",
+          "41"
+        ]
+      }
+    },
+    "140": {
+      "prereqs": [
+        "32",
+        "130A"
+      ],
+      "requirement": {
+        "or": [
+          "32",
+          "130A"
+        ]
+      }
+    },
+    "148": {
+      "prereqs": [
+        "32"
+      ],
+      "requirement": "32"
+    },
+    "153A": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "154": {
+      "prereqs": [
+        "32",
+        "64"
+      ],
+      "requirement": {
+        "and": [
+          "32",
+          "64"
+        ]
+      }
+    },
+    "156": {
+      "prereqs": [
+        "24",
+        "32"
+      ],
+      "requirement": {
+        "and": [
+          "24",
+          "32"
+        ]
+      }
+    },
+    "160": {
+      "prereqs": [
+        "64",
+        "130A",
+        "138"
+      ],
+      "requirement": {
+        "and": [
+          "64",
+          "130A",
+          "138"
+        ]
+      }
+    },
+    "162": {
+      "prereqs": [
+        "130A",
+        "138"
+      ],
+      "requirement": {
+        "and": [
+          "130A",
+          "138"
+        ]
+      }
+    },
+    "165A": {
+      "prereqs": [
+        "130A"
+      ],
+      "requirement": "130A"
+    },
+    "165B": {
+      "prereqs": [
+        "130A"
+      ],
+      "requirement": "130A"
+    },
+    "170": {
+      "prereqs": [
+        "130A",
+        "154"
+      ],
+      "requirement": {
+        "and": [
+          "130A",
+          "154"
+        ]
+      },
+      "mayBeConcurrent": [
+        "154"
+      ]
+    },
+    "171": {
+      "prereqs": [
+        "130A"
+      ],
+      "requirement": "130A"
+    },
+    "172": {
+      "prereqs": [
+        "130A"
+      ],
+      "requirement": "130A"
+    },
+    "174A": {
+      "prereqs": [
+        "130A"
+      ],
+      "requirement": "130A"
+    },
+    "174B": {
+      "prereqs": [
+        "130B"
+      ],
+      "requirement": "130B"
+    },
+    "174N": {
+      "prereqs": [
+        "130A"
+      ],
+      "requirement": "130A",
+      "mayBeConcurrent": [
+        "130A"
+      ]
+    },
+    "176A": {
+      "prereqs": [
+        "32"
+      ],
+      "requirement": "32"
+    },
+    "176B": {
+      "prereqs": [
+        "176A"
+      ],
+      "requirement": "176A"
+    },
+    "176C": {
+      "prereqs": [
+        "176A"
+      ],
+      "requirement": "176A"
+    },
+    "177": {
+      "prereqs": [
+        "170"
+      ],
+      "requirement": "170",
+      "mayBeConcurrent": [
+        "170"
+      ]
+    },
+    "178": {
+      "prereqs": [
+        "24",
+        "40",
+        "41"
+      ],
+      "requirement": {
+        "and": [
+          "24",
+          {
+            "or": [
+              "40",
+              "41"
+            ]
+          }
+        ]
+      }
+    },
+    "179P": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "180": {
+      "prereqs": [
+        "130A"
+      ],
+      "requirement": "130A"
+    },
+    "181": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "182": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "183": {
+      "prereqs": [
+        "25"
+      ],
+      "requirement": "25"
+    },
+    "184": {
+      "prereqs": [
+        "56",
+        "130A",
+        "156"
+      ],
+      "requirement": {
+        "and": [
+          {
+            "or": [
+              "56",
+              "156"
+            ]
+          },
+          "130A"
+        ]
+      }
+    },
+    "185": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "186": {
+      "prereqs": [
+        "32",
+        "130A"
+      ],
+      "requirement": {
+        "or": [
+          "32",
+          "130A"
+        ]
+      }
+    },
+    "187": {
+      "prereqs": [
+        "165B"
+      ],
+      "requirement": "165B"
+    },
+    "188": {
+      "prereqs": [
+        "130A",
+        "165A",
+        "165B"
+      ],
+      "requirement": {
+        "and": [
+          "130A",
+          "165A",
+          "165B"
+        ]
+      }
+    },
+    "189A": {
+      "prereqs": [
+        "48",
+        "56",
+        "148",
+        "156",
+        "172"
+      ],
+      "requirement": {
+        "or": [
+          "48",
+          "56",
+          "148",
+          "156",
+          "172"
+        ]
+      }
+    },
+    "189B": {
+      "prereqs": [
+        "189A"
+      ],
+      "requirement": "189A"
+    },
+    "190": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190A": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190B": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190C": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190D": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190DA": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190DB": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190DC": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190DD": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190DE": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190DF": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190E": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190F": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190G": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190H": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190I": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190J": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190K": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "190N": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "192": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "193": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "196": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "196B": {
+      "prereqs": [
+        "196"
+      ],
+      "requirement": "196"
+    },
+    "199": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "209": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "211A": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "211B": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "211C": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "211D": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "216": {
+      "prereqs": [
+        "211C"
+      ],
+      "requirement": "211C"
+    },
+    "219": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "220": {
+      "prereqs": [
+        "186"
+      ],
+      "requirement": "186"
+    },
+    "225": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "230": {
+      "prereqs": [
+        "130A",
+        "130B"
+      ],
+      "requirement": {
+        "and": [
+          "130A",
+          "130B"
+        ]
+      }
+    },
+    "231": {
+      "prereqs": [
+        "130B"
+      ],
+      "requirement": "130B"
+    },
+    "235": {
+      "prereqs": [
+        "130A",
+        "130B"
+      ],
+      "requirement": {
+        "and": [
+          "130A",
+          "130B"
+        ]
+      }
+    },
+    "240A": {
+      "prereqs": [
+        "154",
+        "160"
+      ],
+      "requirement": {
+        "and": [
+          "154",
+          "160"
+        ]
+      }
+    },
+    "254": {
+      "prereqs": [
+        "154"
+      ],
+      "requirement": "154"
+    },
+    "260": {
+      "prereqs": [
+        "160",
+        "162"
+      ],
+      "requirement": {
+        "and": [
+          "160",
+          "162"
+        ]
+      }
+    },
+    "263": {
+      "prereqs": [
+        "154",
+        "160",
+        "162"
+      ],
+      "requirement": {
+        "and": [
+          "154",
+          "160",
+          "162"
+        ]
+      }
+    },
+    "265": {
+      "prereqs": [
+        "165A"
+      ],
+      "requirement": "165A"
+    },
+    "266": {
+      "prereqs": [
+        "130A",
+        "130B",
+        "186"
+      ],
+      "requirement": {
+        "and": [
+          "130A",
+          "130B",
+          "186"
+        ]
+      }
+    },
+    "267": {
+      "prereqs": [
+        "130A",
+        "130B",
+        "138"
+      ],
+      "requirement": {
+        "and": [
+          "130A",
+          "130B",
+          "138"
+        ]
+      }
+    },
+    "270": {
+      "prereqs": [
+        "170"
+      ],
+      "requirement": "170"
+    },
+    "271": {
+      "prereqs": [
+        "170"
+      ],
+      "requirement": "170"
+    },
+    "272": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "273": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "274": {
+      "prereqs": [
+        "170"
+      ],
+      "requirement": "170"
+    },
+    "276": {
+      "prereqs": [
+        "176A",
+        "176B"
+      ],
+      "requirement": {
+        "or": [
+          "176A",
+          "176B"
+        ]
+      }
+    },
+    "279": {
+      "prereqs": [
+        "177"
+      ],
+      "requirement": "177"
+    },
+    "280": {
+      "prereqs": [
+        "180"
+      ],
+      "requirement": "180"
+    },
+    "281": {
+      "prereqs": [
+        "181"
+      ],
+      "requirement": "181"
+    },
+    "281B": {
+      "prereqs": [
+        "181"
+      ],
+      "requirement": "181"
+    },
+    "284": {
+      "prereqs": [
+        "176A",
+        "176B"
+      ],
+      "requirement": {
+        "or": [
+          "176A",
+          "176B"
+        ]
+      }
+    },
+    "285": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "291": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "291A": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "291D": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "291G": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "291H": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "291I": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "291K": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "292": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "292A": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "292C": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "292F": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "292G": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "292H": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "293": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "293A": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "293B": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "293C": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "293D": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "293E": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "293G": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "293K": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "293N": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "293S": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "493": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "501": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "502": {
+      "prereqs": [
+        "501"
+      ],
+      "requirement": "501"
+    },
+    "592": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "593": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "594": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595A": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595B": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595C": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595D": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595E": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595F": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595G": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595H": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595I": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595J": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595K": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595L": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595N": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "595R": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "596": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "597": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "598": {
+      "prereqs": [],
+      "requirement": null
+    },
+    "599": {
+      "prereqs": [],
+      "requirement": null
+    }
+  }
+}
