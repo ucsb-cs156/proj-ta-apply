@@ -1,0 +1,3014 @@
+{
+  "domestic": [
+    {
+      "school": "Stony Brook University",
+      "country": "USA",
+      "department": "Department of Computer Science",
+      "source_urls": [
+        "https://www.stonybrook.edu/sb/bulletin/current-fall24/courses/cse/"
+      ],
+      "notes": "Fall 2024 Undergraduate Bulletin (newest version reachable). CSE 100-499.",
+      "courses": [
+        {
+          "number": "CSE 101",
+          "title": "Computer Science Principles"
+        },
+        {
+          "number": "CSE 102",
+          "title": "Introduction to Web Design and Programming"
+        },
+        {
+          "number": "CSE 110",
+          "title": "Introduction to Computer Science"
+        },
+        {
+          "number": "CSE 113",
+          "title": "Foundations of Computer Science I"
+        },
+        {
+          "number": "CSE 114",
+          "title": "Introduction to Object-Oriented Programming"
+        },
+        {
+          "number": "CSE 130",
+          "title": "Introduction to Programming in C"
+        },
+        {
+          "number": "CSE 150",
+          "title": "Foundations of Computer Science: Honors"
+        },
+        {
+          "number": "CSE 160",
+          "title": "Computer Science A: Honors"
+        },
+        {
+          "number": "CSE 161",
+          "title": "Laboratory for Computer Science A: Honors"
+        },
+        {
+          "number": "CSE 190",
+          "title": "Special Topics in Practice and Applications of Computer Science"
+        },
+        {
+          "number": "CSE 191",
+          "title": "Special Topics in Practice and Applications for Computer Science"
+        },
+        {
+          "number": "CSE 192",
+          "title": "Special Topics in Practice and Applications for Computer Science"
+        },
+        {
+          "number": "CSE 214",
+          "title": "Data Structures"
+        },
+        {
+          "number": "CSE 215",
+          "title": "Foundations of Computer Science"
+        },
+        {
+          "number": "CSE 216",
+          "title": "Programming Abstractions"
+        },
+        {
+          "number": "CSE 220",
+          "title": "Systems Fundamentals I"
+        },
+        {
+          "number": "CSE 230",
+          "title": "Intermediate Programming in C and C++"
+        },
+        {
+          "number": "CSE 260",
+          "title": "Computer Science B: Honors"
+        },
+        {
+          "number": "CSE 261",
+          "title": "Laboratory for Computer Science B: Honors"
+        },
+        {
+          "number": "CSE 300",
+          "title": "Technical Communications"
+        },
+        {
+          "number": "CSE 301",
+          "title": "History of Computing"
+        },
+        {
+          "number": "CSE 303",
+          "title": "Introduction to the Theory of Computation"
+        },
+        {
+          "number": "CSE 304",
+          "title": "Compiler Design"
+        },
+        {
+          "number": "CSE 305",
+          "title": "Principles of Database Systems"
+        },
+        {
+          "number": "CSE 306",
+          "title": "Operating Systems"
+        },
+        {
+          "number": "CSE 307",
+          "title": "Principles of Programming Languages"
+        },
+        {
+          "number": "CSE 310",
+          "title": "Computer Networks"
+        },
+        {
+          "number": "CSE 311",
+          "title": "Systems Administration"
+        },
+        {
+          "number": "CSE 312",
+          "title": "Social, Legal, and Ethical Issues in Computing"
+        },
+        {
+          "number": "CSE 316",
+          "title": "Fundamentals of Software Development"
+        },
+        {
+          "number": "CSE 320",
+          "title": "Systems Fundamentals II"
+        },
+        {
+          "number": "CSE 323",
+          "title": "Human-Computer Interaction"
+        },
+        {
+          "number": "CSE 325",
+          "title": "Computers and Sculpture"
+        },
+        {
+          "number": "CSE 327",
+          "title": "Fundamentals of Computer Vision"
+        },
+        {
+          "number": "CSE 328",
+          "title": "Fundamentals of Computer Graphics"
+        },
+        {
+          "number": "CSE 331",
+          "title": "Computer Security Fundamentals"
+        },
+        {
+          "number": "CSE 332",
+          "title": "Introduction to Visualization"
+        },
+        {
+          "number": "CSE 333",
+          "title": "User Interface Development"
+        },
+        {
+          "number": "CSE 334",
+          "title": "Introduction to Multimedia Systems"
+        },
+        {
+          "number": "CSE 336",
+          "title": "Internet Programming"
+        },
+        {
+          "number": "CSE 337",
+          "title": "Scripting Languages"
+        },
+        {
+          "number": "CSE 350",
+          "title": "Theory of Computation: Honors"
+        },
+        {
+          "number": "CSE 351",
+          "title": "Introduction to Data Science"
+        },
+        {
+          "number": "CSE 352",
+          "title": "Artificial Intelligence"
+        },
+        {
+          "number": "CSE 353",
+          "title": "Machine Learning"
+        },
+        {
+          "number": "CSE 354",
+          "title": "Natural Language Processing"
+        },
+        {
+          "number": "CSE 355",
+          "title": "Computational Geometry"
+        },
+        {
+          "number": "CSE 356",
+          "title": "Cloud Computing"
+        },
+        {
+          "number": "CSE 357",
+          "title": "Statistical Methods for Data Science"
+        },
+        {
+          "number": "CSE 360",
+          "title": "Software Security"
+        },
+        {
+          "number": "CSE 361",
+          "title": "Web Security"
+        },
+        {
+          "number": "CSE 362",
+          "title": "Mobile Security"
+        },
+        {
+          "number": "CSE 363",
+          "title": "Offensive Security"
+        },
+        {
+          "number": "CSE 364",
+          "title": "Advanced Multimedia Techniques"
+        },
+        {
+          "number": "CSE 366",
+          "title": "Introduction to Virtual Reality"
+        },
+        {
+          "number": "CSE 370",
+          "title": "Wireless and Mobile Networking"
+        },
+        {
+          "number": "CSE 371",
+          "title": "Logic"
+        },
+        {
+          "number": "CSE 373",
+          "title": "Analysis of Algorithms"
+        },
+        {
+          "number": "CSE 376",
+          "title": "Advanced Systems Programming in UNIX/C"
+        },
+        {
+          "number": "CSE 377",
+          "title": "Introduction to Medical Imaging"
+        },
+        {
+          "number": "CSE 378",
+          "title": "Introduction to Robotics"
+        },
+        {
+          "number": "CSE 380",
+          "title": "2D Game Programming"
+        },
+        {
+          "number": "CSE 381",
+          "title": "3D Game Programming"
+        },
+        {
+          "number": "CSE 385",
+          "title": "Analysis of Algorithms: Honors"
+        },
+        {
+          "number": "CSE 390",
+          "title": "Special Topics in Computer Science"
+        },
+        {
+          "number": "CSE 391",
+          "title": "Special Topics in Computer Science"
+        },
+        {
+          "number": "CSE 392",
+          "title": "Special Topics in Computer Science"
+        },
+        {
+          "number": "CSE 393",
+          "title": "Special Topics in Computer Science"
+        },
+        {
+          "number": "CSE 394",
+          "title": "Special Topics in Computer Science"
+        },
+        {
+          "number": "CSE 416",
+          "title": "Software Engineering"
+        },
+        {
+          "number": "CSE 475",
+          "title": "Undergraduate Teaching Practicum"
+        },
+        {
+          "number": "CSE 487",
+          "title": "Research in Computer Science"
+        },
+        {
+          "number": "CSE 488",
+          "title": "Internship in Computer Science"
+        },
+        {
+          "number": "CSE 495",
+          "title": "Senior Honors Research Project I"
+        },
+        {
+          "number": "CSE 496",
+          "title": "Senior Honors Research Project II"
+        }
+      ]
+    },
+    {
+      "school": "Purdue University",
+      "country": "USA",
+      "department": "Department of Computer Science",
+      "source_urls": [
+        "https://catalog.purdue.edu/content.php?catoid=19&navoid=25468&filter%5B27%5D=CS&filter%5Bitem_type%5D=3&filter%5Bonly_active%5D=1&filter%5B3%5D=1"
+      ],
+      "notes": "2026-2027 catalog. CS 10000-49999.",
+      "courses": [
+        {
+          "number": "CS 10100",
+          "title": "Digital Literacy"
+        },
+        {
+          "number": "CS 12100",
+          "title": "Introduction To Python With Applications In AI"
+        },
+        {
+          "number": "CS 12600",
+          "title": "Systems Programming In C"
+        },
+        {
+          "number": "CS 15900",
+          "title": "C Programming"
+        },
+        {
+          "number": "CS 16000",
+          "title": "Computer Programming I"
+        },
+        {
+          "number": "CS 17300",
+          "title": "AI Competency"
+        },
+        {
+          "number": "CS 17600",
+          "title": "Data Engineering In Python"
+        },
+        {
+          "number": "CS 17700",
+          "title": "Programming With Multimedia Objects"
+        },
+        {
+          "number": "CS 18000",
+          "title": "Problem Solving And Object-Oriented Programming"
+        },
+        {
+          "number": "CS 18200",
+          "title": "Foundations Of Computer Science"
+        },
+        {
+          "number": "CS 18300",
+          "title": "Professional Practice I"
+        },
+        {
+          "number": "CS 18400",
+          "title": "Professional Practice II"
+        },
+        {
+          "number": "CS 19000",
+          "title": "Topics In Computer Sciences"
+        },
+        {
+          "number": "CS 19100",
+          "title": "Freshman Resources Seminar"
+        },
+        {
+          "number": "CS 19300",
+          "title": "Tools"
+        },
+        {
+          "number": "CS 19700",
+          "title": "Freshman Honors Seminar"
+        },
+        {
+          "number": "CS 21100",
+          "title": "Competitive Programming I"
+        },
+        {
+          "number": "CS 24000",
+          "title": "Programming In C"
+        },
+        {
+          "number": "CS 24200",
+          "title": "Introduction To Data Science"
+        },
+        {
+          "number": "CS 24300",
+          "title": "Artificial Intelligence Basics"
+        },
+        {
+          "number": "CS 25000",
+          "title": "Computer Architecture"
+        },
+        {
+          "number": "CS 25100",
+          "title": "Data Structures And Algorithms"
+        },
+        {
+          "number": "CS 25200",
+          "title": "Systems Programming"
+        },
+        {
+          "number": "CS 25300",
+          "title": "Data Structures And Algorithms For DS/AI"
+        },
+        {
+          "number": "CS 28400",
+          "title": "Professional Practice III"
+        },
+        {
+          "number": "CS 28401",
+          "title": "Professional Practice Part-Time"
+        },
+        {
+          "number": "CS 29000",
+          "title": "Topics In Computer Sciences"
+        },
+        {
+          "number": "CS 29100",
+          "title": "Sophomore Development Seminar"
+        },
+        {
+          "number": "CS 29199",
+          "title": "Cooperative Experience I"
+        },
+        {
+          "number": "CS 29299",
+          "title": "Cooperative Experience II"
+        },
+        {
+          "number": "CS 30700",
+          "title": "Software Engineering I"
+        },
+        {
+          "number": "CS 31100",
+          "title": "Competitive Programming II"
+        },
+        {
+          "number": "CS 31400",
+          "title": "Numerical Methods"
+        },
+        {
+          "number": "CS 33400",
+          "title": "Fundamentals Of Computer Graphics"
+        },
+        {
+          "number": "CS 34800",
+          "title": "Information Systems"
+        },
+        {
+          "number": "CS 35100",
+          "title": "Cloud Computing"
+        },
+        {
+          "number": "CS 35200",
+          "title": "Compilers: Principles And Practice"
+        },
+        {
+          "number": "CS 35300",
+          "title": "Principles Of Concurrency And Parallelism"
+        },
+        {
+          "number": "CS 35400",
+          "title": "Operating Systems"
+        },
+        {
+          "number": "CS 35500",
+          "title": "Introduction To Cryptography"
+        },
+        {
+          "number": "CS 36100",
+          "title": "Great Issues In Computer Science"
+        },
+        {
+          "number": "CS 37300",
+          "title": "Data Mining And Machine Learning"
+        },
+        {
+          "number": "CS 38001",
+          "title": "C++ Programming"
+        },
+        {
+          "number": "CS 38002",
+          "title": "Advanced Java Programming"
+        },
+        {
+          "number": "CS 38003",
+          "title": "Python Programming"
+        },
+        {
+          "number": "CS 38100",
+          "title": "Introduction To The Analysis Of Algorithms"
+        },
+        {
+          "number": "CS 38600",
+          "title": "Professional Practice IV"
+        },
+        {
+          "number": "CS 39000",
+          "title": "Topics In Computer Sciences"
+        },
+        {
+          "number": "CS 39100",
+          "title": "Junior Resources Seminar"
+        },
+        {
+          "number": "CS 39399",
+          "title": "Cooperative Experience III"
+        },
+        {
+          "number": "CS 39499",
+          "title": "Extensive Cooperative Experience IV"
+        },
+        {
+          "number": "CS 39599",
+          "title": "Extensive Cooperative Experience V"
+        },
+        {
+          "number": "CS 39699",
+          "title": "Professional Practice Internship"
+        },
+        {
+          "number": "CS 39700",
+          "title": "Honors Seminar"
+        },
+        {
+          "number": "CS 40700",
+          "title": "Software Engineering Senior Project"
+        },
+        {
+          "number": "CS 40800",
+          "title": "Software Testing"
+        },
+        {
+          "number": "CS 41100",
+          "title": "Competitive Programming III"
+        },
+        {
+          "number": "CS 42200",
+          "title": "Computer Networks"
+        },
+        {
+          "number": "CS 42600",
+          "title": "Computer Security"
+        },
+        {
+          "number": "CS 43400",
+          "title": "Advanced Computer Graphics"
+        },
+        {
+          "number": "CS 43900",
+          "title": "Introduction To Data Visualization"
+        },
+        {
+          "number": "CS 44000",
+          "title": "Large Scale Data Analytics"
+        },
+        {
+          "number": "CS 44100",
+          "title": "Data Science Capstone"
+        },
+        {
+          "number": "CS 44800",
+          "title": "Introduction To Relational Database Systems"
+        },
+        {
+          "number": "CS 45600",
+          "title": "Programming Languages"
+        },
+        {
+          "number": "CS 45800",
+          "title": "Introduction To Robotics"
+        },
+        {
+          "number": "CS 47100",
+          "title": "Introduction To Artificial Intelligence"
+        },
+        {
+          "number": "CS 47300",
+          "title": "Web Information Search And Management"
+        },
+        {
+          "number": "CS 47500",
+          "title": "Human-Computer Interaction"
+        },
+        {
+          "number": "CS 47600",
+          "title": "Artificial Intelligence Capstone"
+        },
+        {
+          "number": "CS 47700",
+          "title": "Natural Language Processing"
+        },
+        {
+          "number": "CS 47800",
+          "title": "Introduction To Bioinformatics"
+        },
+        {
+          "number": "CS 48300",
+          "title": "Introduction To The Theory Of Computation"
+        },
+        {
+          "number": "CS 48700",
+          "title": "Professional Practice V"
+        },
+        {
+          "number": "CS 48900",
+          "title": "Embedded Systems"
+        },
+        {
+          "number": "CS 49000",
+          "title": "Topics In Computer Sciences For Undergraduates"
+        },
+        {
+          "number": "CS 49700",
+          "title": "Honors Research Project"
+        }
+      ]
+    },
+    {
+      "school": "Carnegie Mellon University",
+      "country": "USA",
+      "department": "Computer Science Department, School of Computer Science",
+      "source_urls": [
+        "http://coursecatalog.web.cmu.edu/schools-colleges/schoolofcomputerscience/courses/"
+      ],
+      "notes": "2026-2027 Undergraduate Catalog. 15-xxx courses below the 500 level.",
+      "courses": [
+        {
+          "number": "15-050",
+          "title": "Study Abroad"
+        },
+        {
+          "number": "15-090",
+          "title": "Computer Science Practicum"
+        },
+        {
+          "number": "15-104",
+          "title": "Introduction to Computing for Creative Practice"
+        },
+        {
+          "number": "15-110",
+          "title": "Principles of Computing"
+        },
+        {
+          "number": "15-112",
+          "title": "Fundamentals of Programming and Computer Science"
+        },
+        {
+          "number": "15-113",
+          "title": "Effective Coding with AI"
+        },
+        {
+          "number": "15-121",
+          "title": "Introduction to Data Structures"
+        },
+        {
+          "number": "15-122",
+          "title": "Principles of Imperative Computation"
+        },
+        {
+          "number": "15-150",
+          "title": "Principles of Functional Programming"
+        },
+        {
+          "number": "15-151",
+          "title": "Mathematical Foundations for Computer Science"
+        },
+        {
+          "number": "15-182",
+          "title": "Artificial Intelligence for Medicine"
+        },
+        {
+          "number": "15-195",
+          "title": "Competition Programming I"
+        },
+        {
+          "number": "15-210",
+          "title": "Parallel and Sequential Data Structures and Algorithms"
+        },
+        {
+          "number": "15-213",
+          "title": "Introduction to Computer Systems"
+        },
+        {
+          "number": "15-214",
+          "title": "Principles of Software Construction: Objects, Design, and Concurrency"
+        },
+        {
+          "number": "15-251",
+          "title": "Great Ideas in Theoretical Computer Science"
+        },
+        {
+          "number": "15-259",
+          "title": "Probability and Computing"
+        },
+        {
+          "number": "15-281",
+          "title": "Artificial Intelligence: Representation and Problem Solving"
+        },
+        {
+          "number": "15-282",
+          "title": "Artificial Intelligence for Medicine"
+        },
+        {
+          "number": "15-288",
+          "title": "Special Topic: Machine Learning in a Nutshell"
+        },
+        {
+          "number": "15-292",
+          "title": "History of Computing"
+        },
+        {
+          "number": "15-294",
+          "title": "Rapid Prototyping Technologies"
+        },
+        {
+          "number": "15-295",
+          "title": "Competition Programming and Problem Solving"
+        },
+        {
+          "number": "15-311",
+          "title": "Logic and Mechanized Reasoning"
+        },
+        {
+          "number": "15-312",
+          "title": "Foundations of Programming Languages"
+        },
+        {
+          "number": "15-316",
+          "title": "Software Foundations of Security and Privacy"
+        },
+        {
+          "number": "15-317",
+          "title": "Constructive Logic"
+        },
+        {
+          "number": "15-319",
+          "title": "Cloud Computing"
+        },
+        {
+          "number": "15-322",
+          "title": "Introduction to Computer Music"
+        },
+        {
+          "number": "15-326",
+          "title": "Computational Microeconomics"
+        },
+        {
+          "number": "15-327",
+          "title": "Monte Carlo Methods and Applications"
+        },
+        {
+          "number": "15-330",
+          "title": "Introduction to Computer Security"
+        },
+        {
+          "number": "15-346",
+          "title": "Computer Architecture: Design and Simulation"
+        },
+        {
+          "number": "15-348",
+          "title": "Embedded Systems"
+        },
+        {
+          "number": "15-351",
+          "title": "Algorithms and Advanced Data Structures"
+        },
+        {
+          "number": "15-354",
+          "title": "Computational Discrete Mathematics"
+        },
+        {
+          "number": "15-355",
+          "title": "Modern Computer Algebra"
+        },
+        {
+          "number": "15-356",
+          "title": "Introduction to Cryptography"
+        },
+        {
+          "number": "15-359",
+          "title": "Probability & Computing: Randomized Algs and Markov Chains"
+        },
+        {
+          "number": "15-362",
+          "title": "Computer Graphics"
+        },
+        {
+          "number": "15-367",
+          "title": "Algorithmic Textiles Design"
+        },
+        {
+          "number": "15-369",
+          "title": "Special Topics in Graphics: Numerical Method (Foundations, ML, Visual Computing)"
+        },
+        {
+          "number": "15-382",
+          "title": "Collective Intelligence"
+        },
+        {
+          "number": "15-386",
+          "title": "Neural Computation"
+        },
+        {
+          "number": "15-387",
+          "title": "Computational Perception"
+        },
+        {
+          "number": "15-388",
+          "title": "Practical Data Science"
+        },
+        {
+          "number": "15-390",
+          "title": "Entrepreneurship for Computer Science"
+        },
+        {
+          "number": "15-394",
+          "title": "Intermediate Rapid Prototyping"
+        },
+        {
+          "number": "15-410",
+          "title": "Operating System Design and Implementation"
+        },
+        {
+          "number": "15-411",
+          "title": "Compiler Design"
+        },
+        {
+          "number": "15-412",
+          "title": "Operating System Practicum"
+        },
+        {
+          "number": "15-413",
+          "title": "Advanced Foundations of Programming Languages"
+        },
+        {
+          "number": "15-414",
+          "title": "Bug Catching: Automated Program Verification"
+        },
+        {
+          "number": "15-415",
+          "title": "Database Applications"
+        },
+        {
+          "number": "15-417",
+          "title": "HOT Compilation"
+        },
+        {
+          "number": "15-418",
+          "title": "Parallel Computer Architecture and Programming"
+        },
+        {
+          "number": "15-423",
+          "title": "Special Topic: Digital Signal Processing for Computer Science"
+        },
+        {
+          "number": "15-435",
+          "title": "Distributed Systems and Real-World Usage of Cryptography: A Modern Perspective"
+        },
+        {
+          "number": "15-440",
+          "title": "Distributed Systems"
+        },
+        {
+          "number": "15-441",
+          "title": "Networking and the Internet"
+        },
+        {
+          "number": "15-442",
+          "title": "Machine Learning Systems"
+        },
+        {
+          "number": "15-445",
+          "title": "Database Systems"
+        },
+        {
+          "number": "15-451",
+          "title": "Algorithm Design and Analysis"
+        },
+        {
+          "number": "15-453",
+          "title": "Formal Languages, Automata, and Computability"
+        },
+        {
+          "number": "15-455",
+          "title": "Undergraduate Complexity Theory"
+        },
+        {
+          "number": "15-457",
+          "title": "Special Topics in Theory: Advanced Algorithms"
+        },
+        {
+          "number": "15-458",
+          "title": "Discrete Differential Geometry"
+        },
+        {
+          "number": "15-459",
+          "title": "Undergraduate Quantum Computation"
+        },
+        {
+          "number": "15-463",
+          "title": "Computational Photography"
+        },
+        {
+          "number": "15-464",
+          "title": "Technical Animation"
+        },
+        {
+          "number": "15-466",
+          "title": "Computer Game Programming"
+        },
+        {
+          "number": "15-468",
+          "title": "Physics-Based Rendering"
+        },
+        {
+          "number": "15-469",
+          "title": "Special Topic: Visual Computing Systems"
+        },
+        {
+          "number": "15-472",
+          "title": "Real-Time Graphics"
+        },
+        {
+          "number": "15-473",
+          "title": "Visual Computing Systems"
+        },
+        {
+          "number": "15-474",
+          "title": "Neural Graphics"
+        },
+        {
+          "number": "15-482",
+          "title": "Autonomous Agents"
+        },
+        {
+          "number": "15-488",
+          "title": "Special Topic: Machine Learning in a Nutshell"
+        },
+        {
+          "number": "15-494",
+          "title": "Cognitive Robotics: The Future of Robot Toys"
+        },
+        {
+          "number": "15-495",
+          "title": "Algebraic and Numerical Algorithms"
+        }
+      ]
+    },
+    {
+      "school": "University of Colorado Boulder",
+      "country": "USA",
+      "department": "Department of Computer Science",
+      "source_urls": [
+        "https://catalog.colorado.edu/courses-a-z/csci/"
+      ],
+      "notes": "Current catalog. CSCI 1000-4999.",
+      "courses": [
+        {
+          "number": "CSCI 1000",
+          "title": "Computer Science as a Field of Work and Study"
+        },
+        {
+          "number": "CSCI 1200",
+          "title": "Introduction to Computational Thinking"
+        },
+        {
+          "number": "CSCI 1300",
+          "title": "Computer Science 1: Starting Computing"
+        },
+        {
+          "number": "CSCI 2270",
+          "title": "Computer Science 2: Data Structures"
+        },
+        {
+          "number": "CSCI 2275",
+          "title": "Programming and Data Structures"
+        },
+        {
+          "number": "CSCI 2400",
+          "title": "Computer Systems"
+        },
+        {
+          "number": "CSCI 2750",
+          "title": "Computing, Ethics and Society"
+        },
+        {
+          "number": "CSCI 2820",
+          "title": "Linear Algebra with Computer Science Applications"
+        },
+        {
+          "number": "CSCI 2824",
+          "title": "Discrete Structures"
+        },
+        {
+          "number": "CSCI 2830",
+          "title": "Special Topics in Computer Science"
+        },
+        {
+          "number": "CSCI 2834",
+          "title": "Discrete Structures Workgroup"
+        },
+        {
+          "number": "CSCI 2897",
+          "title": "Calculating Biological Quantities"
+        },
+        {
+          "number": "CSCI 2900",
+          "title": "Lower Division, Undergraduate Level Independent Study"
+        },
+        {
+          "number": "CSCI 3002",
+          "title": "Fundamentals of Human Computer Interaction"
+        },
+        {
+          "number": "CSCI 3010",
+          "title": "Intensive Programming Workshop"
+        },
+        {
+          "number": "CSCI 3022",
+          "title": "Introduction to Data Science with Probability and Statistics"
+        },
+        {
+          "number": "CSCI 3090",
+          "title": "Introduction to Quantum Computing"
+        },
+        {
+          "number": "CSCI 3100",
+          "title": "Software and Society"
+        },
+        {
+          "number": "CSCI 3104",
+          "title": "Algorithms"
+        },
+        {
+          "number": "CSCI 3112",
+          "title": "Professional Development in Computer Science"
+        },
+        {
+          "number": "CSCI 3150",
+          "title": "Universal Design for Digital Media"
+        },
+        {
+          "number": "CSCI 3155",
+          "title": "Principles of Programming Languages"
+        },
+        {
+          "number": "CSCI 3202",
+          "title": "Algorithmic Foundations of Artificial Intelligence"
+        },
+        {
+          "number": "CSCI 3287",
+          "title": "Design and Analysis of Database Systems"
+        },
+        {
+          "number": "CSCI 3302",
+          "title": "Introduction to Robotics"
+        },
+        {
+          "number": "CSCI 3308",
+          "title": "Software Development Methods and Tools"
+        },
+        {
+          "number": "CSCI 3352",
+          "title": "Biological Networks"
+        },
+        {
+          "number": "CSCI 3403",
+          "title": "Introduction to Cybersecurity"
+        },
+        {
+          "number": "CSCI 3434",
+          "title": "Theory of Computation"
+        },
+        {
+          "number": "CSCI 3593",
+          "title": "Computer Organization"
+        },
+        {
+          "number": "CSCI 3656",
+          "title": "Numerical Computation"
+        },
+        {
+          "number": "CSCI 3702",
+          "title": "Cognitive Science"
+        },
+        {
+          "number": "CSCI 3753",
+          "title": "Design and Analysis of Operating Systems"
+        },
+        {
+          "number": "CSCI 3832",
+          "title": "Natural Language Processing"
+        },
+        {
+          "number": "CSCI 4012",
+          "title": "Computational Fabrication"
+        },
+        {
+          "number": "CSCI 4022",
+          "title": "Advanced Data Science"
+        },
+        {
+          "number": "CSCI 4113",
+          "title": "Linux System Administration"
+        },
+        {
+          "number": "CSCI 4114",
+          "title": "Practical Algorithmic Complexity"
+        },
+        {
+          "number": "CSCI 4118",
+          "title": "Software Engineering for Scientists"
+        },
+        {
+          "number": "CSCI 4133",
+          "title": "Fundamentals of Computer Security"
+        },
+        {
+          "number": "CSCI 4200",
+          "title": "Introduction to Wireless Systems"
+        },
+        {
+          "number": "CSCI 4214",
+          "title": "Big Data Architecture"
+        },
+        {
+          "number": "CSCI 4229",
+          "title": "Computer Graphics"
+        },
+        {
+          "number": "CSCI 4239",
+          "title": "Advanced Computer Graphics"
+        },
+        {
+          "number": "CSCI 4240",
+          "title": "Introduction to Blockchain"
+        },
+        {
+          "number": "CSCI 4250",
+          "title": "History of Computing"
+        },
+        {
+          "number": "CSCI 4253",
+          "title": "Datacenter Scale Computing - Methods, Systems and Techniques"
+        },
+        {
+          "number": "CSCI 4263",
+          "title": "Quantum Computer Architecture and Systems"
+        },
+        {
+          "number": "CSCI 4273",
+          "title": "Network Systems"
+        },
+        {
+          "number": "CSCI 4302",
+          "title": "Advanced Robotics"
+        },
+        {
+          "number": "CSCI 4303",
+          "title": "Cybersecurity Club Companion Course"
+        },
+        {
+          "number": "CSCI 4308",
+          "title": "Software Engineering Project 1"
+        },
+        {
+          "number": "CSCI 4313",
+          "title": "Concurrent Programming"
+        },
+        {
+          "number": "CSCI 4314",
+          "title": "Dynamic Models in Biology"
+        },
+        {
+          "number": "CSCI 4318",
+          "title": "Software Engineering Project 2"
+        },
+        {
+          "number": "CSCI 4328",
+          "title": "Software Project Management and Mentoring"
+        },
+        {
+          "number": "CSCI 4338",
+          "title": "Software Project Management"
+        },
+        {
+          "number": "CSCI 4348",
+          "title": "Startup Essentials: Entrepreneurial Projects in Computing"
+        },
+        {
+          "number": "CSCI 4358",
+          "title": "Entrepreneurial Projects II"
+        },
+        {
+          "number": "CSCI 4368",
+          "title": "Multidisciplinary Design Project 1"
+        },
+        {
+          "number": "CSCI 4378",
+          "title": "Multidisciplinary Design Project 2"
+        },
+        {
+          "number": "CSCI 4413",
+          "title": "Computer Security and Ethical Hacking"
+        },
+        {
+          "number": "CSCI 4444",
+          "title": "Algorithms and Data Structures for Analyzing DNA"
+        },
+        {
+          "number": "CSCI 4446",
+          "title": "Nonlinear Dynamics and Chaos"
+        },
+        {
+          "number": "CSCI 4448",
+          "title": "Object-Oriented Analysis and Design"
+        },
+        {
+          "number": "CSCI 4502",
+          "title": "Data Mining"
+        },
+        {
+          "number": "CSCI 4555",
+          "title": "Compiler Construction"
+        },
+        {
+          "number": "CSCI 4576",
+          "title": "High-Performance Scientific Computing"
+        },
+        {
+          "number": "CSCI 4616",
+          "title": "Introduction to Mixed Reality"
+        },
+        {
+          "number": "CSCI 4622",
+          "title": "Machine Learning"
+        },
+        {
+          "number": "CSCI 4712",
+          "title": "Data-Centric Computer Vision"
+        },
+        {
+          "number": "CSCI 4722",
+          "title": "Computer Vision"
+        },
+        {
+          "number": "CSCI 4753",
+          "title": "Computer Performance Modeling"
+        },
+        {
+          "number": "CSCI 4802",
+          "title": "Data Science Team Companion Course"
+        },
+        {
+          "number": "CSCI 4809",
+          "title": "Computer Animation"
+        },
+        {
+          "number": "CSCI 4830",
+          "title": "Special Topics in Computer Science"
+        },
+        {
+          "number": "CSCI 4831",
+          "title": "Special Topics in Algorithms"
+        },
+        {
+          "number": "CSCI 4849",
+          "title": "Input, Interaction, and Accessibility"
+        },
+        {
+          "number": "CSCI 4897",
+          "title": "Computational and Mathematical Modeling of Infectious Diseases"
+        },
+        {
+          "number": "CSCI 4900",
+          "title": "Upper Division, Undergraduate Level Independent Study"
+        },
+        {
+          "number": "CSCI 4922",
+          "title": "Fundamentals of Neural Networks and Deep Learning"
+        },
+        {
+          "number": "CSCI 4932",
+          "title": "Deep Reinforcement Learning"
+        },
+        {
+          "number": "CSCI 4950",
+          "title": "Senior Thesis"
+        }
+      ]
+    },
+    {
+      "school": "University of Illinois Urbana-Champaign",
+      "country": "USA",
+      "department": "Siebel School of Computing and Data Science",
+      "source_urls": [
+        "https://catalog.illinois.edu/courses-of-instruction/cs/"
+      ],
+      "notes": "2026-2027 catalog. CS 100-499 (400-level courses are open to undergraduates).",
+      "courses": [
+        {
+          "number": "CS 100",
+          "title": "Computer Science Orientation"
+        },
+        {
+          "number": "CS 101",
+          "title": "Intro Computing: Engrg & Sci"
+        },
+        {
+          "number": "CS 102",
+          "title": "Little Bits to Big Ideas"
+        },
+        {
+          "number": "CS 105",
+          "title": "Intro Computing: Non-Tech"
+        },
+        {
+          "number": "CS 107",
+          "title": "Data Science Discovery"
+        },
+        {
+          "number": "CS 124",
+          "title": "Introduction to Computer Science I"
+        },
+        {
+          "number": "CS 125",
+          "title": "Introduction to Computer Science"
+        },
+        {
+          "number": "CS 126",
+          "title": "Software Design Studio"
+        },
+        {
+          "number": "CS 128",
+          "title": "Introduction to Computer Science II"
+        },
+        {
+          "number": "CS 173",
+          "title": "Discrete Structures"
+        },
+        {
+          "number": "CS 196",
+          "title": "First-Year Student Honors"
+        },
+        {
+          "number": "CS 199",
+          "title": "Undergraduate Open Seminar in Computer Science"
+        },
+        {
+          "number": "CS 210",
+          "title": "Ethical & Professional Issues"
+        },
+        {
+          "number": "CS 211",
+          "title": "Ethical and Professional Conduct"
+        },
+        {
+          "number": "CS 222",
+          "title": "Software Design Lab"
+        },
+        {
+          "number": "CS 225",
+          "title": "Data Structures"
+        },
+        {
+          "number": "CS 233",
+          "title": "Computer Architecture"
+        },
+        {
+          "number": "CS 242",
+          "title": "Programming Studio"
+        },
+        {
+          "number": "CS 265",
+          "title": "Innovation Illinois: From Accessible Design to Supercomputing Cultures"
+        },
+        {
+          "number": "CS 266",
+          "title": "Community Innovation"
+        },
+        {
+          "number": "CS 277",
+          "title": "Algorithms and Data Structures for Data Science"
+        },
+        {
+          "number": "CS 296",
+          "title": "Honors Course"
+        },
+        {
+          "number": "CS 307",
+          "title": "Modeling and Learning in Data Science"
+        },
+        {
+          "number": "CS 340",
+          "title": "Introduction to Computer Systems"
+        },
+        {
+          "number": "CS 341",
+          "title": "System Programming"
+        },
+        {
+          "number": "CS 357",
+          "title": "Numerical Methods I"
+        },
+        {
+          "number": "CS 361",
+          "title": "Probability & Statistics for Computer Science"
+        },
+        {
+          "number": "CS 374",
+          "title": "Introduction to Algorithms & Models of Computation"
+        },
+        {
+          "number": "CS 397",
+          "title": "Individual Study"
+        },
+        {
+          "number": "CS 398",
+          "title": "Special Topics"
+        },
+        {
+          "number": "CS 400",
+          "title": "Accelerated Fundamentals of Computing I"
+        },
+        {
+          "number": "CS 401",
+          "title": "Accelerated Fundamentals of Algorithms I"
+        },
+        {
+          "number": "CS 402",
+          "title": "Accelerated Fundamentals of Computing II"
+        },
+        {
+          "number": "CS 403",
+          "title": "Accelerated Fundamentals of Algorithms II"
+        },
+        {
+          "number": "CS 407",
+          "title": "Cryptography"
+        },
+        {
+          "number": "CS 409",
+          "title": "The Art of Web Programming"
+        },
+        {
+          "number": "CS 410",
+          "title": "Text Information Systems"
+        },
+        {
+          "number": "CS 411",
+          "title": "Database Systems"
+        },
+        {
+          "number": "CS 412",
+          "title": "Introduction to Data Mining"
+        },
+        {
+          "number": "CS 413",
+          "title": "Intro to Combinatorics"
+        },
+        {
+          "number": "CS 414",
+          "title": "Multimedia Systems"
+        },
+        {
+          "number": "CS 415",
+          "title": "Game Development"
+        },
+        {
+          "number": "CS 416",
+          "title": "Data Visualization"
+        },
+        {
+          "number": "CS 417",
+          "title": "Introduction to Extended Reality"
+        },
+        {
+          "number": "CS 418",
+          "title": "Interactive Computer Graphics"
+        },
+        {
+          "number": "CS 419",
+          "title": "Production Computer Graphics"
+        },
+        {
+          "number": "CS 420",
+          "title": "Parallel Progrmg: Sci & Engrg"
+        },
+        {
+          "number": "CS 421",
+          "title": "Programming Languages & Compilers"
+        },
+        {
+          "number": "CS 422",
+          "title": "Programming Language Design"
+        },
+        {
+          "number": "CS 423",
+          "title": "Operating Systems Design"
+        },
+        {
+          "number": "CS 424",
+          "title": "Real-Time Systems"
+        },
+        {
+          "number": "CS 425",
+          "title": "Distributed Systems"
+        },
+        {
+          "number": "CS 426",
+          "title": "Compiler Construction"
+        },
+        {
+          "number": "CS 427",
+          "title": "Software Engineering I"
+        },
+        {
+          "number": "CS 428",
+          "title": "Software Engineering II"
+        },
+        {
+          "number": "CS 429",
+          "title": "Software Engineering II, ACP"
+        },
+        {
+          "number": "CS 431",
+          "title": "Embedded Systems"
+        },
+        {
+          "number": "CS 433",
+          "title": "Computer System Organization"
+        },
+        {
+          "number": "CS 434",
+          "title": "Real World Algorithms for IoT and Data Science"
+        },
+        {
+          "number": "CS 435",
+          "title": "Cloud Networking"
+        },
+        {
+          "number": "CS 436",
+          "title": "Computer Networking Laboratory"
+        },
+        {
+          "number": "CS 437",
+          "title": "Topics in Internet of Things"
+        },
+        {
+          "number": "CS 438",
+          "title": "Computer Networks"
+        },
+        {
+          "number": "CS 439",
+          "title": "Wireless Networks"
+        },
+        {
+          "number": "CS 440",
+          "title": "Artificial Intelligence"
+        },
+        {
+          "number": "CS 441",
+          "title": "Applied Machine Learning"
+        },
+        {
+          "number": "CS 442",
+          "title": "Trustworthy Machine Learning"
+        },
+        {
+          "number": "CS 443",
+          "title": "Reinforcement Learning"
+        },
+        {
+          "number": "CS 444",
+          "title": "Deep Learning for Computer Vision"
+        },
+        {
+          "number": "CS 445",
+          "title": "Computational Photography"
+        },
+        {
+          "number": "CS 446",
+          "title": "Machine Learning"
+        },
+        {
+          "number": "CS 447",
+          "title": "Natural Language Processing"
+        },
+        {
+          "number": "CS 448",
+          "title": "Audio Computing Laboratory"
+        },
+        {
+          "number": "CS 450",
+          "title": "Numerical Analysis"
+        },
+        {
+          "number": "CS 452",
+          "title": "Topics in Robotics"
+        },
+        {
+          "number": "CS 460",
+          "title": "Security Laboratory"
+        },
+        {
+          "number": "CS 461",
+          "title": "Computer Security I"
+        },
+        {
+          "number": "CS 462",
+          "title": "Issues of Law and Policy in Computer Science"
+        },
+        {
+          "number": "CS 463",
+          "title": "Computer Security II"
+        },
+        {
+          "number": "CS 464",
+          "title": "Topics in Societal and Ethical Impacts of Computer Technology"
+        },
+        {
+          "number": "CS 465",
+          "title": "User Interface Design"
+        },
+        {
+          "number": "CS 466",
+          "title": "Introduction to Bioinformatics"
+        },
+        {
+          "number": "CS 467",
+          "title": "Social Visualization"
+        },
+        {
+          "number": "CS 468",
+          "title": "Tech and Advertising Campaigns"
+        },
+        {
+          "number": "CS 469",
+          "title": "Computational Advertising Infrastructure"
+        },
+        {
+          "number": "CS 470",
+          "title": "Social and Information Networks"
+        },
+        {
+          "number": "CS 473",
+          "title": "Algorithms"
+        },
+        {
+          "number": "CS 474",
+          "title": "Logic in Computer Science"
+        },
+        {
+          "number": "CS 475",
+          "title": "Formal Models of Computation"
+        },
+        {
+          "number": "CS 476",
+          "title": "Program Verification"
+        },
+        {
+          "number": "CS 477",
+          "title": "Formal Software Development Methods"
+        },
+        {
+          "number": "CS 478",
+          "title": "Quantum Algorithms and Complexity"
+        },
+        {
+          "number": "CS 481",
+          "title": "Advanced Topics in Stochastic Processes & Applications"
+        },
+        {
+          "number": "CS 482",
+          "title": "Simulation"
+        },
+        {
+          "number": "CS 483",
+          "title": "Applied Parallel Programming"
+        },
+        {
+          "number": "CS 484",
+          "title": "Parallel Programming"
+        },
+        {
+          "number": "CS 491",
+          "title": "Seminar"
+        },
+        {
+          "number": "CS 492",
+          "title": "Senior Project I"
+        },
+        {
+          "number": "CS 493",
+          "title": "Senior Project II, ACP"
+        },
+        {
+          "number": "CS 494",
+          "title": "Senior Project II"
+        },
+        {
+          "number": "CS 497",
+          "title": "CS Team Project"
+        },
+        {
+          "number": "CS 498",
+          "title": "Special Topics"
+        },
+        {
+          "number": "CS 499",
+          "title": "Senior Thesis"
+        }
+      ]
+    }
+  ],
+  "international": [
+    {
+      "school": "Shanghai Jiao Tong University",
+      "country": "China",
+      "department": "School of Electronic Information and Electrical Engineering (SEIEE) - Computer Science & Technology undergraduate program (Grade 2013 curriculum)",
+      "source_urls": [
+        "https://bjwb.seiee.sjtu.edu.cn/english/info/8269.htm"
+      ],
+      "notes": "Curriculum for the 2013 entering cohort (page dated 2014, marked \"For Reference Only\"); SJTU has renumbered courses since. Chinese title plus the official English title from the source page. Excludes general requirements (math, physics, English, PE, ideology).",
+      "courses": [
+        {
+          "number": "CS048",
+          "title": "C++程序设计（A类）",
+          "title_en": "C++ Programming"
+        },
+        {
+          "number": "CS902",
+          "title": "程序设计思想与方法",
+          "title_en": "Thinking and Approach of Programming"
+        },
+        {
+          "number": "CS358",
+          "title": "数据结构A",
+          "title_en": "Data Structure"
+        },
+        {
+          "number": "CS359",
+          "title": "计算机系统结构（A类）",
+          "title_en": "Computer System Architecture"
+        },
+        {
+          "number": "EI209",
+          "title": "计算机组成",
+          "title_en": "Computer Architecture"
+        },
+        {
+          "number": "CS363",
+          "title": "可计算理论",
+          "title_en": "Computability Theory"
+        },
+        {
+          "number": "CS214",
+          "title": "算法与复杂性",
+          "title_en": "Algorithm and Complexity"
+        },
+        {
+          "number": "CS308",
+          "title": "编译原理（A类）",
+          "title_en": "Compiler Principles"
+        },
+        {
+          "number": "CS022",
+          "title": "数据库原理",
+          "title_en": "Principles of Database"
+        },
+        {
+          "number": "CS307",
+          "title": "操作系统（D类）",
+          "title_en": "Operating System"
+        },
+        {
+          "number": "EE312",
+          "title": "软件工程（C类）",
+          "title_en": "Software Engineering"
+        },
+        {
+          "number": "CS339",
+          "title": "计算机网络（D类）",
+          "title_en": "Computer Network"
+        },
+        {
+          "number": "MA133",
+          "title": "离散数学（2）",
+          "title_en": "Discrete Mathematics(2)"
+        },
+        {
+          "number": "CS382",
+          "title": "自然语言处理",
+          "title_en": "Natural Language Processing"
+        },
+        {
+          "number": "CS383",
+          "title": "程序设计语言（A类）",
+          "title_en": "Programming Language"
+        },
+        {
+          "number": "CS427",
+          "title": "多核计算与并行处理",
+          "title_en": "Multi-core Computing and Parallel Processing"
+        },
+        {
+          "number": "CS432",
+          "title": "基于FPGA系统设计",
+          "title_en": "FPGA-based System Design"
+        },
+        {
+          "number": "CS433",
+          "title": "并行与分布式程序设计",
+          "title_en": "Parallel and Distributed Programming"
+        },
+        {
+          "number": "CS410",
+          "title": "人工智能（B类）",
+          "title_en": "Artificial Intelligence"
+        },
+        {
+          "number": "CS384",
+          "title": "存储技术（A类）",
+          "title_en": "Storage Technology"
+        },
+        {
+          "number": "AM322",
+          "title": "电子商务概论（C类）",
+          "title_en": "Electronic Business"
+        },
+        {
+          "number": "CS381",
+          "title": "计算机安全与密码学（A类）",
+          "title_en": "Computer Security and Cryptography(A)"
+        },
+        {
+          "number": "cs353",
+          "title": "Linux内核",
+          "title_en": "Linux Kernel"
+        },
+        {
+          "number": "CS380",
+          "title": "经济信息学（A类）——企业资源规划原理",
+          "title_en": "Economy Information"
+        },
+        {
+          "number": "CS321",
+          "title": "DB2原理及应用",
+          "title_en": "DB2 Theory and Application"
+        },
+        {
+          "number": "CS332",
+          "title": "基于Internet的信息获取技术（A类）",
+          "title_en": "Internet Information Retrieval"
+        },
+        {
+          "number": "CS337",
+          "title": "计算机图形学",
+          "title_en": "Computer Graphics"
+        },
+        {
+          "number": "CS490",
+          "title": "Windows高级操作系统",
+          "title_en": "Windows Advanced Operating System"
+        },
+        {
+          "number": "CS315",
+          "title": "Web服务与.NET技术",
+          "title_en": "Web Service and .NET Technology"
+        },
+        {
+          "number": "CS426",
+          "title": "海量数据处理技术",
+          "title_en": "Massive Data Processing"
+        },
+        {
+          "number": "CS431",
+          "title": "专业实习（计算机）",
+          "title_en": "Professional Practice"
+        },
+        {
+          "number": "CS356",
+          "title": "操作系统课程设计",
+          "title_en": "Project Workshop of Operating System"
+        },
+        {
+          "number": "CS334",
+          "title": "计算机组成实验",
+          "title_en": "Computer Organization Lab."
+        },
+        {
+          "number": "CS343",
+          "title": "计算机网络实验",
+          "title_en": "Computer Network Lab."
+        },
+        {
+          "number": "CS215",
+          "title": "编译课程设计",
+          "title_en": "Course Design on Compiler Principles"
+        },
+        {
+          "number": "CS362",
+          "title": "软件工程实践",
+          "title_en": "Software Engineering Practice"
+        },
+        {
+          "number": "CS357",
+          "title": "数据库课程设计",
+          "title_en": "Project Workshop of Database System"
+        },
+        {
+          "number": "BS061",
+          "title": "毕业设计（论文）（计算机）",
+          "title_en": "Undergraduate Project (Thesis)"
+        }
+      ]
+    },
+    {
+      "school": "Indian Institute of Technology Madras",
+      "country": "India",
+      "department": "Department of Computer Science and Engineering",
+      "source_urls": [
+        "https://www.cse.iitm.ac.in/courses.php?full=1",
+        "https://cse.iitm.ac.in/pages.php?pages=MzA="
+      ],
+      "notes": "All CS-coded courses tagged UG/UGCore/UGElective in the department course catalog. Typos are as printed on the source.",
+      "courses": [
+        {
+          "number": "CS1100",
+          "title": "Introduction to Programming"
+        },
+        {
+          "number": "CS1111",
+          "title": "Problem Solving using Computers"
+        },
+        {
+          "number": "CS1200",
+          "title": "Discrete Mathematics for Computer Science"
+        },
+        {
+          "number": "CS1202",
+          "title": "Discrete Mathematics II"
+        },
+        {
+          "number": "CS1234",
+          "title": "Small-Scale Application Development"
+        },
+        {
+          "number": "CS2200",
+          "title": "Language Machines and Computations"
+        },
+        {
+          "number": "CS2222",
+          "title": "Advanced Programming Techniques"
+        },
+        {
+          "number": "CS2300",
+          "title": "Foundations of Computer Systems Design"
+        },
+        {
+          "number": "CS2310",
+          "title": "Foundations of Computer Systems Design Lab"
+        },
+        {
+          "number": "CS2320",
+          "title": "Introduction to Graph Theory"
+        },
+        {
+          "number": "CS2600",
+          "title": "Computer Organization and Architecture"
+        },
+        {
+          "number": "CS2610",
+          "title": "Computer Organization and Architecture Lab"
+        },
+        {
+          "number": "CS2700",
+          "title": "Programming and Data Structures"
+        },
+        {
+          "number": "CS2705",
+          "title": "Programming and Data Structures"
+        },
+        {
+          "number": "CS2710",
+          "title": "Programming and Data Structures Lab"
+        },
+        {
+          "number": "CS2800",
+          "title": "Design and Analysis of Algorithms"
+        },
+        {
+          "number": "CS2810",
+          "title": "Object-Oriented Algorithms Implementation and Analysis Lab"
+        },
+        {
+          "number": "CS3100",
+          "title": "Paradigms of Programming"
+        },
+        {
+          "number": "CS3205",
+          "title": "Introduction to Computer Networks"
+        },
+        {
+          "number": "CS3210",
+          "title": "Computer Networks Lab"
+        },
+        {
+          "number": "CS3300",
+          "title": "Compiler Design"
+        },
+        {
+          "number": "CS3310",
+          "title": "Compiler Design Lab"
+        },
+        {
+          "number": "CS3400",
+          "title": "Principles of Software Engg."
+        },
+        {
+          "number": "CS3410",
+          "title": "Software Engg Lab"
+        },
+        {
+          "number": "CS3500",
+          "title": "Operating Systems"
+        },
+        {
+          "number": "CS3510",
+          "title": "Operating Systems Lab"
+        },
+        {
+          "number": "CS3660",
+          "title": "Industrial Training"
+        },
+        {
+          "number": "CS3666",
+          "title": "Industrial Training"
+        },
+        {
+          "number": "CS3700",
+          "title": "Introduction to Database Systems"
+        },
+        {
+          "number": "CS4011",
+          "title": "Principles of Machine Learning"
+        },
+        {
+          "number": "CS4100",
+          "title": "Computer System Design"
+        },
+        {
+          "number": "CS4110",
+          "title": "Computer System Design Lab"
+        },
+        {
+          "number": "CS4410",
+          "title": "Topics in Alg. Combinatorics & Gr.Theory"
+        },
+        {
+          "number": "CS4700",
+          "title": "Advanced Data Stuctures"
+        },
+        {
+          "number": "CS4805",
+          "title": "B. Tech. Project"
+        },
+        {
+          "number": "CS4830",
+          "title": "Big Data Laboratory"
+        },
+        {
+          "number": "CS4900",
+          "title": "Undergraduate Research in Computer Science - I"
+        },
+        {
+          "number": "CS4910",
+          "title": "Undergraduate Research in Computer Science - II"
+        },
+        {
+          "number": "CS4999",
+          "title": "Seminar"
+        }
+      ]
+    },
+    {
+      "school": "École polytechnique fédérale de Lausanne (EPFL)",
+      "country": "Switzerland",
+      "department": "School of Computer and Communication Sciences (IC) - Computer Science section",
+      "source_urls": [
+        "https://edu.epfl.ch/studyplan/en/propedeutics/computer-science/",
+        "https://edu.epfl.ch/studyplan/en/bachelor/computer-science/"
+      ],
+      "notes": "2026-27 Bachelor in Computer Science study plan (years 1-3). Includes the required math/physics/EE courses in the plan; letter-suffixed codes such as MATH-101(e) are parallel sections. CS-304 title_en is a translation.",
+      "courses": [
+        {
+          "number": "MATH-101(e)",
+          "title": "Analysis I"
+        },
+        {
+          "number": "MATH-101(en)",
+          "title": "Analysis I (English)"
+        },
+        {
+          "number": "MATH-101(pi)",
+          "title": "Analysis I (flipped classroom)"
+        },
+        {
+          "number": "MATH-101(de)",
+          "title": "Analysis I (German)"
+        },
+        {
+          "number": "PHYS-101(en)",
+          "title": "General physics : mechanics (English)"
+        },
+        {
+          "number": "PHYS-101(n)",
+          "title": "General physics : mechanics (english flipped classroom)"
+        },
+        {
+          "number": "PHYS-101(l)",
+          "title": "General physics : mechanics (flipped classroom)"
+        },
+        {
+          "number": "PHYS-101(c)",
+          "title": "General physics : mechanics (IN)"
+        },
+        {
+          "number": "MATH-111(e)",
+          "title": "Linear Algebra"
+        },
+        {
+          "number": "MATH-111(en)",
+          "title": "Linear algebra (english)"
+        },
+        {
+          "number": "MATH-111(pi)",
+          "title": "Linear algebra (flipped classroom)"
+        },
+        {
+          "number": "MATH-106(e)",
+          "title": "Analysis II"
+        },
+        {
+          "number": "MATH-106(en)",
+          "title": "Analysis II (English)"
+        },
+        {
+          "number": "CS-107",
+          "title": "Introduction to programming"
+        },
+        {
+          "number": "CS-108",
+          "title": "Practice of object-oriented programming"
+        },
+        {
+          "number": "CS-101",
+          "title": "Advanced information, computation, communication I"
+        },
+        {
+          "number": "COM-102",
+          "title": "Advanced information, computation, communication II"
+        },
+        {
+          "number": "CS-173",
+          "title": "Fundamentals of digital systems"
+        },
+        {
+          "number": "CS-250",
+          "title": "Algorithms I"
+        },
+        {
+          "number": "MATH-203(d)",
+          "title": "Analysis III (for IC)"
+        },
+        {
+          "number": "CS-214",
+          "title": "Software construction"
+        },
+        {
+          "number": "CS-200",
+          "title": "Computer architecture"
+        },
+        {
+          "number": "CS-202",
+          "title": "Computer systems"
+        },
+        {
+          "number": "MATH-232",
+          "title": "Probability and statistics (for IC)"
+        },
+        {
+          "number": "COM-301",
+          "title": "Computer security and privacy"
+        },
+        {
+          "number": "CS-300",
+          "title": "Data-intensive systems"
+        },
+        {
+          "number": "CS-251",
+          "title": "Theory of computation"
+        },
+        {
+          "number": "MATH-310",
+          "title": "Algebra"
+        },
+        {
+          "number": "MATH-207(d)",
+          "title": "Analysis IV"
+        },
+        {
+          "number": "CS-341",
+          "title": "Computer graphics (Cours biennal)"
+        },
+        {
+          "number": "CS-320",
+          "title": "Computer language processing"
+        },
+        {
+          "number": "EE-330",
+          "title": "Digital IC design"
+        },
+        {
+          "number": "EE-200",
+          "title": "Electromagnetics I : Transmission lines and waves"
+        },
+        {
+          "number": "EE-201",
+          "title": "Electromagnetics II : field computation"
+        },
+        {
+          "number": "EE-202(b)",
+          "title": "Electronics I"
+        },
+        {
+          "number": "EE-203(b)",
+          "title": "Electronics II (for IC)"
+        },
+        {
+          "number": "CS-213",
+          "title": "Human-computer interaction"
+        },
+        {
+          "number": "COM-304",
+          "title": "Intelligent systems: communications & AI"
+        },
+        {
+          "number": "COM-308",
+          "title": "Internet analytics"
+        },
+        {
+          "number": "CS-233",
+          "title": "Introduction to machine learning"
+        },
+        {
+          "number": "CS-308",
+          "title": "Introduction to quantum computation"
+        },
+        {
+          "number": "COM-309",
+          "title": "Introduction to quantum information processing"
+        },
+        {
+          "number": "CS-328",
+          "title": "Numerical methods for visual computing and ML"
+        },
+        {
+          "number": "CS-302",
+          "title": "Parallelism and concurrency in software"
+        },
+        {
+          "number": "COM-302",
+          "title": "Principles of digital communications"
+        },
+        {
+          "number": "CS-303",
+          "title": "Principles of online decision-making"
+        },
+        {
+          "number": "CS-304",
+          "title": "Projet de recherche optionnel en Informatique I (BA5/BA6 only)",
+          "title_en": "Optional research project in Computer Science I (BA5/BA6 only)"
+        },
+        {
+          "number": "CS-290",
+          "title": "Responsible software"
+        },
+        {
+          "number": "COM-202",
+          "title": "Signal processing"
+        },
+        {
+          "number": "COM-300",
+          "title": "Stochastic models in communication"
+        },
+        {
+          "number": "CS-234",
+          "title": "Technologies for democratic society"
+        },
+        {
+          "number": "PHYS-202",
+          "title": "Analytical mechanics (for SPH)"
+        },
+        {
+          "number": "PHYS-114",
+          "title": "General physics : electromagnetism"
+        },
+        {
+          "number": "BIO-109",
+          "title": "Introduction to life sciences (for IC)"
+        },
+        {
+          "number": "BIOENG-310",
+          "title": "Neuroscience foundations for engineers"
+        },
+        {
+          "number": "PHYS-344",
+          "title": "Quantum mechanics for non-physicists"
+        },
+        {
+          "number": "CS-358(a)",
+          "title": "Making intelligent things A"
+        },
+        {
+          "number": "CS-358(b)",
+          "title": "Making intelligent things B"
+        },
+        {
+          "number": "CS-311",
+          "title": "The software enterprise - from ideas to products"
+        }
+      ]
+    },
+    {
+      "school": "Technical University of Munich",
+      "country": "Germany",
+      "department": "TUM School of Computation, Information and Technology (CIT), Department of Computer Science - B.Sc. Informatik",
+      "source_urls": [
+        "https://www.cit.tum.de/en/cit/studium/studiengaenge/bachelor-informatik/studienplan/",
+        "https://portal.mytum.de/archiv/kompendium_rechtsangelegenheiten/fachpruefungsordnungen/2019-88-2-AeS-BA-Informatik-FINAL-11-10-2019.pdf"
+      ],
+      "notes": "Bachelor Informatik: compulsory modules from the current (summer semester 2026) and previous study plans, plus CS electives from the 2019 exam-regulation catalog (the current elective catalog is only on TUMonline). title_en values are translations, not official English titles.",
+      "courses": [
+        {
+          "number": "CIT123001",
+          "title": "Einführung in die Informatik und das Programmieren",
+          "title_en": "Introduction to Computer Science and Programming"
+        },
+        {
+          "number": "IN0001",
+          "title": "Einführung in die Informatik",
+          "title_en": "Introduction to Computer Science"
+        },
+        {
+          "number": "IN0002",
+          "title": "Grundlagenpraktikum: Programmierung",
+          "title_en": "Fundamentals Lab: Programming"
+        },
+        {
+          "number": "IN0003",
+          "title": "Funktionale Programmierung und Verifikation",
+          "title_en": "Functional Programming and Verification"
+        },
+        {
+          "number": "IN0004",
+          "title": "Einführung in die Rechnerarchitektur",
+          "title_en": "Introduction to Computer Architecture"
+        },
+        {
+          "number": "IN0005",
+          "title": "Grundlagenpraktikum: Rechnerarchitektur",
+          "title_en": "Fundamentals Lab: Computer Architecture"
+        },
+        {
+          "number": "IN0006",
+          "title": "Einführung in die Softwaretechnik",
+          "title_en": "Introduction to Software Engineering"
+        },
+        {
+          "number": "IN0007",
+          "title": "Grundlagen: Algorithmen und Datenstrukturen",
+          "title_en": "Fundamentals: Algorithms and Data Structures"
+        },
+        {
+          "number": "IN0008",
+          "title": "Grundlagen: Datenbanken",
+          "title_en": "Fundamentals: Databases"
+        },
+        {
+          "number": "IN0009",
+          "title": "Grundlagen: Betriebssysteme und Systemsoftware",
+          "title_en": "Fundamentals: Operating Systems and System Software"
+        },
+        {
+          "number": "IN0010",
+          "title": "Grundlagen: Rechnernetze und Verteilte Systeme",
+          "title_en": "Fundamentals: Computer Networks and Distributed Systems"
+        },
+        {
+          "number": "IN0011",
+          "title": "Einführung in die Theoretische Informatik",
+          "title_en": "Introduction to Theoretical Computer Science"
+        },
+        {
+          "number": "IN0012",
+          "title": "Bachelor-Praktikum",
+          "title_en": "Bachelor Practical Course"
+        },
+        {
+          "number": "IN0014",
+          "title": "Seminar",
+          "title_en": "Seminar"
+        },
+        {
+          "number": "IN0015",
+          "title": "Diskrete Strukturen",
+          "title_en": "Discrete Structures"
+        },
+        {
+          "number": "IN0018",
+          "title": "Diskrete Wahrscheinlichkeitstheorie",
+          "title_en": "Discrete Probability Theory"
+        },
+        {
+          "number": "IN0019",
+          "title": "Numerisches Programmieren",
+          "title_en": "Numerical Programming"
+        },
+        {
+          "number": "IN0042",
+          "title": "IT-Sicherheit",
+          "title_en": "IT Security"
+        },
+        {
+          "number": "MA0901",
+          "title": "Lineare Algebra für Informatik",
+          "title_en": "Linear Algebra for Computer Science"
+        },
+        {
+          "number": "MA0902",
+          "title": "Analysis für Informatik",
+          "title_en": "Analysis for Computer Science"
+        },
+        {
+          "number": "CIT000000",
+          "title": "Bachelorarbeit",
+          "title_en": "Bachelor's Thesis"
+        },
+        {
+          "number": "IN2261",
+          "title": "Bachelor's Thesis",
+          "title_en": "Bachelor's Thesis"
+        },
+        {
+          "number": "IN2260",
+          "title": "Bachelorkolloquium",
+          "title_en": "Bachelor's Colloquium"
+        },
+        {
+          "number": "IN2239",
+          "title": "Algorithmic Game Theory",
+          "title_en": "Algorithmic Game Theory"
+        },
+        {
+          "number": "IN2003",
+          "title": "Effiziente Algorithmen und Datenstrukturen",
+          "title_en": "Efficient Algorithms and Data Structures"
+        },
+        {
+          "number": "IN2007",
+          "title": "Komplexitätstheorie",
+          "title_en": "Complexity Theory"
+        },
+        {
+          "number": "IN2304",
+          "title": "Online- und Approximationsalgorithmen",
+          "title_en": "Online and Approximation Algorithms"
+        },
+        {
+          "number": "IN0038",
+          "title": "Echtzeit-Computergrafik",
+          "title_en": "Real-Time Computer Graphics"
+        },
+        {
+          "number": "IN0039",
+          "title": "Praktikum: Echtzeit-Computergrafik",
+          "title_en": "Practical Course: Real-Time Computer Graphics"
+        },
+        {
+          "number": "IN2124",
+          "title": "Grundlegende Mathematische Methoden für Imaging und Visualisierung",
+          "title_en": "Basic Mathematical Methods for Imaging and Visualization"
+        },
+        {
+          "number": "IN2219",
+          "title": "Anfrageoptimierung",
+          "title_en": "Query Optimization"
+        },
+        {
+          "number": "IN2118",
+          "title": "Datenbanksysteme und moderne CPU-Architekturen",
+          "title_en": "Database Systems and Modern CPU Architectures"
+        },
+        {
+          "number": "IN2031",
+          "title": "Einsatz und Realisierung von Datenbanksystemen",
+          "title_en": "Use and Implementation of Database Systems"
+        },
+        {
+          "number": "IN2032",
+          "title": "Elektronisches Publizieren / Document Engineering und das World-Wide Web",
+          "title_en": "Electronic Publishing / Document Engineering and the World Wide Web"
+        },
+        {
+          "number": "IN2267",
+          "title": "Transaktionssysteme",
+          "title_en": "Transaction Systems"
+        },
+        {
+          "number": "IN2084",
+          "title": "Fortgeschrittene Themen des Softwaretests",
+          "title_en": "Advanced Topics in Software Testing"
+        },
+        {
+          "number": "IN2078",
+          "title": "Grundlagen der Programm- und Systementwicklung",
+          "title_en": "Foundations of Program and System Development"
+        },
+        {
+          "number": "IN2041",
+          "title": "Automaten und formale Sprachen",
+          "title_en": "Automata and Formal Languages"
+        },
+        {
+          "number": "IN2227",
+          "title": "Compilerbau I",
+          "title_en": "Compiler Construction I"
+        },
+        {
+          "number": "IN2050",
+          "title": "Model Checking",
+          "title_en": "Model Checking"
+        },
+        {
+          "number": "IN2113",
+          "title": "Programmiersprachen",
+          "title_en": "Programming Languages"
+        },
+        {
+          "number": "IN2055",
+          "title": "Semantik",
+          "title_en": "Semantics"
+        },
+        {
+          "number": "IN2324",
+          "title": "Connected Mobility Basics",
+          "title_en": "Connected Mobility Basics"
+        },
+        {
+          "number": "IN2098",
+          "title": "Mobile verteilte Systeme",
+          "title_en": "Mobile Distributed Systems"
+        },
+        {
+          "number": "IN2076",
+          "title": "Rechnerarchitektur",
+          "title_en": "Computer Architecture"
+        },
+        {
+          "number": "IN2060",
+          "title": "Echtzeitsysteme",
+          "title_en": "Real-Time Systems"
+        },
+        {
+          "number": "IN2061",
+          "title": "Einführung in die digitale Signalverarbeitung",
+          "title_en": "Introduction to Digital Signal Processing"
+        },
+        {
+          "number": "IN2062",
+          "title": "Grundlagen der Künstlichen Intelligenz",
+          "title_en": "Fundamentals of Artificial Intelligence"
+        },
+        {
+          "number": "IN2209",
+          "title": "IT Sicherheit",
+          "title_en": "IT Security"
+        },
+        {
+          "number": "IN2197",
+          "title": "Kryptographie",
+          "title_en": "Cryptography"
+        },
+        {
+          "number": "IN2101",
+          "title": "Netzsicherheit",
+          "title_en": "Network Security"
+        },
+        {
+          "number": "IN2194",
+          "title": "Peer-to-Peer-Systeme und Sicherheit",
+          "title_en": "Peer-to-Peer Systems and Security"
+        },
+        {
+          "number": "IN2178",
+          "title": "Security Engineering",
+          "title_en": "Security Engineering"
+        },
+        {
+          "number": "IN2001",
+          "title": "Algorithms for Scientific Computing",
+          "title_en": "Algorithms for Scientific Computing"
+        },
+        {
+          "number": "IN2010",
+          "title": "Modellbildung und Simulation",
+          "title_en": "Modeling and Simulation"
+        },
+        {
+          "number": "IN2147",
+          "title": "Parallele Programmierung",
+          "title_en": "Parallel Programming"
+        }
+      ]
+    },
+    {
+      "school": "Zhejiang University",
+      "country": "China",
+      "department": "College of Computer Science and Technology - Computer Science and Technology major (2020 cohort training plan)",
+      "source_urls": [
+        "https://bksy.zju.edu.cn/_upload/article/files/b0/49/cf400d1142e9bb65b751c8d2cfa0/d50867e2-e35b-43fa-b4d7-28a2ebd5931f.pdf"
+      ],
+      "notes": "Training plan for the 2020 entering cohort, CS & Technology major. Titles are Chinese only; title_en values are translations, not official.",
+      "courses": [
+        {
+          "number": "211G0280",
+          "title": "C程序设计基础",
+          "title_en": "Fundamentals of C Programming"
+        },
+        {
+          "number": "211G0260",
+          "title": "程序设计专题",
+          "title_en": "Special Topics in Programming"
+        },
+        {
+          "number": "211B0010",
+          "title": "离散数学及其应用",
+          "title_en": "Discrete Mathematics and Its Applications"
+        },
+        {
+          "number": "211C0020",
+          "title": "数据结构基础",
+          "title_en": "Fundamentals of Data Structures"
+        },
+        {
+          "number": "211C0060",
+          "title": "数字逻辑设计",
+          "title_en": "Digital Logic Design"
+        },
+        {
+          "number": "211C0070",
+          "title": "面向信息技术的沟通技巧",
+          "title_en": "Communication Skills for Information Technology"
+        },
+        {
+          "number": "211C0010",
+          "title": "面向对象程序设计",
+          "title_en": "Object-Oriented Programming"
+        },
+        {
+          "number": "21120491",
+          "title": "高级数据结构与算法分析",
+          "title_en": "Advanced Data Structures and Algorithm Analysis"
+        },
+        {
+          "number": "21121350",
+          "title": "数据库系统",
+          "title_en": "Database Systems"
+        },
+        {
+          "number": "21186033",
+          "title": "计算机组成",
+          "title_en": "Computer Organization"
+        },
+        {
+          "number": "21120520",
+          "title": "计算理论",
+          "title_en": "Theory of Computation"
+        },
+        {
+          "number": "21121330",
+          "title": "操作系统",
+          "title_en": "Operating Systems"
+        },
+        {
+          "number": "21121340",
+          "title": "计算机网络",
+          "title_en": "Computer Networks"
+        },
+        {
+          "number": "21191062",
+          "title": "计算机体系结构",
+          "title_en": "Computer Architecture"
+        },
+        {
+          "number": "21120261",
+          "title": "软件工程",
+          "title_en": "Software Engineering"
+        },
+        {
+          "number": "21120471",
+          "title": "编译原理",
+          "title_en": "Compiler Principles"
+        },
+        {
+          "number": "21190641",
+          "title": "数值分析",
+          "title_en": "Numerical Analysis"
+        },
+        {
+          "number": "21121150",
+          "title": "应用运筹学基础",
+          "title_en": "Fundamentals of Applied Operations Research"
+        },
+        {
+          "number": "21190650",
+          "title": "程序设计方法学",
+          "title_en": "Programming Methodology"
+        },
+        {
+          "number": "21191600",
+          "title": "计算机科学思想史",
+          "title_en": "History of Ideas in Computer Science"
+        },
+        {
+          "number": "21191890",
+          "title": "人工智能",
+          "title_en": "Artificial Intelligence"
+        },
+        {
+          "number": "21190120",
+          "title": "算法设计与分析",
+          "title_en": "Algorithm Design and Analysis"
+        },
+        {
+          "number": "21191441",
+          "title": "数据挖掘导论",
+          "title_en": "Introduction to Data Mining"
+        },
+        {
+          "number": "21191880",
+          "title": "自然语言处理",
+          "title_en": "Natural Language Processing"
+        },
+        {
+          "number": "21120502",
+          "title": "汇编与接口",
+          "title_en": "Assembly Language and Interfacing"
+        },
+        {
+          "number": "21190830",
+          "title": "嵌入式系统",
+          "title_en": "Embedded Systems"
+        },
+        {
+          "number": "21191531",
+          "title": "并行计算与多核编程",
+          "title_en": "Parallel Computing and Multicore Programming"
+        },
+        {
+          "number": "21191670",
+          "title": "计算机系统综合实现",
+          "title_en": "Integrated Computer System Implementation"
+        },
+        {
+          "number": "21191680",
+          "title": "分布式计算",
+          "title_en": "Distributed Computing"
+        },
+        {
+          "number": "21191690",
+          "title": "大数据存储技术",
+          "title_en": "Big Data Storage Technology"
+        },
+        {
+          "number": "21121230",
+          "title": "智能终端软件开发",
+          "title_en": "Smart Device Software Development"
+        },
+        {
+          "number": "21121160",
+          "title": "Java应用技术",
+          "title_en": "Java Application Technology"
+        },
+        {
+          "number": "21191840",
+          "title": "大数据应用强化训练Ⅰ",
+          "title_en": "Intensive Training in Big Data Applications I"
+        },
+        {
+          "number": "21121170",
+          "title": "B/S体系软件设计",
+          "title_en": "Browser/Server Architecture Software Design"
+        },
+        {
+          "number": "21191850",
+          "title": "大数据应用强化训练Ⅱ",
+          "title_en": "Intensive Training in Big Data Applications II"
+        },
+        {
+          "number": "21120100",
+          "title": "多媒体技术",
+          "title_en": "Multimedia Technology"
+        },
+        {
+          "number": "22188080",
+          "title": "软件工程实践",
+          "title_en": "Software Engineering Practice"
+        },
+        {
+          "number": "21191700",
+          "title": "软件保护技术",
+          "title_en": "Software Protection Technology"
+        },
+        {
+          "number": "21190850",
+          "title": "信息安全原理",
+          "title_en": "Principles of Information Security"
+        },
+        {
+          "number": "21190180",
+          "title": "密码学",
+          "title_en": "Cryptography"
+        },
+        {
+          "number": "21191581",
+          "title": "网络安全原理与实践",
+          "title_en": "Network Security Principles and Practice"
+        },
+        {
+          "number": "21121600",
+          "title": "人工智能安全",
+          "title_en": "Artificial Intelligence Security"
+        },
+        {
+          "number": "21190190",
+          "title": "信息隐藏与数字水印",
+          "title_en": "Information Hiding and Digital Watermarking"
+        },
+        {
+          "number": "21191710",
+          "title": "通讯网络安全技术",
+          "title_en": "Communication Network Security Technology"
+        },
+        {
+          "number": "21190160",
+          "title": "信息系统安全",
+          "title_en": "Information System Security"
+        },
+        {
+          "number": "21190171",
+          "title": "信息安全综合实验",
+          "title_en": "Comprehensive Information Security Lab"
+        },
+        {
+          "number": "21121320",
+          "title": "图像信息处理",
+          "title_en": "Image Information Processing"
+        },
+        {
+          "number": "22120320",
+          "title": "服务科学导论",
+          "title_en": "Introduction to Service Science"
+        },
+        {
+          "number": "21191960",
+          "title": "智能视觉信息采集",
+          "title_en": "Intelligent Visual Information Acquisition"
+        },
+        {
+          "number": "21120510",
+          "title": "计算机图形学",
+          "title_en": "Computer Graphics"
+        },
+        {
+          "number": "21120970",
+          "title": "专题研讨",
+          "title_en": "Topical Seminar"
+        },
+        {
+          "number": "21121140",
+          "title": "数字视音频处理",
+          "title_en": "Digital Video and Audio Processing"
+        },
+        {
+          "number": "21121190",
+          "title": "电子商务系统结构",
+          "title_en": "E-Commerce System Architecture"
+        },
+        {
+          "number": "21121280",
+          "title": "信息可视化",
+          "title_en": "Information Visualization"
+        },
+        {
+          "number": "21191070",
+          "title": "计算机视觉",
+          "title_en": "Computer Vision"
+        },
+        {
+          "number": "21121270",
+          "title": "计算机图形学研究进展",
+          "title_en": "Advances in Computer Graphics Research"
+        },
+        {
+          "number": "21191780",
+          "title": "计算摄影学",
+          "title_en": "Computational Photography"
+        },
+        {
+          "number": "21191110",
+          "title": "信息检索和 WEB搜索",
+          "title_en": "Information Retrieval and Web Search"
+        },
+        {
+          "number": "21191790",
+          "title": "并行算法",
+          "title_en": "Parallel Algorithms"
+        },
+        {
+          "number": "21121240",
+          "title": "流计算与 GPGPU软件开发",
+          "title_en": "Stream Computing and GPGPU Software Development"
+        },
+        {
+          "number": "21190911",
+          "title": "计算机游戏程序设计",
+          "title_en": "Computer Game Programming"
+        },
+        {
+          "number": "21191340",
+          "title": "数字媒体后期制作",
+          "title_en": "Digital Media Post-Production"
+        },
+        {
+          "number": "21120860",
+          "title": "科研实践 I",
+          "title_en": "Research Practice I"
+        },
+        {
+          "number": "21120870",
+          "title": "科研实践 II",
+          "title_en": "Research Practice II"
+        },
+        {
+          "number": "21190700",
+          "title": "计算机前沿技术讲座",
+          "title_en": "Lectures on Frontier Computer Technologies"
+        },
+        {
+          "number": "21191050",
+          "title": "计算机动画",
+          "title_en": "Computer Animation"
+        },
+        {
+          "number": "21191370",
+          "title": "虚拟现实与数字娱乐",
+          "title_en": "Virtual Reality and Digital Entertainment"
+        },
+        {
+          "number": "21188142",
+          "title": "课程综合实践Ⅱ",
+          "title_en": "Integrated Course Practice II"
+        },
+        {
+          "number": "21120721",
+          "title": "工程实践",
+          "title_en": "Engineering Practice"
+        },
+        {
+          "number": "21121420",
+          "title": "计算机系统概论",
+          "title_en": "Introduction to Computer Systems"
+        },
+        {
+          "number": "21188141",
+          "title": "课程综合实践Ⅰ",
+          "title_en": "Integrated Course Practice I"
+        },
+        {
+          "number": "21120460",
+          "title": "毕业论文（设计）",
+          "title_en": "Graduation Thesis (Design)"
+        }
+      ]
+    }
+  ]
+}

@@ -45,3 +45,65 @@ Claude responded with the file, and this information:
 >
 > Sources: [UCSB Catalog – CMPSC courses](https://catalog.ucsb.edu/courses?page=1&sortBy=code&departments=CMPSC&cq=)
 
+## `other_undergraduate_courses.json`
+
+This file contains
+
+It was created with this prompt to Claude:
+
+```
+Now please make a json file that contains 5 randomly chosen
+domestic schools that have undergraduate computer science
+programs, and 5 schools that international students from
+China, India, and Europe may have studied at, that have
+undergraduate computer science programs.  Locate programs
+where you can find a list of courses and course titles for
+undergraduate coursework.
+
+Make a json file that is organized by school name, then,
+course.  For each course, we want a course number, and course
+title.
+
+Group the schools into two arrays at the top level,with keys
+domestic and international.
+```
+
+Here is a portion of Claude's comments on this file:
+
+
+> `cs_undergrad_courses.json` has `domestic` and `international` arrays at the top level. Each entry has the school name, country, department, source links, a notes line, and a `courses` list where every course has a number and title. Chinese and German courses also have an English title.
+> 
+> | Domestic | Courses | International | Courses |
+> |---|---|---|---|
+> | Stony Brook | 75 | Shanghai Jiao Tong (China) | 38 |
+> | Purdue | 77 | IIT Madras (India) | 39 |
+> | Carnegie Mellon | 80 | EPFL (Switzerland) | 59 |
+> | CU Boulder | 83 | TU Munich (Germany) | 56 |
+> | UIUC | 103 | Zhejiang University (China) | 72 |
+
+> **How the schools were picked:** I drew them with a seeded random draw from candidate lists. The domestic list had about 50 US universities. The international list had Chinese, Indian and European schools, with at least one from each region. Two international picks were swapped for the next school in the backup order:
+> - **USTC was replaced by Zhejiang.** USTC's curriculum pages show the course list only as an image, and its course catalog is a page whose contents never came through.
+> - **RWTH Aachen was replaced by TU Munich.** RWTH's official pages give no course numbers for about half its required courses, and you asked for a number on every course.
+> 
+> **How reliable the lists are:**
+> - **Checked:** Purdue, UIUC and CU Boulder were read directly from the live catalog pages in the browser and match exactly.
+> - **Not checked:** the other seven came through a fetch tool that summarizes long pages, and I couldn't load those pages in the browser to compare. A wording slip in a title is possible there.
+> - **Other differences between schools:**
+> - The US schools and IIT Madras list every undergraduate course in the department. The European and Chinese schools list the program curriculum, so EPFL also includes its required math and physics courses.
+> - **SJTU's curriculum is old.** The only official list I could reach without a login is for students who started in 2013, and SJTU has renumbered its courses since.
+> - **Some lists aren't current.** Zhejiang's is the plan for students who started in 2020. TUM's electives come from 2019 rules, because the current list sits on a site that blocks automated access.
+> - **Some English titles are my translations.** The Zhejiang and TUM English titles, and one EPFL title, are mine, not official. SJTU's English titles are the university's own.
+> 
+> The per-school notes in the file record the catalog year and these limits.
+> 
+> Sources:
+> - [Stony Brook CSE courses](https://www.stonybrook.edu/sb/bulletin/current-fall24/courses/cse/)
+> - [Purdue catalog](https://catalog.purdue.edu/content.php?catoid=19&navoid=25468)
+> - [CMU SCS courses](http://coursecatalog.web.cmu.edu/schools-colleges/schoolofcomputerscience/courses/)
+> - [CU Boulder CSCI](https://catalog.colorado.edu/courses-a-z/csci/)
+> - [UIUC CS](https://catalog.illinois.edu/courses-of-instruction/cs/)
+> - [SJTU curriculum](https://bjwb.seiee.sjtu.edu.cn/english/info/8269.htm)
+> - [IIT Madras CSE courses](https://www.cse.iitm.ac.in/courses.php?full=1)
+> - [EPFL propedeutics](https://edu.epfl.ch/studyplan/en/propedeutics/computer-science/) and [EPFL bachelor](https://edu.epfl.ch/studyplan/en/bachelor/computer-science/)
+> - [TUM study plan](https://www.cit.tum.de/en/cit/studium/studiengaenge/bachelor-informatik/studienplan/) and [TUM 2019 regulations](https://portal.mytum.de/archiv/kompendium_rechtsangelegenheiten/fachpruefungsordnungen/2019-88-2-AeS-BA-Informatik-FINAL-11-10-2019.pdf)
+> - [ZJU 2020 training plan](https://bksy.zju.edu.cn/_upload/article/files/b0/49/cf400d1142e9bb65b751c8d2cfa0/d50867e2-e35b-43fa-b4d7-28a2ebd5931f.pdf)
