@@ -15,6 +15,7 @@ Then fill in the values in `.env`:
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID | [`docs/oauth.md`](docs/oauth.md) |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | [`docs/oauth.md`](docs/oauth.md) |
 | `ADMIN_EMAILS` | Comma-separated admin email addresses | [`docs/oauth.md`](docs/oauth.md) |
+| `ENABLE_DEVELOPER_MODE` | `true` makes the Developer Mode switch available (Developer menu); default `false`. Set it only on localhost and test instances (`dokku config:set <app> ENABLE_DEVELOPER_MODE=true`), never in production. | this README |
 
 See [`docs/oauth.md`](docs/oauth.md) for full setup instructions, including Dokku deployment.
 

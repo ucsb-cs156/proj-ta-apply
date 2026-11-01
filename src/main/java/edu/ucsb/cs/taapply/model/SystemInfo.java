@@ -13,6 +13,12 @@ import lombok.NoArgsConstructor;
 public class SystemInfo {
   private Boolean springH2ConsoleEnabled;
   private Boolean showSwaggerUILink;
+
+  /**
+   * Whether the Developer Mode switch exists on this instance (issue #217); never in production.
+   */
+  private Boolean enableDeveloperMode;
+
   private String oauthLogin;
   private String sourceRepo;
   private String commitMessage;

@@ -631,6 +631,22 @@ export default function HelpAdminsPage(): React.JSX.Element {
           documentation, and the system settings the app was started with. It is
           for checking what is running, not for changing anything.
         </p>
+
+        <h2 className="my-3 h4" id="developer-mode">
+          Developer Mode (Developer menu)
+        </h2>
+        <p data-testid="HelpAdminsPage-developer-mode">
+          <Link to="/admin/developer-mode">Developer Mode</Link> is a switch for{" "}
+          <strong>test instances only</strong>. It exists only where the
+          instance was started with <code>ENABLE_DEVELOPER_MODE=true</code>;
+          production is started without it, and then the menu item and the
+          switch are not there at all. While the switch is on, a red{" "}
+          <strong>Developer Mode</strong> badge appears in the footer of every
+          page, for everyone, as a reminder that the instance may hold fake
+          data, and page-specific controls for creating that data appear next to
+          the badge as later features add them. Flipping the switch is not
+          recorded in any change history.
+        </p>
       </div>
     </BasicLayout>
   );
