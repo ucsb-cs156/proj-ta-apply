@@ -91,6 +91,18 @@ const CHAR_WIDTH = 5.9;
 export const BOX_HEIGHT = 62;
 /** Live boxes are taller: the bottom 16 units hold the status label. */
 export const LIVE_BOX_HEIGHT = 78;
+/**
+ * Live boxes whose status line ("Opened: 2026-02-05", "Deadline: 2026-02-15") is wider than their
+ * title are given a minimum width, so the text sits inside the box.
+ */
+const LIVE_MIN_WIDTH: Record<number, number> = { 6: 104, 7: 112 };
+/**
+ * Live boxes with a three-line title and a status line get extra room below; their tops do not
+ * move, so they only grow downwards.
+ */
+const LIVE_EXTRA_HEIGHT: Record<number, number> = { 7: 16, 9: 16 };
+/** In live mode the 6 -> 7 arrow enters step 7 this far from its right edge. */
+const LIVE_ARROW_INSET = 20;
 const MARGIN = 20;
 const GAP = 40;
 const WIDE_GAP = 95;
@@ -150,13 +162,17 @@ export const layoutRecruitmentSteps = (
   live = false,
 ): DiagramLayout => {
   const lines = stepLines(type);
-  const height = live ? LIVE_BOX_HEIGHT : BOX_HEIGHT;
+  const heightOf = (n: number): number =>
+    live ? LIVE_BOX_HEIGHT + (LIVE_EXTRA_HEIGHT[n] ?? 0) : BOX_HEIGHT;
   const width = (n: number): number =>
-    Math.round(
-      PAD_LEFT +
-        NUMBER_WIDTH +
-        Math.max(...lines[n].map((l) => l.length)) * CHAR_WIDTH +
-        PAD_RIGHT,
+    Math.max(
+      Math.round(
+        PAD_LEFT +
+          NUMBER_WIDTH +
+          Math.max(...lines[n].map((l) => l.length)) * CHAR_WIDTH +
+          PAD_RIGHT,
+      ),
+      live ? (LIVE_MIN_WIDTH[n] ?? 0) : 0,
     );
   const columns: number[][] = [[1], [2, 4], [3, 5], [6], [8], [9]];
   const columnWidths = columns.map((c) => Math.max(...c.map(width)));
@@ -190,6 +206,7 @@ export const layoutRecruitmentSteps = (
   };
   const box = (n: number, bx: number, top: number): BoxGeometry => {
     const w = width(n);
+    const height = heightOf(n);
     // The title block is centred in the top BOX_HEIGHT units; a live box's extra height is below.
     const titleCy = top + BOX_HEIGHT / 2;
     const k = lines[n].length;
@@ -256,7 +273,9 @@ export const layoutRecruitmentSteps = (
     // 6 (bottom) -> 7 (top): out of 6 horizontally, up into 7's underside with a straight run.
     const x0 = right(6);
     const y0 = cy(6) - 16;
-    const x1 = cx(7);
+    // In live mode a "(see rankings)" link sits under 7's left end, so the arrow enters 7's
+    // underside near its right end instead of at the centre.
+    const x1 = live ? right(7) - LIVE_ARROW_INSET : cx(7);
     const y1 = bottom(7) + 1;
     const ye = y1 + 16;
     paths["6-7"] =
@@ -273,7 +292,8 @@ export const layoutRecruitmentSteps = (
     ...e,
     d: paths[`${e.from}-${e.to}`],
   }));
-  const shift = height - BOX_HEIGHT;
+  const shift =
+    Math.max(...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(heightOf)) - BOX_HEIGHT;
   return {
     width: total,
     height: STATIC_HEIGHT + shift,

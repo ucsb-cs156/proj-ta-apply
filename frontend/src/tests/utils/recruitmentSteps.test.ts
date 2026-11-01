@@ -121,24 +121,44 @@ describe("recruitmentSteps", () => {
     expect(edgeOf(layout, 6, 8).kind).toBe("hard");
   });
 
-  test("the live layout makes every box 16 taller and moves the legend down", () => {
+  test("the live layout makes every box 16 taller (7 and 9 a further 16), widens 6 and 7, and moves the legend down", () => {
     const layout = layoutRecruitmentSteps("TA", true);
-    expect(layout.height).toBe(408);
-    expect(layout.boxes.every((b) => b.height === 78)).toBe(true);
-    expect(layout.boxes.map((b) => [b.number, b.x, b.y])).toEqual(
-      layoutRecruitmentSteps("TA").boxes.map((b) => [b.number, b.x, b.y]),
+    const staticLayout = layoutRecruitmentSteps("TA");
+    expect(layout.width).toBe(868);
+    expect(layout.height).toBe(424);
+    expect(layout.boxes.map((b) => [b.number, b.height])).toEqual([
+      [1, 78],
+      [2, 78],
+      [3, 78],
+      [4, 78],
+      [5, 78],
+      [6, 78],
+      [7, 94],
+      [8, 78],
+      [9, 94],
+    ]);
+    // Only 6 and 7 are wider than their titles need, so the status line fits inside them.
+    expect(boxOf(layout, 6).width).toBe(104);
+    expect(boxOf(layout, 7).width).toBe(112);
+    expect(boxOf(staticLayout, 6).width).toBe(71);
+    expect(boxOf(staticLayout, 7).width).toBe(71);
+    expect(boxOf(layout, 8).width).toBe(boxOf(staticLayout, 8).width);
+    expect(boxOf(layout, 9).width).toBe(boxOf(staticLayout, 9).width);
+    // No box's top moves: the extra height is all below.
+    expect(layout.boxes.map((b) => [b.number, b.y])).toEqual(
+      staticLayout.boxes.map((b) => [b.number, b.y]),
     );
     // The title block stays where it was; the extra height is under it.
     expect(boxOf(layout, 2).firstBaseline).toBeCloseTo(72.55, 5);
     expect(boxOf(layout, 1).cy).toBe(149);
-    expect(layout.legend).toEqual({ hardY: 306, softY: 332 });
-    expect(layout.footnote).toEqual({ y1: 368, y2: 386 });
+    expect(layout.legend).toEqual({ hardY: 322, softY: 348 });
+    expect(layout.footnote).toEqual({ y1: 384, y2: 402 });
     // Edges follow the taller boxes: 1 leaves from its new centre, 6 -> 7 ends at 7's new bottom.
     expect(edgeOf(layout, 1, 2).d).toBe(
       "M 115.0 139.0 C 126.5 139.0, 126.5 84.0, 138.0 84.0 H 154.0",
     );
     expect(edgeOf(layout, 6, 7).d).toBe(
-      "M 508.0 198.0 C 555.5 198.0, 555.5 169.0, 555.5 140.0 V 124.0",
+      "M 541.0 198.0 C 624.5 198.0, 624.5 177.0, 624.5 156.0 V 140.0",
     );
   });
 

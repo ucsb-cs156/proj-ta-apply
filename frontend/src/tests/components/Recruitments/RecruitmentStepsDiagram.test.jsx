@@ -171,7 +171,7 @@ describe("RecruitmentStepsDiagram tests", () => {
       renderLive(recruitmentStepsFixtures.rankingsOpen);
 
       expect(svg()).toHaveAttribute("data-mode", "live");
-      expect(svg()).toHaveAttribute("viewBox", "0 0 835 408");
+      expect(svg()).toHaveAttribute("viewBox", "0 0 868 424");
       expect(screen.getByTestId("D-step-2-box")).toHaveAttribute(
         "height",
         "78",
@@ -223,7 +223,7 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(label2).toHaveAttribute("font-size", "11");
       expect(label2).toHaveAttribute("x", "163");
       // The legend moved down with the taller boxes.
-      expect(screen.getByTestId("D-footnote")).toHaveAttribute("y", "368");
+      expect(screen.getByTestId("D-footnote")).toHaveAttribute("y", "384");
     });
 
     test("a step with a page link wraps its title in a link; onNavigate takes over the click", async () => {
@@ -366,11 +366,11 @@ describe("RecruitmentStepsDiagram tests", () => {
       const rankings = screen.getByTestId("D-step-7-secondary-link");
       expect(rankings).toHaveTextContent("(see rankings)");
       expect(rankings).toHaveAttribute("href", "/admin/recruitments/1/courses");
-      // Centred under the box: cx, y + height + 13.
+      // Under the box's left end: x + 4, y + height + 13, so step 6's arrow can enter at the right.
       const text = rankings.querySelector("text");
-      expect(text).toHaveAttribute("x", "555.5");
-      expect(text).toHaveAttribute("y", "136");
-      expect(text).toHaveAttribute("text-anchor", "middle");
+      expect(text).toHaveAttribute("x", "536.5");
+      expect(text).toHaveAttribute("y", "152");
+      expect(text).toHaveAttribute("text-anchor", "start");
       expect(text).toHaveAttribute("fill", "#0d6efd");
       expect(text).toHaveAttribute("font-size", "11");
       expect(text.style.textDecoration).toBe("underline");

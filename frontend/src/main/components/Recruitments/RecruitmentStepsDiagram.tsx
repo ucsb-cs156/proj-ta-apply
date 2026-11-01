@@ -230,11 +230,11 @@ export default function RecruitmentStepsDiagram({
                 data-testid={`${testIdPrefix}-step-${box.number}-secondary-link`}
               >
                 <text
-                  x={box.cx}
+                  x={box.x + 4}
                   y={box.y + box.height + 13}
                   fontSize={11}
                   fill={LINK_INK}
-                  textAnchor="middle"
+                  textAnchor="start"
                   style={{ textDecoration: "underline" }}
                 >
                   {status.secondaryLink.text}
