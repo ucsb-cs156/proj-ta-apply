@@ -48,6 +48,12 @@ export type RecruitmentStepsData = {
   steps: RecruitmentStepStatus[];
 };
 
+/**
+ * The first part of every recruitment's steps query key: ["/api/admin/recruitments/steps", id].
+ * Invalidating it alone re-reads the steps of every recruitment on the page.
+ */
+export const STEPS_QUERY_KEY = "/api/admin/recruitments/steps";
+
 export const STEP_COUNT = 9;
 
 /** The lines of each box's title, for a TA or ULA recruitment. */

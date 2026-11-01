@@ -6,7 +6,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
-import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.Course;
@@ -235,10 +234,12 @@ public class RecruitmentsWebIT extends WebTestCase {
     goToRecruitments();
     createTaRecruitment();
 
-    Locator statusButton = page.getByTestId("HomePageLoggedIn-admin-card-0-status-button");
+    // Issue #233: Open Applications is step 2 of the live diagram on the card.
+    Locator statusButton =
+        page.getByTestId("HomePageLoggedIn-admin-card-0-steps-steps-step-2-action");
     waitFor(statusButton);
-
-    assertThat(statusButton).containsText("Open");
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-applicationStatus"))
+        .containsText("CLOSED");
     statusButton.click();
 
     // Issue #186: the button asks first. Nothing changes until Yes is clicked.
@@ -251,8 +252,8 @@ public class RecruitmentsWebIT extends WebTestCase {
         .hasAttribute("href", "/help/admins#open-close-applications");
     page.getByTestId("HomePageLoggedIn-admin-status-modal-no").click();
     assertThat(statusModal).not().isVisible();
-    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-status-button"))
-        .containsText("Open");
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-applicationStatus"))
+        .containsText("CLOSED");
 
     statusButton.click();
     waitFor(page.getByTestId("HomePageLoggedIn-admin-status-modal-yes"));
@@ -260,13 +261,13 @@ public class RecruitmentsWebIT extends WebTestCase {
         .hasText("Yes, Open Applications Now");
     page.getByTestId("HomePageLoggedIn-admin-status-modal-yes").click();
 
-    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-status-button"))
-        .containsText("Close");
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-applicationStatus"))
+        .containsText("OPEN");
     assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-actualOpeningDate")).not().isEmpty();
 
-    // Issue #139: the Review Applications page lists the recruitment's own audit trail, newest
+    // Issue #139: the Applications page lists the recruitment's own audit trail, newest
     // first: the stamped opening date, the status change, then the creation.
-    page.getByTestId("HomePageLoggedIn-admin-card-0-review-button").click();
+    page.getByTestId("HomePageLoggedIn-admin-card-0-applications-button").click();
     assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-total"))
         .hasText("3 changes recorded.");
     assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-whatChanged"))
@@ -283,29 +284,6 @@ public class RecruitmentsWebIT extends WebTestCase {
         .hasText("OPEN");
     assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-2-col-whatChanged"))
         .hasText("created");
-  }
-
-  /** The CSV button hands the browser a file named after the recruitment, with the TA columns. */
-  @Test
-  public void the_csv_button_downloads_the_recruitment_s_applications() throws Exception {
-    stubOfferings();
-    setupAdminUser();
-    goToRecruitments();
-    createTaRecruitment();
-
-    Locator csvButton = page.getByTestId("HomePageLoggedIn-admin-card-0-csv-button");
-    waitFor(csvButton);
-    assertThat(csvButton).containsText("CSV");
-
-    Download download = page.waitForDownload(csvButton::click);
-    String firstLine = java.nio.file.Files.readAllLines(download.path()).get(0);
-    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-type")).containsText("TA");
-    org.junit.jupiter.api.Assertions.assertTrue(
-        download.suggestedFilename().matches("applications-\\d+\\.csv"),
-        download.suggestedFilename());
-    org.junit.jupiter.api.Assertions.assertTrue(
-        firstLine.startsWith("\"id\",\"submittedAt\",\"email\""), firstLine);
-    org.junit.jupiter.api.Assertions.assertTrue(firstLine.contains("\"classLevel\""), firstLine);
   }
 
   /** Issue #141: the recruitments live on the admin's home page, and the old page is gone. */

@@ -6,6 +6,7 @@ import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
+import { recruitmentStepsHandler } from "../../recruitmentStepsHandlers";
 
 // S26 TA not yet opened; W26 ULA open; W26 TA closed on 2026-02-01.
 const three = recruitmentsFixtures.threeRecruitments;
@@ -15,6 +16,7 @@ const handlers = (user, backend = {}) => [
   http.get("/api/systemInfo", () =>
     HttpResponse.json(systemInfoFixtures.showingNeither),
   ),
+  recruitmentStepsHandler,
   http.get("/api/admin/recruitments/all", () => HttpResponse.json(three)),
   http.get("/api/admin/recruitments/applicationCounts", () =>
     HttpResponse.json({ 1: 15, 2: 1, 3: 0 }),
