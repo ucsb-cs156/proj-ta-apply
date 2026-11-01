@@ -704,4 +704,39 @@ describe("Help pages (issue #140)", () => {
       "Afterwards: Close Applications, plan the hiring on the Courses and Budget for Quarter pages, release each lecture's allocation to its instructor, then Open Faculty Reviews.",
     );
   });
+
+  test("the admins page links to the Recruitment Steps page above its flow (issue #232)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const paragraph = screen.getByTestId("HelpAdminsPage-steps-link");
+    expect(paragraph).toHaveTextContent(
+      "The order the steps happen in, and which ones must come first, is drawn on the Recruitment Steps page.",
+    );
+    expect(
+      within(paragraph).getByRole("link", { name: "Recruitment Steps" }),
+    ).toHaveAttribute("href", "/help/recruitment-steps");
+    expect(
+      document.getElementById("flow").compareDocumentPosition(paragraph) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      paragraph.compareDocumentPosition(
+        screen.getByTestId("HelpAdminsPage-flow"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("the instructors page links to the Recruitment Steps page (issue #232)", async () => {
+    renderPage(<HelpInstructorsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Instructors" });
+
+    const paragraph = screen.getByTestId("HelpInstructorsPage-steps-link");
+    expect(paragraph).toHaveTextContent(
+      "Where your part fits in a recruitment, and what the admin does before and after it, is drawn on the Recruitment Steps page.",
+    );
+    expect(
+      within(paragraph).getByRole("link", { name: "Recruitment Steps" }),
+    ).toHaveAttribute("href", "/help/recruitment-steps");
+  });
 });

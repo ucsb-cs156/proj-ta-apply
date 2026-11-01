@@ -140,6 +140,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
         <h2 className="my-3 h4" id="flow">
           The flow of a recruitment
         </h2>
+        <p data-testid="HelpAdminsPage-steps-link">
+          The order the steps happen in, and which ones must come first, is
+          drawn on the{" "}
+          <Link to="/help/recruitment-steps">Recruitment Steps</Link> page.
+        </p>
         <p>
           Everything on the Admin menu, and the Recruitments section of your
           home page, serves one cycle, repeated each quarter for TAs and again
