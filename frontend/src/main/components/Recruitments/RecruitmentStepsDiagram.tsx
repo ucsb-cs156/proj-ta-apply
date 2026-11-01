@@ -88,7 +88,7 @@ export default function RecruitmentStepsDiagram({
       <tspan key={i} x={box.labelX} dy={i === 0 ? undefined : LINE_HEIGHT}>
         {titleLinks === undefined
           ? line
-          : // Step 4: each linked word becomes its own link, the rest stays plain text.
+          : // Step 3: each linked word becomes its own link, the rest stays plain text.
             line.split(/(\b\w+\b)/).map((part, j) => {
               const link = titleLinks.find((l) => l.text === part);
               return link === undefined ? (

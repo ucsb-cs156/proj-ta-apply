@@ -18,17 +18,17 @@ const freshSteps = (id, qyy) => [
   {
     number: 3,
     done: false,
-    label: "Prim. Consid: 2026-01-20",
-    action: "closeApplications",
-  },
-  {
-    number: 4,
-    done: false,
     label: "Hiring Target: 1",
     titleLinks: [
       { text: "Budget", href: `/admin/budget/${qyy}` },
       { text: "Allocations", href: courses(id) },
     ],
+  },
+  {
+    number: 4,
+    done: false,
+    label: "Prim. Consid: 2026-01-20",
+    action: "closeApplications",
   },
   {
     number: 5,
@@ -80,7 +80,7 @@ const applicationsOpen = withSteps(fresh, [
 
 const applicationsClosed = withSteps(applicationsOpen, [
   {
-    number: 3,
+    number: 4,
     done: true,
     label: "Closed: 2026-02-01",
     action: "openApplications",
@@ -90,7 +90,7 @@ const applicationsClosed = withSteps(applicationsOpen, [
 /** The admin has set a target of 8 and allocated all eight slots. */
 const allocated = withSteps(applicationsClosed, [
   {
-    number: 4,
+    number: 3,
     done: true,
     label: "Hiring Target: 8",
     titleLinks: [

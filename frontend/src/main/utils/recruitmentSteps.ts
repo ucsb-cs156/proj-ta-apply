@@ -28,7 +28,7 @@ export type RecruitmentStepStatus = {
   href?: string;
   /** The card modal the title opens instead of a page. */
   action?: RecruitmentStepAction;
-  /** Step 4: the words of the title that link to different pages ("Budget", "Allocations"). */
+  /** Step 3: the words of the title that link to different pages ("Budget", "Allocations"). */
   titleLinks?: StepLink[];
   /** Steps 7 and 9: "(see rankings)" / "(see assignments)". */
   secondaryLink?: StepLink;
@@ -46,8 +46,8 @@ export const STEP_COUNT = 9;
 export const stepLines = (type: RecruitmentType): Record<number, string[]> => ({
   1: [`Create ${type}`, "Recruitment"],
   2: [`Open ${type}`, "Applications"],
-  3: [`Close ${type}`, "Applications"],
-  4: ["Budget /", "Allocations"],
+  3: ["Budget /", "Allocations"],
+  4: [`Close ${type}`, "Applications"],
   5: ["Release", "Allocations", "to Faculty *"],
   6: ["Open", "Faculty", "Ranking"],
   7: ["Close", "Faculty", "Ranking"],
@@ -64,16 +64,16 @@ export type EdgeKind = "hard" | "soft";
 /** The prerequisites, from -> to. Hard ones must happen first; soft ones are the preferred order. */
 export const STEP_EDGES: { from: number; to: number; kind: EdgeKind }[] = [
   { from: 1, to: 2, kind: "hard" },
-  { from: 2, to: 3, kind: "hard" },
-  { from: 1, to: 4, kind: "hard" },
-  { from: 4, to: 5, kind: "hard" },
+  { from: 2, to: 4, kind: "hard" },
+  { from: 1, to: 3, kind: "hard" },
+  { from: 3, to: 5, kind: "hard" },
   { from: 5, to: 6, kind: "soft" },
   { from: 6, to: 7, kind: "hard" },
   { from: 6, to: 8, kind: "hard" },
   { from: 7, to: 8, kind: "soft" },
   { from: 8, to: 9, kind: "hard" },
-  { from: 3, to: 6, kind: "soft" },
-  { from: 3, to: 9, kind: "hard" },
+  { from: 4, to: 6, kind: "soft" },
+  { from: 4, to: 9, kind: "hard" },
 ];
 
 export const LEGEND_HARD = "hard prerequisite: must happen first";
@@ -104,11 +104,11 @@ const LIVE_EXTRA_HEIGHT: Record<number, number> = { 7: 16, 9: 16 };
 /** In live mode the 6 -> 7 arrow enters step 7 this far from its right edge. */
 const LIVE_ARROW_INSET = 20;
 /**
- * Live boxes whose status line is wider than the box ("Prim. Consid: 2026-01-20" in step 3) may
+ * Live boxes whose status line is wider than the box ("Prim. Consid: 2026-01-20" in step 4) may
  * extend to the right of their column without widening it: the box keeps its left edge and its
  * right edge simply no longer lines up with the box below it.
  */
-const LIVE_OVERHANG_WIDTH: Record<number, number> = { 3: 128 };
+const LIVE_OVERHANG_WIDTH: Record<number, number> = { 4: 128 };
 const MARGIN = 20;
 const GAP = 40;
 const WIDE_GAP = 95;
@@ -158,8 +158,8 @@ export type DiagramLayout = {
 const f = (n: number): string => n.toFixed(1);
 
 /**
- * Lays the nine steps out exactly as the generator does. Columns are (1), (2 over 4), (3 over 5),
- * (6), (8), (9), with 7 centred above the wide gap between 6 and 8; steps 2, 3 and 7 are on the top
+ * Lays the nine steps out exactly as the generator does. Columns are (1), (2 over 3), (4 over 5),
+ * (6), (8), (9), with 7 centred above the wide gap between 6 and 8; steps 2, 4 and 7 are on the top
  * row and 4, 5, 6, 8 and 9 on the bottom row, with 1 at the left between the rows. In live mode
  * every box is taller, to hold the status label, and the legend moves down by the difference.
  */
@@ -182,7 +182,7 @@ export const layoutRecruitmentSteps = (
     );
   const boxWidth = (n: number): number =>
     Math.max(width(n), live ? (LIVE_OVERHANG_WIDTH[n] ?? 0) : 0);
-  const columns: number[][] = [[1], [2, 4], [3, 5], [6], [8], [9]];
+  const columns: number[][] = [[1], [2, 3], [4, 5], [6], [8], [9]];
   const columnWidths = columns.map((c) => Math.max(...c.map(width)));
   const gaps = [GAP, GAP, GAP, WIDE_GAP, GAP];
   const columnX: number[] = [];
@@ -195,8 +195,8 @@ export const layoutRecruitmentSteps = (
   const rowOf: Record<number, number> = {
     1: ROW_MIDDLE,
     2: ROW_TOP,
-    3: ROW_TOP,
-    4: ROW_BOTTOM,
+    4: ROW_TOP,
+    3: ROW_BOTTOM,
     5: ROW_BOTTOM,
     6: ROW_BOTTOM,
     8: ROW_BOTTOM,
@@ -205,8 +205,8 @@ export const layoutRecruitmentSteps = (
   const columnOf: Record<number, number> = {
     1: 0,
     2: 1,
-    4: 1,
-    3: 2,
+    3: 1,
+    4: 2,
     5: 2,
     6: 3,
     8: 4,
@@ -249,12 +249,12 @@ export const layoutRecruitmentSteps = (
   const cx = (n: number) => boxes[n].cx;
 
   const paths: Record<string, string> = {};
-  // 1 -> 2 and 1 -> 4: an S-curve with horizontal tangents at both ends, finishing with a
+  // 1 -> 2 and 1 -> 3: an S-curve with horizontal tangents at both ends, finishing with a
   // straight run so the line meets the arrowhead squarely.
   (
     [
       [2, -10],
-      [4, 10],
+      [3, 10],
     ] as const
   ).forEach(([target, dy]) => {
     const x0 = right(1);
@@ -268,8 +268,8 @@ export const layoutRecruitmentSteps = (
   });
   (
     [
-      [2, 3],
-      [4, 5],
+      [2, 4],
+      [3, 5],
       [5, 6],
       [6, 8],
       [8, 9],
@@ -291,10 +291,10 @@ export const layoutRecruitmentSteps = (
   }
   paths["7-8"] =
     `M ${f(right(7))} ${f(cy(7))} H ${f(cx(8))} V ${f(top(8) - 1)}`;
-  paths["3-6"] =
-    `M ${f(right(3))} ${f(cy(3))} H ${f(cx(6))} V ${f(top(6) - 1)}`;
-  paths["3-9"] =
-    `M ${f(cx(3))} ${f(top(3))} V 22 H ${f(cx(9))} V ${f(top(9) - 1)}`;
+  paths["4-6"] =
+    `M ${f(right(4))} ${f(cy(4))} H ${f(cx(6))} V ${f(top(6) - 1)}`;
+  paths["4-9"] =
+    `M ${f(cx(4))} ${f(top(4))} V 22 H ${f(cx(9))} V ${f(top(9) - 1)}`;
 
   const edges: EdgeGeometry[] = STEP_EDGES.map((e) => ({
     ...e,

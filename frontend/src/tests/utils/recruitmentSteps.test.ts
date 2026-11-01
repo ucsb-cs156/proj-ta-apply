@@ -27,7 +27,8 @@ describe("recruitmentSteps", () => {
     expect(STEP_COUNT).toBe(9);
     expect(stepLines("TA")[1]).toEqual(["Create TA", "Recruitment"]);
     expect(stepLines("ULA")[2]).toEqual(["Open ULA", "Applications"]);
-    expect(stepLines("ULA")[3]).toEqual(["Close ULA", "Applications"]);
+    expect(stepLines("ULA")[4]).toEqual(["Close ULA", "Applications"]);
+    expect(stepLines("TA")[3]).toEqual(["Budget /", "Allocations"]);
     expect(stepLines("TA")[5]).toEqual([
       "Release",
       "Allocations",
@@ -38,7 +39,8 @@ describe("recruitmentSteps", () => {
     expect(stepLines("TA")[9]).toEqual(["Release", "Hiring", "Decisions"]);
     expect(stepTitle("TA", 5)).toBe("Release Allocations to Faculty");
     expect(stepTitle("ULA", 1)).toBe("Create ULA Recruitment");
-    expect(stepTitle("TA", 4)).toBe("Budget / Allocations");
+    expect(stepTitle("TA", 3)).toBe("Budget / Allocations");
+    expect(stepTitle("TA", 4)).toBe("Close TA Applications");
     expect(stepTitle("TA", 6)).toBe("Open Faculty Ranking");
     expect(stepTitle("TA", 8)).toBe("Assign Candidates to Slots");
   });
@@ -49,12 +51,12 @@ describe("recruitmentSteps", () => {
       STEP_EDGES.filter((e) => e.kind === "soft").map(
         (e) => `${e.from}-${e.to}`,
       ),
-    ).toEqual(["5-6", "7-8", "3-6"]);
+    ).toEqual(["5-6", "7-8", "4-6"]);
     expect(
       STEP_EDGES.filter((e) => e.kind === "hard").map(
         (e) => `${e.from}-${e.to}`,
       ),
-    ).toEqual(["1-2", "2-3", "1-4", "4-5", "6-7", "6-8", "8-9", "3-9"]);
+    ).toEqual(["1-2", "2-4", "1-3", "3-5", "6-7", "6-8", "8-9", "4-9"]);
   });
 
   test("the static layout matches the agreed diagram's geometry", () => {
@@ -67,8 +69,8 @@ describe("recruitmentSteps", () => {
     ).toEqual([
       [1, 20, 110, 95, 62],
       [2, 155, 45, 101, 62],
-      [3, 296, 45, 101, 62],
-      [4, 158, 175, 95, 62],
+      [3, 158, 175, 95, 62],
+      [4, 296, 45, 101, 62],
       [5, 296, 175, 101, 62],
       [6, 437, 175, 71, 62],
       [7, 520, 45, 71, 62],
@@ -103,11 +105,11 @@ describe("recruitmentSteps", () => {
     expect(edgeOf(layout, 1, 2).d).toBe(
       "M 115.0 131.0 C 126.5 131.0, 126.5 76.0, 138.0 76.0 H 154.0",
     );
-    expect(edgeOf(layout, 1, 4).d).toBe(
+    expect(edgeOf(layout, 1, 3).d).toBe(
       "M 115.0 151.0 C 128.0 151.0, 128.0 206.0, 141.0 206.0 H 157.0",
     );
-    expect(edgeOf(layout, 2, 3).d).toBe("M 256.0 76.0 H 295.0");
-    expect(edgeOf(layout, 4, 5).d).toBe("M 253.0 206.0 H 295.0");
+    expect(edgeOf(layout, 2, 4).d).toBe("M 256.0 76.0 H 295.0");
+    expect(edgeOf(layout, 3, 5).d).toBe("M 253.0 206.0 H 295.0");
     expect(edgeOf(layout, 5, 6).d).toBe("M 397.0 206.0 H 436.0");
     expect(edgeOf(layout, 6, 8).d).toBe("M 508.0 206.0 H 602.0");
     expect(edgeOf(layout, 8, 9).d).toBe("M 692.0 206.0 H 731.0");
@@ -115,8 +117,8 @@ describe("recruitmentSteps", () => {
       "M 508.0 190.0 C 555.5 190.0, 555.5 157.0, 555.5 124.0 V 108.0",
     );
     expect(edgeOf(layout, 7, 8).d).toBe("M 591.0 76.0 H 647.5 V 174.0");
-    expect(edgeOf(layout, 3, 6).d).toBe("M 397.0 76.0 H 472.5 V 174.0");
-    expect(edgeOf(layout, 3, 9).d).toBe("M 346.5 45.0 V 22 H 773.5 V 174.0");
+    expect(edgeOf(layout, 4, 6).d).toBe("M 397.0 76.0 H 472.5 V 174.0");
+    expect(edgeOf(layout, 4, 9).d).toBe("M 346.5 45.0 V 22 H 773.5 V 174.0");
     expect(edgeOf(layout, 5, 6).kind).toBe("soft");
     expect(edgeOf(layout, 6, 8).kind).toBe("hard");
   });
@@ -142,13 +144,13 @@ describe("recruitmentSteps", () => {
     expect(boxOf(layout, 7).width).toBe(112);
     expect(boxOf(staticLayout, 6).width).toBe(71);
     expect(boxOf(staticLayout, 7).width).toBe(71);
-    // Step 3's status line ("Prim. Consid: 2026-01-20") is wider than its column, so it extends to
+    // Step 4's status line ("Prim. Consid: 2026-01-20") is wider than its column, so it extends to
     // the right: same left edge, wider box, and nothing else moves.
-    expect(boxOf(layout, 3).width).toBe(128);
-    expect(boxOf(layout, 3).x).toBe(boxOf(staticLayout, 3).x);
+    expect(boxOf(layout, 4).width).toBe(128);
+    expect(boxOf(layout, 4).x).toBe(boxOf(staticLayout, 4).x);
     expect(boxOf(layout, 5).x).toBe(boxOf(staticLayout, 5).x);
     expect(boxOf(layout, 5).width).toBe(boxOf(staticLayout, 5).width);
-    expect(boxOf(staticLayout, 3).width).toBe(101);
+    expect(boxOf(staticLayout, 4).width).toBe(101);
     expect(boxOf(layout, 8).width).toBe(boxOf(staticLayout, 8).width);
     expect(boxOf(layout, 9).width).toBe(boxOf(staticLayout, 9).width);
     // No box's top moves: the extra height is all below.
@@ -193,7 +195,7 @@ describe("recruitmentSteps", () => {
       stepsSummary(
         recruitmentStepsFixtures.applicationsClosed as RecruitmentStepsData,
       ),
-    ).toBe("Step 4 of 9: Budget / Allocations");
+    ).toBe("Step 3 of 9: Budget / Allocations");
     expect(
       stepsSummary(
         recruitmentStepsFixtures.rankingsOpen as RecruitmentStepsData,

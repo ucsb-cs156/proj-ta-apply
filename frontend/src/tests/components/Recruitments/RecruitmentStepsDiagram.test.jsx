@@ -113,7 +113,7 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(svg().querySelectorAll("a")).toHaveLength(0);
     });
 
-    test("the ULA diagram says ULA in steps 1 to 3 and has the same geometry", () => {
+    test("the ULA diagram says ULA in steps 1, 2 and 4 and has the same geometry", () => {
       render(<RecruitmentStepsDiagram type="ULA" testIdPrefix="D" />);
 
       expect(screen.getByTestId("D-step-1-title")).toHaveTextContent(
@@ -122,11 +122,11 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(screen.getByTestId("D-step-2-title")).toHaveTextContent(
         "Open ULA",
       );
-      expect(screen.getByTestId("D-step-3-title")).toHaveTextContent(
+      expect(screen.getByTestId("D-step-4-title")).toHaveTextContent(
         "Close ULA",
       );
-      expect(screen.getByTestId("D-step-4-title")).toHaveTextContent(
-        "4. Budget / Allocations",
+      expect(screen.getByTestId("D-step-3-title")).toHaveTextContent(
+        "3. Budget / Allocations",
       );
       expect(screen.getByTestId("D-step-2-box")).toHaveAttribute("x", "155");
       expect(svg()).toHaveAttribute("viewBox", "0 0 835 392");
@@ -196,10 +196,10 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(screen.getByTestId("D-step-2-label")).toHaveTextContent(
         "Opened: 2026-01-07",
       );
-      expect(screen.getByTestId("D-step-3-label")).toHaveTextContent(
+      expect(screen.getByTestId("D-step-4-label")).toHaveTextContent(
         "Closed: 2026-02-01",
       );
-      expect(screen.getByTestId("D-step-4-label")).toHaveTextContent(
+      expect(screen.getByTestId("D-step-3-label")).toHaveTextContent(
         "Hiring Target: 8",
       );
       expect(screen.getByTestId("D-step-5-label")).toHaveTextContent(
@@ -263,7 +263,7 @@ describe("RecruitmentStepsDiagram tests", () => {
       );
       // No handler at all, so the browser's own navigation is not prevented.
       expect(fireEvent.click(screen.getByTestId("D-step-9-link"))).toBe(true);
-      expect(fireEvent.click(screen.getByTestId("D-step-4-link-Budget"))).toBe(
+      expect(fireEvent.click(screen.getByTestId("D-step-3-link-Budget"))).toBe(
         true,
       );
       expect(screen.getByTestId("D-step-8-label")).toHaveTextContent(
@@ -308,7 +308,7 @@ describe("RecruitmentStepsDiagram tests", () => {
         "Release Allocations to Faculty: open the allocationVisibility dialog",
       );
 
-      await userEvent.click(screen.getByTestId("D-step-3-action"));
+      await userEvent.click(screen.getByTestId("D-step-4-action"));
       expect(onAction).toHaveBeenLastCalledWith("closeApplications");
       await userEvent.click(screen.getByTestId("D-step-5-action"));
       expect(onAction).toHaveBeenLastCalledWith("allocationVisibility");
@@ -319,7 +319,7 @@ describe("RecruitmentStepsDiagram tests", () => {
       await userEvent.click(screen.getByTestId("D-step-9-action"));
       expect(onAction).toHaveBeenLastCalledWith("publishAssignments");
       expect(screen.queryByTestId("D-step-1-action")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("D-step-4-action")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("D-step-3-action")).not.toBeInTheDocument();
     });
 
     test("the default onAction is a no-op", async () => {
@@ -334,11 +334,11 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(screen.getByTestId("D-step-2-action")).toBeInTheDocument();
     });
 
-    test("step 4's title links the words Budget and Allocations to different pages", async () => {
+    test("step 3's title links the words Budget and Allocations to different pages", async () => {
       const { onNavigate } = renderLive(recruitmentStepsFixtures.fresh);
 
-      const budget = screen.getByTestId("D-step-4-link-Budget");
-      const allocations = screen.getByTestId("D-step-4-link-Allocations");
+      const budget = screen.getByTestId("D-step-3-link-Budget");
+      const allocations = screen.getByTestId("D-step-3-link-Allocations");
       expect(budget).toHaveAttribute("href", "/admin/budget/W26");
       expect(budget).toHaveTextContent("Budget");
       expect(allocations).toHaveAttribute(
@@ -348,8 +348,8 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(allocations).toHaveTextContent("Allocations");
       expect(budget.style.textDecoration).toBe("underline");
       expect(budget.style.fill).toMatch(/#0d6efd|rgb\(13, 110, 253\)/);
-      expect(screen.getByTestId("D-step-4-title").textContent).toBe(
-        "4. Budget / Allocations",
+      expect(screen.getByTestId("D-step-3-title").textContent).toBe(
+        "3. Budget / Allocations",
       );
       await userEvent.click(budget);
       expect(onNavigate).toHaveBeenLastCalledWith("/admin/budget/W26");
@@ -357,7 +357,7 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(onNavigate).toHaveBeenLastCalledWith(
         "/admin/recruitments/1/courses",
       );
-      expect(screen.queryByTestId("D-step-4-link")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("D-step-3-link")).not.toBeInTheDocument();
     });
 
     test("steps 7 and 9 carry their secondary links under the box", async () => {
@@ -395,7 +395,7 @@ describe("RecruitmentStepsDiagram tests", () => {
         "aria-label",
         "Open ULA Applications: open the openApplications dialog",
       );
-      expect(screen.getByTestId("D-step-4-link-Budget")).toHaveAttribute(
+      expect(screen.getByTestId("D-step-3-link-Budget")).toHaveAttribute(
         "href",
         "/admin/budget/W26",
       );
