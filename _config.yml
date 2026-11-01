@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: []
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/218-auto-create-recruitments","number":242,"title":"Developer Mode 2: Auto Create Recruitments for the next non-summer quarter (closes #218)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/242"}]
