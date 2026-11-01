@@ -113,8 +113,8 @@ export default function AutoCreateRecruitmentsModal({
                 {planLine("ULA", plan.ulaExists, plan.qyy)}
               </p>
               <p className="mb-0" data-testid={`${testIdPrefix}-dates`}>
-                Tentative opening date: {plan.tentativeOpeningDate}. Primary
-                consideration date: {plan.primaryConsiderationDate}.
+                Tentative opening date: {plan.tentativeOpeningDate}. <br />
+                Primary consideration date: {plan.primaryConsiderationDate}.
               </p>
             </>
           )}

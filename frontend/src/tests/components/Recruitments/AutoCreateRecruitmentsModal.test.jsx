@@ -74,6 +74,13 @@ describe("AutoCreateRecruitmentsModal tests", () => {
     expect(screen.getByTestId("Auto-dates")).toHaveTextContent(
       "Tentative opening date: 2026-11-07. Primary consideration date: 2026-11-14.",
     );
+    // The primary consideration date starts a new line.
+    const dates = screen.getByTestId("Auto-dates");
+    expect(dates.querySelectorAll("br")).toHaveLength(1);
+    expect(dates.querySelector("br").previousSibling.textContent).toBe(". ");
+    expect(dates.querySelector("br").nextSibling.textContent).toBe(
+      "Primary consideration date: ",
+    );
     expect(screen.queryByTestId("Auto-nothing")).not.toBeInTheDocument();
     // The whole plan is one block: both lines and the dates.
     expect(screen.getByTestId("Auto-plan")).toContainElement(
