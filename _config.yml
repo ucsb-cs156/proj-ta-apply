@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"form/214-ta-required-fields","number":216,"title":"TA application: PhD or MS?, residency, GPAs, year, graduation and language exam required (closes #214)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/216"}]
+pull_requests: []
