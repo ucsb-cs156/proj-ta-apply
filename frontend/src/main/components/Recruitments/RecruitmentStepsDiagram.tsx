@@ -7,6 +7,7 @@ import {
   LEGEND_HARD,
   LEGEND_SOFT,
   LINE_HEIGHT,
+  TENTATIVE_NOTE,
   layoutRecruitmentSteps,
   type BoxGeometry,
   type RecruitmentStepAction,
@@ -21,6 +22,19 @@ const NUMBER_INK = "#0f172a";
 const LABEL_INK = "#1e293b";
 const LEGEND_INK = "#475569";
 const LINK_INK = "#0d6efd";
+/** The Tentative note: dark amber, readable on white and distinct from the links. */
+const TENTATIVE_INK = "#92400e";
+const TENTATIVE_LINE_HEIGHT = 12;
+/**
+ * The note in three lines under step 9, each but the last ending in a space so the text reads as
+ * the one sentence.
+ */
+const TENTATIVE_WORDS = TENTATIVE_NOTE.split(" ");
+const TENTATIVE_LINES = [
+  `${TENTATIVE_WORDS.slice(0, 4).join(" ")} `,
+  `${TENTATIVE_WORDS.slice(4, 8).join(" ")} `,
+  TENTATIVE_WORDS[8],
+];
 const DONE_GREEN = "#198754";
 
 type RecruitmentStepsDiagramProps = {
@@ -144,6 +158,9 @@ export default function RecruitmentStepsDiagram({
           style={{ cursor: "pointer", textDecoration: "underline" }}
           data-testid={id("action")}
         >
+          {status.blockedReason !== undefined && (
+            <title data-testid={id("blocked")}>{status.blockedReason}</title>
+          )}
           {text}
         </g>
       );
@@ -221,6 +238,26 @@ export default function RecruitmentStepsDiagram({
                 data-testid={`${testIdPrefix}-step-${box.number}-label`}
               >
                 {status.label}
+              </text>
+            )}
+            {status?.tentative === true && (
+              <text
+                x={box.x + box.width}
+                y={box.y + box.height + 30}
+                fontSize={10}
+                fill={TENTATIVE_INK}
+                textAnchor="end"
+                data-testid={`${testIdPrefix}-step-${box.number}-tentative`}
+              >
+                {TENTATIVE_LINES.map((line, i) => (
+                  <tspan
+                    key={line}
+                    x={box.x + box.width}
+                    dy={i === 0 ? undefined : TENTATIVE_LINE_HEIGHT}
+                  >
+                    {line}
+                  </tspan>
+                ))}
               </text>
             )}
             {status?.secondaryLink !== undefined && (

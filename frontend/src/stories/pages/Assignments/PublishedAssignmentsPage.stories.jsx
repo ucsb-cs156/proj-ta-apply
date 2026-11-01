@@ -83,3 +83,18 @@ NotPublishedYet.parameters = {
     ],
   },
 };
+
+/** Applications or faculty ranking were reopened after release: the Tentative note shows. */
+export const Tentative = Template.bind({});
+Tentative.parameters = {
+  reactRouter: { initialEntries: ["/recruitments/1/assignments"] },
+  msw: {
+    handlers: [
+      ...common(apiCurrentUserFixtures.instructorUser),
+      byLayout(
+        publishedAssignmentsFixtures.taByCourseTentative,
+        publishedAssignmentsFixtures.taByStudent,
+      ),
+    ],
+  },
+};

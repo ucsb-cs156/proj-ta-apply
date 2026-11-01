@@ -11,6 +11,8 @@ export type PublishedAssignmentsTable = {
   layout: AssignmentsLayout;
   headers: string[];
   rows: string[][];
+  /** Released, but applications or faculty ranking have been reopened since (issue #237). */
+  tentative?: boolean;
 };
 
 /** The radio button labels, as the design words them. */
@@ -38,3 +40,27 @@ export const publishModalText = (type: "TA" | "ULA"): string[] => [
   "It is still possible to update assignments after this point, but it's best to wait on this step until most assignments are finalized.",
   "Proceed?",
 ];
+
+/** What the backend says when faculty ranking has not been closed (issue #237). */
+export const CLOSE_RANKING_FIRST =
+  "Close Faculty Ranking before releasing hiring decisions.";
+/** What the backend says when applications are still open (issue #237). */
+export const CLOSE_APPLICATIONS_FIRST =
+  "Close Applications before releasing hiring decisions.";
+
+/**
+ * The first prerequisite of releasing hiring decisions that the recruitment itself shows is not
+ * met, in the order the backend checks them, or null. Whether anyone has been assigned is not known
+ * here; the backend refuses that case and the modal shows its message.
+ */
+export const unmetPrerequisite = (recruitment: {
+  applicationStatus: "OPEN" | "CLOSED";
+  reviewStatus: "NotStarted" | "Open" | "Closed";
+}): string | null => {
+  if (recruitment.reviewStatus !== "Closed") {
+    return CLOSE_RANKING_FIRST;
+  }
+  return recruitment.applicationStatus === "OPEN"
+    ? CLOSE_APPLICATIONS_FIRST
+    : null;
+};

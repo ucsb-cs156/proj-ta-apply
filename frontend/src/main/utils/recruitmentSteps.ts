@@ -32,7 +32,15 @@ export type RecruitmentStepStatus = {
   titleLinks?: StepLink[];
   /** Steps 7 and 9: "(see rankings)" / "(see assignments)". */
   secondaryLink?: StepLink;
+  /** Step 9: hiring decisions are released but applications or faculty ranking were reopened. */
+  tentative?: boolean;
+  /** Step 9, not yet released: the first prerequisite of releasing that is not met (issue #237). */
+  blockedReason?: string;
 };
+
+/** The note shown beside released hiring decisions while part of the process is reopened. */
+export const TENTATIVE_NOTE =
+  "Tentative; part of the hiring process has been reopened";
 
 export type RecruitmentStepsData = {
   recruitmentId: number;

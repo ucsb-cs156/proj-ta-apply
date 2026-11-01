@@ -91,10 +91,13 @@ export default function HelpInstructorsPage(): React.JSX.Element {
             Interested/Not Applicable&quot;
           </strong>{" "}
           under the table; a red warning then asks you to consider whether you
-          should rank them at all. Applicants who cancelled their application
-          are never candidates; the <strong>Cancelled applications</strong>{" "}
-          table at the bottom of the page lists them with their reason, so you
-          can tell what became of someone you expected to see.
+          should rank them at all. Once you have ranked one of them, the box
+          stays ticked and cannot be cleared, so a ranked candidate is never
+          hidden; clear that ranking and you can untick it again. Applicants who
+          cancelled their application are never candidates; the{" "}
+          <strong>Cancelled applications</strong> table at the bottom of the
+          page lists them with their reason, so you can tell what became of
+          someone you expected to see.
         </p>
         <p data-testid="HelpInstructorsPage-assignments">
           When the admins have settled who is hired, the recruitment card gains

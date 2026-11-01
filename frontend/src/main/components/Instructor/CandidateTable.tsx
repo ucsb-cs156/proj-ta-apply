@@ -34,6 +34,8 @@ type Props = {
   editable: boolean;
   apiUrl: string;
   applicationUrl: string;
+  /** Called after each ranking is saved, so the page can re-read what depends on the rankings. */
+  onSaved?: () => void;
 };
 
 // Strongest interest first; "Not Interested" candidates appear only when the instructor asks.
@@ -68,6 +70,7 @@ export default function CandidateTable({
   type,
   editable,
   apiUrl,
+  onSaved,
   applicationUrl,
 }: Props): React.JSX.Element {
   const [ranks, setRanks] = useState<Record<number, string>>(() =>
@@ -129,6 +132,7 @@ export default function CandidateTable({
         await axios.put(`${apiUrl}/${id}/rank`, {
           rank: value === "" ? null : Number(value),
         });
+        onSaved?.();
         if (active.current && revisions.current[id] === revision) {
           setStates((previous) => ({ ...previous, [id]: "Saved" }));
         }

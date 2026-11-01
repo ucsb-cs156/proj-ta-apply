@@ -150,6 +150,10 @@ describe("Help pages (issue #140)", () => {
     expect(interest).toHaveTextContent(
       'until you tick Include candidates that marked my course with "Not Interested/Not Applicable" under the table; a red warning then asks you to consider whether you should rank them at all.',
     );
+    // Issue #221: the box cannot be cleared while one of those candidates is ranked.
+    expect(interest).toHaveTextContent(
+      "Once you have ranked one of them, the box stays ticked and cannot be cleared, so a ranked candidate is never hidden; clear that ranking and you can untick it again.",
+    );
     expect(interest).toHaveTextContent(
       "the Cancelled applications table at the bottom of the page lists them with their reason",
     );
@@ -178,6 +182,30 @@ describe("Help pages (issue #140)", () => {
       screen
         .getByTestId("HelpAdminsPage-assignments")
         .compareDocumentPosition(cells) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("the admins page explains the prerequisites of releasing hiring decisions and the Tentative note (issue #237)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const release = screen.getByTestId(
+      "HelpAdminsPage-release-hiring-decisions",
+    );
+    expect(release.id).toBe("release-hiring-decisions");
+    expect(release).toHaveTextContent(
+      "Releasing hiring decisions has three prerequisites, checked in this order: faculty ranking is closed, applications are closed, and at least one candidate is assigned to a course.",
+    );
+    expect(release).toHaveTextContent(
+      "“Close Faculty Ranking before releasing hiring decisions.”, and nothing is published; the Yes button is greyed out when the card already shows that ranking or applications are open. Taking published assignments back is never refused.",
+    );
+    expect(release).toHaveTextContent(
+      "Tentative; part of the hiring process has been reopened. When both are closed again the note goes away. Nothing is ever marked final, since reopening is always possible.",
+    );
+    expect(
+      screen
+        .getByTestId("HelpAdminsPage-publish-assignments")
+        .compareDocumentPosition(release) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
@@ -264,6 +292,23 @@ describe("Help pages (issue #140)", () => {
         .getAllByRole("link", { name: "Developer Mode" })
         .map((link) => link.getAttribute("href")),
     ).toEqual(["#developer-mode", "/admin/developer-mode"]);
+    // Issue #218: the Auto Create Recruitments button.
+    const autoCreate = screen.getByTestId(
+      "HelpAdminsPage-auto-create-recruitments",
+    );
+    expect(autoCreate).toHaveTextContent(
+      "While developer mode is on, the recruitments section of the home page has an Auto Create Recruitments button. It proposes the quarter after the current one, skipping Summer (and lets you pick another),",
+    );
+    expect(autoCreate).toHaveTextContent(
+      "with the tentative opening date a week from today and the primary consideration date a week after that. If both exist already there is nothing to create.",
+    );
+    expect(autoCreate).toHaveTextContent(
+      "nothing is opened, and no hiring target is set.",
+    );
+    expect(
+      heading.compareDocumentPosition(autoCreate) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(
       document
         .getElementById("developer-info")

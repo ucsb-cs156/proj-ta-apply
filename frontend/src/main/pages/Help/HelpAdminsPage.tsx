@@ -136,6 +136,27 @@ export default function HelpAdminsPage(): React.JSX.Element {
           is not mapped on the Instructors page shows as &ldquo;Not
           mapped&rdquo;.
         </p>
+        <p
+          id="release-hiring-decisions"
+          data-testid="HelpAdminsPage-release-hiring-decisions"
+        >
+          Releasing hiring decisions has three prerequisites, checked in this
+          order: <strong>faculty ranking is closed</strong>,{" "}
+          <strong>applications are closed</strong>, and{" "}
+          <strong>at least one candidate is assigned</strong> to a course. If
+          one is not met, the Publish Assignments box names it, for example
+          &ldquo;Close Faculty Ranking before releasing hiring
+          decisions.&rdquo;, and nothing is published; the Yes button is greyed
+          out when the card already shows that ranking or applications are open.
+          Taking published assignments back is never refused. Applications and
+          faculty ranking can be reopened after hiring decisions are released.
+          Nothing is blocked and the published page keeps showing the current
+          assignments, but while either is open again, step 9 of the card&apos;s
+          diagram and the published Assignments page say{" "}
+          <em>Tentative; part of the hiring process has been reopened</em>. When
+          both are closed again the note goes away. Nothing is ever marked
+          final, since reopening is always possible.
+        </p>
 
         <h2 className="my-3 h4" id="flow">
           The flow of a recruitment
@@ -678,6 +699,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
           data, and page-specific controls for creating that data appear next to
           the badge as later features add them. Flipping the switch is not
           recorded in any change history.
+        </p>
+        <p data-testid="HelpAdminsPage-auto-create-recruitments">
+          While developer mode is on, the recruitments section of the home page
+          has an <strong>Auto Create Recruitments</strong> button. It proposes
+          the quarter after the current one, skipping Summer (and lets you pick
+          another), and shows what it would do: a TA recruitment and a ULA
+          recruitment for that quarter, each only if one does not exist yet,
+          with the tentative opening date a week from today and the primary
+          consideration date a week after that. If both exist already there is
+          nothing to create. <em>Create Recruitments</em> then creates them
+          exactly as the <em>Create New Recruitment</em> button would, so their
+          course lists are filled in the usual way; nothing is opened, and no
+          hiring target is set.
         </p>
       </div>
     </BasicLayout>

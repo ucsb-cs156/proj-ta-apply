@@ -191,6 +191,12 @@ public class AssignmentsService {
     return real(applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));
   }
 
+  /** Whether any real application of the recruitment has been tentatively assigned (issue #237). */
+  public boolean anyAssigned(Long recruitmentId) {
+    return realApplications(recruitmentId).stream()
+        .anyMatch(a -> a.getTentativeAssignmentId() != null);
+  }
+
   /** The given applications without test applications and without cancelled ones. */
   public static List<Application> real(List<Application> applications) {
     return applications.stream()

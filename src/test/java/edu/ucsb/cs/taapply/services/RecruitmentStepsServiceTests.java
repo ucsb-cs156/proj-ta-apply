@@ -400,7 +400,8 @@ public class RecruitmentStepsServiceTests {
             "publishAssignments",
             null,
             new Link("(see assignments)", COURSES),
-            false),
+            false,
+            "Close Faculty Ranking before releasing hiring decisions."),
         step(fresh(), 9));
   }
 
@@ -457,5 +458,46 @@ public class RecruitmentStepsServiceTests {
     r.setAssignmentsPublished(null);
     assertFalse(step(r, 9).done());
     assertFalse(step(r, 9).tentative());
+  }
+
+  // ---- step 9: what stands in the way of releasing (issue #237) ----
+
+  @Test
+  public void step_9_names_the_first_unmet_prerequisite_in_order() {
+    Recruitment r = fresh();
+    r.setReviewStatus("Open");
+    r.setApplicationStatus(ApplicationStatus.OPEN);
+    assertEquals(
+        "Close Faculty Ranking before releasing hiring decisions.", step(r, 9).blockedReason());
+
+    r.setReviewStatus("Closed");
+    assertEquals(
+        "Close Applications before releasing hiring decisions.", step(r, 9).blockedReason());
+
+    r.setApplicationStatus(ApplicationStatus.CLOSED);
+    assertEquals(
+        "Assign candidates to slots before releasing hiring decisions.",
+        step(r, 9).blockedReason());
+  }
+
+  @Test
+  public void step_9_has_no_blocked_reason_when_every_prerequisite_is_met() {
+    Recruitment r = fresh();
+    r.setReviewStatus("Closed");
+    r.setApplicationStatus(ApplicationStatus.CLOSED);
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of(assignedTo(1L, 10L)));
+
+    assertNull(step(r, 9).blockedReason());
+  }
+
+  @Test
+  public void step_9_has_no_blocked_reason_once_released_and_no_other_step_ever_has_one() {
+    Recruitment r = fresh();
+    r.setAssignmentsPublished(true);
+    assertNull(step(r, 9).blockedReason());
+
+    for (int number = 1; number <= 8; number++) {
+      assertNull(step(fresh(), number).blockedReason());
+    }
   }
 }

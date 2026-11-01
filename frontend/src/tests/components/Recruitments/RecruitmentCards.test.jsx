@@ -1189,21 +1189,56 @@ describe("RecruitmentCards tests", () => {
       .reply(200, {});
     renderCards();
 
-    await userEvent.click(await stepButton(0, 9));
+    // W26 TA (id 1) has applications and ranking closed, so nothing stands in the way.
+    await userEvent.click(await stepButton(1, 9));
     const modal = await screen.findByTestId("Cards-publish-modal");
     expect(modal).toHaveTextContent("Publish Assignments");
+    expect(screen.queryByTestId("Cards-publish-refusal")).toBeNull();
     await userEvent.click(screen.getByTestId("Cards-publish-cancel"));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(axiosMock.history.put).toHaveLength(0);
 
-    await userEvent.click(await stepButton(2, 9));
+    await userEvent.click(await stepButton(1, 9));
     await userEvent.click(await screen.findByTestId("Cards-publish-confirm"));
     await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
     expect(axiosMock.history.put[0].url).toBe(
       "/api/admin/recruitments/assignmentsPublished",
     );
-    expect(axiosMock.history.put[0].params).toEqual({ id: 2, published: true });
+    expect(axiosMock.history.put[0].params).toEqual({ id: 1, published: true });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  test("step 9 on a card whose ranking or applications are still open shows why and disables Yes (issue #237)", async () => {
+    renderCards();
+
+    // S26 TA (id 3): faculty ranking has not even started.
+    await userEvent.click(await stepButton(0, 9));
+    expect(
+      await screen.findByTestId("Cards-publish-refusal"),
+    ).toHaveTextContent(
+      "Close Faculty Ranking before releasing hiring decisions.",
+    );
+    expect(screen.getByTestId("Cards-publish-confirm")).toBeDisabled();
+    await userEvent.click(screen.getByTestId("Cards-publish-cancel"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("a refusal from the backend stays in the modal opened from the card", async () => {
+    axiosMock.onPut("/api/admin/recruitments/assignmentsPublished").reply(400, {
+      message: "Assign candidates to slots before releasing hiring decisions.",
+    });
+    renderCards();
+
+    await userEvent.click(await stepButton(1, 9));
+    await userEvent.click(await screen.findByTestId("Cards-publish-confirm"));
+    expect(
+      await screen.findByTestId("Cards-publish-refusal"),
+    ).toHaveTextContent(
+      "Assign candidates to slots before releasing hiring decisions.",
+    );
+    expect(screen.getByTestId("Cards-publish-modal")).toBeInTheDocument();
   });
 
   test("the diagram's page links go to the budget, courses and assignments pages without a reload", async () => {

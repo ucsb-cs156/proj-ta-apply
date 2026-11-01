@@ -279,4 +279,38 @@ describe("PublishedAssignmentsPage tests", () => {
       "/api/assignments/csv?recruitmentId=3&layout=course",
     );
   });
+
+  test("a tentative table carries the note above the type line", async () => {
+    axiosMock
+      .onGet("/api/assignments", {
+        params: { recruitmentId: "1", layout: "course" },
+      })
+      .reply(200, publishedAssignmentsFixtures.taByCourseTentative);
+    renderPage();
+
+    const note = await screen.findByTestId(
+      "PublishedAssignmentsPage-tentative",
+    );
+    expect(note).toHaveTextContent(
+      "Tentative; part of the hiring process has been reopened",
+    );
+    expect(note).toHaveClass("fw-bold");
+    expect(
+      note.compareDocumentPosition(
+        screen.getByTestId("PublishedAssignmentsPage-type"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("a table that is not tentative has no note, and nothing says Final", async () => {
+    renderPage();
+    await screen.findByTestId("PublishedAssignmentsPage-type");
+
+    expect(
+      screen.queryByTestId("PublishedAssignmentsPage-tentative"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("PublishedAssignmentsPage").textContent,
+    ).not.toMatch(/final/i);
+  });
 });

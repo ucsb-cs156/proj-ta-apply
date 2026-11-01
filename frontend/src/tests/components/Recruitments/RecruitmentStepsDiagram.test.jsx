@@ -409,4 +409,93 @@ describe("RecruitmentStepsDiagram tests", () => {
       );
     });
   });
+
+  describe("releasing hiring decisions (issue #237)", () => {
+    const renderLive = (steps) =>
+      render(
+        <RecruitmentStepsDiagram
+          type={steps.type}
+          steps={steps}
+          testIdPrefix="D"
+        />,
+      );
+
+    test("an unreleased step 9 says what stands in the way, as a tooltip on its link", () => {
+      renderLive(recruitmentStepsFixtures.fresh);
+
+      const tooltip = screen.getByTestId("D-step-9-blocked");
+      expect(tooltip.tagName.toLowerCase()).toBe("title");
+      expect(tooltip).toHaveTextContent(
+        "Close Faculty Ranking before releasing hiring decisions.",
+      );
+      expect(screen.getByTestId("D-step-9-action")).toContainElement(tooltip);
+    });
+
+    test("the reason follows the state: nobody assigned yet, then nothing in the way", () => {
+      const { unmount } = renderLive(
+        recruitmentStepsFixtures.rankingsClosedNobodyAssigned,
+      );
+      expect(screen.getByTestId("D-step-9-blocked")).toHaveTextContent(
+        "Assign candidates to slots before releasing hiring decisions.",
+      );
+      unmount();
+
+      renderLive(recruitmentStepsFixtures.assigning);
+      expect(screen.queryByTestId("D-step-9-blocked")).not.toBeInTheDocument();
+      expect(screen.getByTestId("D-step-9-action")).toBeInTheDocument();
+    });
+
+    test("no other step has a tooltip of this kind", () => {
+      renderLive(recruitmentStepsFixtures.fresh);
+      expect(svg().querySelectorAll("[data-testid$='-blocked']")).toHaveLength(
+        1,
+      );
+    });
+
+    test("released decisions that were reopened carry the Tentative note in three lines under step 9", () => {
+      renderLive(recruitmentStepsFixtures.publishedTentative);
+
+      const note = screen.getByTestId("D-step-9-tentative");
+      expect(note.textContent).toBe(
+        "Tentative; part of the hiring process has been reopened",
+      );
+      expect(note.querySelectorAll("tspan")).toHaveLength(3);
+      expect(note).toHaveAttribute("text-anchor", "end");
+      expect(note).toHaveAttribute("fill", "#92400e");
+      expect(note).toHaveAttribute("font-size", "10");
+      const box = screen.getByTestId("D-step-9-box");
+      const right =
+        Number(box.getAttribute("x")) + Number(box.getAttribute("width"));
+      expect(note).toHaveAttribute("x", String(right));
+      expect(note).toHaveAttribute(
+        "y",
+        String(
+          Number(box.getAttribute("y")) +
+            Number(box.getAttribute("height")) +
+            30,
+        ),
+      );
+      [...note.querySelectorAll("tspan")].forEach((line) =>
+        expect(line).toHaveAttribute("x", String(right)),
+      );
+      expect(
+        [...note.querySelectorAll("tspan")].map((t) => t.getAttribute("dy")),
+      ).toEqual([null, "12", "12"]);
+    });
+
+    test("closed again, or never released, there is no note and the word Final appears nowhere", () => {
+      [
+        recruitmentStepsFixtures.published,
+        recruitmentStepsFixtures.fresh,
+        recruitmentStepsFixtures.assigning,
+      ].forEach((steps) => {
+        const { unmount } = renderLive(steps);
+        expect(
+          svg().querySelectorAll("[data-testid$='-tentative']"),
+        ).toHaveLength(0);
+        expect(svg().textContent).not.toMatch(/final/i);
+        unmount();
+      });
+    });
+  });
 });

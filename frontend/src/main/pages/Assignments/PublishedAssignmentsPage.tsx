@@ -13,6 +13,7 @@ import {
   type AssignmentsLayout,
   type PublishedAssignmentsTable,
 } from "main/utils/publishedAssignments";
+import { TENTATIVE_NOTE } from "main/utils/recruitmentSteps";
 
 const LAYOUTS: AssignmentsLayout[] = ["course", "student"];
 
@@ -49,6 +50,14 @@ export default function PublishedAssignmentsPage(): React.JSX.Element {
     <BasicLayout>
       <div className="pt-2" data-testid="PublishedAssignmentsPage">
         <h1>Assignments</h1>
+        {data?.tentative === true && (
+          <p
+            className="fw-bold text-warning-emphasis"
+            data-testid="PublishedAssignmentsPage-tentative"
+          >
+            {TENTATIVE_NOTE}
+          </p>
+        )}
         {data && (
           <p data-testid="PublishedAssignmentsPage-type">
             {data.type} recruitment: who has been assigned to each course.

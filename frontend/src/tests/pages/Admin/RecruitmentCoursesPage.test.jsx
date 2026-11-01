@@ -1290,10 +1290,36 @@ describe("RecruitmentCoursesPage tests", () => {
   });
 
   // Issue #180: publishing the assignments from the very bottom of the page.
+  test("the Publish Assignments modal says why it cannot publish while ranking is open (issue #237)", async () => {
+    renderPage();
+
+    await userEvent.click(
+      await screen.findByTestId("RecruitmentCoursesPage-publish-button"),
+    );
+
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-publish-refusal"),
+    ).toHaveTextContent(
+      "Close Faculty Ranking before releasing hiring decisions.",
+    );
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-publish-confirm"),
+    ).toBeDisabled();
+  });
+
   test("the Publish Assignments panel is the last thing on the page and publishes recruitment 7", async () => {
     axiosMock
       .onPut("/api/admin/recruitments/assignmentsPublished")
       .reply(200, {});
+    // Faculty ranking and applications are closed, so releasing is not blocked (issue #237).
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
+      {
+        ...recruitmentsFixtures.threeRecruitments[1],
+        id: 7,
+        reviewStatus: "Closed",
+        applicationStatus: "CLOSED",
+      },
+    ]);
     renderPage();
 
     const button = await screen.findByTestId(
