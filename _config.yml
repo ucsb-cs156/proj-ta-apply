@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"ux/205-ranking-page-layout","number":210,"title":"Ranking page: recruitment and course details as one-row tables, clickable video links (closes #205)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/210"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"ux/211-close-reviews-confirmation","number":212,"title":"Confirmation for closing faculty reviews, early-close warning, and a default deadline five working days ahead (closes #211)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/212"}]
