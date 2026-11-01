@@ -142,6 +142,13 @@ describe("recruitmentSteps", () => {
     expect(boxOf(layout, 7).width).toBe(112);
     expect(boxOf(staticLayout, 6).width).toBe(71);
     expect(boxOf(staticLayout, 7).width).toBe(71);
+    // Step 3's status line ("Prim. Consid: 2026-01-20") is wider than its column, so it extends to
+    // the right: same left edge, wider box, and nothing else moves.
+    expect(boxOf(layout, 3).width).toBe(128);
+    expect(boxOf(layout, 3).x).toBe(boxOf(staticLayout, 3).x);
+    expect(boxOf(layout, 5).x).toBe(boxOf(staticLayout, 5).x);
+    expect(boxOf(layout, 5).width).toBe(boxOf(staticLayout, 5).width);
+    expect(boxOf(staticLayout, 3).width).toBe(101);
     expect(boxOf(layout, 8).width).toBe(boxOf(staticLayout, 8).width);
     expect(boxOf(layout, 9).width).toBe(boxOf(staticLayout, 9).width);
     // No box's top moves: the extra height is all below.

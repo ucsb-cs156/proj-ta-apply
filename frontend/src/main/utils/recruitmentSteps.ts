@@ -103,6 +103,12 @@ const LIVE_MIN_WIDTH: Record<number, number> = { 6: 104, 7: 112 };
 const LIVE_EXTRA_HEIGHT: Record<number, number> = { 7: 16, 9: 16 };
 /** In live mode the 6 -> 7 arrow enters step 7 this far from its right edge. */
 const LIVE_ARROW_INSET = 20;
+/**
+ * Live boxes whose status line is wider than the box ("Prim. Consid: 2026-01-20" in step 3) may
+ * extend to the right of their column without widening it: the box keeps its left edge and its
+ * right edge simply no longer lines up with the box below it.
+ */
+const LIVE_OVERHANG_WIDTH: Record<number, number> = { 3: 128 };
 const MARGIN = 20;
 const GAP = 40;
 const WIDE_GAP = 95;
@@ -174,6 +180,8 @@ export const layoutRecruitmentSteps = (
       ),
       live ? (LIVE_MIN_WIDTH[n] ?? 0) : 0,
     );
+  const boxWidth = (n: number): number =>
+    Math.max(width(n), live ? (LIVE_OVERHANG_WIDTH[n] ?? 0) : 0);
   const columns: number[][] = [[1], [2, 4], [3, 5], [6], [8], [9]];
   const columnWidths = columns.map((c) => Math.max(...c.map(width)));
   const gaps = [GAP, GAP, GAP, WIDE_GAP, GAP];
@@ -205,7 +213,7 @@ export const layoutRecruitmentSteps = (
     9: 5,
   };
   const box = (n: number, bx: number, top: number): BoxGeometry => {
-    const w = width(n);
+    const w = boxWidth(n);
     const height = heightOf(n);
     // The title block is centred in the top BOX_HEIGHT units; a live box's extra height is below.
     const titleCy = top + BOX_HEIGHT / 2;
