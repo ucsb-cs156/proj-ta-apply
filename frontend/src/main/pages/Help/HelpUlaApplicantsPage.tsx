@@ -67,7 +67,9 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             paperwork sooner if you are offered a position: whether you will
             have another UC job that quarter, whether you have been paid by the
             University of California before (and your employee ID if so), and
-            whether your I-9 verification is already on file.
+            whether your I-9 verification is already on file. Every applicant
+            must tick the box confirming that they will make an I-9 verification
+            appointment if hired.
           </li>
           <li>
             For new ULAs, whether you can commit to the training offered at the

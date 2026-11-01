@@ -164,6 +164,11 @@ describe("AdminApplicationEditPage tests", () => {
     const major = await screen.findByTestId("AdminApplicationEditPage-major");
     await waitFor(() => expect(major.options.length).toBeGreaterThan(2));
     await userEvent.selectOptions(major, "Mathematics");
+    // The form holds an admin to the applicant's required answers; this application was saved
+    // with the I-9 box unticked, which is required since issue #213.
+    await userEvent.click(
+      screen.getByTestId("AdminApplicationEditPage-i9Appointment"),
+    );
     await userEvent.click(
       screen.getByTestId("AdminApplicationEditPage-submit"),
     );

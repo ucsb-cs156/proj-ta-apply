@@ -256,6 +256,8 @@ describe("ApplicationPage tests", () => {
       screen.getByTestId("ApplicationPage-firstName"),
       "Christina",
     );
+    // This application was saved with the I-9 box unticked; it is required now (issue #213).
+    await userEvent.click(screen.getByTestId("ApplicationPage-i9Appointment"));
     await userEvent.click(screen.getByTestId("ApplicationPage-submit"));
 
     await waitFor(() => expect(axiosMock.history.put.length).toBe(1));

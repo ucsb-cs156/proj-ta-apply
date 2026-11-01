@@ -93,6 +93,9 @@ async function fillRequiredUla(prefix = "ApplicationForm") {
     screen.getByTestId(`${prefix}-priorUcsbEmployment`),
     "false",
   );
+  // Every ULA applicant confirms the I-9 appointment (issue #213).
+  const i9 = screen.getByTestId(`${prefix}-i9Appointment`);
+  if (!i9.checked) await userEvent.click(i9);
 }
 
 /** Names, a listed major and a first choice: everything else required, so one thing can be tested. */
@@ -1779,7 +1782,11 @@ describe("ApplicationForm tests", () => {
     const submitAction = renderForm({
       type: "ULA",
       interestList: ["Tutoring"],
-      initialContents: applicationsFixtures.oneUlaApplication,
+      // The I-9 box is required (issue #213), so a saved No is ticked here.
+      initialContents: {
+        ...applicationsFixtures.oneUlaApplication,
+        i9Appointment: true,
+      },
     });
 
     await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
@@ -2633,6 +2640,11 @@ describe("ApplicationForm tests", () => {
         ),
       ).toBeInTheDocument();
       expect(submitAction).not.toHaveBeenCalled();
+      // A first-time applicant must also give a video link (issue #213).
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-videoLink"),
+        "https://example.edu/demo",
+      );
 
       const commitment = screen.getByTestId(
         "ApplicationForm-trainingCommitment",
@@ -2664,6 +2676,126 @@ describe("ApplicationForm tests", () => {
       expect(payload.previousServiceAsUla).toBe(0);
       expect(payload.trainingCommitment).toBe("UNSURE");
       expect(payload.trainingCommitmentExplanation).toBe("Friday lab");
+    });
+
+    /** Issue #213: the video link is required exactly when previous service is 0. */
+    test("the video link is required only for a first-time applicant", async () => {
+      const submitAction = renderForm({
+        type: "ULA",
+        initialContents: {
+          priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+        },
+      });
+      // Blank previous service: not yet required.
+      expect(labelNamed("Video Link").textContent).not.toMatch(/\*/);
+      await fillRequired();
+      // The helper entered 2 quarters: still optional.
+      expect(labelNamed("Video Link").textContent).not.toMatch(/\*/);
+
+      const service = screen.getByTestId(
+        "ApplicationForm-previousServiceAsUla",
+      );
+      await userEvent.clear(service);
+      await userEvent.type(service, "0");
+      expect(labelNamed("Video Link").textContent).toMatch(/\*\s*$/);
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-trainingCommitment"),
+        "AGREE",
+      );
+
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      expect(
+        await screen.findByText(
+          "As a first-time ULA applicant, please include a link to your video.",
+        ),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("ApplicationForm-videoLink")).toHaveClass(
+        "is-invalid",
+      );
+      expect(
+        screen.getByTestId("ApplicationForm-missing-videoLink"),
+      ).toHaveTextContent("Video Link");
+      expect(submitAction).not.toHaveBeenCalled();
+
+      // Spaces are not a link.
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-videoLink"),
+        "   ",
+      );
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      expect(submitAction).not.toHaveBeenCalled();
+
+      await userEvent.clear(screen.getByTestId("ApplicationForm-videoLink"));
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-videoLink"),
+        "https://example.edu/demo",
+      );
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+      expect(submitAction.mock.calls[0][0].videoLink).toBe(
+        "https://example.edu/demo",
+      );
+      expect(submitAction.mock.calls[0][0].previousServiceAsUla).toBe(0);
+    });
+
+    test("a returning applicant may leave the video link blank", async () => {
+      const submitAction = renderForm({
+        type: "ULA",
+        initialContents: {
+          priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+        },
+      });
+      await fillRequired();
+      expect(screen.getByTestId("ApplicationForm-videoLink")).toHaveValue("");
+
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+      expect(submitAction.mock.calls[0][0].videoLink).toBe("");
+      expect(
+        screen.queryByTestId("ApplicationForm-missing-videoLink"),
+      ).toBeNull();
+    });
+
+    /** Issue #213: every ULA applicant must tick the I-9 box. */
+    test("the I-9 confirmation is required of every ULA applicant", async () => {
+      const submitAction = renderForm({
+        type: "ULA",
+        initialContents: {
+          priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+        },
+      });
+      await fillRequired();
+      const i9 = screen.getByTestId("ApplicationForm-i9Appointment");
+      expect(i9).toBeChecked();
+      expect(
+        screen.getByText(
+          (_, element) =>
+            element.tagName === "LABEL" &&
+            element.getAttribute("for") === "ApplicationForm-i9Appointment",
+        ).textContent,
+      ).toMatch(/\*\s*$/);
+      await userEvent.click(i9);
+      expect(i9).not.toBeChecked();
+
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      expect(
+        await screen.findByText(
+          "Please confirm the I-9 verification appointment to continue.",
+        ),
+      ).toBeInTheDocument();
+      expect(i9).toHaveClass("is-invalid");
+      expect(
+        screen.getByTestId("ApplicationForm-missing-i9Appointment"),
+      ).toHaveTextContent("I-9 Verification");
+      expect(submitAction).not.toHaveBeenCalled();
+
+      await userEvent.click(i9);
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+      expect(submitAction.mock.calls[0][0].i9Appointment).toBe(true);
+      expect(
+        screen.queryByTestId("ApplicationForm-missing-i9Appointment"),
+      ).toBeNull();
     });
 
     test("a returning applicant is not asked about the training", async () => {
@@ -2707,9 +2839,8 @@ describe("ApplicationForm tests", () => {
         screen.getByTestId("ApplicationForm-employeeId"),
         "1234567",
       );
-      await userEvent.click(
-        screen.getByTestId("ApplicationForm-i9Appointment"),
-      );
+      // The I-9 box was ticked by fillRequired (issue #213).
+      expect(screen.getByTestId("ApplicationForm-i9Appointment")).toBeChecked();
       await userEvent.selectOptions(
         screen.getByTestId("ApplicationForm-changingMajor"),
         "true",
@@ -2819,17 +2950,19 @@ describe("ApplicationForm tests", () => {
       const box = screen.getByTestId("ApplicationForm-i9Appointment");
       expect(box).toHaveAttribute("type", "checkbox");
       expect(box).not.toBeChecked();
+      // Required since issue #213, so the label carries the mark.
       expect(
         screen.getByLabelText(
-          "I agree to show up for my I-9 appointment with these documents within one week of being notified that I have been hired.",
+          /^I agree to show up for my I-9 appointment with these documents within one week of being notified that I have been hired\.\s*\*$/,
         ),
       ).toBe(box);
 
-      // Not required: unticked goes in as No.
+      // fillRequired ticks it; a ticked box goes in as Yes.
       await fillRequired();
+      expect(box).toBeChecked();
       await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
       await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
-      expect(submitAction.mock.calls[0][0].i9Appointment).toBe(false);
+      expect(submitAction.mock.calls[0][0].i9Appointment).toBe(true);
     });
 
     test("a previous Yes to the I-9 question pre-ticks the box", () => {
@@ -3159,9 +3292,11 @@ describe("ApplicationForm tests", () => {
         "Year in Program",
         "Expected Graduation",
         "Perm Number",
+        "Video Link",
         "BS/MS student?",
         "Other campus job this quarter?",
         "Prior UCSB employment?",
+        "I-9 Verification",
         "Training commitment",
         "Prior Coursework",
         "First Choice Course",
@@ -3181,6 +3316,9 @@ describe("ApplicationForm tests", () => {
       await screen.findByTestId("ApplicationForm-missing");
       expect(listed()).toContain("Previous ULA Service?");
       expect(listed()).not.toContain("Training commitment");
+      // Nor a video link: it is required only once the answer is 0 (issue #213).
+      expect(listed()).not.toContain("Video Link");
+      expect(listed()).toContain("I-9 Verification");
     });
   });
 

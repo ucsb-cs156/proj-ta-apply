@@ -524,7 +524,8 @@ public class ApplicationsController extends ApiController {
    * The questions a ULA applicant must answer, as on the Google Form the ULA application used to
    * be: the perm number, whether they are a BS/MS student, the two employment questions, and, for a
    * first-time applicant (no previous service), the training commitment. Since issue #78 also both
-   * GPAs, the year in program, the expected graduation and the count of quarters served. A TA form
+   * GPAs, the year in program, the expected graduation and the count of quarters served; since
+   * issue #213 the I-9 confirmation, and a video link from a first-time applicant. A TA form
    * requires none of these. An admin editing an application is held only to the perm number's
    * format.
    */
@@ -566,6 +567,16 @@ public class ApplicationsController extends ApiController {
         && fields.trainingCommitment() == null) {
       throw new IllegalArgumentException(
           "As a first-time ULA applicant, please answer the training commitment question");
+    }
+    // Issue #213: a first-time applicant must give a video link, and everyone confirms the I-9.
+    if (Integer.valueOf(0).equals(fields.previousServiceAsUla())
+        && blankToNull(fields.videoLink()) == null) {
+      throw new IllegalArgumentException(
+          "As a first-time ULA applicant, please include a link to your video");
+    }
+    if (!Boolean.TRUE.equals(fields.i9Appointment())) {
+      throw new IllegalArgumentException(
+          "Please confirm that you will make an I-9 verification appointment if hired");
     }
   }
 

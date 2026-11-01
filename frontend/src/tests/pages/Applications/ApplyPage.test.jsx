@@ -85,6 +85,8 @@ async function fillUlaRequired() {
     screen.getByTestId("ApplyPage-priorUcsbEmployment"),
     "false",
   );
+  // Every ULA applicant confirms the I-9 appointment (issue #213).
+  await userEvent.click(screen.getByTestId("ApplyPage-i9Appointment"));
 }
 
 describe("ApplyPage tests", () => {

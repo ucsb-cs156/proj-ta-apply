@@ -285,6 +285,8 @@ export default function ApplicationForm({
   const asksBsMsFollowUps = !isTa && bsMsStudent === "true";
   const asksEmployeeId = !isTa && priorUcsbEmployment === "true";
   const asksTraining = !isTa && previousService === "0";
+  // Issue #213: a first-time applicant (no previous service) must give a video link.
+  const asksVideo = asksTraining;
   const asksTrainingExplanation =
     asksTraining && ["UNSURE", "CANNOT"].includes(trainingCommitment);
 
@@ -470,9 +472,11 @@ export default function ApplicationForm({
     ...missingField("graduationDate", "Expected Graduation"),
     ...missingField("permNumber", "Perm Number"),
     ...missingField("previousServiceAsUla", "Previous ULA Service?"),
+    ...missingField("videoLink", "Video Link"),
     ...missingField("bsMsStudent", "BS/MS student?"),
     ...missingField("otherCampusJob", "Other campus job this quarter?"),
     ...missingField("priorUcsbEmployment", "Prior UCSB employment?"),
+    ...missingField("i9Appointment", "I-9 Verification"),
     ...missingField("trainingCommitment", "Training commitment"),
     ...(tooFewCourses
       ? [{ name: "coursework-add-button", label: "Prior Coursework" }]
@@ -808,13 +812,22 @@ export default function ApplicationForm({
               </Form.Text>
             </Form.Group>
             <Form.Group as={Col} md={6} className="mb-3">
-              <Form.Label htmlFor={id("videoLink")}>Video Link</Form.Label>
+              <Form.Label htmlFor={id("videoLink")}>
+                Video Link {asksVideo && <RequiredField />}
+              </Form.Label>
               <Form.Control
                 id={id("videoLink")}
                 data-testid={id("videoLink")}
                 placeholder="https://"
-                {...register("videoLink")}
+                isInvalid={Boolean(errors.videoLink)}
+                {...register("videoLink", {
+                  validate: (value) => !asksVideo || value.trim() !== "",
+                })}
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.videoLink &&
+                  "As a first-time ULA applicant, please include a link to your video."}
+              </Form.Control.Feedback>
               <Form.Text as="div" muted data-testid={id("videoLink-note")}>
                 {VIDEO_GUIDANCE}
               </Form.Text>
@@ -981,8 +994,18 @@ export default function ApplicationForm({
               type="checkbox"
               id={id("i9Appointment")}
               data-testid={id("i9Appointment")}
-              label={I9_AGREEMENT}
-              {...register("i9Appointment")}
+              label={
+                <>
+                  {I9_AGREEMENT} <RequiredField />
+                </>
+              }
+              isInvalid={Boolean(errors.i9Appointment)}
+              feedback="Please confirm the I-9 verification appointment to continue."
+              feedbackType="invalid"
+              {...register("i9Appointment", {
+                // Issue #213: required of every ULA applicant.
+                validate: (value) => value === true,
+              })}
             />
           </div>
 
