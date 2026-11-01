@@ -34,7 +34,7 @@ const freshSteps = (id, qyy) => [
     number: 5,
     done: false,
     label: "Not released yet",
-    action: "releaseAllocations",
+    action: "allocationVisibility",
   },
   { number: 6, done: false, label: "Not opened yet", action: "openReviews" },
   {
@@ -111,7 +111,7 @@ const released = withSteps(allocated, [
     number: 5,
     done: true,
     label: "Released: 2026-02-03",
-    action: "releaseAllocations",
+    action: "allocationVisibility",
   },
 ]);
 

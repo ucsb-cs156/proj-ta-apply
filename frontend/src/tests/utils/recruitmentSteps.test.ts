@@ -148,10 +148,10 @@ describe("recruitmentSteps", () => {
       "soft prerequisite: the preferred order, not enforced",
     );
     expect(FOOTNOTE_LINE_1).toBe(
-      "By default, this only releases the allocations for courses the faculty member teaches. It is also possible to release all",
+      "Allocation visibility has three settings: admins only (the default), each faculty member sees the allocations for the courses they teach,",
     );
     expect(FOOTNOTE_LINE_2).toBe(
-      "allocations for all courses; that is a separate option on the Courses page.",
+      'or all faculty see all allocations. Step 5 means moving off "admins only".',
     );
   });
 

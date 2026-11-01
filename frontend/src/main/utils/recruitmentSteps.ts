@@ -11,7 +11,7 @@ export type RecruitmentType = "TA" | "ULA";
 export type RecruitmentStepAction =
   | "openApplications"
   | "closeApplications"
-  | "releaseAllocations"
+  | "allocationVisibility"
   | "openReviews"
   | "closeReviews"
   | "publishAssignments";
@@ -80,9 +80,9 @@ export const LEGEND_HARD = "hard prerequisite: must happen first";
 export const LEGEND_SOFT =
   "soft prerequisite: the preferred order, not enforced";
 export const FOOTNOTE_LINE_1 =
-  "By default, this only releases the allocations for courses the faculty member teaches. It is also possible to release all";
+  "Allocation visibility has three settings: admins only (the default), each faculty member sees the allocations for the courses they teach,";
 export const FOOTNOTE_LINE_2 =
-  "allocations for all courses; that is a separate option on the Courses page.";
+  'or all faculty see all allocations. Step 5 means moving off "admins only".';
 
 // The generator's constants.
 export const FONT_SIZE = 13;
