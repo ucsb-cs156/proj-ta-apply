@@ -5,6 +5,9 @@ import CancelledApplicationsTable, {
   type CancelledApplication,
 } from "main/components/Applications/CancelledApplicationsTable";
 import InterestLegend from "main/components/Common/InterestLegend";
+import DetailsTable, {
+  type DetailsColumn,
+} from "main/components/Common/DetailsTable";
 import {
   INCLUDE_NOT_INTERESTED_LABEL,
   NOT_INTERESTED_WARNING,
@@ -24,6 +27,17 @@ type CourseDetails = {
   section: string | null;
   title: string | null;
   instructor: string | null;
+};
+
+/** One cell of the details tables (issue #205): the value, or the fallback when there is none. */
+const detail = (
+  label: string,
+  value: string | null | undefined,
+  fallback: string,
+  testId: string,
+): DetailsColumn => {
+  const text = value ?? fallback;
+  return { label, value: text, text, testId };
 };
 
 export type CandidateRankingPageData = {
@@ -122,89 +136,99 @@ export default function CandidateRankingPage(): React.JSX.Element {
               </p>
             )}
             <section aria-label="Recruitment details">
-              <h2>Recruitment</h2>
-              <dl className="row">
-                <dt className="col-sm-3">Quarter</dt>
-                <dd
-                  className="col-sm-9"
-                  data-testid="CandidateRankingPage-quarter"
-                >
-                  {yyyyqToQyy(data.quarter)}
-                </dd>
-                <dt className="col-sm-3">Type</dt>
-                <dd
-                  className="col-sm-9"
-                  data-testid="CandidateRankingPage-type"
-                >
-                  {data.type}
-                </dd>
-                <dt className="col-sm-3">Tentative Opening</dt>
-                <dd className="col-sm-9">
-                  {data.tentativeOpeningDate ?? "Not set"}
-                </dd>
-                <dt className="col-sm-3">Primary Consideration</dt>
-                <dd className="col-sm-9">
-                  {data.primaryConsiderationDate ?? "Not set"}
-                </dd>
-                <dt className="col-sm-3">Actually Opened</dt>
-                <dd className="col-sm-9">
-                  {data.actualOpeningDate ?? "Not opened"}
-                </dd>
-                <dt className="col-sm-3">Actually Closed</dt>
-                <dd className="col-sm-9">
-                  {data.actualClosingDate ?? "Not closed"}
-                </dd>
-                <dt className="col-sm-3">Faculty Reviews Opened</dt>
-                <dd
-                  className="col-sm-9"
-                  data-testid="CandidateRankingPage-opening-date"
-                >
-                  {data.facultyReviewOpeningDate ?? "Not recorded"}
-                </dd>
-                <dt className="col-sm-3">Faculty Ranking Deadline</dt>
-                <dd
-                  className="col-sm-9"
-                  data-testid="CandidateRankingPage-deadline"
-                >
-                  {data.facultyRankingDeadline ?? "Not set"}
-                </dd>
-              </dl>
+              <h2 className="h5 mt-3">Recruitment</h2>
+              <DetailsTable
+                testIdPrefix="CandidateRankingPage-recruitment"
+                columns={[
+                  {
+                    label: "Quarter",
+                    value: yyyyqToQyy(data.quarter),
+                    text: yyyyqToQyy(data.quarter),
+                    testId: "CandidateRankingPage-quarter",
+                  },
+                  {
+                    label: "Type",
+                    value: data.type,
+                    text: data.type,
+                    testId: "CandidateRankingPage-type",
+                  },
+                  detail(
+                    "Tentative Opening",
+                    data.tentativeOpeningDate,
+                    "Not set",
+                    "CandidateRankingPage-tentative-opening",
+                  ),
+                  detail(
+                    "Primary Consideration",
+                    data.primaryConsiderationDate,
+                    "Not set",
+                    "CandidateRankingPage-primary-consideration",
+                  ),
+                  detail(
+                    "Actually Opened",
+                    data.actualOpeningDate,
+                    "Not opened",
+                    "CandidateRankingPage-actual-opening",
+                  ),
+                  detail(
+                    "Actually Closed",
+                    data.actualClosingDate,
+                    "Not closed",
+                    "CandidateRankingPage-actual-closing",
+                  ),
+                  detail(
+                    "Faculty Reviews Opened",
+                    data.facultyReviewOpeningDate,
+                    "Not recorded",
+                    "CandidateRankingPage-opening-date",
+                  ),
+                  detail(
+                    "Faculty Ranking Deadline",
+                    data.facultyRankingDeadline,
+                    "Not set",
+                    "CandidateRankingPage-deadline",
+                  ),
+                ]}
+              />
             </section>
 
             <section aria-label="Course details">
-              <h2>Course</h2>
-              <dl className="row">
-                <dt className="col-sm-3">Course</dt>
-                <dd
-                  className="col-sm-9"
-                  data-testid="CandidateRankingPage-course-id"
-                >
-                  <span style={{ whiteSpace: "pre", fontFamily: "monospace" }}>
-                    {data.course.courseId}
-                  </span>
-                </dd>
-                <dt className="col-sm-3">Section</dt>
-                <dd
-                  className="col-sm-9"
-                  data-testid="CandidateRankingPage-section"
-                >
-                  {data.course.section ?? "Not specified"}
-                </dd>
-                <dt className="col-sm-3">Title</dt>
-                <dd
-                  className="col-sm-9"
-                  data-testid="CandidateRankingPage-title"
-                >
-                  {data.course.title ?? "Not specified"}
-                </dd>
-                <dt className="col-sm-3">Instructor</dt>
-                <dd
-                  className="col-sm-9"
-                  data-testid="CandidateRankingPage-instructor"
-                >
-                  {data.course.instructor ?? "Not specified"}
-                </dd>
-              </dl>
+              <h2 className="h5 mt-3">Course</h2>
+              <DetailsTable
+                testIdPrefix="CandidateRankingPage-course"
+                columns={[
+                  {
+                    label: "Course",
+                    value: (
+                      <span
+                        style={{ whiteSpace: "pre", fontFamily: "monospace" }}
+                      >
+                        {data.course.courseId}
+                      </span>
+                    ),
+                    text: data.course.courseId,
+                    testId: "CandidateRankingPage-course-id",
+                  },
+                  detail(
+                    "Section",
+                    data.course.section,
+                    "Not specified",
+                    "CandidateRankingPage-section",
+                  ),
+                  detail(
+                    "Title",
+                    data.course.title,
+                    "Not specified",
+                    "CandidateRankingPage-title",
+                  ),
+                  detail(
+                    "Instructor",
+                    data.course.instructor,
+                    "Not specified",
+                    "CandidateRankingPage-instructor",
+                  ),
+                ]}
+              />
             </section>
 
             {data.otherCourses.length > 0 && (

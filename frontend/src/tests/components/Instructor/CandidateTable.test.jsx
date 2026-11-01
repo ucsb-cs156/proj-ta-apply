@@ -436,4 +436,30 @@ describe("CandidateTable", () => {
     expect(cells[2].style.backgroundColor).toBe("");
     expect(cells[0].style.backgroundColor).toBe("");
   });
+
+  /** Issue #205: video links are clickable. */
+  test("a ULA candidate's video link is a link that opens in a new tab", () => {
+    table({ type: "ULA" });
+
+    const ada = candidatesFixtures[0];
+    const link = screen.getByTestId(
+      `CandidateTable-video-${ada.applicationId}`,
+    );
+    expect(link.tagName).toBe("A");
+    expect(link).toHaveAttribute("href", ada.videoLink);
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(link).toHaveTextContent(ada.videoLink);
+    expect(ada.videoLink).toBe("https://example.edu/ada");
+  });
+
+  test("a candidate without a video link gets an empty cell, not a link", () => {
+    table({
+      type: "ULA",
+      candidates: [{ ...candidatesFixtures[0], videoLink: null }],
+    });
+    expect(
+      screen.queryByTestId("CandidateTable-video-31"),
+    ).not.toBeInTheDocument();
+  });
 });

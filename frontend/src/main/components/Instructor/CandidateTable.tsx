@@ -323,6 +323,15 @@ export default function CandidateTable({
                         >
                           {candidate[column.key]}
                         </a>
+                      ) : column.key === "videoLink" && candidate.videoLink ? (
+                        <a
+                          href={candidate.videoLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          data-testid={`CandidateTable-video-${candidate.applicationId}`}
+                        >
+                          {candidate.videoLink}
+                        </a>
                       ) : column.key === "preference" ? (
                         <>
                           <InterestMark
