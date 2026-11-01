@@ -7,7 +7,6 @@ import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
-import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
@@ -17,6 +16,7 @@ import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.AssignmentsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -281,7 +281,7 @@ import org.springframework.web.bind.annotation.RestController;
 <span class="fc" id="L281">        .map(</span>
             course -&gt; {
 <span class="fc" id="L283">              Set&lt;Long&gt; eligibleApplicationIds =</span>
-<span class="fc" id="L284">                  eligible(applications, course).stream()</span>
+<span class="fc" id="L284">                  eligible(applications, course, true).stream()</span>
 <span class="fc" id="L285">                      .map(Application::getId)</span>
 <span class="fc" id="L286">                      .collect(Collectors.toSet());</span>
 <span class="fc" id="L287">              long rankingCount =</span>
@@ -387,55 +387,91 @@ import org.springframework.web.bind.annotation.RestController;
 <span class="fc" id="L387">  public static record RankEdit(Integer rank) {}</span>
 
   static String preference(Application application, String courseId) {
-<span class="fc bfc" id="L390" title="All 2 branches covered.">    if (courseId.equals(application.getFirstChoiceCourse())) return &quot;1st Choice&quot;;</span>
-<span class="fc bfc" id="L391" title="All 2 branches covered.">    if (courseId.equals(application.getSecondChoiceCourse())) return &quot;2nd Choice&quot;;</span>
-<span class="fc" id="L392">    CourseInterest interest = application.getCourseInterests().get(courseId);</span>
-<span class="fc bfc" id="L393" title="All 2 branches covered.">    if (interest == CourseInterest.ENTHUSIASTIC) return &quot;Enthusiastic&quot;;</span>
-<span class="fc bfc" id="L394" title="All 2 branches covered.">    if (interest == CourseInterest.WOULD_CONSIDER) return &quot;Would Consider&quot;;</span>
-<span class="fc" id="L395">    return null;</span>
+<span class="fc" id="L390">    return AssignmentsService.preference(application, courseId);</span>
   }
 
-  private List&lt;Application&gt; eligible(RankingScope scope) {
+  /**
+   * The applications a section may rank: real (not test) applications the applicant has not
+   * cancelled (issue #199), and, unless {@code includeNotInterested}, only those that expressed
+   * some interest in the course.
+   */
+  private List&lt;Application&gt; eligible(RankingScope scope, boolean includeNotInterested) {
 <span class="fc" id="L399">    return eligible(</span>
 <span class="fc" id="L400">        applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()),</span>
-<span class="fc" id="L401">        scope.course());</span>
+<span class="fc" id="L401">        scope.course(),</span>
+        includeNotInterested);
   }
 
-  private List&lt;Application&gt; eligible(List&lt;Application&gt; applications, RecruitmentCourse course) {
-<span class="fc" id="L405">    return applications.stream()</span>
-<span class="fc bfc" id="L406" title="All 2 branches covered.">        .filter(application -&gt; !application.isTestApplication())</span>
-<span class="fc bfc" id="L407" title="All 2 branches covered.">        .filter(application -&gt; preference(application, course.getCourseId()) != null)</span>
-<span class="fc" id="L408">        .toList();</span>
+  private List&lt;Application&gt; eligible(
+      List&lt;Application&gt; applications, RecruitmentCourse course, boolean includeNotInterested) {
+<span class="fc" id="L407">    return AssignmentsService.real(applications).stream()</span>
+<span class="fc" id="L408">        .filter(</span>
+            application -&gt;
+<span class="fc bfc" id="L410" title="All 4 branches covered.">                includeNotInterested || preference(application, course.getCourseId()) != null)</span>
+<span class="fc" id="L411">        .toList();</span>
   }
 
+  @Operation(
+      summary = &quot;The candidates a section may rank&quot;,
+      description =
+          &quot;Real applications the applicant has not cancelled. By default only applicants who&quot;
+              + &quot; expressed interest in the course (first or second choice, Enthusiastic or Would&quot;
+              + &quot; Consider); includeNotInterested=true adds the rest, with the preference \&quot;Not&quot;
+              + &quot; Interested\&quot; (issue #199).&quot;)
   @PreAuthorize(&quot;hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')&quot;)
   @GetMapping(&quot;/{recruitmentId}/courses/{recruitmentCourseId}/candidates&quot;)
   public List&lt;Candidate&gt; candidates(
-      @PathVariable Long recruitmentId, @PathVariable Long recruitmentCourseId) {
-<span class="fc" id="L415">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
-<span class="fc" id="L416">    Map&lt;Long, Integer&gt; ranks = new HashMap&lt;&gt;();</span>
-<span class="fc" id="L417">    candidateRankingRepository</span>
-<span class="fc" id="L418">        .findByRecruitmentCourseId(recruitmentCourseId)</span>
-<span class="fc" id="L419">        .forEach(row -&gt; ranks.put(row.getApplicationId(), row.getRank()));</span>
-<span class="fc" id="L420">    return eligible(scope).stream()</span>
-<span class="fc" id="L421">        .map(</span>
+      @PathVariable Long recruitmentId,
+      @PathVariable Long recruitmentCourseId,
+      @Parameter(name = &quot;includeNotInterested&quot;) @RequestParam(defaultValue = &quot;false&quot;)
+          boolean includeNotInterested) {
+<span class="fc" id="L428">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
+<span class="fc" id="L429">    Map&lt;Long, Integer&gt; ranks = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L430">    candidateRankingRepository</span>
+<span class="fc" id="L431">        .findByRecruitmentCourseId(recruitmentCourseId)</span>
+<span class="fc" id="L432">        .forEach(row -&gt; ranks.put(row.getApplicationId(), row.getRank()));</span>
+<span class="fc" id="L433">    return eligible(scope, includeNotInterested).stream()</span>
+<span class="fc" id="L434">        .map(</span>
             application -&gt;
-<span class="fc" id="L423">                new Candidate(</span>
-<span class="fc" id="L424">                    application.getId(),</span>
-<span class="fc" id="L425">                    ranks.get(application.getId()),</span>
-<span class="fc" id="L426">                    preference(application, scope.course().getCourseId()),</span>
-<span class="fc" id="L427">                    application.getFirstName(),</span>
-<span class="fc" id="L428">                    application.getLastName(),</span>
-<span class="fc" id="L429">                    application.getEmail(),</span>
-<span class="fc" id="L430">                    application.getMajor(),</span>
-<span class="fc bfc" id="L431" title="All 2 branches covered.">                    application.getClassLevel() == null ? null : application.getClassLevel().name(),</span>
-<span class="fc" id="L432">                    application.getYearInProgram(),</span>
-<span class="fc" id="L433">                    application.getGraduationDate(),</span>
-<span class="fc" id="L434">                    application.getGpaMajor(),</span>
-<span class="fc" id="L435">                    application.getGpaOverall(),</span>
-<span class="fc" id="L436">                    application.getPreviousServiceAsUla(),</span>
-<span class="fc" id="L437">                    application.getVideoLink()))</span>
-<span class="fc" id="L438">        .toList();</span>
+<span class="fc" id="L436">                new Candidate(</span>
+<span class="fc" id="L437">                    application.getId(),</span>
+<span class="fc" id="L438">                    ranks.get(application.getId()),</span>
+<span class="fc" id="L439">                    preferenceLabel(application, scope.course().getCourseId()),</span>
+<span class="fc" id="L440">                    application.getFirstName(),</span>
+<span class="fc" id="L441">                    application.getLastName(),</span>
+<span class="fc" id="L442">                    application.getEmail(),</span>
+<span class="fc" id="L443">                    application.getMajor(),</span>
+<span class="fc bfc" id="L444" title="All 2 branches covered.">                    application.getClassLevel() == null ? null : application.getClassLevel().name(),</span>
+<span class="fc" id="L445">                    application.getYearInProgram(),</span>
+<span class="fc" id="L446">                    application.getGraduationDate(),</span>
+<span class="fc" id="L447">                    application.getGpaMajor(),</span>
+<span class="fc" id="L448">                    application.getGpaOverall(),</span>
+<span class="fc" id="L449">                    application.getPreviousServiceAsUla(),</span>
+<span class="fc" id="L450">                    application.getVideoLink()))</span>
+<span class="fc" id="L451">        .toList();</span>
+  }
+
+  /**
+   * The preference as shown: &quot;Not Interested&quot; rather than null for an applicant who marked none.
+   */
+  private static String preferenceLabel(Application application, String courseId) {
+<span class="fc" id="L458">    String preference = preference(application, courseId);</span>
+<span class="fc bfc" id="L459" title="All 2 branches covered.">    return preference == null ? AssignmentsService.NOT_INTERESTED : preference;</span>
+  }
+
+  @Operation(
+      summary = &quot;The recruitment's cancelled applications, as the ranking page lists them&quot;,
+      description =
+          &quot;Name, email and the applicant's reason, so faculty can see what became of an applicant&quot;
+              + &quot; they expected among the candidates (issue #199). Same access rules as the&quot;
+              + &quot; candidates.&quot;)
+  @PreAuthorize(&quot;hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/{recruitmentId}/courses/{recruitmentCourseId}/cancelled&quot;)
+  public List&lt;AssignmentsService.CancelledApplication&gt; cancelled(
+      @PathVariable Long recruitmentId, @PathVariable Long recruitmentCourseId) {
+<span class="fc" id="L472">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
+<span class="fc" id="L473">    return AssignmentsService.cancelled(</span>
+<span class="fc" id="L474">        applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()));</span>
   }
 
   @PreAuthorize(&quot;hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')&quot;)
@@ -445,45 +481,46 @@ import org.springframework.web.bind.annotation.RestController;
       @PathVariable Long recruitmentCourseId,
       @PathVariable Long applicationId,
       @RequestBody JsonNode body) {
-<span class="fc" id="L448">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, true);</span>
-<span class="fc" id="L449">    List&lt;Application&gt; applications = eligible(scope);</span>
-<span class="fc" id="L450">    requireCandidate(applications, applicationId);</span>
-<span class="fc" id="L451">    JsonNode value = body.get(&quot;rank&quot;);</span>
-<span class="fc bfc" id="L452" title="All 2 branches covered.">    if (value == null</span>
-<span class="fc bfc" id="L453" title="All 6 branches covered.">        || (!value.isNull() &amp;&amp; (!value.isIntegralNumber() || !value.canConvertToInt()))) {</span>
-<span class="fc" id="L454">      throw new IllegalArgumentException(&quot;Rank must be an integer or null.&quot;);</span>
+<span class="fc" id="L484">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, true);</span>
+    // Anyone the instructor can list, with or without the not-interested box ticked, can be ranked.
+<span class="fc" id="L486">    List&lt;Application&gt; applications = eligible(scope, true);</span>
+<span class="fc" id="L487">    requireCandidate(applications, applicationId);</span>
+<span class="fc" id="L488">    JsonNode value = body.get(&quot;rank&quot;);</span>
+<span class="fc bfc" id="L489" title="All 2 branches covered.">    if (value == null</span>
+<span class="fc bfc" id="L490" title="All 6 branches covered.">        || (!value.isNull() &amp;&amp; (!value.isIntegralNumber() || !value.canConvertToInt()))) {</span>
+<span class="fc" id="L491">      throw new IllegalArgumentException(&quot;Rank must be an integer or null.&quot;);</span>
     }
-<span class="fc bfc" id="L456" title="All 2 branches covered.">    RankEdit edit = new RankEdit(value.isNull() ? null : value.intValue());</span>
-<span class="fc bfc" id="L457" title="All 6 branches covered.">    if (edit.rank() != null &amp;&amp; (edit.rank() &lt; 1 || edit.rank() &gt; applications.size())) {</span>
-<span class="fc" id="L458">      throw new IllegalArgumentException(</span>
-<span class="fc" id="L459">          &quot;Rank must be an integer from 1 through &quot; + applications.size() + &quot;, or null.&quot;);</span>
+<span class="fc bfc" id="L493" title="All 2 branches covered.">    RankEdit edit = new RankEdit(value.isNull() ? null : value.intValue());</span>
+<span class="fc bfc" id="L494" title="All 6 branches covered.">    if (edit.rank() != null &amp;&amp; (edit.rank() &lt; 1 || edit.rank() &gt; applications.size())) {</span>
+<span class="fc" id="L495">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L496">          &quot;Rank must be an integer from 1 through &quot; + applications.size() + &quot;, or null.&quot;);</span>
     }
-<span class="fc" id="L461">    CandidateRanking ranking =</span>
+<span class="fc" id="L498">    CandidateRanking ranking =</span>
         candidateRankingRepository
-<span class="fc" id="L463">            .findByRecruitmentCourseIdAndApplicationId(recruitmentCourseId, applicationId)</span>
-<span class="fc" id="L464">            .orElseGet(</span>
+<span class="fc" id="L500">            .findByRecruitmentCourseIdAndApplicationId(recruitmentCourseId, applicationId)</span>
+<span class="fc" id="L501">            .orElseGet(</span>
                 () -&gt;
-<span class="fc" id="L466">                    CandidateRanking.builder()</span>
-<span class="fc" id="L467">                        .recruitmentCourseId(recruitmentCourseId)</span>
-<span class="fc" id="L468">                        .applicationId(applicationId)</span>
-<span class="fc" id="L469">                        .build());</span>
-<span class="fc" id="L470">    ranking.setRank(edit.rank());</span>
-<span class="fc" id="L471">    candidateRankingRepository.save(ranking);</span>
-<span class="fc" id="L472">    return edit;</span>
+<span class="fc" id="L503">                    CandidateRanking.builder()</span>
+<span class="fc" id="L504">                        .recruitmentCourseId(recruitmentCourseId)</span>
+<span class="fc" id="L505">                        .applicationId(applicationId)</span>
+<span class="fc" id="L506">                        .build());</span>
+<span class="fc" id="L507">    ranking.setRank(edit.rank());</span>
+<span class="fc" id="L508">    candidateRankingRepository.save(ranking);</span>
+<span class="fc" id="L509">    return edit;</span>
   }
 
   private Application requireCandidate(List&lt;Application&gt; applications, Long applicationId) {
-<span class="fc" id="L476">    return applications.stream()</span>
-<span class="fc" id="L477">        .filter(application -&gt; applicationId.equals(application.getId()))</span>
-<span class="fc" id="L478">        .findFirst()</span>
-<span class="fc" id="L479">        .orElseThrow(</span>
+<span class="fc" id="L513">    return applications.stream()</span>
+<span class="fc" id="L514">        .filter(application -&gt; applicationId.equals(application.getId()))</span>
+<span class="fc" id="L515">        .findFirst()</span>
+<span class="fc" id="L516">        .orElseThrow(</span>
             () -&gt;
-<span class="fc" id="L481">                new ForbiddenException(</span>
+<span class="fc" id="L518">                new ForbiddenException(</span>
                     &quot;This application is not an eligible candidate for this recruitment course.&quot;));
   }
 
   /** Student answers only: never return the administrative review fields. */
-<span class="fc" id="L486">  public static record CandidateApplication(</span>
+<span class="fc" id="L523">  public static record CandidateApplication(</span>
       Long id,
       Long recruitmentId,
       String email,
@@ -497,65 +534,65 @@ import org.springframework.web.bind.annotation.RestController;
       @PathVariable Long recruitmentId,
       @PathVariable Long recruitmentCourseId,
       @PathVariable Long applicationId) {
-<span class="fc" id="L500">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
-<span class="fc" id="L501">    Application a = requireCandidate(eligible(scope), applicationId);</span>
-<span class="fc" id="L502">    return new CandidateApplication(</span>
-<span class="fc" id="L503">        a.getId(),</span>
-<span class="fc" id="L504">        a.getRecruitmentId(),</span>
-<span class="fc" id="L505">        a.getEmail(),</span>
-<span class="fc" id="L506">        a.getSubmittedAt(),</span>
-<span class="fc" id="L507">        a.getPostApplicationComments(),</span>
+<span class="fc" id="L537">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
+<span class="fc" id="L538">    Application a = requireCandidate(eligible(scope, true), applicationId);</span>
+<span class="fc" id="L539">    return new CandidateApplication(</span>
+<span class="fc" id="L540">        a.getId(),</span>
+<span class="fc" id="L541">        a.getRecruitmentId(),</span>
+<span class="fc" id="L542">        a.getEmail(),</span>
+<span class="fc" id="L543">        a.getSubmittedAt(),</span>
+<span class="fc" id="L544">        a.getPostApplicationComments(),</span>
         new ApplicationsController.ApplicationFields(
-<span class="fc" id="L509">            a.getFirstName(),</span>
-<span class="fc" id="L510">            a.getMiddleName(),</span>
-<span class="fc" id="L511">            a.getLastName(),</span>
-<span class="fc" id="L512">            a.getMajor(),</span>
-<span class="fc" id="L513">            a.getGpaMajor(),</span>
-<span class="fc" id="L514">            a.getGpaOverall(),</span>
-<span class="fc" id="L515">            a.getYearInProgram(),</span>
-<span class="fc" id="L516">            a.getGraduationDate(),</span>
-<span class="fc" id="L517">            a.getPriorCoursework().stream()</span>
-<span class="fc" id="L518">                .map(</span>
+<span class="fc" id="L546">            a.getFirstName(),</span>
+<span class="fc" id="L547">            a.getMiddleName(),</span>
+<span class="fc" id="L548">            a.getLastName(),</span>
+<span class="fc" id="L549">            a.getMajor(),</span>
+<span class="fc" id="L550">            a.getGpaMajor(),</span>
+<span class="fc" id="L551">            a.getGpaOverall(),</span>
+<span class="fc" id="L552">            a.getYearInProgram(),</span>
+<span class="fc" id="L553">            a.getGraduationDate(),</span>
+<span class="fc" id="L554">            a.getPriorCoursework().stream()</span>
+<span class="fc" id="L555">                .map(</span>
                     p -&gt;
-<span class="fc" id="L520">                        new ApplicationsController.PriorCourseworkFields(</span>
-<span class="fc" id="L521">                            p.isUcsbCourse(),</span>
-<span class="fc" id="L522">                            p.getOtherSchool(),</span>
-<span class="fc" id="L523">                            p.getCourseNumber(),</span>
-<span class="fc" id="L524">                            p.getCourseTitle(),</span>
-<span class="fc" id="L525">                            p.getTerm(),</span>
-<span class="fc" id="L526">                            p.getGrade()))</span>
-<span class="fc" id="L527">                .toList(),</span>
-<span class="fc" id="L528">            a.getTopicProficiencies(),</span>
-<span class="fc" id="L529">            a.getInterests(),</span>
-<span class="fc" id="L530">            a.getPrevExperience(),</span>
-<span class="fc" id="L531">            a.getComments(),</span>
-<span class="fc" id="L532">            a.getFirstChoiceCourse(),</span>
-<span class="fc" id="L533">            a.getSecondChoiceCourse(),</span>
-<span class="fc" id="L534">            a.isAvailableForLecturesFirstChoice(),</span>
-<span class="fc" id="L535">            a.isAvailableForLecturesSecondChoice(),</span>
-<span class="fc" id="L536">            a.isAvailableForDiscussionFirstChoice(),</span>
-<span class="fc" id="L537">            a.isAvailableForDiscussionSecondChoice(),</span>
-<span class="fc" id="L538">            a.getAvailabilityCommentsFirstChoice(),</span>
-<span class="fc" id="L539">            a.getAvailabilityCommentsSecondChoice(),</span>
-<span class="fc" id="L540">            a.getCourseInterests(),</span>
-<span class="fc" id="L541">            a.getResidencyStatus(),</span>
-<span class="fc" id="L542">            a.getLanguageExam(),</span>
-<span class="fc" id="L543">            a.getLanguageExamDatePassed(),</span>
-<span class="fc" id="L544">            a.getClassLevel(),</span>
-<span class="fc" id="L545">            a.getVideoLink(),</span>
-<span class="fc" id="L546">            a.getPreviousServiceAsUla(),</span>
-<span class="fc" id="L547">            a.getPermNumber(),</span>
-<span class="fc" id="L548">            a.getBsMsStudent(),</span>
-<span class="fc" id="L549">            a.getStudentStatusNextQuarter(),</span>
-<span class="fc" id="L550">            a.getWantsTaEligibility(),</span>
-<span class="fc" id="L551">            a.getOtherCampusJob(),</span>
-<span class="fc" id="L552">            a.getPriorUcsbEmployment(),</span>
-<span class="fc" id="L553">            a.getEmployeeId(),</span>
-<span class="fc" id="L554">            a.getI9Appointment(),</span>
-<span class="fc" id="L555">            a.getTrainingCommitment(),</span>
-<span class="fc" id="L556">            a.getTrainingCommitmentExplanation(),</span>
-<span class="fc" id="L557">            a.getChangingMajor(),</span>
-<span class="fc" id="L558">            a.getNoticeVersionId()));</span>
+<span class="fc" id="L557">                        new ApplicationsController.PriorCourseworkFields(</span>
+<span class="fc" id="L558">                            p.isUcsbCourse(),</span>
+<span class="fc" id="L559">                            p.getOtherSchool(),</span>
+<span class="fc" id="L560">                            p.getCourseNumber(),</span>
+<span class="fc" id="L561">                            p.getCourseTitle(),</span>
+<span class="fc" id="L562">                            p.getTerm(),</span>
+<span class="fc" id="L563">                            p.getGrade()))</span>
+<span class="fc" id="L564">                .toList(),</span>
+<span class="fc" id="L565">            a.getTopicProficiencies(),</span>
+<span class="fc" id="L566">            a.getInterests(),</span>
+<span class="fc" id="L567">            a.getPrevExperience(),</span>
+<span class="fc" id="L568">            a.getComments(),</span>
+<span class="fc" id="L569">            a.getFirstChoiceCourse(),</span>
+<span class="fc" id="L570">            a.getSecondChoiceCourse(),</span>
+<span class="fc" id="L571">            a.isAvailableForLecturesFirstChoice(),</span>
+<span class="fc" id="L572">            a.isAvailableForLecturesSecondChoice(),</span>
+<span class="fc" id="L573">            a.isAvailableForDiscussionFirstChoice(),</span>
+<span class="fc" id="L574">            a.isAvailableForDiscussionSecondChoice(),</span>
+<span class="fc" id="L575">            a.getAvailabilityCommentsFirstChoice(),</span>
+<span class="fc" id="L576">            a.getAvailabilityCommentsSecondChoice(),</span>
+<span class="fc" id="L577">            a.getCourseInterests(),</span>
+<span class="fc" id="L578">            a.getResidencyStatus(),</span>
+<span class="fc" id="L579">            a.getLanguageExam(),</span>
+<span class="fc" id="L580">            a.getLanguageExamDatePassed(),</span>
+<span class="fc" id="L581">            a.getClassLevel(),</span>
+<span class="fc" id="L582">            a.getVideoLink(),</span>
+<span class="fc" id="L583">            a.getPreviousServiceAsUla(),</span>
+<span class="fc" id="L584">            a.getPermNumber(),</span>
+<span class="fc" id="L585">            a.getBsMsStudent(),</span>
+<span class="fc" id="L586">            a.getStudentStatusNextQuarter(),</span>
+<span class="fc" id="L587">            a.getWantsTaEligibility(),</span>
+<span class="fc" id="L588">            a.getOtherCampusJob(),</span>
+<span class="fc" id="L589">            a.getPriorUcsbEmployment(),</span>
+<span class="fc" id="L590">            a.getEmployeeId(),</span>
+<span class="fc" id="L591">            a.getI9Appointment(),</span>
+<span class="fc" id="L592">            a.getTrainingCommitment(),</span>
+<span class="fc" id="L593">            a.getTrainingCommitmentExplanation(),</span>
+<span class="fc" id="L594">            a.getChangingMajor(),</span>
+<span class="fc" id="L595">            a.getNoticeVersionId()));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
