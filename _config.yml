@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"adminui/233-live-diagram-on-card","number":244,"title":"Admin UI 4: live Recruitment Steps diagram on the admin recruitment card (closes #233)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/244"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"adminui/237-release-prerequisites","number":243,"title":"Admin UI 6: enforce the prerequisites of releasing hiring decisions; Tentative note when reopened (closes #237)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/243"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"adminui/233-live-diagram-on-card","number":244,"title":"Admin UI 4: live Recruitment Steps diagram on the admin recruitment card (closes #233)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/244"}]
