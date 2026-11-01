@@ -14,6 +14,7 @@ import RecruitmentTable, {
   type Recruitment,
 } from "main/components/Recruitments/RecruitmentTable";
 import AdminApplicationTable from "main/components/Applications/AdminApplicationTable";
+import ApplicationsPageHeader from "main/components/Applications/ApplicationsPageHeader";
 import type { Application } from "main/components/Applications/ApplicationTable";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { receivedText } from "main/utils/adminApplications";
@@ -176,11 +177,16 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
   return (
     <BasicLayout>
       <div className="pt-2">
-        <h1>
-          Applications
-          {recruitment &&
-            `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`}
-        </h1>
+        <ApplicationsPageHeader
+          // Stryker disable next-line StringLiteral : the route always supplies the id
+          recruitmentId={recruitmentId ?? ""}
+          title={`Applications${
+            recruitment
+              ? `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`
+              : ""
+          }`}
+          testIdPrefix="RecruitmentApplicationsPage-header"
+        />
 
         <RecruitmentTable
           recruitments={recruitment ? [recruitment] : []}

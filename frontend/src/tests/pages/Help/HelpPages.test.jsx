@@ -46,6 +46,12 @@ describe("Help pages (issue #140)", () => {
     ).toHaveTextContent(
       /every real applicant.*no interests or rankings.*test applications are excluded.*Unset rankings are blank, not zero, and ties are preserved/,
     );
+    // Issue #234: where the two CSV downloads now are.
+    expect(
+      screen.getByText(/This is separate from/, { exact: false }),
+    ).toHaveTextContent(
+      "On a recruitment's Courses page, Download Rankings CSV saves that recruitment's faculty rankings as a spreadsheet-ready file. This is separate from Download Applications as CSV on its Applications page, which exports application answers.",
+    );
     expect(screen.getByText(/TA columns are/)).toHaveTextContent(
       /TA columns are first name, last name, email, major, class level, year in program and expected graduation/,
     );
@@ -571,10 +577,10 @@ describe("Help pages (issue #140)", () => {
     ].map((li) => li.textContent);
     expect(flow[0]).toMatch(/under TA App Settings and ULA App Settings\./);
     expect(flow[1]).toMatch(
-      /check it with Courses, try the form with Test Application, then Open Applications\./,
+      /check it with Courses, try the form with Test Application \(on the Applications page\), then open applications from step 2 of the diagram\./,
     );
     expect(flow[2]).toMatch(
-      /Review Applications and Download CSV show what has come in/,
+      /The Applications page and its Download Applications as CSV show what has come in/,
     );
     expect(
       document.getElementById("instructors").nextElementSibling.textContent,

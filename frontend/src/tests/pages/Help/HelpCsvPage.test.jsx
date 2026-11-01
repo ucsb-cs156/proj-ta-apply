@@ -92,7 +92,7 @@ describe("HelpCsvPage tests", () => {
 
     // Issue #179: the rankings CSV's tentativeAssignment column and planning rows.
     expect(screen.getByTestId("rankingsCsvDescription")).toHaveTextContent(
-      "Download Rankings CSV on a recruitment card saves the faculty rankings: the applicant identity columns for the recruitment's type, then tentativeAssignment",
+      "Download Rankings CSV on a recruitment's Courses page saves the faculty rankings: the applicant identity columns for the recruitment's type, then tentativeAssignment",
     );
     expect(screen.getByTestId("rankingsCsvDescription")).toHaveTextContent(
       "three planning rows labelled Allocation, Assigned and Left to assign in the first column, with each lecture's numbers under its column and every other cell blank; applicant rows follow.",
