@@ -188,6 +188,14 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplyPage-firstName").fill("Chris");
     page.getByTestId("ApplyPage-lastName").fill("Gaucho");
     page.getByTestId("ApplyPage-major").selectOption("Computer Science");
+    // The TA answers required since issue #214.
+    page.getByTestId("ApplyPage-gpaMajor").fill("3.9");
+    page.getByTestId("ApplyPage-gpaOverall").fill("3.8");
+    page.getByTestId("ApplyPage-yearInProgram").fill("2nd");
+    page.getByTestId("ApplyPage-graduationDate").fill("S27");
+    page.getByTestId("ApplyPage-classLevel").selectOption("PHD");
+    page.getByTestId("ApplyPage-residencyStatus").selectOption("US_CITIZEN");
+    page.getByTestId("ApplyPage-languageExam").selectOption("EXEMPT_US_CITIZEN");
     page.getByTestId("ApplyPage-topic-Java-4").check();
     page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
     page.getByTestId("ApplyPage-courseInterest-CMPSC-130A-ENTHUSIASTIC").check();
@@ -551,6 +559,14 @@ public class ApplicationsWebIT extends WebTestCase {
             .lastName("Lovelace")
             .major("Computer Science")
             .classLevel(edu.ucsb.cs.taapply.enums.ClassLevel.PHD)
+            // The other TA answers the form requires since issue #214, so the admin's edit
+            // below changes only the major and the courses.
+            .gpaMajor(3.9)
+            .gpaOverall(3.8)
+            .yearInProgram("2nd")
+            .graduationDate("S27")
+            .residencyStatus(edu.ucsb.cs.taapply.enums.ResidencyStatus.US_CITIZEN)
+            .languageExam(edu.ucsb.cs.taapply.enums.LanguageExamStatus.EXEMPT_US_CITIZEN)
             .firstChoiceCourse("CMPSC   156")
             .build());
 
@@ -694,6 +710,15 @@ public class ApplicationsWebIT extends WebTestCase {
     // Not on the list: Other, then the text.
     page.getByTestId("TestApplicationPage-major").selectOption("__OTHER__");
     page.getByTestId("TestApplicationPage-otherMajor").fill("Computer Science");
+    // The TA answers required since issue #214; a passed exam asks when it was passed.
+    page.getByTestId("TestApplicationPage-gpaMajor").fill("3.9");
+    page.getByTestId("TestApplicationPage-gpaOverall").fill("3.8");
+    page.getByTestId("TestApplicationPage-yearInProgram").fill("2nd");
+    page.getByTestId("TestApplicationPage-graduationDate").fill("S27");
+    page.getByTestId("TestApplicationPage-classLevel").selectOption("MS");
+    page.getByTestId("TestApplicationPage-residencyStatus").selectOption("F1_STUDENT_VISA");
+    page.getByTestId("TestApplicationPage-languageExam").selectOption("PASSED_F1_OR_J1_VISA");
+    page.getByTestId("TestApplicationPage-languageExamDatePassed").fill("F25");
     page.getByTestId("TestApplicationPage-firstChoiceCourse").selectOption("CMPSC   156");
     addCourse("TestApplicationPage", "CMPSC 8");
     addCourse("TestApplicationPage", "CMPSC 16");

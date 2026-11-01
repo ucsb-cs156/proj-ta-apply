@@ -157,6 +157,14 @@ const LANGUAGE_EXAM_OPTIONS = [
   { value: "NOT_PASSED", label: "not passed" },
 ];
 
+/**
+ * Whether a TA language exam answer says the exam was passed (issue #214): the two "passed"
+ * answers, not "not passed" and not the exemption.
+ */
+const examPassed = (languageExam: string | null | undefined): boolean =>
+  languageExam === "PASSED_US_PERMANENT_RESIDENT" ||
+  languageExam === "PASSED_F1_OR_J1_VISA";
+
 const CLASS_LEVEL_OPTIONS = [
   { value: "PHD", label: "PhD" },
   { value: "MS", label: "MS" },
@@ -271,6 +279,7 @@ export default function ApplicationForm({
     "priorUcsbEmployment",
     "previousServiceAsUla",
     "trainingCommitment",
+    "languageExam",
   ]);
   const [
     firstChoice,
@@ -280,7 +289,10 @@ export default function ApplicationForm({
     priorUcsbEmployment,
     previousService,
     trainingCommitment,
+    languageExam,
   ] = watched;
+  // Issue #214: the quarter and year the exam was passed is required once the answer says it was.
+  const asksExamDate = isTa && examPassed(languageExam);
   // The ULA questions that depend on an earlier answer, as the Google Form revealed them.
   const asksBsMsFollowUps = !isTa && bsMsStudent === "true";
   const asksEmployeeId = !isTa && priorUcsbEmployment === "true";
@@ -426,14 +438,14 @@ export default function ApplicationForm({
   const graduationField = (width: number) => (
     <Form.Group as={Col} md={width} className="mb-3">
       <Form.Label htmlFor={id("graduationDate")}>
-        Expected Graduation {!isTa && <RequiredField />}
+        Expected Graduation <RequiredField />
       </Form.Label>
       <Form.Control
         id={id("graduationDate")}
         data-testid={id("graduationDate")}
         placeholder="e.g. S27"
         isInvalid={Boolean(errors.graduationDate)}
-        {...register("graduationDate", { required: !isTa })}
+        {...register("graduationDate", { required: true })}
       />
       <Form.Control.Feedback type="invalid">
         {errors.graduationDate && "Your expected graduation is required."}
@@ -470,6 +482,13 @@ export default function ApplicationForm({
     ...missingField("gpaOverall", "Overall GPA"),
     ...missingField("yearInProgram", "Year in Program"),
     ...missingField("graduationDate", "Expected Graduation"),
+    ...missingField("classLevel", "PhD or MS?"),
+    ...missingField("residencyStatus", "Residency Status"),
+    ...missingField("languageExam", "TA Language Exam"),
+    ...missingField(
+      "languageExamDatePassed",
+      "Quarter and Year Language Exam Passed",
+    ),
     ...missingField("permNumber", "Perm Number"),
     ...missingField("previousServiceAsUla", "Previous ULA Service?"),
     ...missingField("videoLink", "Video Link"),
@@ -634,7 +653,7 @@ export default function ApplicationForm({
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
           <Form.Label htmlFor={id("gpaMajor")}>
-            GPA in Major {!isTa && <RequiredField />}
+            GPA in Major <RequiredField />
           </Form.Label>
           <Form.Control
             id={id("gpaMajor")}
@@ -642,7 +661,7 @@ export default function ApplicationForm({
             type="number"
             step="0.01"
             isInvalid={Boolean(errors.gpaMajor)}
-            {...register("gpaMajor", { required: !isTa })}
+            {...register("gpaMajor", { required: true })}
           />
           <Form.Control.Feedback type="invalid">
             {errors.gpaMajor && "Your GPA in major is required."}
@@ -650,7 +669,7 @@ export default function ApplicationForm({
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
           <Form.Label htmlFor={id("gpaOverall")}>
-            Overall GPA {!isTa && <RequiredField />}
+            Overall GPA <RequiredField />
           </Form.Label>
           <Form.Control
             id={id("gpaOverall")}
@@ -658,7 +677,7 @@ export default function ApplicationForm({
             type="number"
             step="0.01"
             isInvalid={Boolean(errors.gpaOverall)}
-            {...register("gpaOverall", { required: !isTa })}
+            {...register("gpaOverall", { required: true })}
           />
           <Form.Control.Feedback type="invalid">
             {errors.gpaOverall && "Your overall GPA is required."}
@@ -666,13 +685,13 @@ export default function ApplicationForm({
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
           <Form.Label htmlFor={id("yearInProgram")}>
-            Year in Program {!isTa && <RequiredField />}
+            Year in Program <RequiredField />
           </Form.Label>
           <Form.Control
             id={id("yearInProgram")}
             data-testid={id("yearInProgram")}
             isInvalid={Boolean(errors.yearInProgram)}
-            {...register("yearInProgram", { required: !isTa })}
+            {...register("yearInProgram", { required: true })}
           />
           <Form.Control.Feedback type="invalid">
             {errors.yearInProgram && "Your year in program is required."}
@@ -703,11 +722,14 @@ export default function ApplicationForm({
       {isTa && (
         <Row data-testid={id("ta-only")}>
           <Form.Group as={Col} md={3} className="mb-3">
-            <Form.Label htmlFor={id("classLevel")}>Class Level</Form.Label>
+            <Form.Label htmlFor={id("classLevel")}>
+              PhD or MS? <RequiredField />
+            </Form.Label>
             <Form.Select
               id={id("classLevel")}
               data-testid={id("classLevel")}
-              {...register("classLevel")}
+              isInvalid={Boolean(errors.classLevel)}
+              {...register("classLevel", { required: true })}
             >
               <option value="">Choose one</option>
               {CLASS_LEVEL_OPTIONS.map((option) => (
@@ -716,15 +738,20 @@ export default function ApplicationForm({
                 </option>
               ))}
             </Form.Select>
+            <Form.Control.Feedback type="invalid">
+              {errors.classLevel &&
+                "Please say whether you are a PhD or MS student."}
+            </Form.Control.Feedback>
           </Form.Group>
           <Form.Group as={Col} md={3} className="mb-3">
             <Form.Label htmlFor={id("residencyStatus")}>
-              Residency Status
+              Residency Status <RequiredField />
             </Form.Label>
             <Form.Select
               id={id("residencyStatus")}
               data-testid={id("residencyStatus")}
-              {...register("residencyStatus")}
+              isInvalid={Boolean(errors.residencyStatus)}
+              {...register("residencyStatus", { required: true })}
             >
               <option value="">Choose one</option>
               {RESIDENCY_OPTIONS.map((option) => (
@@ -733,15 +760,19 @@ export default function ApplicationForm({
                 </option>
               ))}
             </Form.Select>
+            <Form.Control.Feedback type="invalid">
+              {errors.residencyStatus && "Your residency status is required."}
+            </Form.Control.Feedback>
           </Form.Group>
           <Form.Group as={Col} md={3} className="mb-3">
             <Form.Label htmlFor={id("languageExam")}>
-              TA Language Exam
+              TA Language Exam <RequiredField />
             </Form.Label>
             <Form.Select
               id={id("languageExam")}
               data-testid={id("languageExam")}
-              {...register("languageExam")}
+              isInvalid={Boolean(errors.languageExam)}
+              {...register("languageExam", { required: true })}
             >
               <option value="">Choose one</option>
               {LANGUAGE_EXAM_OPTIONS.map((option) => (
@@ -750,17 +781,29 @@ export default function ApplicationForm({
                 </option>
               ))}
             </Form.Select>
+            <Form.Control.Feedback type="invalid">
+              {errors.languageExam &&
+                "Your TA language exam status is required."}
+            </Form.Control.Feedback>
           </Form.Group>
           <Form.Group as={Col} md={3} className="mb-3">
             <Form.Label htmlFor={id("languageExamDatePassed")}>
-              Quarter and Year Language Exam Passed
+              Quarter and Year Language Exam Passed{" "}
+              {asksExamDate && <RequiredField />}
             </Form.Label>
             <Form.Control
               id={id("languageExamDatePassed")}
               data-testid={id("languageExamDatePassed")}
               placeholder="e.g. F25"
-              {...register("languageExamDatePassed")}
+              isInvalid={Boolean(errors.languageExamDatePassed)}
+              {...register("languageExamDatePassed", {
+                validate: (value) => !asksExamDate || value.trim() !== "",
+              })}
             />
+            <Form.Control.Feedback type="invalid">
+              {errors.languageExamDatePassed &&
+                "Please give the quarter and year you passed the exam."}
+            </Form.Control.Feedback>
           </Form.Group>
         </Row>
       )}

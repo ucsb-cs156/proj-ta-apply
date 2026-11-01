@@ -72,7 +72,7 @@ describe("Help pages (issue #140)", () => {
     ].map((li) => li.textContent);
     expect(items).toHaveLength(9);
     expect(items[1]).toMatch(
-      /major, program \(Ph\.D\. or M\.S\.\), year in the program, GPA/,
+      /major, whether you are a PhD or MS student, your year in the program, your GPA/,
     );
     expect(items[2]).toMatch(/residency status.*language exam/);
     expect(items[3]).toMatch(/courses you have taken, at UCSB or elsewhere/);
