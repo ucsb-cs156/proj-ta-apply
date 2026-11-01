@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
@@ -229,29 +230,31 @@ public class RecruitmentsController extends ApiController {
   }
 
   @Operation(
-      summary = "Show or hide the per-course allocations on faculty-facing pages",
+      summary = "Choose who may see the allocations: admins only, own courses, or all courses",
       description =
-          "While hidden (the default) neither the home page cards nor the candidate ranking page"
-              + " tell an instructor how many TAs or ULAs a course was allocated, and the"
-              + " instructor endpoints leave the number out (issue #178). Faculty see the result,"
-              + " so the change is recorded in the recruitment audit trail.")
+          "ADMINS_ONLY (the default): no faculty member sees any allocation. OWN_COURSES: each"
+              + " faculty member sees the allocations for the courses they teach. ALL_COURSES:"
+              + " every faculty member teaching in the recruitment sees the allocations of all"
+              + " its courses (issues #178 and #224). Faculty see the result, so the change is"
+              + " recorded in the recruitment audit trail; choosing the current value changes"
+              + " nothing. 400 for any other value.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @Transactional
-  @PutMapping("/allocationsVisibleToFaculty")
-  public Recruitment updateAllocationsVisibleToFaculty(
+  @PutMapping("/allocationVisibility")
+  public Recruitment updateAllocationVisibility(
       @Parameter(name = "id") @RequestParam Long id,
-      @Parameter(name = "visible") @RequestParam boolean visible) {
+      @Parameter(name = "visibility") @RequestParam AllocationVisibility visibility) {
 
     Recruitment recruitment =
         recruitmentRepository
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
-    if (visible == Boolean.TRUE.equals(recruitment.getAllocationsVisibleToFaculty())) {
+    if (visibility == recruitment.getAllocationVisibility()) {
       return recruitment;
     }
 
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
-    recruitment.setAllocationsVisibleToFaculty(visible);
+    recruitment.setAllocationVisibility(visibility);
     recruitmentRepository.save(recruitment);
     recruitmentAuditService.recordChanges(before, recruitment);
     return recruitment;

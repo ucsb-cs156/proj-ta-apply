@@ -31,7 +31,6 @@ export const columnChoices = (
   { id: "maxEnroll", label: "Max" },
   { id: "enrollmentEstimate", label: "Enrollment Estimate" },
   { id: "allocation", label: "Allocation" },
-  { id: "allocationReleased", label: "Released to faculty" },
   { id: "unroundedAllocation", label: "Unrounded Allocation" },
   { id: "delta", label: "Delta" },
   { id: "ratio", label: "TA:student ratio" },

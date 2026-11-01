@@ -350,25 +350,26 @@ export default function HelpAdminsPage(): React.JSX.Element {
           id="allocation-visibility"
           data-testid="HelpAdminsPage-allocation-visibility"
         >
-          Faculty do not see an allocation until you let them, and the{" "}
-          <strong>Faculty visibility</strong> panel under the hiring target
-          gives you two ways to. The usual one is per course: tick{" "}
-          <strong>Released to faculty</strong> on a lecture&apos;s row (or use{" "}
-          <em>Release all allocations to their instructors</em>) once its number
-          is mostly final, and that lecture&apos;s instructor sees a small table
-          on their home page card and at the top of its ranking page: the{" "}
+          Who may see the allocations is one setting for the recruitment, shown
+          under the hiring target as <em>Allocation visibility</em>; choose{" "}
+          <strong>Change</strong> to pick one of three states.{" "}
+          <strong>Admins only</strong> is where every recruitment starts: no
+          faculty member sees any allocation.{" "}
+          <strong>Faculty see their own courses</strong> is what{" "}
+          <em>Release Allocations to Faculty</em> means: each faculty member
+          sees the allocations for the courses they teach, as a small table on
+          their home page card and at the top of each ranking page: the{" "}
           <strong>Hiring Target</strong> (the allocation), the{" "}
           <strong>Ranking Target</strong> (twice the allocation, but never more
           than the candidates who expressed interest in the course),{" "}
           <strong>Candidates Ranked</strong> so far and{" "}
-          <strong>Rankings Still Needed</strong>. You can still change the
-          allocation afterwards; untick the box, or <em>Withdraw all</em>, to
-          take it back. The other way is the switch{" "}
-          <strong>Show All Allocations to All Faculty</strong>, for when the
-          whole plan is public: every instructor then gets the table for each of
-          their courses and an <em>All allocations</em> page listing every
-          course&apos;s number; <strong>Hide All Allocations</strong> turns it
-          off. Each release, withdrawal and switch is recorded in the
+          <strong>Rankings Still Needed</strong>.{" "}
+          <strong>Faculty see all courses</strong> goes further, for when the
+          whole plan is public: every faculty member teaching in the recruitment
+          also gets an <em>All allocations</em> page listing every course&apos;s
+          number. Move off Admins only once the numbers are mostly final; you
+          can still change an allocation afterwards, and faculty see the change
+          immediately. Every change of state is recorded in the
           recruitment&apos;s change history. Do this before opening faculty
           reviews, so faculty know how many candidates to rank, and ask them to
           raise any concerns about their targets then.

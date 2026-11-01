@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
@@ -56,7 +57,7 @@ public class RecruitmentAuditServiceTests {
             "reviewStatus",
             "facultyReviewOpeningDate",
             "facultyRankingDeadline",
-            "allocationsVisibleToFaculty",
+            "allocationVisibility",
             "assignmentsPublished"),
         new ArrayList<>(RecruitmentAuditService.FIELDS.keySet()));
   }
@@ -80,7 +81,7 @@ public class RecruitmentAuditServiceTests {
             "reviewStatus",
             "facultyReviewOpeningDate",
             "facultyRankingDeadline",
-            "allocationsVisibleToFaculty",
+            "allocationVisibility",
             "assignmentsPublished"),
         new ArrayList<>(fields.keySet()));
     assertEquals("CLOSED", fields.get("applicationStatus"));
@@ -92,22 +93,22 @@ public class RecruitmentAuditServiceTests {
     assertEquals("NotStarted", fields.get("reviewStatus"));
     assertNull(fields.get("facultyReviewOpeningDate"));
     assertNull(fields.get("facultyRankingDeadline"));
-    assertEquals("false", fields.get("allocationsVisibleToFaculty"));
+    assertEquals("ADMINS_ONLY", fields.get("allocationVisibility"));
     assertEquals("false", fields.get("assignmentsPublished"));
   }
 
   @Test
-  public void showing_allocations_to_faculty_records_one_change() {
+  public void changing_allocation_visibility_records_one_change() {
     Recruitment r = recruitment();
     RecruitmentAuditService.Snapshot before = service.snapshot(r);
-    r.setAllocationsVisibleToFaculty(true);
+    r.setAllocationVisibility(AllocationVisibility.OWN_COURSES);
 
     List<RecruitmentAuditTrail> changes = service.recordChanges(before, r);
 
     assertEquals(1, changes.size());
-    assertEquals("allocationsVisibleToFaculty", changes.get(0).getWhatChanged());
-    assertEquals("false", changes.get(0).getOldValue());
-    assertEquals("true", changes.get(0).getNewValue());
+    assertEquals("allocationVisibility", changes.get(0).getWhatChanged());
+    assertEquals("ADMINS_ONLY", changes.get(0).getOldValue());
+    assertEquals("OWN_COURSES", changes.get(0).getNewValue());
   }
 
   @Test
@@ -268,35 +269,5 @@ public class RecruitmentAuditServiceTests {
     assertEquals("false", changes.get(0).getOldValue());
     assertEquals("true", changes.get(0).getNewValue());
     verify(repository).saveAll(changes);
-  }
-
-  /** Issue #224: a course-level change gets one row naming the field and the course. */
-  @Test
-  public void recordCourseChange_writes_one_row_with_the_values_as_text() {
-    RecruitmentAuditTrail saved = RecruitmentAuditTrail.builder().id(5L).build();
-    when(repository.save(any())).thenReturn(saved);
-
-    RecruitmentAuditTrail result =
-        service.recordCourseChange(7L, "allocationReleased CMPSC 156 (0100)", false, true);
-
-    assertSame(saved, result);
-    ArgumentCaptor<RecruitmentAuditTrail> captor =
-        ArgumentCaptor.forClass(RecruitmentAuditTrail.class);
-    verify(repository, times(1)).save(captor.capture());
-    RecruitmentAuditTrail row = captor.getValue();
-    assertEquals(7L, row.getRecruitmentId());
-    assertEquals("allocationReleased CMPSC 156 (0100)", row.getWhatChanged());
-    assertEquals("false", row.getOldValue());
-    assertEquals("true", row.getNewValue());
-  }
-
-  @Test
-  public void recordCourseChange_keeps_null_values_null() {
-    when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-    RecruitmentAuditTrail row = service.recordCourseChange(7L, "something", null, 3);
-
-    assertNull(row.getOldValue());
-    assertEquals("3", row.getNewValue());
   }
 }

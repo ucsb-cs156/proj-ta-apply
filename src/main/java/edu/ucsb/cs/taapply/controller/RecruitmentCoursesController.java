@@ -10,7 +10,6 @@ import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
-import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs.taapply.services.RecruitmentCoursesRefreshService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,7 +35,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class RecruitmentCoursesController extends ApiController {
 
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
-  @Autowired RecruitmentAuditService recruitmentAuditService;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired UCSBCurriculumService ucsbCurriculumService;
   @Autowired RecruitmentCoursesRefreshService recruitmentCoursesRefreshService;
@@ -188,66 +186,6 @@ public class RecruitmentCoursesController extends ApiController {
     course.setAllocation(allocation);
     recruitmentCourseRepository.save(course);
     return course;
-  }
-
-  @Operation(
-      summary = "Release one section's allocation to its instructor, or withdraw it",
-      description =
-          "Released, the section's instructor sees its hiring target, ranking target and ranking"
-              + " counts on their home page card and ranking page (issue #224). Faculty see the"
-              + " result, so each change is recorded in the recruitment's audit trail; setting the"
-              + " value a section already has changes nothing.")
-  @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @PutMapping("/allocationReleased")
-  public RecruitmentCourse setAllocationReleased(
-      @Parameter(name = "id") @RequestParam Long id,
-      @Parameter(name = "released") @RequestParam boolean released) {
-    RecruitmentCourse course =
-        recruitmentCourseRepository
-            .findById(id)
-            .orElseThrow(() -> new EntityNotFoundException(RecruitmentCourse.class, id));
-    release(course, released);
-    return course;
-  }
-
-  @Operation(
-      summary = "Release every section's allocation to its instructor, or withdraw them all",
-      description =
-          "Applies to the recruitment's non-removed sections (issue #224); each one that actually"
-              + " changes gets its own audit-trail row. Returns the recruitment's non-removed"
-              + " sections.")
-  @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @PutMapping("/allocationReleased/all")
-  public List<RecruitmentCourse> setAllAllocationsReleased(
-      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
-      @Parameter(name = "released") @RequestParam boolean released) {
-    recruitmentRepository
-        .findById(recruitmentId)
-        .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
-    List<RecruitmentCourse> courses = allForRecruitment(recruitmentId, false);
-    for (RecruitmentCourse course : courses) {
-      release(course, released);
-    }
-    return courses;
-  }
-
-  /** Flips one section's release flag if it differs, saving and auditing the change. */
-  private void release(RecruitmentCourse course, boolean released) {
-    boolean before = Boolean.TRUE.equals(course.getAllocationReleased());
-    if (before == released) {
-      return;
-    }
-    course.setAllocationReleased(released);
-    recruitmentCourseRepository.save(course);
-    recruitmentAuditService.recordCourseChange(
-        course.getRecruitmentId(), "allocationReleased " + courseLabel(course), before, released);
-  }
-
-  /** "CMPSC 156 (0100)": the course number with its spaces collapsed, and the section. */
-  static String courseLabel(RecruitmentCourse course) {
-    String number =
-        course.getCourseId() == null ? "" : course.getCourseId().trim().replaceAll("\\s+", " ");
-    return course.getSection() == null ? number : number + " (" + course.getSection() + ")";
   }
 
   @Operation(

@@ -115,7 +115,7 @@ export default function InstructorRecruitmentCards({
                   Assignments
                 </Link>
               )}
-              {recruitment.allocationsVisibleToFaculty === true && (
+              {recruitment.allocationVisibility === "ALL_COURSES" && (
                 <Link
                   className="btn btn-outline-primary mb-2 ms-2"
                   to={`/recruitments/${recruitment.id}/allocations`}

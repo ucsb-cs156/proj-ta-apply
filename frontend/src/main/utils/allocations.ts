@@ -83,30 +83,56 @@ export const autoAssignTooltip = (
   `Automatically allocate the ${totalHiringTarget} ${type}s across courses based on enrollment`;
 
 /**
- * Issues #178 and #224: the two states of the global switch on the Recruitment Courses page, which
- * shows every course's allocation to every faculty member. Without it, each instructor sees only
- * the courses whose allocation the admin has released to them.
+ * Issues #178 and #224: who may see a recruitment's allocations. One setting per recruitment with
+ * three states, chosen in the Allocation Visibility modal on the Recruitment Courses page; there is
+ * nothing about it on a course's row.
  */
-export const ALLOCATIONS_HIDDEN_MESSAGE =
-  "All courses' allocations are hidden from faculty; each instructor sees only their own released courses.";
-export const ALLOCATIONS_SHOWN_MESSAGE =
-  "All courses' allocations are visible to every faculty member.";
-export const SHOW_ALLOCATIONS_LABEL = "Show All Allocations to All Faculty";
-export const HIDE_ALLOCATIONS_LABEL = "Hide All Allocations";
-export const ALLOCATIONS_SHOWN_TOAST =
-  "All allocations are now visible to every faculty member.";
-export const ALLOCATIONS_HIDDEN_TOAST =
-  "All allocations are now hidden; instructors see only their released courses.";
+export type AllocationVisibility =
+  "ADMINS_ONLY" | "OWN_COURSES" | "ALL_COURSES";
 
-/** The sentence above both controls of the Faculty visibility panel (issue #224). */
-export const RELEASE_ADVICE =
-  "Release a course's allocation to its instructor when the number is mostly final; you can still change it afterwards.";
-export const RELEASE_ALL_LABEL = "Release all allocations to their instructors";
-export const WITHDRAW_ALL_LABEL = "Withdraw all";
-export const RELEASED_ALL_TOAST =
-  "Every course's allocation is now released to its instructor.";
-export const WITHDREW_ALL_TOAST =
-  "Every course's allocation is now withdrawn from its instructor.";
+export const ALLOCATION_VISIBILITY_OPTIONS: {
+  value: AllocationVisibility;
+  name: string;
+  explanation: string;
+}[] = [
+  {
+    value: "ADMINS_ONLY",
+    name: "Admins only",
+    explanation: "No faculty member sees any allocation.",
+  },
+  {
+    value: "OWN_COURSES",
+    name: "Faculty see their own courses",
+    explanation:
+      "Each faculty member sees the allocations for the courses they teach. This is what Release Allocations to Faculty means.",
+  },
+  {
+    value: "ALL_COURSES",
+    name: "Faculty see all courses",
+    explanation:
+      "Every faculty member teaching in this recruitment sees the allocations of all its courses.",
+  },
+];
+
+/** A recruitment's setting; one that has none yet (an older response) is admins only. */
+export const allocationVisibilityOf = (recruitment: {
+  allocationVisibility?: AllocationVisibility | null;
+}): AllocationVisibility => recruitment.allocationVisibility ?? "ADMINS_ONLY";
+
+/** The short name of a state, as the panel and the toast say it. */
+export const allocationVisibilityName = (
+  visibility: AllocationVisibility,
+): string =>
+  ALLOCATION_VISIBILITY_OPTIONS.find((option) => option.value === visibility)
+    ?.name ?? "";
+
+export const ALLOCATION_VISIBILITY_NOTE =
+  "You can still change allocations afterwards; faculty see changes immediately.";
+
+export const allocationVisibilityToast = (
+  visibility: AllocationVisibility,
+): string =>
+  `Allocation visibility is now: ${allocationVisibilityName(visibility)}.`;
 
 /**
  * The notice at the top of the candidate ranking page once allocations are shown (issue #178; the

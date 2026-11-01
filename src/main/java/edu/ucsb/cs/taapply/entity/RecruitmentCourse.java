@@ -118,16 +118,6 @@ public class RecruitmentCourse {
   @Column(name = "unrounded_allocation")
   private Double unroundedAllocation;
 
-  /**
-   * Whether the admin has released this section's allocation (its hiring target) to its instructor
-   * (issue #224). Until then, and unless the recruitment shows all allocations to all faculty, the
-   * instructor sees nothing about it. Faculty see the result, so each change is recorded in the
-   * recruitment's audit trail.
-   */
-  @Column(name = "allocation_released", nullable = false)
-  @Builder.Default
-  private Boolean allocationReleased = false;
-
   /** The status the UCSB API reports for a section that has been cancelled. */
   public static final String CANCELLED = "cancelled";
 

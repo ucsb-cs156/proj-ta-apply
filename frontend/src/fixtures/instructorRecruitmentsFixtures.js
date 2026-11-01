@@ -54,7 +54,7 @@ const instructorRecruitmentsFixtures = {
   twoRecruitmentsWithAllocations: [
     {
       ...closedTa,
-      allocationsVisibleToFaculty: true,
+      allocationVisibility: "ALL_COURSES",
       courses: [
         { ...lecture156a, recruitmentId: 1, allocation: 2 },
         {
@@ -87,7 +87,7 @@ const instructorRecruitmentsFixtures = {
     },
     {
       ...openUla,
-      allocationsVisibleToFaculty: true,
+      allocationVisibility: "ALL_COURSES",
       courses: [{ ...oneA, recruitmentId: 2, allocation: 1 }],
       targets: {
         1: {

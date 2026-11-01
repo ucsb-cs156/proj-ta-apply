@@ -6,6 +6,7 @@ import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
@@ -99,7 +100,7 @@ public class InstructorRecruitmentsController extends ApiController {
           courses.stream()
               .map(
                   course ->
-                      allocationVisible(r, course)
+                      allocationsVisible(r)
                           ? course
                           : InstructorRecruitment.withoutAllocation(course))
               .toList();
@@ -129,17 +130,14 @@ public class InstructorRecruitmentsController extends ApiController {
     }
   }
 
-  /** Whether the admin has chosen to show all of this recruitment's allocations to all faculty. */
-  static boolean allocationsVisible(Recruitment r) {
-    return Boolean.TRUE.equals(r.getAllocationsVisibleToFaculty());
-  }
-
   /**
-   * Whether this course's allocation may reach its instructor (issue #224): the admin released it,
-   * or shows all allocations to all faculty.
+   * Whether this recruitment's allocations may reach the faculty who teach in it (issue #224):
+   * every state except ADMINS_ONLY. The instructor endpoints only ever return the signed-in
+   * instructor's own courses, so OWN_COURSES and ALL_COURSES differ only in the all-allocations
+   * view.
    */
-  static boolean allocationVisible(Recruitment r, RecruitmentCourse course) {
-    return allocationsVisible(r) || Boolean.TRUE.equals(course.getAllocationReleased());
+  static boolean allocationsVisible(Recruitment r) {
+    return r.getAllocationVisibility() != AllocationVisibility.ADMINS_ONLY;
   }
 
   /** One row of the all-allocations view faculty get once the admin shows them (issue #224). */
@@ -240,12 +238,11 @@ public class InstructorRecruitmentsController extends ApiController {
             r -> {
               List<RecruitmentCourse> courses =
                   byRecruitment.get(r.getId()).stream().sorted(BY_COURSE_THEN_SECTION).toList();
-              // The hiring figures leave the server only for courses the admin has released, or
-              // for all of them once all allocations are shown to all faculty.
-              List<RecruitmentCourse> released =
-                  courses.stream().filter(course -> allocationVisible(r, course)).toList();
+              // The hiring figures leave the server only once the admin lets faculty see them.
               Map<Long, CourseTargets> targets =
-                  released.isEmpty() ? null : courseTargetsService.targetsFor(r.getId(), released);
+                  allocationsVisible(r)
+                      ? courseTargetsService.targetsFor(r.getId(), courses)
+                      : null;
               return InstructorRecruitment.of(r, courses, targets);
             })
         .toList();
@@ -291,9 +288,9 @@ public class InstructorRecruitmentsController extends ApiController {
         recruitment.getFacultyRankingDeadline(),
         CourseDetails.of(course),
         otherCourses,
-        scope.isAdmin() || allocationVisible(recruitment, course) ? course.getAllocation() : null,
+        scope.isAdmin() || allocationsVisible(recruitment) ? course.getAllocation() : null,
         scope.canRank(),
-        scope.isAdmin() || allocationVisible(recruitment, course)
+        scope.isAdmin() || allocationsVisible(recruitment)
             ? courseTargetsService.targetsFor(recruitmentId, course)
             : null);
   }
@@ -311,7 +308,7 @@ public class InstructorRecruitmentsController extends ApiController {
         recruitmentRepository
             .findById(recruitmentId)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
-    if (!isAdmin() && !allocationsVisible(recruitment)) {
+    if (!isAdmin() && recruitment.getAllocationVisibility() != AllocationVisibility.ALL_COURSES) {
       throw new ForbiddenException(
           "The admin has not chosen to show this recruitment's allocations to all faculty.");
     }

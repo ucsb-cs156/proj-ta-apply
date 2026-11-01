@@ -21,6 +21,7 @@ import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.User;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.model.CurrentUser;
@@ -37,6 +38,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -213,7 +216,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             .reviewStatus("Open")
             .facultyReviewOpeningDate(LocalDate.of(2026, 4, 2))
             .facultyRankingDeadline(LocalDate.of(2026, 4, 20))
-            .allocationsVisibleToFaculty(true)
+            .allocationVisibility(AllocationVisibility.OWN_COURSES)
             .build();
     RecruitmentCourse course = row(9L, 3L, "CMPSC    16", "0100", false);
     course.setAllocation(2);
@@ -710,12 +713,14 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   }
 
   @Test
-  public void allocationsVisible_is_true_only_for_an_explicit_true() {
+  public void allocationsVisible_is_false_only_while_admins_alone_may_see_them() {
     Recruitment r = recruitment(3L, "20261", RecruitmentType.TA);
     assertFalse(InstructorRecruitmentsController.allocationsVisible(r));
-    r.setAllocationsVisibleToFaculty(null);
+    r.setAllocationVisibility(AllocationVisibility.ADMINS_ONLY);
     assertFalse(InstructorRecruitmentsController.allocationsVisible(r));
-    r.setAllocationsVisibleToFaculty(true);
+    r.setAllocationVisibility(AllocationVisibility.OWN_COURSES);
+    assertTrue(InstructorRecruitmentsController.allocationsVisible(r));
+    r.setAllocationVisibility(AllocationVisibility.ALL_COURSES);
     assertTrue(InstructorRecruitmentsController.allocationsVisible(r));
   }
 
@@ -768,13 +773,17 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
-  @Test
-  public void once_shown_the_instructor_endpoint_carries_the_allocation() throws Exception {
+  @ParameterizedTest
+  @EnumSource(
+      value = AllocationVisibility.class,
+      names = {"OWN_COURSES", "ALL_COURSES"})
+  public void once_shown_the_instructor_endpoint_carries_the_allocation(
+      AllocationVisibility visibility) throws Exception {
     instructorWithCatalogName("CONRAD P");
     RecruitmentCourse course = rowWithFigures(1L, 11L);
     when(recruitmentCourseRepository.findByInstructor("CONRAD P")).thenReturn(List.of(course));
     Recruitment ta = recruitment(11L, "20261", RecruitmentType.TA);
-    ta.setAllocationsVisibleToFaculty(true);
+    ta.setAllocationVisibility(visibility);
     when(recruitmentRepository.findAllById(Set.of(11L))).thenReturn(List.of(ta));
     Map<Long, CourseTargets> targets = Map.of(1L, new CourseTargets(1L, 3, 7, 6, 2, 4));
     when(courseTargetsService.targetsFor(11L, List.of(course))).thenReturn(targets);
@@ -801,7 +810,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   private RecruitmentCourse rankingPageSetup(boolean visible) {
     Recruitment recruitment = recruitment(10L, "20261", RecruitmentType.TA);
     recruitment.setReviewStatus("Open");
-    recruitment.setAllocationsVisibleToFaculty(visible);
+    recruitment.setAllocationVisibility(
+        visible ? AllocationVisibility.OWN_COURSES : AllocationVisibility.ADMINS_ONLY);
     when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
     RecruitmentCourse course = rowWithFigures(1L, 10L);
     when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
@@ -875,71 +885,19 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(2, json.get("targets").get("stillNeeded").asInt());
   }
 
-  // ---- per-course release (issue #224) ----
-
-  @Test
-  public void allocationVisible_is_true_for_a_released_course_or_when_all_are_shown() {
-    Recruitment r = recruitment(3L, "20261", RecruitmentType.TA);
-    RecruitmentCourse course = rowWithFigures(9L, 3L);
-    assertFalse(InstructorRecruitmentsController.allocationVisible(r, course));
-    course.setAllocationReleased(null);
-    assertFalse(InstructorRecruitmentsController.allocationVisible(r, course));
-    course.setAllocationReleased(true);
-    assertTrue(InstructorRecruitmentsController.allocationVisible(r, course));
-    course.setAllocationReleased(false);
-    r.setAllocationsVisibleToFaculty(true);
-    assertTrue(InstructorRecruitmentsController.allocationVisible(r, course));
-  }
-
-  @Test
-  public void the_record_blanks_only_the_courses_that_are_not_released() {
-    Recruitment r = recruitment(3L, "20261", RecruitmentType.TA);
-    RecruitmentCourse hidden = rowWithFigures(9L, 3L);
-    RecruitmentCourse released = rowWithFigures(10L, 3L);
-    released.setAllocationReleased(true);
-
-    InstructorRecruitment ir = InstructorRecruitment.of(r, List.of(hidden, released));
-
-    assertNull(ir.courses().get(0).getAllocation());
-    assertEquals(3, ir.courses().get(1).getAllocation());
-    assertEquals(120, ir.courses().get(1).getEnrollmentEstimate());
-  }
+  // ---- the three visibility states (issue #224) ----
 
   @WithMockUser(roles = {"INSTRUCTOR"})
-  @Test
-  public void a_released_course_carries_its_targets_while_the_others_stay_blank() throws Exception {
-    instructorWithCatalogName("CONRAD P");
-    RecruitmentCourse hidden = rowWithFigures(1L, 11L);
-    RecruitmentCourse released = rowWithFigures(2L, 11L);
-    released.setSection("0200");
-    released.setAllocationReleased(true);
-    when(recruitmentCourseRepository.findByInstructor("CONRAD P"))
-        .thenReturn(List.of(hidden, released));
-    Recruitment ta = recruitment(11L, "20261", RecruitmentType.TA);
-    when(recruitmentRepository.findAllById(Set.of(11L))).thenReturn(List.of(ta));
-    when(courseTargetsService.targetsFor(11L, List.of(released)))
-        .thenReturn(Map.of(2L, new CourseTargets(2L, 3, 4, 4, 0, 4)));
-
-    MvcResult response = mockMvc.perform(get(URL)).andExpect(status().isOk()).andReturn();
-
-    JsonNode json = mapper.readTree(response.getResponse().getContentAsString()).get(0);
-    assertTrue(json.get("courses").get(0).get("allocation").isNull());
-    assertEquals(3, json.get("courses").get(1).get("allocation").asInt());
-    assertNull(json.get("targets").get("1"));
-    assertEquals(4, json.get("targets").get("2").get("rankingTarget").asInt());
-    // Only the released course is computed.
-    verify(courseTargetsService).targetsFor(11L, List.of(released));
-    verify(courseTargetsService, never()).targetsFor(11L, List.of(hidden, released));
-  }
-
-  @WithMockUser(roles = {"INSTRUCTOR"})
-  @Test
-  public void the_ranking_page_shows_a_released_course_while_all_allocations_stay_hidden()
-      throws Exception {
+  @ParameterizedTest
+  @EnumSource(
+      value = AllocationVisibility.class,
+      names = {"OWN_COURSES", "ALL_COURSES"})
+  public void the_ranking_page_carries_the_targets_in_both_faculty_states(
+      AllocationVisibility visibility) throws Exception {
     currentUser(EMAIL, false);
     instructorWithCatalogName("CONRAD P");
-    RecruitmentCourse course = rankingPageSetup(false);
-    course.setAllocationReleased(true);
+    RecruitmentCourse course = rankingPageSetup(true);
+    recruitmentRepository.findById(10L).orElseThrow().setAllocationVisibility(visibility);
     when(courseTargetsService.targetsFor(10L, course))
         .thenReturn(new CourseTargets(1L, 3, 6, 6, 2, 4));
 
@@ -958,9 +916,9 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
 
   private static final String ALLOCATIONS_URL = "/api/instructor/recruitments/11/allocations";
 
-  private Recruitment allocationsSetup(boolean shown) {
+  private Recruitment allocationsSetup(AllocationVisibility visibility) {
     Recruitment ta = recruitment(11L, "20261", RecruitmentType.TA);
-    ta.setAllocationsVisibleToFaculty(shown);
+    ta.setAllocationVisibility(visibility);
     when(recruitmentRepository.findById(11L)).thenReturn(Optional.of(ta));
     RecruitmentCourse second = rowWithFigures(2L, 11L);
     second.setCourseId("CMPSC   156");
@@ -990,10 +948,14 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
-  @Test
-  public void instructors_get_403_while_the_admin_hides_all_allocations() throws Exception {
+  @ParameterizedTest
+  @EnumSource(
+      value = AllocationVisibility.class,
+      names = {"ADMINS_ONLY", "OWN_COURSES"})
+  public void instructors_get_403_unless_the_admin_shows_all_allocations(
+      AllocationVisibility visibility) throws Exception {
     currentUser(EMAIL, false);
-    allocationsSetup(false);
+    allocationsSetup(visibility);
 
     MvcResult response =
         mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403)).andReturn();
@@ -1008,7 +970,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   @Test
   public void instructors_get_every_non_removed_course_in_page_order_once_shown() throws Exception {
     currentUser(EMAIL, false);
-    allocationsSetup(true);
+    allocationsSetup(AllocationVisibility.ALL_COURSES);
 
     MvcResult response =
         mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().isOk()).andReturn();
@@ -1026,7 +988,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   @Test
   public void admins_read_the_allocations_even_while_hidden() throws Exception {
     currentUser(EMAIL, true);
-    allocationsSetup(false);
+    allocationsSetup(AllocationVisibility.ADMINS_ONLY);
 
     MvcResult response =
         mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().isOk()).andReturn();
@@ -1039,7 +1001,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   public void an_admin_whose_roles_are_missing_is_treated_as_a_plain_viewer() throws Exception {
     when(currentUserService.getCurrentUser())
         .thenReturn(CurrentUser.builder().user(User.builder().email(EMAIL).build()).build());
-    allocationsSetup(false);
+    allocationsSetup(AllocationVisibility.ADMINS_ONLY);
     mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403));
 
     when(currentUserService.getCurrentUser()).thenReturn(null);

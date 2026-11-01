@@ -10,17 +10,11 @@ import {
   isValidEnrollmentEstimate,
   isValidHiringTarget,
   OVER_ALLOCATED_MESSAGE,
-  ALLOCATIONS_HIDDEN_MESSAGE,
-  ALLOCATIONS_HIDDEN_TOAST,
-  ALLOCATIONS_SHOWN_MESSAGE,
-  ALLOCATIONS_SHOWN_TOAST,
-  SHOW_ALLOCATIONS_LABEL,
-  HIDE_ALLOCATIONS_LABEL,
-  RELEASE_ADVICE,
-  RELEASE_ALL_LABEL,
-  RELEASED_ALL_TOAST,
-  WITHDRAW_ALL_LABEL,
-  WITHDREW_ALL_TOAST,
+  ALLOCATION_VISIBILITY_NOTE,
+  ALLOCATION_VISIBILITY_OPTIONS,
+  allocationVisibilityName,
+  allocationVisibilityOf,
+  allocationVisibilityToast,
   rankingAllocationNotice,
 } from "main/utils/allocations";
 
@@ -156,33 +150,49 @@ describe("allocations utilities", () => {
 
   // ---- issue #178 ----
 
-  test("the Faculty visibility panel's words are the ones issue #224 asks for", () => {
-    expect(ALLOCATIONS_HIDDEN_MESSAGE).toBe(
-      "All courses' allocations are hidden from faculty; each instructor sees only their own released courses.",
+  test("the three allocation visibility states and their plain-language explanations", () => {
+    expect(ALLOCATION_VISIBILITY_OPTIONS).toEqual([
+      {
+        value: "ADMINS_ONLY",
+        name: "Admins only",
+        explanation: "No faculty member sees any allocation.",
+      },
+      {
+        value: "OWN_COURSES",
+        name: "Faculty see their own courses",
+        explanation:
+          "Each faculty member sees the allocations for the courses they teach. This is what Release Allocations to Faculty means.",
+      },
+      {
+        value: "ALL_COURSES",
+        name: "Faculty see all courses",
+        explanation:
+          "Every faculty member teaching in this recruitment sees the allocations of all its courses.",
+      },
+    ]);
+    expect(ALLOCATION_VISIBILITY_NOTE).toBe(
+      "You can still change allocations afterwards; faculty see changes immediately.",
     );
-    expect(ALLOCATIONS_SHOWN_MESSAGE).toBe(
-      "All courses' allocations are visible to every faculty member.",
+  });
+
+  test("a recruitment's visibility defaults to admins only, and each state has its name and toast", () => {
+    expect(allocationVisibilityOf({})).toBe("ADMINS_ONLY");
+    expect(allocationVisibilityOf({ allocationVisibility: null })).toBe(
+      "ADMINS_ONLY",
     );
-    expect(SHOW_ALLOCATIONS_LABEL).toBe("Show All Allocations to All Faculty");
-    expect(HIDE_ALLOCATIONS_LABEL).toBe("Hide All Allocations");
-    expect(ALLOCATIONS_SHOWN_TOAST).toBe(
-      "All allocations are now visible to every faculty member.",
+    expect(
+      allocationVisibilityOf({ allocationVisibility: "OWN_COURSES" }),
+    ).toBe("OWN_COURSES");
+    expect(allocationVisibilityName("ADMINS_ONLY")).toBe("Admins only");
+    expect(allocationVisibilityName("OWN_COURSES")).toBe(
+      "Faculty see their own courses",
     );
-    expect(ALLOCATIONS_HIDDEN_TOAST).toBe(
-      "All allocations are now hidden; instructors see only their released courses.",
+    expect(allocationVisibilityName("ALL_COURSES")).toBe(
+      "Faculty see all courses",
     );
-    expect(RELEASE_ADVICE).toBe(
-      "Release a course's allocation to its instructor when the number is mostly final; you can still change it afterwards.",
-    );
-    expect(RELEASE_ALL_LABEL).toBe(
-      "Release all allocations to their instructors",
-    );
-    expect(WITHDRAW_ALL_LABEL).toBe("Withdraw all");
-    expect(RELEASED_ALL_TOAST).toBe(
-      "Every course's allocation is now released to its instructor.",
-    );
-    expect(WITHDREW_ALL_TOAST).toBe(
-      "Every course's allocation is now withdrawn from its instructor.",
+    expect(allocationVisibilityName("SOMETHING_ELSE")).toBe("");
+    expect(allocationVisibilityToast("ALL_COURSES")).toBe(
+      "Allocation visibility is now: Faculty see all courses.",
     );
   });
 

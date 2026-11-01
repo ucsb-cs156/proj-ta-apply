@@ -336,10 +336,10 @@ describe("InstructorRecruitmentCards tests", () => {
 
   // ---- issue #224: the All allocations page link ----
 
-  test("an All allocations link appears only while the admin shows all allocations", () => {
+  test("an All allocations link appears only while the admin shows all courses to all faculty", () => {
     const [ta, ula] =
       instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations;
-    renderCards([ta, { ...ula, allocationsVisibleToFaculty: false }]);
+    renderCards([ta, { ...ula, allocationVisibility: "OWN_COURSES" }]);
 
     const link = screen.getByTestId("I-card-1-all-allocations-button");
     expect(link).toHaveTextContent("All allocations");
@@ -353,7 +353,13 @@ describe("InstructorRecruitmentCards tests", () => {
     ).toBeTruthy();
   });
 
-  test("no All allocations link when the flag is absent", () => {
+  test("no All allocations link while admins only see them", () => {
+    const [ta] = instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations;
+    renderCards([{ ...ta, allocationVisibility: "ADMINS_ONLY" }]);
+    expect(screen.queryByText("All allocations")).toBeNull();
+  });
+
+  test("no All allocations link when the setting is absent", () => {
     renderCards(instructorRecruitmentsFixtures.twoRecruitments);
     expect(screen.queryByText("All allocations")).toBeNull();
   });

@@ -48,8 +48,6 @@ export type RecruitmentCourse = {
   enrollmentEstimate?: number | null;
   /** Its fractional share of the hiring target by estimate (issue #176); null until computed. */
   unroundedAllocation?: number | null;
-  /** Whether the admin has released this section's allocation to its instructor (issue #224). */
-  allocationReleased?: boolean | null;
 };
 
 export type RecruitmentCourseRankingSummary = {
@@ -156,38 +154,6 @@ function EnrollmentEstimateCell({
       onChange={(e) => meta.onChange(course, e.target.value)}
       onBlur={() => meta.onBlur(course)}
       data-testid={`${meta.testIdPrefix}-cell-row-${cell.row.index}-enrollmentEstimate`}
-    />
-  );
-}
-
-/** What the Released to faculty column's cells need, handed to them through the column's meta. */
-type ReleasedColumnMeta = {
-  style: CSSProperties;
-  testIdPrefix: string;
-  onToggle: (course: RecruitmentCourse, released: boolean) => void;
-};
-
-/**
- * One row's Released to faculty box (issue #224), a module-level component for the same reason as
- * AllocationCell. Ticking releases the section's allocation to its instructor at once; a removed
- * row cannot be released.
- */
-function ReleasedCell({
-  cell,
-}: {
-  cell: Cell<RecruitmentCourse, unknown>;
-}): React.JSX.Element {
-  const meta = cell.column.columnDef.meta as ReleasedColumnMeta;
-  const course = cell.row.original;
-  return (
-    <Form.Check
-      type="checkbox"
-      className="d-flex justify-content-center"
-      aria-label={`Released to faculty: ${course.courseId} section ${course.section ?? ""}`}
-      checked={course.allocationReleased === true}
-      disabled={course.removed}
-      onChange={(e) => meta.onToggle(course, e.target.checked)}
-      data-testid={`${meta.testIdPrefix}-cell-row-${cell.row.index}-allocationReleased`}
     />
   );
 }
@@ -302,23 +268,6 @@ export default function RecruitmentCourseTable({
     { onSuccess: replaceInCache },
     ["/api/recruitmentcourses/all", includeRemoved],
   );
-  // Issue #224: releasing one section's allocation to its instructor, audited by the backend.
-  const releasedMutation = useBackendMutation<
-    { id: number; released: boolean },
-    RecruitmentCourse
-  >(
-    ({ id, released }) => ({
-      url: "/api/recruitmentcourses/allocationReleased",
-      method: "PUT",
-      params: { id, released },
-    }),
-    { onSuccess: replaceInCache },
-    // Stryker disable next-line all : the key is only observable through invalidation, which the saved row's cache replacement makes redundant
-    ["/api/recruitmentcourses/all", includeRemoved],
-  );
-  const onReleasedToggle = (course: RecruitmentCourse, released: boolean) =>
-    releasedMutation.mutate({ id: course.id, released });
-
   const onAllocationChange = (course: RecruitmentCourse, value: string) => {
     setAllocationDrafts((previous) => ({ ...previous, [course.id]: value }));
     if (isValidAllocation(value)) {
@@ -573,16 +522,6 @@ export default function RecruitmentCourseTable({
         onBlur: onAllocationBlur,
       } satisfies AllocationColumnMeta,
       cell: AllocationCell,
-    },
-    {
-      header: stacked("Released", "to faculty"),
-      accessorKey: "allocationReleased",
-      meta: {
-        ...shrinkToContent,
-        testIdPrefix,
-        onToggle: onReleasedToggle,
-      } satisfies ReleasedColumnMeta,
-      cell: ReleasedCell,
     },
     {
       header: (
