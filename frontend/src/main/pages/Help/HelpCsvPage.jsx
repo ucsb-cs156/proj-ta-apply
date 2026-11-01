@@ -269,9 +269,9 @@ export default function HelpCsvPage() {
           Besides the App Settings lists described above, the{" "}
           <i>Recruitments</i> admin page offers a <b>CSV</b> button per
           recruitment that downloads every application to it, one row per
-          application, with a header row and every cell quoted. Test
-          applications are included, flagged in the <code>testApplication</code>{" "}
-          column.
+          application, with a header row and every cell quoted. Test and fake
+          applications are included, flagged in the <code>origin</code> column:
+          APPLICANT, ADMIN_TEST or DEVELOPER_MODE.
         </p>
         <p data-testid="applicationsCsvDescription">
           The columns differ by recruitment type: a TA file has{" "}

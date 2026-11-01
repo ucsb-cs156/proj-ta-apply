@@ -54,7 +54,7 @@ public class AdminApplicationsController extends ApiController {
   @Operation(
       summary = "Every application to a recruitment, oldest first",
       description =
-          "Test applications are included, flagged by testApplication, so the page can set them"
+          "Test and fake applications are included, flagged by origin, so the page can set them"
               + " apart. 404 for a recruitment that does not exist.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/all")

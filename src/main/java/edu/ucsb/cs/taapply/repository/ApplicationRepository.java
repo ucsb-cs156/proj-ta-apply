@@ -18,7 +18,4 @@ public interface ApplicationRepository extends CrudRepository<Application, Long>
   List<Application> findByRecruitmentIdOrderByIdAsc(Long recruitmentId);
 
   boolean existsByEmailAndRecruitmentId(String email, Long recruitmentId);
-
-  /** How many real (non-test) applications one recruitment has. */
-  long countByRecruitmentIdAndTestApplicationFalse(Long recruitmentId);
 }

@@ -11,6 +11,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -236,9 +237,9 @@ public class ApplicationRepositoryTests {
     assertFalse(applicationRepository.existsByEmailAndRecruitmentId("nobody@ucsb.edu", r.getId()));
   }
 
-  /** The column added by changeset 009 exists and the entity reads and writes it. */
+  /** The origin column (changeset 042) exists and the entity reads and writes every value. */
   @Test
-  public void test_application_defaults_to_false_and_round_trips() {
+  public void origin_defaults_to_applicant_and_round_trips() {
     Recruitment r = recruitment("20261", RecruitmentType.TA);
 
     Application real =
@@ -249,13 +250,27 @@ public class ApplicationRepositoryTests {
             Application.builder()
                 .recruitmentId(r.getId())
                 .email("admin@ucsb.edu")
-                .testApplication(true)
+                .origin(ApplicationOrigin.ADMIN_TEST)
+                .build());
+    Application fake =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(r.getId())
+                .email("fake@fake.ucsb.edu")
+                .origin(ApplicationOrigin.DEVELOPER_MODE)
                 .build());
     entityManager.flush();
     entityManager.clear();
 
-    assertFalse(applicationRepository.findById(real.getId()).orElseThrow().isTestApplication());
-    assertTrue(applicationRepository.findById(test.getId()).orElseThrow().isTestApplication());
+    assertEquals(
+        ApplicationOrigin.APPLICANT,
+        applicationRepository.findById(real.getId()).orElseThrow().getOrigin());
+    assertEquals(
+        ApplicationOrigin.ADMIN_TEST,
+        applicationRepository.findById(test.getId()).orElseThrow().getOrigin());
+    assertEquals(
+        ApplicationOrigin.DEVELOPER_MODE,
+        applicationRepository.findById(fake.getId()).orElseThrow().getOrigin());
   }
 
   private long interestRows() {

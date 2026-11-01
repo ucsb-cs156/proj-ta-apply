@@ -243,7 +243,7 @@ describe("AdminApplicationEditPage tests", () => {
 
     expect(
       await screen.findByTestId("AdminApplicationEditPage-about"),
-    ).toHaveTextContent("Test application from admin@ucsb.edu");
+    ).toHaveTextContent("Test application (admin) from admin@ucsb.edu");
     expect(
       screen.getByRole("heading", { level: 1, name: "Edit Application 9" }),
     ).toBeInTheDocument();

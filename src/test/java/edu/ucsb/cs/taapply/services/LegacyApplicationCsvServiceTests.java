@@ -1,7 +1,6 @@
 package edu.ucsb.cs.taapply.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,6 +16,7 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.TaMajor;
 import edu.ucsb.cs.taapply.entity.TaTopic;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -170,7 +170,7 @@ public class LegacyApplicationCsvServiceTests {
     for (Application a : saved.getAllValues()) {
       assertEquals(5L, a.getRecruitmentId());
       assertEquals(ApplicationReviewStatus.PENDING, a.getStatus());
-      assertFalse(a.isTestApplication());
+      assertEquals(ApplicationOrigin.APPLICANT, a.getOrigin());
       assertNull(a.getNoticeVersionId());
       assertEquals("Fakedata", a.getMiddleName());
       assertTrue(a.getEmail().contains("@"));

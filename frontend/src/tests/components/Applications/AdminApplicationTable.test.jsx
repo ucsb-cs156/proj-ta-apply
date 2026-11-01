@@ -379,6 +379,18 @@ describe("AdminApplicationTable tests", () => {
     ).toBe("");
   });
 
+  test("a fake developer-mode application gets a red fake badge", () => {
+    renderTable({
+      applications: [ta, { ...testApp, origin: "DEVELOPER_MODE" }],
+    });
+
+    const badge = screen.getByTestId(
+      "AdminApplicationTable-cell-row-1-col-id-test",
+    );
+    expect(badge).toHaveTextContent("fake");
+    expect(badge).toHaveClass("text-bg-danger");
+  });
+
   test("a test application is marked as such beside its id", () => {
     renderTable({ applications: [ta, testApp] });
 
