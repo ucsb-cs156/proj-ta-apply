@@ -17,13 +17,13 @@ A recruitment is run in nine steps. Steps have *hard* prerequisites (must happen
 |---|---|---|---|
 | 1 | Create TA (or ULA) Recruitment | | |
 | 2 | Open TA (or ULA) Applications | 1 | |
-| 3 | Close TA (or ULA) Applications | 2 | |
-| 4 | Budget / Allocations | 1 | |
-| 5 | Release Allocations to Faculty * | 4 | |
-| 6 | Open Faculty Ranking | | 3, 5 |
+| 3 | Budget / Allocations | 1 | |
+| 4 | Close TA (or ULA) Applications | 2 | |
+| 5 | Release Allocations to Faculty * | 3 | |
+| 6 | Open Faculty Ranking | | 4, 5 |
 | 7 | Close Faculty Ranking | 6 | |
 | 8 | Assign Candidates to Slots | 6 | 7 |
-| 9 | Release Hiring Decisions | 3, 8 | |
+| 9 | Release Hiring Decisions | 4, 8 | |
 
 \* Allocation visibility has three settings, chosen in one place: **admins only** (the
 default), **each faculty member sees the allocations for the courses they teach**, or **all
@@ -32,7 +32,7 @@ choose is up to the admin.
 
 ### The diagram
 
-The steps are drawn left to right in two rows: steps 2, 3 and 7 on the top row, steps 4, 5,
+The steps are drawn left to right in two rows: steps 2, 4 and 7 on the top row, steps 3, 5,
 6, 8 and 9 on the bottom row, and step 1 at the left between the rows. Boxes are rectangles
 with rounded corners sized to their text, labels broken over up to three lines with a hanging
 indent so the step numbers stick out, in Arial Narrow (Liberation Sans Narrow and Arial as
@@ -40,7 +40,7 @@ fallbacks) at 13px. Hard prerequisites are solid arrows, soft ones dashed; a leg
 both, and the footnote for step 5 sits under the legend. Step 7 is centred above the gap between
 6 and 8. The diagram is 835 × 392 units and scales to its container.
 
-There are two versions, TA and ULA, differing only in the words TA/ULA in steps 1, 2 and 3.
+There are two versions, TA and ULA, differing only in the words TA/ULA in steps 1, 2 and 4.
 
 The diagram is generated from a table of steps and edges, not drawn by hand, so the help page
 and the live admin card share one source. The agreed layout, produced during design, is kept as
@@ -67,8 +67,8 @@ with three additions:
 |---|---|---|---|
 | 1 | `Created: {date the recruitment was created}` | always | none |
 | 2 | `Opened: {actualOpeningDate}` once opened; before that `Tentative: {tentativeOpeningDate}` | actualOpeningDate is set | the Open Applications modal |
-| 3 | `Closed: {actualClosingDate}` once closed; before that `Prim. Consid: {primaryConsiderationDate}` | actualClosingDate is set and applications are closed | the Close Applications modal |
-| 4 | `Hiring Target: {n}` (the target is never unset: it defaults to 1, which is obviously wrong in practice and signals that action is needed) | the allocations add up to the target | the word **Budget** → the Budget for Quarter page for the recruitment's quarter; the word **Allocations** → the Recruitment Courses page |
+| 3 | `Hiring Target: {n}` (the target is never unset: it defaults to 1, which is obviously wrong in practice and signals that action is needed) | the allocations add up to the target | the word **Budget** → the Budget for Quarter page for the recruitment's quarter; the word **Allocations** → the Recruitment Courses page |
+| 4 | `Closed: {actualClosingDate}` once closed; before that `Prim. Consid: {primaryConsiderationDate}` | actualClosingDate is set and applications are closed | the Close Applications modal |
 | 5 | `Released: {date}` or `Not released yet` | visibility is not "admins only" | the Allocation Visibility modal (three radio options) |
 | 6 | `Opened: {date faculty rankings opened}` or `Not opened yet` | faculty review opening date set | the Open Faculty Rankings modal |
 | 7 | `Closed: {date faculty rankings closed}`; before that `Deadline: {facultyRankingDeadline}` if a deadline is set, else `Not closed yet` | reviews closed after having been open | the Close Faculty Rankings modal; and a separate link **(see rankings)** → the Courses page |

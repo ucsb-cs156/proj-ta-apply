@@ -18,10 +18,10 @@
   <text x="28.0" y="137.6"><tspan class="num">1.</tspan><tspan class="label" x="45.0">Create ULA</tspan><tspan class="label" x="45.0" dy="16">Recruitment</tspan></text>
   <rect class="box" x="155.0" y="45" width="101" height="62" rx="9"/>
   <text x="163.0" y="72.5"><tspan class="num">2.</tspan><tspan class="label" x="180.0">Open ULA</tspan><tspan class="label" x="180.0" dy="16">Applications</tspan></text>
-  <rect class="box" x="296.0" y="45" width="101" height="62" rx="9"/>
-  <text x="304.0" y="72.5"><tspan class="num">3.</tspan><tspan class="label" x="321.0">Close ULA</tspan><tspan class="label" x="321.0" dy="16">Applications</tspan></text>
   <rect class="box" x="158.0" y="175" width="95" height="62" rx="9"/>
-  <text x="166.0" y="202.6"><tspan class="num">4.</tspan><tspan class="label" x="183.0">Budget /</tspan><tspan class="label" x="183.0" dy="16">Allocations</tspan></text>
+  <text x="166.0" y="202.6"><tspan class="num">3.</tspan><tspan class="label" x="183.0">Budget /</tspan><tspan class="label" x="183.0" dy="16">Allocations</tspan></text>
+  <rect class="box" x="296.0" y="45" width="101" height="62" rx="9"/>
+  <text x="304.0" y="72.5"><tspan class="num">4.</tspan><tspan class="label" x="321.0">Close ULA</tspan><tspan class="label" x="321.0" dy="16">Applications</tspan></text>
   <rect class="box" x="296.0" y="175" width="101" height="62" rx="9"/>
   <text x="304.0" y="194.6"><tspan class="num">5.</tspan><tspan class="label" x="321.0">Release</tspan><tspan class="label" x="321.0" dy="16">Allocations</tspan><tspan class="label" x="321.0" dy="16">to Faculty *</tspan></text>
   <rect class="box" x="437.0" y="175" width="71" height="62" rx="9"/>
