@@ -27,6 +27,11 @@ describe("helpPages", () => {
       },
       { path: "/help/admins", label: "For Admins", audience: "admin" },
       {
+        path: "/help/recruitment-steps",
+        label: "Recruitment Steps",
+        audience: "staff",
+      },
+      {
         path: "/help/notice-fields",
         label: "Notices Fields",
         audience: "admin",

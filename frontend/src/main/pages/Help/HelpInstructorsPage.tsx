@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 
 /** What an instructor can do here, so far: /help/instructors (issue #140). */
@@ -12,6 +13,11 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           apply to you: each TA or ULA recruitment for a quarter in which you
           are teaching a course that is recruiting, with that course (or
           courses) under it.
+        </p>
+        <p data-testid="HelpInstructorsPage-steps-link">
+          Where your part fits in a recruitment, and what the admin does before
+          and after it, is drawn on the{" "}
+          <Link to="/help/recruitment-steps">Recruitment Steps</Link> page.
         </p>
         <p>
           Courses are matched to you by the name the course schedule uses for

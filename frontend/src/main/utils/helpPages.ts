@@ -2,7 +2,8 @@
  * The Help menu's pages (issue #140): where each lives, what it is called, and who it is for.
  * The menu and the router both read this list, so adding a page is one entry here plus its file.
  */
-export type HelpAudience = "everyone" | "instructor" | "admin";
+/** "staff" is anyone who is an instructor or an admin (issue #232). */
+export type HelpAudience = "everyone" | "instructor" | "admin" | "staff";
 
 export type HelpPage = {
   path: string;
@@ -28,6 +29,11 @@ export const HELP_PAGES: HelpPage[] = [
     audience: "instructor",
   },
   { path: "/help/admins", label: "For Admins", audience: "admin" },
+  {
+    path: "/help/recruitment-steps",
+    label: "Recruitment Steps",
+    audience: "staff",
+  },
   { path: "/help/notice-fields", label: "Notices Fields", audience: "admin" },
   {
     path: "/help/csv",

@@ -19,7 +19,8 @@ export default function HelpMenu({
     (page) =>
       page.audience === "everyone" ||
       (page.audience === "admin" && isAdmin) ||
-      (page.audience === "instructor" && isInstructor),
+      (page.audience === "instructor" && isInstructor) ||
+      (page.audience === "staff" && (isAdmin || isInstructor)),
   );
 
   return (

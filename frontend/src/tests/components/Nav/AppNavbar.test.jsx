@@ -197,6 +197,11 @@ describe("AppNavbar tests", () => {
     expect(screen.queryByText("For Admins")).toBeNull();
     expect(screen.queryByText("Notices Fields")).toBeNull();
     expect(screen.queryByText("CSV Upload/Download Formats")).toBeNull();
+    // Issue #232: the Recruitment Steps page is for instructors as well as admins.
+    expect(screen.getByText("Recruitment Steps")).toHaveAttribute(
+      "href",
+      "/help/recruitment-steps",
+    );
   });
 
   test("Help menu does not offer the CSV formats page to an ordinary user", async () => {
@@ -212,6 +217,8 @@ describe("AppNavbar tests", () => {
     expect(screen.queryByText("CSV Upload/Download Formats")).toBeNull();
     expect(screen.queryByText("For Instructors")).toBeNull();
     expect(screen.queryByText("For Admins")).toBeNull();
+    // Neither admins nor instructors: no Recruitment Steps page either (issue #232).
+    expect(screen.queryByText("Recruitment Steps")).toBeNull();
   });
 
   test("Help menu offers the CSV formats page to an admin", async () => {
@@ -249,6 +256,7 @@ describe("AppNavbar tests", () => {
       "For TA Applicants",
       "For ULA Applicants",
       "For Admins",
+      "Recruitment Steps",
       "Notices Fields",
       "CSV Upload/Download Formats",
     ]);
