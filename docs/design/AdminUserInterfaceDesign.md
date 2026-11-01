@@ -25,9 +25,10 @@ A recruitment is run in nine steps. Steps have *hard* prerequisites (must happen
 | 8 | Assign Candidates to Slots | 6 | 7 |
 | 9 | Release Hiring Decisions | 3, 8 | |
 
-\* By default, step 5 releases only the allocations for the courses each faculty member
-teaches. It is also possible to release all allocations for all courses; that is a separate
-option on the Courses page.
+\* Allocation visibility has three settings, chosen in one place: **admins only** (the
+default), **each faculty member sees the allocations for the courses they teach**, or **all
+faculty see all allocations**. Step 5 means moving off "admins only"; which of the other two to
+choose is up to the admin.
 
 ### The diagram
 
@@ -68,7 +69,7 @@ with three additions:
 | 2 | `Opened: {actualOpeningDate}` once opened; before that `Tentative: {tentativeOpeningDate}` | actualOpeningDate is set | the Open Applications modal |
 | 3 | `Closed: {actualClosingDate}` once closed; before that `Prim. Consid: {primaryConsiderationDate}` | actualClosingDate is set and applications are closed | the Close Applications modal |
 | 4 | `Hiring Target: {n}` (the target is never unset: it defaults to 1, which is obviously wrong in practice and signals that action is needed) | the allocations add up to the target | the word **Budget** → the Budget for Quarter page for the recruitment's quarter; the word **Allocations** → the Recruitment Courses page |
-| 5 | `Released: {date}` or `Not released yet` | released (all courses, or the all-courses switch) | the Release Allocations modal |
+| 5 | `Released: {date}` or `Not released yet` | visibility is not "admins only" | the Allocation Visibility modal (three radio options) |
 | 6 | `Opened: {date faculty rankings opened}` or `Not opened yet` | faculty review opening date set | the Open Faculty Rankings modal |
 | 7 | `Closed: {date faculty rankings closed}`; before that `Deadline: {facultyRankingDeadline}` if a deadline is set, else `Not closed yet` | reviews closed after having been open | the Close Faculty Rankings modal; and a separate link **(see rankings)** → the Courses page |
 | 8 | `Still to assign: n` while tentative assignments < target; `Assignment complete` otherwise | assignments ≥ target | the Assignments page |
@@ -78,7 +79,8 @@ The hiring target keeps its default of 1 (it is a divisor in the budget and rati
 never null); the diagram therefore always shows `Hiring Target: n`.
 
 The dates for steps 1, 5, 7 and 9 are not stored today; the backend will store them (created
-at, allocations released at, faculty review closed at, assignments published at) and stamp them
+at, allocations released at = the first time visibility left "admins only", faculty review
+closed at, assignments published at) and stamp them
 from the existing endpoints. The backend computes the labels, done flags and link targets in one
 endpoint so the frontend only draws.
 

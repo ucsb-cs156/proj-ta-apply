@@ -65,8 +65,8 @@ def build(kind):
     for d in soft: out.append(f'  <path class="soft" d="{d}"/>')
     out.append('  <line x1="30" y1="290" x2="75" y2="290" class="hard"/><text x="85" y="294" class="legend">hard prerequisite: must happen first</text>')
     out.append('  <line x1="30" y1="316" x2="75" y2="316" class="soft"/><text x="85" y="320" class="legend">soft prerequisite: the preferred order, not enforced</text>')
-    out.append('  <text x="30" y="352" class="legend"><tspan font-weight="700">*</tspan> By default, this only releases the allocations for courses the faculty member teaches. It is also possible to release all</text>')
-    out.append('  <text x="30" y="370" class="legend">allocations for all courses; that is a separate option on the Courses page.</text>')
+    out.append('  <text x="30" y="352" class="legend"><tspan font-weight="700">*</tspan> Allocation visibility has three settings: admins only (the default), each faculty member sees the allocations for the courses they teach,</text>')
+    out.append('  <text x="30" y="370" class="legend">or all faculty see all allocations. Step 5 means moving off &quot;admins only&quot;.</text>')
     out.append('</svg>')
     return '\n'.join(out)+'\n', TOTAL
 

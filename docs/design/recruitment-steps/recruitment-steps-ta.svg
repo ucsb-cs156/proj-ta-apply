@@ -45,6 +45,6 @@
   <path class="soft" d="M 397.0 76.0 H 472.5 V 174"/>
   <line x1="30" y1="290" x2="75" y2="290" class="hard"/><text x="85" y="294" class="legend">hard prerequisite: must happen first</text>
   <line x1="30" y1="316" x2="75" y2="316" class="soft"/><text x="85" y="320" class="legend">soft prerequisite: the preferred order, not enforced</text>
-  <text x="30" y="352" class="legend"><tspan font-weight="700">*</tspan> By default, this only releases the allocations for courses the faculty member teaches. It is also possible to release all</text>
-  <text x="30" y="370" class="legend">allocations for all courses; that is a separate option on the Courses page.</text>
+  <text x="30" y="352" class="legend"><tspan font-weight="700">*</tspan> Allocation visibility has three settings: admins only (the default), each faculty member sees the allocations for the courses they teach,</text>
+  <text x="30" y="370" class="legend">or all faculty see all allocations. Step 5 means moving off &quot;admins only&quot;.</text>
 </svg>
