@@ -74,6 +74,7 @@ export const STEP_EDGES: { from: number; to: number; kind: EdgeKind }[] = [
   { from: 8, to: 9, kind: "hard" },
   { from: 4, to: 6, kind: "soft" },
   { from: 4, to: 9, kind: "hard" },
+  { from: 7, to: 9, kind: "hard" },
 ];
 
 export const LEGEND_HARD = "hard prerequisite: must happen first";
@@ -295,6 +296,11 @@ export const layoutRecruitmentSteps = (
     `M ${f(right(4))} ${f(cy(4))} H ${f(cx(6))} V ${f(top(6) - 1)}`;
   paths["4-9"] =
     `M ${f(cx(4))} ${f(top(4))} V 22 H ${f(cx(9))} V ${f(top(9) - 1)}`;
+
+  // 7 -> 9: out of 7's right edge a little above the 7 -> 8 line, then down into 9's top, left of
+  // where 4 -> 9 arrives so the two do not cross.
+  paths["7-9"] =
+    `M ${f(right(7))} ${f(cy(7) - 12)} H ${f(cx(9) - 20)} V ${f(top(9) - 1)}`;
 
   const edges: EdgeGeometry[] = STEP_EDGES.map((e) => ({
     ...e,

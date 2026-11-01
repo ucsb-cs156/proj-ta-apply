@@ -45,8 +45,8 @@ describe("recruitmentSteps", () => {
     expect(stepTitle("TA", 8)).toBe("Assign Candidates to Slots");
   });
 
-  test("the eleven prerequisites, eight hard and three soft", () => {
-    expect(STEP_EDGES).toHaveLength(11);
+  test("the twelve prerequisites, nine hard and three soft", () => {
+    expect(STEP_EDGES).toHaveLength(12);
     expect(
       STEP_EDGES.filter((e) => e.kind === "soft").map(
         (e) => `${e.from}-${e.to}`,
@@ -56,7 +56,7 @@ describe("recruitmentSteps", () => {
       STEP_EDGES.filter((e) => e.kind === "hard").map(
         (e) => `${e.from}-${e.to}`,
       ),
-    ).toEqual(["1-2", "2-4", "1-3", "3-5", "6-7", "6-8", "8-9", "4-9"]);
+    ).toEqual(["1-2", "2-4", "1-3", "3-5", "6-7", "6-8", "8-9", "4-9", "7-9"]);
   });
 
   test("the static layout matches the agreed diagram's geometry", () => {
@@ -119,6 +119,8 @@ describe("recruitmentSteps", () => {
     expect(edgeOf(layout, 7, 8).d).toBe("M 591.0 76.0 H 647.5 V 174.0");
     expect(edgeOf(layout, 4, 6).d).toBe("M 397.0 76.0 H 472.5 V 174.0");
     expect(edgeOf(layout, 4, 9).d).toBe("M 346.5 45.0 V 22 H 773.5 V 174.0");
+    expect(edgeOf(layout, 7, 9).d).toBe("M 591.0 64.0 H 753.5 V 174.0");
+    expect(edgeOf(layout, 7, 9).kind).toBe("hard");
     expect(edgeOf(layout, 5, 6).kind).toBe("soft");
     expect(edgeOf(layout, 6, 8).kind).toBe("hard");
   });

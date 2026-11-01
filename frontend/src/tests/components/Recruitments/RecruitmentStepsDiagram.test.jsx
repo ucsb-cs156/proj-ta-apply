@@ -10,7 +10,7 @@ const step = (n) => screen.getByTestId(`D-step-${n}`);
 
 describe("RecruitmentStepsDiagram tests", () => {
   describe("static mode", () => {
-    test("draws the agreed TA diagram: nine boxes, eleven edges, legend and footnote", () => {
+    test("draws the agreed TA diagram: nine boxes, twelve edges, legend and footnote", () => {
       render(<RecruitmentStepsDiagram type="TA" testIdPrefix="D" />);
 
       expect(svg()).toHaveAttribute("viewBox", "0 0 835 392");
@@ -76,7 +76,7 @@ describe("RecruitmentStepsDiagram tests", () => {
       );
 
       const edges = [...svg().querySelectorAll("path[data-kind]")];
-      expect(edges).toHaveLength(11);
+      expect(edges).toHaveLength(12);
       expect(edges.filter((e) => e.dataset.kind === "soft")).toHaveLength(3);
       expect(screen.getByTestId("D-edge-5-6")).toHaveAttribute(
         "stroke-dasharray",
@@ -84,6 +84,14 @@ describe("RecruitmentStepsDiagram tests", () => {
       );
       expect(screen.getByTestId("D-edge-6-8")).not.toHaveAttribute(
         "stroke-dasharray",
+      );
+      // Closing faculty ranking (7) is a hard prerequisite of releasing hiring decisions (9).
+      expect(screen.getByTestId("D-edge-7-9")).not.toHaveAttribute(
+        "stroke-dasharray",
+      );
+      expect(screen.getByTestId("D-edge-7-9")).toHaveAttribute(
+        "d",
+        "M 591.0 64.0 H 753.5 V 174.0",
       );
       expect(screen.getByTestId("D-edge-6-8")).toHaveAttribute(
         "d",
