@@ -476,6 +476,10 @@ the enrollment estimates, and returns the sections in page order:
 <dd>
 <div class="block">Returns the value of the <code>availabilityCommentsSecondChoice</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html#available()" class="member-name-link">available()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService.Status</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>available</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#availableForDiscussionFirstChoice()" class="member-name-link">availableForDiscussionFirstChoice()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>availableForDiscussionFirstChoice</code> record component.</div>
@@ -850,6 +854,24 @@ who has just chosen that course.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#deleteRecruitment(java.lang.Long)" class="member-name-link">deleteRecruitment(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DeveloperModeController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">DeveloperModeController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">The Developer Mode switch (issue #217): anyone, signed in or not, may ask whether it is on (the
+footer badge is shown everywhere); only admins may flip it, and only where the environment flag
+makes it available.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DeveloperModeController.html#%3Cinit%3E()" class="member-name-link">DeveloperModeController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DeveloperModeController.html" title="class in edu.ucsb.cs.taapply.controller">DeveloperModeController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">The Developer Mode switch (issue #217).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html#%3Cinit%3E()" class="member-name-link">DeveloperModeService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService.Status</a> - Record Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">What the frontend needs: whether the switch exists here, and whether it is on.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#downloadCsv(java.lang.Long)" class="member-name-link">downloadCsv(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html#downloadCsv(java.lang.Long)" class="member-name-link">downloadCsv(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminRankingsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminRankingsController</a></dt>
@@ -1086,6 +1108,10 @@ both Summer and Fall are reachable.</div>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Summary</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService.Status</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -1385,6 +1411,16 @@ recruitment can record instructors, meeting times and enrollment.</div>
 <dd>
 <div class="block">Returns the value of the <code>givenName</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/GlobalSetting.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">GlobalSetting</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">One app-wide setting an admin can switch (issue #217), keyed by name.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/GlobalSetting.html#%3Cinit%3E()" class="member-name-link">GlobalSetting()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/GlobalSetting.html" title="class in edu.ucsb.cs.taapply.entity">GlobalSetting</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/GlobalSettingRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">GlobalSettingRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
+<dd>
+<div class="block">Settings are keyed by name; see <a href="edu/ucsb/cs/taapply/entity/GlobalSetting.html" title="class in edu.ucsb.cs.taapply.entity"><code>GlobalSetting</code></a>.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/GoogleSignInService.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.services">GoogleSignInService</a> - Interface in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/GoogleSignInServiceImpl.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">GoogleSignInServiceImpl</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
@@ -1562,6 +1598,10 @@ applicant, and anyone in the admin or instructor tables whatever their address.<
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Summary</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService.Status</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -1828,6 +1868,10 @@ have logged in: until then both names are null.</div>
 <dd>
 <div class="block">Returns the value of the <code>invalidEmails</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html#isAvailable()" class="member-name-link">isAvailable()</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService</a></dt>
+<dd>
+<div class="block">Whether the environment flag makes the switch available on this instance.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html#isEligible(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">isEligible(Recruitment, LocalDate)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html" title="class in edu.ucsb.cs.taapply.jobs">RecruitmentCoursesRefreshScheduler</a></dt>
 <dd>
 <div class="block">Whether a recruitment's course list is still worth refreshing today.</div>
@@ -1838,6 +1882,10 @@ have logged in: until then both names are null.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/CurrentUserService.html#isLoggedIn()" class="member-name-link">isLoggedIn()</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/CurrentUserService.html" title="class in edu.ucsb.cs.taapply.services">CurrentUserService</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html#isOn()" class="member-name-link">isOn()</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService</a></dt>
+<dd>
+<div class="block">Whether developer mode is switched on: available, and the setting is "On".</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html#isOnOffer()" class="member-name-link">isOnOffer()</a> - Method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></dt>
 <dd>
 <div class="block">Whether applicants should see this row: not removed by an admin, not stale, and not cancelled
@@ -2164,6 +2212,14 @@ application form.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CourseDetails.html#of(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">of(RecruitmentCourse)</a> - Static method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CourseDetails.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CourseDetails</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.InstructorRecruitment.html#of(edu.ucsb.cs.taapply.entity.Recruitment,java.util.List)" class="member-name-link">of(Recruitment, List)</a> - Static method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html#OFF" class="member-name-link">OFF</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html#on()" class="member-name-link">on()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService.Status</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>on</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html#ON" class="member-name-link">ON</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/QuarterCalendarController.html#one(java.lang.String)" class="member-name-link">one(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/QuarterCalendarController.html" title="class in edu.ucsb.cs.taapply.controller">QuarterCalendarController</a></dt>
 <dd>&nbsp;</dd>
@@ -2764,10 +2820,20 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html#setHidden(java.lang.String,java.lang.Long,java.lang.String,boolean)" class="member-name-link">setHidden(String, Long, String, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html" title="class in edu.ucsb.cs.taapply.controller">HiddenColumnsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DeveloperModeController.html#setOn(boolean)" class="member-name-link">setOn(boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DeveloperModeController.html" title="class in edu.ucsb.cs.taapply.controller">DeveloperModeController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html#setOn(boolean)" class="member-name-link">setOn(boolean)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService</a></dt>
+<dd>
+<div class="block">Switches developer mode on or off.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setRemoved(java.lang.Long,boolean)" class="member-name-link">setRemoved(Long, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html#setTentative(java.lang.Long,java.lang.Long)" class="member-name-link">setTentative(Long, Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminAssignmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html#SETTING_KEY" class="member-name-link">SETTING_KEY</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService</a></dt>
+<dd>
+<div class="block">The setting's key in <code>global_settings</code>.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/wiremock/WiremockServiceImpl.html#setupOauthMocks(com.github.tomakehurst.wiremock.junit.Stubbing,java.lang.String)" class="member-name-link">setupOauthMocks(Stubbing, String)</a> - Static method in class edu.ucsb.cs.taapply.services.wiremock.<a href="edu/ucsb/cs/taapply/services/wiremock/WiremockServiceImpl.html" title="class in edu.ucsb.cs.taapply.services.wiremock">WiremockServiceImpl</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetService.Side.html#%3Cinit%3E(java.lang.Long,java.lang.Integer,java.math.BigDecimal,int,int,int,java.lang.Double,java.math.BigDecimal)" class="member-name-link">Side(Long, Integer, BigDecimal, int, int, int, Double, BigDecimal)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a></dt>
@@ -2827,6 +2893,14 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dt><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.QuarterRefresh.html#start()" class="member-name-link">start()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.QuarterRefresh.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService.QuarterRefresh</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>start</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DeveloperModeController.html#status()" class="member-name-link">status()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DeveloperModeController.html" title="class in edu.ucsb.cs.taapply.controller">DeveloperModeController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html#status()" class="member-name-link">status()</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html#%3Cinit%3E(boolean,boolean)" class="member-name-link">Status(boolean, boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService.Status</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>Status</code> record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetService.Side.html#studentsPerPosition()" class="member-name-link">studentsPerPosition()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a></dt>
 <dd>
@@ -3073,6 +3147,10 @@ for; ULA positions are funded for undergraduates only.</div>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Summary</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService.Status</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
