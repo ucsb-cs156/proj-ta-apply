@@ -10,7 +10,6 @@ import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
-import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs.taapply.services.RecruitmentCoursesRefreshService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,11 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = &quot;RecruitmentCourses&quot;)
 @RequestMapping(&quot;/api/recruitmentcourses&quot;)
 @RestController
-<span class="fc" id="L35">@Slf4j</span>
-<span class="fc" id="L36">public class RecruitmentCoursesController extends ApiController {</span>
+<span class="fc" id="L34">@Slf4j</span>
+<span class="fc" id="L35">public class RecruitmentCoursesController extends ApiController {</span>
 
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
-  @Autowired RecruitmentAuditService recruitmentAuditService;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired UCSBCurriculumService ucsbCurriculumService;
   @Autowired RecruitmentCoursesRefreshService recruitmentCoursesRefreshService;
@@ -49,10 +47,10 @@ import org.springframework.web.bind.annotation.RestController;
    * code-unit comparison, and Postgres' default collation can treat spaces as negligible, which
    * would pass on H2 and reorder wrongly in production.
    */
-<span class="fc" id="L52">  private static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_THEN_SECTION =</span>
-<span class="fc" id="L53">      Comparator.comparing(RecruitmentCourse::getCourseId)</span>
-<span class="fc" id="L54">          .thenComparing(</span>
-<span class="fc" id="L55">              RecruitmentCourse::getSection, Comparator.nullsFirst(Comparator.naturalOrder()));</span>
+<span class="fc" id="L50">  private static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_THEN_SECTION =</span>
+<span class="fc" id="L51">      Comparator.comparing(RecruitmentCourse::getCourseId)</span>
+<span class="fc" id="L52">          .thenComparing(</span>
+<span class="fc" id="L53">              RecruitmentCourse::getSection, Comparator.nullsFirst(Comparator.naturalOrder()));</span>
 
   @Operation(
       summary = &quot;List the courses for a recruitment&quot;,
@@ -66,10 +64,10 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;includeRemoved&quot;) @RequestParam(defaultValue = &quot;false&quot;)
           boolean includeRemoved) {
 
-<span class="fc" id="L69">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
-<span class="fc bfc" id="L70" title="All 4 branches covered.">        .filter(course -&gt; includeRemoved || !course.isRemoved())</span>
-<span class="fc" id="L71">        .sorted(BY_COURSE_THEN_SECTION)</span>
-<span class="fc" id="L72">        .toList();</span>
+<span class="fc" id="L67">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc bfc" id="L68" title="All 4 branches covered.">        .filter(course -&gt; includeRemoved || !course.isRemoved())</span>
+<span class="fc" id="L69">        .sorted(BY_COURSE_THEN_SECTION)</span>
+<span class="fc" id="L70">        .toList();</span>
   }
 
   @Operation(
@@ -86,51 +84,51 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @Parameter(name = &quot;enrollCode&quot;, description = &quot;e.g. 07492&quot;) @RequestParam String enrollCode) {
 
-<span class="fc" id="L89">    Recruitment recruitment =</span>
+<span class="fc" id="L87">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L91">            .findById(recruitmentId)</span>
-<span class="fc" id="L92">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc" id="L93">    String code = enrollCode.strip();</span>
+<span class="fc" id="L89">            .findById(recruitmentId)</span>
+<span class="fc" id="L90">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L91">    String code = enrollCode.strip();</span>
 
     UcsbCourseOffering offering;
     try {
-<span class="fc" id="L97">      offering = ucsbCurriculumService.getOffering(recruitment.getQuarter(), code);</span>
-<span class="fc" id="L98">    } catch (Exception e) {</span>
-<span class="fc" id="L99">      log.warn(&quot;Lookup of enroll code {} in {} failed&quot;, code, recruitment.getQuarter(), e);</span>
-<span class="fc" id="L100">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L95">      offering = ucsbCurriculumService.getOffering(recruitment.getQuarter(), code);</span>
+<span class="fc" id="L96">    } catch (Exception e) {</span>
+<span class="fc" id="L97">      log.warn(&quot;Lookup of enroll code {} in {} failed&quot;, code, recruitment.getQuarter(), e);</span>
+<span class="fc" id="L98">      throw new IllegalArgumentException(</span>
           &quot;The UCSB API has no section with enroll code %s in quarter %s&quot;
-<span class="fc" id="L102">              .formatted(code, recruitment.getQuarter()));</span>
-<span class="fc" id="L103">    }</span>
+<span class="fc" id="L100">              .formatted(code, recruitment.getQuarter()));</span>
+<span class="fc" id="L101">    }</span>
     UcsbSection section =
-<span class="fc bfc" id="L105" title="All 4 branches covered.">        (offering == null || offering.getClassSections() == null</span>
-<span class="fc" id="L106">                ? List.&lt;UcsbSection&gt;of()</span>
-<span class="fc" id="L107">                : offering.getClassSections())</span>
-<span class="fc" id="L108">            .stream()</span>
-<span class="fc" id="L109">                .filter(s -&gt; code.equals(s.getEnrollCode()))</span>
-<span class="fc" id="L110">                .findFirst()</span>
-<span class="fc" id="L111">                .orElseThrow(</span>
+<span class="fc bfc" id="L103" title="All 4 branches covered.">        (offering == null || offering.getClassSections() == null</span>
+<span class="fc" id="L104">                ? List.&lt;UcsbSection&gt;of()</span>
+<span class="fc" id="L105">                : offering.getClassSections())</span>
+<span class="fc" id="L106">            .stream()</span>
+<span class="fc" id="L107">                .filter(s -&gt; code.equals(s.getEnrollCode()))</span>
+<span class="fc" id="L108">                .findFirst()</span>
+<span class="fc" id="L109">                .orElseThrow(</span>
                     () -&gt;
-<span class="fc" id="L113">                        new IllegalArgumentException(</span>
+<span class="fc" id="L111">                        new IllegalArgumentException(</span>
                             &quot;The UCSB API has no section with enroll code %s in quarter %s&quot;
-<span class="fc" id="L115">                                .formatted(code, recruitment.getQuarter())));</span>
-<span class="fc bfc" id="L116" title="All 2 branches covered.">    if (!section.isPrimary()) {</span>
-<span class="fc" id="L117">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L113">                                .formatted(code, recruitment.getQuarter())));</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">    if (!section.isPrimary()) {</span>
+<span class="fc" id="L115">      throw new IllegalArgumentException(</span>
           &quot;Enroll code %s is section %s, a discussion or lab; only lectures (section numbers&quot;
-<span class="fc" id="L119">                  .formatted(code, section.getSection())</span>
+<span class="fc" id="L117">                  .formatted(code, section.getSection())</span>
               + &quot; ending in 00) can be added&quot;);
     }
 
-<span class="fc" id="L123">    String courseId = UCSBCurriculumService.normalizeCourseId(offering.getCourseId());</span>
-<span class="fc" id="L124">    RecruitmentCourse row =</span>
+<span class="fc" id="L121">    String courseId = UCSBCurriculumService.normalizeCourseId(offering.getCourseId());</span>
+<span class="fc" id="L122">    RecruitmentCourse row =</span>
         recruitmentCourseRepository
-<span class="fc" id="L126">            .findByRecruitmentIdAndEnrollCode(recruitmentId, code)</span>
-<span class="fc" id="L127">            .orElseGet(() -&gt; RecruitmentCourse.builder().build());</span>
-<span class="fc" id="L128">    PopulateRecruitmentCoursesJob.applyOffering(row, recruitmentId, courseId, offering, section);</span>
-<span class="fc" id="L129">    row.setManuallyAdded(true);</span>
-<span class="fc" id="L130">    row.setRemoved(false);</span>
-<span class="fc" id="L131">    row.setStale(false);</span>
-<span class="fc" id="L132">    recruitmentCourseRepository.save(row);</span>
-<span class="fc" id="L133">    return row;</span>
+<span class="fc" id="L124">            .findByRecruitmentIdAndEnrollCode(recruitmentId, code)</span>
+<span class="fc" id="L125">            .orElseGet(() -&gt; RecruitmentCourse.builder().build());</span>
+<span class="fc" id="L126">    PopulateRecruitmentCoursesJob.applyOffering(row, recruitmentId, courseId, offering, section);</span>
+<span class="fc" id="L127">    row.setManuallyAdded(true);</span>
+<span class="fc" id="L128">    row.setRemoved(false);</span>
+<span class="fc" id="L129">    row.setStale(false);</span>
+<span class="fc" id="L130">    recruitmentCourseRepository.save(row);</span>
+<span class="fc" id="L131">    return row;</span>
   }
 
   @Operation(
@@ -145,24 +143,24 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;removed&quot;) @RequestParam boolean removed) {
 
-<span class="fc" id="L148">    RecruitmentCourse course =</span>
+<span class="fc" id="L146">    RecruitmentCourse course =</span>
         recruitmentCourseRepository
-<span class="fc" id="L150">            .findById(id)</span>
-<span class="fc" id="L151">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
+<span class="fc" id="L148">            .findById(id)</span>
+<span class="fc" id="L149">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
 
-<span class="fc" id="L153">    course.setRemoved(removed);</span>
-<span class="fc" id="L154">    recruitmentCourseRepository.save(course);</span>
+<span class="fc" id="L151">    course.setRemoved(removed);</span>
+<span class="fc" id="L152">    recruitmentCourseRepository.save(course);</span>
     // A removed section leaves the total of the estimates, so every share changes (issue #176).
-<span class="fc" id="L156">    allocationService.recompute(recruitmentOf(course));</span>
-<span class="fc" id="L157">    return course;</span>
+<span class="fc" id="L154">    allocationService.recompute(recruitmentOf(course));</span>
+<span class="fc" id="L155">    return course;</span>
   }
 
   /** The recruitment a row belongs to; the row's foreign key makes it exist. */
   private Recruitment recruitmentOf(RecruitmentCourse course) {
-<span class="fc" id="L162">    return recruitmentRepository</span>
-<span class="fc" id="L163">        .findById(course.getRecruitmentId())</span>
-<span class="fc" id="L164">        .orElseThrow(</span>
-<span class="fc" id="L165">            () -&gt; new EntityNotFoundException(Recruitment.class, course.getRecruitmentId()));</span>
+<span class="fc" id="L160">    return recruitmentRepository</span>
+<span class="fc" id="L161">        .findById(course.getRecruitmentId())</span>
+<span class="fc" id="L162">        .orElseThrow(</span>
+<span class="fc" id="L163">            () -&gt; new EntityNotFoundException(Recruitment.class, course.getRecruitmentId()));</span>
   }
 
   @Operation(
@@ -176,78 +174,18 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;allocation&quot;) @RequestParam Integer allocation) {
 
-<span class="fc bfc" id="L179" title="All 2 branches covered.">    if (allocation &lt; 0) {</span>
-<span class="fc" id="L180">      throw new IllegalArgumentException(&quot;allocation must not be negative&quot;);</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">    if (allocation &lt; 0) {</span>
+<span class="fc" id="L178">      throw new IllegalArgumentException(&quot;allocation must not be negative&quot;);</span>
     }
 
-<span class="fc" id="L183">    RecruitmentCourse course =</span>
+<span class="fc" id="L181">    RecruitmentCourse course =</span>
         recruitmentCourseRepository
-<span class="fc" id="L185">            .findById(id)</span>
-<span class="fc" id="L186">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
+<span class="fc" id="L183">            .findById(id)</span>
+<span class="fc" id="L184">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
 
-<span class="fc" id="L188">    course.setAllocation(allocation);</span>
-<span class="fc" id="L189">    recruitmentCourseRepository.save(course);</span>
-<span class="fc" id="L190">    return course;</span>
-  }
-
-  @Operation(
-      summary = &quot;Release one section's allocation to its instructor, or withdraw it&quot;,
-      description =
-          &quot;Released, the section's instructor sees its hiring target, ranking target and ranking&quot;
-              + &quot; counts on their home page card and ranking page (issue #224). Faculty see the&quot;
-              + &quot; result, so each change is recorded in the recruitment's audit trail; setting the&quot;
-              + &quot; value a section already has changes nothing.&quot;)
-  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
-  @PutMapping(&quot;/allocationReleased&quot;)
-  public RecruitmentCourse setAllocationReleased(
-      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
-      @Parameter(name = &quot;released&quot;) @RequestParam boolean released) {
-<span class="fc" id="L205">    RecruitmentCourse course =</span>
-        recruitmentCourseRepository
-<span class="fc" id="L207">            .findById(id)</span>
-<span class="fc" id="L208">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
-<span class="fc" id="L209">    release(course, released);</span>
-<span class="fc" id="L210">    return course;</span>
-  }
-
-  @Operation(
-      summary = &quot;Release every section's allocation to its instructor, or withdraw them all&quot;,
-      description =
-          &quot;Applies to the recruitment's non-removed sections (issue #224); each one that actually&quot;
-              + &quot; changes gets its own audit-trail row. Returns the recruitment's non-removed&quot;
-              + &quot; sections.&quot;)
-  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
-  @PutMapping(&quot;/allocationReleased/all&quot;)
-  public List&lt;RecruitmentCourse&gt; setAllAllocationsReleased(
-      @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
-      @Parameter(name = &quot;released&quot;) @RequestParam boolean released) {
-<span class="fc" id="L224">    recruitmentRepository</span>
-<span class="fc" id="L225">        .findById(recruitmentId)</span>
-<span class="fc" id="L226">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc" id="L227">    List&lt;RecruitmentCourse&gt; courses = allForRecruitment(recruitmentId, false);</span>
-<span class="fc bfc" id="L228" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
-<span class="fc" id="L229">      release(course, released);</span>
-<span class="fc" id="L230">    }</span>
-<span class="fc" id="L231">    return courses;</span>
-  }
-
-  /** Flips one section's release flag if it differs, saving and auditing the change. */
-  private void release(RecruitmentCourse course, boolean released) {
-<span class="fc" id="L236">    boolean before = Boolean.TRUE.equals(course.getAllocationReleased());</span>
-<span class="fc bfc" id="L237" title="All 2 branches covered.">    if (before == released) {</span>
-<span class="fc" id="L238">      return;</span>
-    }
-<span class="fc" id="L240">    course.setAllocationReleased(released);</span>
-<span class="fc" id="L241">    recruitmentCourseRepository.save(course);</span>
-<span class="fc" id="L242">    recruitmentAuditService.recordCourseChange(</span>
-<span class="fc" id="L243">        course.getRecruitmentId(), &quot;allocationReleased &quot; + courseLabel(course), before, released);</span>
-<span class="fc" id="L244">  }</span>
-
-  /** &quot;CMPSC 156 (0100)&quot;: the course number with its spaces collapsed, and the section. */
-  static String courseLabel(RecruitmentCourse course) {
-    String number =
-<span class="fc bfc" id="L249" title="All 2 branches covered.">        course.getCourseId() == null ? &quot;&quot; : course.getCourseId().trim().replaceAll(&quot;\\s+&quot;, &quot; &quot;);</span>
-<span class="fc bfc" id="L250" title="All 2 branches covered.">    return course.getSection() == null ? number : number + &quot; (&quot; + course.getSection() + &quot;)&quot;;</span>
+<span class="fc" id="L186">    course.setAllocation(allocation);</span>
+<span class="fc" id="L187">    recruitmentCourseRepository.save(course);</span>
+<span class="fc" id="L188">    return course;</span>
   }
 
   @Operation(
@@ -263,16 +201,16 @@ import org.springframework.web.bind.annotation.RestController;
   public List&lt;RecruitmentCourse&gt; refresh(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
 
-<span class="fc" id="L266">    Recruitment recruitment =</span>
+<span class="fc" id="L204">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L268">            .findById(recruitmentId)</span>
-<span class="fc" id="L269">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L206">            .findById(recruitmentId)</span>
+<span class="fc" id="L207">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
 
-<span class="fc" id="L271">    int refreshed = recruitmentCoursesRefreshService.refresh(recruitment);</span>
-<span class="fc" id="L272">    log.info(&quot;Refreshed {} course(s) of recruitment {}&quot;, refreshed, recruitmentId);</span>
+<span class="fc" id="L209">    int refreshed = recruitmentCoursesRefreshService.refresh(recruitment);</span>
+<span class="fc" id="L210">    log.info(&quot;Refreshed {} course(s) of recruitment {}&quot;, refreshed, recruitmentId);</span>
     // Also fills in the share of any row Populate has added since the last change (issue #176).
-<span class="fc" id="L274">    allocationService.recompute(recruitment);</span>
-<span class="fc" id="L275">    return allForRecruitment(recruitmentId, false);</span>
+<span class="fc" id="L212">    allocationService.recompute(recruitment);</span>
+<span class="fc" id="L213">    return allForRecruitment(recruitmentId, false);</span>
   }
 
   @Operation(
@@ -288,19 +226,19 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;enrollmentEstimate&quot;) @RequestParam(required = false)
           Integer enrollmentEstimate) {
 
-<span class="fc bfc" id="L291" title="All 4 branches covered.">    if (enrollmentEstimate != null &amp;&amp; enrollmentEstimate &lt; 0) {</span>
-<span class="fc" id="L292">      throw new IllegalArgumentException(&quot;enrollmentEstimate must not be negative&quot;);</span>
+<span class="fc bfc" id="L229" title="All 4 branches covered.">    if (enrollmentEstimate != null &amp;&amp; enrollmentEstimate &lt; 0) {</span>
+<span class="fc" id="L230">      throw new IllegalArgumentException(&quot;enrollmentEstimate must not be negative&quot;);</span>
     }
 
-<span class="fc" id="L295">    RecruitmentCourse course =</span>
+<span class="fc" id="L233">    RecruitmentCourse course =</span>
         recruitmentCourseRepository
-<span class="fc" id="L297">            .findById(id)</span>
-<span class="fc" id="L298">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
+<span class="fc" id="L235">            .findById(id)</span>
+<span class="fc" id="L236">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
 
-<span class="fc" id="L300">    course.setEnrollmentEstimate(enrollmentEstimate);</span>
-<span class="fc" id="L301">    recruitmentCourseRepository.save(course);</span>
-<span class="fc" id="L302">    allocationService.recompute(recruitmentOf(course));</span>
-<span class="fc" id="L303">    return course;</span>
+<span class="fc" id="L238">    course.setEnrollmentEstimate(enrollmentEstimate);</span>
+<span class="fc" id="L239">    recruitmentCourseRepository.save(course);</span>
+<span class="fc" id="L240">    allocationService.recompute(recruitmentOf(course));</span>
+<span class="fc" id="L241">    return course;</span>
   }
 
   @Operation(
@@ -316,24 +254,24 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @Parameter(name = &quot;source&quot;) @RequestParam EnrollmentEstimateSource source) {
 
-<span class="fc" id="L319">    Recruitment recruitment =</span>
+<span class="fc" id="L257">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L321">            .findById(recruitmentId)</span>
-<span class="fc" id="L322">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L259">            .findById(recruitmentId)</span>
+<span class="fc" id="L260">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
 
-<span class="fc bfc" id="L324" title="All 2 branches covered.">    for (RecruitmentCourse row : recruitmentCourseRepository.findByRecruitmentId(recruitmentId)) {</span>
-<span class="fc bfc" id="L325" title="All 2 branches covered.">      if (row.isRemoved()) {</span>
-<span class="fc" id="L326">        continue;</span>
+<span class="fc bfc" id="L262" title="All 2 branches covered.">    for (RecruitmentCourse row : recruitmentCourseRepository.findByRecruitmentId(recruitmentId)) {</span>
+<span class="fc bfc" id="L263" title="All 2 branches covered.">      if (row.isRemoved()) {</span>
+<span class="fc" id="L264">        continue;</span>
       }
       Integer value =
-<span class="fc bfc" id="L329" title="All 2 branches covered.">          source == EnrollmentEstimateSource.MAX ? row.getMaxEnroll() : row.getEnrollment();</span>
-<span class="fc bfc" id="L330" title="All 2 branches covered.">      if (value != null) {</span>
-<span class="fc" id="L331">        row.setEnrollmentEstimate(value);</span>
-<span class="fc" id="L332">        recruitmentCourseRepository.save(row);</span>
+<span class="fc bfc" id="L267" title="All 2 branches covered.">          source == EnrollmentEstimateSource.MAX ? row.getMaxEnroll() : row.getEnrollment();</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">      if (value != null) {</span>
+<span class="fc" id="L269">        row.setEnrollmentEstimate(value);</span>
+<span class="fc" id="L270">        recruitmentCourseRepository.save(row);</span>
       }
-<span class="fc" id="L334">    }</span>
-<span class="fc" id="L335">    allocationService.recompute(recruitment);</span>
-<span class="fc" id="L336">    return allForRecruitment(recruitmentId, false);</span>
+<span class="fc" id="L272">    }</span>
+<span class="fc" id="L273">    allocationService.recompute(recruitment);</span>
+<span class="fc" id="L274">    return allForRecruitment(recruitmentId, false);</span>
   }
 
   @Operation(
@@ -350,13 +288,13 @@ import org.springframework.web.bind.annotation.RestController;
   public List&lt;RecruitmentCourse&gt; autoAllocate(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
 
-<span class="fc" id="L353">    Recruitment recruitment =</span>
+<span class="fc" id="L291">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L355">            .findById(recruitmentId)</span>
-<span class="fc" id="L356">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L293">            .findById(recruitmentId)</span>
+<span class="fc" id="L294">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
 
-<span class="fc" id="L358">    allocationService.autoAllocate(recruitment);</span>
-<span class="fc" id="L359">    return allForRecruitment(recruitmentId, false);</span>
+<span class="fc" id="L296">    allocationService.autoAllocate(recruitment);</span>
+<span class="fc" id="L297">    return allForRecruitment(recruitmentId, false);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

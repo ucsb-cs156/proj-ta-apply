@@ -40,7 +40,7 @@ import org.springframework.stereotype.Service;
 <span class="fc" id="L40">    FIELDS.put(&quot;reviewStatus&quot;, Recruitment::getReviewStatus);</span>
 <span class="fc" id="L41">    FIELDS.put(&quot;facultyReviewOpeningDate&quot;, Recruitment::getFacultyReviewOpeningDate);</span>
 <span class="fc" id="L42">    FIELDS.put(&quot;facultyRankingDeadline&quot;, Recruitment::getFacultyRankingDeadline);</span>
-<span class="fc" id="L43">    FIELDS.put(&quot;allocationsVisibleToFaculty&quot;, Recruitment::getAllocationsVisibleToFaculty);</span>
+<span class="fc" id="L43">    FIELDS.put(&quot;allocationVisibility&quot;, Recruitment::getAllocationVisibility);</span>
 <span class="fc" id="L44">    FIELDS.put(&quot;assignmentsPublished&quot;, Recruitment::getAssignmentsPublished);</span>
 <span class="fc" id="L45">  }</span>
 
@@ -86,28 +86,18 @@ import org.springframework.stereotype.Service;
 <span class="fc" id="L86">    return changes;</span>
   }
 
-  /**
-   * Records a change to one of the recruitment's courses that faculty can see (issue #224), such as
-   * releasing a course's allocation: {@code whatChanged} names the field and the course, e.g.
-   * {@code &quot;allocationReleased CMPSC 156 (0100)&quot;}. Returns the row written.
-   */
-  public RecruitmentAuditTrail recordCourseChange(
-      Long recruitmentId, String whatChanged, Object oldValue, Object newValue) {
-<span class="fc" id="L96">    return repository.save(row(recruitmentId, whatChanged, text(oldValue), text(newValue)));</span>
-  }
-
   private static RecruitmentAuditTrail row(
       Long recruitmentId, String whatChanged, String oldValue, String newValue) {
-<span class="fc" id="L101">    return RecruitmentAuditTrail.builder()</span>
-<span class="fc" id="L102">        .recruitmentId(recruitmentId)</span>
-<span class="fc" id="L103">        .whatChanged(whatChanged)</span>
-<span class="fc" id="L104">        .oldValue(oldValue)</span>
-<span class="fc" id="L105">        .newValue(newValue)</span>
-<span class="fc" id="L106">        .build();</span>
+<span class="fc" id="L91">    return RecruitmentAuditTrail.builder()</span>
+<span class="fc" id="L92">        .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L93">        .whatChanged(whatChanged)</span>
+<span class="fc" id="L94">        .oldValue(oldValue)</span>
+<span class="fc" id="L95">        .newValue(newValue)</span>
+<span class="fc" id="L96">        .build();</span>
   }
 
   private static String text(Object value) {
-<span class="fc bfc" id="L110" title="All 2 branches covered.">    return value == null ? null : String.valueOf(value);</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">    return value == null ? null : String.valueOf(value);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -118,16 +118,6 @@ public class RecruitmentCourse {
   @Column(name = &quot;unrounded_allocation&quot;)
   private Double unroundedAllocation;
 
-  /**
-   * Whether the admin has released this section's allocation (its hiring target) to its instructor
-   * (issue #224). Until then, and unless the recruitment shows all allocations to all faculty, the
-   * instructor sees nothing about it. Faculty see the result, so each change is recorded in the
-   * recruitment's audit trail.
-   */
-  @Column(name = &quot;allocation_released&quot;, nullable = false)
-  @Builder.Default
-  private Boolean allocationReleased = false;
-
   /** The status the UCSB API reports for a section that has been cancelled. */
   public static final String CANCELLED = &quot;cancelled&quot;;
 
@@ -138,7 +128,7 @@ public class RecruitmentCourse {
    */
   @JsonIgnore
   public boolean isOnOffer() {
-<span class="fc bfc" id="L141" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
+<span class="fc bfc" id="L131" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

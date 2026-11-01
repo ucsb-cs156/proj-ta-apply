@@ -6,6 +6,7 @@ import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
@@ -54,8 +55,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = &quot;InstructorRecruitments&quot;)
 @RequestMapping(&quot;/api/instructor/recruitments&quot;)
 @RestController
-<span class="fc" id="L57">@Slf4j</span>
-<span class="fc" id="L58">public class InstructorRecruitmentsController extends ApiController {</span>
+<span class="fc" id="L58">@Slf4j</span>
+<span class="fc" id="L59">public class InstructorRecruitmentsController extends ApiController {</span>
 
   @Autowired InstructorRepository instructorRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
@@ -74,7 +75,7 @@ import org.springframework.web.bind.annotation.RestController;
    * goes out as stored and {@code targets} holds its {@link CourseTargets} under its course id.
    * {@code targets} is null when no course is released.
    */
-<span class="fc" id="L77">  public static record InstructorRecruitment(</span>
+<span class="fc" id="L78">  public static record InstructorRecruitment(</span>
       Long id,
       String quarter,
       RecruitmentType type,
@@ -90,68 +91,65 @@ import org.springframework.web.bind.annotation.RestController;
       Map&lt;Long, CourseTargets&gt; targets) {
     /** The recruitment with its targets withheld (or not yet computed). */
     public static InstructorRecruitment of(Recruitment r, List&lt;RecruitmentCourse&gt; courses) {
-<span class="fc" id="L93">      return of(r, courses, null);</span>
+<span class="fc" id="L94">      return of(r, courses, null);</span>
     }
 
     public static InstructorRecruitment of(
         Recruitment r, List&lt;RecruitmentCourse&gt; courses, Map&lt;Long, CourseTargets&gt; targets) {
-<span class="fc" id="L98">      List&lt;RecruitmentCourse&gt; shown =</span>
-<span class="fc" id="L99">          courses.stream()</span>
-<span class="fc" id="L100">              .map(</span>
+<span class="fc" id="L99">      List&lt;RecruitmentCourse&gt; shown =</span>
+<span class="fc" id="L100">          courses.stream()</span>
+<span class="fc" id="L101">              .map(</span>
                   course -&gt;
-<span class="fc bfc" id="L102" title="All 2 branches covered.">                      allocationVisible(r, course)</span>
-<span class="fc" id="L103">                          ? course</span>
-<span class="fc" id="L104">                          : InstructorRecruitment.withoutAllocation(course))</span>
-<span class="fc" id="L105">              .toList();</span>
-<span class="fc" id="L106">      return new InstructorRecruitment(</span>
-<span class="fc" id="L107">          r.getId(),</span>
-<span class="fc" id="L108">          r.getQuarter(),</span>
-<span class="fc" id="L109">          r.getType(),</span>
-<span class="fc" id="L110">          r.getApplicationStatus(),</span>
-<span class="fc" id="L111">          r.getTentativeOpeningDate(),</span>
-<span class="fc" id="L112">          r.getPrimaryConsiderationDate(),</span>
-<span class="fc" id="L113">          r.getActualOpeningDate(),</span>
-<span class="fc" id="L114">          r.getActualClosingDate(),</span>
-<span class="fc" id="L115">          r.getReviewStatus(),</span>
-<span class="fc" id="L116">          r.getFacultyReviewOpeningDate(),</span>
-<span class="fc" id="L117">          r.getFacultyRankingDeadline(),</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">                      allocationsVisible(r)</span>
+<span class="fc" id="L104">                          ? course</span>
+<span class="fc" id="L105">                          : InstructorRecruitment.withoutAllocation(course))</span>
+<span class="fc" id="L106">              .toList();</span>
+<span class="fc" id="L107">      return new InstructorRecruitment(</span>
+<span class="fc" id="L108">          r.getId(),</span>
+<span class="fc" id="L109">          r.getQuarter(),</span>
+<span class="fc" id="L110">          r.getType(),</span>
+<span class="fc" id="L111">          r.getApplicationStatus(),</span>
+<span class="fc" id="L112">          r.getTentativeOpeningDate(),</span>
+<span class="fc" id="L113">          r.getPrimaryConsiderationDate(),</span>
+<span class="fc" id="L114">          r.getActualOpeningDate(),</span>
+<span class="fc" id="L115">          r.getActualClosingDate(),</span>
+<span class="fc" id="L116">          r.getReviewStatus(),</span>
+<span class="fc" id="L117">          r.getFacultyReviewOpeningDate(),</span>
+<span class="fc" id="L118">          r.getFacultyRankingDeadline(),</span>
           shown,
           targets);
     }
 
     /** The row with the planning figures an instructor may not see yet blanked. */
     static RecruitmentCourse withoutAllocation(RecruitmentCourse row) {
-<span class="fc" id="L124">      return row.toBuilder()</span>
-<span class="fc" id="L125">          .allocation(null)</span>
-<span class="fc" id="L126">          .enrollmentEstimate(null)</span>
-<span class="fc" id="L127">          .unroundedAllocation(null)</span>
-<span class="fc" id="L128">          .build();</span>
+<span class="fc" id="L125">      return row.toBuilder()</span>
+<span class="fc" id="L126">          .allocation(null)</span>
+<span class="fc" id="L127">          .enrollmentEstimate(null)</span>
+<span class="fc" id="L128">          .unroundedAllocation(null)</span>
+<span class="fc" id="L129">          .build();</span>
     }
   }
 
-  /** Whether the admin has chosen to show all of this recruitment's allocations to all faculty. */
-  static boolean allocationsVisible(Recruitment r) {
-<span class="fc" id="L134">    return Boolean.TRUE.equals(r.getAllocationsVisibleToFaculty());</span>
-  }
-
   /**
-   * Whether this course's allocation may reach its instructor (issue #224): the admin released it,
-   * or shows all allocations to all faculty.
+   * Whether this recruitment's allocations may reach the faculty who teach in it (issue #224):
+   * every state except ADMINS_ONLY. The instructor endpoints only ever return the signed-in
+   * instructor's own courses, so OWN_COURSES and ALL_COURSES differ only in the all-allocations
+   * view.
    */
-  static boolean allocationVisible(Recruitment r, RecruitmentCourse course) {
-<span class="fc bfc" id="L142" title="All 4 branches covered.">    return allocationsVisible(r) || Boolean.TRUE.equals(course.getAllocationReleased());</span>
+  static boolean allocationsVisible(Recruitment r) {
+<span class="fc bfc" id="L140" title="All 2 branches covered.">    return r.getAllocationVisibility() != AllocationVisibility.ADMINS_ONLY;</span>
   }
 
   /** One row of the all-allocations view faculty get once the admin shows them (issue #224). */
-<span class="fc" id="L146">  public static record AllocationRow(</span>
+<span class="fc" id="L144">  public static record AllocationRow(</span>
       Long id, String courseId, String section, String instructor, Integer allocation) {
     static AllocationRow of(RecruitmentCourse course) {
-<span class="fc" id="L149">      return new AllocationRow(</span>
-<span class="fc" id="L150">          course.getId(),</span>
-<span class="fc" id="L151">          course.getCourseId(),</span>
-<span class="fc" id="L152">          course.getSection(),</span>
-<span class="fc" id="L153">          course.getInstructor(),</span>
-<span class="fc" id="L154">          course.getAllocation());</span>
+<span class="fc" id="L147">      return new AllocationRow(</span>
+<span class="fc" id="L148">          course.getId(),</span>
+<span class="fc" id="L149">          course.getCourseId(),</span>
+<span class="fc" id="L150">          course.getSection(),</span>
+<span class="fc" id="L151">          course.getInstructor(),</span>
+<span class="fc" id="L152">          course.getAllocation());</span>
     }
   }
 
@@ -163,7 +161,7 @@ import org.springframework.web.bind.annotation.RestController;
    * while reviews are Open, whether or not they are also an admin (issue #202). {@code targets} is
    * the course's hiring figures (issue #224), present on the same terms as {@code allocation}.
    */
-<span class="fc" id="L166">  public static record CandidateRankingPage(</span>
+<span class="fc" id="L164">  public static record CandidateRankingPage(</span>
       Long recruitmentId,
       String quarter,
       RecruitmentType type,
@@ -181,31 +179,31 @@ import org.springframework.web.bind.annotation.RestController;
       CourseTargets targets) {}
 
   /** Course identity and catalog display fields; section rows remain distinct by id. */
-<span class="fc" id="L184">  public static record CourseDetails(</span>
+<span class="fc" id="L182">  public static record CourseDetails(</span>
       Long id, String courseId, String section, String title, String instructor) {
     public static CourseDetails of(RecruitmentCourse course) {
-<span class="fc" id="L187">      return new CourseDetails(</span>
-<span class="fc" id="L188">          course.getId(),</span>
-<span class="fc" id="L189">          course.getCourseId(),</span>
-<span class="fc" id="L190">          course.getSection(),</span>
-<span class="fc" id="L191">          course.getTitle(),</span>
-<span class="fc" id="L192">          course.getInstructor());</span>
+<span class="fc" id="L185">      return new CourseDetails(</span>
+<span class="fc" id="L186">          course.getId(),</span>
+<span class="fc" id="L187">          course.getCourseId(),</span>
+<span class="fc" id="L188">          course.getSection(),</span>
+<span class="fc" id="L189">          course.getTitle(),</span>
+<span class="fc" id="L190">          course.getInstructor());</span>
     }
   }
 
   /** Read-only admin metadata for the course table and faculty reminders. */
-<span class="fc" id="L197">  public static record AdminCourseRankingSummary(</span>
+<span class="fc" id="L195">  public static record AdminCourseRankingSummary(</span>
       Long recruitmentCourseId, long rankingCount, String instructorEmail) {}
 
   /** Newest quarter first, TA before ULA within a quarter: the order the other lists use. */
-<span class="fc" id="L201">  private static final Comparator&lt;Recruitment&gt; NEWEST_FIRST =</span>
-<span class="fc" id="L202">      Comparator.comparing(Recruitment::getQuarter).reversed().thenComparing(Recruitment::getType);</span>
+<span class="fc" id="L199">  private static final Comparator&lt;Recruitment&gt; NEWEST_FIRST =</span>
+<span class="fc" id="L200">      Comparator.comparing(Recruitment::getQuarter).reversed().thenComparing(Recruitment::getType);</span>
 
   /** Course id first, then section, so a course's several lectures sit together in order. */
-<span class="fc" id="L205">  private static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_THEN_SECTION =</span>
-<span class="fc" id="L206">      Comparator.comparing(RecruitmentCourse::getCourseId)</span>
-<span class="fc" id="L207">          .thenComparing(</span>
-<span class="fc" id="L208">              RecruitmentCourse::getSection, Comparator.nullsFirst(Comparator.naturalOrder()));</span>
+<span class="fc" id="L203">  private static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_THEN_SECTION =</span>
+<span class="fc" id="L204">      Comparator.comparing(RecruitmentCourse::getCourseId)</span>
+<span class="fc" id="L205">          .thenComparing(</span>
+<span class="fc" id="L206">              RecruitmentCourse::getSection, Comparator.nullsFirst(Comparator.naturalOrder()));</span>
 
   @Operation(
       summary = &quot;The recruitments that include a course this instructor teaches&quot;,
@@ -219,36 +217,35 @@ import org.springframework.web.bind.annotation.RestController;
   public List&lt;InstructorRecruitment&gt; forInstructor(
       @Parameter(name = &quot;email&quot;) @RequestParam String email) {
 
-<span class="fc" id="L222">    String catalogName =</span>
-<span class="fc" id="L223">        instructorRepository.findByEmail(email).map(Instructor::getCatalogName).orElse(null);</span>
-<span class="fc bfc" id="L224" title="All 2 branches covered.">    if (catalogName == null) {</span>
-<span class="fc" id="L225">      return List.of();</span>
+<span class="fc" id="L220">    String catalogName =</span>
+<span class="fc" id="L221">        instructorRepository.findByEmail(email).map(Instructor::getCatalogName).orElse(null);</span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">    if (catalogName == null) {</span>
+<span class="fc" id="L223">      return List.of();</span>
     }
 
-<span class="fc" id="L228">    Map&lt;Long, List&lt;RecruitmentCourse&gt;&gt; byRecruitment =</span>
-<span class="fc" id="L229">        recruitmentCourseRepository.findByInstructor(catalogName).stream()</span>
-<span class="fc bfc" id="L230" title="All 2 branches covered.">            .filter(row -&gt; !row.isRemoved())</span>
-<span class="fc" id="L231">            .collect(Collectors.groupingBy(RecruitmentCourse::getRecruitmentId));</span>
-<span class="fc bfc" id="L232" title="All 2 branches covered.">    if (byRecruitment.isEmpty()) {</span>
-<span class="fc" id="L233">      return List.of();</span>
+<span class="fc" id="L226">    Map&lt;Long, List&lt;RecruitmentCourse&gt;&gt; byRecruitment =</span>
+<span class="fc" id="L227">        recruitmentCourseRepository.findByInstructor(catalogName).stream()</span>
+<span class="fc bfc" id="L228" title="All 2 branches covered.">            .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L229">            .collect(Collectors.groupingBy(RecruitmentCourse::getRecruitmentId));</span>
+<span class="fc bfc" id="L230" title="All 2 branches covered.">    if (byRecruitment.isEmpty()) {</span>
+<span class="fc" id="L231">      return List.of();</span>
     }
 
-<span class="fc" id="L236">    return StreamSupport.stream(</span>
-<span class="fc" id="L237">            recruitmentRepository.findAllById(byRecruitment.keySet()).spliterator(), false)</span>
-<span class="fc" id="L238">        .sorted(NEWEST_FIRST)</span>
-<span class="fc" id="L239">        .map(</span>
+<span class="fc" id="L234">    return StreamSupport.stream(</span>
+<span class="fc" id="L235">            recruitmentRepository.findAllById(byRecruitment.keySet()).spliterator(), false)</span>
+<span class="fc" id="L236">        .sorted(NEWEST_FIRST)</span>
+<span class="fc" id="L237">        .map(</span>
             r -&gt; {
-<span class="fc" id="L241">              List&lt;RecruitmentCourse&gt; courses =</span>
-<span class="fc" id="L242">                  byRecruitment.get(r.getId()).stream().sorted(BY_COURSE_THEN_SECTION).toList();</span>
-              // The hiring figures leave the server only for courses the admin has released, or
-              // for all of them once all allocations are shown to all faculty.
-<span class="fc" id="L245">              List&lt;RecruitmentCourse&gt; released =</span>
-<span class="fc" id="L246">                  courses.stream().filter(course -&gt; allocationVisible(r, course)).toList();</span>
+<span class="fc" id="L239">              List&lt;RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L240">                  byRecruitment.get(r.getId()).stream().sorted(BY_COURSE_THEN_SECTION).toList();</span>
+              // The hiring figures leave the server only once the admin lets faculty see them.
               Map&lt;Long, CourseTargets&gt; targets =
-<span class="fc bfc" id="L248" title="All 2 branches covered.">                  released.isEmpty() ? null : courseTargetsService.targetsFor(r.getId(), released);</span>
-<span class="fc" id="L249">              return InstructorRecruitment.of(r, courses, targets);</span>
+<span class="fc bfc" id="L243" title="All 2 branches covered.">                  allocationsVisible(r)</span>
+<span class="fc" id="L244">                      ? courseTargetsService.targetsFor(r.getId(), courses)</span>
+<span class="fc" id="L245">                      : null;</span>
+<span class="fc" id="L246">              return InstructorRecruitment.of(r, courses, targets);</span>
             })
-<span class="fc" id="L251">        .toList();</span>
+<span class="fc" id="L248">        .toList();</span>
   }
 
   /**
@@ -263,39 +260,39 @@ import org.springframework.web.bind.annotation.RestController;
   @GetMapping(&quot;/{recruitmentId}/courses/{recruitmentCourseId}/ranking&quot;)
   public CandidateRankingPage candidateRankingPage(
       @PathVariable Long recruitmentId, @PathVariable Long recruitmentCourseId) {
-<span class="fc" id="L266">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
-<span class="fc" id="L267">    Recruitment recruitment = scope.recruitment();</span>
-<span class="fc" id="L268">    RecruitmentCourse course = scope.course();</span>
-<span class="fc" id="L269">    String catalogName = scope.catalogName();</span>
+<span class="fc" id="L263">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
+<span class="fc" id="L264">    Recruitment recruitment = scope.recruitment();</span>
+<span class="fc" id="L265">    RecruitmentCourse course = scope.course();</span>
+<span class="fc" id="L266">    String catalogName = scope.catalogName();</span>
     List&lt;CourseDetails&gt; otherCourses =
-<span class="fc bfc" id="L271" title="All 2 branches covered.">        catalogName == null</span>
-<span class="fc" id="L272">            ? List.of()</span>
-<span class="fc" id="L273">            : recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
-<span class="fc bfc" id="L274" title="All 2 branches covered.">                .filter(row -&gt; !row.getId().equals(recruitmentCourseId))</span>
-<span class="fc" id="L275">                .filter(row -&gt; catalogName.equals(row.getInstructor()))</span>
-<span class="fc" id="L276">                .filter(RecruitmentCourse::isOnOffer)</span>
-<span class="fc" id="L277">                .sorted(BY_COURSE_THEN_SECTION)</span>
-<span class="fc" id="L278">                .map(CourseDetails::of)</span>
-<span class="fc" id="L279">                .toList();</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">        catalogName == null</span>
+<span class="fc" id="L269">            ? List.of()</span>
+<span class="fc" id="L270">            : recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc bfc" id="L271" title="All 2 branches covered.">                .filter(row -&gt; !row.getId().equals(recruitmentCourseId))</span>
+<span class="fc" id="L272">                .filter(row -&gt; catalogName.equals(row.getInstructor()))</span>
+<span class="fc" id="L273">                .filter(RecruitmentCourse::isOnOffer)</span>
+<span class="fc" id="L274">                .sorted(BY_COURSE_THEN_SECTION)</span>
+<span class="fc" id="L275">                .map(CourseDetails::of)</span>
+<span class="fc" id="L276">                .toList();</span>
 
-<span class="fc" id="L281">    return new CandidateRankingPage(</span>
-<span class="fc" id="L282">        recruitment.getId(),</span>
-<span class="fc" id="L283">        recruitment.getQuarter(),</span>
-<span class="fc" id="L284">        recruitment.getType(),</span>
-<span class="fc" id="L285">        recruitment.getTentativeOpeningDate(),</span>
-<span class="fc" id="L286">        recruitment.getPrimaryConsiderationDate(),</span>
-<span class="fc" id="L287">        recruitment.getActualOpeningDate(),</span>
-<span class="fc" id="L288">        recruitment.getActualClosingDate(),</span>
-<span class="fc" id="L289">        recruitment.getReviewStatus(),</span>
-<span class="fc" id="L290">        recruitment.getFacultyReviewOpeningDate(),</span>
-<span class="fc" id="L291">        recruitment.getFacultyRankingDeadline(),</span>
-<span class="fc" id="L292">        CourseDetails.of(course),</span>
+<span class="fc" id="L278">    return new CandidateRankingPage(</span>
+<span class="fc" id="L279">        recruitment.getId(),</span>
+<span class="fc" id="L280">        recruitment.getQuarter(),</span>
+<span class="fc" id="L281">        recruitment.getType(),</span>
+<span class="fc" id="L282">        recruitment.getTentativeOpeningDate(),</span>
+<span class="fc" id="L283">        recruitment.getPrimaryConsiderationDate(),</span>
+<span class="fc" id="L284">        recruitment.getActualOpeningDate(),</span>
+<span class="fc" id="L285">        recruitment.getActualClosingDate(),</span>
+<span class="fc" id="L286">        recruitment.getReviewStatus(),</span>
+<span class="fc" id="L287">        recruitment.getFacultyReviewOpeningDate(),</span>
+<span class="fc" id="L288">        recruitment.getFacultyRankingDeadline(),</span>
+<span class="fc" id="L289">        CourseDetails.of(course),</span>
         otherCourses,
-<span class="fc bfc" id="L294" title="All 4 branches covered.">        scope.isAdmin() || allocationVisible(recruitment, course) ? course.getAllocation() : null,</span>
-<span class="fc" id="L295">        scope.canRank(),</span>
-<span class="fc bfc" id="L296" title="All 4 branches covered.">        scope.isAdmin() || allocationVisible(recruitment, course)</span>
-<span class="fc" id="L297">            ? courseTargetsService.targetsFor(recruitmentId, course)</span>
-<span class="fc" id="L298">            : null);</span>
+<span class="fc bfc" id="L291" title="All 4 branches covered.">        scope.isAdmin() || allocationsVisible(recruitment) ? course.getAllocation() : null,</span>
+<span class="fc" id="L292">        scope.canRank(),</span>
+<span class="fc bfc" id="L293" title="All 4 branches covered.">        scope.isAdmin() || allocationsVisible(recruitment)</span>
+<span class="fc" id="L294">            ? courseTargetsService.targetsFor(recruitmentId, course)</span>
+<span class="fc" id="L295">            : null);</span>
   }
 
   @Operation(
@@ -307,29 +304,29 @@ import org.springframework.web.bind.annotation.RestController;
   @PreAuthorize(&quot;hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')&quot;)
   @GetMapping(&quot;/{recruitmentId}/allocations&quot;)
   public List&lt;AllocationRow&gt; allocations(@PathVariable Long recruitmentId) {
-<span class="fc" id="L310">    Recruitment recruitment =</span>
+<span class="fc" id="L307">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L312">            .findById(recruitmentId)</span>
-<span class="fc" id="L313">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc bfc" id="L314" title="All 4 branches covered.">    if (!isAdmin() &amp;&amp; !allocationsVisible(recruitment)) {</span>
-<span class="fc" id="L315">      throw new ForbiddenException(</span>
+<span class="fc" id="L309">            .findById(recruitmentId)</span>
+<span class="fc" id="L310">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc bfc" id="L311" title="All 4 branches covered.">    if (!isAdmin() &amp;&amp; recruitment.getAllocationVisibility() != AllocationVisibility.ALL_COURSES) {</span>
+<span class="fc" id="L312">      throw new ForbiddenException(</span>
           &quot;The admin has not chosen to show this recruitment's allocations to all faculty.&quot;);
     }
-<span class="fc" id="L318">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
-<span class="fc bfc" id="L319" title="All 2 branches covered.">        .filter(course -&gt; !course.isRemoved())</span>
-<span class="fc" id="L320">        .sorted(BY_COURSE_THEN_SECTION)</span>
-<span class="fc" id="L321">        .map(AllocationRow::of)</span>
-<span class="fc" id="L322">        .toList();</span>
+<span class="fc" id="L315">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc bfc" id="L316" title="All 2 branches covered.">        .filter(course -&gt; !course.isRemoved())</span>
+<span class="fc" id="L317">        .sorted(BY_COURSE_THEN_SECTION)</span>
+<span class="fc" id="L318">        .map(AllocationRow::of)</span>
+<span class="fc" id="L319">        .toList();</span>
   }
 
   /** Whether the signed-in user holds the admin role. */
   private boolean isAdmin() {
-<span class="fc" id="L327">    CurrentUser currentUser = getCurrentUser();</span>
-<span class="fc bfc" id="L328" title="All 2 branches covered.">    return currentUser != null</span>
-<span class="fc bfc" id="L329" title="All 2 branches covered.">        &amp;&amp; currentUser.getRoles() != null</span>
-<span class="fc" id="L330">        &amp;&amp; currentUser.getRoles().stream()</span>
-<span class="fc" id="L331">            .map(GrantedAuthority::getAuthority)</span>
-<span class="fc bfc" id="L332" title="All 2 branches covered.">            .anyMatch(&quot;ROLE_ADMIN&quot;::equals);</span>
+<span class="fc" id="L324">    CurrentUser currentUser = getCurrentUser();</span>
+<span class="fc bfc" id="L325" title="All 2 branches covered.">    return currentUser != null</span>
+<span class="fc bfc" id="L326" title="All 2 branches covered.">        &amp;&amp; currentUser.getRoles() != null</span>
+<span class="fc" id="L327">        &amp;&amp; currentUser.getRoles().stream()</span>
+<span class="fc" id="L328">            .map(GrantedAuthority::getAuthority)</span>
+<span class="fc bfc" id="L329" title="All 2 branches covered.">            .anyMatch(&quot;ROLE_ADMIN&quot;::equals);</span>
   }
 
   /**
@@ -343,44 +340,44 @@ import org.springframework.web.bind.annotation.RestController;
       @PathVariable Long recruitmentId,
       @Parameter(name = &quot;includeRemoved&quot;) @RequestParam(defaultValue = &quot;false&quot;)
           boolean includeRemoved) {
-<span class="fc" id="L346">    Recruitment recruitment =</span>
+<span class="fc" id="L343">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L348">            .findById(recruitmentId)</span>
-<span class="fc" id="L349">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc" id="L350">    List&lt;Application&gt; applications =</span>
-<span class="fc" id="L351">        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId).stream()</span>
-<span class="fc" id="L352">            .filter(application -&gt; recruitmentId.equals(application.getRecruitmentId()))</span>
-<span class="fc" id="L353">            .toList();</span>
-<span class="fc" id="L354">    Map&lt;String, List&lt;String&gt;&gt; emailsByCatalogName =</span>
-<span class="fc" id="L355">        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)</span>
-<span class="fc bfc" id="L356" title="All 2 branches covered.">            .filter(instructor -&gt; instructor.getCatalogName() != null)</span>
-<span class="fc" id="L357">            .collect(</span>
-<span class="fc" id="L358">                Collectors.groupingBy(</span>
+<span class="fc" id="L345">            .findById(recruitmentId)</span>
+<span class="fc" id="L346">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L347">    List&lt;Application&gt; applications =</span>
+<span class="fc" id="L348">        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId).stream()</span>
+<span class="fc" id="L349">            .filter(application -&gt; recruitmentId.equals(application.getRecruitmentId()))</span>
+<span class="fc" id="L350">            .toList();</span>
+<span class="fc" id="L351">    Map&lt;String, List&lt;String&gt;&gt; emailsByCatalogName =</span>
+<span class="fc" id="L352">        StreamSupport.stream(instructorRepository.findAll().spliterator(), false)</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">            .filter(instructor -&gt; instructor.getCatalogName() != null)</span>
+<span class="fc" id="L354">            .collect(</span>
+<span class="fc" id="L355">                Collectors.groupingBy(</span>
                     Instructor::getCatalogName,
-<span class="fc" id="L360">                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));</span>
+<span class="fc" id="L357">                    Collectors.mapping(Instructor::getEmail, Collectors.toList())));</span>
 
-<span class="fc" id="L362">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
-<span class="fc" id="L363">        .filter(course -&gt; recruitmentId.equals(course.getRecruitmentId()))</span>
-<span class="fc bfc" id="L364" title="All 4 branches covered.">        .filter(course -&gt; includeRemoved || !course.isRemoved())</span>
-<span class="fc" id="L365">        .sorted(BY_COURSE_THEN_SECTION)</span>
-<span class="fc" id="L366">        .map(</span>
+<span class="fc" id="L359">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc" id="L360">        .filter(course -&gt; recruitmentId.equals(course.getRecruitmentId()))</span>
+<span class="fc bfc" id="L361" title="All 4 branches covered.">        .filter(course -&gt; includeRemoved || !course.isRemoved())</span>
+<span class="fc" id="L362">        .sorted(BY_COURSE_THEN_SECTION)</span>
+<span class="fc" id="L363">        .map(</span>
             course -&gt; {
-<span class="fc" id="L368">              Set&lt;Long&gt; eligibleApplicationIds =</span>
-<span class="fc" id="L369">                  eligible(applications, course, true).stream()</span>
-<span class="fc" id="L370">                      .map(Application::getId)</span>
-<span class="fc" id="L371">                      .collect(Collectors.toSet());</span>
-<span class="fc" id="L372">              long rankingCount =</span>
-<span class="fc" id="L373">                  candidateRankingRepository.findByRecruitmentCourseId(course.getId()).stream()</span>
-<span class="fc bfc" id="L374" title="All 2 branches covered.">                      .filter(ranking -&gt; ranking.getRank() != null)</span>
-<span class="fc" id="L375">                      .filter(</span>
-<span class="fc" id="L376">                          ranking -&gt; eligibleApplicationIds.contains(ranking.getApplicationId()))</span>
-<span class="fc" id="L377">                      .count();</span>
-<span class="fc" id="L378">              List&lt;String&gt; mappedEmails = emailsByCatalogName.get(course.getInstructor());</span>
+<span class="fc" id="L365">              Set&lt;Long&gt; eligibleApplicationIds =</span>
+<span class="fc" id="L366">                  eligible(applications, course, true).stream()</span>
+<span class="fc" id="L367">                      .map(Application::getId)</span>
+<span class="fc" id="L368">                      .collect(Collectors.toSet());</span>
+<span class="fc" id="L369">              long rankingCount =</span>
+<span class="fc" id="L370">                  candidateRankingRepository.findByRecruitmentCourseId(course.getId()).stream()</span>
+<span class="fc bfc" id="L371" title="All 2 branches covered.">                      .filter(ranking -&gt; ranking.getRank() != null)</span>
+<span class="fc" id="L372">                      .filter(</span>
+<span class="fc" id="L373">                          ranking -&gt; eligibleApplicationIds.contains(ranking.getApplicationId()))</span>
+<span class="fc" id="L374">                      .count();</span>
+<span class="fc" id="L375">              List&lt;String&gt; mappedEmails = emailsByCatalogName.get(course.getInstructor());</span>
               String instructorEmail =
-<span class="fc bfc" id="L380" title="All 4 branches covered.">                  mappedEmails != null &amp;&amp; mappedEmails.size() == 1 ? mappedEmails.get(0) : null;</span>
-<span class="fc" id="L381">              return new AdminCourseRankingSummary(course.getId(), rankingCount, instructorEmail);</span>
+<span class="fc bfc" id="L377" title="All 4 branches covered.">                  mappedEmails != null &amp;&amp; mappedEmails.size() == 1 ? mappedEmails.get(0) : null;</span>
+<span class="fc" id="L378">              return new AdminCourseRankingSummary(course.getId(), rankingCount, instructorEmail);</span>
             })
-<span class="fc" id="L383">        .toList();</span>
+<span class="fc" id="L380">        .toList();</span>
   }
 
   /**
@@ -389,71 +386,71 @@ import org.springframework.web.bind.annotation.RestController;
    * role, is what allows ranking (issue #202): an admin who also teaches the course ranks it like
    * any other instructor, while an admin who does not sees it read-only.
    */
-<span class="fc" id="L392">  private record RankingScope(</span>
+<span class="fc" id="L389">  private record RankingScope(</span>
       Recruitment recruitment,
       RecruitmentCourse course,
       String catalogName,
       boolean isAdmin,
       boolean isInstructor) {
     boolean canRank() {
-<span class="fc bfc" id="L399" title="All 4 branches covered.">      return isInstructor &amp;&amp; &quot;Open&quot;.equals(recruitment.getReviewStatus());</span>
+<span class="fc bfc" id="L396" title="All 4 branches covered.">      return isInstructor &amp;&amp; &quot;Open&quot;.equals(recruitment.getReviewStatus());</span>
     }
   }
 
   private RankingScope rankingScope(Long recruitmentId, Long recruitmentCourseId, boolean editing) {
-<span class="fc" id="L404">    Recruitment recruitment =</span>
+<span class="fc" id="L401">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L406">            .findById(recruitmentId)</span>
-<span class="fc" id="L407">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc" id="L408">    RecruitmentCourse course =</span>
+<span class="fc" id="L403">            .findById(recruitmentId)</span>
+<span class="fc" id="L404">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L405">    RecruitmentCourse course =</span>
         recruitmentCourseRepository
-<span class="fc" id="L410">            .findById(recruitmentCourseId)</span>
-<span class="fc" id="L411">            .orElseThrow(</span>
-<span class="fc" id="L412">                () -&gt; new EntityNotFoundException(RecruitmentCourse.class, recruitmentCourseId));</span>
+<span class="fc" id="L407">            .findById(recruitmentCourseId)</span>
+<span class="fc" id="L408">            .orElseThrow(</span>
+<span class="fc" id="L409">                () -&gt; new EntityNotFoundException(RecruitmentCourse.class, recruitmentCourseId));</span>
 
-<span class="fc bfc" id="L414" title="All 2 branches covered.">    if (!recruitmentId.equals(course.getRecruitmentId())) {</span>
-<span class="fc" id="L415">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L411" title="All 2 branches covered.">    if (!recruitmentId.equals(course.getRecruitmentId())) {</span>
+<span class="fc" id="L412">      throw new IllegalArgumentException(</span>
           &quot;Recruitment course %s does not belong to recruitment %s&quot;
-<span class="fc" id="L417">              .formatted(recruitmentCourseId, recruitmentId));</span>
+<span class="fc" id="L414">              .formatted(recruitmentCourseId, recruitmentId));</span>
     }
-<span class="fc" id="L419">    CurrentUser currentUser = getCurrentUser();</span>
-<span class="fc bfc" id="L420" title="All 4 branches covered.">    if (currentUser == null || currentUser.getUser() == null) {</span>
-<span class="fc" id="L421">      throw new ForbiddenException(&quot;The authenticated user could not be identified.&quot;);</span>
+<span class="fc" id="L416">    CurrentUser currentUser = getCurrentUser();</span>
+<span class="fc bfc" id="L417" title="All 4 branches covered.">    if (currentUser == null || currentUser.getUser() == null) {</span>
+<span class="fc" id="L418">      throw new ForbiddenException(&quot;The authenticated user could not be identified.&quot;);</span>
     }
-<span class="fc" id="L423">    String email = currentUser.getUser().getEmail();</span>
-<span class="fc" id="L424">    boolean isAdmin =</span>
-<span class="fc bfc" id="L425" title="All 2 branches covered.">        currentUser.getRoles() != null</span>
-<span class="fc" id="L426">            &amp;&amp; currentUser.getRoles().stream()</span>
-<span class="fc" id="L427">                .map(GrantedAuthority::getAuthority)</span>
-<span class="fc bfc" id="L428" title="All 2 branches covered.">                .anyMatch(&quot;ROLE_ADMIN&quot;::equals);</span>
+<span class="fc" id="L420">    String email = currentUser.getUser().getEmail();</span>
+<span class="fc" id="L421">    boolean isAdmin =</span>
+<span class="fc bfc" id="L422" title="All 2 branches covered.">        currentUser.getRoles() != null</span>
+<span class="fc" id="L423">            &amp;&amp; currentUser.getRoles().stream()</span>
+<span class="fc" id="L424">                .map(GrantedAuthority::getAuthority)</span>
+<span class="fc bfc" id="L425" title="All 2 branches covered.">                .anyMatch(&quot;ROLE_ADMIN&quot;::equals);</span>
 
     // Admins may inspect historical rankings for stale, cancelled, or removed rows, but those
     // rows remain unavailable to instructors and this read exception never grants edit access.
-<span class="fc bfc" id="L432" title="All 4 branches covered.">    if (!course.isOnOffer() &amp;&amp; !isAdmin) {</span>
-<span class="fc" id="L433">      throw new ForbiddenException(</span>
+<span class="fc bfc" id="L429" title="All 4 branches covered.">    if (!course.isOnOffer() &amp;&amp; !isAdmin) {</span>
+<span class="fc" id="L430">      throw new ForbiddenException(</span>
           &quot;This recruitment course has been removed or is no longer available.&quot;);
     }
-<span class="fc bfc" id="L436" title="All 2 branches covered.">    if (&quot;NotStarted&quot;.equals(recruitment.getReviewStatus())) {</span>
-<span class="fc" id="L437">      throw new ForbiddenException(</span>
+<span class="fc bfc" id="L433" title="All 2 branches covered.">    if (&quot;NotStarted&quot;.equals(recruitment.getReviewStatus())) {</span>
+<span class="fc" id="L434">      throw new ForbiddenException(</span>
           &quot;Candidate rankings are unavailable because faculty reviews have not started.&quot;);
     }
 
-<span class="fc" id="L441">    String catalogName =</span>
-<span class="fc" id="L442">        instructorRepository.findByEmail(email).map(Instructor::getCatalogName).orElse(null);</span>
-<span class="fc bfc" id="L443" title="All 4 branches covered.">    boolean isInstructor = catalogName != null &amp;&amp; catalogName.equals(course.getInstructor());</span>
-<span class="fc bfc" id="L444" title="All 4 branches covered.">    if (!isAdmin &amp;&amp; !isInstructor) {</span>
-<span class="fc" id="L445">      throw new ForbiddenException(</span>
+<span class="fc" id="L438">    String catalogName =</span>
+<span class="fc" id="L439">        instructorRepository.findByEmail(email).map(Instructor::getCatalogName).orElse(null);</span>
+<span class="fc bfc" id="L440" title="All 4 branches covered.">    boolean isInstructor = catalogName != null &amp;&amp; catalogName.equals(course.getInstructor());</span>
+<span class="fc bfc" id="L441" title="All 4 branches covered.">    if (!isAdmin &amp;&amp; !isInstructor) {</span>
+<span class="fc" id="L442">      throw new ForbiddenException(</span>
           &quot;This recruitment course is not assigned to the authenticated instructor.&quot;);
     }
-<span class="fc" id="L448">    RankingScope scope = new RankingScope(recruitment, course, catalogName, isAdmin, isInstructor);</span>
-<span class="fc bfc" id="L449" title="All 4 branches covered.">    if (editing &amp;&amp; !scope.canRank()) {</span>
-<span class="fc" id="L450">      throw new ForbiddenException(</span>
+<span class="fc" id="L445">    RankingScope scope = new RankingScope(recruitment, course, catalogName, isAdmin, isInstructor);</span>
+<span class="fc bfc" id="L446" title="All 4 branches covered.">    if (editing &amp;&amp; !scope.canRank()) {</span>
+<span class="fc" id="L447">      throw new ForbiddenException(</span>
           &quot;Only assigned instructors may rank candidates while reviews are Open.&quot;);
     }
-<span class="fc" id="L453">    return scope;</span>
+<span class="fc" id="L450">    return scope;</span>
   }
 
-<span class="fc" id="L456">  public static record Candidate(</span>
+<span class="fc" id="L453">  public static record Candidate(</span>
       Long applicationId,
       Integer rank,
       String preference,
@@ -469,10 +466,10 @@ import org.springframework.web.bind.annotation.RestController;
       Integer previousServiceAsUla,
       String videoLink) {}
 
-<span class="fc" id="L472">  public static record RankEdit(Integer rank) {}</span>
+<span class="fc" id="L469">  public static record RankEdit(Integer rank) {}</span>
 
   static String preference(Application application, String courseId) {
-<span class="fc" id="L475">    return AssignmentsService.preference(application, courseId);</span>
+<span class="fc" id="L472">    return AssignmentsService.preference(application, courseId);</span>
   }
 
   /**
@@ -481,19 +478,19 @@ import org.springframework.web.bind.annotation.RestController;
    * some interest in the course.
    */
   private List&lt;Application&gt; eligible(RankingScope scope, boolean includeNotInterested) {
-<span class="fc" id="L484">    return eligible(</span>
-<span class="fc" id="L485">        applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()),</span>
-<span class="fc" id="L486">        scope.course(),</span>
+<span class="fc" id="L481">    return eligible(</span>
+<span class="fc" id="L482">        applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()),</span>
+<span class="fc" id="L483">        scope.course(),</span>
         includeNotInterested);
   }
 
   private List&lt;Application&gt; eligible(
       List&lt;Application&gt; applications, RecruitmentCourse course, boolean includeNotInterested) {
-<span class="fc" id="L492">    return AssignmentsService.real(applications).stream()</span>
-<span class="fc" id="L493">        .filter(</span>
+<span class="fc" id="L489">    return AssignmentsService.real(applications).stream()</span>
+<span class="fc" id="L490">        .filter(</span>
             application -&gt;
-<span class="fc bfc" id="L495" title="All 4 branches covered.">                includeNotInterested || preference(application, course.getCourseId()) != null)</span>
-<span class="fc" id="L496">        .toList();</span>
+<span class="fc bfc" id="L492" title="All 4 branches covered.">                includeNotInterested || preference(application, course.getCourseId()) != null)</span>
+<span class="fc" id="L493">        .toList();</span>
   }
 
   @Operation(
@@ -510,38 +507,38 @@ import org.springframework.web.bind.annotation.RestController;
       @PathVariable Long recruitmentCourseId,
       @Parameter(name = &quot;includeNotInterested&quot;) @RequestParam(defaultValue = &quot;false&quot;)
           boolean includeNotInterested) {
-<span class="fc" id="L513">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
-<span class="fc" id="L514">    Map&lt;Long, Integer&gt; ranks = new HashMap&lt;&gt;();</span>
-<span class="fc" id="L515">    candidateRankingRepository</span>
-<span class="fc" id="L516">        .findByRecruitmentCourseId(recruitmentCourseId)</span>
-<span class="fc" id="L517">        .forEach(row -&gt; ranks.put(row.getApplicationId(), row.getRank()));</span>
-<span class="fc" id="L518">    return eligible(scope, includeNotInterested).stream()</span>
-<span class="fc" id="L519">        .map(</span>
+<span class="fc" id="L510">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
+<span class="fc" id="L511">    Map&lt;Long, Integer&gt; ranks = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L512">    candidateRankingRepository</span>
+<span class="fc" id="L513">        .findByRecruitmentCourseId(recruitmentCourseId)</span>
+<span class="fc" id="L514">        .forEach(row -&gt; ranks.put(row.getApplicationId(), row.getRank()));</span>
+<span class="fc" id="L515">    return eligible(scope, includeNotInterested).stream()</span>
+<span class="fc" id="L516">        .map(</span>
             application -&gt;
-<span class="fc" id="L521">                new Candidate(</span>
-<span class="fc" id="L522">                    application.getId(),</span>
-<span class="fc" id="L523">                    ranks.get(application.getId()),</span>
-<span class="fc" id="L524">                    preferenceLabel(application, scope.course().getCourseId()),</span>
-<span class="fc" id="L525">                    application.getFirstName(),</span>
-<span class="fc" id="L526">                    application.getLastName(),</span>
-<span class="fc" id="L527">                    application.getEmail(),</span>
-<span class="fc" id="L528">                    application.getMajor(),</span>
-<span class="fc bfc" id="L529" title="All 2 branches covered.">                    application.getClassLevel() == null ? null : application.getClassLevel().name(),</span>
-<span class="fc" id="L530">                    application.getYearInProgram(),</span>
-<span class="fc" id="L531">                    application.getGraduationDate(),</span>
-<span class="fc" id="L532">                    application.getGpaMajor(),</span>
-<span class="fc" id="L533">                    application.getGpaOverall(),</span>
-<span class="fc" id="L534">                    application.getPreviousServiceAsUla(),</span>
-<span class="fc" id="L535">                    application.getVideoLink()))</span>
-<span class="fc" id="L536">        .toList();</span>
+<span class="fc" id="L518">                new Candidate(</span>
+<span class="fc" id="L519">                    application.getId(),</span>
+<span class="fc" id="L520">                    ranks.get(application.getId()),</span>
+<span class="fc" id="L521">                    preferenceLabel(application, scope.course().getCourseId()),</span>
+<span class="fc" id="L522">                    application.getFirstName(),</span>
+<span class="fc" id="L523">                    application.getLastName(),</span>
+<span class="fc" id="L524">                    application.getEmail(),</span>
+<span class="fc" id="L525">                    application.getMajor(),</span>
+<span class="fc bfc" id="L526" title="All 2 branches covered.">                    application.getClassLevel() == null ? null : application.getClassLevel().name(),</span>
+<span class="fc" id="L527">                    application.getYearInProgram(),</span>
+<span class="fc" id="L528">                    application.getGraduationDate(),</span>
+<span class="fc" id="L529">                    application.getGpaMajor(),</span>
+<span class="fc" id="L530">                    application.getGpaOverall(),</span>
+<span class="fc" id="L531">                    application.getPreviousServiceAsUla(),</span>
+<span class="fc" id="L532">                    application.getVideoLink()))</span>
+<span class="fc" id="L533">        .toList();</span>
   }
 
   /**
    * The preference as shown: &quot;Not Interested&quot; rather than null for an applicant who marked none.
    */
   private static String preferenceLabel(Application application, String courseId) {
-<span class="fc" id="L543">    String preference = preference(application, courseId);</span>
-<span class="fc bfc" id="L544" title="All 2 branches covered.">    return preference == null ? AssignmentsService.NOT_INTERESTED : preference;</span>
+<span class="fc" id="L540">    String preference = preference(application, courseId);</span>
+<span class="fc bfc" id="L541" title="All 2 branches covered.">    return preference == null ? AssignmentsService.NOT_INTERESTED : preference;</span>
   }
 
   @Operation(
@@ -554,9 +551,9 @@ import org.springframework.web.bind.annotation.RestController;
   @GetMapping(&quot;/{recruitmentId}/courses/{recruitmentCourseId}/cancelled&quot;)
   public List&lt;AssignmentsService.CancelledApplication&gt; cancelled(
       @PathVariable Long recruitmentId, @PathVariable Long recruitmentCourseId) {
-<span class="fc" id="L557">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
-<span class="fc" id="L558">    return AssignmentsService.cancelled(</span>
-<span class="fc" id="L559">        applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()));</span>
+<span class="fc" id="L554">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
+<span class="fc" id="L555">    return AssignmentsService.cancelled(</span>
+<span class="fc" id="L556">        applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()));</span>
   }
 
   @PreAuthorize(&quot;hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')&quot;)
@@ -566,46 +563,46 @@ import org.springframework.web.bind.annotation.RestController;
       @PathVariable Long recruitmentCourseId,
       @PathVariable Long applicationId,
       @RequestBody JsonNode body) {
-<span class="fc" id="L569">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, true);</span>
+<span class="fc" id="L566">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, true);</span>
     // Anyone the instructor can list, with or without the not-interested box ticked, can be ranked.
-<span class="fc" id="L571">    List&lt;Application&gt; applications = eligible(scope, true);</span>
-<span class="fc" id="L572">    requireCandidate(applications, applicationId);</span>
-<span class="fc" id="L573">    JsonNode value = body.get(&quot;rank&quot;);</span>
-<span class="fc bfc" id="L574" title="All 2 branches covered.">    if (value == null</span>
-<span class="fc bfc" id="L575" title="All 6 branches covered.">        || (!value.isNull() &amp;&amp; (!value.isIntegralNumber() || !value.canConvertToInt()))) {</span>
-<span class="fc" id="L576">      throw new IllegalArgumentException(&quot;Rank must be an integer or null.&quot;);</span>
+<span class="fc" id="L568">    List&lt;Application&gt; applications = eligible(scope, true);</span>
+<span class="fc" id="L569">    requireCandidate(applications, applicationId);</span>
+<span class="fc" id="L570">    JsonNode value = body.get(&quot;rank&quot;);</span>
+<span class="fc bfc" id="L571" title="All 2 branches covered.">    if (value == null</span>
+<span class="fc bfc" id="L572" title="All 6 branches covered.">        || (!value.isNull() &amp;&amp; (!value.isIntegralNumber() || !value.canConvertToInt()))) {</span>
+<span class="fc" id="L573">      throw new IllegalArgumentException(&quot;Rank must be an integer or null.&quot;);</span>
     }
-<span class="fc bfc" id="L578" title="All 2 branches covered.">    RankEdit edit = new RankEdit(value.isNull() ? null : value.intValue());</span>
-<span class="fc bfc" id="L579" title="All 6 branches covered.">    if (edit.rank() != null &amp;&amp; (edit.rank() &lt; 1 || edit.rank() &gt; applications.size())) {</span>
-<span class="fc" id="L580">      throw new IllegalArgumentException(</span>
-<span class="fc" id="L581">          &quot;Rank must be an integer from 1 through &quot; + applications.size() + &quot;, or null.&quot;);</span>
+<span class="fc bfc" id="L575" title="All 2 branches covered.">    RankEdit edit = new RankEdit(value.isNull() ? null : value.intValue());</span>
+<span class="fc bfc" id="L576" title="All 6 branches covered.">    if (edit.rank() != null &amp;&amp; (edit.rank() &lt; 1 || edit.rank() &gt; applications.size())) {</span>
+<span class="fc" id="L577">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L578">          &quot;Rank must be an integer from 1 through &quot; + applications.size() + &quot;, or null.&quot;);</span>
     }
-<span class="fc" id="L583">    CandidateRanking ranking =</span>
+<span class="fc" id="L580">    CandidateRanking ranking =</span>
         candidateRankingRepository
-<span class="fc" id="L585">            .findByRecruitmentCourseIdAndApplicationId(recruitmentCourseId, applicationId)</span>
-<span class="fc" id="L586">            .orElseGet(</span>
+<span class="fc" id="L582">            .findByRecruitmentCourseIdAndApplicationId(recruitmentCourseId, applicationId)</span>
+<span class="fc" id="L583">            .orElseGet(</span>
                 () -&gt;
-<span class="fc" id="L588">                    CandidateRanking.builder()</span>
-<span class="fc" id="L589">                        .recruitmentCourseId(recruitmentCourseId)</span>
-<span class="fc" id="L590">                        .applicationId(applicationId)</span>
-<span class="fc" id="L591">                        .build());</span>
-<span class="fc" id="L592">    ranking.setRank(edit.rank());</span>
-<span class="fc" id="L593">    candidateRankingRepository.save(ranking);</span>
-<span class="fc" id="L594">    return edit;</span>
+<span class="fc" id="L585">                    CandidateRanking.builder()</span>
+<span class="fc" id="L586">                        .recruitmentCourseId(recruitmentCourseId)</span>
+<span class="fc" id="L587">                        .applicationId(applicationId)</span>
+<span class="fc" id="L588">                        .build());</span>
+<span class="fc" id="L589">    ranking.setRank(edit.rank());</span>
+<span class="fc" id="L590">    candidateRankingRepository.save(ranking);</span>
+<span class="fc" id="L591">    return edit;</span>
   }
 
   private Application requireCandidate(List&lt;Application&gt; applications, Long applicationId) {
-<span class="fc" id="L598">    return applications.stream()</span>
-<span class="fc" id="L599">        .filter(application -&gt; applicationId.equals(application.getId()))</span>
-<span class="fc" id="L600">        .findFirst()</span>
-<span class="fc" id="L601">        .orElseThrow(</span>
+<span class="fc" id="L595">    return applications.stream()</span>
+<span class="fc" id="L596">        .filter(application -&gt; applicationId.equals(application.getId()))</span>
+<span class="fc" id="L597">        .findFirst()</span>
+<span class="fc" id="L598">        .orElseThrow(</span>
             () -&gt;
-<span class="fc" id="L603">                new ForbiddenException(</span>
+<span class="fc" id="L600">                new ForbiddenException(</span>
                     &quot;This application is not an eligible candidate for this recruitment course.&quot;));
   }
 
   /** Student answers only: never return the administrative review fields. */
-<span class="fc" id="L608">  public static record CandidateApplication(</span>
+<span class="fc" id="L605">  public static record CandidateApplication(</span>
       Long id,
       Long recruitmentId,
       String email,
@@ -619,65 +616,65 @@ import org.springframework.web.bind.annotation.RestController;
       @PathVariable Long recruitmentId,
       @PathVariable Long recruitmentCourseId,
       @PathVariable Long applicationId) {
-<span class="fc" id="L622">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
-<span class="fc" id="L623">    Application a = requireCandidate(eligible(scope, true), applicationId);</span>
-<span class="fc" id="L624">    return new CandidateApplication(</span>
-<span class="fc" id="L625">        a.getId(),</span>
-<span class="fc" id="L626">        a.getRecruitmentId(),</span>
-<span class="fc" id="L627">        a.getEmail(),</span>
-<span class="fc" id="L628">        a.getSubmittedAt(),</span>
-<span class="fc" id="L629">        a.getPostApplicationComments(),</span>
+<span class="fc" id="L619">    RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);</span>
+<span class="fc" id="L620">    Application a = requireCandidate(eligible(scope, true), applicationId);</span>
+<span class="fc" id="L621">    return new CandidateApplication(</span>
+<span class="fc" id="L622">        a.getId(),</span>
+<span class="fc" id="L623">        a.getRecruitmentId(),</span>
+<span class="fc" id="L624">        a.getEmail(),</span>
+<span class="fc" id="L625">        a.getSubmittedAt(),</span>
+<span class="fc" id="L626">        a.getPostApplicationComments(),</span>
         new ApplicationsController.ApplicationFields(
-<span class="fc" id="L631">            a.getFirstName(),</span>
-<span class="fc" id="L632">            a.getMiddleName(),</span>
-<span class="fc" id="L633">            a.getLastName(),</span>
-<span class="fc" id="L634">            a.getMajor(),</span>
-<span class="fc" id="L635">            a.getGpaMajor(),</span>
-<span class="fc" id="L636">            a.getGpaOverall(),</span>
-<span class="fc" id="L637">            a.getYearInProgram(),</span>
-<span class="fc" id="L638">            a.getGraduationDate(),</span>
-<span class="fc" id="L639">            a.getPriorCoursework().stream()</span>
-<span class="fc" id="L640">                .map(</span>
+<span class="fc" id="L628">            a.getFirstName(),</span>
+<span class="fc" id="L629">            a.getMiddleName(),</span>
+<span class="fc" id="L630">            a.getLastName(),</span>
+<span class="fc" id="L631">            a.getMajor(),</span>
+<span class="fc" id="L632">            a.getGpaMajor(),</span>
+<span class="fc" id="L633">            a.getGpaOverall(),</span>
+<span class="fc" id="L634">            a.getYearInProgram(),</span>
+<span class="fc" id="L635">            a.getGraduationDate(),</span>
+<span class="fc" id="L636">            a.getPriorCoursework().stream()</span>
+<span class="fc" id="L637">                .map(</span>
                     p -&gt;
-<span class="fc" id="L642">                        new ApplicationsController.PriorCourseworkFields(</span>
-<span class="fc" id="L643">                            p.isUcsbCourse(),</span>
-<span class="fc" id="L644">                            p.getOtherSchool(),</span>
-<span class="fc" id="L645">                            p.getCourseNumber(),</span>
-<span class="fc" id="L646">                            p.getCourseTitle(),</span>
-<span class="fc" id="L647">                            p.getTerm(),</span>
-<span class="fc" id="L648">                            p.getGrade()))</span>
-<span class="fc" id="L649">                .toList(),</span>
-<span class="fc" id="L650">            a.getTopicProficiencies(),</span>
-<span class="fc" id="L651">            a.getInterests(),</span>
-<span class="fc" id="L652">            a.getPrevExperience(),</span>
-<span class="fc" id="L653">            a.getComments(),</span>
-<span class="fc" id="L654">            a.getFirstChoiceCourse(),</span>
-<span class="fc" id="L655">            a.getSecondChoiceCourse(),</span>
-<span class="fc" id="L656">            a.isAvailableForLecturesFirstChoice(),</span>
-<span class="fc" id="L657">            a.isAvailableForLecturesSecondChoice(),</span>
-<span class="fc" id="L658">            a.isAvailableForDiscussionFirstChoice(),</span>
-<span class="fc" id="L659">            a.isAvailableForDiscussionSecondChoice(),</span>
-<span class="fc" id="L660">            a.getAvailabilityCommentsFirstChoice(),</span>
-<span class="fc" id="L661">            a.getAvailabilityCommentsSecondChoice(),</span>
-<span class="fc" id="L662">            a.getCourseInterests(),</span>
-<span class="fc" id="L663">            a.getResidencyStatus(),</span>
-<span class="fc" id="L664">            a.getLanguageExam(),</span>
-<span class="fc" id="L665">            a.getLanguageExamDatePassed(),</span>
-<span class="fc" id="L666">            a.getClassLevel(),</span>
-<span class="fc" id="L667">            a.getVideoLink(),</span>
-<span class="fc" id="L668">            a.getPreviousServiceAsUla(),</span>
-<span class="fc" id="L669">            a.getPermNumber(),</span>
-<span class="fc" id="L670">            a.getBsMsStudent(),</span>
-<span class="fc" id="L671">            a.getStudentStatusNextQuarter(),</span>
-<span class="fc" id="L672">            a.getWantsTaEligibility(),</span>
-<span class="fc" id="L673">            a.getOtherCampusJob(),</span>
-<span class="fc" id="L674">            a.getPriorUcsbEmployment(),</span>
-<span class="fc" id="L675">            a.getEmployeeId(),</span>
-<span class="fc" id="L676">            a.getI9Appointment(),</span>
-<span class="fc" id="L677">            a.getTrainingCommitment(),</span>
-<span class="fc" id="L678">            a.getTrainingCommitmentExplanation(),</span>
-<span class="fc" id="L679">            a.getChangingMajor(),</span>
-<span class="fc" id="L680">            a.getNoticeVersionId()));</span>
+<span class="fc" id="L639">                        new ApplicationsController.PriorCourseworkFields(</span>
+<span class="fc" id="L640">                            p.isUcsbCourse(),</span>
+<span class="fc" id="L641">                            p.getOtherSchool(),</span>
+<span class="fc" id="L642">                            p.getCourseNumber(),</span>
+<span class="fc" id="L643">                            p.getCourseTitle(),</span>
+<span class="fc" id="L644">                            p.getTerm(),</span>
+<span class="fc" id="L645">                            p.getGrade()))</span>
+<span class="fc" id="L646">                .toList(),</span>
+<span class="fc" id="L647">            a.getTopicProficiencies(),</span>
+<span class="fc" id="L648">            a.getInterests(),</span>
+<span class="fc" id="L649">            a.getPrevExperience(),</span>
+<span class="fc" id="L650">            a.getComments(),</span>
+<span class="fc" id="L651">            a.getFirstChoiceCourse(),</span>
+<span class="fc" id="L652">            a.getSecondChoiceCourse(),</span>
+<span class="fc" id="L653">            a.isAvailableForLecturesFirstChoice(),</span>
+<span class="fc" id="L654">            a.isAvailableForLecturesSecondChoice(),</span>
+<span class="fc" id="L655">            a.isAvailableForDiscussionFirstChoice(),</span>
+<span class="fc" id="L656">            a.isAvailableForDiscussionSecondChoice(),</span>
+<span class="fc" id="L657">            a.getAvailabilityCommentsFirstChoice(),</span>
+<span class="fc" id="L658">            a.getAvailabilityCommentsSecondChoice(),</span>
+<span class="fc" id="L659">            a.getCourseInterests(),</span>
+<span class="fc" id="L660">            a.getResidencyStatus(),</span>
+<span class="fc" id="L661">            a.getLanguageExam(),</span>
+<span class="fc" id="L662">            a.getLanguageExamDatePassed(),</span>
+<span class="fc" id="L663">            a.getClassLevel(),</span>
+<span class="fc" id="L664">            a.getVideoLink(),</span>
+<span class="fc" id="L665">            a.getPreviousServiceAsUla(),</span>
+<span class="fc" id="L666">            a.getPermNumber(),</span>
+<span class="fc" id="L667">            a.getBsMsStudent(),</span>
+<span class="fc" id="L668">            a.getStudentStatusNextQuarter(),</span>
+<span class="fc" id="L669">            a.getWantsTaEligibility(),</span>
+<span class="fc" id="L670">            a.getOtherCampusJob(),</span>
+<span class="fc" id="L671">            a.getPriorUcsbEmployment(),</span>
+<span class="fc" id="L672">            a.getEmployeeId(),</span>
+<span class="fc" id="L673">            a.getI9Appointment(),</span>
+<span class="fc" id="L674">            a.getTrainingCommitment(),</span>
+<span class="fc" id="L675">            a.getTrainingCommitmentExplanation(),</span>
+<span class="fc" id="L676">            a.getChangingMajor(),</span>
+<span class="fc" id="L677">            a.getNoticeVersionId()));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

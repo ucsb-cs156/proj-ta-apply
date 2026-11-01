@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
   @Value(&quot;${app.showSwaggerUILink:false}&quot;)
   private boolean showSwaggerUILink;
 
+  @Value(&quot;${app.enableDeveloperMode:false}&quot;)
+  private boolean enableDeveloperMode;
+
   @Value(&quot;${app.oauth.login:/oauth2/authorization/google}&quot;)
   private String oauthLogin;
 
@@ -41,25 +44,26 @@ import org.springframework.stereotype.Service;
   @Override
   public SystemInfo getSystemInfo() {
     String commitMessage =
-<span class="fc bfc" id="L44" title="All 2 branches covered.">        this.gitProperties != null ? this.gitProperties.get(&quot;commit.message.short&quot;) : &quot;unknown&quot;;</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">        this.gitProperties != null ? this.gitProperties.get(&quot;commit.message.short&quot;) : &quot;unknown&quot;;</span>
     String commitId =
-<span class="fc bfc" id="L46" title="All 2 branches covered.">        this.gitProperties != null ? this.gitProperties.getShortCommitId() : &quot;unknown&quot;;</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        this.gitProperties != null ? this.gitProperties.getShortCommitId() : &quot;unknown&quot;;</span>
 
     SystemInfo si =
-<span class="fc" id="L49">        SystemInfo.builder()</span>
-<span class="fc" id="L50">            .springH2ConsoleEnabled(this.springH2ConsoleEnabled)</span>
-<span class="fc" id="L51">            .showSwaggerUILink(this.showSwaggerUILink)</span>
-<span class="fc" id="L52">            .oauthLogin(this.oauthLogin)</span>
-<span class="fc" id="L53">            .sourceRepo(this.sourceRepo)</span>
-<span class="fc" id="L54">            .commitMessage(commitMessage)</span>
-<span class="fc" id="L55">            .commitId(commitId)</span>
-<span class="fc" id="L56">            .githubUrl(this.sourceRepo + &quot;/commit/&quot; + commitId)</span>
-<span class="fc" id="L57">            .subjectArea(this.subjectArea)</span>
-<span class="fc" id="L58">            .startQtrYYYYQ(this.startQtrYYYYQ)</span>
-<span class="fc" id="L59">            .endQtrYYYYQ(ucsbQuarterService.getEndQtrYYYYQ())</span>
-<span class="fc" id="L60">            .build();</span>
-<span class="fc" id="L61">    log.info(&quot;getSystemInfo returns {}&quot;, si);</span>
-<span class="fc" id="L62">    return si;</span>
+<span class="fc" id="L52">        SystemInfo.builder()</span>
+<span class="fc" id="L53">            .springH2ConsoleEnabled(this.springH2ConsoleEnabled)</span>
+<span class="fc" id="L54">            .showSwaggerUILink(this.showSwaggerUILink)</span>
+<span class="fc" id="L55">            .enableDeveloperMode(this.enableDeveloperMode)</span>
+<span class="fc" id="L56">            .oauthLogin(this.oauthLogin)</span>
+<span class="fc" id="L57">            .sourceRepo(this.sourceRepo)</span>
+<span class="fc" id="L58">            .commitMessage(commitMessage)</span>
+<span class="fc" id="L59">            .commitId(commitId)</span>
+<span class="fc" id="L60">            .githubUrl(this.sourceRepo + &quot;/commit/&quot; + commitId)</span>
+<span class="fc" id="L61">            .subjectArea(this.subjectArea)</span>
+<span class="fc" id="L62">            .startQtrYYYYQ(this.startQtrYYYYQ)</span>
+<span class="fc" id="L63">            .endQtrYYYYQ(ucsbQuarterService.getEndQtrYYYYQ())</span>
+<span class="fc" id="L64">            .build();</span>
+<span class="fc" id="L65">    log.info(&quot;getSystemInfo returns {}&quot;, si);</span>
+<span class="fc" id="L66">    return si;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
