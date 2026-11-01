@@ -160,6 +160,8 @@ public class InstructorRecruitmentsController extends ApiController {
    * {@code canRank} is whether this user may enter rankings here: the course's instructor of record
    * while reviews are Open, whether or not they are also an admin (issue #202). {@code targets} is
    * the course's hiring figures (issue #224), present on the same terms as {@code allocation}.
+   * {@code hasRankedNotInterested} is whether any real, non-cancelled applicant who did not express
+   * interest in the course has a ranking for it (issue #221): the page then always shows that tier.
    */
   public static record CandidateRankingPage(
       Long recruitmentId,
@@ -176,7 +178,8 @@ public class InstructorRecruitmentsController extends ApiController {
       List<CourseDetails> otherCourses,
       Integer allocation,
       boolean canRank,
-      CourseTargets targets) {}
+      CourseTargets targets,
+      boolean hasRankedNotInterested) {}
 
   /** Course identity and catalog display fields; section rows remain distinct by id. */
   public static record CourseDetails(
@@ -292,7 +295,27 @@ public class InstructorRecruitmentsController extends ApiController {
         scope.canRank(),
         scope.isAdmin() || allocationsVisible(recruitment)
             ? courseTargetsService.targetsFor(recruitmentId, course)
-            : null);
+            : null,
+        hasRankedNotInterested(recruitmentId, course));
+  }
+
+  /**
+   * Whether an applicant who did not express interest in the course (and is real and not cancelled)
+   * has a ranking for it, so the ranking page cannot hide that tier (issue #221).
+   */
+  private boolean hasRankedNotInterested(Long recruitmentId, RecruitmentCourse course) {
+    Set<Long> rankedIds =
+        candidateRankingRepository.findByRecruitmentCourseId(course.getId()).stream()
+            .filter(ranking -> ranking.getRank() != null)
+            .map(CandidateRanking::getApplicationId)
+            .collect(Collectors.toSet());
+    return eligible(
+            applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId), course, true)
+        .stream()
+        .anyMatch(
+            application ->
+                preference(application, course.getCourseId()) == null
+                    && rankedIds.contains(application.getId()));
   }
 
   @Operation(

@@ -511,6 +511,133 @@ describe("CandidateRankingPage", () => {
     ).not.toBeInTheDocument();
   });
 
+  // ---- Issue #221: the Not Interested tier cannot be hidden while one of its candidates is ranked ----
+
+  const rankedNotInterested = candidatesWithNotInterested.map((candidate) =>
+    candidate.applicationId === 99 ? { ...candidate, rank: 3 } : candidate,
+  );
+
+  test("while a not-interested candidate is ranked, the tier is shown and the box is checked, disabled and explained", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      canRank: true,
+      reviewStatus: "Open",
+      hasRankedNotInterested: true,
+    });
+    axiosMock
+      .onGet("/api/instructor/recruitments/1/courses/2/candidates")
+      .reply((config) => [
+        200,
+        config.params.includeNotInterested
+          ? rankedNotInterested
+          : candidatesFixtures,
+      ]);
+    renderPage();
+
+    const box = await screen.findByTestId(
+      "CandidateRankingPage-include-not-interested",
+    );
+    expect(await screen.findByText("Edsger")).toBeInTheDocument();
+    expect(box).toBeChecked();
+    expect(box).toBeDisabled();
+    // The narrow list is never asked for: the page knew before it fetched candidates.
+    expect(
+      candidatesRequests().every((r) => r.params.includeNotInterested === true),
+    ).toBe(true);
+    expect(
+      screen.getByTestId("CandidateRankingPage-not-interested-warning"),
+    ).toBeInTheDocument();
+
+    // Hovering the box (through its wrapper) explains why it cannot be cleared.
+    await userEvent.hover(box.closest("span.d-inline-block"));
+    expect(
+      await screen.findByText(
+        "This option cannot be deselected when there are ranked candidates in this section",
+      ),
+    ).toBeInTheDocument();
+    expect(box).toBeChecked();
+  });
+
+  test("clearing the last ranked not-interested candidate re-enables the box and keeps the tier shown", async () => {
+    let stillRanked = true;
+    axiosMock.onGet(rankingUrl).reply(() => [
+      200,
+      {
+        ...instructorRecruitmentsFixtures.candidateRankingPage,
+        canRank: true,
+        reviewStatus: "Open",
+        hasRankedNotInterested: stillRanked,
+      },
+    ]);
+    axiosMock
+      .onGet("/api/instructor/recruitments/1/courses/2/candidates")
+      .reply((config) => [
+        200,
+        config.params.includeNotInterested
+          ? rankedNotInterested
+          : candidatesFixtures,
+      ]);
+    axiosMock
+      .onPut("/api/instructor/recruitments/1/courses/2/candidates/99/rank")
+      .reply(() => {
+        stillRanked = false;
+        return [200, { rank: null }];
+      });
+    renderPage();
+
+    const box = await screen.findByTestId(
+      "CandidateRankingPage-include-not-interested",
+    );
+    await screen.findByText("Edsger");
+    expect(box).toBeDisabled();
+    const rankingGets = () =>
+      axiosMock.history.get.filter((r) => r.url === rankingUrl).length;
+    const before = rankingGets();
+
+    await userEvent.clear(
+      screen.getByRole("spinbutton", { name: "Ranking for Edsger Dijkstra" }),
+    );
+
+    // The page re-reads the ranking details after the save, and the box comes back to life.
+    await waitFor(() => expect(box).toBeEnabled());
+    expect(rankingGets()).toBeGreaterThan(before);
+    // It stays checked and the tier stays on screen: nothing vanishes under the user's hands.
+    expect(box).toBeChecked();
+    expect(screen.getByText("Edsger")).toBeInTheDocument();
+    await userEvent.hover(box);
+    expect(
+      screen.queryByText(
+        "This option cannot be deselected when there are ranked candidates in this section",
+      ),
+    ).not.toBeInTheDocument();
+
+    // Now the instructor may untick it, as before.
+    await userEvent.click(box);
+    expect(box).not.toBeChecked();
+    await waitFor(() =>
+      expect(screen.queryByText("Edsger")).not.toBeInTheDocument(),
+    );
+  });
+
+  test("without a ranked not-interested candidate (or without the field) the box is enabled and hovering explains nothing", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      hasRankedNotInterested: false,
+    });
+    renderPage();
+    const box = await screen.findByTestId(
+      "CandidateRankingPage-include-not-interested",
+    );
+    expect(box).toBeEnabled();
+    expect(box).not.toBeChecked();
+    await userEvent.hover(box.closest("span.d-inline-block"));
+    expect(
+      screen.queryByText(
+        "This option cannot be deselected when there are ranked candidates in this section",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   test("lists the cancelled applications under the candidates", async () => {
     axiosMock
       .onGet(rankingUrl)

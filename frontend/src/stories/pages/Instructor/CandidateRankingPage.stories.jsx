@@ -98,3 +98,33 @@ Rankable.parameters = {
     ],
   },
 };
+
+/**
+ * A not-interested candidate is ranked (issue #221): the tier is shown and the box under the table
+ * is checked and disabled, with a tooltip on hover.
+ */
+export const NotInterestedRanked = Template.bind({});
+NotInterestedRanked.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/instructor/recruitments/1/courses/2/ranking", () =>
+        HttpResponse.json({
+          ...instructorRecruitmentsFixtures.candidateRankingPage,
+          reviewStatus: "Open",
+          canRank: true,
+          hasRankedNotInterested: true,
+        }),
+      ),
+      http.get("/api/instructor/recruitments/1/courses/2/candidates", () =>
+        HttpResponse.json(
+          candidatesWithNotInterested.map((candidate) =>
+            candidate.applicationId === 99
+              ? { ...candidate, rank: 3 }
+              : candidate,
+          ),
+        ),
+      ),
+      ...handlers,
+    ],
+  },
+};

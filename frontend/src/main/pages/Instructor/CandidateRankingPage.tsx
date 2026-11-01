@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Form } from "react-bootstrap";
+import { Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import CancelledApplicationsTable, {
   type CancelledApplication,
@@ -10,6 +10,7 @@ import DetailsTable, {
 } from "main/components/Common/DetailsTable";
 import {
   INCLUDE_NOT_INTERESTED_LABEL,
+  NOT_INTERESTED_FORCED_TOOLTIP,
   NOT_INTERESTED_WARNING,
 } from "main/utils/interestDisplay";
 import { apiErrorMessage } from "main/utils/apiError";
@@ -55,6 +56,11 @@ export type CandidateRankingPageData = {
   course: CourseDetails;
   otherCourses: CourseDetails[];
   /**
+   * Whether a candidate who did not express interest in the course is ranked (issue #221): the
+   * page then always shows that tier and cannot hide it.
+   */
+  hasRankedNotInterested?: boolean;
+  /**
    * Whether this user may enter rankings (issue #202): the course's instructor of record while
    * reviews are Open, admin or not. Anyone else, including an admin who does not teach the
    * course, sees the rankings read-only.
@@ -83,20 +89,39 @@ export default function CandidateRankingPage(): React.JSX.Element {
   const url = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/ranking`;
   const candidatesUrl = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/candidates`;
   const cancelledUrl = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/cancelled`;
-  // Issue #199: candidates who marked the course Not Interested are listed only on request.
+  const { data, isFetching, isError, error, refetch } =
+    useBackend<CandidateRankingPageData | null>(
+      // Stryker disable next-line all : the query key is only a cache name
+      [url],
+      // Stryker disable next-line all : GET is axios's default method
+      { method: "GET", url },
+      null,
+      // Stryker disable next-line all : only decides whether a failed fetch also toasts
+      true,
+      { enabled: validIds },
+    );
+  // Issue #199: candidates who marked the course Not Interested are listed only on request,
+  // except that (issue #221) while any of them is ranked the tier is always shown.
   const [includeNotInterested, setIncludeNotInterested] = useState(false);
+  const forced = data?.hasRankedNotInterested === true;
+  // Forcing the tier on ticks the ordinary box too, so that when the last such ranking is cleared
+  // the tier stays on screen (nothing vanishes under the instructor's hands) and the box is simply
+  // enabled again, to be unticked or not as before.
+  if (forced && !includeNotInterested) setIncludeNotInterested(true);
+  const showNotInterested = includeNotInterested || forced;
   const candidates = useBackend<Candidate[] | null>(
     // Stryker disable next-line all : the query key is only a cache name
-    [candidatesUrl, includeNotInterested],
+    [candidatesUrl, showNotInterested],
     {
       // Stryker disable next-line all : GET is axios's default method
       method: "GET",
       url: candidatesUrl,
-      params: { includeNotInterested },
+      params: { includeNotInterested: showNotInterested },
     },
     null,
     true,
-    { enabled: validIds },
+    // The ranking details come first, so a ranked not-interested tier is asked for from the start.
+    { enabled: validIds && data != null },
   );
   const cancelled = useBackend<CancelledApplication[] | null>(
     // Stryker disable next-line all : the query key is only a cache name
@@ -107,14 +132,18 @@ export default function CandidateRankingPage(): React.JSX.Element {
     true,
     { enabled: validIds },
   );
-  const { data, isFetching, isError, error } =
-    useBackend<CandidateRankingPageData | null>(
-      [url],
-      { method: "GET", url },
-      null,
-      true,
-      { enabled: validIds },
-    );
+
+  const notInterestedBox = (
+    <Form.Check
+      type="checkbox"
+      id="CandidateRankingPage-include-not-interested"
+      label={INCLUDE_NOT_INTERESTED_LABEL}
+      checked={showNotInterested}
+      disabled={forced}
+      onChange={(e) => setIncludeNotInterested(e.target.checked)}
+      data-testid="CandidateRankingPage-include-not-interested"
+    />
+  );
 
   return (
     <BasicLayout>
@@ -277,25 +306,31 @@ export default function CandidateRankingPage(): React.JSX.Element {
                 <InterestLegend testIdPrefix="CandidateRankingPage-legend" />
                 <CandidateTable
                   // Stryker disable next-line all : React key property not exposed in dom
-                  key={`${candidatesUrl}?${includeNotInterested}`}
+                  key={`${candidatesUrl}?${showNotInterested}`}
                   candidates={candidates.data}
                   type={data.type}
                   editable={data.canRank === true}
                   apiUrl={candidatesUrl}
                   applicationUrl={`/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/applications`}
+                  onSaved={() => void refetch()}
                 />
               </>
             )}
-            <Form.Check
-              type="checkbox"
-              id="CandidateRankingPage-include-not-interested"
-              className="mt-2"
-              label={INCLUDE_NOT_INTERESTED_LABEL}
-              checked={includeNotInterested}
-              onChange={(e) => setIncludeNotInterested(e.target.checked)}
-              data-testid="CandidateRankingPage-include-not-interested"
-            />
-            {includeNotInterested && (
+            {/* The wrapper is always there, so the box keeps its place (and focus) when it is
+                forced on or released; only while forced does hovering it explain why. */}
+            <OverlayTrigger
+              placement="top"
+              // Stryker disable next-line all : an unknown trigger name triggers nothing, like []
+              trigger={forced ? ["hover"] : []}
+              overlay={
+                <Tooltip id="CandidateRankingPage-not-interested-forced-tooltip">
+                  {NOT_INTERESTED_FORCED_TOOLTIP}
+                </Tooltip>
+              }
+            >
+              <span className="d-inline-block mt-2">{notInterestedBox}</span>
+            </OverlayTrigger>
+            {showNotInterested && (
               <p
                 className="text-danger fw-bold"
                 role="alert"

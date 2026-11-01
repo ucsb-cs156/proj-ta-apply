@@ -8,6 +8,7 @@ import {
   LIGHT_GREEN,
   NOT_INTERESTED,
   NOT_INTERESTED_LABEL,
+  NOT_INTERESTED_FORCED_TOOLTIP,
   NOT_INTERESTED_WARNING,
   PALE_RED,
   PALE_YELLOW,
@@ -91,6 +92,12 @@ describe("interestDisplay", () => {
     );
     expect(INCLUDE_NOT_INTERESTED_LABEL).toBe(
       'Include candidates that marked my course with "Not Interested/Not Applicable"',
+    );
+  });
+
+  test("the tooltip on the forced checkbox", () => {
+    expect(NOT_INTERESTED_FORCED_TOOLTIP).toBe(
+      "This option cannot be deselected when there are ranked candidates in this section",
     );
   });
 });
