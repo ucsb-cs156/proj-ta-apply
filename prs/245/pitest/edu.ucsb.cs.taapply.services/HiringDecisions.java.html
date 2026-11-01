@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>HiringDecisions.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.services;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.Recruitment;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.enums.ApplicationStatus;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * The rules about releasing hiring decisions, i.e. publishing a recruitment&#39;s assignments (issue</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * #237; design in docs/design/AdminUserInterfaceDesign.md, &#34;Hiring decisions and reopening&#34;). One</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * place, so the endpoint that refuses a release, the steps endpoint and the published assignments</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * page all agree.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>public final class HiringDecisions {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class=''>  private HiringDecisions() {}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static final String CLOSE_RANKING_FIRST =</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      &#34;Close Faculty Ranking before releasing hiring decisions.&#34;;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static final String CLOSE_APPLICATIONS_FIRST =</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      &#34;Close Applications before releasing hiring decisions.&#34;;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static final String ASSIGN_FIRST =</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      &#34;Assign candidates to slots before releasing hiring decisions.&#34;;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * The first prerequisite of releasing hiring decisions that is not met, as the message to show,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * or null when all are: faculty ranking is closed, applications are closed, and at least one</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * candidate has been assigned.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static String unmetPrerequisite(Recruitment recruitment, boolean anyAssigned) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_29'/>
+29
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_29'>1</a>
+<span>
+1. unmetPrerequisite : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (!&#34;Closed&#34;.equals(recruitment.getReviewStatus())) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_30'/>
+30
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_30'>1</a>
+<span>
+1. unmetPrerequisite : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/services/HiringDecisions::unmetPrerequisite &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return CLOSE_RANKING_FIRST;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_32'/>
+32
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_32'>1</a>
+<span>
+1. unmetPrerequisite : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (recruitment.getApplicationStatus() == ApplicationStatus.OPEN) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_33'/>
+33
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_33'>1</a>
+<span>
+1. unmetPrerequisite : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/services/HiringDecisions::unmetPrerequisite &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>      return CLOSE_APPLICATIONS_FIRST;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_35'/>
+35
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_35'>2</a>
+<span>
+1. unmetPrerequisite : negated conditional &rarr; KILLED<br/>
+2. unmetPrerequisite : replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/services/HiringDecisions::unmetPrerequisite &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return anyAssigned ? null : ASSIGN_FIRST;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * Whether the released hiring decisions are now tentative: they were released, and applications</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * or faculty ranking have been reopened since. Never &#34;final&#34;: a later reopening is always</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_41'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * possible.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_42'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_43'/>
+43
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_43'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static boolean isTentative(Recruitment recruitment) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_44'/>
+44
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_44'>2</a>
+<span>
+1. isTentative : negated conditional &rarr; KILLED<br/>
+2. isTentative : replaced boolean return with true for edu/ucsb/cs/taapply/services/HiringDecisions::isTentative &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return Boolean.TRUE.equals(recruitment.getAssignmentsPublished())</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_45'/>
+45
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_45'>1</a>
+<span>
+1. isTentative : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        &#38;&#38; (recruitment.getApplicationStatus() == ApplicationStatus.OPEN</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_46'/>
+46
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_46'>1</a>
+<span>
+1. isTentative : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            || &#34;Open&#34;.equals(recruitment.getReviewStatus()));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_47'/>
+47
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_47'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@6628d62d_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_48'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6628d62d_29'>29</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_29'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>unmetPrerequisite<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:ranking_not_closed_comes_first_whether_never_opened_or_open()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6628d62d_30'>30</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_30'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>unmetPrerequisite<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:ranking_not_closed_comes_first_whether_never_opened_or_open()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/services/HiringDecisions::unmetPrerequisite &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6628d62d_32'>32</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_32'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>unmetPrerequisite<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:nobody_assigned_comes_last_and_everything_met_is_null()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6628d62d_33'>33</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_33'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>unmetPrerequisite<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:open_applications_come_second()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/services/HiringDecisions::unmetPrerequisite &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6628d62d_35'>35</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_35'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>unmetPrerequisite<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:nobody_assigned_comes_last_and_everything_met_is_null()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>unmetPrerequisite<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:nobody_assigned_comes_last_and_everything_met_is_null()]</span></span> replaced return value with &#34;&#34; for edu/ucsb/cs/taapply/services/HiringDecisions::unmetPrerequisite &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6628d62d_44'>44</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_44'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isTentative<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:decisions_not_released_are_never_tentative()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>isTentative<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:decisions_not_released_are_never_tentative()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/HiringDecisions::isTentative &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6628d62d_45'>45</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_45'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isTentative<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:released_decisions_are_tentative_only_while_applications_or_ranking_are_open()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@6628d62d_46'>46</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@6628d62d_46'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isTentative<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:released_decisions_are_tentative_only_while_applications_or_ranking_are_open()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:decisions_not_released_are_never_tentative()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:released_decisions_are_tentative_only_while_applications_or_ranking_are_open()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_4_is_done_when_closed_after_having_been_closed_once()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_9_before_publishing_opens_the_publish_modal()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_5_after_withdrawing_is_not_done_even_though_a_release_was_stamped()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_5_without_a_stamp_just_says_released()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_2_is_done_once_opened_and_then_offers_to_close()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_6_offers_to_open_until_reviews_have_opened()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:the_budget_link_writes_the_quarter_as_admins_do()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_1_is_always_done_and_says_when_when_it_is_known()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_4_is_not_done_when_applications_were_reopened_after_closing()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_2_offers_to_open_until_applications_have_opened()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:unpublished_decisions_are_never_tentative()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_7_shows_the_deadline_while_reviews_are_open_and_not_closed_yet_without_one()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_5_is_done_when_the_visibility_is_not_admins_only()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_9_once_published_links_to_the_published_page_and_says_when()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_9_has_no_blocked_reason_once_released_and_no_other_step_ever_has_one()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:a_fresh_recruitment_has_nine_steps_and_only_the_first_is_done()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_7_is_done_when_closed_and_says_when_if_it_is_known()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_9_names_the_first_unmet_prerequisite_in_order()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_4_shows_the_primary_consideration_date_until_applications_are_closed()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:published_decisions_are_tentative_while_applications_or_ranking_are_open()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:removed_courses_do_not_count_toward_the_allocations()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_3_is_not_done_when_the_allocations_fall_short_or_overshoot()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_3_is_done_when_the_allocations_add_up_to_the_target()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_8_counts_what_is_still_to_assign()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_9_has_no_blocked_reason_when_every_prerequisite_is_met()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:the_response_keeps_the_type_and_leaves_out_what_does_not_apply()] (6 ms)</li><li>edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RecruitmentStepsServiceTests]/[method:step_8_is_complete_at_or_above_the_target_and_unassigned_applications_do_not_count()] (2 ms)</li><li>edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests]/[method:student_layout_for_a_TA_recruitment_has_no_first_time_column()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests]/[method:course_layout_has_no_position_columns_when_nobody_is_assigned()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests]/[method:student_layout_for_a_ULA_recruitment_says_who_is_a_first_time_ULA()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests]/[method:course_layout_heads_the_position_columns_ULA_for_a_ULA_recruitment()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests]/[method:course_layout_lists_every_live_section_in_order_with_its_people()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests]/[method:the_table_is_tentative_while_applications_or_ranking_are_open()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.PublishedAssignmentsServiceTests]/[method:csv_is_the_same_table_with_every_cell_quoted()] (2 ms)</li><li>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:ranking_not_closed_comes_first_whether_never_opened_or_open()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests]/[method:the_first_unmet_prerequisite_is_the_one_named()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests]/[method:publishing_while_faculty_ranking_is_not_closed_is_refused()] (6 ms)</li><li>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:nobody_assigned_comes_last_and_everything_met_is_null()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests]/[method:publishing_with_nobody_assigned_is_refused()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests]/[method:an_unset_published_flag_counts_as_unpublished()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests]/[method:admin_can_publish_assignments_and_it_is_audited()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests]/[method:publishing_stamps_each_time_and_taking_it_back_keeps_the_last_stamp()] (6 ms)</li><li>edu.ucsb.cs.taapply.services.HiringDecisionsTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.HiringDecisionsTests]/[method:open_applications_come_second()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests]/[method:publishing_while_applications_are_open_is_refused()] (3 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>

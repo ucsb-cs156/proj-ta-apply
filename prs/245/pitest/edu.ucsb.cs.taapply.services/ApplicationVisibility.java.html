@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>ApplicationVisibility.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.services;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.entity.Application;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.enums.ApplicationOrigin;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.List;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * The one rule for which applications count (issue #219). An application from a real applicant</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * always counts. Test applications entered by an admin and fake ones made by Developer Mode count</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * only while Developer Mode is on, so that every feature of the app can be tried on test data; with</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * it off, which is the only state production can be in, they are left out of every count, ranking,</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * assignment and export, as test applications always were.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>public final class ApplicationVisibility {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='uncovered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='uncovered'><pre><span  class=''>  private ApplicationVisibility() {}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Whether the application counts as a real one, ignoring whether it was cancelled. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static boolean isReal(Application application, boolean developerModeOn) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_21'/>
+21
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_21'>3</a>
+<span>
+1. isReal : negated conditional &rarr; KILLED<br/>
+2. isReal : negated conditional &rarr; KILLED<br/>
+3. isReal : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationVisibility::isReal &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return application.getOrigin() == ApplicationOrigin.APPLICANT || developerModeOn;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** The applications that count and that the applicant has not cancelled. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static List&#60;Application&#62; real(List&#60;Application&#62; applications, boolean developerModeOn) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_26'/>
+26
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_26'>1</a>
+<span>
+1. real : replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/ApplicationVisibility::real &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return applications.stream()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_27'/>
+27
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_27'>2</a>
+<span>
+1. lambda$real$0 : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$real$0 &rarr; KILLED<br/>
+2. lambda$real$0 : replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$real$0 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        .filter(a -&#62; isReal(a, developerModeOn))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_28'/>
+28
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_28'>2</a>
+<span>
+1. lambda$real$1 : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$real$1 &rarr; KILLED<br/>
+2. lambda$real$1 : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        .filter(a -&#62; a.getStatus() != ApplicationReviewStatus.CANCELLED)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_29'/>
+29
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_29'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .toList();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** The applications that count and that the applicant cancelled. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static List&#60;Application&#62; cancelled(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>      List&#60;Application&#62; applications, boolean developerModeOn) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_35'/>
+35
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_35'>1</a>
+<span>
+1. cancelled : replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/ApplicationVisibility::cancelled &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return applications.stream()</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_36'/>
+36
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_36'>2</a>
+<span>
+1. lambda$cancelled$0 : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$cancelled$0 &rarr; KILLED<br/>
+2. lambda$cancelled$0 : replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$cancelled$0 &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        .filter(a -&#62; isReal(a, developerModeOn))</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_37'/>
+37
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_37'>2</a>
+<span>
+1. lambda$cancelled$1 : replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$cancelled$1 &rarr; KILLED<br/>
+2. lambda$cancelled$1 : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        .filter(a -&#62; a.getStatus() == ApplicationReviewStatus.CANCELLED)</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        .toList();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@26d0ef9_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@26d0ef9_21'>21</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_21'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isReal<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:test_and_fake_applications_count_only_in_developer_mode()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>isReal<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:test_and_fake_applications_count_only_in_developer_mode()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>3.<span><b>3</b><br/><b>Location : </b>isReal<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:test_and_fake_applications_count_only_in_developer_mode()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationVisibility::isReal &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@26d0ef9_26'>26</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_26'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>real<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()]</span></span> replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/ApplicationVisibility::real &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@26d0ef9_27'>27</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_27'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$real$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$real$0 &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>lambda$real$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()]</span></span> replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$real$0 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@26d0ef9_28'>28</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_28'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$real$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$real$1 &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>lambda$real$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@26d0ef9_35'>35</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_35'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>cancelled<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()]</span></span> replaced return value with Collections.emptyList for edu/ucsb/cs/taapply/services/ApplicationVisibility::cancelled &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@26d0ef9_36'>36</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_36'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$cancelled$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$cancelled$0 &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>lambda$cancelled$0<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()]</span></span> replaced boolean return with false for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$cancelled$0 &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@26d0ef9_37'>37</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@26d0ef9_37'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>lambda$cancelled$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()]</span></span> replaced boolean return with true for edu/ucsb/cs/taapply/services/ApplicationVisibility::lambda$cancelled$1 &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>lambda$cancelled$1<br/><b>Killed by : </b>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:real_and_cancelled_partition_the_visible_applications()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:anyAssigned_is_true_when_a_real_application_has_a_tentative_assignment()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:anyAssigned_is_false_when_nobody_or_only_test_and_cancelled_applications_are_assigned()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:real_applications_leave_out_test_and_cancelled_in_creation_order()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.CourseTargetsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.CourseTargetsServiceTests]/[method:more_ranked_than_asked_leaves_nothing_still_needed()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.CourseTargetsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.CourseTargetsServiceTests]/[method:twice_the_allocation_when_enough_candidates_are_interested()] (2 ms)</li><li>edu.ucsb.cs.taapply.services.CourseTargetsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.CourseTargetsServiceTests]/[method:no_allocation_means_no_target_and_nothing_needed_even_with_rankings()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.CourseTargetsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.CourseTargetsServiceTests]/[method:targets_for_several_courses_load_the_applications_once_and_keep_course_order()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.CourseTargetsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.CourseTargetsServiceTests]/[method:counts_interested_candidates_and_rankings_of_real_applicants()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:ula_assignments_use_ula_identity_and_text_values()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RankingsCsvServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RankingsCsvServiceTests]/[method:no_courses_still_exports_real_unranked_applicants_with_a_blank_assignment()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:over_assigned_section_has_negative_places_left()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#4] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#5] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#6] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#8] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#7] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#1] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#2] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#3] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:missing_class_level_and_empty_candidates_are_safe()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:no_not_interested_candidate_is_ranked_when_nobody_is_ranked()] (4 ms)</li><li>edu.ucsb.cs.taapply.services.RankingsCsvServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RankingsCsvServiceTests]/[method:ula_exact_document_quotes_unicode_commas_and_newlines_and_preserves_stored_numbers()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:a_ranked_test_application_does_not_force_the_tier()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:nullable_applicant_follow_up_comments_are_returned_without_admin_comments()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:a_ranked_not_interested_candidate_who_cancelled_does_not_force_the_tier()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:rejects_missing_rank_and_ineligible_or_other_recruitment_applications()] (12 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:ranking_only_interested_candidates_does_not_force_the_tier()] (4 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:assignments_carry_each_applicants_interest_in_every_listed_section()] (1 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:a_ranked_not_interested_candidate_forces_the_tier()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:a_cleared_ranking_of_a_not_interested_candidate_does_not_force_the_tier()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:missing_authenticated_user_and_missing_mapping_are_denied_on_direct_candidate_requests()] (11 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:assignments_list_sections_applicants_counts_and_rankings_exactly()] (3 ms)</li><li>edu.ucsb.cs.taapply.services.RankingsCsvServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RankingsCsvServiceTests]/[method:ta_exact_rows_preserve_ties_and_historical_sections_without_leaking_other_applicants()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:an_admin_who_teaches_the_course_ranks_like_any_instructor()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminRankingsControllerTests]/[method:download_is_utf8_csv_attachment_scoped_to_requested_recruitment()] (16 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:saves_immediately_updates_existing_row_clears_and_permits_ties_past_deadline()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:same_application_has_independent_section_rankings_in_the_api()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:exact_candidate_response_excludes_test_and_nonmatching_applications_and_uses_precedence()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:admins_can_read_historical_unavailable_courses_but_cannot_edit_them()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:admins_read_closed_pages_but_never_edit_even_with_dual_role()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:full_application_answers_have_an_independent_exact_contract_and_no_admin_fields()] (12 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:admin_counts_only_entered_ranks_for_real_eligible_applications_in_visible_course_scope()] (11 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:a_not_interested_applicant_can_be_ranked_and_read_but_a_cancelled_one_cannot()] (10 ms)</li><li>edu.ucsb.cs.taapply.services.RankingsCsvPersistenceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RankingsCsvPersistenceTests]/[method:persisted_export_is_deterministic_and_never_reads_other_recruitment_rankings()] (45 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:cancelled_applications_are_never_candidates_and_not_interested_ones_only_on_request()] (21 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:test_and_fake_applications_count_only_in_developer_mode()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:cancelled_includes_test_and_fake_applications_in_developer_mode()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:cancelled_keeps_only_real_cancelled_applications_in_order_with_the_reason()] (1 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests]/[method:test_and_fake_applications_count_in_developer_mode()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentsControllerTests]/[method:admin_gets_the_application_count_of_every_recruitment()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:an_admin_sees_the_cancelled_applications_of_any_course()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:the_course_instructor_sees_the_recruitments_cancelled_applications()] (6 ms)</li><li>edu.ucsb.cs.taapply.services.ApplicationVisibilityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.ApplicationVisibilityTests]/[method:applicants_always_count()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:cancelled_applications_of_a_recruitment_come_from_the_repository()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.CourseTargetsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.CourseTargetsServiceTests]/[method:no_courses_gives_an_empty_map()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.AssignmentsServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.AssignmentsServiceTests]/[method:empty_recruitment_has_headers_and_nothing_else()] (0 ms)</li><li>edu.ucsb.cs.taapply.services.RankingsCsvServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RankingsCsvServiceTests]/[method:empty_recruitment_has_exact_ta_header_and_blank_planning_rows()] (1 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminRankingsControllerTests]/[method:empty_ula_download_has_exact_header_and_its_own_filename()] (6 ms)</li><li>edu.ucsb.cs.taapply.services.RankingsCsvServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RankingsCsvServiceTests]/[method:no_applicants_keeps_course_columns_including_null_offering_details()] (1 ms)</li><li>edu.ucsb.cs.taapply.services.RankingsCsvServiceTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.services.RankingsCsvServiceTests]/[method:section_order_takes_precedence_over_enrollment_code()] (1 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:an_admin_with_no_catalog_name_cannot_rank()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:admins_can_read_any_course_without_an_instructor_mapping()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:closed_review_metadata_is_available_to_the_course_instructor()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:an_admin_who_teaches_the_course_can_rank_while_reviews_are_open()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:the_ranking_page_shows_the_allocation_to_an_admin_even_while_hidden()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:the_instructor_cannot_rank_once_reviews_are_closed()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:an_admin_who_does_not_teach_the_course_cannot_rank()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:the_ranking_page_hides_the_allocation_from_the_instructor_until_shown()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:the_ranking_page_shows_the_allocation_to_the_instructor_once_shown()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[test-template:the_ranking_page_carries_the_targets_in_both_faculty_states(edu.ucsb.cs.taapply.enums.AllocationVisibility)]/[test-template-invocation:#2] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[method:instructor_can_read_course_metadata_and_only_their_other_courses()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.InstructorRecruitmentsControllerTests]/[test-template:the_ranking_page_carries_the_targets_in_both_faculty_states(edu.ucsb.cs.taapply.enums.AllocationVisibility)]/[test-template-invocation:#1] (11 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>
