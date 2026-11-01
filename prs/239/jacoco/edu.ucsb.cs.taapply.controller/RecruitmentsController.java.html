@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">RecruitmentsController.java</span></div><h1>RecruitmentsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJobFactory;
+import edu.ucsb.cs.taapply.models.Quarter;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.AllocationService;
+import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
+import edu.ucsb.cs156.jobs.services.JobService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Admin management of recruitments. Every creation, deletion and change of status or dates is
+ * recorded in the recruitment audit trail (issue #139) through {@link RecruitmentAuditService}.
+ */
+@Tag(name = &quot;Recruitments&quot;)
+@RequestMapping(&quot;/api/admin/recruitments&quot;)
+@RestController
+<span class="fc" id="L46">@Slf4j</span>
+<span class="fc" id="L47">public class RecruitmentsController extends ApiController {</span>
+
+<span class="fc" id="L49">  private static final Set&lt;String&gt; REVIEW_STATUSES = Set.of(&quot;NotStarted&quot;, &quot;Open&quot;, &quot;Closed&quot;);</span>
+
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired ApplicationRepository applicationRepository;
+  @Autowired JobService jobService;
+  @Autowired PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
+  @Autowired RecruitmentAuditService recruitmentAuditService;
+  @Autowired AllocationService allocationService;
+
+  @Operation(
+      summary = &quot;Create a recruitment&quot;,
+      description =
+          &quot;Creating one immediately launches the job that fills its course list, so the list is&quot;
+              + &quot; there without a second step. At most one recruitment exists per quarter and type.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/post&quot;)
+  public Recruitment postRecruitment(
+      @Parameter(name = &quot;quarter&quot;, description = &quot;YYYYQ, e.g. 20261&quot;) @RequestParam String quarter,
+      @Parameter(name = &quot;type&quot;) @RequestParam RecruitmentType type,
+      @Parameter(name = &quot;tentativeOpeningDate&quot;)
+          @RequestParam
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate tentativeOpeningDate,
+      @Parameter(name = &quot;primaryConsiderationDate&quot;)
+          @RequestParam
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate primaryConsiderationDate) {
+
+    // Validate before writing; ApiController maps IllegalArgumentException to 400.
+<span class="fc" id="L78">    Quarter.yyyyqToInt(quarter);</span>
+
+<span class="fc bfc" id="L80" title="All 2 branches covered.">    if (recruitmentRepository.existsByQuarterAndType(quarter, type)) {</span>
+<span class="fc" id="L81">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L82">          String.format(&quot;A %s recruitment already exists for quarter %s&quot;, type, quarter));</span>
+    }
+
+<span class="fc" id="L85">    Recruitment recruitment =</span>
+<span class="fc" id="L86">        recruitmentRepository.save(</span>
+<span class="fc" id="L87">            Recruitment.builder()</span>
+<span class="fc" id="L88">                .quarter(quarter)</span>
+<span class="fc" id="L89">                .type(type)</span>
+<span class="fc" id="L90">                .applicationStatus(ApplicationStatus.CLOSED)</span>
+<span class="fc" id="L91">                .tentativeOpeningDate(tentativeOpeningDate)</span>
+<span class="fc" id="L92">                .primaryConsiderationDate(primaryConsiderationDate)</span>
+<span class="fc" id="L93">                .createdAt(LocalDateTime.now())</span>
+<span class="fc" id="L94">                .build());</span>
+<span class="fc" id="L95">    recruitmentAuditService.recordCreated(recruitment);</span>
+
+<span class="fc" id="L97">    jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));</span>
+<span class="fc" id="L98">    return recruitment;</span>
+  }
+
+  @Operation(
+      summary = &quot;Open or close faculty reviews for a recruitment&quot;,
+      description =
+          &quot;Opening requires a facultyRankingDeadline. The first opening stamps&quot;
+              + &quot; facultyReviewOpeningDate; later openings preserve that original date.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @Transactional
+  @PutMapping(&quot;/reviewStatus&quot;)
+  public Recruitment updateReviewStatus(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;status&quot;) @RequestParam String status,
+      @Parameter(name = &quot;facultyRankingDeadline&quot;)
+          @RequestParam(required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate facultyRankingDeadline) {
+
+<span class="fc bfc" id="L117" title="All 2 branches covered.">    if (!REVIEW_STATUSES.contains(status)) {</span>
+<span class="fc" id="L118">      throw new IllegalArgumentException(</span>
+          &quot;reviewStatus must be exactly NotStarted, Open, or Closed&quot;);
+    }
+<span class="fc bfc" id="L121" title="All 4 branches covered.">    if (&quot;Open&quot;.equals(status) &amp;&amp; facultyRankingDeadline == null) {</span>
+<span class="fc" id="L122">      throw new IllegalArgumentException(&quot;facultyRankingDeadline is required when opening reviews&quot;);</span>
+    }
+
+<span class="fc" id="L125">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L127">            .findById(id)</span>
+<span class="fc" id="L128">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+
+<span class="fc bfc" id="L130" title="All 2 branches covered.">    boolean statusChanged = !status.equals(recruitment.getReviewStatus());</span>
+<span class="fc" id="L131">    boolean openingDateMissing =</span>
+<span class="fc bfc" id="L132" title="All 4 branches covered.">        &quot;Open&quot;.equals(status) &amp;&amp; recruitment.getFacultyReviewOpeningDate() == null;</span>
+<span class="fc" id="L133">    boolean deadlineChanged =</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        &quot;Open&quot;.equals(status)</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">            &amp;&amp; !facultyRankingDeadline.equals(recruitment.getFacultyRankingDeadline());</span>
+<span class="fc bfc" id="L136" title="All 6 branches covered.">    if (!statusChanged &amp;&amp; !openingDateMissing &amp;&amp; !deadlineChanged) {</span>
+<span class="fc" id="L137">      return recruitment;</span>
+    }
+
+<span class="fc" id="L140">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
+<span class="fc bfc" id="L141" title="All 4 branches covered.">    if (&quot;Open&quot;.equals(status) &amp;&amp; recruitment.getFacultyReviewOpeningDate() == null) {</span>
+<span class="fc" id="L142">      recruitment.setFacultyReviewOpeningDate(LocalDate.now());</span>
+    }
+<span class="fc" id="L144">    recruitment.setReviewStatus(status);</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">    if (&quot;Open&quot;.equals(status)) {</span>
+<span class="fc" id="L146">      recruitment.setFacultyRankingDeadline(facultyRankingDeadline);</span>
+    }
+<span class="fc bfc" id="L148" title="All 2 branches covered.">    if (&quot;Closed&quot;.equals(status)) {</span>
+<span class="fc" id="L149">      recruitment.setFacultyReviewClosedAt(LocalDateTime.now());</span>
+    }
+
+<span class="fc" id="L152">    recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L153">    recruitmentAuditService.recordChanges(before, recruitment);</span>
+<span class="fc" id="L154">    return recruitment;</span>
+  }
+
+  @Operation(summary = &quot;Change the faculty ranking deadline for a recruitment&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @Transactional
+  @PutMapping(&quot;/facultyRankingDeadline&quot;)
+  public Recruitment updateFacultyRankingDeadline(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;facultyRankingDeadline&quot;)
+          @RequestParam
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate facultyRankingDeadline) {
+
+<span class="fc" id="L168">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L170">            .findById(id)</span>
+<span class="fc" id="L171">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">    if (facultyRankingDeadline.equals(recruitment.getFacultyRankingDeadline())) {</span>
+<span class="fc" id="L173">      return recruitment;</span>
+    }
+
+<span class="fc" id="L176">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
+<span class="fc" id="L177">    recruitment.setFacultyRankingDeadline(facultyRankingDeadline);</span>
+<span class="fc" id="L178">    recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L179">    recruitmentAuditService.recordChanges(before, recruitment);</span>
+<span class="fc" id="L180">    return recruitment;</span>
+  }
+
+  @Operation(
+      summary = &quot;Set how many TAs or ULAs a recruitment expects to hire&quot;,
+      description =
+          &quot;The total the per-course allocations on the Recruitment Courses page should add up to&quot;
+              + &quot; (issue #174). Must be at least 1. A planning figure: not recorded in the audit&quot;
+              + &quot; trail.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;/totalHiringTarget&quot;)
+  public Recruitment updateTotalHiringTarget(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;totalHiringTarget&quot;) @RequestParam Integer totalHiringTarget) {
+
+<span class="fc bfc" id="L195" title="All 2 branches covered.">    if (totalHiringTarget &lt; 1) {</span>
+<span class="fc" id="L196">      throw new IllegalArgumentException(&quot;totalHiringTarget must be at least 1&quot;);</span>
+    }
+
+<span class="fc" id="L199">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L201">            .findById(id)</span>
+<span class="fc" id="L202">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+
+<span class="fc" id="L204">    recruitment.setTotalHiringTarget(totalHiringTarget);</span>
+<span class="fc" id="L205">    recruitmentRepository.save(recruitment);</span>
+    // Every section's fractional share depends on the target (issue #176).
+<span class="fc" id="L207">    allocationService.recompute(recruitment);</span>
+<span class="fc" id="L208">    return recruitment;</span>
+  }
+
+  @Operation(
+      summary = &quot;Set the estimated average cost of one TA or ULA&quot;,
+      description =
+          &quot;In dollars and cents, per TA on a TA recruitment and per ULA on a ULA recruitment, for&quot;
+              + &quot; the Budget for Quarter page (issue #177). Must not be negative. A planning&quot;
+              + &quot; figure: not recorded in the audit trail.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;/avgCostPerPosition&quot;)
+  public Recruitment updateAvgCostPerPosition(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;avgCostPerPosition&quot;) @RequestParam BigDecimal avgCostPerPosition) {
+
+<span class="fc bfc" id="L223" title="All 2 branches covered.">    if (avgCostPerPosition.signum() &lt; 0) {</span>
+<span class="fc" id="L224">      throw new IllegalArgumentException(&quot;avgCostPerPosition must not be negative&quot;);</span>
+    }
+
+<span class="fc" id="L227">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L229">            .findById(id)</span>
+<span class="fc" id="L230">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+
+<span class="fc" id="L232">    recruitment.setAvgCostPerPosition(avgCostPerPosition.setScale(2, RoundingMode.HALF_UP));</span>
+<span class="fc" id="L233">    recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L234">    return recruitment;</span>
+  }
+
+  @Operation(
+      summary = &quot;Choose who may see the allocations: admins only, own courses, or all courses&quot;,
+      description =
+          &quot;ADMINS_ONLY (the default): no faculty member sees any allocation. OWN_COURSES: each&quot;
+              + &quot; faculty member sees the allocations for the courses they teach. ALL_COURSES:&quot;
+              + &quot; every faculty member teaching in the recruitment sees the allocations of all&quot;
+              + &quot; its courses (issues #178 and #224). Faculty see the result, so the change is&quot;
+              + &quot; recorded in the recruitment audit trail; choosing the current value changes&quot;
+              + &quot; nothing. 400 for any other value.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @Transactional
+  @PutMapping(&quot;/allocationVisibility&quot;)
+  public Recruitment updateAllocationVisibility(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;visibility&quot;) @RequestParam AllocationVisibility visibility) {
+
+<span class="fc" id="L253">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L255">            .findById(id)</span>
+<span class="fc" id="L256">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc bfc" id="L257" title="All 2 branches covered.">    if (visibility == recruitment.getAllocationVisibility()) {</span>
+<span class="fc" id="L258">      return recruitment;</span>
+    }
+
+<span class="fc" id="L261">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
+<span class="fc" id="L262">    recruitment.setAllocationVisibility(visibility);</span>
+<span class="fc bfc" id="L263" title="All 2 branches covered.">    if (visibility != AllocationVisibility.ADMINS_ONLY</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">        &amp;&amp; recruitment.getAllocationsReleasedAt() == null) {</span>
+<span class="fc" id="L265">      recruitment.setAllocationsReleasedAt(LocalDateTime.now());</span>
+    }
+<span class="fc" id="L267">    recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L268">    recruitmentAuditService.recordChanges(before, recruitment);</span>
+<span class="fc" id="L269">    return recruitment;</span>
+  }
+
+  @Operation(
+      summary = &quot;Publish a recruitment's assignments, or take them back&quot;,
+      description =
+          &quot;Publishing opens the read-only assignments page and its CSV downloads to admins and&quot;
+              + &quot; faculty (issue #180). Tentative assignments can still be changed afterwards; the&quot;
+              + &quot; page always shows the current ones. Recorded in the audit trail. Setting the&quot;
+              + &quot; value already stored changes and records nothing.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;/assignmentsPublished&quot;)
+  public Recruitment updateAssignmentsPublished(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;published&quot;) @RequestParam boolean published) {
+
+<span class="fc" id="L285">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L287">            .findById(id)</span>
+<span class="fc" id="L288">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+
+<span class="fc bfc" id="L290" title="All 2 branches covered.">    if (Boolean.TRUE.equals(recruitment.getAssignmentsPublished()) == published) {</span>
+<span class="fc" id="L291">      return recruitment;</span>
+    }
+
+<span class="fc" id="L294">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
+<span class="fc" id="L295">    recruitment.setAssignmentsPublished(published);</span>
+<span class="fc bfc" id="L296" title="All 2 branches covered.">    if (published) {</span>
+<span class="fc" id="L297">      recruitment.setAssignmentsPublishedAt(LocalDateTime.now());</span>
+    }
+<span class="fc" id="L299">    recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L300">    recruitmentAuditService.recordChanges(before, recruitment);</span>
+<span class="fc" id="L301">    return recruitment;</span>
+  }
+
+  @Operation(summary = &quot;List all recruitments, most recent quarter first&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/all&quot;)
+  public List&lt;Recruitment&gt; allRecruitments() {
+<span class="fc" id="L308">    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();</span>
+  }
+
+  @Operation(
+      summary = &quot;Open or close applications for a recruitment&quot;,
+      description =
+          &quot;The first open stamps actualOpeningDate and never overwrites it, so it keeps the date&quot;
+              + &quot; applicants were actually able to start. Each close stamps actualClosingDate.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;/status&quot;)
+  public Recruitment updateStatus(
+      @Parameter(name = &quot;id&quot;) @RequestParam Long id,
+      @Parameter(name = &quot;status&quot;) @RequestParam ApplicationStatus status) {
+
+<span class="fc" id="L322">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L324">            .findById(id)</span>
+<span class="fc" id="L325">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+
+<span class="fc" id="L327">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
+<span class="fc" id="L328">    LocalDate today = LocalDate.now();</span>
+<span class="fc bfc" id="L329" title="All 2 branches covered.">    if (status == ApplicationStatus.OPEN) {</span>
+<span class="fc bfc" id="L330" title="All 2 branches covered.">      if (recruitment.getActualOpeningDate() == null) {</span>
+<span class="fc" id="L331">        recruitment.setActualOpeningDate(today);</span>
+      }
+    } else {
+<span class="fc" id="L334">      recruitment.setActualClosingDate(today);</span>
+    }
+<span class="fc" id="L336">    recruitment.setApplicationStatus(status);</span>
+
+<span class="fc" id="L338">    recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L339">    recruitmentAuditService.recordChanges(before, recruitment);</span>
+<span class="fc" id="L340">    return recruitment;</span>
+  }
+
+  @Operation(
+      summary = &quot;How many applications each recruitment has on file&quot;,
+      description =
+          &quot;Recruitment id to the number of real (non-test) applications, for the admin's cards and&quot;
+              + &quot; the warning before deleting one (issue #108). Every recruitment is listed, with 0&quot;
+              + &quot; for one that has none.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/applicationCounts&quot;)
+  public Map&lt;Long, Long&gt; applicationCounts() {
+<span class="fc" id="L352">    Map&lt;Long, Long&gt; counts = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">    for (Recruitment recruitment : recruitmentRepository.findAll()) {</span>
+<span class="fc" id="L354">      counts.put(</span>
+<span class="fc" id="L355">          recruitment.getId(),</span>
+<span class="fc" id="L356">          applicationRepository.countByRecruitmentIdAndTestApplicationFalse(recruitment.getId()));</span>
+<span class="fc" id="L357">    }</span>
+<span class="fc" id="L358">    return counts;</span>
+  }
+
+  @Operation(
+      summary = &quot;Delete a recruitment&quot;,
+      description =
+          &quot;Its recruitment courses and every application to it go with it, via the cascading&quot;
+              + &quot; foreign keys.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @DeleteMapping(&quot;/delete&quot;)
+  public Object deleteRecruitment(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
+<span class="fc" id="L369">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L371">            .findById(id)</span>
+<span class="fc" id="L372">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+
+<span class="fc" id="L374">    recruitmentAuditService.recordDeleted(recruitment);</span>
+<span class="fc" id="L375">    recruitmentRepository.delete(recruitment);</span>
+<span class="fc" id="L376">    return genericMessage(&quot;Recruitment with id %s deleted&quot;.formatted(id));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
