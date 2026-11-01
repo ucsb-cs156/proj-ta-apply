@@ -2230,6 +2230,263 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertEquals(1, ApplicationsController.minimumCourses(RecruitmentType.ULA));
   }
 
+  // ---- the TA questions that are required (issue #214) ----
+
+  /** FULL_FIELDS with the TA answers replaced. */
+  private static ApplicationFields withTa(
+      Double gpaMajor,
+      Double gpaOverall,
+      String yearInProgram,
+      String graduationDate,
+      ResidencyStatus residencyStatus,
+      LanguageExamStatus languageExam,
+      String languageExamDatePassed,
+      ClassLevel classLevel) {
+    ApplicationFields f = FULL_FIELDS;
+    return new ApplicationFields(
+        f.firstName(),
+        f.middleName(),
+        f.lastName(),
+        f.major(),
+        gpaMajor,
+        gpaOverall,
+        yearInProgram,
+        graduationDate,
+        f.priorCoursework(),
+        f.topicProficiencies(),
+        f.interests(),
+        f.prevExperience(),
+        f.comments(),
+        f.firstChoiceCourse(),
+        f.secondChoiceCourse(),
+        f.availableForLecturesFirstChoice(),
+        f.availableForLecturesSecondChoice(),
+        f.availableForDiscussionFirstChoice(),
+        f.availableForDiscussionSecondChoice(),
+        f.availabilityCommentsFirstChoice(),
+        f.availabilityCommentsSecondChoice(),
+        f.courseInterests(),
+        residencyStatus,
+        languageExam,
+        languageExamDatePassed,
+        classLevel,
+        f.videoLink(),
+        f.previousServiceAsUla(),
+        f.permNumber(),
+        f.bsMsStudent(),
+        f.studentStatusNextQuarter(),
+        f.wantsTaEligibility(),
+        f.otherCampusJob(),
+        f.priorUcsbEmployment(),
+        f.employeeId(),
+        f.i9Appointment(),
+        f.trainingCommitment(),
+        f.trainingCommitmentExplanation(),
+        f.changingMajor(),
+        f.noticeVersionId());
+  }
+
+  /** FULL_FIELDS' TA answers, each argument defaulting to the fixture's value when null. */
+  private static ApplicationFields taMissing(String which) {
+    ApplicationFields f = FULL_FIELDS;
+    return withTa(
+        which.equals("gpaMajor") ? null : f.gpaMajor(),
+        which.equals("gpaOverall") ? null : f.gpaOverall(),
+        which.equals("yearInProgram") ? "  " : f.yearInProgram(),
+        which.equals("graduationDate") ? "" : f.graduationDate(),
+        which.equals("residencyStatus") ? null : f.residencyStatus(),
+        which.equals("languageExam") ? null : f.languageExam(),
+        which.equals("languageExamDatePassed") ? " " : f.languageExamDatePassed(),
+        which.equals("classLevel") ? null : f.classLevel());
+  }
+
+  private MvcResult postTa(ApplicationFields fields, int status) throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    return mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(fields))
+                .with(csrf()))
+        .andExpect(status().is(status))
+        .andReturn();
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_application_needs_its_required_answers() throws Exception {
+    String[][] cases = {
+      {"classLevel", "Please say whether you are a PhD or MS student"},
+      {"residencyStatus", "A TA application needs your residency status"},
+      {"gpaMajor", "A TA application needs your GPA in major"},
+      {"gpaOverall", "A TA application needs your overall GPA"},
+      {"yearInProgram", "A TA application needs your year in program"},
+      {"graduationDate", "A TA application needs your expected graduation"},
+      {"languageExam", "A TA application needs your TA language exam status"},
+      {
+        "languageExamDatePassed", "Please give the quarter and year you passed the TA language exam"
+      },
+    };
+    for (String[] c : cases) {
+      MvcResult response = postTa(taMissing(c[0]), 400);
+      assertEquals(c[1], responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** The exam date is required only when the exam was passed. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void the_exam_date_is_required_only_when_the_exam_was_passed() throws Exception {
+    ApplicationFields f = FULL_FIELDS;
+    for (LanguageExamStatus passed :
+        List.of(
+            LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT,
+            LanguageExamStatus.PASSED_F1_OR_J1_VISA)) {
+      MvcResult response =
+          postTa(
+              withTa(
+                  f.gpaMajor(),
+                  f.gpaOverall(),
+                  f.yearInProgram(),
+                  f.graduationDate(),
+                  f.residencyStatus(),
+                  passed,
+                  null,
+                  f.classLevel()),
+              400);
+      assertEquals(
+          "Please give the quarter and year you passed the TA language exam",
+          responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+
+    for (LanguageExamStatus other :
+        List.of(LanguageExamStatus.EXEMPT_US_CITIZEN, LanguageExamStatus.NOT_PASSED)) {
+      postTa(
+          withTa(
+              f.gpaMajor(),
+              f.gpaOverall(),
+              f.yearInProgram(),
+              f.graduationDate(),
+              f.residencyStatus(),
+              other,
+              null,
+              f.classLevel()),
+          200);
+    }
+    assertTrue(ApplicationsController.examPassed(LanguageExamStatus.PASSED_F1_OR_J1_VISA));
+    assertTrue(ApplicationsController.examPassed(LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT));
+    assertFalse(ApplicationsController.examPassed(LanguageExamStatus.NOT_PASSED));
+    assertFalse(ApplicationsController.examPassed(LanguageExamStatus.EXEMPT_US_CITIZEN));
+    assertFalse(ApplicationsController.examPassed(null));
+  }
+
+  /** The TA rule does not touch a ULA application, whatever its TA fields hold. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void the_ta_rule_leaves_ula_applications_alone() throws Exception {
+    ApplicationFields ula = withUla("1234567", true, OtherCampusJob.NO, true, 2, null);
+    ApplicationFields noTaAnswers =
+        new ApplicationFields(
+            ula.firstName(),
+            ula.middleName(),
+            ula.lastName(),
+            ula.major(),
+            ula.gpaMajor(),
+            ula.gpaOverall(),
+            ula.yearInProgram(),
+            ula.graduationDate(),
+            ula.priorCoursework(),
+            ula.topicProficiencies(),
+            ula.interests(),
+            ula.prevExperience(),
+            ula.comments(),
+            ula.firstChoiceCourse(),
+            ula.secondChoiceCourse(),
+            ula.availableForLecturesFirstChoice(),
+            ula.availableForLecturesSecondChoice(),
+            ula.availableForDiscussionFirstChoice(),
+            ula.availableForDiscussionSecondChoice(),
+            ula.availabilityCommentsFirstChoice(),
+            ula.availabilityCommentsSecondChoice(),
+            ula.courseInterests(),
+            null,
+            null,
+            null,
+            null,
+            ula.videoLink(),
+            ula.previousServiceAsUla(),
+            ula.permNumber(),
+            ula.bsMsStudent(),
+            ula.studentStatusNextQuarter(),
+            ula.wantsTaEligibility(),
+            ula.otherCampusJob(),
+            ula.priorUcsbEmployment(),
+            ula.employeeId(),
+            ula.i9Appointment(),
+            ula.trainingCommitment(),
+            ula.trainingCommitmentExplanation(),
+            ula.changingMajor(),
+            ula.noticeVersionId());
+    postUla(noTaAnswers, 200);
+  }
+
+  /** The TA rule guards the edit path too. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void editing_a_ta_application_also_requires_the_ta_answers() throws Exception {
+    Application existing = application(5L, 1L, GRAD_EMAIL);
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(existing));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/applications?id=5")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(taMissing("residencyStatus")))
+                    .with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    assertEquals(
+        "A TA application needs your residency status", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /** And the admin's test application, which goes through the same rules. */
+  @WithMockUser(
+      username = "admin",
+      roles = {"ADMIN"})
+  @Test
+  public void a_test_application_also_requires_the_ta_answers() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/test?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(taMissing("classLevel")))
+                    .with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    assertEquals(
+        "Please say whether you are a PhD or MS student", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
   // ---- the ULA questions from the Google Form (issue #72) ----
 
   /** FULL_FIELDS with the ULA answers replaced, for the ULA recruitment and notice. */
@@ -2738,26 +2995,19 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     verify(applicationRepository, times(1)).save(any());
   }
 
-  /** A TA applicant may leave all of these blank, as before. */
+  /** Since issue #214 a TA applicant must answer these too; the TA rule refuses blanks. */
   @WithMockUser(
       username = "grad",
       roles = {"USER"})
   @Test
-  public void a_ta_application_may_leave_the_academic_answers_blank() throws Exception {
-    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+  public void a_ta_application_may_not_leave_the_academic_answers_blank() throws Exception {
     ApplicationFields bare = withAcademics(FULL_FIELDS, null, null, null, null);
 
-    mockMvc
-        .perform(
-            post("/api/applications/post?recruitmentId=1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(bare))
-                .with(csrf()))
-        .andExpect(status().isOk());
+    MvcResult response = postTa(bare, 400);
 
-    assertNull(saved().getGpaMajor());
-    assertNull(saved().getGraduationDate());
+    assertEquals(
+        "A TA application needs your GPA in major", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
   }
 
   // ---- applicants never see the admin comments (issue #75) ----

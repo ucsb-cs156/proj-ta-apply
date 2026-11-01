@@ -292,6 +292,28 @@ describe("TestApplicationPage tests", () => {
     for (const number of ["CMPSC 8", "CMPSC 16", "CMPSC 24"]) {
       await addCourse(number);
     }
+    // The TA answers required since issue #214.
+    for (const [name, value] of [
+      ["gpaMajor", "3.9"],
+      ["gpaOverall", "3.8"],
+      ["yearInProgram", "2nd"],
+      ["graduationDate", "S27"],
+    ]) {
+      await userEvent.type(
+        screen.getByTestId(`TestApplicationPage-${name}`),
+        value,
+      );
+    }
+    for (const [name, value] of [
+      ["classLevel", "PHD"],
+      ["residencyStatus", "US_CITIZEN"],
+      ["languageExam", "EXEMPT_US_CITIZEN"],
+    ]) {
+      await userEvent.selectOptions(
+        screen.getByTestId(`TestApplicationPage-${name}`),
+        value,
+      );
+    }
     await userEvent.click(screen.getByTestId("TestApplicationPage-submit"));
 
     await waitFor(() => expect(axiosMock.history.post.length).toBe(1));

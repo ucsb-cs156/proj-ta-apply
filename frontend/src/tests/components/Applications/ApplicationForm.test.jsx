@@ -98,6 +98,28 @@ async function fillRequiredUla(prefix = "ApplicationForm") {
   if (!i9.checked) await userEvent.click(i9);
 }
 
+/** The TA form's own required answers (issue #214), when the form is a TA one. */
+async function fillRequiredTa(prefix = "ApplicationForm") {
+  if (!screen.queryByTestId(`${prefix}-classLevel`)) return;
+  for (const [name, value] of [
+    ["gpaMajor", "3.9"],
+    ["gpaOverall", "3.8"],
+    ["yearInProgram", "2nd"],
+    ["graduationDate", "S27"],
+  ]) {
+    const control = screen.getByTestId(`${prefix}-${name}`);
+    if (control.value === "") await userEvent.type(control, value);
+  }
+  for (const [name, value] of [
+    ["classLevel", "PHD"],
+    ["residencyStatus", "US_CITIZEN"],
+    ["languageExam", "EXEMPT_US_CITIZEN"],
+  ]) {
+    const control = screen.getByTestId(`${prefix}-${name}`);
+    if (control.value === "") await userEvent.selectOptions(control, value);
+  }
+}
+
 /** Names, a listed major and a first choice: everything else required, so one thing can be tested. */
 async function fillRequired(prefix = "ApplicationForm") {
   await userEvent.type(screen.getByTestId(`${prefix}-firstName`), "Ada");
@@ -111,6 +133,7 @@ async function fillRequired(prefix = "ApplicationForm") {
     "CMPSC   156",
   );
   await fillRequiredUla(prefix);
+  await fillRequiredTa(prefix);
 }
 
 /**
@@ -173,10 +196,21 @@ describe("ApplicationForm tests", () => {
       "First Name",
       "Last Name",
       "Major",
+      "GPA in Major",
+      "Overall GPA",
+      "Year in Program",
+      "Expected Graduation",
+      "PhD or MS?",
+      "Residency Status",
+      "TA Language Exam",
       "First Choice Course",
     ]);
     // And nothing optional is marked.
-    ["Middle Name", "GPA in Major", "Second Choice Course"].forEach((label) =>
+    [
+      "Middle Name",
+      "Quarter and Year Language Exam Passed",
+      "Second Choice Course",
+    ].forEach((label) =>
       expect(labelNamed(label).querySelector(".required-field")).toBeNull(),
     );
   });
@@ -198,7 +232,7 @@ describe("ApplicationForm tests", () => {
       ["Overall GPA", "gpaOverall"],
       ["Year in Program", "yearInProgram"],
       ["Expected Graduation", "graduationDate"],
-      ["Class Level", "classLevel"],
+      ["PhD or MS?", "classLevel"],
       ["Residency Status", "residencyStatus"],
       ["TA Language Exam", "languageExam"],
       ["Quarter and Year Language Exam Passed", "languageExamDatePassed"],
@@ -339,7 +373,7 @@ describe("ApplicationForm tests", () => {
       "id",
       "ApplicationForm-classLevel",
     );
-    expect(labelNamed("Class Level")).toHaveAttribute(
+    expect(labelNamed("PhD or MS?")).toHaveAttribute(
       "for",
       "ApplicationForm-classLevel",
     );
@@ -546,9 +580,11 @@ describe("ApplicationForm tests", () => {
     renderForm({ type: "TA" });
 
     const row = screen.getByTestId("ApplicationForm-ta-only");
-    const order = [...row.querySelectorAll("label")].map((l) => l.textContent);
+    const order = [...row.querySelectorAll("label")].map((l) =>
+      l.textContent.replace(/\s*\*\s*$/, "").trim(),
+    );
     expect(order).toEqual([
-      "Class Level",
+      "PhD or MS?",
       "Residency Status",
       "TA Language Exam",
       "Quarter and Year Language Exam Passed",
@@ -631,6 +667,14 @@ describe("ApplicationForm tests", () => {
         major: "Computer Science",
         firstChoiceCourse: "CMPSC   194",
         secondChoiceCourse: "CMPSC   189",
+        // The TA answers required since issue #214.
+        gpaMajor: 3.9,
+        gpaOverall: 3.8,
+        yearInProgram: "2nd",
+        graduationDate: "S27",
+        classLevel: "PHD",
+        residencyStatus: "US_CITIZEN",
+        languageExam: "EXEMPT_US_CITIZEN",
       },
     });
 
@@ -1698,6 +1742,7 @@ describe("ApplicationForm tests", () => {
       screen.getByTestId("ApplicationForm-firstChoiceCourse"),
       "CMPSC   156",
     );
+    await fillRequiredTa();
     await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
 
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
@@ -3083,7 +3128,8 @@ describe("ApplicationForm tests", () => {
     expect(payload.previousServiceAsUla).toBe(1);
   });
 
-  test("a TA form leaves the academic answers optional and unmarked", async () => {
+  /** Issue #214: a TA form requires the academic answers and its own questions too. */
+  test("a TA form requires and marks the academic answers and the TA questions", async () => {
     const submitAction = renderForm({
       type: "TA",
       initialContents: {
@@ -3099,13 +3145,130 @@ describe("ApplicationForm tests", () => {
       "Overall GPA",
       "Year in Program",
       "Expected Graduation",
+      "PhD or MS?",
+      "Residency Status",
+      "TA Language Exam",
     ]) {
-      expect(labelNamed(label).textContent).not.toMatch(/\*/);
+      expect(labelNamed(label).textContent).toMatch(/\*\s*$/);
     }
-    await fillRequired();
+    // Not yet: the exam date is required only once the exam is said to be passed.
+    expect(
+      labelNamed("Quarter and Year Language Exam Passed").textContent,
+    ).not.toMatch(/\*/);
+
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-firstName"),
+      "Ada",
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-lastName"),
+      "Lovelace",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-major"),
+      "Statistics",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+    expect(
+      await screen.findByText(
+        "Please say whether you are a PhD or MS student.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Your residency status is required."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Your TA language exam status is required."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Your GPA in major is required."),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("ApplicationForm-classLevel")).toHaveClass(
+      "is-invalid",
+    );
+    expect(submitAction).not.toHaveBeenCalled();
+
+    await fillRequiredTa();
     await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
-    expect(submitAction.mock.calls[0][0].gpaMajor).toBeNull();
+    const payload = submitAction.mock.calls[0][0];
+    expect(payload.gpaMajor).toBe(3.9);
+    expect(payload.classLevel).toBe("PHD");
+    expect(payload.residencyStatus).toBe("US_CITIZEN");
+    expect(payload.languageExam).toBe("EXEMPT_US_CITIZEN");
+  });
+
+  /** Issue #214: the exam date is required exactly when the exam was passed. */
+  test("the quarter and year the exam was passed is required once the exam is passed", async () => {
+    const submitAction = renderForm({
+      type: "TA",
+      initialContents: {
+        priorCoursework: priorCourseworkFixtures.threeCourses ?? [
+          priorCourseworkFixtures.ucsbCourse,
+          { ...priorCourseworkFixtures.ucsbCourse, courseNumber: "CMPSC 130B" },
+          { ...priorCourseworkFixtures.ucsbCourse, courseNumber: "CMPSC 138" },
+        ],
+      },
+    });
+    await fillRequired();
+    const exam = screen.getByTestId("ApplicationForm-languageExam");
+    const dateLabel = () =>
+      labelNamed("Quarter and Year Language Exam Passed").textContent;
+
+    for (const notPassed of ["EXEMPT_US_CITIZEN", "NOT_PASSED"]) {
+      await userEvent.selectOptions(exam, notPassed);
+      expect(dateLabel()).not.toMatch(/\*/);
+    }
+    for (const passed of [
+      "PASSED_US_PERMANENT_RESIDENT",
+      "PASSED_F1_OR_J1_VISA",
+    ]) {
+      await userEvent.selectOptions(exam, passed);
+      expect(dateLabel()).toMatch(/\*\s*$/);
+    }
+
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+    expect(
+      await screen.findByText(
+        "Please give the quarter and year you passed the exam.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("ApplicationForm-missing-languageExamDatePassed"),
+    ).toHaveTextContent("Quarter and Year Language Exam Passed");
+    expect(submitAction).not.toHaveBeenCalled();
+
+    // Spaces are not an answer.
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-languageExamDatePassed"),
+      "  ",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+    expect(submitAction).not.toHaveBeenCalled();
+
+    await userEvent.clear(
+      screen.getByTestId("ApplicationForm-languageExamDatePassed"),
+    );
+    await userEvent.type(
+      screen.getByTestId("ApplicationForm-languageExamDatePassed"),
+      "F25",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].languageExamDatePassed).toBe("F25");
+
+    // Saying "not passed" after all drops the requirement again.
+    await userEvent.selectOptions(exam, "NOT_PASSED");
+    await userEvent.clear(
+      screen.getByTestId("ApplicationForm-languageExamDatePassed"),
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(2));
+    expect(submitAction.mock.calls[1][0].languageExamDatePassed).toBeNull();
   });
 
   // ---- the notice comes first (issue #77) ----
@@ -3170,6 +3333,13 @@ describe("ApplicationForm tests", () => {
         "First Name",
         "Last Name",
         "Major",
+        "GPA in Major",
+        "Overall GPA",
+        "Year in Program",
+        "Expected Graduation",
+        "PhD or MS?",
+        "Residency Status",
+        "TA Language Exam",
         "Prior Coursework",
         "First Choice Course",
       ]);
@@ -3220,7 +3390,18 @@ describe("ApplicationForm tests", () => {
     });
 
     test("entries drop off as fields are filled in, and the list goes with the last", async () => {
-      renderForm({ initialContents: threeCourses });
+      renderForm({
+        initialContents: {
+          ...threeCourses,
+          gpaMajor: 3.9,
+          gpaOverall: 3.8,
+          yearInProgram: "2nd",
+          graduationDate: "S27",
+          classLevel: "PHD",
+          residencyStatus: "US_CITIZEN",
+          languageExam: "EXEMPT_US_CITIZEN",
+        },
+      });
       await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
       await screen.findByTestId("ApplicationForm-missing");
       expect(listed()).toEqual([

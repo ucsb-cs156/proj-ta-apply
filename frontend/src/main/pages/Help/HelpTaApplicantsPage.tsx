@@ -33,12 +33,14 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
         <ul data-testid="HelpTaApplicantsPage-asked-for">
           <li>Your name.</li>
           <li>
-            Your major, program (Ph.D. or M.S.), year in the program, GPA (in
-            your major and overall), and expected graduation date.
+            Your major, whether you are a PhD or MS student, your year in the
+            program, your GPA (in your major and overall), and your expected
+            graduation date. All of these are required.
           </li>
           <li>
-            Your residency status, and if applicable, your language exam status
-            and the date you passed it.
+            Your residency status and your TA language exam status, both
+            required; if you have passed the exam, the quarter and year you
+            passed it is required too.
           </li>
           <li>
             A list of courses you have taken, at UCSB or elsewhere, that are

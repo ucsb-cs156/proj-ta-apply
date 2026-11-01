@@ -228,6 +228,7 @@ public class ApplicationsController extends ApiController {
     requireAgreement(recruitment.getType(), fields);
     requireCoursework(recruitment.getType(), fields);
     requireUlaAnswers(recruitment.getType(), fields);
+    requireTaAnswers(recruitment.getType(), fields);
 
     Application application =
         Application.builder()
@@ -261,6 +262,7 @@ public class ApplicationsController extends ApiController {
     requireAgreement(recruitment.getType(), fields);
     requireCoursework(recruitment.getType(), fields);
     requireUlaAnswers(recruitment.getType(), fields);
+    requireTaAnswers(recruitment.getType(), fields);
 
     // The unique (email, recruitment) constraint allows one row per admin per recruitment, and an
     // admin testing a form will naturally submit it more than once, so the second submission
@@ -309,6 +311,7 @@ public class ApplicationsController extends ApiController {
     requireAgreement(recruitment.getType(), fields);
     requireCoursework(recruitment.getType(), fields);
     requireUlaAnswers(recruitment.getType(), fields);
+    requireTaAnswers(recruitment.getType(), fields);
 
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
@@ -578,6 +581,49 @@ public class ApplicationsController extends ApiController {
       throw new IllegalArgumentException(
           "Please confirm that you will make an I-9 verification appointment if hired");
     }
+  }
+
+  /**
+   * The questions a TA applicant must answer (issue #214): PhD or MS, residency status, both GPAs,
+   * the year in program, the expected graduation and the language exam status; and, when the exam
+   * was passed, the quarter and year it was passed. A ULA form requires none of these here (its own
+   * rule covers the academic answers). An admin editing an application is not held to them.
+   */
+  static void requireTaAnswers(RecruitmentType type, ApplicationFields fields) {
+    if (type != RecruitmentType.TA) {
+      return;
+    }
+    if (fields.classLevel() == null) {
+      throw new IllegalArgumentException("Please say whether you are a PhD or MS student");
+    }
+    if (fields.residencyStatus() == null) {
+      throw new IllegalArgumentException("A TA application needs your residency status");
+    }
+    if (fields.gpaMajor() == null) {
+      throw new IllegalArgumentException("A TA application needs your GPA in major");
+    }
+    if (fields.gpaOverall() == null) {
+      throw new IllegalArgumentException("A TA application needs your overall GPA");
+    }
+    if (blankToNull(fields.yearInProgram()) == null) {
+      throw new IllegalArgumentException("A TA application needs your year in program");
+    }
+    if (blankToNull(fields.graduationDate()) == null) {
+      throw new IllegalArgumentException("A TA application needs your expected graduation");
+    }
+    if (fields.languageExam() == null) {
+      throw new IllegalArgumentException("A TA application needs your TA language exam status");
+    }
+    if (examPassed(fields.languageExam()) && blankToNull(fields.languageExamDatePassed()) == null) {
+      throw new IllegalArgumentException(
+          "Please give the quarter and year you passed the TA language exam");
+    }
+  }
+
+  /** The two answers that say the TA language exam was passed; "not passed" is not one of them. */
+  static boolean examPassed(edu.ucsb.cs.taapply.enums.LanguageExamStatus languageExam) {
+    return languageExam == edu.ucsb.cs.taapply.enums.LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT
+        || languageExam == edu.ucsb.cs.taapply.enums.LanguageExamStatus.PASSED_F1_OR_J1_VISA;
   }
 
   /** Fresh rows from the request, trimmed; replaces whatever the application had. */
