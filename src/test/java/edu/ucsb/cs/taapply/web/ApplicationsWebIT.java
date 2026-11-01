@@ -398,6 +398,8 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplyPage-previousServiceAsUla").fill("0");
     assertThat(page.getByTestId("ApplyPage-training-statement"))
         .containsText("five mandatory training sessions");
+    // A first-time applicant must give a video link (issue #213).
+    page.getByTestId("ApplyPage-videoLink").fill("https://example.edu/demo");
     page.getByTestId("ApplyPage-trainingCommitment").selectOption("UNSURE");
     page.getByTestId("ApplyPage-trainingCommitmentExplanation").fill("Might have a Friday lab");
     page.getByTestId("ApplyPage-changingMajor").selectOption("false");

@@ -247,7 +247,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           OtherCampusJob.NO,
           true,
           "1234567",
-          false,
+          true,
           TrainingCommitment.AGREE,
           null,
           false,
@@ -446,7 +446,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .otherCampusJob(OtherCampusJob.NO)
         .priorUcsbEmployment(true)
         .employeeId("1234567")
-        .i9Appointment(false)
+        .i9Appointment(true)
         .trainingCommitment(TrainingCommitment.AGREE)
         .trainingCommitmentExplanation(null)
         .changingMajor(false)
@@ -2313,7 +2313,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertEquals(OtherCampusJob.NOT_SURE, saved.getOtherCampusJob());
     assertEquals(false, saved.getPriorUcsbEmployment());
     assertEquals("1234567", saved.getEmployeeId());
-    assertEquals(false, saved.getI9Appointment());
+    assertEquals(true, saved.getI9Appointment());
     assertNull(saved.getTrainingCommitment());
     assertNull(saved.getTrainingCommitmentExplanation());
     assertEquals(false, saved.getChangingMajor());
@@ -2375,6 +2375,94 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertEquals(TrainingCommitment.UNSURE, saved().getTrainingCommitment());
     // Returning applicants are not asked.
     postUla(withUla("1234567", true, OtherCampusJob.NO, true, 1, null), 200);
+  }
+
+  /** withUla with the video link and the I-9 answer replaced (issue #213). */
+  private static ApplicationFields withVideoAndI9(
+      ApplicationFields f, String videoLink, Boolean i9Appointment) {
+    return new ApplicationFields(
+        f.firstName(),
+        f.middleName(),
+        f.lastName(),
+        f.major(),
+        f.gpaMajor(),
+        f.gpaOverall(),
+        f.yearInProgram(),
+        f.graduationDate(),
+        f.priorCoursework(),
+        f.topicProficiencies(),
+        f.interests(),
+        f.prevExperience(),
+        f.comments(),
+        f.firstChoiceCourse(),
+        f.secondChoiceCourse(),
+        f.availableForLecturesFirstChoice(),
+        f.availableForLecturesSecondChoice(),
+        f.availableForDiscussionFirstChoice(),
+        f.availableForDiscussionSecondChoice(),
+        f.availabilityCommentsFirstChoice(),
+        f.availabilityCommentsSecondChoice(),
+        f.courseInterests(),
+        f.residencyStatus(),
+        f.languageExam(),
+        f.languageExamDatePassed(),
+        f.classLevel(),
+        videoLink,
+        f.previousServiceAsUla(),
+        f.permNumber(),
+        f.bsMsStudent(),
+        f.studentStatusNextQuarter(),
+        f.wantsTaEligibility(),
+        f.otherCampusJob(),
+        f.priorUcsbEmployment(),
+        f.employeeId(),
+        i9Appointment,
+        f.trainingCommitment(),
+        f.trainingCommitmentExplanation(),
+        f.changingMajor(),
+        f.noticeVersionId());
+  }
+
+  /** Issue #213: a first-time applicant (previous service 0) must give a video link. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_first_time_ula_applicant_must_include_a_video_link() throws Exception {
+    ApplicationFields firstTime =
+        withUla("1234567", true, OtherCampusJob.NO, true, 0, TrainingCommitment.AGREE);
+    for (String missing : java.util.Arrays.asList(null, "", "  ")) {
+      MvcResult response = postUla(withVideoAndI9(firstTime, missing, true), 400);
+      assertEquals(
+          "As a first-time ULA applicant, please include a link to your video",
+          responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+
+    postUla(withVideoAndI9(firstTime, "https://example.org/demo", true), 200);
+    assertEquals("https://example.org/demo", saved().getVideoLink());
+    // A returning applicant may leave it out.
+    ApplicationFields returning = withUla("1234567", true, OtherCampusJob.NO, true, 1, null);
+    postUla(withVideoAndI9(returning, null, true), 200);
+  }
+
+  /** Issue #213: every ULA applicant confirms the I-9 appointment. */
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_applicant_must_confirm_the_i9_appointment() throws Exception {
+    ApplicationFields returning = withUla("1234567", true, OtherCampusJob.NO, true, 2, null);
+    for (Boolean missing : java.util.Arrays.asList(null, false)) {
+      MvcResult response = postUla(withVideoAndI9(returning, null, missing), 400);
+      assertEquals(
+          "Please confirm that you will make an I-9 verification appointment if hired",
+          responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+
+    postUla(withVideoAndI9(returning, null, true), 200);
+    assertEquals(true, saved().getI9Appointment());
   }
 
   /** A TA form asks none of this, so a TA application is saved without any of it. */
