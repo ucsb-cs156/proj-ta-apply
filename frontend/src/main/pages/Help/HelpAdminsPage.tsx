@@ -447,7 +447,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Creating one launches the job that fills its course list, so the list
           is there without a second step. Each recruitment is a card, newest
           quarter first, showing its status, dates and how many applications it
-          has, with these buttons:
+          has. Under the dates is the live{" "}
+          <Link to="/help/recruitment-steps">Recruitment Steps</Link> diagram
+          (collapsed to a one-line summary on older cards, expanded on the
+          latest TA and ULA recruitments). Its boxes carry the lifecycle
+          actions, and the card has Courses and Applications buttons:
         </p>
         <ul data-testid="HelpAdminsPage-recruitment-buttons">
           <li
@@ -462,7 +466,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
             edit only until the primary consideration date. Closing keeps every
             application on file, and a closed recruitment can be opened again.
             Each button first asks <em>Are you sure?</em> with a short account
-            of what will happen, so a stray click changes nothing.
+            of what will happen, so a stray click changes nothing. Opening is
+            step 2 of the diagram and closing is step 4.
           </li>
           <li id="faculty-reviews" data-testid="HelpAdminsPage-faculty-reviews">
             <strong>Open Faculty Reviews / Close Faculty Reviews.</strong>{" "}
@@ -476,6 +481,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             deadline has not passed yet; it stops faculty from changing their
             rankings and keeps both dates. Opening and closing, and deadline
             changes, are recorded in the recruitment&apos;s change history.
+            Opening is step 6 of the diagram and closing is step 7.
           </li>
           <li>
             <strong>Courses.</strong> The recruitment&apos;s course list: one
@@ -495,16 +501,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <strong>Test Application.</strong> The form exactly as an applicant
             for this recruitment sees it, even before it opens. Submitting saves
             a test application that never counts as a real one and is marked as
-            such wherever it appears.
+            such wherever it appears. It is no longer a button on the card and
+            is being given a new home on the Applications page.
           </li>
           <li>
             <strong>Download CSV.</strong> Every application to the recruitment
             as a spreadsheet, with the columns for its type (the layout is on
-            the CSV formats page).
+            the CSV formats page). It is no longer a button on the card and is
+            being moved to the Applications page, with the rankings download
+            moving to the Courses page.
           </li>
           <li>
-            <strong>Review Applications.</strong> The list of applications, with
-            a count that leaves test applications out. Each has a <em>View</em>{" "}
+            <strong>Applications.</strong> The list of applications, with a
+            count that leaves test applications out. Each has a <em>View</em>{" "}
             page (everything the applicant wrote, read-only, plus a box for the
             admin&apos;s own comments) and an <em>Edit</em> page, the same form
             the applicant filled in, for correcting an answer on their behalf;
@@ -529,7 +538,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <em>Tentative Assignment</em> dropdown on each row for pencilling
             the applicant into a lecture; the{" "}
             <a href="#assignments">Assignments</a> section below has the
-            details.
+            details. The card reaches it from step 8 of the diagram.
           </li>
           <li>
             <strong>Published Assignments.</strong> Shown once{" "}

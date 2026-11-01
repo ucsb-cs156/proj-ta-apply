@@ -7,15 +7,13 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 import { vi } from "vitest";
 
-import RecruitmentCards, {
-  DELETE_TOOLTIP,
-  TEST_APPLICATION_TOOLTIP,
-} from "main/components/Recruitments/RecruitmentCards";
+import RecruitmentCards from "main/components/Recruitments/RecruitmentCards";
+import { DELETE_TOOLTIP } from "main/components/Recruitments/RecruitmentCardLayout";
 import { applicationsText } from "main/utils/adminApplications";
 import { SORT_KEYS, sortRecruitments } from "main/utils/recruitmentSort";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
@@ -25,13 +23,98 @@ const axiosMock = new AxiosMockAdapter(axios);
 // Fixture order: S26 TA CLOSED (id 3), W26 ULA OPEN (id 2), W26 TA CLOSED (id 1).
 const three = recruitmentsFixtures.threeRecruitments;
 
+// The recruitments on screen, so the mocked steps endpoint can answer for any of them.
+let rendered = three;
+
+/** Every step that has a control, so a test can click any of them (issue #233). */
+const stepsFor = (recruitment) => ({
+  recruitmentId: recruitment.id,
+  type: recruitment.type,
+  steps: [
+    { number: 1, done: true, label: `Created #${recruitment.id}` },
+    {
+      number: 2,
+      done: false,
+      label: "Tentative: 2026-01-05",
+      action: "openApplications",
+    },
+    {
+      number: 3,
+      done: false,
+      label: "Hiring Target: 1",
+      titleLinks: [
+        { text: "Budget", href: "/admin/budget/W26" },
+        {
+          text: "Allocations",
+          href: `/admin/recruitments/${recruitment.id}/courses`,
+        },
+      ],
+    },
+    {
+      number: 4,
+      done: false,
+      label: "Prim. Consid: 2026-01-20",
+      action: "closeApplications",
+    },
+    {
+      number: 5,
+      done: false,
+      label: "Not released yet",
+      action: "allocationVisibility",
+    },
+    { number: 6, done: false, label: "Not opened yet", action: "openReviews" },
+    {
+      number: 7,
+      done: false,
+      label: "Not closed yet",
+      action: "closeReviews",
+      secondaryLink: {
+        text: "(see rankings)",
+        href: `/admin/recruitments/${recruitment.id}/courses`,
+      },
+    },
+    {
+      number: 8,
+      done: false,
+      label: "Still to assign: 1",
+      href: `/admin/recruitments/${recruitment.id}/assignments`,
+    },
+    {
+      number: 9,
+      done: false,
+      label: "Not released yet",
+      action: "publishAssignments",
+      secondaryLink: {
+        text: "(see assignments)",
+        href: `/admin/recruitments/${recruitment.id}/courses`,
+      },
+    },
+  ],
+});
+
+const stepsUrl = /\/api\/admin\/recruitments\/(\d+)\/steps$/;
+const stepsGets = (id) =>
+  axiosMock.history.get.filter(
+    (r) => r.url === `/api/admin/recruitments/${id}/steps`,
+  );
+
+/** The pathname the router is at, for the navigation tests. */
+function Where() {
+  return <div data-testid="where">{useLocation().pathname}</div>;
+}
+
 function renderCards(
   recruitments = three,
   onDeleteRequested = vi.fn(),
   applicationCounts = undefined,
 ) {
+  rendered = Array.isArray(recruitments) ? recruitments : [];
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
       <MemoryRouter>
         <RecruitmentCards
           recruitments={recruitments}
@@ -39,10 +122,27 @@ function renderCards(
           onDeleteRequested={onDeleteRequested}
           testIdPrefix="Cards"
         />
+        <Routes>
+          <Route path="*" element={<Where />} />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   );
   return onDeleteRequested;
+}
+
+/**
+ * The clickable title of one step of one card's diagram, once the steps have loaded, expanding
+ * the card's panel first if it starts collapsed.
+ */
+async function stepButton(index, number) {
+  const toggle = await screen.findByTestId(`Cards-card-${index}-steps-toggle`);
+  if (toggle.getAttribute("aria-expanded") === "false") {
+    await userEvent.click(toggle);
+  }
+  return screen.findByTestId(
+    `Cards-card-${index}-steps-steps-step-${number}-action`,
+  );
 }
 
 /** The quarter and type of each card, top to bottom. */
@@ -60,6 +160,13 @@ describe("RecruitmentCards tests", () => {
   beforeEach(() => {
     axiosMock.reset();
     axiosMock.resetHistory();
+    axiosMock.onGet(stepsUrl).reply((config) => {
+      const id = Number(config.url.match(stepsUrl)[1]);
+      const recruitment = rendered.find((r) => r.id === id);
+      return recruitment === undefined
+        ? [404, {}]
+        : [200, stepsFor(recruitment)];
+    });
     axiosMock.onPut("/api/admin/recruitments/status").reply(200, {});
     axiosMock.onPut("/api/admin/recruitments/reviewStatus").reply(200, {});
     axiosMock
@@ -122,9 +229,9 @@ describe("RecruitmentCards tests", () => {
       "Faculty Ranking Deadline:",
     ]);
     expect(screen.getByTestId("Cards-card-2-card")).toHaveClass("card", "mb-3");
-    expect(screen.getByTestId("Cards-card-2-card").style.maxWidth).toBe(
-      "48rem",
-    );
+    // Wide enough for the diagram (issue #233): the full width, not capped at 48rem.
+    expect(screen.getByTestId("Cards-card-2-card")).toHaveClass("w-100");
+    expect(screen.getByTestId("Cards-card-2-card").style.maxWidth).toBe("");
   });
 
   test("the Sort by bar has a button per field, with Quarter selected and descending at first", () => {
@@ -223,12 +330,8 @@ describe("RecruitmentCards tests", () => {
       </QueryClientProvider>,
     );
     // Card 0 is S26 TA, CLOSED (id 3); card 2 is W26 ULA, OPEN (id 2).
-    const openButton = screen.getByTestId("Cards-card-0-status-button");
-    expect(openButton).toHaveTextContent("Open Applications");
-    expect(openButton).toHaveClass("btn-success");
-    const closeButton = screen.getByTestId("Cards-card-2-status-button");
-    expect(closeButton).toHaveTextContent("Close Applications");
-    expect(closeButton).toHaveClass("btn-warning");
+    const openButton = await stepButton(0, 2);
+    const closeButton = await stepButton(2, 4);
 
     // Issue #186: the button asks first; nothing is sent until Yes.
     await userEvent.click(openButton);
@@ -265,9 +368,13 @@ describe("RecruitmentCards tests", () => {
     expect(axiosMock.history.put[0].url).toBe("/api/admin/recruitments/status");
     expect(axiosMock.history.put[0].params).toEqual({ id: 3, status: "OPEN" });
     // The list is refreshed from the backend afterwards, and the modal closes.
-    await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(2));
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({
       queryKey: ["/api/admin/recruitments/all"],
+    });
+    // Issue #233: every recruitment's steps are re-read too.
+    expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+      queryKey: ["/api/admin/recruitments/steps"],
     });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
@@ -297,13 +404,13 @@ describe("RecruitmentCards tests", () => {
   test("No, and the modal's close control, change nothing", async () => {
     renderCards();
 
-    await userEvent.click(screen.getByTestId("Cards-card-0-status-button"));
+    await userEvent.click(await stepButton(0, 2));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     await userEvent.click(screen.getByTestId("Cards-status-modal-no"));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(axiosMock.history.put).toHaveLength(0);
 
-    await userEvent.click(screen.getByTestId("Cards-card-2-status-button"));
+    await userEvent.click(await stepButton(2, 2));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Close" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -320,7 +427,7 @@ describe("RecruitmentCards tests", () => {
     );
     renderCards();
 
-    await userEvent.click(screen.getByTestId("Cards-card-0-status-button"));
+    await userEvent.click(await stepButton(0, 2));
     const yes = await screen.findByTestId("Cards-status-modal-yes");
     expect(yes).not.toBeDisabled();
     await userEvent.click(yes);
@@ -329,7 +436,7 @@ describe("RecruitmentCards tests", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
     axiosMock.onPut("/api/admin/recruitments/status").reply(500, "no");
-    await userEvent.click(screen.getByTestId("Cards-card-0-status-button"));
+    await userEvent.click(await stepButton(0, 2));
     await userEvent.click(await screen.findByTestId("Cards-status-modal-yes"));
     await waitFor(() => expect(axiosMock.history.put).toHaveLength(2));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
@@ -338,48 +445,10 @@ describe("RecruitmentCards tests", () => {
     );
   });
 
-  test("the lifecycle buttons have tooltips that say what they do", async () => {
-    renderCards();
-
-    const cases = [
-      [
-        "Cards-card-0-status-button",
-        "Cards-card-0-status-tooltip",
-        "Let applicants submit and edit applications for this recruitment",
-      ],
-      [
-        "Cards-card-2-status-button",
-        "Cards-card-2-status-tooltip",
-        "Stop accepting applications for this recruitment",
-      ],
-      [
-        "Cards-card-0-review-status-button",
-        "Cards-card-0-review-status-tooltip",
-        "Let faculty see and rank the candidates for their courses, with a ranking deadline",
-      ],
-      [
-        "Cards-card-2-review-status-button",
-        "Cards-card-2-review-status-tooltip",
-        "Stop faculty from changing their rankings; the dates on file are kept",
-      ],
-    ];
-    for (const [buttonId, tooltipId, text] of cases) {
-      const button = screen.getByTestId(buttonId);
-      fireEvent.mouseOver(button);
-      const tooltip = await screen.findByRole("tooltip");
-      expect(tooltip).toHaveTextContent(text);
-      expect(tooltip).toHaveAttribute("id", tooltipId);
-      fireEvent.mouseOut(button);
-      await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
-    }
-  });
-
   test("the Open Faculty Reviews modal explains itself, links to help, and asks Yes or No", async () => {
     renderCards();
 
-    await userEvent.click(
-      screen.getByTestId("Cards-card-0-review-status-button"),
-    );
+    await userEvent.click(await stepButton(0, 6));
     const explanation = screen.getByTestId("Cards-faculty-review-explanation");
     expect(explanation).toHaveTextContent(
       "Faculty will be able to see the candidates for their courses and enter rankings until the deadline you give here. The first opening stamps the faculty review opening date, which is kept if reviews are reopened; the deadline can be changed later. The change is recorded in the recruitment's change history. More about this action",
@@ -421,7 +490,7 @@ describe("RecruitmentCards tests", () => {
     );
   });
 
-  test("the links lead to that recruitment's courses, preview, CSV and review pages", () => {
+  test("the footer has just the Courses and Applications buttons, leading to that recruitment's pages", () => {
     renderCards();
     // Card 2 is id 2.
     const courses = screen.getByTestId("Cards-card-2-courses-button");
@@ -429,91 +498,43 @@ describe("RecruitmentCards tests", () => {
     expect(courses).toHaveAttribute("href", "/admin/recruitments/2/courses");
     expect(courses).toHaveClass("btn", "btn-primary");
 
-    const test = screen.getByTestId("Cards-card-2-test-button");
-    expect(test).toHaveTextContent("Test Application");
-    expect(test).toHaveAttribute(
-      "href",
-      "/admin/recruitments/2/test-application",
-    );
-    expect(test).toHaveAttribute("title", TEST_APPLICATION_TOOLTIP);
-    expect(test).toHaveClass("btn", "btn-secondary");
-    expect(TEST_APPLICATION_TOOLTIP).toBe(
-      "Submit a test application to see what the form looks like to applicants",
-    );
-
-    const csv = screen.getByTestId("Cards-card-2-csv-button");
-    expect(csv).toHaveTextContent("Download CSV");
-    expect(csv).toHaveAttribute(
-      "href",
-      "/api/admin/applications/csv?recruitmentId=2",
-    );
-    expect(csv).toHaveAttribute("download", "applications-2.csv");
-    expect(csv).toHaveClass("btn", "btn-outline-secondary");
-
-    for (const [index, id] of [
-      [0, 3],
-      [1, 1],
-      [2, 2],
-    ]) {
-      const rankings = screen.getByTestId(
-        `Cards-card-${index}-rankings-csv-button`,
-      );
-      expect(rankings).toHaveTextContent("Download Rankings CSV");
-      expect(rankings).toHaveAttribute(
-        "href",
-        `/api/admin/rankings/csv?recruitmentId=${id}`,
-      );
-      expect(rankings).toHaveAttribute("download", `rankings-${id}.csv`);
-      expect(rankings).toHaveClass("btn", "btn-outline-secondary");
-      expect(rankings.closest(".card-footer")).not.toBeNull();
-    }
-
-    const review = screen.getByTestId("Cards-card-2-review-button");
-    expect(review).toHaveTextContent("Review Applications");
-    expect(review).toHaveAttribute(
+    const applications = screen.getByTestId("Cards-card-2-applications-button");
+    expect(applications).toHaveTextContent("Applications");
+    expect(applications).toHaveAttribute(
       "href",
       "/admin/recruitments/2/applications",
     );
-    expect(review).toHaveClass("btn", "btn-info");
+    expect(applications).toHaveClass("btn", "btn-info");
 
-    // Issue #179: the admin Assignments page, one per recruitment.
-    for (const [index, id] of [
-      [0, 3],
-      [1, 1],
-      [2, 2],
-    ]) {
-      const assignments = screen.getByTestId(
-        `Cards-card-${index}-assignments-button`,
-      );
-      expect(assignments).toHaveTextContent("Assignments");
-      expect(assignments).toHaveAttribute(
-        "href",
-        `/admin/recruitments/${id}/assignments`,
-      );
-      expect(assignments).toHaveClass("btn", "btn-dark");
-      expect(assignments.closest(".card-footer")).not.toBeNull();
-    }
-
-    // Actions sit in the footer; Delete moved to the header (issue #108).
+    // Everything else the footer once held is reached through the diagram or has moved (#234).
     const footer = screen
       .getByTestId("Cards-card-2-card")
       .querySelector(".card-footer");
     expect(footer).toHaveClass("d-flex", "flex-wrap", "gap-2");
-    expect(footer.children).toHaveLength(8);
+    expect(footer.children).toHaveLength(2);
     expect(footer).not.toContainElement(
       screen.getByTestId("Cards-card-2-delete-button"),
+    );
+    [
+      "status-button",
+      "review-status-button",
+      "test-button",
+      "csv-button",
+      "rankings-csv-button",
+      "review-button",
+      "assignments-button",
+      "published-assignments-button",
+    ].forEach((suffix) =>
+      expect(
+        screen.queryByTestId(`Cards-card-2-${suffix}`),
+      ).not.toBeInTheDocument(),
     );
   });
 
   test("opening reviews requires and submits a deadline; canceling does not save", async () => {
     renderCards();
 
-    expect(
-      screen.getByTestId("Cards-card-1-review-status-button"),
-    ).toHaveTextContent("Open Faculty Reviews");
-    await userEvent.click(
-      screen.getByTestId("Cards-card-0-review-status-button"),
-    );
+    await userEvent.click(await stepButton(0, 6));
     expect(screen.getByRole("dialog")).toHaveTextContent(
       "Open Faculty Reviews",
     );
@@ -529,9 +550,7 @@ describe("RecruitmentCards tests", () => {
     }
     expect(axiosMock.history.put).toHaveLength(0);
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    await userEvent.click(
-      screen.getByTestId("Cards-card-0-review-status-button"),
-    );
+    await userEvent.click(await stepButton(0, 6));
     const reopenedDateInput = screen.getByTestId(
       "Cards-faculty-ranking-deadline-input",
     );
@@ -549,9 +568,7 @@ describe("RecruitmentCards tests", () => {
     expect(axiosMock.history.put).toHaveLength(0);
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
-    await userEvent.click(
-      screen.getByTestId("Cards-card-0-review-status-button"),
-    );
+    await userEvent.click(await stepButton(0, 6));
     await userEvent.clear(
       screen.getByTestId("Cards-faculty-ranking-deadline-input"),
     );
@@ -571,12 +588,59 @@ describe("RecruitmentCards tests", () => {
     });
   });
 
+  test("the deadline box is labelled, flags a missing date until it is fixed, and each mode has its own title", async () => {
+    renderCards();
+    expect(screen.getByTestId("Cards-cards")).toBeInTheDocument();
+
+    await userEvent.click(await stepButton(0, 6));
+    expect(
+      screen
+        .getByTestId("Cards-faculty-review-modal")
+        .querySelector(".modal-title"),
+    ).toHaveTextContent(/^Open Faculty Reviews$/);
+    const input = screen.getByLabelText("Faculty ranking deadline");
+    expect(input).toBe(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+    );
+    expect(input).not.toHaveClass("is-invalid");
+    expect(screen.getByText("Enter a deadline.")).toBeInTheDocument();
+
+    await userEvent.clear(input);
+    fireEvent.submit(input.closest("form"));
+    expect(input).toHaveClass("is-invalid");
+    expect(screen.getByText("Enter a valid deadline.")).toBeInTheDocument();
+
+    // Typing a date clears the complaint.
+    fireEvent.change(input, { target: { value: "2026-03-01" } });
+    expect(input).not.toHaveClass("is-invalid");
+
+    fireEvent.change(input, { target: { value: "" } });
+    await userEvent.clear(input);
+    fireEvent.submit(input.closest("form"));
+    await waitFor(() => expect(input).toHaveClass("is-invalid"));
+    await userEvent.click(screen.getByTestId("Cards-faculty-review-cancel"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await userEvent.click(await stepButton(0, 6));
+    expect(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+    ).not.toHaveClass("is-invalid");
+    await userEvent.click(screen.getByTestId("Cards-faculty-review-cancel"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-edit-faculty-ranking-deadline"),
+    );
+    expect(
+      screen
+        .getByTestId("Cards-faculty-review-modal")
+        .querySelector(".modal-title"),
+    ).toHaveTextContent(/^Change Faculty Ranking Deadline$/);
+  });
+
   test("admins can close reviews and edit the deadline beside its date", async () => {
     renderCards();
 
-    await userEvent.click(
-      screen.getByTestId("Cards-card-2-review-status-button"),
-    );
+    await userEvent.click(await stepButton(2, 6));
     // Issue #211: closing asks first.
     await userEvent.click(screen.getByTestId("Cards-close-reviews-yes"));
     await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
@@ -628,9 +692,7 @@ describe("RecruitmentCards tests", () => {
     );
     renderCards();
 
-    await userEvent.click(
-      screen.getByTestId("Cards-card-0-review-status-button"),
-    );
+    await userEvent.click(await stepButton(0, 6));
     fireEvent.change(
       screen.getByTestId("Cards-faculty-ranking-deadline-input"),
       {
@@ -646,9 +708,7 @@ describe("RecruitmentCards tests", () => {
     axiosMock
       .onPut("/api/admin/recruitments/reviewStatus")
       .reply(500, "unable to save");
-    await userEvent.click(
-      screen.getByTestId("Cards-card-0-review-status-button"),
-    );
+    await userEvent.click(await stepButton(0, 6));
     fireEvent.change(
       screen.getByTestId("Cards-faculty-ranking-deadline-input"),
       {
@@ -776,7 +836,7 @@ describe("RecruitmentCards tests", () => {
     expect(screen.queryByText("Published Assignments")).not.toBeInTheDocument();
   });
 
-  test("a published recruitment shows the badge and the Published Assignments button", () => {
+  test("a published recruitment shows the Assignments Published badge", () => {
     renderCards([
       { ...three[2], assignmentsPublished: true },
       { ...three[1], assignmentsPublished: false },
@@ -794,24 +854,17 @@ describe("RecruitmentCards tests", () => {
       screen.getByTestId("Cards-card-0-applications"),
     );
 
-    const button = screen.getByTestId(
-      "Cards-card-0-published-assignments-button",
-    );
-    expect(button).toHaveTextContent("Published Assignments");
-    expect(button).toHaveAttribute("href", "/recruitments/1/assignments");
-    expect(button).toHaveClass("btn", "btn-outline-dark");
-    expect(button.closest(".card-footer")).not.toBeNull();
-    // The last button in the footer, after the admin Assignments page button.
-    expect(button.previousElementSibling).toBe(
-      screen.getByTestId("Cards-card-0-assignments-button"),
-    );
-    expect(button.closest(".card-footer").children).toHaveLength(9);
+    // The Published Assignments and Assignments buttons left the footer (issue #233): step 9 of
+    // the diagram links to the published page instead.
+    expect(
+      screen.queryByTestId("Cards-card-0-published-assignments-button"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("Cards-card-0-assignments-button"),
+    ).not.toBeInTheDocument();
 
     expect(
       screen.queryByTestId("Cards-card-1-assignmentsPublished"),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId("Cards-card-1-published-assignments-button"),
     ).not.toBeInTheDocument();
   });
 
@@ -820,9 +873,7 @@ describe("RecruitmentCards tests", () => {
   test("Close Faculty Reviews opens a confirmation that explains, links to help and asks Yes or No", async () => {
     renderCards();
     // Card 2 is the open ULA recruitment (W26) whose deadline, 2026-02-15, has passed.
-    await userEvent.click(
-      screen.getByTestId("Cards-card-2-review-status-button"),
-    );
+    await userEvent.click(await stepButton(2, 6));
 
     const modal = await screen.findByTestId("Cards-close-reviews-modal");
     expect(
@@ -853,9 +904,7 @@ describe("RecruitmentCards tests", () => {
 
   test("No, or the close control, closes the confirmation without saving", async () => {
     renderCards();
-    await userEvent.click(
-      screen.getByTestId("Cards-card-2-review-status-button"),
-    );
+    await userEvent.click(await stepButton(2, 6));
     await screen.findByTestId("Cards-close-reviews-modal");
 
     await userEvent.click(screen.getByTestId("Cards-close-reviews-no"));
@@ -864,9 +913,7 @@ describe("RecruitmentCards tests", () => {
         screen.queryByTestId("Cards-close-reviews-modal"),
       ).not.toBeInTheDocument(),
     );
-    await userEvent.click(
-      screen.getByTestId("Cards-card-2-review-status-button"),
-    );
+    await userEvent.click(await stepButton(2, 6));
     await screen.findByTestId("Cards-close-reviews-modal");
     await userEvent.click(screen.getByRole("button", { name: "Close" }));
     await waitFor(() =>
@@ -885,9 +932,7 @@ describe("RecruitmentCards tests", () => {
         () => new Promise((resolve) => (release = () => resolve([200, {}]))),
       );
     renderCards();
-    await userEvent.click(
-      screen.getByTestId("Cards-card-2-review-status-button"),
-    );
+    await userEvent.click(await stepButton(2, 6));
     await userEvent.click(await screen.findByTestId("Cards-close-reviews-yes"));
 
     await waitFor(() =>
@@ -911,9 +956,7 @@ describe("RecruitmentCards tests", () => {
         r.id === 2 ? { ...r, facultyRankingDeadline: "2999-12-31" } : r,
       ),
     );
-    await userEvent.click(
-      screen.getByTestId("Cards-card-2-review-status-button"),
-    );
+    await userEvent.click(await stepButton(2, 6));
 
     const warning = await screen.findByTestId("Cards-close-reviews-early");
     expect(warning).toHaveTextContent(
@@ -932,9 +975,7 @@ describe("RecruitmentCards tests", () => {
         r.id === 2 ? { ...r, facultyRankingDeadline: null } : r,
       ),
     );
-    await userEvent.click(
-      screen.getByTestId("Cards-card-2-review-status-button"),
-    );
+    await userEvent.click(await stepButton(2, 6));
     await screen.findByTestId("Cards-close-reviews-modal");
     expect(
       screen.queryByTestId("Cards-close-reviews-early"),
@@ -947,9 +988,7 @@ describe("RecruitmentCards tests", () => {
     vi.setSystemTime(new Date(2026, 10, 2, 9, 0, 0));
     try {
       renderCards();
-      await userEvent.click(
-        screen.getByTestId("Cards-card-0-review-status-button"),
-      );
+      await userEvent.click(await stepButton(0, 6));
       expect(
         screen.getByTestId("Cards-faculty-ranking-deadline-input"),
       ).toHaveValue("2026-11-09");
@@ -963,14 +1002,271 @@ describe("RecruitmentCards tests", () => {
     vi.setSystemTime(new Date(2026, 10, 6, 17, 0, 0));
     try {
       renderCards();
-      await userEvent.click(
-        screen.getByTestId("Cards-card-0-review-status-button"),
-      );
+      await userEvent.click(await stepButton(0, 6));
       expect(
         screen.getByTestId("Cards-faculty-ranking-deadline-input"),
       ).toHaveValue("2026-11-13");
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  // ---- Issue #233: the live Recruitment Steps diagram on each card ----
+
+  const expandedByIndex = (count) =>
+    Array.from({ length: count }, (_, i) =>
+      screen
+        .getByTestId(`Cards-card-${i}-steps-toggle`)
+        .getAttribute("aria-expanded"),
+    );
+
+  test("each card fetches its recruitment's steps and shows where it is in one line", async () => {
+    renderCards();
+
+    // Every box but step 1 is not done in the mocked steps, so each is at step 2 (TA or ULA).
+    expect(
+      await screen.findByTestId("Cards-card-0-steps-summary"),
+    ).toHaveTextContent("Step 2 of 9: Open TA Applications");
+    expect(screen.getByTestId("Cards-card-1-steps-summary")).toHaveTextContent(
+      "Step 2 of 9: Open TA Applications",
+    );
+    expect(screen.getByTestId("Cards-card-2-steps-summary")).toHaveTextContent(
+      "Step 2 of 9: Open ULA Applications",
+    );
+    for (const id of [3, 1, 2]) {
+      expect(stepsGets(id)).toHaveLength(1);
+    }
+  });
+
+  test("the most recent TA and the most recent ULA recruitment start expanded, the rest collapsed", async () => {
+    renderCards();
+    await screen.findByTestId("Cards-card-2-steps-toggle");
+
+    // S26 TA (id 3) and W26 ULA (id 2) are the latest of their types; W26 TA (id 1) is older.
+    expect(expandedByIndex(3)).toEqual(["true", "false", "true"]);
+    expect(
+      screen.getByTestId("Cards-card-0-steps-diagram"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("Cards-card-1-steps-diagram"),
+    ).not.toBeInTheDocument();
+
+    // The admin can open the collapsed one and close an open one; nothing is saved.
+    await userEvent.click(screen.getByTestId("Cards-card-1-steps-toggle"));
+    expect(
+      screen.getByTestId("Cards-card-1-steps-diagram"),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId("Cards-card-0-steps-toggle"));
+    expect(
+      screen.queryByTestId("Cards-card-0-steps-diagram"),
+    ).not.toBeInTheDocument();
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("of two recruitments of one type, the later quarter is expanded, and on a tie the newer id", async () => {
+    const make = (id, quarter, type) => ({ ...three[0], id, quarter, type });
+    renderCards([
+      make(10, "20262", "TA"),
+      make(11, "20262", "TA"),
+      make(12, "20254", "TA"),
+      make(13, "20261", "ULA"),
+      make(14, "20254", "ULA"),
+    ]);
+    await screen.findByTestId("Cards-card-4-steps-toggle");
+
+    // The mocked step 1 label carries its recruitment's id, so the expanded panels name themselves.
+    const expandedIds = [];
+    for (let i = 0; i < 5; i += 1) {
+      if (
+        screen
+          .getByTestId(`Cards-card-${i}-steps-toggle`)
+          .getAttribute("aria-expanded") === "true"
+      ) {
+        const label = screen.getByTestId(
+          `Cards-card-${i}-steps-steps-step-1-label`,
+        );
+        expandedIds.push(Number(label.textContent.match(/#(\d+)/)[1]));
+      }
+    }
+    // Ids 10 and 11 tie on quarter (11 is newer); 13 is the latest ULA quarter.
+    expect(expandedIds.sort()).toEqual([11, 13]);
+  });
+
+  test("a card whose steps cannot be loaded still shows, without the diagram panel", async () => {
+    axiosMock.onGet(stepsUrl).reply(500, { message: "boom" });
+    renderCards();
+
+    expect(await screen.findByTestId("Cards-card-0-quarter")).toHaveTextContent(
+      "S26",
+    );
+    await waitFor(() => expect(stepsGets(3)).toHaveLength(1));
+    expect(
+      screen.queryByTestId("Cards-card-0-steps-summary"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("Cards-card-0-courses-button"),
+    ).toBeInTheDocument();
+  });
+
+  test("the applications and review steps open the same modal either way, going by the current status", async () => {
+    renderCards();
+
+    // Card 2 (W26 ULA) is open for applications and for faculty reviews; card 0 is neither.
+    await userEvent.click(await stepButton(2, 2));
+    expect(
+      await screen.findByTestId("Cards-status-modal-yes"),
+    ).toHaveTextContent("Yes, Close Applications Now");
+    await userEvent.click(screen.getByTestId("Cards-status-modal-no"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    await userEvent.click(await stepButton(0, 4));
+    expect(
+      await screen.findByTestId("Cards-status-modal-yes"),
+    ).toHaveTextContent("Yes, Open Applications Now");
+    await userEvent.click(screen.getByTestId("Cards-status-modal-no"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    await userEvent.click(await stepButton(2, 6));
+    expect(
+      await screen.findByTestId("Cards-close-reviews-yes"),
+    ).toHaveTextContent("Yes, Close Faculty Reviews Now");
+    await userEvent.click(screen.getByTestId("Cards-close-reviews-no"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    await userEvent.click(await stepButton(0, 7));
+    expect(
+      await screen.findByTestId("Cards-faculty-review-save"),
+    ).toHaveTextContent("Yes, Open Faculty Reviews Now");
+    await userEvent.click(screen.getByTestId("Cards-faculty-review-cancel"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("step 5 opens the Allocation Visibility modal, and Save sends the choice and re-reads the steps", async () => {
+    axiosMock
+      .onPut("/api/admin/recruitments/allocationVisibility")
+      .reply(200, {});
+    renderCards();
+
+    await userEvent.click(await stepButton(0, 5));
+    expect(await screen.findByTestId("Cards-visibility")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "Allocation Visibility",
+    );
+    await userEvent.click(screen.getByTestId("Cards-visibility-OWN_COURSES"));
+    const getsBefore = stepsGets(3).length;
+    await userEvent.click(screen.getByTestId("Cards-visibility-save"));
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter((r) =>
+          r.url.endsWith("/allocationVisibility"),
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find((r) => r.url.endsWith("/allocationVisibility"))
+        .params,
+    ).toEqual({ id: 3, visibility: "OWN_COURSES" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() =>
+      expect(stepsGets(3).length).toBeGreaterThan(getsBefore),
+    );
+  });
+
+  test("Cancel in the Allocation Visibility modal sends nothing", async () => {
+    renderCards();
+
+    await userEvent.click(await stepButton(2, 5));
+    await userEvent.click(await screen.findByTestId("Cards-visibility-cancel"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("step 9 opens the Publish Assignments modal, Yes publishes, and No does nothing", async () => {
+    axiosMock
+      .onPut("/api/admin/recruitments/assignmentsPublished")
+      .reply(200, {});
+    renderCards();
+
+    await userEvent.click(await stepButton(0, 9));
+    const modal = await screen.findByTestId("Cards-publish-modal");
+    expect(modal).toHaveTextContent("Publish Assignments");
+    await userEvent.click(screen.getByTestId("Cards-publish-cancel"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(axiosMock.history.put).toHaveLength(0);
+
+    await userEvent.click(await stepButton(2, 9));
+    await userEvent.click(await screen.findByTestId("Cards-publish-confirm"));
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    expect(axiosMock.history.put[0].url).toBe(
+      "/api/admin/recruitments/assignmentsPublished",
+    );
+    expect(axiosMock.history.put[0].params).toEqual({ id: 2, published: true });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  test("the diagram's page links go to the budget, courses and assignments pages without a reload", async () => {
+    renderCards();
+    // Open the collapsed card 1 (W26 TA, id 1) so every kind of link is on screen.
+    await stepButton(1, 2);
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-1-steps-steps-step-3-link-Budget"),
+    );
+    expect(screen.getByTestId("where")).toHaveTextContent("/admin/budget/W26");
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-1-steps-steps-step-3-link-Allocations"),
+    );
+    expect(screen.getByTestId("where")).toHaveTextContent(
+      "/admin/recruitments/1/courses",
+    );
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-1-steps-steps-step-8-link"),
+    );
+    expect(screen.getByTestId("where")).toHaveTextContent(
+      "/admin/recruitments/1/assignments",
+    );
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-1-steps-steps-step-7-secondary-link"),
+    );
+    expect(screen.getByTestId("where")).toHaveTextContent(
+      "/admin/recruitments/1/courses",
+    );
+    await userEvent.click(
+      screen.getByTestId("Cards-card-1-steps-steps-step-9-secondary-link"),
+    );
+    expect(screen.getByTestId("where")).toHaveTextContent(
+      "/admin/recruitments/1/courses",
+    );
+    // Following links changes nothing on the backend.
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("a successful change re-reads the steps of the recruitments", async () => {
+    renderCards();
+
+    await userEvent.click(await stepButton(0, 2));
+    await userEvent.click(await screen.findByTestId("Cards-status-modal-yes"));
+    await waitFor(() => expect(stepsGets(3).length).toBeGreaterThan(1));
+    // Steps of the other cards are refreshed too: one list of steps, one query key.
+    await waitFor(() => expect(stepsGets(2).length).toBeGreaterThan(1));
+  });
+
+  test("the deadline Change button still opens the deadline modal from the new layout", async () => {
+    renderCards();
+
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-edit-faculty-ranking-deadline"),
+    );
+    expect(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+    ).toHaveValue("2026-02-15");
+    expect(screen.getByTestId("Cards-faculty-review-save")).toHaveTextContent(
+      "Save Deadline",
+    );
   });
 });

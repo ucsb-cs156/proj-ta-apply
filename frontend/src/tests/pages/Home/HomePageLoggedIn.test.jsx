@@ -10,6 +10,7 @@ import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 
 const axiosMock = new AxiosMockAdapter(axios);
@@ -26,6 +27,8 @@ function renderHome(currentUserFixture, backend = {}) {
     .onGet("/api/systemInfo")
     .reply(200, systemInfoFixtures.showingNeither);
   axiosMock
+    .onGet(/\/api\/admin\/recruitments\/\d+\/steps$/)
+    .reply(200, recruitmentStepsFixtures.fresh)
     .onGet("/api/admin/recruitments/all")
     .reply(200, backend.adminRecruitments ?? []);
   axiosMock
@@ -135,7 +138,7 @@ describe("HomePageLoggedIn tests", () => {
       ).toHaveTextContent("15 applications"),
     );
     expect(
-      screen.getByTestId("HomePageLoggedIn-admin-card-0-review-button"),
+      screen.getByTestId("HomePageLoggedIn-admin-card-0-applications-button"),
     ).toHaveAttribute("href", "/admin/recruitments/3/applications");
     // Admins are students too, as far as applying goes.
     expect(screen.getByTestId("HomePageLoggedIn-student")).toBeInTheDocument();

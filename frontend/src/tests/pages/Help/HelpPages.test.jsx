@@ -316,6 +316,14 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
+    // Issue #233: the live Recruitment Steps diagram on each card.
+    const cardIntro = screen.getByText(/Under the dates is the live/);
+    expect(cardIntro).toHaveTextContent(
+      "Under the dates is the live Recruitment Steps diagram (collapsed to a one-line summary on older cards, expanded on the latest TA and ULA recruitments).",
+    );
+    expect(
+      within(cardIntro).getByRole("link", { name: "Recruitment Steps" }),
+    ).toHaveAttribute("href", "/help/recruitment-steps");
     // Issue #186: the confirmations on the cards link to these two items.
     const openClose = screen.getByTestId(
       "HelpAdminsPage-open-close-applications",
@@ -323,7 +331,7 @@ describe("Help pages (issue #140)", () => {
     expect(openClose.id).toBe("open-close-applications");
     expect(openClose.tagName).toBe("LI");
     expect(openClose).toHaveTextContent(
-      "Each button first asks Are you sure? with a short account of what will happen, so a stray click changes nothing.",
+      "Each button first asks Are you sure? with a short account of what will happen, so a stray click changes nothing. Opening is step 2 of the diagram and closing is step 4.",
     );
     const reviews = screen.getByTestId("HelpAdminsPage-faculty-reviews");
     expect(reviews.id).toBe("faculty-reviews");
@@ -432,7 +440,7 @@ describe("Help pages (issue #140)", () => {
       document.getElementById("courses").compareDocumentPosition(columns) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    // Issue #189: the applications table's column order and Columns menu, under Review Applications.
+    // Issue #189: the applications table's column order and Columns menu, under Applications.
     const applicationColumns = screen.getByTestId(
       "HelpAdminsPage-application-columns",
     );
@@ -444,7 +452,7 @@ describe("Help pages (issue #140)", () => {
       "the columns the table has always had start shown and the rest start hidden, and the choice is kept for that recruitment, for all admins.",
     );
     expect(applicationColumns.closest("li")).toHaveTextContent(
-      "Review Applications.",
+      "Applications. The list of applications",
     );
     // Issue #174: the hiring target and per-course allocations, in the Courses section.
     const hiring = screen.getByTestId("HelpAdminsPage-hiring-target");
