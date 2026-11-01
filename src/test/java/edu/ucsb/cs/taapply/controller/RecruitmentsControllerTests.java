@@ -32,6 +32,7 @@ import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs156.jobs.services.JobService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1138,5 +1139,142 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     mockMvc.perform(put(VISIBILITY_URL + "?id=1").with(csrf())).andExpect(status().isBadRequest());
     verify(recruitmentRepository, never()).findById(any());
     verify(recruitmentRepository, never()).save(any());
+  }
+
+  // ---- The dates the Recruitment Steps diagram shows (issue #231) ----
+
+  /** True when the stamp was written during the test, i.e. within the last minute. */
+  private static boolean justNow(LocalDateTime stamp) {
+    return stamp != null
+        && !stamp.isBefore(LocalDateTime.now().minusMinutes(1))
+        && !stamp.isAfter(LocalDateTime.now().plusMinutes(1));
+  }
+
+  private static final LocalDateTime LONG_AGO = LocalDateTime.of(2020, 1, 1, 12, 0);
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void creating_a_recruitment_stamps_when_it_was_created() throws Exception {
+    Recruitment saved = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.existsByQuarterAndType("20261", RecruitmentType.TA))
+        .thenReturn(false);
+    when(recruitmentRepository.save(any())).thenReturn(saved);
+    when(populateRecruitmentCoursesJobFactory.create(saved))
+        .thenReturn(PopulateRecruitmentCoursesJob.builder().build());
+
+    mockMvc.perform(post(CREATE_URL).with(csrf())).andExpect(status().isOk());
+
+    ArgumentCaptor<Recruitment> captor = ArgumentCaptor.forClass(Recruitment.class);
+    verify(recruitmentRepository).save(captor.capture());
+    assertTrue(justNow(captor.getValue().getCreatedAt()));
+    assertNull(captor.getValue().getAllocationsReleasedAt());
+    assertNull(captor.getValue().getFacultyReviewClosedAt());
+    assertNull(captor.getValue().getAssignmentsPublishedAt());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void closing_reviews_stamps_when_they_were_closed_and_opening_them_does_not()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    when(recruitmentAuditService.snapshot(r))
+        .thenReturn(new RecruitmentAuditService.Snapshot(1L, Map.of()));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/reviewStatus?id=1&status=Open"
+                    + "&facultyRankingDeadline=2026-02-01")
+                .with(csrf()))
+        .andExpect(status().isOk());
+    assertNull(r.getFacultyReviewClosedAt());
+
+    mockMvc
+        .perform(put("/api/admin/recruitments/reviewStatus?id=1&status=Closed").with(csrf()))
+        .andExpect(status().isOk());
+    assertTrue(justNow(r.getFacultyReviewClosedAt()));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void closing_reviews_again_after_reopening_them_restamps() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setReviewStatus("Open");
+    r.setFacultyReviewOpeningDate(LocalDate.of(2026, 1, 10));
+    r.setFacultyRankingDeadline(LocalDate.of(2026, 2, 1));
+    r.setFacultyReviewClosedAt(LONG_AGO);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    when(recruitmentAuditService.snapshot(r))
+        .thenReturn(new RecruitmentAuditService.Snapshot(1L, Map.of()));
+
+    mockMvc
+        .perform(put("/api/admin/recruitments/reviewStatus?id=1&status=Closed").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertTrue(justNow(r.getFacultyReviewClosedAt()));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void leaving_admins_only_stamps_the_first_release_and_later_changes_keep_it()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    when(recruitmentAuditService.snapshot(r))
+        .thenReturn(new RecruitmentAuditService.Snapshot(1L, Map.of()));
+
+    mockMvc
+        .perform(put(VISIBILITY_URL + "?id=1&visibility=OWN_COURSES").with(csrf()))
+        .andExpect(status().isOk());
+    LocalDateTime first = r.getAllocationsReleasedAt();
+    assertTrue(justNow(first));
+
+    // Widening it, and even withdrawing it, leave the date of the first release alone.
+    r.setAllocationsReleasedAt(LONG_AGO);
+    mockMvc
+        .perform(put(VISIBILITY_URL + "?id=1&visibility=ALL_COURSES").with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals(LONG_AGO, r.getAllocationsReleasedAt());
+    mockMvc
+        .perform(put(VISIBILITY_URL + "?id=1&visibility=ADMINS_ONLY").with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals(LONG_AGO, r.getAllocationsReleasedAt());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void withdrawing_before_any_release_stamps_nothing() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAllocationVisibility(AllocationVisibility.OWN_COURSES);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    when(recruitmentAuditService.snapshot(r))
+        .thenReturn(new RecruitmentAuditService.Snapshot(1L, Map.of()));
+
+    mockMvc
+        .perform(put(VISIBILITY_URL + "?id=1&visibility=ADMINS_ONLY").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertNull(r.getAllocationsReleasedAt());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void publishing_stamps_each_time_and_taking_it_back_keeps_the_last_stamp()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    when(recruitmentAuditService.snapshot(r))
+        .thenReturn(new RecruitmentAuditService.Snapshot(1L, Map.of()));
+    String url = "/api/admin/recruitments/assignmentsPublished?id=1&published=";
+
+    mockMvc.perform(put(url + "true").with(csrf())).andExpect(status().isOk());
+    assertTrue(justNow(r.getAssignmentsPublishedAt()));
+
+    r.setAssignmentsPublishedAt(LONG_AGO);
+    mockMvc.perform(put(url + "false").with(csrf())).andExpect(status().isOk());
+    assertEquals(LONG_AGO, r.getAssignmentsPublishedAt());
+
+    mockMvc.perform(put(url + "true").with(csrf())).andExpect(status().isOk());
+    assertTrue(justNow(r.getAssignmentsPublishedAt()));
   }
 }
