@@ -8,6 +8,8 @@ import RecruitmentForm, {
   type RecruitmentFormFields,
 } from "main/components/Recruitments/RecruitmentForm";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import AutoCreateRecruitmentsModal from "main/components/Recruitments/AutoCreateRecruitmentsModal";
+import { useDeveloperMode } from "main/utils/developerMode";
 import { useSystemInfo } from "main/utils/systemInfo";
 import { quarterRange } from "main/utils/quarterUtilities";
 import { toast } from "react-toastify";
@@ -26,6 +28,9 @@ export default function RecruitmentsDashboard({
   testIdPrefix = "RecruitmentsDashboard",
 }: RecruitmentsDashboardProps): React.JSX.Element {
   const { data: systemInfo } = useSystemInfo();
+  const { data: developerMode } = useDeveloperMode();
+  // Stryker disable next-line all : the query's initial data is the "off" status, never undefined
+  const developerModeOn = developerMode?.on === true;
 
   // Stryker disable OptionalChaining
   const startQtr = systemInfo?.startQtrYYYYQ || "20211";
@@ -51,6 +56,7 @@ export default function RecruitmentsDashboard({
   const counts = applicationCounts ?? {};
 
   const [creating, setCreating] = useState(false);
+  const [autoCreating, setAutoCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Recruitment | null>(null);
 
   const createMutation = useBackendMutation<RecruitmentFormFields, Recruitment>(
@@ -116,6 +122,27 @@ export default function RecruitmentsDashboard({
       >
         Create New Recruitment
       </Button>
+
+      {/* Developer mode only (issue #218): a plan for the next quarter's recruitments. */}
+      {developerModeOn && (
+        <Button
+          variant="outline-secondary"
+          className="mb-3 ms-2"
+          onClick={() => setAutoCreating(true)}
+          data-testid={`${testIdPrefix}-auto-create-button`}
+        >
+          Auto Create Recruitments
+        </Button>
+      )}
+
+      {autoCreating && (
+        <AutoCreateRecruitmentsModal
+          // Stryker disable next-line all : the query's initial data is an empty list, never undefined
+          recruitments={recruitments ?? []}
+          onHide={() => setAutoCreating(false)}
+          testIdPrefix={`${testIdPrefix}-auto-create`}
+        />
+      )}
 
       {/* Mounted only while open, so each opening starts with a blank form. */}
       {creating && (
