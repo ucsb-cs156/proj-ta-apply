@@ -39,6 +39,8 @@ describe("TaAppSettingsPage tests", () => {
       .onGet("/api/admin/settings/ta-topics/all")
       .reply(200, appSettingsFixtures.twoTopics);
     axiosMock.onGet("/api/admin/notices/all").reply(200, []);
+    axiosMock.onGet("/api/admin/quarters/all").reply(200, []);
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
     axiosMock
       .onGet("/api/admin/recruitments/all")
       .reply(200, recruitmentsFixtures.threeRecruitments);

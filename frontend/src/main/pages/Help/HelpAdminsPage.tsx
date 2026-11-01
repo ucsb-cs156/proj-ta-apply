@@ -520,9 +520,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
         </p>
         <p>
           The <strong>Notices, Terms and Conditions</strong> card is the text
-          every TA applicant must agree to before submitting. It is written in
-          Markdown with a live preview; each save is kept as a new version, and
-          each application records which version its applicant agreed to.
+          every TA applicant must agree to before submitting. It is written in{" "}
+          <a href="#markdown">Markdown</a> with a live preview, filled in for
+          the quarter chosen above the editor (by default the quarter after the
+          current one); each save is kept as a new version, and each application
+          records which version its applicant agreed to. A field the preview
+          does not recognise is shown in red, with a note under the preview.
         </p>
         <p id="notice-fields" data-testid="HelpAdminsPage-notice-fields">
           The text can carry fields that are filled in for each applicant from
@@ -547,6 +550,26 @@ export default function HelpAdminsPage(): React.JSX.Element {
           rates their interest in), the ULA notices, terms and conditions (with
           the same <a href="#notice-fields">fields</a> available), and the
           import of the old ULA Google Form&apos;s response sheet.
+        </p>
+
+        <h2 className="my-3 h4" id="markdown">
+          Markdown
+        </h2>
+        <p data-testid="HelpAdminsPage-markdown">
+          The Notices, Terms and Conditions text on the TA and ULA App Settings
+          pages is written in Markdown, a plain-text way of marking up
+          formatting, and rendered for applicants (and in the editor&apos;s
+          preview) with GitHub-flavoured Markdown. The basics: a line starting
+          with <code># </code> is a heading (<code>## </code> a smaller one);{" "}
+          <code>*emphasis*</code> is italic and <code>**strong**</code> is bold;
+          lines starting with <code>- </code> make a bulleted list and with{" "}
+          <code>1. </code> a numbered one;{" "}
+          <code>[text](https://example.com)</code> makes a link; a blank line
+          starts a new paragraph, and a line starting with <code>&gt; </code> is
+          a quotation. Tables are written with <code>|</code> between the cells.
+          The editor&apos;s toolbar inserts each of these for you; the fields
+          such as <code>{"${quarter}"}</code> are described under{" "}
+          <Link to="/help/notice-fields">Help &rarr; Notices Fields</Link>.
         </p>
 
         <h2 className="my-3 h4" id="legacy-ta-application">
