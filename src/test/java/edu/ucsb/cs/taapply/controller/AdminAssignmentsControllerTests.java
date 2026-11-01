@@ -56,7 +56,8 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
                   1L,
                   Map.of("firstName", "Ada", "lastName", "Lovelace", "email", "a@ucsb.edu"),
                   10L,
-                  Map.of(10L, 3))));
+                  Map.of(10L, 3),
+                  Map.of(10L, "1st Choice"))));
 
   private static Application application(long id, Long recruitmentId, Long tentative) {
     return Application.builder()
@@ -272,5 +273,60 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
 
     assertEquals("Recruitment with id 7 not found", responseToJson(response).get("message"));
     verify(assignmentsService, never()).assignments(any());
+  }
+
+  // ---- GET /api/admin/assignments/cancelled (issue #199) ----
+
+  @Test
+  void logged_out_users_cannot_read_cancelled_applications() throws Exception {
+    mockMvc
+        .perform(get("/api/admin/assignments/cancelled?recruitmentId=7"))
+        .andExpect(status().is(403));
+    verify(assignmentsService, never()).cancelledApplications(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  void instructors_cannot_read_cancelled_applications_here() throws Exception {
+    mockMvc
+        .perform(get("/api/admin/assignments/cancelled?recruitmentId=7"))
+        .andExpect(status().is(403));
+    verify(assignmentsService, never()).cancelledApplications(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  void admin_reads_the_cancelled_applications_of_a_recruitment() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    List<AssignmentsService.CancelledApplication> cancelled =
+        List.of(
+            new AssignmentsService.CancelledApplication(
+                4L, "Grace", "Hopper", "grace@ucsb.edu", "Took another job"),
+            new AssignmentsService.CancelledApplication(
+                5L, "Alan", "Turing", "alan@ucsb.edu", null));
+    when(assignmentsService.cancelledApplications(7L)).thenReturn(cancelled);
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/assignments/cancelled?recruitmentId=7"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(mapper.writeValueAsString(cancelled), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  void cancelled_applications_of_an_unknown_recruitment_are_404() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/assignments/cancelled?recruitmentId=99"))
+            .andExpect(status().isNotFound())
+            .andReturn();
+
+    assertEquals("Recruitment with id 99 not found", responseToJson(response).get("message"));
+    verify(assignmentsService, never()).cancelledApplications(any());
   }
 }

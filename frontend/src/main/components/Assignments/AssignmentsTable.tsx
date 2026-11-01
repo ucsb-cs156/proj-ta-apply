@@ -1,12 +1,15 @@
 import { Badge, Form } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
 import OurTable from "main/components/Common/OurTable";
+import InterestMark from "main/components/Common/InterestMark";
+import { interestDisplay } from "main/utils/interestDisplay";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import {
   assignedCourse,
   courseLabel,
   courseOptionLabel,
   identityLabel,
+  preferenceFor,
   rankFor,
   type AssignmentCourse,
   type AssignmentRow,
@@ -102,6 +105,41 @@ function CourseHeader({
   );
 }
 
+/** What a lecture column's cells need, handed to them through the column's meta. */
+type CourseColumnMeta = {
+  course: AssignmentCourse;
+  testIdPrefix: string;
+  style: { textAlign: "right" };
+};
+
+/**
+ * One lecture's cell for one applicant (issue #199): the rank, right-aligned, on a pastel
+ * background that says how interested the applicant is in the course, with a symbol at the left
+ * for readers who cannot tell the colours apart. A module-level component so TanStack does not
+ * remount it on every render.
+ */
+function CourseRankCell({
+  cell,
+}: {
+  cell: Cell<AssignmentRow, unknown>;
+}): React.JSX.Element {
+  const meta = cell.column.columnDef.meta as CourseColumnMeta;
+  const row = cell.row.original;
+  const preference = preferenceFor(row, meta.course);
+  const rank = rankFor(row, meta.course);
+  const id = `${meta.testIdPrefix}-cell-row-${cell.row.index}-course-${meta.course.id}`;
+  return (
+    <div
+      className="d-flex justify-content-between align-items-center px-1"
+      style={{ backgroundColor: interestDisplay(preference).background }}
+      data-testid={id}
+    >
+      <InterestMark preference={preference} testId={`${id}-mark`} />
+      <span data-testid={`${id}-rank`}>{rank ?? ""}</span>
+    </div>
+  );
+}
+
 type AssignmentsTableProps = {
   data: Assignments;
   onAssign: (applicationId: number, recruitmentCourseId: number | null) => void;
@@ -150,7 +188,12 @@ export default function AssignmentsTable({
       sortUndefined: "last",
       sortingFn: "basic",
       sortDescFirst: false,
-      meta: { style: { textAlign: "center" } },
+      cell: CourseRankCell,
+      meta: {
+        course,
+        testIdPrefix,
+        style: { textAlign: "right" },
+      } satisfies CourseColumnMeta,
     })),
   ];
   return <OurTable data={data.rows} columns={columns} testid={testIdPrefix} />;

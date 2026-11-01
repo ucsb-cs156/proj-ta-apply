@@ -142,6 +142,17 @@ describe("Help pages (issue #140)", () => {
       "Please rank at least that many candidates, and preferably twice as many. Until then no allocation is shown.",
     );
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
+    // Issue #199: interest colours, the not-interested opt-in and cancelled applications.
+    const interest = screen.getByTestId("HelpInstructorsPage-interest");
+    expect(interest).toHaveTextContent(
+      "light green for a first or second choice (marked ➊ or ➋) or Enthusiastic (✓), pale yellow for Would Consider (▬) and pale red for Not Interested/Not Applicable (✖)",
+    );
+    expect(interest).toHaveTextContent(
+      'until you tick Include candidates that marked my course with "Not Interested/Not Applicable" under the table; a red warning then asks you to consider whether you should rank them at all.',
+    );
+    expect(interest).toHaveTextContent(
+      "the Cancelled applications table at the bottom of the page lists them with their reason",
+    );
     // Issue #180: the published assignments page.
     const assignments = screen.getByTestId("HelpInstructorsPage-assignments");
     expect(assignments).toHaveTextContent(
@@ -150,6 +161,24 @@ describe("Help pages (issue #140)", () => {
     expect(assignments).toHaveTextContent(
       "not just yours: choose One Row per course to see each course with its instructor and the TAs (or ULAs) assigned to it, or One Row per TA/ULA to see each person with their course. Either view can be saved as a CSV file with the Download CSV buttons.",
     );
+  });
+
+  test("the admins page explains the interest colours and cancelled applications (issue #199)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const cells = screen.getByTestId("HelpAdminsPage-interest-cells");
+    expect(cells).toHaveTextContent(
+      "Each lecture's ranking cell is right-aligned and coloured by the applicant's own interest in that lecture: light green for a first or second choice (marked ➊ or ➋) or Enthusiastic (✓), pale yellow for Would Consider (▬) and pale red for Not Interested/Not Applicable (✖)",
+    );
+    expect(cells).toHaveTextContent(
+      "the Cancelled applications table at the bottom of the page lists them with their reason.",
+    );
+    expect(
+      screen
+        .getByTestId("HelpAdminsPage-assignments")
+        .compareDocumentPosition(cells) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   test("the admins page explains publishing assignments (issue #180)", async () => {

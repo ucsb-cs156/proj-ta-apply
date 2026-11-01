@@ -20,6 +20,11 @@ export type AssignmentRow = {
   tentativeAssignment: number | null;
   /** Each lecture's rank for this applicant, keyed by recruitment course id; absent if unranked. */
   rankings: Record<string, number | null>;
+  /**
+   * The applicant's interest in each lecture ("1st Choice", "2nd Choice", "Enthusiastic" or
+   * "Would Consider"), keyed by recruitment course id; absent means Not Interested (issue #199).
+   */
+  preferences: Record<string, string>;
 };
 
 /** The payload of GET /api/admin/assignments. */
@@ -67,6 +72,12 @@ export const assignedCourse = (
   courses: AssignmentCourse[],
 ): AssignmentCourse | null =>
   courses.find((course) => course.id === row.tentativeAssignment) ?? null;
+
+/** The applicant's interest in a lecture, or undefined when they marked none (issue #199). */
+export const preferenceFor = (
+  row: AssignmentRow,
+  course: AssignmentCourse,
+): string | undefined => row.preferences[String(course.id)];
 
 /** A lecture's rank for a row, or undefined when it has not ranked them (sorted last). */
 export const rankFor = (

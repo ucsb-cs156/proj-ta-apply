@@ -1,4 +1,14 @@
+import { useState } from "react";
+import { Form } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
+import CancelledApplicationsTable, {
+  type CancelledApplication,
+} from "main/components/Applications/CancelledApplicationsTable";
+import InterestLegend from "main/components/Common/InterestLegend";
+import {
+  INCLUDE_NOT_INTERESTED_LABEL,
+  NOT_INTERESTED_WARNING,
+} from "main/utils/interestDisplay";
 import { apiErrorMessage } from "main/utils/apiError";
 import { useBackend } from "main/utils/useBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
@@ -52,9 +62,27 @@ export default function CandidateRankingPage(): React.JSX.Element {
     /^\d+$/.test(recruitmentCourseId);
   const url = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/ranking`;
   const candidatesUrl = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/candidates`;
+  const cancelledUrl = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/cancelled`;
+  // Issue #199: candidates who marked the course Not Interested are listed only on request.
+  const [includeNotInterested, setIncludeNotInterested] = useState(false);
   const candidates = useBackend<Candidate[] | null>(
-    [candidatesUrl],
-    { method: "GET", url: candidatesUrl },
+    // Stryker disable next-line all : the query key is only a cache name
+    [candidatesUrl, includeNotInterested],
+    {
+      // Stryker disable next-line all : GET is axios's default method
+      method: "GET",
+      url: candidatesUrl,
+      params: { includeNotInterested },
+    },
+    null,
+    true,
+    { enabled: validIds },
+  );
+  const cancelled = useBackend<CancelledApplication[] | null>(
+    // Stryker disable next-line all : the query key is only a cache name
+    [cancelledUrl],
+    // Stryker disable next-line all : GET is axios's default method
+    { method: "GET", url: cancelledUrl },
     null,
     true,
     { enabled: validIds },
@@ -209,13 +237,59 @@ export default function CandidateRankingPage(): React.JSX.Element {
             ) : candidates.data == null ? (
               <p role="alert">No candidate data were returned.</p>
             ) : (
-              <CandidateTable
-                key={candidatesUrl}
-                candidates={candidates.data}
-                type={data.type}
-                editable={data.canRank === true}
-                apiUrl={candidatesUrl}
-                applicationUrl={`/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/applications`}
+              <>
+                <InterestLegend testIdPrefix="CandidateRankingPage-legend" />
+                <CandidateTable
+                  // Stryker disable next-line all : React key property not exposed in dom
+                  key={`${candidatesUrl}?${includeNotInterested}`}
+                  candidates={candidates.data}
+                  type={data.type}
+                  editable={data.canRank === true}
+                  apiUrl={candidatesUrl}
+                  applicationUrl={`/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/applications`}
+                />
+              </>
+            )}
+            <Form.Check
+              type="checkbox"
+              id="CandidateRankingPage-include-not-interested"
+              className="mt-2"
+              label={INCLUDE_NOT_INTERESTED_LABEL}
+              checked={includeNotInterested}
+              onChange={(e) => setIncludeNotInterested(e.target.checked)}
+              data-testid="CandidateRankingPage-include-not-interested"
+            />
+            {includeNotInterested && (
+              <p
+                className="text-danger fw-bold"
+                role="alert"
+                data-testid="CandidateRankingPage-not-interested-warning"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                  aria-hidden="true"
+                  className="me-1"
+                  data-testid="CandidateRankingPage-danger-icon"
+                >
+                  <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                </svg>
+                {NOT_INTERESTED_WARNING}
+              </p>
+            )}
+            {cancelled.isError ? (
+              <p role="alert">
+                Unable to load cancelled applications:{" "}
+                {apiErrorMessage(cancelled.error)}
+              </p>
+            ) : (
+              <CancelledApplicationsTable
+                cancelled={cancelled.data ?? []}
+                audience="faculty"
+                testIdPrefix="CandidateRankingPage-cancelled"
               />
             )}
           </>

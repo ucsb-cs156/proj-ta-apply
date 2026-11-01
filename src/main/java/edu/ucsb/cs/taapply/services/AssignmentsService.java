@@ -5,6 +5,7 @@ import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
@@ -137,7 +138,42 @@ public class AssignmentsService {
       Long applicationId,
       Map<String, String> identity,
       Long tentativeAssignment,
-      Map<Long, Integer> rankings) {}
+      Map<Long, Integer> rankings,
+      Map<Long, String> preferences) {}
+
+  /**
+   * An application the applicant cancelled (issue #199): just enough for faculty and admins to see
+   * what became of someone they expected to find among the candidates. Test applications are left
+   * out.
+   */
+  public record CancelledApplication(
+      Long applicationId,
+      String firstName,
+      String lastName,
+      String email,
+      String cancellationReason) {}
+
+  /** The labels of the interest an applicant expressed in a course, strongest first. */
+  public static final String FIRST_CHOICE = "1st Choice";
+
+  public static final String SECOND_CHOICE = "2nd Choice";
+  public static final String ENTHUSIASTIC = "Enthusiastic";
+  public static final String WOULD_CONSIDER = "Would Consider";
+  public static final String NOT_INTERESTED = "Not Interested";
+
+  /**
+   * How interested an applicant is in a course: their first or second choice, or the interest they
+   * marked for it, or null when they marked nothing or "Not Interested/Not Applicable" (the default
+   * answer, never stored).
+   */
+  public static String preference(Application application, String courseId) {
+    if (courseId.equals(application.getFirstChoiceCourse())) return FIRST_CHOICE;
+    if (courseId.equals(application.getSecondChoiceCourse())) return SECOND_CHOICE;
+    CourseInterest interest = application.getCourseInterests().get(courseId);
+    if (interest == CourseInterest.ENTHUSIASTIC) return ENTHUSIASTIC;
+    if (interest == CourseInterest.WOULD_CONSIDER) return WOULD_CONSIDER;
+    return null;
+  }
 
   /** Everything the admin Assignments page needs for one recruitment. */
   public record Assignments(
@@ -160,6 +196,27 @@ public class AssignmentsService {
     return applications.stream()
         .filter(a -> !a.isTestApplication())
         .filter(a -> a.getStatus() != ApplicationReviewStatus.CANCELLED)
+        .toList();
+  }
+
+  /** The applications to a recruitment that the applicant cancelled, oldest first. */
+  public List<CancelledApplication> cancelledApplications(Long recruitmentId) {
+    return cancelled(applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));
+  }
+
+  /** The cancelled ones among the given applications, test applications left out. */
+  public static List<CancelledApplication> cancelled(List<Application> applications) {
+    return applications.stream()
+        .filter(a -> !a.isTestApplication())
+        .filter(a -> a.getStatus() == ApplicationReviewStatus.CANCELLED)
+        .map(
+            a ->
+                new CancelledApplication(
+                    a.getId(),
+                    a.getFirstName(),
+                    a.getLastName(),
+                    a.getEmail(),
+                    a.getCancellationReason()))
         .toList();
   }
 
@@ -200,6 +257,7 @@ public class AssignmentsService {
 
     List<CourseSummary> summaries = new ArrayList<>();
     Map<Long, Map<Long, Integer>> ranksByCourse = new LinkedHashMap<>();
+    Map<Long, String> courseIds = new LinkedHashMap<>();
     for (RecruitmentCourse course : courses) {
       Map<Long, Integer> ranks = ranksFor(course);
       int count = assigned.getOrDefault(course.getId(), 0);
@@ -207,6 +265,7 @@ public class AssignmentsService {
         continue;
       }
       ranksByCourse.put(course.getId(), ranks);
+      courseIds.put(course.getId(), course.getCourseId());
       summaries.add(
           new CourseSummary(
               course.getId(),
@@ -232,9 +291,23 @@ public class AssignmentsService {
               rankings.put(courseId, ranks.get(application.getId()));
             }
           });
+      // The applicant's interest in each listed section, for the colour of its cell (issue #199);
+      // a section they marked nothing for is absent, meaning not interested.
+      Map<Long, String> preferences = new LinkedHashMap<>();
+      courseIds.forEach(
+          (id, courseId) -> {
+            String preference = preference(application, courseId);
+            if (preference != null) {
+              preferences.put(id, preference);
+            }
+          });
       rows.add(
           new AssignmentRow(
-              application.getId(), fields, application.getTentativeAssignmentId(), rankings));
+              application.getId(),
+              fields,
+              application.getTentativeAssignmentId(),
+              rankings,
+              preferences));
     }
 
     return new Assignments(

@@ -14,6 +14,7 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
+import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
@@ -357,9 +358,9 @@ class AssignmentsServiceTests {
     }
     assertEquals(
         List.of(
-            new AssignmentRow(1L, identity, 10L, firstRanks),
-            new AssignmentRow(3L, thirdIdentity, 50L, thirdRanks),
-            new AssignmentRow(5L, blankIdentity, null, Map.of())),
+            new AssignmentRow(1L, identity, 10L, firstRanks, Map.of()),
+            new AssignmentRow(3L, thirdIdentity, 50L, thirdRanks, Map.of()),
+            new AssignmentRow(5L, blankIdentity, null, Map.of(), Map.of())),
         result.rows());
     // Column order is preserved, not just membership.
     assertEquals(List.of(10L, 30L), new ArrayList<>(result.rows().get(0).rankings().keySet()));
@@ -397,7 +398,7 @@ class AssignmentsServiceTests {
     identity.put("gpaMajor", "3.75");
     identity.put("gpaOverall", "3.5");
     identity.put("previousServiceAsUla", "2");
-    assertEquals(List.of(new AssignmentRow(1L, identity, null, Map.of())), result.rows());
+    assertEquals(List.of(new AssignmentRow(1L, identity, null, Map.of(), Map.of())), result.rows());
     assertEquals(new ArrayList<>(identity.keySet()), result.identityHeaders());
   }
 
@@ -434,5 +435,134 @@ class AssignmentsServiceTests {
     assertEquals(
         List.of(new CourseSummary(10L, "CMPSC 16", "0100", "100", 1, 3, -2, false)),
         result.courses());
+  }
+
+  // ---- issue #199: preferences and cancelled applications ----
+
+  @Test
+  void preference_is_the_choice_or_the_marked_interest_or_null() {
+    Application a =
+        applicant(1, null).toBuilder()
+            .firstChoiceCourse("CMPSC 16")
+            .secondChoiceCourse("CMPSC 24")
+            .courseInterests(
+                Map.of(
+                    "CMPSC 8", CourseInterest.ENTHUSIASTIC,
+                    "CMPSC 9", CourseInterest.WOULD_CONSIDER,
+                    "CMPSC 5A", CourseInterest.NOT_INTERESTED))
+            .build();
+    assertEquals("1st Choice", AssignmentsService.preference(a, "CMPSC 16"));
+    assertEquals("2nd Choice", AssignmentsService.preference(a, "CMPSC 24"));
+    assertEquals("Enthusiastic", AssignmentsService.preference(a, "CMPSC 8"));
+    assertEquals("Would Consider", AssignmentsService.preference(a, "CMPSC 9"));
+    assertNull(AssignmentsService.preference(a, "CMPSC 5A"));
+    assertNull(AssignmentsService.preference(a, "CMPSC 130A"));
+    assertEquals(AssignmentsService.FIRST_CHOICE, "1st Choice");
+    assertEquals(AssignmentsService.SECOND_CHOICE, "2nd Choice");
+    assertEquals(AssignmentsService.ENTHUSIASTIC, "Enthusiastic");
+    assertEquals(AssignmentsService.WOULD_CONSIDER, "Would Consider");
+    assertEquals(AssignmentsService.NOT_INTERESTED, "Not Interested");
+  }
+
+  @Test
+  void a_first_choice_outranks_a_marked_interest_and_a_second_choice() {
+    Application a =
+        applicant(1, null).toBuilder()
+            .firstChoiceCourse("CMPSC 16")
+            .secondChoiceCourse("CMPSC 16")
+            .courseInterests(Map.of("CMPSC 16", CourseInterest.NOT_INTERESTED))
+            .build();
+    assertEquals("1st Choice", AssignmentsService.preference(a, "CMPSC 16"));
+    Application b =
+        applicant(2, null).toBuilder()
+            .secondChoiceCourse("CMPSC 16")
+            .courseInterests(Map.of("CMPSC 16", CourseInterest.ENTHUSIASTIC))
+            .build();
+    assertEquals("2nd Choice", AssignmentsService.preference(b, "CMPSC 16"));
+  }
+
+  @Test
+  void cancelled_keeps_only_real_cancelled_applications_in_order_with_the_reason() {
+    Application kept = applicant(1, null);
+    Application cancelledTest = applicant(2, null);
+    cancelledTest.setTestApplication(true);
+    cancelledTest.setStatus(ApplicationReviewStatus.CANCELLED);
+    Application cancelledLater = applicant(4, null);
+    cancelledLater.setStatus(ApplicationReviewStatus.CANCELLED);
+    cancelledLater.setCancellationReason("Took another job");
+    Application cancelledFirst = applicant(3, null);
+    cancelledFirst.setStatus(ApplicationReviewStatus.CANCELLED);
+    cancelledFirst.setFirstName("Grace");
+    cancelledFirst.setLastName("Hopper");
+
+    assertEquals(
+        List.of(
+            new AssignmentsService.CancelledApplication(3L, "Grace", "Hopper", "a3@ucsb.edu", null),
+            new AssignmentsService.CancelledApplication(
+                4L, "Ada", "Lovelace", "a4@ucsb.edu", "Took another job")),
+        AssignmentsService.cancelled(List.of(kept, cancelledTest, cancelledFirst, cancelledLater)));
+    assertEquals(List.of(), AssignmentsService.cancelled(List.of(kept, cancelledTest)));
+  }
+
+  @Test
+  void cancelled_applications_of_a_recruitment_come_from_the_repository() {
+    Application cancelled = applicant(9, null);
+    cancelled.setStatus(ApplicationReviewStatus.CANCELLED);
+    cancelled.setCancellationReason("Moved away");
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L))
+        .thenReturn(List.of(applicant(8, null), cancelled));
+
+    assertEquals(
+        List.of(
+            new AssignmentsService.CancelledApplication(
+                9L, "Ada", "Lovelace", "a9@ucsb.edu", "Moved away")),
+        service.cancelledApplications(7L));
+    verify(applicationRepository).findByRecruitmentIdOrderByIdAsc(7L);
+  }
+
+  @Test
+  void assignments_carry_each_applicants_interest_in_every_listed_section() {
+    RecruitmentCourse sixteenA = course(10, "CMPSC 16", "0100", "100", 1);
+    RecruitmentCourse sixteenB = course(20, "CMPSC 16", "0200", "200", 1);
+    RecruitmentCourse twentyFour = course(30, "CMPSC 24", "0100", "300", 1);
+    twentyFour.setRemoved(true);
+    RecruitmentCourse unlisted = course(40, "CMPSC 24", "0200", "400", 1);
+    unlisted.setRemoved(true);
+    RecruitmentCourse eight = course(50, "CMPSC 8", "0100", "500", 1);
+    RecruitmentCourse nine = course(60, "CMPSC 9", "0100", "600", 1);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L))
+        .thenReturn(List.of(sixteenA, sixteenB, twentyFour, unlisted, eight, nine));
+    for (long id : List.of(10L, 20L, 40L, 50L, 60L)) {
+      when(candidateRankingRepository.findByRecruitmentCourseId(id)).thenReturn(List.of());
+    }
+    when(candidateRankingRepository.findByRecruitmentCourseId(30L))
+        .thenReturn(List.of(rank(30, 1, 1)));
+    Application a =
+        applicant(1, null).toBuilder()
+            .firstChoiceCourse("CMPSC 16")
+            .secondChoiceCourse("CMPSC 24")
+            .courseInterests(
+                Map.of(
+                    "CMPSC 8",
+                    CourseInterest.ENTHUSIASTIC,
+                    "CMPSC 9",
+                    CourseInterest.NOT_INTERESTED))
+            .build();
+    Application b = applicant(2, null);
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L)).thenReturn(List.of(a, b));
+
+    Assignments result = service.assignments(recruitment(RecruitmentType.TA));
+
+    Map<Long, String> expected = new LinkedHashMap<>();
+    expected.put(10L, "1st Choice");
+    expected.put(20L, "1st Choice");
+    expected.put(30L, "2nd Choice");
+    expected.put(50L, "Enthusiastic");
+    assertEquals(expected, result.rows().get(0).preferences());
+    // Listed sections in page order; the unlisted removed section and the one marked Not
+    // Interested are absent.
+    assertEquals(
+        List.of(10L, 20L, 30L, 50L), new ArrayList<>(result.rows().get(0).preferences().keySet()));
+    assertEquals(Map.of(), result.rows().get(1).preferences());
   }
 }

@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
 import axios from "axios";
@@ -9,7 +10,10 @@ import CandidateRankingPage from "main/pages/Instructor/CandidateRankingPage";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
-import candidatesFixtures from "fixtures/candidatesFixtures";
+import candidatesFixtures, {
+  candidatesWithNotInterested,
+} from "fixtures/candidatesFixtures";
+import cancelledApplicationsFixtures from "fixtures/cancelledApplicationsFixtures";
 
 const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
@@ -52,6 +56,9 @@ describe("CandidateRankingPage", () => {
     axiosMock
       .onGet("/api/instructor/recruitments/1/courses/2/candidates")
       .reply(200, candidatesFixtures);
+    axiosMock
+      .onGet("/api/instructor/recruitments/1/courses/2/cancelled")
+      .reply(200, cancelledApplicationsFixtures.two);
   });
 
   test("shows the TA recruitment and course details and links only to other courses", async () => {
@@ -109,7 +116,7 @@ describe("CandidateRankingPage", () => {
       "href",
       "/recruitments/1/courses/3/ranking",
     );
-    expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect((await screen.findAllByRole("table"))[0]).toBeInTheDocument();
     expect(
       screen.getByRole("columnheader", { name: "Level (PhD/MS)" }),
     ).toBeInTheDocument();
@@ -151,7 +158,7 @@ describe("CandidateRankingPage", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "Loading candidate ranking...",
     );
-    await screen.findByRole("table");
+    await screen.findAllByRole("table");
   });
 
   test("shows the backend's explicit error message", async () => {
@@ -360,5 +367,194 @@ describe("CandidateRankingPage", () => {
     expect(
       await screen.findByTestId("CandidateRankingPage-allocation"),
     ).toHaveTextContent("0 TAs have been allocated to this course.");
+  });
+
+  // ---- issue #199 ----
+
+  const candidatesRequests = () =>
+    axiosMock.history.get.filter(
+      (r) => r.url === "/api/instructor/recruitments/1/courses/2/candidates",
+    );
+
+  test("asks for interested candidates only, until the box is ticked, then warns", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(200, instructorRecruitmentsFixtures.candidateRankingPage);
+    // Replaces the beforeEach handler for this url: the answer depends on the parameter.
+    axiosMock
+      .onGet("/api/instructor/recruitments/1/courses/2/candidates")
+      .reply((config) => [
+        200,
+        config.params.includeNotInterested
+          ? candidatesWithNotInterested
+          : candidatesFixtures,
+      ]);
+    renderPage();
+
+    const box = await screen.findByTestId(
+      "CandidateRankingPage-include-not-interested",
+    );
+    expect(
+      screen.getByLabelText(
+        'Include candidates that marked my course with "Not Interested/Not Applicable"',
+      ),
+    ).toBe(box);
+    expect(box).not.toBeChecked();
+    await waitFor(() => expect(candidatesRequests()).toHaveLength(1));
+    expect(candidatesRequests()[0].params).toEqual({
+      includeNotInterested: false,
+    });
+    expect(
+      screen.queryByTestId("CandidateRankingPage-not-interested-warning"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Edsger")).not.toBeInTheDocument();
+    // The checkbox sits after the candidates table.
+    const table = screen.getAllByRole("table")[0];
+    expect(
+      table.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId("CandidateRankingPage-legend"),
+    ).toBeInTheDocument();
+
+    await userEvent.click(box);
+
+    expect(box).toBeChecked();
+    await waitFor(() => expect(candidatesRequests()).toHaveLength(2));
+    expect(candidatesRequests()[1].params).toEqual({
+      includeNotInterested: true,
+    });
+    expect(await screen.findByText("Edsger")).toBeInTheDocument();
+    const warning = screen.getByTestId(
+      "CandidateRankingPage-not-interested-warning",
+    );
+    expect(warning).toHaveTextContent(
+      "Consider whether you should rank candidates that did not express interest in your course",
+    );
+    expect(warning).toHaveClass("text-danger", "fw-bold");
+    expect(warning).toHaveAttribute("role", "alert");
+    expect(
+      screen.getByTestId("CandidateRankingPage-danger-icon"),
+    ).toHaveAttribute("aria-hidden", "true");
+    expect(
+      screen.getByTestId("CandidateTable-preference-99-mark"),
+    ).toHaveTextContent("✖");
+
+    await userEvent.click(box);
+    expect(box).not.toBeChecked();
+    await waitFor(() =>
+      expect(screen.queryByText("Edsger")).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByTestId("CandidateRankingPage-not-interested-warning"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("lists the cancelled applications under the candidates", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(200, instructorRecruitmentsFixtures.candidateRankingPage);
+    renderPage();
+
+    const cancelled = await screen.findByTestId(
+      "CandidateRankingPage-cancelled",
+    );
+    expect(
+      within(cancelled).getByTestId(
+        "CandidateRankingPage-cancelled-table-cell-row-0-col-name",
+      ),
+    ).toHaveTextContent("Grace Hopper");
+    expect(
+      within(cancelled).getByTestId(
+        "CandidateRankingPage-cancelled-table-cell-row-0-col-cancellationReason",
+      ),
+    ).toHaveTextContent("Took a position in another department");
+    expect(
+      screen.getByTestId("CandidateRankingPage-cancelled-why"),
+    ).toHaveTextContent("not among the candidates above");
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/instructor/recruitments/1/courses/2/cancelled",
+      ),
+    ).toHaveLength(1);
+    const box = screen.getByTestId(
+      "CandidateRankingPage-include-not-interested",
+    );
+    expect(
+      box.compareDocumentPosition(cancelled) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("says so when no one has cancelled, and reports a failed cancelled fetch", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(200, instructorRecruitmentsFixtures.candidateRankingPage);
+    axiosMock
+      .onGet("/api/instructor/recruitments/1/courses/2/cancelled")
+      .reply(200, []);
+    const { unmount } = renderPage();
+    expect(
+      await screen.findByTestId("CandidateRankingPage-cancelled-empty"),
+    ).toHaveTextContent("No applicant has cancelled their application.");
+    unmount();
+
+    axiosMock
+      .onGet("/api/instructor/recruitments/1/courses/2/cancelled")
+      .reply(500, { message: "Cancelled unavailable" });
+    renderPage();
+    expect(
+      await screen.findByText(
+        "Unable to load cancelled applications: Cancelled unavailable",
+      ),
+    ).toHaveAttribute("role", "alert");
+    expect(
+      screen.queryByTestId("CandidateRankingPage-cancelled"),
+    ).not.toBeInTheDocument();
+    // The page reports the failure itself; no toast.
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  test("an invalid link asks for neither candidates nor cancelled applications", async () => {
+    renderPage("/recruitments/x/courses/2/ranking");
+    expect(
+      await screen.findByText("This candidate-ranking link is invalid."),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/currentUser"),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url.endsWith("/cancelled") || r.url.endsWith("/candidates"),
+      ),
+    ).toHaveLength(0);
+  });
+
+  test("shows the empty cancelled state while the cancelled list is still loading", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(200, instructorRecruitmentsFixtures.candidateRankingPage);
+    axiosMock
+      .onGet("/api/instructor/recruitments/1/courses/2/cancelled")
+      .reply(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () => resolve([200, cancelledApplicationsFixtures.two]),
+              300,
+            ),
+          ),
+      );
+    renderPage();
+
+    expect(
+      await screen.findByTestId("CandidateRankingPage-cancelled-empty"),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByTestId(
+        "CandidateRankingPage-cancelled-table-cell-row-0-col-name",
+      ),
+    ).toHaveTextContent("Grace Hopper");
   });
 });

@@ -58,6 +58,7 @@ const taRows = [
     },
     tentativeAssignment: 10,
     rankings: { 10: 1, 20: 3 },
+    preferences: { 10: "1st Choice", 20: "Would Consider" },
   },
   {
     applicationId: 2,
@@ -72,6 +73,7 @@ const taRows = [
     },
     tentativeAssignment: 20,
     rankings: { 20: 1 },
+    preferences: { 20: "Enthusiastic", 30: "2nd Choice" },
   },
   {
     applicationId: 3,
@@ -86,6 +88,7 @@ const taRows = [
     },
     tentativeAssignment: 20,
     rankings: { 10: 2, 30: 1 },
+    preferences: { 30: "1st Choice" },
   },
   {
     applicationId: 4,
@@ -100,6 +103,7 @@ const taRows = [
     },
     tentativeAssignment: null,
     rankings: {},
+    preferences: {},
   },
 ];
 
@@ -165,6 +169,7 @@ const assignmentsFixtures = {
         },
         tentativeAssignment: null,
         rankings: { 40: null },
+        preferences: { 40: "Would Consider" },
       },
     ],
   },

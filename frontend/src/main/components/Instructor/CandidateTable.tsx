@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { apiErrorMessage } from "main/utils/apiError";
+import InterestMark from "main/components/Common/InterestMark";
+import {
+  ENTHUSIASTIC,
+  FIRST_CHOICE,
+  interestDisplay,
+  NOT_INTERESTED,
+  SECOND_CHOICE,
+  WOULD_CONSIDER,
+} from "main/utils/interestDisplay";
 
 export type Candidate = {
   applicationId: number;
@@ -27,11 +36,13 @@ type Props = {
   applicationUrl: string;
 };
 
+// Strongest interest first; "Not Interested" candidates appear only when the instructor asks.
 const preferences = [
-  "1st Choice",
-  "2nd Choice",
-  "Enthusiastic",
-  "Would Consider",
+  FIRST_CHOICE,
+  SECOND_CHOICE,
+  ENTHUSIASTIC,
+  WOULD_CONSIDER,
+  NOT_INTERESTED,
 ];
 type Column = { key: keyof Candidate; label: string; numeric?: boolean };
 const common: Column[] = [
@@ -226,10 +237,22 @@ export default function CandidateTable({
                   {columns.map((column) => (
                     <td
                       key={column.key}
+                      className={column.key === "rank" ? "text-end" : undefined}
                       style={
                         column.key === "rank" &&
                         tied.includes(Number(ranks[candidate.applicationId]))
                           ? { backgroundColor: "#ffff00" }
+                          : column.key === "preference"
+                            ? {
+                                backgroundColor: interestDisplay(
+                                  candidate.preference,
+                                ).background,
+                              }
+                            : undefined
+                      }
+                      data-testid={
+                        column.key === "preference"
+                          ? `CandidateTable-preference-${candidate.applicationId}`
                           : undefined
                       }
                     >
@@ -300,6 +323,14 @@ export default function CandidateTable({
                         >
                           {candidate[column.key]}
                         </a>
+                      ) : column.key === "preference" ? (
+                        <>
+                          <InterestMark
+                            preference={candidate.preference}
+                            testId={`CandidateTable-preference-${candidate.applicationId}-mark`}
+                          />
+                          {candidate.preference}
+                        </>
                       ) : column.key === "classLevel" ? (
                         candidate.classLevel === "PHD" ? (
                           "PhD"

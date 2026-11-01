@@ -4,6 +4,10 @@ import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import AssignmentsTable from "main/components/Assignments/AssignmentsTable";
+import CancelledApplicationsTable, {
+  type CancelledApplication,
+} from "main/components/Applications/CancelledApplicationsTable";
+import InterestLegend from "main/components/Common/InterestLegend";
 import type { Assignments } from "main/utils/assignments";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 
@@ -46,6 +50,15 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
   );
   const page = assignments ?? emptyAssignments;
 
+  // Issue #199: who withdrew, so an admin missing an applicant can see why.
+  const { data: cancelled } = useBackend<CancelledApplication[]>(
+    // Stryker disable next-line all : the query key is only a cache name
+    ["/api/admin/assignments/cancelled", recruitmentId],
+    { url: "/api/admin/assignments/cancelled", params: { recruitmentId } },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+
   // The response is the whole page with the new counts, so it goes straight into the cache and
   // nothing has to be re-read.
   const assignMutation = useBackendMutation<
@@ -86,12 +99,19 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           {page.courses.reduce((sum, course) => sum + course.assigned, 0)}{" "}
           assigned so far.
         </p>
+        <InterestLegend testIdPrefix="AdminAssignmentsPage-legend" />
         <AssignmentsTable
           data={page}
           onAssign={(applicationId, recruitmentCourseId) =>
             assignMutation.mutate({ applicationId, recruitmentCourseId })
           }
           testIdPrefix="AdminAssignmentsPage-table"
+        />
+        <CancelledApplicationsTable
+          // Stryker disable next-line all : useBackend always hands back the initial data
+          cancelled={cancelled ?? []}
+          audience="admin"
+          testIdPrefix="AdminAssignmentsPage-cancelled"
         />
       </div>
     </BasicLayout>

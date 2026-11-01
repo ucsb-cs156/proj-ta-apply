@@ -65,4 +65,25 @@ const candidatesFixtures = [
   },
 ];
 
+/** The same list once the instructor asks for the Not Interested candidates too (issue #199). */
+export const candidatesWithNotInterested = [
+  ...candidatesFixtures,
+  {
+    applicationId: 99,
+    rank: null,
+    preference: "Not Interested",
+    firstName: "Edsger",
+    lastName: "Dijkstra",
+    email: "edsger@ucsb.edu",
+    major: "Computer Science",
+    classLevel: "PHD",
+    yearInProgram: "4",
+    graduationDate: "S26",
+    gpaMajor: 4.0,
+    gpaOverall: 3.9,
+    previousServiceAsUla: 0,
+    videoLink: null,
+  },
+];
+
 export default candidatesFixtures;

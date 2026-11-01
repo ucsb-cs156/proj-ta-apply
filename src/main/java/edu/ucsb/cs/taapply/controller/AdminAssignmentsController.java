@@ -11,6 +11,7 @@ import edu.ucsb.cs.taapply.services.AssignmentsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,6 +47,19 @@ public class AdminAssignmentsController extends ApiController {
   public AssignmentsService.Assignments forRecruitment(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
     return assignmentsService.assignments(recruitmentOf(recruitmentId));
+  }
+
+  @Operation(
+      summary = "A recruitment's cancelled applications",
+      description =
+          "Name, email and the applicant's reason, for the bottom of the Assignments page (issue"
+              + " #199). Test applications are left out. 404 for a recruitment that does not"
+              + " exist.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @GetMapping("/cancelled")
+  public List<AssignmentsService.CancelledApplication> cancelled(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+    return assignmentsService.cancelledApplications(recruitmentOf(recruitmentId).getId());
   }
 
   @Operation(

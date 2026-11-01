@@ -403,10 +403,14 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     Application otherCourseApplication =
         application.toBuilder().id(31L).firstChoiceCourse("OTHER").build();
     Application testApplication = application.toBuilder().id(32L).testApplication(true).build();
-    Application ineligibleApplication =
-        application.toBuilder().id(33L).firstChoiceCourse("OTHER").build();
+    // Cancelled by the applicant: its ranking no longer counts (issue #199).
+    Application cancelledApplication =
+        application.toBuilder().id(33L).status(ApplicationReviewStatus.CANCELLED).build();
     Application otherRecruitmentApplication =
         application.toBuilder().id(34L).recruitmentId(11L).build();
+    // Marked the course Not Interested, but the instructor chose to rank them anyway: counts.
+    Application notInterestedRanked =
+        application.toBuilder().id(35L).firstChoiceCourse("OTHER").build();
     RecruitmentCourse removedCourse =
         RecruitmentCourse.builder()
             .id(21L)
@@ -438,8 +442,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
                 application,
                 otherCourseApplication,
                 testApplication,
-                ineligibleApplication,
-                otherRecruitmentApplication));
+                cancelledApplication,
+                otherRecruitmentApplication,
+                notInterestedRanked));
     when(candidateRankingRepository.findByRecruitmentCourseId(20L))
         .thenReturn(
             List.of(
@@ -449,7 +454,8 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
                 CandidateRanking.builder().applicationId(30L).rank(null).build(),
                 CandidateRanking.builder().applicationId(999L).rank(1).build(),
                 CandidateRanking.builder().applicationId(null).rank(1).build(),
-                CandidateRanking.builder().applicationId(34L).rank(1).build()));
+                CandidateRanking.builder().applicationId(34L).rank(1).build(),
+                CandidateRanking.builder().applicationId(35L).rank(3).build()));
     when(candidateRankingRepository.findByRecruitmentCourseId(21L))
         .thenReturn(List.of(CandidateRanking.builder().applicationId(31L).rank(1).build()));
     when(candidateRankingRepository.findByRecruitmentCourseId(22L)).thenReturn(List.of());
@@ -477,7 +483,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     assertJson(
         """
         [
-          {"recruitmentCourseId":20,"rankingCount":1,"instructorEmail":"faculty@ucsb.edu"},
+          {"recruitmentCourseId":20,"rankingCount":2,"instructorEmail":"faculty@ucsb.edu"},
           {"recruitmentCourseId":22,"rankingCount":0,"instructorEmail":null}
         ]
         """,
@@ -501,7 +507,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     assertJson(
         """
         [
-          {"recruitmentCourseId":20,"rankingCount":1,"instructorEmail":"faculty@ucsb.edu"},
+          {"recruitmentCourseId":20,"rankingCount":2,"instructorEmail":"faculty@ucsb.edu"},
           {"recruitmentCourseId":21,"rankingCount":1,"instructorEmail":null},
           {"recruitmentCourseId":22,"rankingCount":0,"instructorEmail":null}
         ]
@@ -518,7 +524,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     assertJson(
         """
         [
-          {"recruitmentCourseId":20,"rankingCount":1,"instructorEmail":null},
+          {"recruitmentCourseId":20,"rankingCount":2,"instructorEmail":null},
           {"recruitmentCourseId":22,"rankingCount":0,"instructorEmail":null}
         ]
         """,
@@ -774,5 +780,172 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     assertFalse(actual.contains("adminComments"));
     assertFalse(actual.contains("status"));
     assertFalse(actual.contains("testApplication"));
+  }
+
+  // ---- issue #199: cancelled applications and the not-interested opt-in ----
+
+  private static final String CANCELLED_URL =
+      "/api/instructor/recruitments/10/courses/20/cancelled";
+
+  private List<Application> fourApplicants() {
+    Application cancelled =
+        application.toBuilder()
+            .id(31L)
+            .firstName("Grace")
+            .lastName("Hopper")
+            .email("grace@ucsb.edu")
+            .status(ApplicationReviewStatus.CANCELLED)
+            .cancellationReason("Took another job")
+            .build();
+    Application notInterested =
+        application.toBuilder()
+            .id(32L)
+            .firstName("Alan")
+            .firstChoiceCourse("OTHER")
+            .courseInterests(Map.of("CMPSC   156", CourseInterest.NOT_INTERESTED))
+            .build();
+    Application cancelledTest =
+        application.toBuilder()
+            .id(33L)
+            .testApplication(true)
+            .status(ApplicationReviewStatus.CANCELLED)
+            .build();
+    return List.of(application, cancelled, notInterested, cancelledTest);
+  }
+
+  private List<Integer> candidateIds(String url) throws Exception {
+    String body =
+        mockMvc
+            .perform(get(url))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    List<Integer> ids = new java.util.ArrayList<>();
+    mapper.readTree(body).forEach(node -> ids.add(node.get("applicationId").intValue()));
+    return ids;
+  }
+
+  @Test
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  void cancelled_applications_are_never_candidates_and_not_interested_ones_only_on_request()
+      throws Exception {
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(10L)).thenReturn(fourApplicants());
+    when(candidateRankingRepository.findByRecruitmentCourseId(20L))
+        .thenReturn(
+            List.of(
+                CandidateRanking.builder()
+                    .recruitmentCourseId(20L)
+                    .applicationId(31L)
+                    .rank(1)
+                    .build(),
+                CandidateRanking.builder()
+                    .recruitmentCourseId(20L)
+                    .applicationId(32L)
+                    .rank(2)
+                    .build()));
+
+    assertEquals(List.of(30), candidateIds(BASE));
+    assertEquals(List.of(30), candidateIds(BASE + "?includeNotInterested=false"));
+    assertEquals(List.of(30, 32), candidateIds(BASE + "?includeNotInterested=true"));
+
+    String withNotInterested =
+        mockMvc
+            .perform(get(BASE + "?includeNotInterested=true"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    var rows = mapper.readTree(withNotInterested);
+    assertEquals("1st Choice", rows.get(0).get("preference").asText());
+    assertEquals("Not Interested", rows.get(1).get("preference").asText());
+    assertEquals(2, rows.get(1).get("rank").intValue());
+    assertEquals("Alan", rows.get(1).get("firstName").asText());
+  }
+
+  @Test
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  void a_not_interested_applicant_can_be_ranked_and_read_but_a_cancelled_one_cannot()
+      throws Exception {
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(10L)).thenReturn(fourApplicants());
+    when(candidateRankingRepository.findByRecruitmentCourseIdAndApplicationId(20L, 32L))
+        .thenReturn(Optional.empty());
+
+    // Two rankable applicants (30 and 32), so 2 is in range and 3 is not.
+    mockMvc
+        .perform(
+            put(BASE + "/32/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":2}"))
+        .andExpect(status().isOk());
+    verify(candidateRankingRepository).save(any());
+    mockMvc
+        .perform(
+            put(BASE + "/32/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":3}"))
+        .andExpect(status().isBadRequest());
+    mockMvc.perform(get(BASE + "/32")).andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            put(BASE + "/31/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(get(BASE + "/31")).andExpect(status().isForbidden());
+    mockMvc.perform(get(BASE + "/33")).andExpect(status().isForbidden());
+    verify(candidateRankingRepository, times(1)).save(any());
+  }
+
+  @Test
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  void the_course_instructor_sees_the_recruitments_cancelled_applications() throws Exception {
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(10L)).thenReturn(fourApplicants());
+
+    String body =
+        mockMvc
+            .perform(get(CANCELLED_URL))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    assertJson(
+        """
+        [{"applicationId":31,"firstName":"Grace","lastName":"Hopper","email":"grace@ucsb.edu",
+          "cancellationReason":"Took another job"}]
+        """,
+        body);
+  }
+
+  @Test
+  @WithMockUser(roles = {"ADMIN"})
+  void an_admin_sees_the_cancelled_applications_of_any_course() throws Exception {
+    when(currentUserService.getCurrentUser())
+        .thenReturn(
+            CurrentUser.builder()
+                .user(User.builder().email("admin@ucsb.edu").build())
+                .roles(List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                .build());
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(10L)).thenReturn(fourApplicants());
+
+    mockMvc.perform(get(CANCELLED_URL)).andExpect(status().isOk());
+  }
+
+  @Test
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  void another_instructor_cannot_see_the_cancelled_applications_through_this_course()
+      throws Exception {
+    when(instructorRepository.findByEmail("faculty@ucsb.edu"))
+        .thenReturn(
+            Optional.of(
+                Instructor.builder()
+                    .email("faculty@ucsb.edu")
+                    .catalogName("SOMEONE ELSE")
+                    .build()));
+
+    mockMvc.perform(get(CANCELLED_URL)).andExpect(status().isForbidden());
+    verify(applicationRepository, never()).findByRecruitmentIdOrderByIdAsc(any());
+  }
+
+  @Test
+  @WithMockUser(roles = {"USER"})
+  void students_cannot_see_cancelled_applications() throws Exception {
+    mockMvc.perform(get(CANCELLED_URL)).andExpect(status().isForbidden());
   }
 }

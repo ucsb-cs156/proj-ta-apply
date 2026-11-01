@@ -129,11 +129,11 @@ describe("AssignmentsTable tests (issue #179)", () => {
     expect(screen.getByTestId("T-cell-row-0-col-course-20")).toHaveTextContent(
       "3",
     );
-    expect(screen.getByTestId("T-cell-row-0-col-course-30").textContent).toBe(
+    expect(screen.getByTestId("T-cell-row-0-course-30-rank").textContent).toBe(
       "",
     );
     expect(screen.getByTestId("T-cell-row-0-col-course-10")).toHaveStyle({
-      textAlign: "center",
+      textAlign: "right",
     });
     expect(screen.getByTestId("T-cell-row-2-col-course-30")).toHaveTextContent(
       "1",
@@ -141,7 +141,7 @@ describe("AssignmentsTable tests (issue #179)", () => {
     expect(screen.getByTestId("T-cell-row-3-col-firstName").textContent).toBe(
       "",
     );
-    expect(screen.getByTestId("T-cell-row-3-col-course-10").textContent).toBe(
+    expect(screen.getByTestId("T-cell-row-3-course-10-rank").textContent).toBe(
       "",
     );
     // A stored null rank reads as unranked.
@@ -324,7 +324,7 @@ describe("AssignmentsTable tests (issue #179)", () => {
       screen.getByTestId("AssignmentsTable-cell-row-0-col-gpaMajor"),
     ).toHaveTextContent("3.9");
     expect(
-      screen.getByTestId("AssignmentsTable-cell-row-0-col-course-40")
+      screen.getByTestId("AssignmentsTable-cell-row-0-course-40-rank")
         .textContent,
     ).toBe("");
     expect(
@@ -345,5 +345,45 @@ describe("AssignmentsTable tests (issue #179)", () => {
     ).toBeInTheDocument();
     expect(screen.queryByTestId("T-cell-row-0-col-email")).toBeNull();
     expect(screen.queryByTestId("T-header-course-10")).toBeNull();
+  });
+
+  // ---- issue #199: interest colours and symbols in the lecture cells ----
+
+  test("lecture cells are coloured and marked by the applicant's interest, rank at the right", () => {
+    render(
+      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="T" />,
+    );
+    const cell = (row, course) =>
+      screen.getByTestId(`T-cell-row-${row}-course-${course}`);
+    const mark = (row, course) =>
+      screen.getByTestId(`T-cell-row-${row}-course-${course}-mark`);
+    const rank = (row, course) =>
+      screen.getByTestId(`T-cell-row-${row}-course-${course}-rank`);
+
+    // Ada: 1st choice for CMPSC 8 (rank 1), Would Consider CMPSC 16 (rank 3), nothing for 24.
+    expect(cell(0, 10).style.backgroundColor).toBe("rgb(209, 231, 221)");
+    expect(mark(0, 10)).toHaveTextContent("➊");
+    expect(mark(0, 10).style.fontSize).toBe("120%");
+    expect(rank(0, 10)).toHaveTextContent("1");
+    expect(cell(0, 20).style.backgroundColor).toBe("rgb(255, 243, 205)");
+    expect(mark(0, 20)).toHaveTextContent("▬");
+    expect(rank(0, 20)).toHaveTextContent("3");
+    expect(cell(0, 30).style.backgroundColor).toBe("rgb(248, 215, 218)");
+    expect(mark(0, 30)).toHaveTextContent("✖");
+    expect(rank(0, 30).textContent).toBe("");
+    // Grace: Enthusiastic about 16, 2nd choice 24.
+    expect(cell(1, 20).style.backgroundColor).toBe("rgb(209, 231, 221)");
+    expect(mark(1, 20)).toHaveTextContent("✓");
+    expect(mark(1, 30)).toHaveTextContent("➋");
+    expect(cell(0, 10)).toHaveClass(
+      "d-flex",
+      "justify-content-between",
+      "align-items-center",
+      "px-1",
+    );
+    expect(screen.getByTestId("T-cell-row-0-col-course-20")).toHaveStyle({
+      textAlign: "right",
+    });
+    expect(mark(0, 10)).toHaveAttribute("title", "Applicant's 1st choice");
   });
 });
