@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"ux/199-ranking-cancellations-interest","number":209,"title":"Ranking page: cancelled applications, opt-in for not-interested candidates, and colour-coded interest cells (closes #199)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/209"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"ux/205-ranking-page-layout","number":210,"title":"Ranking page: recruitment and course details as one-row tables, clickable video links (closes #205)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/210"}]
