@@ -48,7 +48,8 @@ public class AssignmentsControllerTests extends ControllerTestCase {
           "course",
           List.of("Course", "Instructor", "Instructor email", "TA"),
           List.of(
-              List.of("CMPSC 8", "CONRAD P", "pconrad@ucsb.edu", "Ada Lovelace (ada@ucsb.edu)")));
+              List.of("CMPSC 8", "CONRAD P", "pconrad@ucsb.edu", "Ada Lovelace (ada@ucsb.edu)")),
+          false);
 
   private static final String CSV =
       "\"Course\",\"Instructor\",\"Instructor email\",\"TA\"\n"

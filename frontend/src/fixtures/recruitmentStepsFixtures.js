@@ -56,6 +56,7 @@ const freshSteps = (id, qyy) => [
     label: "Not released yet",
     action: "publishAssignments",
     secondaryLink: { text: "(see assignments)", href: courses(id) },
+    blockedReason: "Close Faculty Ranking before releasing hiring decisions.",
   },
 ];
 
@@ -143,12 +144,31 @@ const rankingsClosed = withSteps(rankingsOpen, [
 ]);
 
 /** Six of the eight slots have a tentative assignment. */
-const assigning = withSteps(rankingsClosed, [
+const rankingsClosedNobodyAssigned = withSteps(rankingsClosed, [
+  {
+    number: 9,
+    done: false,
+    label: "Not released yet",
+    action: "publishAssignments",
+    secondaryLink: { text: "(see assignments)", href: courses(1) },
+    blockedReason:
+      "Assign candidates to slots before releasing hiring decisions.",
+  },
+]);
+
+const assigning = withSteps(rankingsClosedNobodyAssigned, [
   {
     number: 8,
     done: false,
     label: "Still to assign: 2",
     href: "/admin/recruitments/1/assignments",
+  },
+  {
+    number: 9,
+    done: false,
+    label: "Not released yet",
+    action: "publishAssignments",
+    secondaryLink: { text: "(see assignments)", href: courses(1) },
   },
 ]);
 
@@ -169,6 +189,18 @@ const published = withSteps(assigning, [
   },
 ]);
 
+/** Released, then applications or faculty ranking were reopened (issue #237). */
+const publishedTentative = withSteps(published, [
+  {
+    number: 9,
+    done: true,
+    label: "Released: 2026-02-20",
+    href: "/recruitments/1/assignments",
+    secondaryLink: { text: "(see assignments)", href: courses(1) },
+    tentative: true,
+  },
+]);
+
 const ulaFresh = { recruitmentId: 2, type: "ULA", steps: freshSteps(2, "W26") };
 
 const recruitmentStepsFixtures = {
@@ -179,8 +211,10 @@ const recruitmentStepsFixtures = {
   released,
   rankingsOpen,
   rankingsClosed,
+  rankingsClosedNobodyAssigned,
   assigning,
   published,
+  publishedTentative,
   ulaFresh,
 };
 

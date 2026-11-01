@@ -181,6 +181,30 @@ describe("Help pages (issue #140)", () => {
     ).toBeTruthy();
   });
 
+  test("the admins page explains the prerequisites of releasing hiring decisions and the Tentative note (issue #237)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const release = screen.getByTestId(
+      "HelpAdminsPage-release-hiring-decisions",
+    );
+    expect(release.id).toBe("release-hiring-decisions");
+    expect(release).toHaveTextContent(
+      "Releasing hiring decisions has three prerequisites, checked in this order: faculty ranking is closed, applications are closed, and at least one candidate is assigned to a course.",
+    );
+    expect(release).toHaveTextContent(
+      "“Close Faculty Ranking before releasing hiring decisions.”, and nothing is published; the Yes button is greyed out when the card already shows that ranking or applications are open. Taking published assignments back is never refused.",
+    );
+    expect(release).toHaveTextContent(
+      "Tentative; part of the hiring process has been reopened. When both are closed again the note goes away. Nothing is ever marked final, since reopening is always possible.",
+    );
+    expect(
+      screen
+        .getByTestId("HelpAdminsPage-publish-assignments")
+        .compareDocumentPosition(release) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   test("the admins page explains publishing assignments (issue #180)", async () => {
     renderPage(<HelpAdminsPage />);
     await screen.findByRole("heading", { level: 1, name: "For Admins" });

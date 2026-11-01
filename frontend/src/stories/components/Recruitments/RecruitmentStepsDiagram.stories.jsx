@@ -62,3 +62,17 @@ LivePublished.args = { type: "TA", steps: recruitmentStepsFixtures.published };
 
 export const LiveULAFresh = Template.bind({});
 LiveULAFresh.args = { type: "ULA", steps: recruitmentStepsFixtures.ulaFresh };
+
+/** Faculty ranking and applications are closed but nobody is assigned: step 9 says what is next. */
+export const LiveRankingsClosedNobodyAssigned = Template.bind({});
+LiveRankingsClosedNobodyAssigned.args = {
+  type: "TA",
+  steps: recruitmentStepsFixtures.rankingsClosedNobodyAssigned,
+};
+
+/** Hiring decisions were released, then applications or ranking reopened (issue #237). */
+export const LivePublishedTentative = Template.bind({});
+LivePublishedTentative.args = {
+  type: "TA",
+  steps: recruitmentStepsFixtures.publishedTentative,
+};

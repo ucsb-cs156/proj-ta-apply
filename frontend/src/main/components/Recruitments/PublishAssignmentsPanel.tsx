@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Button, Modal } from "react-bootstrap";
+import { Alert, Button, Modal } from "react-bootstrap";
 import { Link } from "react-router";
 import { toast } from "react-toastify";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackendMutation } from "main/utils/useBackend";
-import { publishModalText } from "main/utils/publishedAssignments";
+import { apiErrorMessage } from "main/utils/apiError";
+import {
+  publishModalText,
+  unmetPrerequisite,
+} from "main/utils/publishedAssignments";
 
 type PublishAssignmentsPanelProps = {
   recruitment: Recruitment;
@@ -20,6 +24,10 @@ export default function PublishAssignmentsPanel({
   testIdPrefix = "PublishAssignmentsPanel",
 }: PublishAssignmentsPanelProps): React.JSX.Element {
   const [showModal, setShowModal] = useState(false);
+  // The backend's reason for refusing, kept in the modal rather than toasted (issue #237).
+  const [refusal, setRefusal] = useState<string | null>(null);
+  // What is known without asking: ranking and applications must be closed first.
+  const blocked = unmetPrerequisite(recruitment);
 
   const mutation = useBackendMutation<void, Recruitment>(
     () => ({
@@ -32,6 +40,7 @@ export default function PublishAssignmentsPanel({
         setShowModal(false);
         toast("Assignments published.");
       },
+      onError: (error) => setRefusal(apiErrorMessage(error)),
     },
     ["/api/admin/recruitments/all"],
   );
@@ -52,7 +61,10 @@ export default function PublishAssignmentsPanel({
     <div className="mt-4" data-testid={testIdPrefix}>
       <Button
         variant="outline-dark"
-        onClick={() => setShowModal(true)}
+        onClick={() => {
+          setRefusal(null);
+          setShowModal(true);
+        }}
         data-testid={`${testIdPrefix}-button`}
       >
         Publish Assignments
@@ -72,12 +84,24 @@ export default function PublishAssignmentsPanel({
               {paragraph}
             </p>
           ))}
+          {(blocked ?? refusal) !== null && (
+            <Alert
+              variant="danger"
+              className="mb-0 mt-3"
+              data-testid={`${testIdPrefix}-refusal`}
+            >
+              {blocked ?? refusal}
+            </Alert>
+          )}
         </Modal.Body>
         <Modal.Footer>
           <Button
             variant="primary"
-            disabled={mutation.isPending}
-            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending || blocked !== null}
+            onClick={() => {
+              setRefusal(null);
+              mutation.mutate();
+            }}
             data-testid={`${testIdPrefix}-confirm`}
           >
             Yes

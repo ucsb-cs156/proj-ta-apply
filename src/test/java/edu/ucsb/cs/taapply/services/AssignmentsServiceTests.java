@@ -565,4 +565,32 @@ class AssignmentsServiceTests {
         List.of(10L, 20L, 30L, 50L), new ArrayList<>(result.rows().get(0).preferences().keySet()));
     assertEquals(Map.of(), result.rows().get(1).preferences());
   }
+
+  @Test
+  void anyAssigned_is_true_when_a_real_application_has_a_tentative_assignment() {
+    Application assigned = Application.builder().id(1L).tentativeAssignmentId(10L).build();
+    Application unassigned = Application.builder().id(2L).build();
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L))
+        .thenReturn(List.of(unassigned, assigned));
+    assertTrue(service.anyAssigned(7L));
+  }
+
+  @Test
+  void anyAssigned_is_false_when_nobody_or_only_test_and_cancelled_applications_are_assigned() {
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L)).thenReturn(List.of());
+    assertFalse(service.anyAssigned(7L));
+
+    Application test =
+        Application.builder().id(1L).tentativeAssignmentId(10L).testApplication(true).build();
+    Application cancelled =
+        Application.builder()
+            .id(2L)
+            .tentativeAssignmentId(10L)
+            .status(ApplicationReviewStatus.CANCELLED)
+            .build();
+    Application unassigned = Application.builder().id(3L).build();
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L))
+        .thenReturn(List.of(test, cancelled, unassigned));
+    assertFalse(service.anyAssigned(7L));
+  }
 }
