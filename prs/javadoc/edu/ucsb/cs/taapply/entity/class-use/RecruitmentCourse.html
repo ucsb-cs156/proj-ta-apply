@@ -136,7 +136,14 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color"><code>static <a href="../../controller/InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></code></div>
 <div class="col-second even-row-color"><span class="type-name-label">InstructorRecruitmentsController.InstructorRecruitment.</span><code><a href="../../controller/InstructorRecruitmentsController.InstructorRecruitment.html#of(edu.ucsb.cs.taapply.entity.Recruitment,java.util.List)" class="member-name-link">of</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;r,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses)</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-last even-row-color">
+<div class="block">The recruitment with its targets withheld (or not yet computed).</div>
+</div>
+<div class="col-first odd-row-color"><code>static <a href="../../controller/InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">InstructorRecruitmentsController.InstructorRecruitment.</span><code><a href="../../controller/InstructorRecruitmentsController.InstructorRecruitment.html#of(edu.ucsb.cs.taapply.entity.Recruitment,java.util.List,java.util.Map)" class="member-name-link">of</a><wbr>(<a href="../Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;r,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;&nbsp;targets)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <div class="caption"><span>Constructor parameters in <a href="../../controller/package-summary.html">edu.ucsb.cs.taapply.controller</a> with type arguments of type <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span></div>
 <div class="summary-table three-column-summary">
@@ -144,7 +151,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="../../controller/InstructorRecruitmentsController.InstructorRecruitment.html#%3Cinit%3E(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.lang.String,java.time.LocalDate,java.time.LocalDate,java.util.List)" class="member-name-link">InstructorRecruitment</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+<div class="col-second even-row-color"><code><a href="../../controller/InstructorRecruitmentsController.InstructorRecruitment.html#%3Cinit%3E(java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.enums.ApplicationStatus,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.time.LocalDate,java.lang.String,java.time.LocalDate,java.time.LocalDate,java.util.List,java.util.Map)" class="member-name-link">InstructorRecruitment</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type,
  <a href="../../enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a>&nbsp;applicationStatus,
@@ -155,7 +162,8 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;reviewStatus,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyReviewOpeningDate,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;facultyRankingDeadline,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;&nbsp;targets)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>InstructorRecruitment</code> record class.</div>
 </div>
@@ -268,6 +276,12 @@ section when the estimates add up to nothing.</div>
 <div class="col-last even-row-color">
 <div class="block">The ranks one section gave, keyed by application id.</div>
 </div>
+<div class="col-first odd-row-color"><code><a href="../../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">CourseTargetsService.</span><code><a href="../../services/CourseTargetsService.html#targetsFor(java.lang.Long,edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">targetsFor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;course)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">The figures for one course.</div>
+</div>
 </div>
 <div class="caption"><span>Method parameters in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with type arguments of type <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span></div>
 <div class="summary-table three-column-summary">
@@ -281,6 +295,12 @@ section when the estimates add up to nothing.</div>
 the bare course number, plus " (section S)" only when the export has more than one section of
 that course, and ", enroll E" inside the parentheses only in the odd case of two rows with the
 same course and section.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">CourseTargetsService.</span><code><a href="../../services/CourseTargetsService.html#targetsFor(java.lang.Long,java.util.List)" class="member-name-link">targetsFor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">The figures for every course given, keyed by course id, loading the applications once.</div>
 </div>
 </div>
 </section>
