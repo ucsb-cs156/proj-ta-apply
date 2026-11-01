@@ -8,6 +8,7 @@ import {
   labelOf,
   selectToBoolean,
   yesNoLabel,
+  GRADUATE_WARNING,
 } from "main/utils/ulaQuestions";
 
 describe("ulaQuestions utilities", () => {
@@ -66,5 +67,12 @@ describe("ulaQuestions utilities", () => {
     expect(PERM_NUMBER_PATTERN.test("12345678")).toBe(false);
     expect(PERM_NUMBER_PATTERN.test("12-4567")).toBe(false);
     expect(PERM_NUMBER_PATTERN.test("")).toBe(false);
+  });
+
+  test("the graduate-status warning is the short form (issue #194)", () => {
+    expect(GRADUATE_WARNING).toBe(
+      "If you will be in graduate status, you are strongly encouraged to apply to be a TA instead of applying to be a ULA.",
+    );
+    expect(GRADUATE_WARNING).not.toMatch(/funding/);
   });
 });
