@@ -41,12 +41,14 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Download Rankings CSV
         </h2>
         <p>
-          On a recruitment card, <strong>Download Rankings CSV</strong> saves
-          that recruitment&apos;s faculty rankings as a spreadsheet-ready file.
-          This is separate from <strong>Download CSV</strong>, which exports
-          application answers. Rankings include every real applicant, even those
-          with no interests or rankings; test applications are excluded. Unset
-          rankings are blank, not zero, and ties are preserved.
+          On a recruitment&apos;s Courses page,{" "}
+          <strong>Download Rankings CSV</strong> saves that recruitment&apos;s
+          faculty rankings as a spreadsheet-ready file. This is separate from{" "}
+          <strong>Download Applications as CSV</strong> on its Applications
+          page, which exports application answers. Rankings include every real
+          applicant, even those with no interests or rankings; test applications
+          are excluded. Unset rankings are blank, not zero, and ties are
+          preserved.
         </p>
         <p>
           TA columns are first name, last name, email, major, class level, year
@@ -184,14 +186,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
             on your home page, create a recruitment for the quarter and type.
             Its course list is filled automatically from the quarter&apos;s
             schedule; check it with <em>Courses</em>, try the form with{" "}
-            <em>Test Application</em>, then <em>Open Applications</em>.
+            <em>Test Application</em> (on the Applications page), then open
+            applications from step 2 of the diagram.
           </li>
           <li>
             <strong>While open:</strong> applicants apply and edit until the
-            primary consideration date. <em>Review Applications</em> and{" "}
-            <em>Download CSV</em> show what has come in; a student&apos;s
-            answers can be corrected on their behalf, with every change recorded
-            in the <strong>Audit Trail</strong>.
+            primary consideration date. The <em>Applications</em> page and its{" "}
+            <em>Download Applications as CSV</em> show what has come in; a
+            student&apos;s answers can be corrected on their behalf, with every
+            change recorded in the <strong>Audit Trail</strong>.
           </li>
           <li>
             <strong>Afterwards:</strong> <em>Close Applications</em>, plan the
@@ -522,15 +525,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <strong>Test Application.</strong> The form exactly as an applicant
             for this recruitment sees it, even before it opens. Submitting saves
             a test application that never counts as a real one and is marked as
-            such wherever it appears. It is no longer a button on the card and
-            is being given a new home on the Applications page.
+            such wherever it appears. The button is at the top of the
+            Applications page.
           </li>
           <li>
-            <strong>Download CSV.</strong> Every application to the recruitment
-            as a spreadsheet, with the columns for its type (the layout is on
-            the CSV formats page). It is no longer a button on the card and is
-            being moved to the Applications page, with the rankings download
-            moving to the Courses page.
+            <strong>Download Applications as CSV.</strong> Every application to
+            the recruitment as a spreadsheet, with the columns for its type (the
+            layout is on the CSV formats page). The button is at the top of the
+            Applications page; the rankings download,{" "}
+            <strong>Download Rankings CSV</strong>, is on the Courses page.
           </li>
           <li>
             <strong>Applications.</strong> The list of applications, with a

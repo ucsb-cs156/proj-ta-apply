@@ -6,6 +6,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
+import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.Course;
@@ -284,6 +285,53 @@ public class RecruitmentsWebIT extends WebTestCase {
         .hasText("OPEN");
     assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-2-col-whatChanged"))
         .hasText("created");
+  }
+
+  /**
+   * Issue #234: the Applications page hands the browser a file named after the recruitment, with
+   * the TA columns. (Until #233 the button was on the recruitment card.)
+   */
+  @Test
+  public void the_applications_page_downloads_the_recruitment_s_applications() throws Exception {
+    stubOfferings();
+    setupAdminUser();
+    goToRecruitments();
+    createTaRecruitment();
+
+    page.getByTestId("HomePageLoggedIn-admin-card-0-applications-button").click();
+    Locator csvButton = page.getByTestId("RecruitmentApplicationsPage-header-download-csv");
+    waitFor(csvButton);
+    assertThat(csvButton).containsText("Download Applications as CSV");
+
+    Download download = page.waitForDownload(csvButton::click);
+    String firstLine = java.nio.file.Files.readAllLines(download.path()).get(0);
+    org.junit.jupiter.api.Assertions.assertTrue(
+        download.suggestedFilename().matches("applications-\\d+\\.csv"),
+        download.suggestedFilename());
+    org.junit.jupiter.api.Assertions.assertTrue(
+        firstLine.startsWith("\"id\",\"submittedAt\",\"email\""), firstLine);
+    org.junit.jupiter.api.Assertions.assertTrue(firstLine.contains("\"classLevel\""), firstLine);
+  }
+
+  /** Issue #234: the Courses page hands the browser the faculty rankings file. */
+  @Test
+  public void the_courses_page_downloads_the_recruitment_s_rankings() throws Exception {
+    stubOfferings();
+    setupAdminUser();
+    goToRecruitments();
+    createTaRecruitment();
+
+    page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
+    Locator csvButton = page.getByTestId("RecruitmentCoursesPage-rankings-csv");
+    waitFor(csvButton);
+    assertThat(csvButton).containsText("Download Rankings CSV");
+
+    Download download = page.waitForDownload(csvButton::click);
+    String firstLine = java.nio.file.Files.readAllLines(download.path()).get(0);
+    org.junit.jupiter.api.Assertions.assertTrue(
+        download.suggestedFilename().matches("rankings-\\d+\\.csv"), download.suggestedFilename());
+    org.junit.jupiter.api.Assertions.assertTrue(
+        firstLine.startsWith("\"firstName\",\"lastName\",\"email\""), firstLine);
   }
 
   /** Issue #141: the recruitments live on the admin's home page, and the old page is gone. */
