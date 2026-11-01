@@ -57,9 +57,11 @@ export default function HelpInstructorsPage(): React.JSX.Element {
         <p>
           Only instructors assigned to a section may edit its rankings while
           reviews are Open; the deadline is informational until an admin closes
-          reviews. Closed reviews and admin views are read-only. Click either
-          name to open the full, read-only application in a new tab, without
-          staff-only notes or editing controls.
+          reviews. Rankings can be entered only by the course&apos;s instructor
+          of record while reviews are open, admin or not; closed reviews, and
+          the view of an admin who does not teach the course, are read-only.
+          Click either name to open the full, read-only application in a new
+          tab, without staff-only notes or editing controls.
         </p>
         <p data-testid="HelpInstructorsPage-assignments">
           When the admins have settled who is hired, the recruitment card gains

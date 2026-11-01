@@ -254,15 +254,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           On a recruitment&apos;s own <strong>Courses</strong> page, after
           faculty reviews have started, the leftmost <strong>Rankings</strong>{" "}
           column shows how many eligible applications have an entered ranking
-          for each section. The number links to the read-only ranking page;
-          sections with no entered rankings link with a zero. The{" "}
-          <strong>Email</strong> column uses the instructor&apos;s catalog-name
-          mapping from the Instructors page. Use its <em>Copy</em> control for
-          one address, or <em>Copy emails of faculty with zero rankings</em> to
-          prepare a reminder. Bulk reminders include only mapped addresses for
-          the courses currently visible, deduplicated when an instructor has
-          multiple sections. Turn on <em>Show removed courses</em> to include
-          removed sections in both the table and reminder list.
+          for each section. The number links to the ranking page, read-only for
+          you unless you are that course&apos;s instructor of record; sections
+          with no entered rankings link with a zero. The <strong>Email</strong>{" "}
+          column uses the instructor&apos;s catalog-name mapping from the
+          Instructors page. Use its <em>Copy</em> control for one address, or{" "}
+          <em>Copy emails of faculty with zero rankings</em> to prepare a
+          reminder. Bulk reminders include only mapped addresses for the courses
+          currently visible, deduplicated when an instructor has multiple
+          sections. Turn on <em>Show removed courses</em> to include removed
+          sections in both the table and reminder list.
         </p>
         <p id="course-columns" data-testid="HelpAdminsPage-course-columns">
           The table can be trimmed to what you need: the{" "}

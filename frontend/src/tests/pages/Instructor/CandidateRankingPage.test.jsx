@@ -170,6 +170,7 @@ describe("CandidateRankingPage", () => {
     axiosMock.onGet(rankingUrl).reply(200, {
       ...instructorRecruitmentsFixtures.candidateRankingPage,
       reviewStatus: "Open",
+      canRank: true,
       facultyRankingDeadline: "2020-01-01",
     });
     renderPage();
@@ -180,7 +181,7 @@ describe("CandidateRankingPage", () => {
     ).toHaveValue(1);
   });
 
-  test("admin views remain read-only even when reviews are Open", async () => {
+  test("the page is read-only when the backend says this user may not rank, whatever their roles", async () => {
     axiosMock.onGet("/api/currentUser").reply(200, {
       ...apiCurrentUserFixtures.adminUser,
       rolesList: ["ROLE_ADMIN", "ROLE_INSTRUCTOR", "ROLE_USER"],
@@ -188,12 +189,44 @@ describe("CandidateRankingPage", () => {
     axiosMock.onGet(rankingUrl).reply(200, {
       ...instructorRecruitmentsFixtures.candidateRankingPage,
       reviewStatus: "Open",
+      canRank: false,
     });
     renderPage();
     expect(
       await screen.findByText("Rankings are read-only."),
     ).toBeInTheDocument();
     expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+  });
+
+  test("a response without canRank is read-only too", async () => {
+    const { canRank: _omitted, ...withoutFlag } =
+      instructorRecruitmentsFixtures.candidateRankingPage;
+    axiosMock.onGet(rankingUrl).reply(200, withoutFlag);
+    renderPage();
+    expect(
+      await screen.findByText("Rankings are read-only."),
+    ).toBeInTheDocument();
+  });
+
+  /** Issue #202: an admin who also teaches the course ranks it like any instructor. */
+  test("an admin may rank when the backend says they are the course's instructor", async () => {
+    axiosMock.onGet("/api/currentUser").reply(200, {
+      ...apiCurrentUserFixtures.adminUser,
+      rolesList: ["ROLE_ADMIN", "ROLE_INSTRUCTOR", "ROLE_USER"],
+    });
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      canRank: true,
+    });
+    renderPage();
+    expect(
+      await screen.findByRole("spinbutton", {
+        name: "Ranking for Ada Lovelace",
+      }),
+    ).toHaveValue(1);
+    expect(
+      screen.queryByText("Rankings are read-only."),
+    ).not.toBeInTheDocument();
   });
 
   test("successful null candidate response is an error, not infinite loading", async () => {
