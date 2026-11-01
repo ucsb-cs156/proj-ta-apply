@@ -76,18 +76,18 @@ describe("CandidateRankingPage", () => {
     expect(screen.getByTestId("CandidateRankingPage-type")).toHaveTextContent(
       "TA",
     );
-    expect(screen.getByText("Tentative Opening").nextSibling).toHaveTextContent(
-      "2025-12-01",
-    );
     expect(
-      screen.getByText("Primary Consideration").nextSibling,
+      screen.getByTestId("CandidateRankingPage-tentative-opening"),
+    ).toHaveTextContent("2025-12-01");
+    expect(
+      screen.getByTestId("CandidateRankingPage-primary-consideration"),
     ).toHaveTextContent("2026-01-20");
-    expect(screen.getByText("Actually Opened").nextSibling).toHaveTextContent(
-      "2026-01-06",
-    );
-    expect(screen.getByText("Actually Closed").nextSibling).toHaveTextContent(
-      "2026-02-01",
-    );
+    expect(
+      screen.getByTestId("CandidateRankingPage-actual-opening"),
+    ).toHaveTextContent("2026-01-06");
+    expect(
+      screen.getByTestId("CandidateRankingPage-actual-closing"),
+    ).toHaveTextContent("2026-02-01");
     expect(
       screen.getByTestId("CandidateRankingPage-opening-date"),
     ).toHaveTextContent("2026-01-08");
@@ -556,5 +556,103 @@ describe("CandidateRankingPage", () => {
         "CandidateRankingPage-cancelled-table-cell-row-0-col-name",
       ),
     ).toHaveTextContent("Grace Hopper");
+  });
+
+  /** Issue #205: the details are one-row tables, so the rankings are visible without scrolling. */
+  test("the recruitment and course details are one-row tables with stacked headings", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(200, instructorRecruitmentsFixtures.candidateRankingPage);
+    renderPage();
+    await screen.findByTestId("CandidateRankingPage-quarter");
+
+    const recruitment = screen.getByTestId("CandidateRankingPage-recruitment");
+    expect(recruitment).toHaveClass("w-auto");
+    expect(recruitment.querySelectorAll("tbody tr")).toHaveLength(1);
+    expect(
+      [...recruitment.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual([
+      "Quarter",
+      "Type",
+      "TentativeOpening",
+      "PrimaryConsideration",
+      "ActuallyOpened",
+      "ActuallyClosed",
+      "FacultyReviewsOpened",
+      "FacultyRankingDeadline",
+    ]);
+    // "Faculty Ranking Deadline" is longer than a date, so it is shown smaller; so is "Quarter"
+    // over "W26"; "Title" over "TITLE 1" is not.
+    expect(
+      screen.getByTestId(
+        "CandidateRankingPage-recruitment-heading-Faculty Ranking Deadline",
+      ).style.fontSize,
+    ).toBe("80%");
+    expect(
+      screen.getByTestId("CandidateRankingPage-recruitment-heading-Quarter")
+        .style.fontSize,
+    ).toBe("80%");
+    expect(
+      screen.getByTestId("CandidateRankingPage-course-heading-Title").style
+        .fontSize,
+    ).toBe("");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Recruitment" }),
+    ).toHaveClass("h5");
+
+    const course = screen.getByTestId("CandidateRankingPage-course");
+    expect(
+      [...course.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual(["Course", "Section", "Title", "Instructor"]);
+    expect(course.querySelectorAll("tbody tr")).toHaveLength(1);
+    const courseId = screen
+      .getByTestId("CandidateRankingPage-course-id")
+      .querySelector("span");
+    expect(courseId.style.fontFamily).toBe("monospace");
+    expect(courseId.style.whiteSpace).toBe("pre");
+  });
+
+  test("missing details show their fallbacks in the tables", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      tentativeOpeningDate: null,
+      primaryConsiderationDate: null,
+      actualOpeningDate: null,
+      actualClosingDate: null,
+      facultyReviewOpeningDate: null,
+      facultyRankingDeadline: null,
+      course: {
+        ...instructorRecruitmentsFixtures.candidateRankingPage.course,
+        section: null,
+        title: null,
+        instructor: null,
+      },
+    });
+    renderPage();
+    await screen.findByTestId("CandidateRankingPage-quarter");
+
+    expect(
+      screen.getByTestId("CandidateRankingPage-tentative-opening"),
+    ).toHaveTextContent("Not set");
+    expect(
+      screen.getByTestId("CandidateRankingPage-primary-consideration"),
+    ).toHaveTextContent("Not set");
+    expect(
+      screen.getByTestId("CandidateRankingPage-actual-opening"),
+    ).toHaveTextContent("Not opened");
+    expect(
+      screen.getByTestId("CandidateRankingPage-actual-closing"),
+    ).toHaveTextContent("Not closed");
+    expect(
+      screen.getByTestId("CandidateRankingPage-opening-date"),
+    ).toHaveTextContent("Not recorded");
+    expect(
+      screen.getByTestId("CandidateRankingPage-deadline"),
+    ).toHaveTextContent("Not set");
+    ["section", "title", "instructor"].forEach((key) => {
+      expect(
+        screen.getByTestId(`CandidateRankingPage-${key}`),
+      ).toHaveTextContent("Not specified");
+    });
   });
 });
