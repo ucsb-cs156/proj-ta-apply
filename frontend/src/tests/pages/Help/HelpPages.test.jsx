@@ -150,6 +150,10 @@ describe("Help pages (issue #140)", () => {
     expect(interest).toHaveTextContent(
       'until you tick Include candidates that marked my course with "Not Interested/Not Applicable" under the table; a red warning then asks you to consider whether you should rank them at all.',
     );
+    // Issue #221: the box cannot be cleared while one of those candidates is ranked.
+    expect(interest).toHaveTextContent(
+      "Once you have ranked one of them, the box stays ticked and cannot be cleared, so a ranked candidate is never hidden; clear that ranking and you can untick it again.",
+    );
     expect(interest).toHaveTextContent(
       "the Cancelled applications table at the bottom of the page lists them with their reason",
     );

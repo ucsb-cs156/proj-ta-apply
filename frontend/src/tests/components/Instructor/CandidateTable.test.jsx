@@ -187,6 +187,38 @@ describe("CandidateTable", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
   });
 
+  test("onSaved is called after a successful save, never before it and never after a failure", async () => {
+    const onSaved = vi.fn();
+    let finish;
+    mock.resetHandlers();
+    mock.onPut(`${apiUrl}/1/rank`).reply(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    table({ onSaved });
+    fireEvent.change(input(), { target: { value: "3" } });
+    expect(onSaved).not.toHaveBeenCalled();
+    await act(async () => finish([200, { rank: 3 }]));
+    expect(onSaved).toHaveBeenCalledTimes(1);
+
+    mock
+      .onPut(`${apiUrl}/1/rank`)
+      .reply(500, { message: "Database unavailable" });
+    fireEvent.change(input(), { target: { value: "2" } });
+    await settle();
+    expect(screen.getByRole("alert")).toHaveTextContent("Save failed");
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  test("saving works without an onSaved callback", async () => {
+    table();
+    fireEvent.change(input(), { target: { value: "2" } });
+    await settle();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
+  });
+
   test.each(["0", "-1", "5", "1.5"])("invalid rank %s is not sent", (value) => {
     table();
     fireEvent.change(input(), { target: { value } });

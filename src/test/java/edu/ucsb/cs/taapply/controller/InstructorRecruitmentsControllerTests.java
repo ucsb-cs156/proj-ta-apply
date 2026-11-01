@@ -338,7 +338,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
                 new CourseDetails(2L, "CMPSC   156", "0200", "TITLE 2", "CONRAD P")),
             null,
             true,
-            null);
+            null,
+            false);
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
     verify(instructorRepository).findByEmail(EMAIL);
     verify(instructorRepository, never()).findByEmail("attacker@example.com");
@@ -353,6 +354,113 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     RecruitmentCourse course = row(1L, 10L, "CMPSC   156", "0100", false);
     when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
     when(recruitmentCourseRepository.findByRecruitmentId(10L)).thenReturn(List.of(course));
+  }
+
+  // ---- hasRankedNotInterested (issue #221) ----
+
+  private static edu.ucsb.cs.taapply.entity.Application applicant(
+      long id, String firstChoice, edu.ucsb.cs.taapply.enums.ApplicationReviewStatus status) {
+    return edu.ucsb.cs.taapply.entity.Application.builder()
+        .id(id)
+        .recruitmentId(10L)
+        .email("a" + id + "@ucsb.edu")
+        .firstChoiceCourse(firstChoice)
+        .status(status)
+        .build();
+  }
+
+  private static edu.ucsb.cs.taapply.entity.Application applicant(long id, String firstChoice) {
+    return applicant(id, firstChoice, edu.ucsb.cs.taapply.enums.ApplicationReviewStatus.PENDING);
+  }
+
+  private static edu.ucsb.cs.taapply.entity.CandidateRanking ranking(
+      long applicationId, Integer rank) {
+    return edu.ucsb.cs.taapply.entity.CandidateRanking.builder()
+        .recruitmentCourseId(1L)
+        .applicationId(applicationId)
+        .rank(rank)
+        .build();
+  }
+
+  private boolean hasRankedNotInterested(
+      List<edu.ucsb.cs.taapply.entity.Application> applications,
+      List<edu.ucsb.cs.taapply.entity.CandidateRanking> rankings)
+      throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    rankingPageSetup("Open");
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(10L)).thenReturn(applications);
+    when(candidateRankingRepository.findByRecruitmentCourseId(1L)).thenReturn(rankings);
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+    return mapper
+        .readTree(response.getResponse().getContentAsString())
+        .get("hasRankedNotInterested")
+        .asBoolean();
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void no_not_interested_candidate_is_ranked_when_nobody_is_ranked() throws Exception {
+    assertFalse(
+        hasRankedNotInterested(
+            List.of(applicant(31L, "CMPSC   156"), applicant(32L, "CMPSC     8")), List.of()));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void ranking_only_interested_candidates_does_not_force_the_tier() throws Exception {
+    assertFalse(
+        hasRankedNotInterested(
+            List.of(applicant(31L, "CMPSC   156"), applicant(32L, "CMPSC     8")),
+            List.of(ranking(31L, 1))));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_ranked_not_interested_candidate_forces_the_tier() throws Exception {
+    assertTrue(
+        hasRankedNotInterested(
+            List.of(applicant(31L, "CMPSC   156"), applicant(32L, "CMPSC     8")),
+            List.of(ranking(31L, 1), ranking(32L, 2))));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_cleared_ranking_of_a_not_interested_candidate_does_not_force_the_tier()
+      throws Exception {
+    assertFalse(
+        hasRankedNotInterested(
+            List.of(applicant(31L, "CMPSC   156"), applicant(32L, "CMPSC     8")),
+            List.of(ranking(32L, null))));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_ranked_not_interested_candidate_who_cancelled_does_not_force_the_tier()
+      throws Exception {
+    assertFalse(
+        hasRankedNotInterested(
+            List.of(
+                applicant(31L, "CMPSC   156"),
+                applicant(
+                    32L,
+                    "CMPSC     8",
+                    edu.ucsb.cs.taapply.enums.ApplicationReviewStatus.CANCELLED)),
+            List.of(ranking(32L, 1))));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_ranked_test_application_does_not_force_the_tier() throws Exception {
+    edu.ucsb.cs.taapply.entity.Application test = applicant(32L, "CMPSC     8");
+    test.setTestApplication(true);
+    assertFalse(
+        hasRankedNotInterested(
+            List.of(applicant(31L, "CMPSC   156"), test), List.of(ranking(32L, 1))));
   }
 
   private void adminWhoIsAlsoInstructor() {

@@ -92,3 +92,7 @@ export const NOT_INTERESTED_WARNING =
 
 /** The checkbox's label on the ranking page. */
 export const INCLUDE_NOT_INTERESTED_LABEL = `Include candidates that marked my course with "${NOT_INTERESTED_LABEL}"`;
+
+/** The tooltip on the checkbox while a not-interested candidate is ranked (issue #221). */
+export const NOT_INTERESTED_FORCED_TOOLTIP =
+  "This option cannot be deselected when there are ranked candidates in this section";
