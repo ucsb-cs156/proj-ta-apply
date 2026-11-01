@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentAuditService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">RecruitmentAuditService.java</span></div><h1>RecruitmentAuditService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
+import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * Writes the audit trail of changes to recruitments themselves (issue #139): a row when one is
+ * created, a row when one is deleted, and a row per field that changed when one is edited, opened
+ * or closed. (The trail of an admin's changes to individual applications is {@link
+ * ApplicationAuditService}.)
+ *
+ * &lt;p&gt;For an edit, the caller takes a {@link #snapshot} before applying it and calls {@link
+ * #recordChanges} with it afterwards; only the fields whose value differs get a row, so a request
+ * that changes nothing writes nothing. Creation and deletion get just their one row: the values a
+ * recruitment was created with are not also written as changes.
+ */
+@Service
+<span class="fc" id="L27">public class RecruitmentAuditService {</span>
+
+  @Autowired private RecruitmentAuditTrailRepository repository;
+
+  /** The fields a change is recorded for, in the order their rows are written. */
+<span class="fc" id="L32">  static final Map&lt;String, Function&lt;Recruitment, Object&gt;&gt; FIELDS = new LinkedHashMap&lt;&gt;();</span>
+
+  static {
+<span class="fc" id="L35">    FIELDS.put(&quot;applicationStatus&quot;, Recruitment::getApplicationStatus);</span>
+<span class="fc" id="L36">    FIELDS.put(&quot;tentativeOpeningDate&quot;, Recruitment::getTentativeOpeningDate);</span>
+<span class="fc" id="L37">    FIELDS.put(&quot;primaryConsiderationDate&quot;, Recruitment::getPrimaryConsiderationDate);</span>
+<span class="fc" id="L38">    FIELDS.put(&quot;actualOpeningDate&quot;, Recruitment::getActualOpeningDate);</span>
+<span class="fc" id="L39">    FIELDS.put(&quot;actualClosingDate&quot;, Recruitment::getActualClosingDate);</span>
+<span class="fc" id="L40">    FIELDS.put(&quot;reviewStatus&quot;, Recruitment::getReviewStatus);</span>
+<span class="fc" id="L41">    FIELDS.put(&quot;facultyReviewOpeningDate&quot;, Recruitment::getFacultyReviewOpeningDate);</span>
+<span class="fc" id="L42">    FIELDS.put(&quot;facultyRankingDeadline&quot;, Recruitment::getFacultyRankingDeadline);</span>
+<span class="fc" id="L43">    FIELDS.put(&quot;allocationsVisibleToFaculty&quot;, Recruitment::getAllocationsVisibleToFaculty);</span>
+<span class="fc" id="L44">    FIELDS.put(&quot;assignmentsPublished&quot;, Recruitment::getAssignmentsPublished);</span>
+<span class="fc" id="L45">  }</span>
+
+  /** A recruitment's audited fields as strings, keyed by field name; a null field is null. */
+<span class="fc" id="L48">  public record Snapshot(Long recruitmentId, Map&lt;String, String&gt; fields) {}</span>
+
+  public Snapshot snapshot(Recruitment recruitment) {
+<span class="fc" id="L51">    Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L52">    FIELDS.forEach((name, getter) -&gt; fields.put(name, text(getter.apply(recruitment))));</span>
+<span class="fc" id="L53">    return new Snapshot(recruitment.getId(), fields);</span>
+  }
+
+  /** Records that the recruitment was just created, and returns the row written. */
+  public RecruitmentAuditTrail recordCreated(Recruitment recruitment) {
+<span class="fc" id="L58">    return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.CREATED, null, null));</span>
+  }
+
+  /** Records that the recruitment is about to be deleted, and returns the row written. */
+  public RecruitmentAuditTrail recordDeleted(Recruitment recruitment) {
+<span class="fc" id="L63">    return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.DELETED, null, null));</span>
+  }
+
+  /**
+   * Records every field whose value differs between the snapshot taken before an edit and the
+   * recruitment as it is now, one row each, and returns the rows written (empty when nothing
+   * changed).
+   */
+  public List&lt;RecruitmentAuditTrail&gt; recordChanges(Snapshot before, Recruitment after) {
+<span class="fc" id="L72">    Snapshot now = snapshot(after);</span>
+<span class="fc" id="L73">    List&lt;RecruitmentAuditTrail&gt; changes = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L74">    before</span>
+<span class="fc" id="L75">        .fields()</span>
+<span class="fc" id="L76">        .forEach(</span>
+            (name, old) -&gt; {
+<span class="fc" id="L78">              String current = now.fields().get(name);</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">              if (!Objects.equals(old, current)) {</span>
+<span class="fc" id="L80">                changes.add(row(before.recruitmentId(), name, old, current));</span>
+              }
+<span class="fc" id="L82">            });</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">    if (!changes.isEmpty()) {</span>
+<span class="fc" id="L84">      repository.saveAll(changes);</span>
+    }
+<span class="fc" id="L86">    return changes;</span>
+  }
+
+  /**
+   * Records a change to one of the recruitment's courses that faculty can see (issue #224), such as
+   * releasing a course's allocation: {@code whatChanged} names the field and the course, e.g.
+   * {@code &quot;allocationReleased CMPSC 156 (0100)&quot;}. Returns the row written.
+   */
+  public RecruitmentAuditTrail recordCourseChange(
+      Long recruitmentId, String whatChanged, Object oldValue, Object newValue) {
+<span class="fc" id="L96">    return repository.save(row(recruitmentId, whatChanged, text(oldValue), text(newValue)));</span>
+  }
+
+  private static RecruitmentAuditTrail row(
+      Long recruitmentId, String whatChanged, String oldValue, String newValue) {
+<span class="fc" id="L101">    return RecruitmentAuditTrail.builder()</span>
+<span class="fc" id="L102">        .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L103">        .whatChanged(whatChanged)</span>
+<span class="fc" id="L104">        .oldValue(oldValue)</span>
+<span class="fc" id="L105">        .newValue(newValue)</span>
+<span class="fc" id="L106">        .build();</span>
+  }
+
+  private static String text(Object value) {
+<span class="fc bfc" id="L110" title="All 2 branches covered.">    return value == null ? null : String.valueOf(value);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
