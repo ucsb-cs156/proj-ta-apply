@@ -305,6 +305,10 @@ open in a spreadsheet.</div>
 <dd>
 <div class="block">Returns the value of the <code>applicationId</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#applicationId()" class="member-name-link">applicationId()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>applicationId</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html#applicationOptions(java.lang.Long)" class="member-name-link">applicationOptions(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.ApplicationOptions.html#%3Cinit%3E(java.util.List,java.util.List,java.util.List)" class="member-name-link">ApplicationOptions(List, List, List)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.ApplicationOptions.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController.ApplicationOptions</a></dt>
@@ -368,7 +372,7 @@ topics an applicant may pick from, and for ULAs the interest areas they rate.</d
 <dd>
 <div class="block">How many of the given applications are tentatively assigned to each recruitment course.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.AssignmentRow.html#%3Cinit%3E(java.lang.Long,java.util.Map,java.lang.Long,java.util.Map)" class="member-name-link">AssignmentRow(Long, Map, Long, Map)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.AssignmentRow.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.AssignmentRow</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.AssignmentRow.html#%3Cinit%3E(java.lang.Long,java.util.Map,java.lang.Long,java.util.Map,java.util.Map)" class="member-name-link">AssignmentRow(Long, Map, Long, Map, Map)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.AssignmentRow.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.AssignmentRow</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>AssignmentRow</code> record class.</div>
 </dd>
@@ -404,6 +408,11 @@ recruitment course id, only for sections that ranked them.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.Assignments</a> - Record Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
 <dd>
 <div class="block">Everything the admin Assignments page needs for one recruitment.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a> - Record Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">An application the applicant cancelled (issue #199): just enough for faculty and admins to see
+what became of someone they expected to find among the candidates.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CourseSummary.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CourseSummary</a> - Record Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
 <dd>
@@ -560,11 +569,31 @@ enrollment totals, and the anticipated expenses, funds and bottom line.</div>
 <dl class="index">
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#cancelApplication(java.lang.Long,java.lang.String)" class="member-name-link">cancelApplication(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#cancellationReason()" class="member-name-link">cancellationReason()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>cancellationReason</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html#cancelled(java.lang.Long)" class="member-name-link">cancelled(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminAssignmentsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#cancelled(java.lang.Long,java.lang.Long)" class="member-name-link">cancelled(Long, Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#cancelled(java.util.List)" class="member-name-link">cancelled(List)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dd>
+<div class="block">The cancelled ones among the given applications, test applications left out.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html#CANCELLED" class="member-name-link">CANCELLED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html#CANCELLED" class="member-name-link">CANCELLED</a> - Static variable in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></dt>
 <dd>
 <div class="block">The status the UCSB API reports for a section that has been cancelled.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#%3Cinit%3E(java.lang.Long,java.lang.String,java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">CancelledApplication(Long, String, String, String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>CancelledApplication</code> record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#cancelledApplications(java.lang.Long)" class="member-name-link">cancelledApplications(Long)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dd>
+<div class="block">The applications to a recruitment that the applicant cancelled, oldest first.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html#%3Cinit%3E(java.lang.Long,java.lang.Integer,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.Double,java.lang.Double,java.lang.Integer,java.lang.String)" class="member-name-link">Candidate(Long, Integer, String, String, String, String, String, String, String, String, Double, Double, Integer, String)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a></dt>
 <dd>
@@ -590,7 +619,7 @@ enrollment totals, and the anticipated expenses, funds and bottom line.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/CandidateRankingRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">CandidateRankingRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#candidates(java.lang.Long,java.lang.Long)" class="member-name-link">candidates(Long, Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#candidates(java.lang.Long,java.lang.Long,boolean)" class="member-name-link">candidates(Long, Long, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/TrainingCommitment.html#CANNOT" class="member-name-link">CANNOT</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/TrainingCommitment.html" title="enum class in edu.ucsb.cs.taapply.enums">TrainingCommitment</a></dt>
 <dd>&nbsp;</dd>
@@ -893,6 +922,10 @@ open (issue #98).</div>
 <dd>
 <div class="block">Returns the value of the <code>email</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#email()" class="member-name-link">email()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>email</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.html#EMAIL_HEADER" class="member-name-link">EMAIL_HEADER</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleEmailCsvService.html" title="class in edu.ucsb.cs.taapply.services">RoleEmailCsvService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#employeeId()" class="member-name-link">employeeId()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
@@ -925,6 +958,8 @@ both Summer and Fall are reachable.</div>
 <div class="block">Which UCSB API figure to copy into every course's enrollment estimate (issue #175).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/CourseInterest.html#ENTHUSIASTIC" class="member-name-link">ENTHUSIASTIC</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/CourseInterest.html" title="enum class in edu.ucsb.cs.taapply.enums">CourseInterest</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#ENTHUSIASTIC" class="member-name-link">ENTHUSIASTIC</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/errors/EntityNotFoundException.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.errors">EntityNotFoundException</a> - Exception Class in <a href="edu/ucsb/cs/taapply/errors/package-summary.html">edu.ucsb.cs.taapply.errors</a></dt>
 <dd>&nbsp;</dd>
@@ -1027,6 +1062,10 @@ both Summer and Fall are reachable.</div>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.Assignments</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -1210,6 +1249,10 @@ both Summer and Fall are reachable.</div>
 <dd>
 <div class="block">The latest quarter on file, if any: where a refresh starts from.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#FIRST_CHOICE" class="member-name-link">FIRST_CHOICE</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dd>
+<div class="block">The labels of the interest an applicant expressed in a course, strongest first.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#firstChoiceCourse()" class="member-name-link">firstChoiceCourse()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>firstChoiceCourse</code> record component.</div>
@@ -1219,6 +1262,10 @@ both Summer and Fall are reachable.</div>
 <div class="block">Returns the value of the <code>firstName</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html#firstName()" class="member-name-link">firstName()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>firstName</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#firstName()" class="member-name-link">firstName()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>firstName</code> record component.</div>
 </dd>
@@ -1491,6 +1538,10 @@ applicant, and anyone in the admin or instructor tables whatever their address.<
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.Assignments</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -1842,6 +1893,10 @@ a U.S. citizen, passed as a U.S. permanent resident, passed on an F1 or J1 visa,
 <dd>
 <div class="block">Returns the value of the <code>lastName</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#lastName()" class="member-name-link">lastName()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>lastName</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html#lastOnline()" class="member-name-link">lastOnline()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>lastOnline</code> record component.</div>
@@ -2053,6 +2108,8 @@ trailing spaces removed.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/CourseInterest.html#NOT_INTERESTED" class="member-name-link">NOT_INTERESTED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/CourseInterest.html" title="enum class in edu.ucsb.cs.taapply.enums">CourseInterest</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#NOT_INTERESTED" class="member-name-link">NOT_INTERESTED</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html#NOT_MAPPED" class="member-name-link">NOT_MAPPED</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">PublishedAssignmentsService</a></dt>
 <dd>
 <div class="block">What an instructor's email reads when the catalog name maps to no, or several, instructors.</div>
@@ -2206,6 +2263,16 @@ does.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html#preference()" class="member-name-link">preference()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>preference</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#preference(edu.ucsb.cs.taapply.entity.Application,java.lang.String)" class="member-name-link">preference(Application, String)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dd>
+<div class="block">How interested an applicant is in a course: their first or second choice, or the interest they
+marked for it, or null when they marked nothing or "Not Interested/Not Applicable" (the default
+answer, never stored).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.AssignmentRow.html#preferences()" class="member-name-link">preferences()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.AssignmentRow.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.AssignmentRow</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>preferences</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#prefill()" class="member-name-link">prefill()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
@@ -2665,6 +2732,8 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/config/SchedulingConfig.html#%3Cinit%3E()" class="member-name-link">SchedulingConfig()</a> - Constructor for class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/SchedulingConfig.html" title="class in edu.ucsb.cs.taapply.config">SchedulingConfig</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#SECOND_CHOICE" class="member-name-link">SECOND_CHOICE</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#secondChoiceCourse()" class="member-name-link">secondChoiceCourse()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>secondChoiceCourse</code> record component.</div>
@@ -2980,6 +3049,10 @@ for; ULA positions are funded for undergraduates only.</div>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.Assignments</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -3475,6 +3548,8 @@ the order they are declared.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/wiremock/WiremockServiceImpl.html#%3Cinit%3E()" class="member-name-link">WiremockServiceImpl()</a> - Constructor for class edu.ucsb.cs.taapply.services.wiremock.<a href="edu/ucsb/cs/taapply/services/wiremock/WiremockServiceImpl.html" title="class in edu.ucsb.cs.taapply.services.wiremock">WiremockServiceImpl</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/CourseInterest.html#WOULD_CONSIDER" class="member-name-link">WOULD_CONSIDER</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/CourseInterest.html" title="enum class in edu.ucsb.cs.taapply.enums">CourseInterest</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#WOULD_CONSIDER" class="member-name-link">WOULD_CONSIDER</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RankingsCsvService.html#write(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">write(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RankingsCsvService.html" title="class in edu.ucsb.cs.taapply.services">RankingsCsvService</a></dt>
 <dd>&nbsp;</dd>

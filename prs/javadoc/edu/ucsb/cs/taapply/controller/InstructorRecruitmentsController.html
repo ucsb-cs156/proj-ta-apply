@@ -67,7 +67,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#forInstructor(java.lang.String)" tabindex="0">forInstructor(String)</a></li>
 <li><a href="#candidateRankingPage(java.lang.Long,java.lang.Long)" tabindex="0">candidateRankingPage(Long, Long)</a></li>
 <li><a href="#adminCourseRankingSummaries(java.lang.Long,boolean)" tabindex="0">adminCourseRankingSummaries(Long, boolean)</a></li>
-<li><a href="#candidates(java.lang.Long,java.lang.Long)" tabindex="0">candidates(Long, Long)</a></li>
+<li><a href="#candidates(java.lang.Long,java.lang.Long,boolean)" tabindex="0">candidates(Long, Long, boolean)</a></li>
+<li><a href="#cancelled(java.lang.Long,java.lang.Long)" tabindex="0">cancelled(Long, Long)</a></li>
 <li><a href="#rank(java.lang.Long,java.lang.Long,java.lang.Long,com.fasterxml.jackson.databind.JsonNode)" tabindex="0">rank(Long, Long, Long, JsonNode)</a></li>
 <li><a href="#candidateApplication(java.lang.Long,java.lang.Long,java.lang.Long)" tabindex="0">candidateApplication(Long, Long, Long)</a></li>
 </ol>
@@ -175,30 +176,35 @@ name of its instructor of record. An instructor with no catalog name yet matches
 <div class="block">Ranking counts and catalog-name email mappings for the rows visible on one recruitment's
 Courses page.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="InstructorRecruitmentsController.CandidateApplication.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateApplication</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#candidateApplication(java.lang.Long,java.lang.Long,java.lang.Long)" class="member-name-link">candidateApplication</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#cancelled(java.lang.Long,java.lang.Long)" class="member-name-link">cancelled</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="InstructorRecruitmentsController.CandidateApplication.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateApplication</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#candidateApplication(java.lang.Long,java.lang.Long,java.lang.Long)" class="member-name-link">candidateApplication</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;applicationId)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="InstructorRecruitmentsController.CandidateRankingPage.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateRankingPage</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#candidateRankingPage(java.lang.Long,java.lang.Long)" class="member-name-link">candidateRankingPage</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="InstructorRecruitmentsController.CandidateRankingPage.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateRankingPage</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#candidateRankingPage(java.lang.Long,java.lang.Long)" class="member-name-link">candidateRankingPage</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read-only candidate-ranking page metadata.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="InstructorRecruitmentsController.Candidate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#candidates(java.lang.Long,java.lang.Long)" class="member-name-link">candidates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#forInstructor(java.lang.String)" class="member-name-link">forInstructor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="InstructorRecruitmentsController.Candidate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#candidates(java.lang.Long,java.lang.Long,boolean)" class="member-name-link">candidates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId,
+ boolean&nbsp;includeNotInterested)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="InstructorRecruitmentsController.RankEdit.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.RankEdit</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rank(java.lang.Long,java.lang.Long,java.lang.Long,com.fasterxml.jackson.databind.JsonNode)" class="member-name-link">rank</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#forInstructor(java.lang.String)" class="member-name-link">forInstructor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="InstructorRecruitmentsController.RankEdit.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.RankEdit</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rank(java.lang.Long,java.lang.Long,java.lang.Long,com.fasterxml.jackson.databind.JsonNode)" class="member-name-link">rank</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;applicationId,
  com.fasterxml.jackson.databind.JsonNode&nbsp;body)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -277,12 +283,27 @@ Courses page. Counts use the same eligibility rules as the instructor ranking ta
 </section>
 </li>
 <li>
-<section class="detail" id="candidates(java.lang.Long,java.lang.Long)">
+<section class="detail" id="candidates(java.lang.Long,java.lang.Long,boolean)">
 <h3>candidates</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
 @GetMapping("/{recruitmentId}/courses/{recruitmentCourseId}/candidates")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="InstructorRecruitmentsController.Candidate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a>&gt;</span>&nbsp;<span class="element-name">candidates</span><wbr><span class="parameters">(@PathVariable
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ @PathVariable
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId,
+ @RequestParam(defaultValue="false")
+ boolean&nbsp;includeNotInterested)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="cancelled(java.lang.Long,java.lang.Long)">
+<h3>cancelled</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
+@GetMapping("/{recruitmentId}/courses/{recruitmentCourseId}/cancelled")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a>&gt;</span>&nbsp;<span class="element-name">cancelled</span><wbr><span class="parameters">(@PathVariable
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
  @PathVariable
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentCourseId)</span></div>

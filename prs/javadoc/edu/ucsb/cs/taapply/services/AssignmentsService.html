@@ -61,6 +61,11 @@ loadScripts(document, 'script');</script>
 <li><a href="#field-detail" tabindex="0">Field Details</a>
 <ol class="toc-list">
 <li><a href="#BY_COURSE_SECTION_ENROLL" tabindex="0">BY_COURSE_SECTION_ENROLL</a></li>
+<li><a href="#FIRST_CHOICE" tabindex="0">FIRST_CHOICE</a></li>
+<li><a href="#SECOND_CHOICE" tabindex="0">SECOND_CHOICE</a></li>
+<li><a href="#ENTHUSIASTIC" tabindex="0">ENTHUSIASTIC</a></li>
+<li><a href="#WOULD_CONSIDER" tabindex="0">WOULD_CONSIDER</a></li>
+<li><a href="#NOT_INTERESTED" tabindex="0">NOT_INTERESTED</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
@@ -73,8 +78,11 @@ loadScripts(document, 'script');</script>
 <li><a href="#identityColumns(edu.ucsb.cs.taapply.enums.RecruitmentType)" tabindex="0">identityColumns(RecruitmentType)</a></li>
 <li><a href="#courseNumber(java.lang.String)" tabindex="0">courseNumber(String)</a></li>
 <li><a href="#headings(java.util.List)" tabindex="0">headings(List)</a></li>
+<li><a href="#preference(edu.ucsb.cs.taapply.entity.Application,java.lang.String)" tabindex="0">preference(Application, String)</a></li>
 <li><a href="#realApplications(java.lang.Long)" tabindex="0">realApplications(Long)</a></li>
 <li><a href="#real(java.util.List)" tabindex="0">real(List)</a></li>
+<li><a href="#cancelledApplications(java.lang.Long)" tabindex="0">cancelledApplications(Long)</a></li>
+<li><a href="#cancelled(java.util.List)" tabindex="0">cancelled(List)</a></li>
 <li><a href="#assignedCounts(java.util.List)" tabindex="0">assignedCounts(List)</a></li>
 <li><a href="#ranksFor(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" tabindex="0">ranksFor(RecruitmentCourse)</a></li>
 <li><a href="#assignments(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">assignments(Recruitment)</a></li>
@@ -125,14 +133,20 @@ recruitment course id, only for sections that ranked them.</div>
 <div class="block">Everything the admin Assignments page needs for one recruitment.</div>
 </div>
 <div class="col-first even-row-color"><code>static final record&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="AssignmentsService.CourseSummary.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CourseSummary</a></code></div>
+<div class="col-second even-row-color"><code><a href="AssignmentsService.CancelledApplication.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">An application the applicant cancelled (issue #199): just enough for faculty and admins to see
+what became of someone they expected to find among the candidates.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="AssignmentsService.CourseSummary.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CourseSummary</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">One section as the page shows it: the stored allocation, how many applicants are tentatively
 assigned to it, and how many places are left (negative when over-assigned).</div>
 </div>
-<div class="col-first odd-row-color"><code>static final record&nbsp;</code></div>
-<div class="col-second odd-row-color"><code><a href="AssignmentsService.IdentityColumn.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.IdentityColumn</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="AssignmentsService.IdentityColumn.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.IdentityColumn</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">One column identifying an applicant: its header and how to read it off an application.</div>
 </div>
 </div>
@@ -152,6 +166,23 @@ assigned to it, and how many places are left (negative when over-assigned).</div
 <div class="col-last even-row-color">
 <div class="block">Course id, then section, then enrollment code, a null reading as "" in each.</div>
 </div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ENTHUSIASTIC" class="member-name-link">ENTHUSIASTIC</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#FIRST_CHOICE" class="member-name-link">FIRST_CHOICE</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">The labels of the interest an applicant expressed in a course, strongest first.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#NOT_INTERESTED" class="member-name-link">NOT_INTERESTED</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#SECOND_CHOICE" class="member-name-link">SECOND_CHOICE</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#WOULD_CONSIDER" class="member-name-link">WOULD_CONSIDER</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -189,6 +220,16 @@ assigned to it, and how many places are left (negative when over-assigned).</div
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The sections and applicants of the Assignments page.</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#cancelled(java.util.List)" class="member-name-link">cancelled</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">The cancelled ones among the given applications, test applications left out.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#cancelledApplications(java.lang.Long)" class="member-name-link">cancelledApplications</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The applications to a recruitment that the applicant cancelled, oldest first.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#courseNumber(java.lang.String)" class="member-name-link">courseNumber</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
@@ -209,19 +250,27 @@ same course and section.</div>
 <div class="block">The identity columns for a recruitment's type: the common four, class level for TAs, year in
 program and graduation date, then GPAs and previous ULA service for ULAs.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ranksFor(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">ranksFor</a><wbr>(<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;course)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#preference(edu.ucsb.cs.taapply.entity.Application,java.lang.String)" class="member-name-link">preference</a><wbr>(<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">How interested an applicant is in a course: their first or second choice, or the interest they
+marked for it, or null when they marked nothing or "Not Interested/Not Applicable" (the default
+answer, never stored).</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ranksFor(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">ranksFor</a><wbr>(<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;course)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The ranks one section gave, keyed by application id.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#real(java.util.List)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#real(java.util.List)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">The given applications without test applications and without cancelled ones.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#realApplications(java.lang.Long)" class="member-name-link">realApplications</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#realApplications(java.lang.Long)" class="member-name-link">realApplications</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The applications that take part in assignments: every application to the recruitment that is
 neither a test application nor cancelled by the applicant, in the order they were created.</div>
 </div>
@@ -248,6 +297,87 @@ neither a test application nor cancelled by the applicant, in the order they wer
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Comparator.html" title="class or interface in java.util" class="external-link">Comparator</a>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</span>&nbsp;<span class="element-name">BY_COURSE_SECTION_ENROLL</span></div>
 <div class="block">Course id, then section, then enrollment code, a null reading as "" in each.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="FIRST_CHOICE">
+<h3>FIRST_CHOICE</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">FIRST_CHOICE</span></div>
+<div class="block">The labels of the interest an applicant expressed in a course, strongest first.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.AssignmentsService.FIRST_CHOICE">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="SECOND_CHOICE">
+<h3>SECOND_CHOICE</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">SECOND_CHOICE</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.AssignmentsService.SECOND_CHOICE">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="ENTHUSIASTIC">
+<h3>ENTHUSIASTIC</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ENTHUSIASTIC</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.AssignmentsService.ENTHUSIASTIC">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="WOULD_CONSIDER">
+<h3>WOULD_CONSIDER</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">WOULD_CONSIDER</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.AssignmentsService.WOULD_CONSIDER">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="NOT_INTERESTED">
+<h3>NOT_INTERESTED</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">NOT_INTERESTED</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.services.AssignmentsService.NOT_INTERESTED">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
 </div>
 </section>
 </li>
@@ -310,6 +440,18 @@ same course and section.</div>
 </section>
 </li>
 <li>
+<section class="detail" id="preference(edu.ucsb.cs.taapply.entity.Application,java.lang.String)">
+<h3>preference</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">preference</span><wbr><span class="parameters">(<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;courseId)</span></div>
+<div class="block">How interested an applicant is in a course: their first or second choice, or the interest they
+marked for it, or null when they marked nothing or "Not Interested/Not Applicable" (the default
+answer, never stored).</div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="realApplications(java.lang.Long)">
 <h3>realApplications</h3>
 <div class="horizontal-scroll">
@@ -325,6 +467,24 @@ neither a test application nor cancelled by the applicant, in the order they wer
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</span>&nbsp;<span class="element-name">real</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</span></div>
 <div class="block">The given applications without test applications and without cancelled ones.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="cancelledApplications(java.lang.Long)">
+<h3>cancelledApplications</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a>&gt;</span>&nbsp;<span class="element-name">cancelledApplications</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</span></div>
+<div class="block">The applications to a recruitment that the applicant cancelled, oldest first.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="cancelled(java.util.List)">
+<h3>cancelled</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a>&gt;</span>&nbsp;<span class="element-name">cancelled</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications)</span></div>
+<div class="block">The cancelled ones among the given applications, test applications left out.</div>
 </div>
 </section>
 </li>
