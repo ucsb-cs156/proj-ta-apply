@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,6 +29,7 @@ import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
+import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs156.jobs.services.JobService;
 import java.math.BigDecimal;
@@ -56,6 +58,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
   @MockitoBean UserRepository userRepository;
   @MockitoBean RecruitmentAuditService recruitmentAuditService;
   @MockitoBean AllocationService allocationService;
+  @MockitoBean AssignmentsService assignmentsService;
 
   private static final String CREATE_URL =
       "/api/admin/recruitments/post?quarter=20261&type=TA"
@@ -756,7 +759,35 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     verify(recruitmentRepository, never()).save(any());
   }
 
-  // ---- PUT /api/admin/recruitments/assignmentsPublished (issue #180) ----
+  // ---- PUT /api/admin/recruitments/assignmentsPublished (issues #180 and #237) ----
+
+  /**
+   * Every prerequisite of releasing hiring decisions met: ranking and applications closed, one
+   * assigned.
+   */
+  private void releasable(Recruitment r) {
+    r.setReviewStatus("Closed");
+    r.setApplicationStatus(ApplicationStatus.CLOSED);
+    when(assignmentsService.anyAssigned(r.getId())).thenReturn(true);
+  }
+
+  private String publishRefusal(Recruitment r) throws Exception {
+    when(recruitmentRepository.findById(r.getId())).thenReturn(Optional.of(r));
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/assignmentsPublished?id="
+                        + r.getId()
+                        + "&published=true")
+                    .with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).snapshot(any());
+    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    assertNotEquals(true, r.getAssignmentsPublished());
+    return (String) responseToJson(response).get("message");
+  }
 
   @Test
   public void logged_out_users_cannot_publish_assignments() throws Exception {
@@ -788,6 +819,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
   @Test
   public void admin_can_publish_assignments_and_it_is_audited() throws Exception {
     Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    releasable(r);
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
     RecruitmentAuditService.Snapshot before =
         new RecruitmentAuditService.Snapshot(1L, Map.of("assignmentsPublished", "false"));
@@ -855,6 +887,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
   @Test
   public void an_unset_published_flag_counts_as_unpublished() throws Exception {
     Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    releasable(r);
     r.setAssignmentsPublished(null);
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
 
@@ -1262,6 +1295,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
   public void publishing_stamps_each_time_and_taking_it_back_keeps_the_last_stamp()
       throws Exception {
     Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    releasable(r);
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
     when(recruitmentAuditService.snapshot(r))
         .thenReturn(new RecruitmentAuditService.Snapshot(1L, Map.of()));
@@ -1276,5 +1310,70 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
 
     mockMvc.perform(put(url + "true").with(csrf())).andExpect(status().isOk());
     assertTrue(justNow(r.getAssignmentsPublishedAt()));
+  }
+
+  // ---- releasing hiring decisions needs its prerequisites (issue #237) ----
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void publishing_while_faculty_ranking_is_not_closed_is_refused() throws Exception {
+    for (String reviewStatus : List.of("NotStarted", "Open")) {
+      Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+      releasable(r);
+      r.setReviewStatus(reviewStatus);
+      assertEquals("Close Faculty Ranking before releasing hiring decisions.", publishRefusal(r));
+    }
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void publishing_while_applications_are_open_is_refused() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    releasable(r);
+    r.setApplicationStatus(ApplicationStatus.OPEN);
+    assertEquals("Close Applications before releasing hiring decisions.", publishRefusal(r));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void publishing_with_nobody_assigned_is_refused() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    releasable(r);
+    when(assignmentsService.anyAssigned(1L)).thenReturn(false);
+    assertEquals(
+        "Assign candidates to slots before releasing hiring decisions.", publishRefusal(r));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void the_first_unmet_prerequisite_is_the_one_named() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setReviewStatus("Open");
+    r.setApplicationStatus(ApplicationStatus.OPEN);
+    when(assignmentsService.anyAssigned(1L)).thenReturn(false);
+    assertEquals("Close Faculty Ranking before releasing hiring decisions.", publishRefusal(r));
+
+    r.setReviewStatus("Closed");
+    assertEquals("Close Applications before releasing hiring decisions.", publishRefusal(r));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void taking_published_assignments_back_is_never_refused() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAssignmentsPublished(true);
+    r.setReviewStatus("Open");
+    r.setApplicationStatus(ApplicationStatus.OPEN);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+    when(recruitmentAuditService.snapshot(r))
+        .thenReturn(new RecruitmentAuditService.Snapshot(1L, Map.of()));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/assignmentsPublished?id=1&published=false").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(false, r.getAssignmentsPublished());
+    verify(assignmentsService, never()).anyAssigned(any());
   }
 }

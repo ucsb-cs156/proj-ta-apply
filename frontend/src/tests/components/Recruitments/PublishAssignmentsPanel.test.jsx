@@ -152,20 +152,127 @@ describe("PublishAssignmentsPanel tests", () => {
     expect(puts()).toHaveLength(0);
   });
 
-  test("a failed publish is toasted and the modal stays open", async () => {
-    axiosMock
-      .onPut("/api/admin/recruitments/assignmentsPublished")
-      .reply(500, { message: "boom" });
+  test("a refused publish shows the backend's message in the modal, which stays open, with no toast", async () => {
+    axiosMock.onPut("/api/admin/recruitments/assignmentsPublished").reply(400, {
+      message: "Assign candidates to slots before releasing hiring decisions.",
+    });
     renderPanel();
     await userEvent.click(screen.getByTestId("Panel-button"));
     await screen.findByTestId("Panel-modal");
+    expect(screen.queryByTestId("Panel-refusal")).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByTestId("Panel-confirm"));
 
-    await waitFor(() => expect(mockToast).toHaveBeenCalled());
-    expect(mockToast.mock.calls[0][0]).toMatch(/500/);
-    expect(mockToast).not.toHaveBeenCalledWith("Assignments published.");
+    const refusal = await screen.findByTestId("Panel-refusal");
+    expect(refusal).toHaveTextContent(
+      "Assign candidates to slots before releasing hiring decisions.",
+    );
+    expect(refusal).toHaveClass("alert-danger");
+    expect(mockToast).not.toHaveBeenCalled();
     expect(screen.getByTestId("Panel-modal")).toBeInTheDocument();
+    expect(screen.getByTestId("Panel-confirm")).not.toBeDisabled();
+  });
+
+  test("trying again clears the message while it runs, and a success closes the modal", async () => {
+    let release;
+    axiosMock.reset();
+    axiosMock
+      .onPut("/api/admin/recruitments/assignmentsPublished")
+      .replyOnce(400, {
+        message:
+          "Assign candidates to slots before releasing hiring decisions.",
+      })
+      .onPut("/api/admin/recruitments/assignmentsPublished")
+      .reply(
+        () =>
+          new Promise((resolve) => {
+            release = () =>
+              resolve([200, { ...taRecruitment, assignmentsPublished: true }]);
+          }),
+      );
+    renderPanel();
+    await userEvent.click(screen.getByTestId("Panel-button"));
+    await userEvent.click(await screen.findByTestId("Panel-confirm"));
+    await screen.findByTestId("Panel-refusal");
+
+    await userEvent.click(screen.getByTestId("Panel-confirm"));
+
+    // The second request is still running: the old message is already gone.
+    await waitFor(() => expect(puts()).toHaveLength(2));
+    expect(screen.queryByTestId("Panel-refusal")).not.toBeInTheDocument();
+    release();
+    await waitFor(() =>
+      expect(screen.queryByTestId("Panel-modal")).not.toBeInTheDocument(),
+    );
+    expect(mockToast).toHaveBeenCalledWith("Assignments published.");
+  });
+
+  test("a message from an earlier try is not there when the modal is opened again", async () => {
+    axiosMock.onPut("/api/admin/recruitments/assignmentsPublished").reply(400, {
+      message: "Assign candidates to slots before releasing hiring decisions.",
+    });
+    renderPanel();
+    await userEvent.click(screen.getByTestId("Panel-button"));
+    await userEvent.click(await screen.findByTestId("Panel-confirm"));
+    await screen.findByTestId("Panel-refusal");
+    await userEvent.click(screen.getByTestId("Panel-cancel"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("Panel-modal")).not.toBeInTheDocument(),
+    );
+
+    await userEvent.click(screen.getByTestId("Panel-button"));
+
+    await screen.findByTestId("Panel-modal");
+    expect(screen.queryByTestId("Panel-refusal")).not.toBeInTheDocument();
+  });
+
+  test("ranking still open: the reason is shown up front, Yes is disabled and nothing is sent", async () => {
+    const open = { ...taRecruitment, reviewStatus: "Open" };
+    renderPanel(open);
+    await userEvent.click(screen.getByTestId("Panel-button"));
+    await screen.findByTestId("Panel-modal");
+
+    expect(screen.getByTestId("Panel-refusal")).toHaveTextContent(
+      "Close Faculty Ranking before releasing hiring decisions.",
+    );
+    expect(screen.getByTestId("Panel-confirm")).toBeDisabled();
+    await userEvent.click(screen.getByTestId("Panel-confirm"));
+    expect(puts()).toHaveLength(0);
+  });
+
+  test("ranking never started is also named first", async () => {
+    renderPanel({ ...taRecruitment, reviewStatus: "NotStarted" });
+    await userEvent.click(screen.getByTestId("Panel-button"));
+    expect(await screen.findByTestId("Panel-refusal")).toHaveTextContent(
+      "Close Faculty Ranking before releasing hiring decisions.",
+    );
+  });
+
+  test("applications still open: that reason is shown up front and Yes is disabled", async () => {
+    renderPanel({
+      ...taRecruitment,
+      reviewStatus: "Closed",
+      applicationStatus: "OPEN",
+    });
+    await userEvent.click(screen.getByTestId("Panel-button"));
+    await screen.findByTestId("Panel-modal");
+
+    expect(screen.getByTestId("Panel-refusal")).toHaveTextContent(
+      "Close Applications before releasing hiring decisions.",
+    );
+    expect(screen.getByTestId("Panel-confirm")).toBeDisabled();
+  });
+
+  test("ranking and applications both closed: no message and Yes is enabled", async () => {
+    renderPanel({
+      ...taRecruitment,
+      reviewStatus: "Closed",
+      applicationStatus: "CLOSED",
+    });
+    await userEvent.click(screen.getByTestId("Panel-button"));
+    await screen.findByTestId("Panel-modal");
+
+    expect(screen.queryByTestId("Panel-refusal")).not.toBeInTheDocument();
     expect(screen.getByTestId("Panel-confirm")).not.toBeDisabled();
   });
 

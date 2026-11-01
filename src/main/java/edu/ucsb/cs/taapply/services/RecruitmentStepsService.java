@@ -40,6 +40,8 @@ public class RecruitmentStepsService {
    * @param secondaryLink steps 7 and 9: the "(see rankings)" / "(see assignments)" link
    * @param tentative step 9 only: hiring decisions are released but applications or faculty ranking
    *     have been reopened
+   * @param blockedReason step 9 only, while not released: the message naming the first prerequisite
+   *     of releasing hiring decisions that is not met (issue #237); null when all are
    */
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public record Step(
@@ -50,7 +52,22 @@ public class RecruitmentStepsService {
       String action,
       List<Link> titleLinks,
       Link secondaryLink,
-      Boolean tentative) {}
+      Boolean tentative,
+      String blockedReason) {
+
+    /** A step with no blocked reason, which is every step but an unreleased step 9. */
+    public Step(
+        int number,
+        boolean done,
+        String label,
+        String href,
+        String action,
+        List<Link> titleLinks,
+        Link secondaryLink,
+        Boolean tentative) {
+      this(number, done, label, href, action, titleLinks, secondaryLink, tentative, null);
+    }
+  }
 
   public record Steps(Long recruitmentId, RecruitmentType type, List<Step> steps) {}
 
@@ -187,7 +204,8 @@ public class RecruitmentStepsService {
                 published ? null : "publishAssignments",
                 null,
                 new Link("(see assignments)", courses),
-                published && (applicationsOpen || reviewsOpen))));
+                HiringDecisions.isTentative(recruitment),
+                published ? null : HiringDecisions.unmetPrerequisite(recruitment, assigned > 0))));
   }
 
   /** "Tentative: not set" rather than "Tentative: null" for a date nobody entered. */

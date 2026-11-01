@@ -1,9 +1,12 @@
 import { describe, expect, test } from "vitest";
 import {
+  CLOSE_APPLICATIONS_FIRST,
+  CLOSE_RANKING_FIRST,
   LAYOUT_LABELS,
   assignmentsCsvFileName,
   assignmentsCsvUrl,
   publishModalText,
+  unmetPrerequisite,
 } from "main/utils/publishedAssignments";
 
 describe("publishedAssignments utilities", () => {
@@ -39,5 +42,32 @@ describe("publishedAssignments utilities", () => {
       "information about the ULAs hired",
     );
     expect(publishModalText("ULA")).toHaveLength(3);
+  });
+
+  test("unmetPrerequisite names ranking first, then applications, then nothing", () => {
+    expect(CLOSE_RANKING_FIRST).toBe(
+      "Close Faculty Ranking before releasing hiring decisions.",
+    );
+    expect(CLOSE_APPLICATIONS_FIRST).toBe(
+      "Close Applications before releasing hiring decisions.",
+    );
+    expect(
+      unmetPrerequisite({ applicationStatus: "OPEN", reviewStatus: "Open" }),
+    ).toBe(CLOSE_RANKING_FIRST);
+    expect(
+      unmetPrerequisite({
+        applicationStatus: "CLOSED",
+        reviewStatus: "NotStarted",
+      }),
+    ).toBe(CLOSE_RANKING_FIRST);
+    expect(
+      unmetPrerequisite({ applicationStatus: "OPEN", reviewStatus: "Closed" }),
+    ).toBe(CLOSE_APPLICATIONS_FIRST);
+    expect(
+      unmetPrerequisite({
+        applicationStatus: "CLOSED",
+        reviewStatus: "Closed",
+      }),
+    ).toBeNull();
   });
 });

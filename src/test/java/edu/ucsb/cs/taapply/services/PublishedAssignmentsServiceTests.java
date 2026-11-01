@@ -1,7 +1,9 @@
 package edu.ucsb.cs.taapply.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -11,6 +13,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
@@ -305,5 +308,22 @@ public class PublishedAssignmentsServiceTests {
             .map(Application::getId)
             .toList();
     assertEquals(List.of(3L, 4L, 2L, 1L), order);
+  }
+
+  // ---- the Tentative note (issue #237) ----
+
+  @Test
+  public void the_table_is_tentative_while_applications_or_ranking_are_open() {
+    Recruitment r = recruitment(RecruitmentType.TA, true);
+    r.setApplicationStatus(ApplicationStatus.CLOSED);
+    r.setReviewStatus("Closed");
+    assertFalse(service.table(r, "course").tentative());
+
+    r.setApplicationStatus(ApplicationStatus.OPEN);
+    assertTrue(service.table(r, "student").tentative());
+
+    r.setApplicationStatus(ApplicationStatus.CLOSED);
+    r.setReviewStatus("Open");
+    assertTrue(service.table(r, "course").tentative());
   }
 }

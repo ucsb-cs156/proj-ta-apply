@@ -19,6 +19,11 @@ const publishedAssignmentsFixtures = {
     ],
   },
 
+  /** The same table while applications or faculty ranking are open again (issue #237). */
+  get taByCourseTentative() {
+    return { ...this.taByCourse, tentative: true };
+  },
+
   /** TA recruitment 1, one row per TA. */
   taByStudent: {
     recruitmentId: 1,

@@ -43,7 +43,8 @@ public class PublishedAssignmentsService {
       RecruitmentType type,
       String layout,
       List<String> headers,
-      List<List<String>> rows) {}
+      List<List<String>> rows,
+      boolean tentative) {}
 
   /** Last name, then first name, case-insensitively, a null reading as "". */
   static final Comparator<Application> BY_NAME =
@@ -146,7 +147,13 @@ public class PublishedAssignmentsService {
         rows.add(row);
       }
     }
-    return new Table(recruitment.getId(), recruitment.getType(), layout, headers, rows);
+    return new Table(
+        recruitment.getId(),
+        recruitment.getType(),
+        layout,
+        headers,
+        rows,
+        HiringDecisions.isTentative(recruitment));
   }
 
   /** The table as CSV: the header row, then the rows, every cell quoted. */

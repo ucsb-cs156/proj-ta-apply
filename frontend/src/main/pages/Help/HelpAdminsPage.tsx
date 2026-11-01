@@ -136,6 +136,27 @@ export default function HelpAdminsPage(): React.JSX.Element {
           is not mapped on the Instructors page shows as &ldquo;Not
           mapped&rdquo;.
         </p>
+        <p
+          id="release-hiring-decisions"
+          data-testid="HelpAdminsPage-release-hiring-decisions"
+        >
+          Releasing hiring decisions has three prerequisites, checked in this
+          order: <strong>faculty ranking is closed</strong>,{" "}
+          <strong>applications are closed</strong>, and{" "}
+          <strong>at least one candidate is assigned</strong> to a course. If
+          one is not met, the Publish Assignments box names it, for example
+          &ldquo;Close Faculty Ranking before releasing hiring
+          decisions.&rdquo;, and nothing is published; the Yes button is greyed
+          out when the card already shows that ranking or applications are open.
+          Taking published assignments back is never refused. Applications and
+          faculty ranking can be reopened after hiring decisions are released.
+          Nothing is blocked and the published page keeps showing the current
+          assignments, but while either is open again, step 9 of the card&apos;s
+          diagram and the published Assignments page say{" "}
+          <em>Tentative; part of the hiring process has been reopened</em>. When
+          both are closed again the note goes away. Nothing is ever marked
+          final, since reopening is always possible.
+        </p>
 
         <h2 className="my-3 h4" id="flow">
           The flow of a recruitment

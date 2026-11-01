@@ -10,6 +10,8 @@ import edu.ucsb.cs.taapply.models.Quarter;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
+import edu.ucsb.cs.taapply.services.AssignmentsService;
+import edu.ucsb.cs.taapply.services.HiringDecisions;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,6 +56,7 @@ public class RecruitmentsController extends ApiController {
   @Autowired PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
   @Autowired RecruitmentAuditService recruitmentAuditService;
   @Autowired AllocationService allocationService;
+  @Autowired AssignmentsService assignmentsService;
 
   @Operation(
       summary = "Create a recruitment",
@@ -274,8 +277,11 @@ public class RecruitmentsController extends ApiController {
       description =
           "Publishing opens the read-only assignments page and its CSV downloads to admins and"
               + " faculty (issue #180). Tentative assignments can still be changed afterwards; the"
-              + " page always shows the current ones. Recorded in the audit trail. Setting the"
-              + " value already stored changes and records nothing.")
+              + " page always shows the current ones. Publishing is refused with a 400 naming the"
+              + " first step still to do unless faculty ranking is closed, applications are closed"
+              + " and at least one candidate is assigned (issue #237); taking them back is never"
+              + " refused. Recorded in the audit trail. Setting the value already stored changes"
+              + " and records nothing.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("/assignmentsPublished")
   public Recruitment updateAssignmentsPublished(
@@ -289,6 +295,14 @@ public class RecruitmentsController extends ApiController {
 
     if (Boolean.TRUE.equals(recruitment.getAssignmentsPublished()) == published) {
       return recruitment;
+    }
+
+    if (published) {
+      String unmet =
+          HiringDecisions.unmetPrerequisite(recruitment, assignmentsService.anyAssigned(id));
+      if (unmet != null) {
+        throw new IllegalArgumentException(unmet);
+      }
     }
 
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
