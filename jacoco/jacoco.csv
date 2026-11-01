@@ -14,8 +14,10 @@ taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService,0,342,0,22,0,77,0,26,0,1
 taapply,edu.ucsb.cs.taapply.services,BudgetService,0,266,0,18,0,48,0,22,0,13
 taapply,edu.ucsb.cs.taapply.services,RoleEmailCsvService.UploadResult,0,15,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService.Row,0,55,0,8,0,10,0,8,0,4
+taapply,edu.ucsb.cs.taapply.services,DeveloperModeService,0,75,0,8,0,15,0,11,0,7
 taapply,edu.ucsb.cs.taapply.services,AllocationService,0,229,0,26,0,50,0,21,0,8
 taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService.Snapshot,0,9,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,DeveloperModeService.Status,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RoleAssignmentService,0,89,0,14,0,17,0,13,0,6
 taapply,edu.ucsb.cs.taapply.services,RecruitmentCoursesRefreshService.Offered,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentCoursesRefreshService,0,138,0,18,0,30,0,12,0,3
@@ -27,9 +29,11 @@ taapply,edu.ucsb.cs.taapply.services,UcsbQuarterService.new TypeReference() {...
 taapply,edu.ucsb.cs.taapply.services,ApplicationCsvService.Column,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,BudgetService.Side,0,27,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RankingsCsvService.Column,0,9,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,CourseTargetsService.CourseTargets,0,21,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services,CourseTargetsService,0,137,0,8,0,27,0,14,0,10
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService.UploadResult,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService,0,540,0,30,0,111,0,28,0,13
-taapply,edu.ucsb.cs.taapply.services,SystemInfoServiceImpl,0,68,0,4,0,18,0,5,0,3
+taapply,edu.ucsb.cs.taapply.services,SystemInfoServiceImpl,0,72,0,4,0,19,0,5,0,3
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService.Columns,0,179,0,22,0,26,0,15,0,4
 taapply,edu.ucsb.cs.taapply.services,LegacyApplicationCsvService,0,1460,0,180,0,305,0,122,0,32
 taapply,edu.ucsb.cs.taapply.services,UCSBCurriculumService,0,355,0,24,0,72,0,23,0,11
@@ -66,6 +70,7 @@ taapply,edu.ucsb.cs.taapply.enums,ClassLevel,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,LanguageExamStatus,0,27,0,0,0,5,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ApplicationStatus,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,RecruitmentType,0,15,0,0,0,3,0,1,0,1
+taapply,edu.ucsb.cs.taapply.enums,AllocationVisibility,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,OtherCampusJob,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,EnrollmentEstimateSource,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,NoticesController,0,66,0,4,0,12,0,9,0,7
@@ -74,7 +79,8 @@ taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CourseDe
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController.ApplicationOptions,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController,0,323,0,26,0,77,0,36,0,23
 taapply,edu.ucsb.cs.taapply.controller,AppSettingsController.NameItem,0,6,0,0,0,1,0,1,0,1
-taapply,edu.ucsb.cs.taapply.controller,RecruitmentsController,0,511,0,46,0,117,0,44,0,21
+taapply,edu.ucsb.cs.taapply.controller,RecruitmentsController,0,508,0,46,0,117,0,44,0,21
+taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.AllocationRow,0,32,0,0,0,7,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,NoticesController.NoticeContent,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,AdminsController,0,124,0,2,0,24,0,10,0,9
 taapply,edu.ucsb.cs.taapply.controller,UserInfoController,0,6,0,0,0,2,0,2,0,2
@@ -82,7 +88,7 @@ taapply,edu.ucsb.cs.taapply.controller,CoursesController,0,76,0,0,0,17,0,7,0,7
 taapply,edu.ucsb.cs.taapply.controller,AssignmentsController,0,65,0,0,0,11,0,5,0,5
 taapply,edu.ucsb.cs.taapply.controller,UCSBAPIQuarterController,0,33,0,4,0,8,0,6,0,4
 taapply,edu.ucsb.cs.taapply.controller,InstructorsController,0,148,0,10,0,30,0,14,0,9
-taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.InstructorRecruitment,0,87,0,2,0,21,0,4,0,3
+taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.InstructorRecruitment,0,100,0,2,0,26,0,6,0,5
 taapply,edu.ucsb.cs.taapply.controller,AdminsController.UserDTO,0,39,0,0,0,8,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,AdminsController.UsersPageDTO,0,31,0,0,0,8,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,JobsController,0,79,0,2,0,13,0,7,0,6
@@ -99,10 +105,11 @@ taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.RankingS
 taapply,edu.ucsb.cs.taapply.controller,SystemInfoController,0,7,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,BudgetController,0,72,0,10,0,18,0,10,0,5
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
+taapply,edu.ucsb.cs.taapply.controller,DeveloperModeController,0,12,0,0,0,3,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,InstructorsController.InstructorDTO,0,34,0,0,0,7,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,AdminAssignmentsController,0,104,0,4,0,20,0,10,0,8
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController.ApplicationFields,0,123,0,0,0,1,0,1,0,1
-taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CandidateRankingPage,0,45,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CandidateRankingPage,0,48,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,InstructorsCSVController,0,176,0,10,0,36,0,13,0,8
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CandidateApplication,0,21,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,QuarterCalendarController,0,22,0,0,0,5,0,4,0,4
@@ -113,7 +120,7 @@ taapply,edu.ucsb.cs.taapply.controller,AuditTrailController,0,84,0,6,0,15,0,7,0,
 taapply,edu.ucsb.cs.taapply.controller,AppSettingsController.NameList,0,18,0,0,0,3,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,AdminRankingsController,0,48,0,0,0,9,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,ApiController,0,59,0,0,0,17,0,9,0,9
-taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController,0,876,0,78,0,236,0,76,0,37
+taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController,0,976,0,98,0,259,0,90,0,41
 taapply,edu.ucsb.cs.taapply.entity,RecruitmentCourse,0,15,0,6,0,1,0,4,0,1
 taapply,edu.ucsb.cs.taapply.errors,UpstreamApiException,0,5,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.errors,ForbiddenException,0,4,0,0,0,2,0,1,0,1
