@@ -68,7 +68,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#updateFacultyRankingDeadline(java.lang.Long,java.time.LocalDate)" tabindex="0">updateFacultyRankingDeadline(Long, LocalDate)</a></li>
 <li><a href="#updateTotalHiringTarget(java.lang.Long,java.lang.Integer)" tabindex="0">updateTotalHiringTarget(Long, Integer)</a></li>
 <li><a href="#updateAvgCostPerPosition(java.lang.Long,java.math.BigDecimal)" tabindex="0">updateAvgCostPerPosition(Long, BigDecimal)</a></li>
-<li><a href="#updateAllocationsVisibleToFaculty(java.lang.Long,boolean)" tabindex="0">updateAllocationsVisibleToFaculty(Long, boolean)</a></li>
+<li><a href="#updateAllocationVisibility(java.lang.Long,edu.ucsb.cs.taapply.enums.AllocationVisibility)" tabindex="0">updateAllocationVisibility(Long, AllocationVisibility)</a></li>
 <li><a href="#updateAssignmentsPublished(java.lang.Long,boolean)" tabindex="0">updateAssignmentsPublished(Long, boolean)</a></li>
 <li><a href="#allRecruitments()" tabindex="0">allRecruitments()</a></li>
 <li><a href="#updateStatus(java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationStatus)" tabindex="0">updateStatus(Long, ApplicationStatus)</a></li>
@@ -141,8 +141,8 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;primaryConsiderationDate)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAllocationsVisibleToFaculty(java.lang.Long,boolean)" class="member-name-link">updateAllocationsVisibleToFaculty</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- boolean&nbsp;visible)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAllocationVisibility(java.lang.Long,edu.ucsb.cs.taapply.enums.AllocationVisibility)" class="member-name-link">updateAllocationVisibility</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="../enums/AllocationVisibility.html" title="enum class in edu.ucsb.cs.taapply.enums">AllocationVisibility</a>&nbsp;visibility)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAssignmentsPublished(java.lang.Long,boolean)" class="member-name-link">updateAssignmentsPublished</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
@@ -279,16 +279,16 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
 </section>
 </li>
 <li>
-<section class="detail" id="updateAllocationsVisibleToFaculty(java.lang.Long,boolean)">
-<h3>updateAllocationsVisibleToFaculty</h3>
+<section class="detail" id="updateAllocationVisibility(java.lang.Long,edu.ucsb.cs.taapply.enums.AllocationVisibility)">
+<h3>updateAllocationVisibility</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
 @Transactional
-@PutMapping("/allocationsVisibleToFaculty")
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">updateAllocationsVisibleToFaculty</span><wbr><span class="parameters">(@RequestParam
+@PutMapping("/allocationVisibility")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">updateAllocationVisibility</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  @RequestParam
- boolean&nbsp;visible)</span></div>
+ <a href="../enums/AllocationVisibility.html" title="enum class in edu.ucsb.cs.taapply.enums">AllocationVisibility</a>&nbsp;visibility)</span></div>
 </div>
 </section>
 </li>
