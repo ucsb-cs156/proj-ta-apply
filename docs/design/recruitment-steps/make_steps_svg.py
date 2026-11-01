@@ -61,6 +61,9 @@ def build(kind):
     soft.append(f'M {R(7):.1f} {g[7]["cy"]:.1f} H {g[8]["cx"]:.1f} V {T(8)-1}')
     soft.append(f'M {R(4):.1f} {g[4]["cy"]:.1f} H {g[6]["cx"]:.1f} V {T(6)-1}')
     hard.append(f'M {g[4]["cx"]:.1f} {T(4):.1f} V 22 H {g[9]["cx"]:.1f} V {T(9)-1}')
+    # 7 -> 9: out of 7's right edge a little above the 7 -> 8 line, then down into 9's top, left of
+    # where 4 -> 9 arrives so the two do not cross.
+    hard.append(f'M {R(7):.1f} {g[7]["cy"]-12:.1f} H {g[9]["cx"]-20:.1f} V {T(9)-1}')
     for d in hard: out.append(f'  <path class="hard" d="{d}"/>')
     for d in soft: out.append(f'  <path class="soft" d="{d}"/>')
     out.append('  <line x1="30" y1="290" x2="75" y2="290" class="hard"/><text x="85" y="294" class="legend">hard prerequisite: must happen first</text>')

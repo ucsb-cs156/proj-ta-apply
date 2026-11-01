@@ -23,7 +23,7 @@ A recruitment is run in nine steps. Steps have *hard* prerequisites (must happen
 | 6 | Open Faculty Ranking | | 4, 5 |
 | 7 | Close Faculty Ranking | 6 | |
 | 8 | Assign Candidates to Slots | 6 | 7 |
-| 9 | Release Hiring Decisions | 4, 8 | |
+| 9 | Release Hiring Decisions | 4, 7, 8 | |
 
 \* Allocation visibility has three settings, chosen in one place: **admins only** (the
 default), **each faculty member sees the allocations for the courses they teach**, or **all
@@ -73,7 +73,20 @@ with three additions:
 | 6 | `Opened: {date faculty rankings opened}` or `Not opened yet` | faculty review opening date set | the Open Faculty Rankings modal |
 | 7 | `Closed: {date faculty rankings closed}`; before that `Deadline: {facultyRankingDeadline}` if a deadline is set, else `Not closed yet` | reviews closed after having been open | the Close Faculty Rankings modal; and a separate link **(see rankings)** → the Courses page |
 | 8 | `Still to assign: n` while tentative assignments < target; `Assignment complete` otherwise | assignments ≥ target | the Assignments page |
-| 9 | `Released: {date hiring decisions released}` or `Not released yet` | assignments published | before publishing, the Release Assignments (publish) modal; after publishing, the published Assignments page; and a separate link **(see assignments)** → the Courses page |
+| 9 | `Released: {date hiring decisions released}` or `Not released yet`, followed by the reopening note below when it applies | assignments published | before publishing, the Release Assignments (publish) modal; after publishing, the published Assignments page; and a separate link **(see assignments)** → the Courses page |
+
+### Hiring decisions and reopening
+
+Releasing hiring decisions (step 9) has three hard prerequisites: applications are closed (step 4),
+faculty ranking is closed (step 7), and candidates have been assigned (step 8). The application
+enforces them: an admin who tries to release hiring decisions with applications or faculty ranking
+still open is told which step has to be done first and nothing is released.
+
+Applications and faculty ranking can be **reopened retroactively**. When hiring decisions have
+been released and either applications or faculty ranking is open again, the step 9 box shows the
+note **"Tentative; part of the hiring process has been reopened"** under its date. When both are
+closed there is no note; the box also never says "Final", because a later reopening is always
+possible.
 
 The hiring target keeps its default of 1 (it is a divisor in the budget and ratio figures, so it is
 never null); the diagram therefore always shows `Hiring Target: n`.
