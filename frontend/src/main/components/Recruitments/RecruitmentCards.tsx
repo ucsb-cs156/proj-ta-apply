@@ -27,9 +27,15 @@ import {
   MORE_ABOUT_TEXT,
   OPEN_APPLICATIONS_TOOLTIP,
   OPEN_REVIEWS_CONFIRMATION,
+  CLOSE_REVIEWS_CONFIRMATION,
+  earlyCloseWarning,
   OPEN_REVIEWS_TOOLTIP,
   statusConfirmation,
 } from "main/utils/recruitmentActions";
+import {
+  defaultReviewDeadline,
+  isBeforeDeadline,
+} from "main/utils/workingDays";
 
 /** On the Test button of each card. */
 export const TEST_APPLICATION_TOOLTIP =
@@ -82,6 +88,10 @@ export default function RecruitmentCards({
   const [statusModal, setStatusModal] = useState<Recruitment | null>(null);
 
   const [reviewModal, setReviewModal] = useState<ReviewModal | null>(null);
+  // The recruitment whose faculty reviews are about to be closed (issue #211), while the
+  // confirmation is open.
+  const [closeReviewsModal, setCloseReviewsModal] =
+    useState<Recruitment | null>(null);
   const [deadline, setDeadline] = useState("");
   const [deadlineError, setDeadlineError] = useState("");
 
@@ -98,7 +108,12 @@ export default function RecruitmentCards({
         ...(rankingDeadline ? { facultyRankingDeadline: rankingDeadline } : {}),
       },
     }),
-    { onSuccess: () => setReviewModal(null) },
+    {
+      onSuccess: () => {
+        setReviewModal(null);
+        setCloseReviewsModal(null);
+      },
+    },
     ["/api/admin/recruitments/all"],
   );
 
@@ -122,8 +137,12 @@ export default function RecruitmentCards({
     recruitment: Recruitment,
     mode: ReviewModal["mode"],
   ) => {
+    // Opening proposes five working days from today (issue #211); the admin may change it.
     setDeadline(
-      mode === "open" ? "" : (recruitment.facultyRankingDeadline ?? ""),
+      mode === "open"
+        ? defaultReviewDeadline()
+        : // Stryker disable next-line StringLiteral : a date box shows any non-date as empty anyway
+          (recruitment.facultyRankingDeadline ?? ""),
     );
     setDeadlineError("");
     setReviewModal({ recruitment, mode });
@@ -328,12 +347,7 @@ export default function RecruitmentCards({
                 {reviewsOpen ? (
                   <Button
                     variant="warning"
-                    onClick={() =>
-                      reviewStatusMutation.mutate({
-                        recruitment,
-                        status: "Closed",
-                      })
-                    }
+                    onClick={() => setCloseReviewsModal(recruitment)}
                     data-testid={id("review-status-button")}
                   >
                     Close Faculty Reviews
@@ -460,6 +474,71 @@ export default function RecruitmentCards({
               </>
             );
           })()}
+      </Modal>
+      <Modal
+        show={closeReviewsModal !== null}
+        onHide={() => setCloseReviewsModal(null)}
+        centered
+        data-testid={`${testIdPrefix}-close-reviews-modal`}
+      >
+        {closeReviewsModal !== null && (
+          <>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                {CLOSE_REVIEWS_CONFIRMATION.title}:{" "}
+                {yyyyqToQyy(closeReviewsModal.quarter)} {closeReviewsModal.type}
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <p data-testid={`${testIdPrefix}-close-reviews-explanation`}>
+                {CLOSE_REVIEWS_CONFIRMATION.explanation}{" "}
+                <a
+                  href={CLOSE_REVIEWS_CONFIRMATION.helpLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  data-testid={`${testIdPrefix}-close-reviews-help`}
+                >
+                  {MORE_ABOUT_TEXT}
+                </a>
+              </p>
+              {isBeforeDeadline(closeReviewsModal.facultyRankingDeadline) && (
+                <p
+                  className="text-danger fw-bold"
+                  role="alert"
+                  data-testid={`${testIdPrefix}-close-reviews-early`}
+                >
+                  <span aria-hidden="true">&#9888; </span>
+                  {earlyCloseWarning(
+                    closeReviewsModal.facultyRankingDeadline as string,
+                  )}
+                </p>
+              )}
+              <p className="fw-bold mb-0">Are you sure?</p>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="secondary"
+                onClick={() => setCloseReviewsModal(null)}
+                data-testid={`${testIdPrefix}-close-reviews-no`}
+              >
+                {CLOSE_REVIEWS_CONFIRMATION.no}
+              </Button>
+              <Button
+                variant="warning"
+                disabled={reviewStatusMutation.isPending}
+                onClick={() =>
+                  reviewStatusMutation.mutate({
+                    recruitment: closeReviewsModal,
+                    status: "Closed",
+                  })
+                }
+                data-testid={`${testIdPrefix}-close-reviews-yes`}
+              >
+                {CLOSE_REVIEWS_CONFIRMATION.yes}
+              </Button>
+            </Modal.Footer>
+          </>
+        )}
       </Modal>
       <Modal
         show={reviewModal !== null}

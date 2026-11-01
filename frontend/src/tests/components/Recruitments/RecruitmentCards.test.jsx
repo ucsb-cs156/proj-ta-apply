@@ -535,6 +535,8 @@ describe("RecruitmentCards tests", () => {
     const reopenedDateInput = screen.getByTestId(
       "Cards-faculty-ranking-deadline-input",
     );
+    // The box proposes a deadline (issue #211); clear it to submit nothing.
+    await userEvent.clear(reopenedDateInput);
     fireEvent.submit(reopenedDateInput.closest("form"));
     expect(axiosMock.history.put).toHaveLength(0);
     expect(screen.getByText("Enter a valid deadline.")).toBeInTheDocument();
@@ -549,6 +551,9 @@ describe("RecruitmentCards tests", () => {
 
     await userEvent.click(
       screen.getByTestId("Cards-card-0-review-status-button"),
+    );
+    await userEvent.clear(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
     );
     await userEvent.type(
       screen.getByTestId("Cards-faculty-ranking-deadline-input"),
@@ -572,6 +577,8 @@ describe("RecruitmentCards tests", () => {
     await userEvent.click(
       screen.getByTestId("Cards-card-2-review-status-button"),
     );
+    // Issue #211: closing asks first.
+    await userEvent.click(screen.getByTestId("Cards-close-reviews-yes"));
     await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
     expect(axiosMock.history.put[0].url).toBe(
       "/api/admin/recruitments/reviewStatus",
@@ -806,5 +813,164 @@ describe("RecruitmentCards tests", () => {
     expect(
       screen.queryByTestId("Cards-card-1-published-assignments-button"),
     ).not.toBeInTheDocument();
+  });
+
+  // ---- Issue #211: closing faculty reviews asks first; the deadline defaults ahead ----
+
+  test("Close Faculty Reviews opens a confirmation that explains, links to help and asks Yes or No", async () => {
+    renderCards();
+    // Card 2 is the open ULA recruitment (W26) whose deadline, 2026-02-15, has passed.
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-review-status-button"),
+    );
+
+    const modal = await screen.findByTestId("Cards-close-reviews-modal");
+    expect(
+      within(modal).getByText("Close Faculty Reviews: W26 ULA"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("Cards-close-reviews-explanation"),
+    ).toHaveTextContent(
+      "Faculty will no longer be able to enter or change rankings; what they have ranked so far is kept, and so are the review opening date and the deadline. Reviews can be opened again later. The change is recorded in the recruitment's change history. More about this action",
+    );
+    const help = screen.getByTestId("Cards-close-reviews-help");
+    expect(help).toHaveAttribute("href", "/help/admins#faculty-reviews");
+    expect(help).toHaveAttribute("target", "_blank");
+    expect(help).toHaveAttribute("rel", "noreferrer");
+    expect(within(modal).getByText("Are you sure?")).toBeInTheDocument();
+    expect(screen.getByTestId("Cards-close-reviews-no")).toHaveTextContent(
+      "No, don't close faculty reviews now",
+    );
+    const yes = screen.getByTestId("Cards-close-reviews-yes");
+    expect(yes).toHaveTextContent("Yes, Close Faculty Reviews Now");
+    expect(yes).toHaveClass("btn-warning");
+    // The deadline has passed, so there is no early-closing warning.
+    expect(
+      screen.queryByTestId("Cards-close-reviews-early"),
+    ).not.toBeInTheDocument();
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("No, or the close control, closes the confirmation without saving", async () => {
+    renderCards();
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-review-status-button"),
+    );
+    await screen.findByTestId("Cards-close-reviews-modal");
+
+    await userEvent.click(screen.getByTestId("Cards-close-reviews-no"));
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("Cards-close-reviews-modal"),
+      ).not.toBeInTheDocument(),
+    );
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-review-status-button"),
+    );
+    await screen.findByTestId("Cards-close-reviews-modal");
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("Cards-close-reviews-modal"),
+      ).not.toBeInTheDocument(),
+    );
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("Yes closes reviews, the modal closes on success, and Yes is disabled while saving", async () => {
+    let release;
+    axiosMock
+      .onPut("/api/admin/recruitments/reviewStatus")
+      .reply(
+        () => new Promise((resolve) => (release = () => resolve([200, {}]))),
+      );
+    renderCards();
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-review-status-button"),
+    );
+    await userEvent.click(await screen.findByTestId("Cards-close-reviews-yes"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("Cards-close-reviews-yes")).toBeDisabled(),
+    );
+    expect(axiosMock.history.put[0].params).toEqual({
+      id: 2,
+      status: "Closed",
+    });
+    release();
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("Cards-close-reviews-modal"),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  test("closing before the stated deadline shows a warning that names the deadline", async () => {
+    renderCards(
+      recruitmentsFixtures.threeRecruitments.map((r) =>
+        r.id === 2 ? { ...r, facultyRankingDeadline: "2999-12-31" } : r,
+      ),
+    );
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-review-status-button"),
+    );
+
+    const warning = await screen.findByTestId("Cards-close-reviews-early");
+    expect(warning).toHaveTextContent(
+      "The faculty ranking deadline is 2999-12-31, which has not passed yet. Faculty who have not finished ranking will be cut off before the deadline they were given.",
+    );
+    expect(warning).toHaveClass("text-danger", "fw-bold");
+    expect(warning).toHaveAttribute("role", "alert");
+    expect(warning.querySelector("span[aria-hidden='true']")).toHaveTextContent(
+      "⚠",
+    );
+  });
+
+  test("no warning when the recruitment has no deadline on file", async () => {
+    renderCards(
+      recruitmentsFixtures.threeRecruitments.map((r) =>
+        r.id === 2 ? { ...r, facultyRankingDeadline: null } : r,
+      ),
+    );
+    await userEvent.click(
+      screen.getByTestId("Cards-card-2-review-status-button"),
+    );
+    await screen.findByTestId("Cards-close-reviews-modal");
+    expect(
+      screen.queryByTestId("Cards-close-reviews-early"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("Open Faculty Reviews proposes a deadline five working days ahead", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    // Monday 2026-11-02: five working days later is Monday 2026-11-09.
+    vi.setSystemTime(new Date(2026, 10, 2, 9, 0, 0));
+    try {
+      renderCards();
+      await userEvent.click(
+        screen.getByTestId("Cards-card-0-review-status-button"),
+      );
+      expect(
+        screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+      ).toHaveValue("2026-11-09");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("on a Friday the proposed deadline skips the weekend", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 6, 17, 0, 0));
+    try {
+      renderCards();
+      await userEvent.click(
+        screen.getByTestId("Cards-card-0-review-status-button"),
+      );
+      expect(
+        screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+      ).toHaveValue("2026-11-13");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
