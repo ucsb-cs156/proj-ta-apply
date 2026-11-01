@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   CLOSE_APPLICATIONS_TOOLTIP,
+  CLOSE_REVIEWS_CONFIRMATION,
+  earlyCloseWarning,
   CLOSE_REVIEWS_TOOLTIP,
   FACULTY_REVIEWS_HELP,
   MORE_ABOUT_TEXT,
@@ -66,5 +68,19 @@ describe("recruitmentActions", () => {
       yes: "Yes, Open Faculty Reviews Now",
       no: "No, don't open faculty reviews now",
     });
+  });
+
+  test("the close faculty reviews confirmation (issue #211)", () => {
+    expect(CLOSE_REVIEWS_CONFIRMATION).toEqual({
+      title: "Close Faculty Reviews",
+      explanation:
+        "Faculty will no longer be able to enter or change rankings; what they have ranked so far is kept, and so are the review opening date and the deadline. Reviews can be opened again later. The change is recorded in the recruitment's change history.",
+      helpLink: "/help/admins#faculty-reviews",
+      yes: "Yes, Close Faculty Reviews Now",
+      no: "No, don't close faculty reviews now",
+    });
+    expect(earlyCloseWarning("2026-11-04")).toBe(
+      "The faculty ranking deadline is 2026-11-04, which has not passed yet. Faculty who have not finished ranking will be cut off before the deadline they were given.",
+    );
   });
 });

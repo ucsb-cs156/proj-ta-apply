@@ -304,6 +304,13 @@ describe("Help pages (issue #140)", () => {
     expect(reviews).toHaveTextContent(
       "Opening and closing, and deadline changes, are recorded in the recruitment's change history.",
     );
+    // Issue #211: the proposed deadline and the closing confirmation.
+    expect(reviews).toHaveTextContent(
+      "the box proposes five working days (Monday to Friday) from today, which you may change.",
+    );
+    expect(reviews).toHaveTextContent(
+      "Closing also asks first, and warns you if the stated deadline has not passed yet;",
+    );
     expect(
       openClose.compareDocumentPosition(reviews) &
         Node.DOCUMENT_POSITION_FOLLOWING,
@@ -508,7 +515,7 @@ describe("Help pages (issue #140)", () => {
       /^Open Faculty Reviews \/ Close Faculty Reviews\. Faculty can see and rank/,
     );
     expect(buttons[1]).toMatch(
-      /ranking deadline, after a short account of what will happen; the first opening stamps/,
+      /ranking deadline, after a short account of what will happen; the box proposes five working days/,
     );
     expect(buttons[2]).toMatch(/from the schedule\. Populate re-runs the job/);
     expect(buttons[2]).toMatch(/finds it again\. Remove takes a lecture out/);

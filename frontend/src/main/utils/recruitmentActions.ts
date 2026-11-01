@@ -60,5 +60,22 @@ export const OPEN_REVIEWS_CONFIRMATION: Confirmation = {
   no: "No, don't open faculty reviews now",
 };
 
+/** What the Close Faculty Reviews button asks before acting (issue #211). */
+export const CLOSE_REVIEWS_CONFIRMATION: Confirmation = {
+  title: "Close Faculty Reviews",
+  explanation:
+    "Faculty will no longer be able to enter or change rankings; what they have ranked so far is kept, and so are the review opening date and the deadline. Reviews can be opened again later. The change is recorded in the recruitment's change history.",
+  helpLink: FACULTY_REVIEWS_HELP,
+  yes: "Yes, Close Faculty Reviews Now",
+  no: "No, don't close faculty reviews now",
+};
+
+/**
+ * The warning shown in the Close Faculty Reviews confirmation when the stated deadline has not
+ * passed yet (issue #211).
+ */
+export const earlyCloseWarning = (deadline: string): string =>
+  `The faculty ranking deadline is ${deadline}, which has not passed yet. Faculty who have not finished ranking will be cut off before the deadline they were given.`;
+
 /** The link text used in every confirmation. */
 export const MORE_ABOUT_TEXT = "More about this action";

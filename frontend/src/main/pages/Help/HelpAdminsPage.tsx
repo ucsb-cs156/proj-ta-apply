@@ -445,12 +445,14 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <strong>Open Faculty Reviews / Close Faculty Reviews.</strong>{" "}
             Faculty can see and rank the candidates for their courses only while
             reviews are Open. Opening asks for the faculty ranking deadline,
-            after a short account of what will happen; the first opening stamps
-            the review opening date, which is kept if reviews are reopened, and{" "}
-            <em>Change</em> beside the deadline edits it later. Closing stops
-            faculty from changing their rankings and keeps both dates. Opening
-            and closing, and deadline changes, are recorded in the
-            recruitment&apos;s change history.
+            after a short account of what will happen; the box proposes five
+            working days (Monday to Friday) from today, which you may change.
+            The first opening stamps the review opening date, which is kept if
+            reviews are reopened, and <em>Change</em> beside the deadline edits
+            it later. Closing also asks first, and warns you if the stated
+            deadline has not passed yet; it stops faculty from changing their
+            rankings and keeps both dates. Opening and closing, and deadline
+            changes, are recorded in the recruitment&apos;s change history.
           </li>
           <li>
             <strong>Courses.</strong> The recruitment&apos;s course list: one
