@@ -46,9 +46,9 @@ describe("ApplicationTable tests", () => {
       (header) => expect(screen.getByText(header)).toBeInTheDocument(),
     );
     // Issue #98: only an admin's list can hold a test application.
-    expect(screen.queryByText("Test")).toBeNull();
+    expect(screen.queryByText("Origin")).toBeNull();
     expect(
-      screen.queryByTestId("ApplicationTable-cell-row-0-col-testApplication"),
+      screen.queryByTestId("ApplicationTable-cell-row-0-col-origin"),
     ).toBeNull();
   });
 
@@ -76,30 +76,32 @@ describe("ApplicationTable tests", () => {
   });
 
   /** An admin's test run is listed like any other application, but says so. */
-  test("the Test column, when asked for, says whether an application is a test", () => {
+  test("the Origin column, when asked for, says where each application came from", () => {
     renderTable(
       applicationsFixtures.threeApplicationsIncludingATest,
       recruitments,
       true,
     );
 
-    expect(screen.getByText("Test")).toBeInTheDocument();
+    expect(screen.getByText("Origin")).toBeInTheDocument();
     expect(
-      screen.getByTestId("ApplicationTable-cell-row-0-col-testApplication"),
-    ).toHaveTextContent("false");
+      screen.getByTestId("ApplicationTable-cell-row-0-col-origin"),
+    ).toHaveTextContent("APPLICANT");
     expect(
-      screen.getByTestId("ApplicationTable-cell-row-2-col-testApplication"),
-    ).toHaveTextContent("true");
+      screen.getByTestId("ApplicationTable-cell-row-2-col-origin"),
+    ).toHaveTextContent("ADMIN_TEST");
   });
 
-  test("an application without the test flag is shown as not a test", () => {
-    const { testApplication: _omitted, ...legacy } =
-      applicationsFixtures.oneUlaApplication;
-    renderTable([legacy], recruitments, true);
+  test("a fake application from developer mode is shown as such", () => {
+    renderTable(
+      [{ ...applicationsFixtures.oneUlaApplication, origin: "DEVELOPER_MODE" }],
+      recruitments,
+      true,
+    );
 
     expect(
-      screen.getByTestId("ApplicationTable-cell-row-0-col-testApplication"),
-    ).toHaveTextContent("false");
+      screen.getByTestId("ApplicationTable-cell-row-0-col-origin"),
+    ).toHaveTextContent("DEVELOPER_MODE");
   });
 
   test("course choices keep their padding", () => {

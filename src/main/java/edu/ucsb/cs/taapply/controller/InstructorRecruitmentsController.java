@@ -20,6 +20,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
+import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -64,6 +65,7 @@ public class InstructorRecruitmentsController extends ApiController {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired CandidateRankingRepository candidateRankingRepository;
   @Autowired CourseTargetsService courseTargetsService;
+  @Autowired DeveloperModeService developerModeService;
 
   /**
    * A recruitment as the admin's and student's cards know it, plus the instructor's courses.
@@ -509,7 +511,7 @@ public class InstructorRecruitmentsController extends ApiController {
 
   private List<Application> eligible(
       List<Application> applications, RecruitmentCourse course, boolean includeNotInterested) {
-    return AssignmentsService.real(applications).stream()
+    return AssignmentsService.real(applications, developerModeService.isOn()).stream()
         .filter(
             application ->
                 includeNotInterested || preference(application, course.getCourseId()) != null)
@@ -576,7 +578,8 @@ public class InstructorRecruitmentsController extends ApiController {
       @PathVariable Long recruitmentId, @PathVariable Long recruitmentCourseId) {
     RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);
     return AssignmentsService.cancelled(
-        applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()));
+        applicationRepository.findByRecruitmentIdOrderByIdAsc(scope.recruitment().getId()),
+        developerModeService.isOn());
   }
 
   @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")

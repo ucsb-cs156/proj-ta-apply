@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -72,11 +73,15 @@ public class Application {
   private String adminComments;
 
   /**
-   * True for an application an admin entered to preview the form, "as if" they were an applicant.
-   * Test applications are stored alongside real ones so the whole path is exercised, but anything
-   * that reviews or counts applications should leave them out.
+   * Where the application came from (issue #219): a real applicant, an admin previewing the form (a
+   * "test application"), or Developer Mode's fake data. Test and fake applications are stored
+   * alongside real ones so the whole path is exercised, but anything that reviews or counts
+   * applications leaves them out unless Developer Mode is on; see {@code ApplicationVisibility}.
    */
-  @Builder.Default private boolean testApplication = false;
+  @Column(nullable = false, length = 32)
+  @Enumerated(EnumType.STRING)
+  @Builder.Default
+  private ApplicationOrigin origin = ApplicationOrigin.APPLICANT;
 
   /**
    * The version of the "Notices, Terms and Conditions" text the applicant agreed to when they

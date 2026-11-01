@@ -324,7 +324,7 @@ describe("TestApplicationPage tests", () => {
     expect(sent.firstName).toBe("Ada");
     expect(sent.firstChoiceCourse).toBe("CMPSC   156");
     // The flag is the backend's to set, not the form's.
-    expect(sent.testApplication).toBeUndefined();
+    expect(sent.origin).toBeUndefined();
 
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(
@@ -352,7 +352,7 @@ describe("TestApplicationPage tests", () => {
     axiosMock
       .onGet("/api/applications/mine")
       .reply(200, [
-        { ...applicationsFixtures.oneTestApplication, testApplication: false },
+        { ...applicationsFixtures.oneTestApplication, origin: "APPLICANT" },
       ]);
 
     renderPage();

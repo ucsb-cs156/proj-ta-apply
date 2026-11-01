@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.opencsv.CSVReader;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -32,7 +33,7 @@ public class ApplicationCsvServiceTests {
           "submittedAt",
           "email",
           "status",
-          "testApplication",
+          "origin",
           "firstName",
           "middleName",
           "lastName",
@@ -93,7 +94,7 @@ public class ApplicationCsvServiceTests {
         .recruitmentId(1L)
         .email("ada@ucsb.edu")
         .status(ApplicationReviewStatus.PENDING)
-        .testApplication(false)
+        .origin(ApplicationOrigin.APPLICANT)
         .submittedAt(LocalDateTime.of(2026, 4, 1, 9, 30))
         .firstName("Ada")
         .middleName("M")
@@ -196,7 +197,7 @@ public class ApplicationCsvServiceTests {
             "2026-04-01T09:30",
             "ada@ucsb.edu",
             "PENDING",
-            "false",
+            "APPLICANT",
             "Ada",
             "M",
             "Lovelace",
@@ -298,7 +299,7 @@ public class ApplicationCsvServiceTests {
     assertEquals("", row[1]); // submittedAt
     assertEquals("x@ucsb.edu", row[2]);
     assertEquals("PENDING", row[3]); // the builder default
-    assertEquals("false", row[4]);
+    assertEquals("APPLICANT", row[4]); // the builder default origin
     // The four availability answers are primitive booleans, so they read false rather than blank.
     List<String> primitiveBooleans =
         List.of(

@@ -1,17 +1,40 @@
-import type { Application } from "main/components/Applications/ApplicationTable";
+import type {
+  Application,
+  ApplicationOrigin,
+} from "main/components/Applications/ApplicationTable";
 
 /** The submission time in the admin's own locale and time zone; blank when it was never stamped. */
 export const submittedText = (submittedAt: string | null): string =>
   submittedAt ? new Date(submittedAt).toLocaleString() : "";
 
-/** "20 Applications Received", with the test applications an admin entered counted apart. */
+/**
+ * "20 Applications Received", with the test applications an admin entered and the fake ones Developer
+ * Mode generated counted apart.
+ */
 export const receivedText = (applications: Application[]): string => {
-  const real = applications.filter((a) => !a.testApplication).length;
-  const tests = applications.length - real;
+  const real = applications.filter((a) => a.origin === "APPLICANT").length;
+  const tests = applications.filter((a) => a.origin === "ADMIN_TEST").length;
+  const fakes = applications.length - real - tests;
+  const plural = (n: number, word: string) =>
+    `${n} ${word} ${n === 1 ? "application" : "applications"}`;
   const base = `${real} ${real === 1 ? "Application" : "Applications"} Received`;
-  return tests === 0
-    ? base
-    : `${base} (plus ${tests} test ${tests === 1 ? "application" : "applications"})`;
+  const extras = [
+    ...(tests > 0 ? [plural(tests, "test")] : []),
+    ...(fakes > 0 ? [plural(fakes, "fake")] : []),
+  ];
+  return extras.length === 0 ? base : `${base} (plus ${extras.join(" and ")})`;
+};
+
+/** The long name of where an application came from; blank for a real applicant's own. */
+export const originLabel = (origin: ApplicationOrigin): string => {
+  switch (origin) {
+    case "ADMIN_TEST":
+      return "Test application (admin)";
+    case "DEVELOPER_MODE":
+      return "Fake application (developer mode)";
+    default:
+      return "";
+  }
 };
 
 /** "15 applications" or "1 application", for a recruitment card's header (issue #108). */

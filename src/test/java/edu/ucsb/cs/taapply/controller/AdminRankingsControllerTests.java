@@ -15,6 +15,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -22,6 +23,7 @@ import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
+import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.RankingsCsvService;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -38,6 +40,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @WebMvcTest(controllers = AdminRankingsController.class)
 @Import({RankingsCsvService.class, AssignmentsService.class})
 class AdminRankingsControllerTests extends ControllerTestCase {
+  @MockitoBean DeveloperModeService developerModeService;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
@@ -129,7 +132,11 @@ class AdminRankingsControllerTests extends ControllerTestCase {
                     .graduationDate("Spring 2027")
                     .adminComments("PRIVATE")
                     .build(),
-                Application.builder().id(2L).recruitmentId(7L).testApplication(true).build(),
+                Application.builder()
+                    .id(2L)
+                    .recruitmentId(7L)
+                    .origin(ApplicationOrigin.ADMIN_TEST)
+                    .build(),
                 Application.builder()
                     .id(3L)
                     .recruitmentId(7L)

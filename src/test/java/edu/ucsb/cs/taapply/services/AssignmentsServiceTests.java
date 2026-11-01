@@ -12,6 +12,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -39,6 +40,7 @@ class AssignmentsServiceTests {
   @Mock ApplicationRepository applicationRepository;
   @Mock RecruitmentCourseRepository recruitmentCourseRepository;
   @Mock CandidateRankingRepository candidateRankingRepository;
+  @Mock DeveloperModeService developerModeService;
   @InjectMocks AssignmentsService service;
 
   private static Recruitment recruitment(RecruitmentType type) {
@@ -243,7 +245,7 @@ class AssignmentsServiceTests {
   void real_applications_leave_out_test_and_cancelled_in_creation_order() {
     Application real = applicant(1, 10L);
     Application test = applicant(2, 10L);
-    test.setTestApplication(true);
+    test.setOrigin(ApplicationOrigin.ADMIN_TEST);
     Application cancelled = applicant(3, 10L);
     cancelled.setStatus(ApplicationReviewStatus.CANCELLED);
     Application hired = applicant(4, null);
@@ -297,7 +299,7 @@ class AssignmentsServiceTests {
 
     Application first = applicant(1, 10L);
     Application test = applicant(2, 10L);
-    test.setTestApplication(true);
+    test.setOrigin(ApplicationOrigin.ADMIN_TEST);
     Application third = applicant(3, 50L);
     Application cancelledApplicant = applicant(4, 10L);
     cancelledApplicant.setStatus(ApplicationReviewStatus.CANCELLED);
@@ -485,7 +487,7 @@ class AssignmentsServiceTests {
   void cancelled_keeps_only_real_cancelled_applications_in_order_with_the_reason() {
     Application kept = applicant(1, null);
     Application cancelledTest = applicant(2, null);
-    cancelledTest.setTestApplication(true);
+    cancelledTest.setOrigin(ApplicationOrigin.ADMIN_TEST);
     cancelledTest.setStatus(ApplicationReviewStatus.CANCELLED);
     Application cancelledLater = applicant(4, null);
     cancelledLater.setStatus(ApplicationReviewStatus.CANCELLED);
@@ -500,8 +502,28 @@ class AssignmentsServiceTests {
             new AssignmentsService.CancelledApplication(3L, "Grace", "Hopper", "a3@ucsb.edu", null),
             new AssignmentsService.CancelledApplication(
                 4L, "Ada", "Lovelace", "a4@ucsb.edu", "Took another job")),
-        AssignmentsService.cancelled(List.of(kept, cancelledTest, cancelledFirst, cancelledLater)));
-    assertEquals(List.of(), AssignmentsService.cancelled(List.of(kept, cancelledTest)));
+        AssignmentsService.cancelled(
+            List.of(kept, cancelledTest, cancelledFirst, cancelledLater), false));
+    assertEquals(List.of(), AssignmentsService.cancelled(List.of(kept, cancelledTest), false));
+  }
+
+  /** With Developer Mode on, a cancelled test application is as real as any other (issue #219). */
+  @Test
+  void cancelled_includes_test_and_fake_applications_in_developer_mode() {
+    Application cancelledTest = applicant(2, null);
+    cancelledTest.setOrigin(ApplicationOrigin.ADMIN_TEST);
+    cancelledTest.setStatus(ApplicationReviewStatus.CANCELLED);
+    Application cancelledFake = applicant(3, null);
+    cancelledFake.setOrigin(ApplicationOrigin.DEVELOPER_MODE);
+    cancelledFake.setStatus(ApplicationReviewStatus.CANCELLED);
+
+    assertEquals(
+        List.of(2L, 3L),
+        AssignmentsService.cancelled(List.of(cancelledTest, cancelledFake), true).stream()
+            .map(AssignmentsService.CancelledApplication::applicationId)
+            .toList());
+    assertEquals(
+        List.of(), AssignmentsService.cancelled(List.of(cancelledTest, cancelledFake), false));
   }
 
   @Test
@@ -581,7 +603,11 @@ class AssignmentsServiceTests {
     assertFalse(service.anyAssigned(7L));
 
     Application test =
-        Application.builder().id(1L).tentativeAssignmentId(10L).testApplication(true).build();
+        Application.builder()
+            .id(1L)
+            .tentativeAssignmentId(10L)
+            .origin(ApplicationOrigin.ADMIN_TEST)
+            .build();
     Application cancelled =
         Application.builder()
             .id(2L)

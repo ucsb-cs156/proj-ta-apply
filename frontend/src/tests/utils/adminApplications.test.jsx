@@ -38,6 +38,24 @@ describe("adminApplications utils", () => {
     ).toBe("0 Applications Received (plus 2 test applications)");
   });
 
+  test("receivedText counts fake developer-mode applications apart too", () => {
+    const fake = { ...applicationsFixtures.oneTestApplication, id: 98 };
+    fake.origin = "DEVELOPER_MODE";
+    expect(receivedText([fake])).toBe(
+      "0 Applications Received (plus 1 fake application)",
+    );
+    expect(
+      receivedText([
+        applicationsFixtures.oneTaApplication,
+        applicationsFixtures.oneTestApplication,
+        fake,
+        { ...fake, id: 99 },
+      ]),
+    ).toBe(
+      "1 Application Received (plus 1 test application and 2 fake applications)",
+    );
+  });
+
   test("the application view and edit paths take a number or a string id", () => {
     expect(adminApplicationPath(5)).toBe("/admin/applications/5");
     expect(adminApplicationPath("5")).toBe("/admin/applications/5");

@@ -8,7 +8,7 @@ function candidateApplication(application) {
     submittedAt,
     adminComments: _adminComments,
     postApplicationComments,
-    testApplication: _testApplication,
+    origin: _origin,
     status: _status,
     cancellationReason: _cancellationReason,
     cancelledAt: _cancelledAt,

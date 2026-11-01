@@ -19,6 +19,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -69,7 +70,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
         .recruitmentId(recruitmentId)
         .email(email)
         .status(ApplicationReviewStatus.PENDING)
-        .testApplication(test)
+        .origin(test ? ApplicationOrigin.ADMIN_TEST : ApplicationOrigin.APPLICANT)
         .submittedAt(LocalDateTime.of(2026, 4, 1, 9, 30))
         .firstName("Ada")
         .lastName("Lovelace")
@@ -152,10 +153,11 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     assertEquals(-1, lines[0].indexOf("classLevel"));
     assertEquals(
         true,
-        lines[1].startsWith("\"1\",\"2026-04-01T09:30\",\"a@ucsb.edu\",\"PENDING\",\"false\""));
+        lines[1].startsWith("\"1\",\"2026-04-01T09:30\",\"a@ucsb.edu\",\"PENDING\",\"APPLICANT\""));
     assertEquals(
         true,
-        lines[2].startsWith("\"2\",\"2026-04-01T09:30\",\"admin@ucsb.edu\",\"PENDING\",\"true\""));
+        lines[2].startsWith(
+            "\"2\",\"2026-04-01T09:30\",\"admin@ucsb.edu\",\"PENDING\",\"ADMIN_TEST\""));
   }
 
   @WithMockUser(roles = {"USER", "ADMIN"})

@@ -17,6 +17,7 @@ import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.UlaInterest;
 import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.OtherCampusJob;
@@ -183,7 +184,7 @@ public class LegacyUlaApplicationCsvServiceTests {
     for (Application a : saved.getAllValues()) {
       assertEquals(6L, a.getRecruitmentId());
       assertEquals(ApplicationReviewStatus.PENDING, a.getStatus());
-      assertFalse(a.isTestApplication());
+      assertEquals(ApplicationOrigin.APPLICANT, a.getOrigin());
       assertNull(a.getNoticeVersionId());
       assertTrue(a.getEmail().contains("@"));
       assertEquals(7, a.getPermNumber().length());

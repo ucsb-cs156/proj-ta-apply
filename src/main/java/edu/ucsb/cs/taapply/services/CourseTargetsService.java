@@ -22,6 +22,7 @@ public class CourseTargetsService {
 
   @Autowired ApplicationRepository applicationRepository;
   @Autowired CandidateRankingRepository candidateRankingRepository;
+  @Autowired DeveloperModeService developerModeService;
 
   /**
    * One course's figures.
@@ -60,7 +61,8 @@ public class CourseTargetsService {
 
   private List<Application> realApplications(Long recruitmentId) {
     return AssignmentsService.real(
-        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));
+        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId),
+        developerModeService.isOn());
   }
 
   private CourseTargets targetsFor(RecruitmentCourse course, List<Application> real) {
