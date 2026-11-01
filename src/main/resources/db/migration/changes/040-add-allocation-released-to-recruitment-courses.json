@@ -1,0 +1,39 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "040-add-allocation-released-to-recruitment-courses",
+        "author": "pc",
+        "comment": "Whether a course's allocation (its hiring target) has been released to its instructor (issue #224).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "recruitment_courses",
+                "columnName": "allocation_released"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitment_courses",
+              "columns": [
+                {
+                  "column": {
+                    "name": "allocation_released",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

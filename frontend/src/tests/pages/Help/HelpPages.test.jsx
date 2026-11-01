@@ -136,10 +136,10 @@ describe("Help pages (issue #140)", () => {
     // Issue #178: what an instructor sees once allocations are shown.
     const allocations = screen.getByTestId("HelpInstructorsPage-allocations");
     expect(allocations).toHaveTextContent(
-      "Once an admin chooses to show them, each of your courses also says how many TAs (or ULAs) have been allocated to it, both on the card and at the top of its ranking page.",
+      "Once an admin releases a course's hiring target to you, that course shows a small table, both on the card and at the top of its ranking page: the Hiring Target (how many TAs or ULAs were allocated to the course), the Ranking Target (how many candidates you are asked to rank: twice the hiring target, or every interested candidate if there are fewer), Candidates Ranked so far and Rankings Still Needed.",
     );
     expect(allocations).toHaveTextContent(
-      "Please rank at least that many candidates, and preferably twice as many. Until then no allocation is shown.",
+      "If you have concerns about your course's target, raise them with the admin once you see it. Until a target is released, nothing about it is shown. An admin may instead show every course's allocation to all faculty; your cards then also offer All allocations, a read-only list of every course's number.",
     );
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
     // Issue #199: interest colours, the not-interested opt-in and cancelled applications.
@@ -465,13 +465,13 @@ describe("Help pages (issue #140)", () => {
     );
     expect(visibility.id).toBe("allocation-visibility");
     expect(visibility).toHaveTextContent(
-      "Allocations are hidden from faculty until you choose otherwise.",
+      "Faculty do not see an allocation until you let them, and the Faculty visibility panel under the hiring target gives you two ways to.",
     );
     expect(visibility).toHaveTextContent(
-      "Show Allocations to Faculty puts each lecture's allocation on the instructor's home page card and at the top of its ranking page",
+      "tick Released to faculty on a lecture's row (or use Release all allocations to their instructors) once its number is mostly final, and that lecture's instructor sees a small table on their home page card and at the top of its ranking page: the Hiring Target (the allocation), the Ranking Target (twice the allocation, but never more than the candidates who expressed interest in the course), Candidates Ranked so far and Rankings Still Needed.",
     );
     expect(visibility).toHaveTextContent(
-      "Hide Allocations from Faculty takes it away again. Showing or hiding is recorded in the recruitment's change history.",
+      "The other way is the switch Show All Allocations to All Faculty, for when the whole plan is public: every instructor then gets the table for each of their courses and an All allocations page listing every course's number; Hide All Allocations turns it off. Each release, withdrawal and switch is recorded in the recruitment's change history.",
     );
     expect(
       auto.compareDocumentPosition(visibility) &
@@ -661,5 +661,18 @@ describe("Help pages (issue #140)", () => {
       await screen.findByRole("heading", { level: 1, name: "For Admins" }),
     ).toBeInTheDocument();
     expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  test("the admins page's recruitment flow mentions releasing allocations before opening reviews (issue #224)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const steps = screen
+      .getByTestId("HelpAdminsPage-flow")
+      .querySelectorAll("li");
+    expect(steps).toHaveLength(4);
+    expect(steps[3]).toHaveTextContent(
+      "Afterwards: Close Applications, plan the hiring on the Courses and Budget for Quarter pages, release each lecture's allocation to its instructor, then Open Faculty Reviews.",
+    );
   });
 });

@@ -16,6 +16,7 @@ vi.mock("react-toastify", async (importOriginal) => ({
 
 const axiosMock = new AxiosMockAdapter(axios);
 const URL = "/api/admin/recruitments/allocationsVisibleToFaculty";
+const RELEASE_ALL_URL = "/api/recruitmentcourses/allocationReleased/all";
 
 const hidden = {
   ...recruitmentsFixtures.threeRecruitments[2],
@@ -36,7 +37,7 @@ function renderPanel(recruitment, props = {}) {
   );
 }
 
-const puts = () => axiosMock.history.put.filter((r) => r.url === URL);
+const puts = (url = URL) => axiosMock.history.put.filter((r) => r.url === url);
 
 describe("AllocationVisibilityPanel tests", () => {
   beforeEach(() => {
@@ -44,28 +45,56 @@ describe("AllocationVisibilityPanel tests", () => {
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock.onPut(URL).reply(200, {});
+    axiosMock.onPut(RELEASE_ALL_URL).reply(200, []);
   });
 
-  test("while hidden it says so and offers to show, with the default test id", () => {
+  test("the panel has a heading, the release advice and both controls, with the default test id", () => {
     renderPanel(hidden);
 
     const panel = screen.getByTestId("AllocationVisibilityPanel");
-    expect(panel).toHaveClass(
-      "mb-3",
-      "d-flex",
-      "align-items-center",
-      "flex-wrap",
-      "gap-2",
+    expect(panel).toHaveClass("mb-3");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Faculty visibility" }),
+    ).toHaveClass("h5");
+    expect(
+      screen.getByTestId("AllocationVisibilityPanel-advice"),
+    ).toHaveTextContent(
+      "Release a course's allocation to its instructor when the number is mostly final; you can still change it afterwards.",
     );
+    const releaseAll = screen.getByTestId(
+      "AllocationVisibilityPanel-release-all",
+    );
+    expect(releaseAll).toHaveTextContent(
+      "Release all allocations to their instructors",
+    );
+    expect(releaseAll).toHaveClass("btn-outline-primary", "btn-sm");
+    const withdrawAll = screen.getByTestId(
+      "AllocationVisibilityPanel-withdraw-all",
+    );
+    expect(withdrawAll).toHaveTextContent("Withdraw all");
+    expect(withdrawAll).toHaveClass("btn-outline-secondary", "btn-sm");
+    // The advice and the per-course buttons come before the global switch.
+    expect(
+      releaseAll.compareDocumentPosition(
+        screen.getByTestId("AllocationVisibilityPanel-toggle"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("while all allocations are hidden it says so and offers to show them all", () => {
+    renderPanel(hidden);
+
     expect(
       screen.getByTestId("AllocationVisibilityPanel-message"),
     ).toHaveTextContent(
-      "Allocations of TAs/ULAs per course are currently hidden from faculty.",
+      "All courses' allocations are hidden from faculty; each instructor sees only their own released courses.",
     );
     const button = screen.getByTestId("AllocationVisibilityPanel-toggle");
-    expect(button).toHaveTextContent("Show Allocations to Faculty");
+    expect(button).toHaveTextContent("Show All Allocations to All Faculty");
     expect(
-      screen.getByRole("button", { name: "Show Allocations to Faculty" }),
+      screen.getByRole("button", {
+        name: "Show All Allocations to All Faculty",
+      }),
     ).toBe(button);
     expect(button).toHaveClass("btn-outline-primary", "btn-sm");
   });
@@ -76,10 +105,10 @@ describe("AllocationVisibilityPanel tests", () => {
     renderPanel(withoutFlag, { testIdPrefix: "P" });
 
     expect(screen.getByTestId("P-message")).toHaveTextContent(
-      "currently hidden from faculty.",
+      "are hidden from faculty",
     );
     expect(screen.getByTestId("P-toggle")).toHaveTextContent(
-      "Show Allocations to Faculty",
+      "Show All Allocations to All Faculty",
     );
   });
 
@@ -87,10 +116,10 @@ describe("AllocationVisibilityPanel tests", () => {
     renderPanel(shown, { testIdPrefix: "P" });
 
     expect(screen.getByTestId("P-message")).toHaveTextContent(
-      "Allocations of TAs/ULAs per course are currently shown to faculty (though only for their own courses)",
+      "All courses' allocations are visible to every faculty member.",
     );
     const button = screen.getByTestId("P-toggle");
-    expect(button).toHaveTextContent("Hide Allocations from Faculty");
+    expect(button).toHaveTextContent("Hide All Allocations");
     expect(button).toHaveClass("btn-outline-secondary", "btn-sm");
   });
 
@@ -103,7 +132,7 @@ describe("AllocationVisibilityPanel tests", () => {
     expect(puts()[0].params).toEqual({ id: 7, visible: true });
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(
-        "Allocations are now shown to faculty.",
+        "All allocations are now visible to every faculty member.",
       ),
     );
     expect(mockToast).toHaveBeenCalledTimes(1);
@@ -118,7 +147,7 @@ describe("AllocationVisibilityPanel tests", () => {
     expect(puts()[0].params).toEqual({ id: 7, visible: false });
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(
-        "Allocations are now hidden from faculty.",
+        "All allocations are now hidden; instructors see only their released courses.",
       ),
     );
     expect(mockToast).toHaveBeenCalledTimes(1);
@@ -134,7 +163,80 @@ describe("AllocationVisibilityPanel tests", () => {
 
     await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1));
     expect(mockToast).not.toHaveBeenCalledWith(
-      "Allocations are now shown to faculty.",
+      "All allocations are now visible to every faculty member.",
+    );
+  });
+
+  // ---- issue #224: release or withdraw every course at once ----
+
+  test("Release all sends released=true for this recruitment and toasts", async () => {
+    renderPanel(hidden, { testIdPrefix: "P" });
+
+    await userEvent.click(screen.getByTestId("P-release-all"));
+
+    await waitFor(() => expect(puts(RELEASE_ALL_URL)).toHaveLength(1));
+    expect(puts(RELEASE_ALL_URL)[0].params).toEqual({
+      recruitmentId: 7,
+      released: true,
+    });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Every course's allocation is now released to its instructor.",
+      ),
+    );
+    expect(puts()).toHaveLength(0);
+  });
+
+  test("Withdraw all sends released=false and toasts", async () => {
+    renderPanel(shown, { testIdPrefix: "P" });
+
+    await userEvent.click(screen.getByTestId("P-withdraw-all"));
+
+    await waitFor(() => expect(puts(RELEASE_ALL_URL)).toHaveLength(1));
+    expect(puts(RELEASE_ALL_URL)[0].params).toEqual({
+      recruitmentId: 7,
+      released: false,
+    });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Every course's allocation is now withdrawn from its instructor.",
+      ),
+    );
+  });
+
+  test("both release buttons are disabled while a release is saving", async () => {
+    let release;
+    axiosMock
+      .onPut(RELEASE_ALL_URL)
+      .reply(
+        () => new Promise((resolve) => (release = () => resolve([200, []]))),
+      );
+    renderPanel(hidden, { testIdPrefix: "P" });
+
+    await userEvent.click(screen.getByTestId("P-release-all"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("P-release-all")).toBeDisabled(),
+    );
+    expect(screen.getByTestId("P-withdraw-all")).toBeDisabled();
+    release();
+    await waitFor(() =>
+      expect(screen.getByTestId("P-release-all")).not.toBeDisabled(),
+    );
+    expect(screen.getByTestId("P-withdraw-all")).not.toBeDisabled();
+  });
+
+  test("a failed release toasts the error only", async () => {
+    axiosMock
+      .onPut(RELEASE_ALL_URL)
+      .reply(404, { message: "Recruitment with id 7 not found" });
+    renderPanel(hidden, { testIdPrefix: "P" });
+
+    await userEvent.click(screen.getByTestId("P-withdraw-all"));
+
+    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1));
+    expect(mockToast).not.toHaveBeenCalledWith(
+      "Every course's allocation is now withdrawn from its instructor.",
     );
   });
 });

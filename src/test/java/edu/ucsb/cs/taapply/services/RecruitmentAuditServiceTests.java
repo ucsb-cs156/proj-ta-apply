@@ -269,4 +269,34 @@ public class RecruitmentAuditServiceTests {
     assertEquals("true", changes.get(0).getNewValue());
     verify(repository).saveAll(changes);
   }
+
+  /** Issue #224: a course-level change gets one row naming the field and the course. */
+  @Test
+  public void recordCourseChange_writes_one_row_with_the_values_as_text() {
+    RecruitmentAuditTrail saved = RecruitmentAuditTrail.builder().id(5L).build();
+    when(repository.save(any())).thenReturn(saved);
+
+    RecruitmentAuditTrail result =
+        service.recordCourseChange(7L, "allocationReleased CMPSC 156 (0100)", false, true);
+
+    assertSame(saved, result);
+    ArgumentCaptor<RecruitmentAuditTrail> captor =
+        ArgumentCaptor.forClass(RecruitmentAuditTrail.class);
+    verify(repository, times(1)).save(captor.capture());
+    RecruitmentAuditTrail row = captor.getValue();
+    assertEquals(7L, row.getRecruitmentId());
+    assertEquals("allocationReleased CMPSC 156 (0100)", row.getWhatChanged());
+    assertEquals("false", row.getOldValue());
+    assertEquals("true", row.getNewValue());
+  }
+
+  @Test
+  public void recordCourseChange_keeps_null_values_null() {
+    when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    RecruitmentAuditTrail row = service.recordCourseChange(7L, "something", null, 3);
+
+    assertNull(row.getOldValue());
+    assertEquals("3", row.getNewValue());
+  }
 }

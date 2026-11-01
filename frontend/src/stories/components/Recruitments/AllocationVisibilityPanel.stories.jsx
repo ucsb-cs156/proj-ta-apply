@@ -12,6 +12,9 @@ export default {
         http.put("/api/admin/recruitments/allocationsVisibleToFaculty", () =>
           HttpResponse.json({}),
         ),
+        http.put("/api/recruitmentcourses/allocationReleased/all", () =>
+          HttpResponse.json([]),
+        ),
       ],
     },
   },
@@ -19,13 +22,13 @@ export default {
 
 const Template = (args) => <AllocationVisibilityPanel {...args} />;
 
-/** The default: allocations hidden from faculty, with the button to show them. */
+/** The default: all allocations hidden, with the per-course release buttons and the switch. */
 export const Hidden = Template.bind({});
 Hidden.args = {
   recruitment: recruitmentsFixtures.threeRecruitments[2],
 };
 
-/** Allocations shown to faculty, with the button to hide them again. */
+/** Every allocation shown to every faculty member, with the button to hide them again. */
 export const Shown = Template.bind({});
 Shown.args = {
   recruitment: {

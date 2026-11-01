@@ -342,6 +342,67 @@ describe("CandidateRankingPage", () => {
     ).toBeTruthy();
   });
 
+  // ---- the targets table (issue #224) ----
+
+  test("once released, the targets table opens the page above the notice", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(
+        200,
+        instructorRecruitmentsFixtures.candidateRankingPageWithAllocation,
+      );
+    renderPage();
+
+    const table = await screen.findByTestId("CandidateRankingPage-targets");
+    expect(
+      [...table.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual([
+      "HiringTarget",
+      "RankingTarget",
+      "CandidatesRanked",
+      "RankingsStillNeeded",
+    ]);
+    expect(
+      screen.getByTestId("CandidateRankingPage-hiring-target"),
+    ).toHaveTextContent("2");
+    expect(
+      screen.getByTestId("CandidateRankingPage-ranking-target"),
+    ).toHaveTextContent("4");
+    expect(
+      screen.getByTestId("CandidateRankingPage-candidates-ranked"),
+    ).toHaveTextContent("1");
+    expect(
+      screen.getByTestId("CandidateRankingPage-rankings-still-needed"),
+    ).toHaveTextContent("3");
+    // The table comes first, then the sentence, then the recruitment details.
+    const notice = screen.getByTestId("CandidateRankingPage-allocation");
+    expect(
+      table.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      notice.compareDocumentPosition(
+        screen.getByRole("heading", { level: 2, name: "Recruitment" }),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("no targets table while withheld, whether the field is null or absent", async () => {
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(200, instructorRecruitmentsFixtures.candidateRankingPage);
+    renderPage();
+    await screen.findByTestId("CandidateRankingPage-quarter");
+    expect(screen.queryByTestId("CandidateRankingPage-targets")).toBeNull();
+
+    const { targets, ...withoutField } =
+      instructorRecruitmentsFixtures.candidateRankingPageWithAllocation;
+    expect(targets).toBeDefined();
+    axiosMock.onGet(rankingUrl).reply(200, { ...withoutField, allocation: 1 });
+    renderPage();
+    await screen.findByTestId("CandidateRankingPage-quarter");
+    expect(screen.queryByTestId("CandidateRankingPage-targets")).toBeNull();
+  });
+
   test("the notice is singular for one ULA", async () => {
     axiosMock.onGet(rankingUrl).reply(200, {
       ...instructorRecruitmentsFixtures.candidateRankingPage,

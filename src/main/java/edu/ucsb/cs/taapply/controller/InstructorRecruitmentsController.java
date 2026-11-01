@@ -17,6 +17,8 @@ import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
+import edu.ucsb.cs.taapply.services.CourseTargetsService;
+import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,13 +62,17 @@ public class InstructorRecruitmentsController extends ApiController {
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired ApplicationRepository applicationRepository;
   @Autowired CandidateRankingRepository candidateRankingRepository;
+  @Autowired CourseTargetsService courseTargetsService;
 
   /**
    * A recruitment as the admin's and student's cards know it, plus the instructor's courses.
    *
-   * <p>While the recruitment's allocations are hidden from faculty (issue #178), each course is a
-   * copy with its allocation, enrollment estimate and unrounded allocation blanked, so the numbers
-   * never leave the server; when shown, the rows go out as stored.
+   * <p>A course's allocation reaches its instructor only once the admin has released it, or has
+   * chosen to show all allocations to all faculty (issues #178 and #224). A course not yet released
+   * goes out as a copy with its allocation, enrollment estimate and unrounded allocation blanked,
+   * so the numbers never leave the server, and has no entry in {@code targets}; a released course
+   * goes out as stored and {@code targets} holds its {@link CourseTargets} under its course id.
+   * {@code targets} is null when no course is released.
    */
   public static record InstructorRecruitment(
       Long id,
@@ -80,12 +86,23 @@ public class InstructorRecruitmentsController extends ApiController {
       String reviewStatus,
       LocalDate facultyReviewOpeningDate,
       LocalDate facultyRankingDeadline,
-      List<RecruitmentCourse> courses) {
+      List<RecruitmentCourse> courses,
+      Map<Long, CourseTargets> targets) {
+    /** The recruitment with its targets withheld (or not yet computed). */
     public static InstructorRecruitment of(Recruitment r, List<RecruitmentCourse> courses) {
+      return of(r, courses, null);
+    }
+
+    public static InstructorRecruitment of(
+        Recruitment r, List<RecruitmentCourse> courses, Map<Long, CourseTargets> targets) {
       List<RecruitmentCourse> shown =
-          allocationsVisible(r)
-              ? courses
-              : courses.stream().map(InstructorRecruitment::withoutAllocation).toList();
+          courses.stream()
+              .map(
+                  course ->
+                      allocationVisible(r, course)
+                          ? course
+                          : InstructorRecruitment.withoutAllocation(course))
+              .toList();
       return new InstructorRecruitment(
           r.getId(),
           r.getQuarter(),
@@ -98,7 +115,8 @@ public class InstructorRecruitmentsController extends ApiController {
           r.getReviewStatus(),
           r.getFacultyReviewOpeningDate(),
           r.getFacultyRankingDeadline(),
-          shown);
+          shown,
+          targets);
     }
 
     /** The row with the planning figures an instructor may not see yet blanked. */
@@ -111,9 +129,30 @@ public class InstructorRecruitmentsController extends ApiController {
     }
   }
 
-  /** Whether the admin has chosen to show this recruitment's allocations to faculty. */
+  /** Whether the admin has chosen to show all of this recruitment's allocations to all faculty. */
   static boolean allocationsVisible(Recruitment r) {
     return Boolean.TRUE.equals(r.getAllocationsVisibleToFaculty());
+  }
+
+  /**
+   * Whether this course's allocation may reach its instructor (issue #224): the admin released it,
+   * or shows all allocations to all faculty.
+   */
+  static boolean allocationVisible(Recruitment r, RecruitmentCourse course) {
+    return allocationsVisible(r) || Boolean.TRUE.equals(course.getAllocationReleased());
+  }
+
+  /** One row of the all-allocations view faculty get once the admin shows them (issue #224). */
+  public static record AllocationRow(
+      Long id, String courseId, String section, String instructor, Integer allocation) {
+    static AllocationRow of(RecruitmentCourse course) {
+      return new AllocationRow(
+          course.getId(),
+          course.getCourseId(),
+          course.getSection(),
+          course.getInstructor(),
+          course.getAllocation());
+    }
   }
 
   /**
@@ -121,7 +160,8 @@ public class InstructorRecruitmentsController extends ApiController {
    * allocation} is how many TAs or ULAs the course was allocated: present for admins, and for
    * instructors only once the admin shows allocations to faculty (issue #178); otherwise null.
    * {@code canRank} is whether this user may enter rankings here: the course's instructor of record
-   * while reviews are Open, whether or not they are also an admin (issue #202).
+   * while reviews are Open, whether or not they are also an admin (issue #202). {@code targets} is
+   * the course's hiring figures (issue #224), present on the same terms as {@code allocation}.
    */
   public static record CandidateRankingPage(
       Long recruitmentId,
@@ -137,7 +177,8 @@ public class InstructorRecruitmentsController extends ApiController {
       CourseDetails course,
       List<CourseDetails> otherCourses,
       Integer allocation,
-      boolean canRank) {}
+      boolean canRank,
+      CourseTargets targets) {}
 
   /** Course identity and catalog display fields; section rows remain distinct by id. */
   public static record CourseDetails(
@@ -196,10 +237,17 @@ public class InstructorRecruitmentsController extends ApiController {
             recruitmentRepository.findAllById(byRecruitment.keySet()).spliterator(), false)
         .sorted(NEWEST_FIRST)
         .map(
-            r ->
-                InstructorRecruitment.of(
-                    r,
-                    byRecruitment.get(r.getId()).stream().sorted(BY_COURSE_THEN_SECTION).toList()))
+            r -> {
+              List<RecruitmentCourse> courses =
+                  byRecruitment.get(r.getId()).stream().sorted(BY_COURSE_THEN_SECTION).toList();
+              // The hiring figures leave the server only for courses the admin has released, or
+              // for all of them once all allocations are shown to all faculty.
+              List<RecruitmentCourse> released =
+                  courses.stream().filter(course -> allocationVisible(r, course)).toList();
+              Map<Long, CourseTargets> targets =
+                  released.isEmpty() ? null : courseTargetsService.targetsFor(r.getId(), released);
+              return InstructorRecruitment.of(r, courses, targets);
+            })
         .toList();
   }
 
@@ -243,8 +291,45 @@ public class InstructorRecruitmentsController extends ApiController {
         recruitment.getFacultyRankingDeadline(),
         CourseDetails.of(course),
         otherCourses,
-        scope.isAdmin() || allocationsVisible(recruitment) ? course.getAllocation() : null,
-        scope.canRank());
+        scope.isAdmin() || allocationVisible(recruitment, course) ? course.getAllocation() : null,
+        scope.canRank(),
+        scope.isAdmin() || allocationVisible(recruitment, course)
+            ? courseTargetsService.targetsFor(recruitmentId, course)
+            : null);
+  }
+
+  @Operation(
+      summary = "Every course's allocation, for faculty, once the admin shows them all",
+      description =
+          "The recruitment's non-removed sections with their instructor and allocation (issue"
+              + " #224). Admins may always read it; instructors only while the admin shows all"
+              + " allocations to all faculty, otherwise 403.")
+  @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
+  @GetMapping("/{recruitmentId}/allocations")
+  public List<AllocationRow> allocations(@PathVariable Long recruitmentId) {
+    Recruitment recruitment =
+        recruitmentRepository
+            .findById(recruitmentId)
+            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    if (!isAdmin() && !allocationsVisible(recruitment)) {
+      throw new ForbiddenException(
+          "The admin has not chosen to show this recruitment's allocations to all faculty.");
+    }
+    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
+        .filter(course -> !course.isRemoved())
+        .sorted(BY_COURSE_THEN_SECTION)
+        .map(AllocationRow::of)
+        .toList();
+  }
+
+  /** Whether the signed-in user holds the admin role. */
+  private boolean isAdmin() {
+    CurrentUser currentUser = getCurrentUser();
+    return currentUser != null
+        && currentUser.getRoles() != null
+        && currentUser.getRoles().stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch("ROLE_ADMIN"::equals);
   }
 
   /**

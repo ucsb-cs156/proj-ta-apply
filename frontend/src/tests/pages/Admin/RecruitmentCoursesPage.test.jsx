@@ -199,6 +199,7 @@ describe("RecruitmentCoursesPage tests", () => {
       "RecruitmentCoursesPage-header-maxEnroll",
       "RecruitmentCoursesPage-header-enrollmentEstimate",
       "RecruitmentCoursesPage-header-allocation",
+      "RecruitmentCoursesPage-header-allocationReleased",
       "RecruitmentCoursesPage-header-unroundedAllocation",
       "RecruitmentCoursesPage-header-delta",
       "RecruitmentCoursesPage-header-ratio",
@@ -1083,11 +1084,16 @@ describe("RecruitmentCoursesPage tests", () => {
         "RecruitmentCoursesPage-allocation-visibility-message",
       ),
     ).toHaveTextContent(
-      "Allocations of TAs/ULAs per course are currently hidden from faculty.",
+      "All courses' allocations are hidden from faculty; each instructor sees only their own released courses.",
     );
     expect(
       screen.getByTestId("RecruitmentCoursesPage-allocation-visibility-toggle"),
-    ).toHaveTextContent("Show Allocations to Faculty");
+    ).toHaveTextContent("Show All Allocations to All Faculty");
+    expect(
+      screen.getByTestId(
+        "RecruitmentCoursesPage-allocation-visibility-release-all",
+      ),
+    ).toHaveTextContent("Release all allocations to their instructors");
     const hiring = screen.getByTestId("RecruitmentCoursesPage-hiring-target");
     expect(
       hiring.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING,
@@ -1136,7 +1142,7 @@ describe("RecruitmentCoursesPage tests", () => {
     ).toEqual({ id: 7, visible: true });
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(
-        "Allocations are now shown to faculty.",
+        "All allocations are now visible to every faculty member.",
       ),
     );
     await waitFor(() => expect(listReads()).toBeGreaterThan(before));
@@ -1156,13 +1162,13 @@ describe("RecruitmentCoursesPage tests", () => {
       await screen.findByTestId(
         "RecruitmentCoursesPage-allocation-visibility-toggle",
       ),
-    ).toHaveTextContent("Hide Allocations from Faculty");
+    ).toHaveTextContent("Hide All Allocations");
     expect(
       screen.getByTestId(
         "RecruitmentCoursesPage-allocation-visibility-message",
       ),
     ).toHaveTextContent(
-      "Allocations of TAs/ULAs per course are currently shown to faculty (though only for their own courses)",
+      "All courses' allocations are visible to every faculty member.",
     );
   });
 
@@ -1360,5 +1366,64 @@ describe("RecruitmentCoursesPage tests", () => {
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-publish-button"),
     ).not.toBeInTheDocument();
+  });
+
+  // ---- issue #224: releasing allocations per course ----
+
+  test("Release all sends released=true for this recruitment and re-reads the courses", async () => {
+    axiosMock
+      .onPut("/api/recruitmentcourses/allocationReleased/all")
+      .reply(200, []);
+    renderPage();
+    const button = await screen.findByTestId(
+      "RecruitmentCoursesPage-allocation-visibility-release-all",
+    );
+    const courseReads = () =>
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/recruitmentcourses/all",
+      ).length;
+    const before = courseReads();
+
+    await userEvent.click(button);
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter(
+          (r) => r.url === "/api/recruitmentcourses/allocationReleased/all",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find(
+        (r) => r.url === "/api/recruitmentcourses/allocationReleased/all",
+      ).params,
+    ).toEqual({ recruitmentId: 7, released: true });
+    await waitFor(() => expect(courseReads()).toBeGreaterThan(before));
+  });
+
+  test("ticking Released to faculty on a row saves it for that section", async () => {
+    axiosMock
+      .onPut("/api/recruitmentcourses/allocationReleased")
+      .reply(200, {});
+    renderPage();
+    const box = await screen.findByTestId(
+      "RecruitmentCoursesPage-cell-row-0-allocationReleased",
+    );
+    expect(box).not.toBeChecked();
+
+    await userEvent.click(box);
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter(
+          (r) => r.url === "/api/recruitmentcourses/allocationReleased",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find(
+        (r) => r.url === "/api/recruitmentcourses/allocationReleased",
+      ).params,
+    ).toEqual({ id: 1, released: true });
   });
 });

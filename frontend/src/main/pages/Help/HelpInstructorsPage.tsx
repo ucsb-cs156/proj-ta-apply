@@ -27,11 +27,20 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           application dates.
         </p>
         <p data-testid="HelpInstructorsPage-allocations">
-          Once an admin chooses to show them, each of your courses also says how
-          many TAs (or ULAs) have been allocated to it, both on the card and at
-          the top of its ranking page. Please rank at least that many
-          candidates, and preferably twice as many. Until then no allocation is
-          shown.
+          Once an admin releases a course&apos;s hiring target to you, that
+          course shows a small table, both on the card and at the top of its
+          ranking page: the <strong>Hiring Target</strong> (how many TAs or ULAs
+          were allocated to the course), the <strong>Ranking Target</strong>{" "}
+          (how many candidates you are asked to rank: twice the hiring target,
+          or every interested candidate if there are fewer),{" "}
+          <strong>Candidates Ranked</strong> so far and{" "}
+          <strong>Rankings Still Needed</strong>. Please rank at least as many
+          as the hiring target, and preferably the whole ranking target. If you
+          have concerns about your course&apos;s target, raise them with the
+          admin once you see it. Until a target is released, nothing about it is
+          shown. An admin may instead show every course&apos;s allocation to all
+          faculty; your cards then also offer <strong>All allocations</strong>,
+          a read-only list of every course&apos;s number.
         </p>
         <p>
           When faculty reviews are open, expand one of your listed courses and

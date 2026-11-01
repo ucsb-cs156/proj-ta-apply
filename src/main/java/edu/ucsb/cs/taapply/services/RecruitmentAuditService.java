@@ -86,6 +86,16 @@ public class RecruitmentAuditService {
     return changes;
   }
 
+  /**
+   * Records a change to one of the recruitment's courses that faculty can see (issue #224), such as
+   * releasing a course's allocation: {@code whatChanged} names the field and the course, e.g.
+   * {@code "allocationReleased CMPSC 156 (0100)"}. Returns the row written.
+   */
+  public RecruitmentAuditTrail recordCourseChange(
+      Long recruitmentId, String whatChanged, Object oldValue, Object newValue) {
+    return repository.save(row(recruitmentId, whatChanged, text(oldValue), text(newValue)));
+  }
+
   private static RecruitmentAuditTrail row(
       Long recruitmentId, String whatChanged, String oldValue, String newValue) {
     return RecruitmentAuditTrail.builder()

@@ -185,55 +185,109 @@ describe("InstructorRecruitmentCards tests", () => {
     ).toHaveTextContent("W26");
   });
 
-  // ---- allocations shown to faculty (issue #178) ----
+  // ---- hiring targets released to faculty (issues #178 and #224) ----
 
-  test("no allocation line while the admin hides allocations, whether the field is null or absent", () => {
+  test("no targets table while the admin withholds targets, whether the field is null or absent", () => {
     const [ta, ula] = instructorRecruitmentsFixtures.twoRecruitments;
-    const absent = {
-      ...ula,
-      courses: ula.courses.map(({ allocation, ...rest }) => rest),
-    };
-    renderCards([ta, absent]);
+    const absent = { ...ula };
+    delete absent.targets;
+    renderCards([{ ...ta, targets: null }, absent]);
 
     expect(ta.courses[0].allocation).toBeNull();
-    expect(absent.courses[0]).not.toHaveProperty("allocation");
-    expect(screen.queryByText(/allocated to this course/)).toBeNull();
-    expect(screen.queryByTestId("I-card-1-course-2-allocation")).toBeNull();
-    expect(screen.queryByTestId("I-card-2-course-1-allocation")).toBeNull();
+    expect(absent).not.toHaveProperty("targets");
+    expect(screen.queryByText("Hiring Target")).toBeNull();
+    expect(screen.queryByTestId("I-card-1-course-2-targets")).toBeNull();
+    expect(screen.queryByTestId("I-card-2-course-1-targets")).toBeNull();
   });
 
-  test("once shown, each course says how many TAs or ULAs it has, by the recruitment's type", () => {
+  test("once released, each course shows its four figures in a table above the ranking action", () => {
     renderCards(instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations);
 
-    const first = screen.getByTestId("I-card-1-course-2-allocation");
-    expect(first).toHaveTextContent("TAs allocated to this course: 2");
-    expect(first.tagName).toBe("P");
+    const first = screen.getByTestId("I-card-1-course-2-targets");
     expect(first).toHaveClass("mb-2");
-    expect(
-      screen.getByTestId("I-card-1-course-3-allocation"),
-    ).toHaveTextContent("TAs allocated to this course: 3");
-    expect(
-      screen.getByTestId("I-card-2-course-1-allocation"),
-    ).toHaveTextContent("ULAs allocated to this course: 1");
-    // The line sits in the course's body, above the ranking action.
-    const body = screen.getByTestId("I-card-1-course-2-body");
-    expect(within(body).getByTestId("I-card-1-course-2-allocation")).toBe(
-      first,
+    const table = screen.getByTestId("I-card-1-course-2-targets-table");
+    expect(within(first).getByTestId("I-card-1-course-2-targets-table")).toBe(
+      table,
     );
+    expect(
+      [...table.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual([
+      "HiringTarget",
+      "RankingTarget",
+      "CandidatesRanked",
+      "RankingsStillNeeded",
+    ]);
+    expect(
+      screen.getByTestId("I-card-1-course-2-hiring-target"),
+    ).toHaveTextContent("2");
+    expect(
+      screen.getByTestId("I-card-1-course-2-ranking-target"),
+    ).toHaveTextContent("4");
+    expect(
+      screen.getByTestId("I-card-1-course-2-candidates-ranked"),
+    ).toHaveTextContent("1");
+    expect(
+      screen.getByTestId("I-card-1-course-2-rankings-still-needed"),
+    ).toHaveTextContent("3");
+    // The second lecture's target is capped by its five interested candidates, all ranked.
+    expect(
+      screen.getByTestId("I-card-1-course-3-hiring-target"),
+    ).toHaveTextContent("3");
+    expect(
+      screen.getByTestId("I-card-1-course-3-ranking-target"),
+    ).toHaveTextContent("5");
+    expect(
+      screen.getByTestId("I-card-1-course-3-candidates-ranked"),
+    ).toHaveTextContent("6");
+    expect(
+      screen.getByTestId("I-card-1-course-3-rankings-still-needed"),
+    ).toHaveTextContent("0");
+    expect(
+      screen.getByTestId("I-card-2-course-1-ranking-target"),
+    ).toHaveTextContent("2");
+    // The table sits in the course's body, above the ranking action; the old one-line text is gone.
+    const body = screen.getByTestId("I-card-1-course-2-body");
+    expect(within(body).getByTestId("I-card-1-course-2-targets")).toBe(first);
     expect(
       first.compareDocumentPosition(
         screen.getByTestId("I-card-1-course-2-view-rankings"),
       ) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    expect(screen.queryByText(/allocated to this course/)).toBeNull();
   });
 
-  test("an allocation of zero is still shown once allocations are visible", () => {
+  test("a course without an entry in targets gets no table even when others have one", () => {
     const [ta] = instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations;
-    renderCards([{ ...ta, courses: [{ ...ta.courses[0], allocation: 0 }] }]);
+    renderCards([{ ...ta, targets: { 3: ta.targets[3] } }]);
+
+    expect(screen.queryByTestId("I-card-1-course-2-targets")).toBeNull();
+    expect(screen.getByTestId("I-card-1-course-3-targets")).toBeInTheDocument();
+  });
+
+  test("zeros are shown, not hidden", () => {
+    const [ta] = instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations;
+    renderCards([
+      {
+        ...ta,
+        targets: {
+          2: {
+            recruitmentCourseId: 2,
+            allocation: 0,
+            candidateCount: 3,
+            rankingTarget: 0,
+            rankedCount: 0,
+            stillNeeded: 0,
+          },
+        },
+      },
+    ]);
 
     expect(
-      screen.getByTestId("I-card-1-course-2-allocation"),
-    ).toHaveTextContent("TAs allocated to this course: 0");
+      screen.getByTestId("I-card-1-course-2-hiring-target"),
+    ).toHaveTextContent("0");
+    expect(
+      screen.getByTestId("I-card-1-course-2-rankings-still-needed"),
+    ).toHaveTextContent("0");
   });
 
   // Issue #180: published assignments.
@@ -278,5 +332,29 @@ describe("InstructorRecruitmentCards tests", () => {
     expect(
       screen.queryByTestId("I-card-2-assignments-button"),
     ).not.toBeInTheDocument();
+  });
+
+  // ---- issue #224: the All allocations page link ----
+
+  test("an All allocations link appears only while the admin shows all allocations", () => {
+    const [ta, ula] =
+      instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations;
+    renderCards([ta, { ...ula, allocationsVisibleToFaculty: false }]);
+
+    const link = screen.getByTestId("I-card-1-all-allocations-button");
+    expect(link).toHaveTextContent("All allocations");
+    expect(link).toHaveAttribute("href", "/recruitments/1/allocations");
+    expect(link).toHaveClass("btn", "btn-outline-primary");
+    expect(screen.queryByTestId("I-card-2-all-allocations-button")).toBeNull();
+    // Above the courses accordion.
+    expect(
+      link.compareDocumentPosition(screen.getByTestId("I-card-1-courses")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("no All allocations link when the flag is absent", () => {
+    renderCards(instructorRecruitmentsFixtures.twoRecruitments);
+    expect(screen.queryByText("All allocations")).toBeNull();
   });
 });

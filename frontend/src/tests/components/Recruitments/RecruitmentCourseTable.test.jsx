@@ -848,7 +848,8 @@ describe("RecruitmentCourseTable tests", () => {
     const allocation = headers.indexOf(
       "RecruitmentCourseTable-header-allocation",
     );
-    expect(headers.slice(allocation + 1, allocation + 5)).toEqual([
+    expect(headers.slice(allocation + 1, allocation + 6)).toEqual([
+      "RecruitmentCourseTable-header-allocationReleased",
       "RecruitmentCourseTable-header-unroundedAllocation",
       "RecruitmentCourseTable-header-delta",
       "RecruitmentCourseTable-header-ratio",
@@ -1088,5 +1089,126 @@ describe("RecruitmentCourseTable tests", () => {
     expect(
       screen.getByTestId("RecruitmentCourseTable-header-courseId"),
     ).toBeInTheDocument();
+  });
+
+  // ---- Issue #224: the Released to faculty column ----
+
+  test("the Released to faculty column follows Allocation, stacked and small, one box per row", () => {
+    renderTable(recruitmentCoursesFixtures.fourCourses, true);
+
+    const heading = screen.getByTestId(
+      "RecruitmentCourseTable-header-allocationReleased",
+    );
+    expect(heading).toHaveTextContent("Released to faculty");
+    const small = [...heading.querySelectorAll("span")].find(
+      (span) => span.style.fontSize !== "",
+    );
+    expect(small.style.fontSize).toBe("80%");
+    const headers = [
+      ...screen
+        .getByTestId("RecruitmentCourseTable")
+        .querySelectorAll("thead th"),
+    ].map((th) => th.getAttribute("data-testid"));
+    expect(
+      headers.indexOf("RecruitmentCourseTable-header-allocationReleased"),
+    ).toBe(headers.indexOf("RecruitmentCourseTable-header-allocation") + 1);
+    // The fixture releases the second course only; the removed fourth row cannot be released.
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-0-allocationReleased",
+      ),
+    ).not.toBeChecked();
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-1-allocationReleased",
+      ),
+    ).toBeChecked();
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-3-allocationReleased",
+      ),
+    ).toBeDisabled();
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-0-allocationReleased",
+      ),
+    ).not.toBeDisabled();
+    // The label matcher would collapse the padded id's spaces, so check the attribute itself.
+    expect(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-0-allocationReleased",
+      ),
+    ).toHaveAttribute(
+      "aria-label",
+      "Released to faculty: CMPSC     1A section 0100",
+    );
+  });
+
+  test("a row without the flag counts as not released", () => {
+    renderTable([
+      { ...notRemoved[0], allocationReleased: undefined, section: null },
+    ]);
+    const box = screen.getByTestId(
+      "RecruitmentCourseTable-cell-row-0-allocationReleased",
+    );
+    expect(box).not.toBeChecked();
+    expect(box).toHaveAttribute(
+      "aria-label",
+      "Released to faculty: CMPSC     1A section ",
+    );
+  });
+
+  test("ticking a box releases that section at once; unticking withdraws it", async () => {
+    axiosMock.onPut("/api/recruitmentcourses/allocationReleased").reply(200, {
+      ...notRemoved[0],
+      allocationReleased: true,
+    });
+    renderTable();
+    const releasedPuts = () =>
+      axiosMock.history.put.filter(
+        (r) => r.url === "/api/recruitmentcourses/allocationReleased",
+      );
+
+    await userEvent.click(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-0-allocationReleased",
+      ),
+    );
+    await waitFor(() => expect(releasedPuts()).toHaveLength(1));
+    expect(releasedPuts()[0].params).toEqual({ id: 1, released: true });
+
+    await userEvent.click(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-1-allocationReleased",
+      ),
+    );
+    await waitFor(() => expect(releasedPuts()).toHaveLength(2));
+    expect(releasedPuts()[1].params).toEqual({ id: 2, released: false });
+  });
+
+  test("the saved row replaces its cached copy, so the box shows the new state at once", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(
+      ["/api/recruitmentcourses/all", false],
+      notRemoved,
+    );
+    axiosMock.onPut("/api/recruitmentcourses/allocationReleased").reply(200, {
+      ...notRemoved[0],
+      allocationReleased: true,
+    });
+    renderTable(notRemoved, false, queryClient);
+
+    await userEvent.click(
+      screen.getByTestId(
+        "RecruitmentCourseTable-cell-row-0-allocationReleased",
+      ),
+    );
+
+    await waitFor(() =>
+      expect(
+        queryClient.getQueryData(["/api/recruitmentcourses/all", false])[0]
+          .allocationReleased,
+      ).toBe(true),
+    );
   });
 });

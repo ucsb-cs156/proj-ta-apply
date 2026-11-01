@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import edu.ucsb.cs.taapply.ControllerTestCase;
+import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.AllocationRow;
 import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.CandidateRankingPage;
 import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.CourseDetails;
 import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.InstructorRecruitment;
@@ -27,9 +28,12 @@ import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.CourseTargetsService;
+import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import edu.ucsb.cs.taapply.services.CurrentUserService;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -51,6 +55,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   @MockitoBean CurrentUserService currentUserService;
   @MockitoBean edu.ucsb.cs.taapply.repository.ApplicationRepository applicationRepository;
   @MockitoBean edu.ucsb.cs.taapply.repository.CandidateRankingRepository candidateRankingRepository;
+  @MockitoBean CourseTargetsService courseTargetsService;
 
   private static final String EMAIL = "pconrad@ucsb.edu";
   private static final String URL = "/api/instructor/recruitments?email=" + EMAIL;
@@ -242,7 +247,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             "Open",
             LocalDate.of(2026, 4, 2),
             LocalDate.of(2026, 4, 20),
-            List.of(course)),
+            List.of(course),
+            null),
         ir);
   }
 
@@ -328,7 +334,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
                 new CourseDetails(4L, "CMPSC     8", "0100", "TITLE 4", "CONRAD P"),
                 new CourseDetails(2L, "CMPSC   156", "0200", "TITLE 2", "CONRAD P")),
             null,
-            true);
+            true,
+            null);
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
     verify(instructorRepository).findByEmail(EMAIL);
     verify(instructorRepository, never()).findByEmail("attacker@example.com");
@@ -753,6 +760,9 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertFalse(body.contains("\"allocation\":3"));
     assertFalse(body.contains("120"));
     assertFalse(body.contains("2.5"));
+    // Issue #224: the hiring figures stay on the server too.
+    assertTrue(mapper.readTree(body).get(0).get("targets").isNull());
+    verify(courseTargetsService, never()).targetsFor(any(), any(java.util.List.class));
     assertEquals(
         mapper.writeValueAsString(List.of(InstructorRecruitment.of(ta, List.of(course)))), body);
   }
@@ -766,6 +776,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     Recruitment ta = recruitment(11L, "20261", RecruitmentType.TA);
     ta.setAllocationsVisibleToFaculty(true);
     when(recruitmentRepository.findAllById(Set.of(11L))).thenReturn(List.of(ta));
+    Map<Long, CourseTargets> targets = Map.of(1L, new CourseTargets(1L, 3, 7, 6, 2, 4));
+    when(courseTargetsService.targetsFor(11L, List.of(course))).thenReturn(targets);
 
     MvcResult response = mockMvc.perform(get(URL)).andExpect(status().isOk()).andReturn();
 
@@ -774,8 +786,16 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(3, courseJson.get("allocation").asInt());
     assertEquals(120, courseJson.get("enrollmentEstimate").asInt());
     assertEquals(2.5, courseJson.get("unroundedAllocation").asDouble());
+    // Issue #224: released, so each course's hiring figures travel with it, keyed by course id.
+    JsonNode targetsJson = mapper.readTree(body).get(0).get("targets").get("1");
+    assertEquals(3, targetsJson.get("allocation").asInt());
+    assertEquals(7, targetsJson.get("candidateCount").asInt());
+    assertEquals(6, targetsJson.get("rankingTarget").asInt());
+    assertEquals(2, targetsJson.get("rankedCount").asInt());
+    assertEquals(4, targetsJson.get("stillNeeded").asInt());
     assertEquals(
-        mapper.writeValueAsString(List.of(InstructorRecruitment.of(ta, List.of(course)))), body);
+        mapper.writeValueAsString(List.of(InstructorRecruitment.of(ta, List.of(course), targets))),
+        body);
   }
 
   private RecruitmentCourse rankingPageSetup(boolean visible) {
@@ -806,6 +826,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     String body = response.getResponse().getContentAsString();
     assertTrue(mapper.readTree(body).get("allocation").isNull());
     assertFalse(body.contains("\"allocation\":3"), body);
+    assertTrue(mapper.readTree(body).get("targets").isNull());
+    verify(courseTargetsService, never()).targetsFor(any(), any(RecruitmentCourse.class));
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
@@ -814,7 +836,9 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
       throws Exception {
     currentUser(EMAIL, false);
     instructorWithCatalogName("CONRAD P");
-    rankingPageSetup(true);
+    RecruitmentCourse course = rankingPageSetup(true);
+    when(courseTargetsService.targetsFor(10L, course))
+        .thenReturn(new CourseTargets(1L, 3, 5, 5, 1, 4));
 
     MvcResult response =
         mockMvc
@@ -822,8 +846,11 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             .andExpect(status().isOk())
             .andReturn();
 
+    JsonNode json = mapper.readTree(response.getResponse().getContentAsString());
+    assertEquals(3, json.get("allocation").asInt());
     assertEquals(
-        3, mapper.readTree(response.getResponse().getContentAsString()).get("allocation").asInt());
+        mapper.readTree(mapper.writeValueAsString(new CourseTargets(1L, 3, 5, 5, 1, 4))),
+        json.get("targets"));
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -831,7 +858,9 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   public void the_ranking_page_shows_the_allocation_to_an_admin_even_while_hidden()
       throws Exception {
     currentUser(EMAIL, true);
-    rankingPageSetup(false);
+    RecruitmentCourse course = rankingPageSetup(false);
+    when(courseTargetsService.targetsFor(10L, course))
+        .thenReturn(new CourseTargets(1L, 3, 2, 2, 0, 2));
 
     MvcResult response =
         mockMvc
@@ -842,5 +871,190 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     JsonNode json = mapper.readTree(response.getResponse().getContentAsString());
     assertEquals(3, json.get("allocation").asInt());
     assertEquals(1L, json.get("course").get("id").asLong());
+    assertEquals(2, json.get("targets").get("rankingTarget").asInt());
+    assertEquals(2, json.get("targets").get("stillNeeded").asInt());
+  }
+
+  // ---- per-course release (issue #224) ----
+
+  @Test
+  public void allocationVisible_is_true_for_a_released_course_or_when_all_are_shown() {
+    Recruitment r = recruitment(3L, "20261", RecruitmentType.TA);
+    RecruitmentCourse course = rowWithFigures(9L, 3L);
+    assertFalse(InstructorRecruitmentsController.allocationVisible(r, course));
+    course.setAllocationReleased(null);
+    assertFalse(InstructorRecruitmentsController.allocationVisible(r, course));
+    course.setAllocationReleased(true);
+    assertTrue(InstructorRecruitmentsController.allocationVisible(r, course));
+    course.setAllocationReleased(false);
+    r.setAllocationsVisibleToFaculty(true);
+    assertTrue(InstructorRecruitmentsController.allocationVisible(r, course));
+  }
+
+  @Test
+  public void the_record_blanks_only_the_courses_that_are_not_released() {
+    Recruitment r = recruitment(3L, "20261", RecruitmentType.TA);
+    RecruitmentCourse hidden = rowWithFigures(9L, 3L);
+    RecruitmentCourse released = rowWithFigures(10L, 3L);
+    released.setAllocationReleased(true);
+
+    InstructorRecruitment ir = InstructorRecruitment.of(r, List.of(hidden, released));
+
+    assertNull(ir.courses().get(0).getAllocation());
+    assertEquals(3, ir.courses().get(1).getAllocation());
+    assertEquals(120, ir.courses().get(1).getEnrollmentEstimate());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_released_course_carries_its_targets_while_the_others_stay_blank() throws Exception {
+    instructorWithCatalogName("CONRAD P");
+    RecruitmentCourse hidden = rowWithFigures(1L, 11L);
+    RecruitmentCourse released = rowWithFigures(2L, 11L);
+    released.setSection("0200");
+    released.setAllocationReleased(true);
+    when(recruitmentCourseRepository.findByInstructor("CONRAD P"))
+        .thenReturn(List.of(hidden, released));
+    Recruitment ta = recruitment(11L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findAllById(Set.of(11L))).thenReturn(List.of(ta));
+    when(courseTargetsService.targetsFor(11L, List.of(released)))
+        .thenReturn(Map.of(2L, new CourseTargets(2L, 3, 4, 4, 0, 4)));
+
+    MvcResult response = mockMvc.perform(get(URL)).andExpect(status().isOk()).andReturn();
+
+    JsonNode json = mapper.readTree(response.getResponse().getContentAsString()).get(0);
+    assertTrue(json.get("courses").get(0).get("allocation").isNull());
+    assertEquals(3, json.get("courses").get(1).get("allocation").asInt());
+    assertNull(json.get("targets").get("1"));
+    assertEquals(4, json.get("targets").get("2").get("rankingTarget").asInt());
+    // Only the released course is computed.
+    verify(courseTargetsService).targetsFor(11L, List.of(released));
+    verify(courseTargetsService, never()).targetsFor(11L, List.of(hidden, released));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void the_ranking_page_shows_a_released_course_while_all_allocations_stay_hidden()
+      throws Exception {
+    currentUser(EMAIL, false);
+    instructorWithCatalogName("CONRAD P");
+    RecruitmentCourse course = rankingPageSetup(false);
+    course.setAllocationReleased(true);
+    when(courseTargetsService.targetsFor(10L, course))
+        .thenReturn(new CourseTargets(1L, 3, 6, 6, 2, 4));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/instructor/recruitments/10/courses/1/ranking"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    JsonNode json = mapper.readTree(response.getResponse().getContentAsString());
+    assertEquals(3, json.get("allocation").asInt());
+    assertEquals(4, json.get("targets").get("stillNeeded").asInt());
+  }
+
+  // ---- GET /api/instructor/recruitments/{id}/allocations (issue #224) ----
+
+  private static final String ALLOCATIONS_URL = "/api/instructor/recruitments/11/allocations";
+
+  private Recruitment allocationsSetup(boolean shown) {
+    Recruitment ta = recruitment(11L, "20261", RecruitmentType.TA);
+    ta.setAllocationsVisibleToFaculty(shown);
+    when(recruitmentRepository.findById(11L)).thenReturn(Optional.of(ta));
+    RecruitmentCourse second = rowWithFigures(2L, 11L);
+    second.setCourseId("CMPSC   156");
+    second.setSection("0200");
+    second.setInstructor("SOMEONE ELSE");
+    second.setAllocation(1);
+    RecruitmentCourse first = rowWithFigures(1L, 11L);
+    RecruitmentCourse removed = rowWithFigures(3L, 11L);
+    removed.setRemoved(true);
+    RecruitmentCourse eight = rowWithFigures(4L, 11L);
+    eight.setCourseId("CMPSC     8");
+    eight.setAllocation(0);
+    when(recruitmentCourseRepository.findByRecruitmentId(11L))
+        .thenReturn(List.of(second, removed, first, eight));
+    return ta;
+  }
+
+  @Test
+  public void logged_out_users_cannot_read_the_allocations() throws Exception {
+    mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void plain_users_cannot_read_the_allocations() throws Exception {
+    mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_get_403_while_the_admin_hides_all_allocations() throws Exception {
+    currentUser(EMAIL, false);
+    allocationsSetup(false);
+
+    MvcResult response =
+        mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403)).andReturn();
+
+    assertEquals(
+        "The admin has not chosen to show this recruitment's allocations to all faculty.",
+        responseToJson(response).get("message"));
+    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_get_every_non_removed_course_in_page_order_once_shown() throws Exception {
+    currentUser(EMAIL, false);
+    allocationsSetup(true);
+
+    MvcResult response =
+        mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().isOk()).andReturn();
+
+    assertEquals(
+        mapper.writeValueAsString(
+            List.of(
+                new AllocationRow(4L, "CMPSC     8", "0100", "CONRAD P", 0),
+                new AllocationRow(1L, "CMPSC   156", "0100", "CONRAD P", 3),
+                new AllocationRow(2L, "CMPSC   156", "0200", "SOMEONE ELSE", 1))),
+        response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admins_read_the_allocations_even_while_hidden() throws Exception {
+    currentUser(EMAIL, true);
+    allocationsSetup(false);
+
+    MvcResult response =
+        mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().isOk()).andReturn();
+
+    assertEquals(3, mapper.readTree(response.getResponse().getContentAsString()).size());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_admin_whose_roles_are_missing_is_treated_as_a_plain_viewer() throws Exception {
+    when(currentUserService.getCurrentUser())
+        .thenReturn(CurrentUser.builder().user(User.builder().email(EMAIL).build()).build());
+    allocationsSetup(false);
+    mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403));
+
+    when(currentUserService.getCurrentUser()).thenReturn(null);
+    mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403));
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void the_allocations_of_an_unknown_recruitment_are_a_404() throws Exception {
+    currentUser(EMAIL, false);
+    when(recruitmentRepository.findById(11L)).thenReturn(Optional.empty());
+
+    MvcResult response =
+        mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().isNotFound()).andReturn();
+
+    assertEquals("Recruitment with id 11 not found", responseToJson(response).get("message"));
   }
 }

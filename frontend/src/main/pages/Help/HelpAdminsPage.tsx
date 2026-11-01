@@ -168,9 +168,13 @@ export default function HelpAdminsPage(): React.JSX.Element {
             in the <strong>Audit Trail</strong>.
           </li>
           <li>
-            <strong>Afterwards:</strong> <em>Close Applications</em>. The
-            recruitment and its applications stay on file; past recruitments
-            tell applicants when the last round ran.
+            <strong>Afterwards:</strong> <em>Close Applications</em>, plan the
+            hiring on the <strong>Courses</strong> and{" "}
+            <strong>Budget for Quarter</strong> pages, release each
+            lecture&apos;s allocation to its instructor, then{" "}
+            <em>Open Faculty Reviews</em>. The recruitment and its applications
+            stay on file; past recruitments tell applicants when the last round
+            ran.
           </li>
         </ol>
 
@@ -346,15 +350,28 @@ export default function HelpAdminsPage(): React.JSX.Element {
           id="allocation-visibility"
           data-testid="HelpAdminsPage-allocation-visibility"
         >
-          Allocations are hidden from faculty until you choose otherwise. Under
-          the hiring target, the page says whether they are currently hidden or
-          shown. <strong>Show Allocations to Faculty</strong> puts each
-          lecture&apos;s allocation on the instructor&apos;s home page card and
-          at the top of its ranking page, where it asks them to rank at least
-          that many candidates and preferably twice as many; instructors see
-          only their own courses. <strong>Hide Allocations from Faculty</strong>{" "}
-          takes it away again. Showing or hiding is recorded in the
-          recruitment&apos;s change history.
+          Faculty do not see an allocation until you let them, and the{" "}
+          <strong>Faculty visibility</strong> panel under the hiring target
+          gives you two ways to. The usual one is per course: tick{" "}
+          <strong>Released to faculty</strong> on a lecture&apos;s row (or use{" "}
+          <em>Release all allocations to their instructors</em>) once its number
+          is mostly final, and that lecture&apos;s instructor sees a small table
+          on their home page card and at the top of its ranking page: the{" "}
+          <strong>Hiring Target</strong> (the allocation), the{" "}
+          <strong>Ranking Target</strong> (twice the allocation, but never more
+          than the candidates who expressed interest in the course),{" "}
+          <strong>Candidates Ranked</strong> so far and{" "}
+          <strong>Rankings Still Needed</strong>. You can still change the
+          allocation afterwards; untick the box, or <em>Withdraw all</em>, to
+          take it back. The other way is the switch{" "}
+          <strong>Show All Allocations to All Faculty</strong>, for when the
+          whole plan is public: every instructor then gets the table for each of
+          their courses and an <em>All allocations</em> page listing every
+          course&apos;s number; <strong>Hide All Allocations</strong> turns it
+          off. Each release, withdrawal and switch is recorded in the
+          recruitment&apos;s change history. Do this before opening faculty
+          reviews, so faculty know how many candidates to rank, and ask them to
+          raise any concerns about their targets then.
         </p>
 
         <h2 className="my-3 h4" id="quarters">
