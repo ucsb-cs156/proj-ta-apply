@@ -82,3 +82,26 @@ Here's what the job should do:
 * Finally, there is an existing field on the application to mark fake data. Please modify the name of this field if needed, and the values stored in it to make it clear that there are now three kinds of applications: "real ones entered by a real applicant", "fake ones entered as a test by the admin", "fake ones populated by the automatic developerMode feature".  Come up with a short name for each of these, and populate the field with those values (maybe an enum?)  Please add a badge to the top of the application forms that distinguishes between fake applications entered by a human Admin, and those created by the developerMode in some way (different text on badge, or different color, or both).  Regular applications should not have the badge at all.
 * Currently, it may be the case that at later stages, e.g. ranking applicants, hiring, etc. that fake applications are excluded.  That should still be the case in most circumstances.  But not when developerMode is on; in this case, treat all applications as valid ones so that we can test all of the features of the app.  Note that developerMode should NOT be enabled in production; only for testing.
 
+# Iteration 4: When developerMode is on, admins can populate faculty rankings
+
+When developerMode is on, and the admin has opened faculty reviews, they can go to the Courses page. At the bottom of thec courses page, in the footer, just to the right of the developer mode badge, there will be a button [Create Fake Faculty Rankings].
+
+This button will bring up a modal where the admin will have two options:
+
+* () Enter faculty ratings for some courses
+* () Enter complete faculty ratings for all courses
+
+Then a separate checkbox:[] rank candidates that expressed no interest.
+
+Based on the option chosen, a job will be launched that populates the faculty rankings for this recruitment with fake, but plausible data.
+
+For the first radio button, the job should shuffle the courses, and then assign rankings for 3/4 of them (rounded to nearest integer).
+
+Futhermore, when assigning rankings, the number of candidate ranked should follow a normal distribution with mean "target number of rankings * 2", and variance 1/2 target number of rankings, up to the number of candidates on the list.
+
+For the second radio button, the job should assign rankings for all courses, and should assign exactly the target number of rankings, up to the number of candidates on the list.
+
+The [] rank candidates that expressed no interest button will modify the options above so that when ranking candidates, the entire list of candidates is included in the rankings.  
+
+Also: [and this features has nothing to do with the fake data epic, but is a fix to the existing UI]; any time a candidates in the "Not Applicable/Not Interested" tier is ranked, the page that shows rankings should ALWAYS show that section of candidates, and the checkbox to toggle that on/off should be disabled, with the checkbox on.  A tooltip should say: "This option cannot be deselected when there are ranked candidates in this section".
+
