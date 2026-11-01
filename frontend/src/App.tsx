@@ -25,6 +25,7 @@ import UnauthorizedPage from "main/pages/Auth/UnauthorizedPage";
 
 import { useCurrentUser } from "main/utils/currentUser";
 import AdminDeveloperPage from "main/pages/Admin/AdminDeveloperPage";
+import DeveloperModePage from "main/pages/Admin/DeveloperModePage";
 import AdminUsersPage from "main/pages/Admin/AdminUsersPage";
 
 import HomePageLoggedIn from "main/pages/Home/HomePageLoggedIn";
@@ -368,6 +369,16 @@ export default function App() {
           element={
             <ProtectedPage
               component={<AdminDeveloperPage />}
+              enforceRole={"ROLE_ADMIN"}
+              currentUser={currentUser}
+            />
+          }
+        />
+        <Route
+          path="/admin/developer-mode"
+          element={
+            <ProtectedPage
+              component={<DeveloperModePage />}
               enforceRole={"ROLE_ADMIN"}
               currentUser={currentUser}
             />

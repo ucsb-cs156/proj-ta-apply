@@ -1,0 +1,38 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "039-create-global-settings-table",
+        "author": "pc",
+        "comment": "App-wide settings an admin can switch, one row per setting; the first is developerMode (issue #217).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "global_settings" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "global_settings",
+              "columns": [
+                {
+                  "column": {
+                    "name": "setting_key",
+                    "type": "VARCHAR(64)",
+                    "constraints": { "primaryKey": true, "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "setting_value",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

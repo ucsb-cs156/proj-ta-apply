@@ -154,4 +154,12 @@ export const ADMIN_MENU_ENTRIES: AdminMenuEntry[] = [
     summary:
       "Which commit is deployed, the API endpoints, and system settings.",
   },
+  {
+    menu: "Developer",
+    label: "Developer Mode",
+    path: "/admin/developer-mode",
+    section: "developer-mode",
+    summary:
+      "On test instances only: switch on the features that fill the app with fake data.",
+  },
 ];

@@ -242,6 +242,35 @@ describe("Help pages (issue #140)", () => {
     ).toBeTruthy();
   });
 
+  test("the admins page explains the Developer Mode switch (issue #217)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const heading = document.getElementById("developer-mode");
+    expect(heading.tagName).toBe("H2");
+    expect(heading).toHaveTextContent("Developer Mode (Developer menu)");
+    const section = screen.getByTestId("HelpAdminsPage-developer-mode");
+    expect(section).toHaveTextContent(
+      "is a switch for test instances only. It exists only where the instance was started with ENABLE_DEVELOPER_MODE=true;",
+    );
+    expect(section).toHaveTextContent(
+      "a red Developer Mode badge appears in the footer of every page, for everyone,",
+    );
+    expect(section).toHaveTextContent(
+      "Flipping the switch is not recorded in any change history.",
+    );
+    expect(
+      screen
+        .getAllByRole("link", { name: "Developer Mode" })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["#developer-mode", "/admin/developer-mode"]);
+    expect(
+      document
+        .getElementById("developer-info")
+        .compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   test("the admins page starts with a table of every menu option linking to its section", async () => {
     renderPage(<HelpAdminsPage />);
     expect(

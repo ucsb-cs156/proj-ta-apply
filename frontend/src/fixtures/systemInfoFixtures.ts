@@ -4,6 +4,7 @@ export const systemInfoFixtures = {
   showingNeither: {
     springH2ConsoleEnabled: false,
     showSwaggerUILink: false,
+    enableDeveloperMode: false,
     oauthLogin: "/oauth2/authorization/google",
     sourceRepo: "https://github.com/ucsb-cs156/proj-ta-apply",
     subjectArea: "CMPSC",
@@ -13,6 +14,18 @@ export const systemInfoFixtures = {
   showingBoth: {
     springH2ConsoleEnabled: true,
     showSwaggerUILink: true,
+    enableDeveloperMode: false,
+    oauthLogin: "/oauth2/authorization/google",
+    sourceRepo: "https://github.com/ucsb-cs156/proj-ta-apply",
+    subjectArea: "CMPSC",
+    startQtrYYYYQ: "20211",
+    endQtrYYYYQ: "20214",
+  },
+  /** A test instance started with ENABLE_DEVELOPER_MODE=true (issue #217). */
+  developerModeAvailable: {
+    springH2ConsoleEnabled: false,
+    showSwaggerUILink: false,
+    enableDeveloperMode: true,
     oauthLogin: "/oauth2/authorization/google",
     sourceRepo: "https://github.com/ucsb-cs156/proj-ta-apply",
     subjectArea: "CMPSC",

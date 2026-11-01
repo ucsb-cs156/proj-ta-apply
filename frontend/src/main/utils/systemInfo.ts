@@ -4,6 +4,8 @@ import axios from "axios";
 export interface SystemInfo {
   springH2ConsoleEnabled: boolean;
   showSwaggerUILink: boolean;
+  /** Whether the Developer Mode switch exists on this instance (issue #217). */
+  enableDeveloperMode?: boolean;
   oauthLogin: string;
   sourceRepo: string;
   commitId?: string;

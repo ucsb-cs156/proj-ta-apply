@@ -63,6 +63,7 @@ describe("helpPages", () => {
       ["Admin", "Audit Trail", "/admin/audittrail"],
       ["Developer", "Jobs", "/admin/jobs"],
       ["Developer", "Developer Info", "/admin/developer"],
+      ["Developer", "Developer Mode", "/admin/developer-mode"],
     ]);
     expect(ADMIN_MENU_ENTRIES.map((e) => e.section)).toEqual([
       "users",
@@ -78,6 +79,7 @@ describe("helpPages", () => {
       "audit-trail",
       "jobs",
       "developer-info",
+      "developer-mode",
     ]);
     ADMIN_MENU_ENTRIES.forEach((entry) => {
       expect(entry.summary.length).toBeGreaterThan(20);
