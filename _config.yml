@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: []
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/219a-application-origin","number":245,"title":"Developer Mode 3a: ApplicationOrigin replaces testApplication; developer mode counts all applications as real (part of #219)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/245"}]
