@@ -572,7 +572,7 @@ public class ApplicationsWebIT extends WebTestCase {
 
     setupAdminUser();
     goTo("/");
-    page.getByTestId("HomePageLoggedIn-admin-card-0-review-button").click();
+    page.getByTestId("HomePageLoggedIn-admin-card-0-applications-button").click();
 
     // The one recruitment repeated at the top, the count, and the application listed.
     assertThat(page.getByTestId("RecruitmentApplicationsPage-recruitment-cell-row-0-col-type"))
@@ -687,7 +687,7 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-coursework-bulk")).not().isVisible();
   }
 
-  /** An admin previews the form from the recruitments table; the result is flagged as a test. */
+  /** An admin previews the form for a recruitment; the result is flagged as a test. */
   @Test
   public void an_admin_can_enter_a_test_application_from_the_recruitments_table() throws Exception {
     Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
@@ -696,9 +696,9 @@ public class ApplicationsWebIT extends WebTestCase {
     recruitmentRepository.save(recruitment);
 
     setupAdminUser();
-    goTo("/");
-
-    page.getByTestId("HomePageLoggedIn-admin-card-0-test-button").click();
+    // Issue #233 removed the Test Application button from the card. Issue #234 gives it a new home
+    // on the Applications page and will restore the click path; until then, go to the page itself.
+    goTo("/admin/recruitments/" + recruitment.getId() + "/test-application");
 
     // The warning sits above the form, and the form is the TA one.
     assertThat(page.getByTestId("TestOnlyBanner")).containsText("This is a test only");
