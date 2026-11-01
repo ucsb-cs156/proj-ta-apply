@@ -301,4 +301,164 @@ describe("RecruitmentsDashboard tests", () => {
       await screen.findByTestId("RecruitmentForm.Quarter"),
     ).toBeInTheDocument();
   });
+
+  // ---- Issue #218: Auto Create Recruitments, developer mode only ----
+
+  test("there is no Auto Create button while developer mode is off, or when it is unavailable", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: false });
+    renderDashboard();
+    await screen.findByTestId("RecruitmentsDashboard-create-button");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/developerMode"),
+      ).toHaveLength(1),
+    );
+    expect(
+      screen.queryByTestId("RecruitmentsDashboard-auto-create-button"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("there is no Auto Create button when the status cannot be read", async () => {
+    axiosMock.onGet("/api/developerMode").reply(500);
+    renderDashboard();
+    await screen.findByTestId("RecruitmentsDashboard-create-button");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/developerMode")
+          .length,
+      ).toBeGreaterThan(0),
+    );
+    expect(
+      screen.queryByTestId("RecruitmentsDashboard-auto-create-button"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("with developer mode on, the button opens the plan and Cancel closes it", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
+    renderDashboard();
+
+    const button = await screen.findByTestId(
+      "RecruitmentsDashboard-auto-create-button",
+    );
+    expect(button).toHaveTextContent("Auto Create Recruitments");
+    expect(button).toHaveClass("btn-outline-secondary", "ms-2", "mb-3");
+    expect(
+      screen.queryByTestId("RecruitmentsDashboard-auto-create-modal"),
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(button);
+    expect(
+      await screen.findByTestId("RecruitmentsDashboard-auto-create-modal"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("RecruitmentsDashboard-auto-create-quarter"),
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentsDashboard-auto-create-cancel"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("RecruitmentsDashboard-auto-create-modal"),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      axiosMock.history.post.filter(
+        (r) => r.url === "/api/admin/recruitments/post",
+      ),
+    ).toHaveLength(0);
+  });
+
+  test("the plan reads the recruitments on the page", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
+    // Monday 2026-01-05, in Winter: the next quarter is Spring (S26). The fixtures hold a TA
+    // recruitment for S26, and both a TA and a ULA recruitment for W26.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 0, 5, 9, 0, 0));
+    try {
+      renderDashboard();
+      await userEvent.click(
+        await screen.findByTestId("RecruitmentsDashboard-auto-create-button"),
+      );
+      expect(
+        await screen.findByTestId("RecruitmentsDashboard-auto-create-quarter"),
+      ).toHaveValue("20262");
+      await waitFor(() =>
+        expect(
+          screen.getByTestId("RecruitmentsDashboard-auto-create-ta"),
+        ).toHaveTextContent(
+          "A TA recruitment for S26 already exists; it will not be created.",
+        ),
+      );
+      expect(
+        screen.getByTestId("RecruitmentsDashboard-auto-create-ula"),
+      ).toHaveTextContent("A ULA recruitment for S26 will be created.");
+      expect(
+        screen.getByTestId("RecruitmentsDashboard-auto-create-dates"),
+      ).toHaveTextContent(
+        "Tentative opening date: 2026-01-12. Primary consideration date: 2026-01-19.",
+      );
+
+      await userEvent.selectOptions(
+        screen.getByTestId("RecruitmentsDashboard-auto-create-quarter"),
+        "20261",
+      );
+      expect(
+        screen.getByTestId("RecruitmentsDashboard-auto-create-nothing"),
+      ).toHaveTextContent(
+        "A TA and a ULA recruitment for W26 already exist, so there is nothing to create.",
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("Create Recruitments from the dashboard posts the missing one and refreshes the list", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 0, 5, 9, 0, 0));
+    try {
+      renderDashboard();
+      await userEvent.click(
+        await screen.findByTestId("RecruitmentsDashboard-auto-create-button"),
+      );
+      await screen.findByTestId("RecruitmentsDashboard-auto-create-ula");
+      const listReads = () =>
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/recruitments/all",
+        ).length;
+      const before = listReads();
+
+      await userEvent.click(
+        screen.getByTestId("RecruitmentsDashboard-auto-create-create"),
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.queryByTestId("RecruitmentsDashboard-auto-create-modal"),
+        ).not.toBeInTheDocument(),
+      );
+      const posts = axiosMock.history.post.filter(
+        (r) => r.url === "/api/admin/recruitments/post",
+      );
+      expect(posts).toHaveLength(1);
+      expect(posts[0].params).toEqual({
+        quarter: "20262",
+        type: "ULA",
+        tentativeOpeningDate: "2026-01-12",
+        primaryConsiderationDate: "2026-01-19",
+      });
+      await waitFor(() => expect(listReads()).toBeGreaterThan(before));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

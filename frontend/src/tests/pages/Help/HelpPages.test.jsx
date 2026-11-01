@@ -268,6 +268,23 @@ describe("Help pages (issue #140)", () => {
         .getAllByRole("link", { name: "Developer Mode" })
         .map((link) => link.getAttribute("href")),
     ).toEqual(["#developer-mode", "/admin/developer-mode"]);
+    // Issue #218: the Auto Create Recruitments button.
+    const autoCreate = screen.getByTestId(
+      "HelpAdminsPage-auto-create-recruitments",
+    );
+    expect(autoCreate).toHaveTextContent(
+      "While developer mode is on, the recruitments section of the home page has an Auto Create Recruitments button. It proposes the quarter after the current one, skipping Summer (and lets you pick another),",
+    );
+    expect(autoCreate).toHaveTextContent(
+      "with the tentative opening date a week from today and the primary consideration date a week after that. If both exist already there is nothing to create.",
+    );
+    expect(autoCreate).toHaveTextContent(
+      "nothing is opened, and no hiring target is set.",
+    );
+    expect(
+      heading.compareDocumentPosition(autoCreate) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(
       document
         .getElementById("developer-info")
