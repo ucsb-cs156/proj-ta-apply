@@ -6,6 +6,7 @@ import {
   fromNumericYYYYQ,
   toNumericYYYYQ,
   nextQuarter,
+  quarterOfDate,
   quarterRange,
   qtrNumToQuarter,
 } from "main/utils/quarterUtilities";
@@ -53,6 +54,18 @@ describe("QuarterFormSelect conversion tests", () => {
     expect(qyyToYyyyq(undefined)).toBe(null);
     expect(qyyToYyyyq(null)).toBe(null);
     expect(qyyToYyyyq(26)).toBe(null);
+  });
+
+  test("quarterOfDate puts each month in its quarter", () => {
+    expect(quarterOfDate(new Date(2026, 0, 15))).toBe("20261");
+    expect(quarterOfDate(new Date(2026, 2, 31))).toBe("20261");
+    expect(quarterOfDate(new Date(2026, 3, 1))).toBe("20262");
+    expect(quarterOfDate(new Date(2026, 5, 30))).toBe("20262");
+    expect(quarterOfDate(new Date(2026, 6, 1))).toBe("20263");
+    expect(quarterOfDate(new Date(2026, 7, 31))).toBe("20263");
+    expect(quarterOfDate(new Date(2026, 8, 1))).toBe("20264");
+    expect(quarterOfDate(new Date(2026, 11, 31))).toBe("20264");
+    expect(quarterOfDate(new Date(1999, 9, 31))).toBe("19994");
   });
 
   test("toFormat correctly converts", () => {

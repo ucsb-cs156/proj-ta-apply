@@ -8,6 +8,8 @@ import { vi } from "vitest";
 
 import NoticeEditorCard from "main/components/Notices/NoticeEditorCard";
 import noticesFixtures from "fixtures/noticesFixtures";
+import quartersFixtures from "fixtures/quartersFixtures";
+import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import * as useBackendModule from "main/utils/useBackend";
 
 const mockToast = vi.fn();
@@ -34,6 +36,9 @@ const useBackendSpy = vi.spyOn(useBackendModule, "useBackend");
 
 const axiosMock = new AxiosMockAdapter(axios);
 
+const historyGets = () =>
+  axiosMock.history.get.filter((r) => r.url === "/api/admin/notices/all");
+
 function renderCard(type = "TA") {
   const queryClient = new QueryClient();
   const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
@@ -56,6 +61,15 @@ describe("NoticeEditorCard tests", () => {
     axiosMock
       .onGet("/api/admin/notices/all")
       .reply(200, noticesFixtures.taHistory);
+    axiosMock.onGet("/api/admin/quarters/all").reply(200, []);
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    // 2026-02-10 is in Winter 2026, so the preview defaults to Spring 2026 (S26).
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(2026, 1, 10, 12, 0, 0));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   test("loads the history for its type and shows the current version in the editor", async () => {
@@ -124,11 +138,23 @@ describe("NoticeEditorCard tests", () => {
     renderCard();
     const hint = await screen.findByTestId("Card-fields-hint");
     expect(hint).toHaveTextContent(
-      "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place; the various dates of that quarter, such as ${firstDayOfClasses}, can be inserted the same way. The preview shows them as written. All the fields, with examples.",
+      "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place; the various dates of that quarter, such as ${firstDayOfClasses}, can be inserted the same way. The preview fills them in for the quarter chosen above it. All the fields, with examples.",
     );
-    expect(
-      within(hint).getByRole("link", { name: "All the fields, with examples" }),
-    ).toHaveAttribute("href", "/help/notice-fields");
+    const fields = within(hint).getByRole("link", {
+      name: "All the fields, with examples",
+    });
+    expect(fields).toHaveAttribute("href", "/help/notice-fields");
+    // Issue #192: in a new tab, so the admin does not lose their place.
+    expect(fields).toHaveAttribute("target", "_blank");
+    expect(fields).toHaveAttribute("rel", "noreferrer");
+    const markdown = screen.getByTestId("Card-markdown-link");
+    expect(markdown).toHaveTextContent("Markdown");
+    expect(markdown).toHaveAttribute("href", "/help/admins#markdown");
+    expect(markdown).toHaveAttribute("target", "_blank");
+    expect(markdown).toHaveAttribute("rel", "noreferrer");
+    expect(markdown.parentElement).toHaveTextContent(
+      "Written in Markdown; the preview on the right is what applicants see.",
+    );
   });
 
   test("the preview renders GitHub-flavoured Markdown", async () => {
@@ -203,14 +229,14 @@ describe("NoticeEditorCard tests", () => {
     axiosMock.onGet("/api/admin/notices/all").reply(200, { nope: true });
     renderCard("ULA");
 
-    await waitFor(() => expect(axiosMock.history.get.length).toBe(1));
+    await waitFor(() => expect(historyGets()).toHaveLength(1));
     expect(screen.getByTestId("Card-preview-empty")).toBeInTheDocument();
   });
 
   test("typing updates the preview and enables Save; blank or unchanged text does not", async () => {
     axiosMock.onGet("/api/admin/notices/all").reply(200, []);
     renderCard("TA");
-    await waitFor(() => expect(axiosMock.history.get.length).toBe(1));
+    await waitFor(() => expect(historyGets()).toHaveLength(1));
 
     const editor = screen.getByTestId("mde");
     await userEvent.type(editor, "   ");
@@ -285,7 +311,7 @@ describe("NoticeEditorCard tests", () => {
       .reply(400, { message: "The notice text cannot be blank" });
     axiosMock.onGet("/api/admin/notices/all").reply(200, []);
     renderCard("ULA");
-    await waitFor(() => expect(axiosMock.history.get.length).toBe(1));
+    await waitFor(() => expect(historyGets()).toHaveLength(1));
 
     await userEvent.type(screen.getByTestId("mde"), "Draft");
     await userEvent.click(screen.getByTestId("Card-save-button"));
@@ -309,5 +335,223 @@ describe("NoticeEditorCard tests", () => {
     expect(
       await screen.findByTestId("NoticeEditorCard-save-button"),
     ).toBeInTheDocument();
+  });
+
+  // ---- Issue #192: the preview quarter and unknown fields ----
+
+  // The quarter calendar with rows for W26 and S26, the quarters of the recruitment fixtures.
+  const quartersWithRecruitments = () => {
+    axiosMock
+      .onGet("/api/admin/quarters/all")
+      .reply(200, [
+        { ...quartersFixtures.f21, quarter: "20262", qyy: "S26" },
+        { ...quartersFixtures.f21, quarter: "20261", qyy: "W26" },
+        quartersFixtures.f21,
+      ]);
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, recruitmentsFixtures.threeRecruitments);
+  };
+
+  test("the quarter box defaults to the quarter after today's, and asks for the calendar and recruitments", async () => {
+    renderCard("TA");
+
+    const box = await screen.findByLabelText("Preview for quarter:");
+    expect(box).toBe(screen.getByTestId("Card-preview-quarter"));
+    expect(box.id).toBe("Card-preview-quarter");
+    expect(box).toHaveValue("20262");
+    expect(box).toHaveClass("form-select-sm");
+    expect(box.style.width).toBe("8em");
+    // Nothing on file: the chosen quarter is the only option, and both notes show.
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/quarters/all",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.get.find((r) => r.url === "/api/admin/quarters/all")
+        .params,
+    ).toEqual({ direction: "desc" });
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/admin/recruitments/all",
+      ),
+    ).toHaveLength(1);
+    expect([...box.options].map((o) => [o.value, o.textContent])).toEqual([
+      ["20262", "S26"],
+    ]);
+    expect(screen.getByTestId("Card-preview-no-calendar")).toHaveTextContent(
+      "The quarter calendar for S26 is not on file (see Admin → Quarters), so its dates are shown as written.",
+    );
+    expect(screen.getByTestId("Card-preview-no-recruitment")).toHaveTextContent(
+      "No TA recruitment for S26 yet, so ${primaryConsiderationDate} is shown as written.",
+    );
+  });
+
+  test("the default quarter follows the date: a September day previews for the Winter after", () => {
+    vi.setSystemTime(new Date(2026, 8, 15));
+    renderCard("ULA");
+    expect(screen.getByTestId("Card-preview-quarter")).toHaveValue("20271");
+  });
+
+  test("lists the quarters on file, keeping the chosen one when it is not among them", async () => {
+    axiosMock
+      .onGet("/api/admin/quarters/all")
+      .reply(200, quartersFixtures.threeNewestFirst);
+    renderCard("TA");
+
+    const box = screen.getByTestId("Card-preview-quarter");
+    await waitFor(() => expect(box.options).toHaveLength(4));
+    expect([...box.options].map((o) => o.textContent)).toEqual([
+      "S26",
+      "S22",
+      "W22",
+      "F21",
+    ]);
+    expect(box).toHaveValue("20262");
+
+    // Choosing a quarter that is on file drops the extra option and the note.
+    await userEvent.selectOptions(box, "20214");
+    expect(box).toHaveValue("20214");
+    expect([...box.options].map((o) => o.textContent)).toEqual([
+      "S22",
+      "W22",
+      "F21",
+    ]);
+    expect(screen.queryByTestId("Card-preview-no-calendar")).toBeNull();
+  });
+
+  test("the preview fills the quarter, its calendar dates and the recruitment's deadline for the chosen quarter", async () => {
+    quartersWithRecruitments();
+    axiosMock.onGet("/api/admin/notices/all").reply(200, [
+      {
+        ...noticesFixtures.taV1,
+        content:
+          "Apply by ${primaryConsiderationDate} for ${quarter} (${qyy}); classes start ${firstDayOfClasses}.",
+      },
+    ]);
+    renderCard("TA");
+    const preview = screen.getByTestId("Card-preview");
+
+    // S26 (20262): the TA recruitment 3 has that quarter, and the calendar has a row for it.
+    await waitFor(() =>
+      expect(preview).toHaveTextContent(
+        "Apply by April 15, 2026 for Spring 2026 (S26); classes start October 1, 2021.",
+      ),
+    );
+    expect(screen.queryByTestId("Card-preview-no-recruitment")).toBeNull();
+    expect(screen.queryByTestId("Card-preview-no-calendar")).toBeNull();
+    // Known fields without a value are not red and raise no message.
+    expect(preview.querySelector(".text-danger")).toBeNull();
+    expect(screen.queryByTestId(/Card-unknown-field-/)).toBeNull();
+
+    // F21 (20214): a calendar row but no recruitment.
+    await userEvent.selectOptions(
+      screen.getByTestId("Card-preview-quarter"),
+      "20214",
+    );
+    expect(preview).toHaveTextContent(
+      "Apply by ${primaryConsiderationDate} for Fall 2021 (F21); classes start October 1, 2021.",
+    );
+    expect(screen.getByTestId("Card-preview-no-recruitment")).toHaveTextContent(
+      "No TA recruitment for F21 yet",
+    );
+    expect(screen.queryByTestId("Card-preview-no-calendar")).toBeNull();
+  });
+
+  test("the recruitment used for the deadline is the one of this card's type", async () => {
+    quartersWithRecruitments();
+    axiosMock
+      .onGet("/api/admin/notices/all")
+      .reply(200, [
+        { ...noticesFixtures.taV1, content: "By ${primaryConsiderationDate}." },
+      ]);
+    renderCard("ULA");
+    const box = screen.getByTestId("Card-preview-quarter");
+
+    // W26 has both a TA (id 1) and a ULA (id 2) recruitment; the ULA card uses the ULA one.
+    await waitFor(() => expect(box.options.length).toBeGreaterThan(1));
+    await userEvent.selectOptions(box, "20261");
+    await waitFor(() =>
+      expect(screen.getByTestId("Card-preview")).toHaveTextContent(
+        "By January 20, 2026.",
+      ),
+    );
+    // S26 has only a TA recruitment, so the ULA card shows the field as written.
+    await userEvent.selectOptions(box, "20262");
+    expect(screen.getByTestId("Card-preview")).toHaveTextContent(
+      "By ${primaryConsiderationDate}.",
+    );
+    expect(screen.getByTestId("Card-preview-no-recruitment")).toHaveTextContent(
+      "No ULA recruitment for S26 yet",
+    );
+  });
+
+  test("an unknown field is shown in red in the preview, with a message linking to the documentation", async () => {
+    axiosMock.onGet("/api/admin/notices/all").reply(200, [
+      {
+        ...noticesFixtures.taV1,
+        content:
+          "Due ${deadline} in ${quarter}. Also ${deadline} and [a real link](https://example.com).",
+      },
+    ]);
+    renderCard("TA");
+    const preview = screen.getByTestId("Card-preview");
+
+    await waitFor(() =>
+      expect(preview).toHaveTextContent(
+        "Due ${deadline} in Spring 2026. Also ${deadline} and a real link.",
+      ),
+    );
+    const red = [...preview.querySelectorAll("span.text-danger")];
+    expect(red.map((span) => span.textContent)).toEqual([
+      "${deadline}",
+      "${deadline}",
+    ]);
+    red.forEach((span) => expect(span).toHaveClass("fw-bold"));
+    // The marker never reaches the DOM as a link, and ordinary links still render as links.
+    expect(preview.querySelector('a[title="unknown-notice-field"]')).toBeNull();
+    expect(
+      within(preview).getByRole("link", { name: "a real link" }),
+    ).toHaveAttribute("href", "https://example.com");
+
+    const message = screen.getByTestId("Card-unknown-field-deadline");
+    expect(message).toHaveTextContent("Unknown ${deadline}; see documentation");
+    expect(message).toHaveClass("text-danger");
+    const link = within(message).getByRole("link", { name: "documentation" });
+    expect(link).toHaveAttribute("href", "/help/notice-fields");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noreferrer");
+    expect(link).toHaveClass("text-danger");
+    expect(screen.getAllByTestId(/^Card-unknown-field-/)).toHaveLength(1);
+  });
+
+  test("typing an unknown field adds its message at once; fixing it removes it", async () => {
+    renderCard("TA");
+    const editor = await screen.findByTestId("mde");
+    await waitFor(() =>
+      expect(editor).toHaveValue(noticesFixtures.taV2.content),
+    );
+
+    await userEvent.clear(editor);
+    await userEvent.paste("See ${Quarter}.");
+    expect(screen.getByTestId("Card-unknown-field-Quarter")).toHaveTextContent(
+      "Unknown ${Quarter}; see documentation",
+    );
+    expect(
+      screen.getByTestId("Card-preview").querySelector("span.text-danger"),
+    ).toHaveTextContent("${Quarter}");
+
+    await userEvent.clear(editor);
+    await userEvent.paste("See ${quarter}.");
+    expect(screen.queryByTestId(/^Card-unknown-field-/)).toBeNull();
+    expect(screen.getByTestId("Card-preview")).toHaveTextContent(
+      "See Spring 2026.",
+    );
+    expect(
+      screen.getByTestId("Card-preview").querySelector(".text-danger"),
+    ).toBeNull();
   });
 });

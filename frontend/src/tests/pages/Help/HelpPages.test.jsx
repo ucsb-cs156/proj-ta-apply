@@ -320,6 +320,37 @@ describe("Help pages (issue #140)", () => {
       "href",
       "#notice-fields",
     );
+    // Issue #192: Markdown basics, linked from the TA App Settings paragraph.
+    const markdownHeading = document.getElementById("markdown");
+    expect(markdownHeading.tagName).toBe("H2");
+    expect(markdownHeading).toHaveTextContent("Markdown");
+    expect(screen.getByRole("link", { name: "Markdown" })).toHaveAttribute(
+      "href",
+      "#markdown",
+    );
+    const markdown = screen.getByTestId("HelpAdminsPage-markdown");
+    expect(markdown).toHaveTextContent(
+      "a line starting with # is a heading (## a smaller one); *emphasis* is italic and **strong** is bold;",
+    );
+    expect(markdown).toHaveTextContent(
+      "lines starting with - make a bulleted list and with 1. a numbered one; [text](https://example.com) makes a link; a blank line starts a new paragraph",
+    );
+    expect(markdown).toHaveTextContent(
+      "the fields such as ${quarter} are described under Help → Notices Fields.",
+    );
+    expect(
+      screen.getByRole("link", { name: "Markdown" }).parentElement,
+    ).toHaveTextContent(
+      "It is written in Markdown with a live preview, filled in for the quarter chosen above the editor",
+    );
+    expect(
+      within(markdown).getByRole("link", { name: "Help → Notices Fields" }),
+    ).toHaveAttribute("href", "/help/notice-fields");
+    expect(
+      screen.getByText(
+        /filled in for the quarter chosen above the editor \(by default the quarter after the current one\)/,
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "CSV Upload/Download Formats" }),
     ).toHaveAttribute("href", "/help/csv");

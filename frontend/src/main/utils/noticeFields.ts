@@ -1,4 +1,9 @@
-import { fromFormat } from "main/utils/quarterUtilities";
+import {
+  fromFormat,
+  nextQuarter,
+  quarterOfDate,
+  toNumericYYYYQ,
+} from "main/utils/quarterUtilities";
 import {
   QUARTER_DATE_FIELDS,
   type UcsbApiQuarter,
@@ -114,7 +119,54 @@ export function fillNoticeFields(
 
 /** The one-line explanation beside the editor. */
 export const NOTICE_FIELDS_HINT =
-  "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place; the various dates of that quarter, such as ${firstDayOfClasses}, can be inserted the same way. The preview shows them as written.";
+  "Write ${quarter} or ${primaryConsiderationDate} and each applicant sees their recruitment's quarter (e.g. Winter 2026) or primary consideration date (e.g. January 20, 2026) in its place; the various dates of that quarter, such as ${firstDayOfClasses}, can be inserted the same way. The preview fills them in for the quarter chosen above it.";
+
+/** Every field name a notice may carry (issue #192): the recruitment's own and the calendar's. */
+export const KNOWN_NOTICE_FIELDS: readonly string[] = [
+  ...NOTICE_FIELDS,
+  ...QUARTER_NOTICE_FIELDS.map((field) => String(field.key)),
+];
+
+/** Anything written as ${...}, whatever is inside the braces (no closing brace or line break). */
+const FIELD_PATTERN = /\$\{([^}\n]*)\}/g;
+
+/**
+ * The names written as ${name} that are not fields at all (issue #192), each once, in the order
+ * they first appear; "${}" counts, as the empty name.
+ */
+export const findUnknownFields = (content: string): string[] => {
+  const unknown: string[] = [];
+  for (const match of content.matchAll(FIELD_PATTERN)) {
+    const key = match[1];
+    if (!KNOWN_NOTICE_FIELDS.includes(key) && !unknown.includes(key)) {
+      unknown.push(key);
+    }
+  }
+  return unknown;
+};
+
+/**
+ * The quarter the editor's preview is filled in for by default (issue #192): the one after the
+ * quarter today falls in, as YYYYQ, since the next notice is most likely for that quarter.
+ */
+export const defaultPreviewQuarter = (today: Date = new Date()): string =>
+  String(nextQuarter(toNumericYYYYQ(quarterOfDate(today))));
+
+/** The title that marks a link as an unknown field in the preview, so it can be drawn in red. */
+export const UNKNOWN_FIELD_TITLE = "unknown-notice-field";
+
+/**
+ * The content with every unknown ${name} turned into a Markdown link titled
+ * {@link UNKNOWN_FIELD_TITLE}, which the preview renders as red text instead of a link. Known
+ * fields, filled in or not, are left alone. Brackets and backslashes in the name are escaped so
+ * the link text survives Markdown.
+ */
+export const markUnknownFields = (content: string): string =>
+  content.replace(FIELD_PATTERN, (whole, key: string) =>
+    KNOWN_NOTICE_FIELDS.includes(key)
+      ? whole
+      : `[${whole.replace(/[\\[\]]/g, "\\$&")}](# "${UNKNOWN_FIELD_TITLE}")`,
+  );
 
 /** A sample quarter for the help page, so each calendar field can be shown with a value. */
 export const SAMPLE_CALENDAR: UcsbApiQuarter = {
