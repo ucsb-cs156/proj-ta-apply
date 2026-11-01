@@ -8,6 +8,7 @@ import { vi } from "vitest";
 
 import RecruitmentsDashboard from "main/components/Recruitments/RecruitmentsDashboard";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
@@ -46,6 +47,9 @@ describe("RecruitmentsDashboard tests", () => {
     axiosMock
       .onGet("/api/admin/recruitments/all")
       .reply(200, recruitmentsFixtures.threeRecruitments);
+    axiosMock
+      .onGet(/\/api\/admin\/recruitments\/\d+\/steps$/)
+      .reply(200, recruitmentStepsFixtures.fresh);
     axiosMock
       .onGet("/api/admin/recruitments/applicationCounts")
       .reply(200, { 1: 15, 2: 1, 3: 0 });

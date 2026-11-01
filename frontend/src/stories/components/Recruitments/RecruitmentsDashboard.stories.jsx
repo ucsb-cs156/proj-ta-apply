@@ -4,8 +4,10 @@ import RecruitmentsDashboard from "main/components/Recruitments/RecruitmentsDash
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
+import { recruitmentStepsHandler } from "../../recruitmentStepsHandlers";
 
 const baseHandlers = [
+  recruitmentStepsHandler,
   http.get("/api/currentUser", () =>
     HttpResponse.json(apiCurrentUserFixtures.adminUser),
   ),

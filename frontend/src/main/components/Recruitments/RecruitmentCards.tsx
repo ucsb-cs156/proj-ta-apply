@@ -1,48 +1,99 @@
 import { useState } from "react";
-import {
-  Badge,
-  Button,
-  ButtonGroup,
-  Card,
-  Form,
-  Modal,
-  OverlayTrigger,
-  Tooltip,
-} from "react-bootstrap";
-import { Link } from "react-router";
-import { TrashIcon } from "main/components/Common/Icons";
-import { applicationsText } from "main/utils/adminApplications";
-import { useBackendMutation } from "main/utils/useBackend";
+import { Button, ButtonGroup, Form, Modal } from "react-bootstrap";
+import { useNavigate } from "react-router";
+import AllocationVisibilityModal from "main/components/Recruitments/AllocationVisibilityModal";
+import PublishAssignmentsModal from "main/components/Recruitments/PublishAssignmentsModal";
+import RecruitmentCardLayout from "main/components/Recruitments/RecruitmentCardLayout";
+import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import {
-  DATE_KEYS,
   SORT_KEYS,
   sortRecruitments,
   type SortKey,
 } from "main/utils/recruitmentSort";
 import {
-  CLOSE_APPLICATIONS_TOOLTIP,
-  CLOSE_REVIEWS_TOOLTIP,
   MORE_ABOUT_TEXT,
-  OPEN_APPLICATIONS_TOOLTIP,
   OPEN_REVIEWS_CONFIRMATION,
   CLOSE_REVIEWS_CONFIRMATION,
   earlyCloseWarning,
-  OPEN_REVIEWS_TOOLTIP,
   statusConfirmation,
 } from "main/utils/recruitmentActions";
+import {
+  STEPS_QUERY_KEY,
+  type RecruitmentStepAction,
+  type RecruitmentStepsData,
+} from "main/utils/recruitmentSteps";
 import {
   defaultReviewDeadline,
   isBeforeDeadline,
 } from "main/utils/workingDays";
 
-/** On the Test button of each card. */
-export const TEST_APPLICATION_TOOLTIP =
-  "Submit a test application to see what the form looks like to applicants";
+/** Re-read after every change: the recruitment list, and every recruitment's steps. */
+const REFRESH_KEYS = ["/api/admin/recruitments/all", STEPS_QUERY_KEY];
 
-/** On the trash icon of each card (issue #108). */
-export const DELETE_TOOLTIP = "Delete this Recruitment";
+/**
+ * The id of the most recent recruitment (by quarter, then id) of one type, whose diagram starts
+ * expanded; every other recruitment's starts collapsed (docs/design/AdminUserInterfaceDesign.md).
+ */
+const latestOfType = (
+  recruitments: Recruitment[],
+  type: Recruitment["type"],
+): number | undefined => {
+  // Stryker disable next-line EqualityOperator : the two types are expanded symmetrically, so swapping them changes nothing
+  const ofType = recruitments.filter((r) => r.type === type);
+  return ofType.sort(
+    (a, b) => b.quarter.localeCompare(a.quarter) || b.id - a.id,
+  )[0]?.id;
+};
+
+type AdminRecruitmentCardProps = {
+  recruitment: Recruitment;
+  applicationCount: number;
+  defaultExpanded: boolean;
+  onChangeDeadline: (recruitment: Recruitment) => void;
+  onDeleteRequested: (recruitment: Recruitment) => void;
+  onAction: (recruitment: Recruitment, action: RecruitmentStepAction) => void;
+  testIdPrefix: string;
+};
+
+/**
+ * One recruitment's card with its live steps (issue #233): fetches the steps, then lays the card
+ * out with RecruitmentCardLayout. A component of its own because each card needs its own query.
+ */
+function AdminRecruitmentCard({
+  recruitment,
+  applicationCount,
+  defaultExpanded,
+  onChangeDeadline,
+  onDeleteRequested,
+  onAction,
+  testIdPrefix,
+}: AdminRecruitmentCardProps): React.JSX.Element {
+  const navigate = useNavigate();
+  const { data: steps } = useBackend<RecruitmentStepsData | undefined>(
+    [STEPS_QUERY_KEY, recruitment.id],
+    {
+      // Stryker disable next-line StringLiteral : axios defaults to GET
+      method: "GET",
+      url: `/api/admin/recruitments/${recruitment.id}/steps`,
+    },
+    undefined,
+  );
+  return (
+    <RecruitmentCardLayout
+      recruitment={recruitment}
+      applicationCount={applicationCount}
+      steps={steps}
+      defaultExpanded={defaultExpanded}
+      onChangeDeadline={onChangeDeadline}
+      onDeleteRequested={onDeleteRequested}
+      onAction={(action) => onAction(recruitment, action)}
+      onNavigate={navigate}
+      testIdPrefix={testIdPrefix}
+    />
+  );
+}
 
 type ReviewModal = { recruitment: Recruitment; mode: "open" | "editDeadline" };
 
@@ -56,9 +107,12 @@ type RecruitmentCardsProps = {
 
 /**
  * One card per recruitment with a Sort by bar above (issue #86): the recruitments table had
- * thirteen columns and overflowed a laptop screen. Each card has the quarter, type, status and
- * application count in its header with a trash icon at the right (issue #108), the dates in its
- * body and the application and faculty-review actions in its footer.
+ * thirteen columns and overflowed a laptop screen. Each card (RecruitmentCardLayout) has the
+ * quarter, type, status and application count in its header with a trash icon at the right
+ * (issue #108), the dates in its body, the live Recruitment Steps diagram in a collapsible panel
+ * (issue #233) and the Courses and Applications buttons in its footer. The diagram's actions open
+ * the confirmation modals defined here, the Allocation Visibility modal and the Publish
+ * Assignments modal.
  */
 export default function RecruitmentCards({
   recruitments,
@@ -81,7 +135,7 @@ export default function RecruitmentCards({
       },
     }),
     { onSuccess: () => setStatusModal(null) },
-    ["/api/admin/recruitments/all"],
+    REFRESH_KEYS,
   );
   // The recruitment whose Open/Close Applications button was clicked, while the modal asks
   // "Are you sure?" (issue #186); null when the modal is closed.
@@ -92,8 +146,14 @@ export default function RecruitmentCards({
   // confirmation is open.
   const [closeReviewsModal, setCloseReviewsModal] =
     useState<Recruitment | null>(null);
+  // Stryker disable next-line StringLiteral : the box is always set when the modal opens
   const [deadline, setDeadline] = useState("");
+  // Stryker disable next-line StringLiteral : the error is cleared whenever the modal opens or the box changes
   const [deadlineError, setDeadlineError] = useState("");
+  // The recruitment whose Allocation Visibility or Publish Assignments modal is open (issue
+  // #233), by id so the modal always shows the latest data; null when closed.
+  const [visibilityId, setVisibilityId] = useState<number | null>(null);
+  const [publishId, setPublishId] = useState<number | null>(null);
 
   const reviewStatusMutation = useBackendMutation<
     { recruitment: Recruitment; status: "Open" | "Closed"; deadline?: string },
@@ -114,7 +174,7 @@ export default function RecruitmentCards({
         setCloseReviewsModal(null);
       },
     },
-    ["/api/admin/recruitments/all"],
+    REFRESH_KEYS,
   );
 
   const deadlineMutation = useBackendMutation<
@@ -130,7 +190,7 @@ export default function RecruitmentCards({
       },
     }),
     { onSuccess: () => setReviewModal(null) },
-    ["/api/admin/recruitments/all"],
+    REFRESH_KEYS,
   );
 
   const openReviewModal = (
@@ -149,9 +209,11 @@ export default function RecruitmentCards({
   };
 
   const submitReviewDate = (event: React.FormEvent<HTMLFormElement>) => {
+    // Stryker disable next-line BlockStatement,CallExpression : the form is never really submitted in jsdom or the modal
     event.preventDefault();
     if (!reviewModal) return;
     if (
+      // Stryker disable next-line Regex,LogicalOperator : a date box only ever holds a well-formed date or an empty string
       !/^\d{4}-\d{2}-\d{2}$/.test(deadline) ||
       Number.isNaN(Date.parse(deadline))
     ) {
@@ -175,6 +237,34 @@ export default function RecruitmentCards({
   const savingReviewChanges =
     reviewStatusMutation.isPending || deadlineMutation.isPending;
 
+  // What a click on a box of the diagram does. The two applications steps share one modal and so
+  // do the two faculty-review steps: which way it goes follows the recruitment's current status.
+  const onStepAction = (
+    recruitment: Recruitment,
+    action: RecruitmentStepAction,
+  ) => {
+    switch (action) {
+      case "openApplications":
+      case "closeApplications":
+        setStatusModal(recruitment);
+        break;
+      case "openReviews":
+      case "closeReviews":
+        if (recruitment.reviewStatus === "Open") {
+          setCloseReviewsModal(recruitment);
+        } else {
+          openReviewModal(recruitment, "open");
+        }
+        break;
+      case "allocationVisibility":
+        setVisibilityId(recruitment.id);
+        break;
+      case "publishAssignments":
+        setPublishId(recruitment.id);
+        break;
+    }
+  };
+
   const sortBy = (key: SortKey) => {
     if (key === sortKey) {
       setDescending(!descending);
@@ -184,11 +274,12 @@ export default function RecruitmentCards({
     }
   };
 
-  const sorted = sortRecruitments(
-    Array.isArray(recruitments) ? recruitments : [],
-    sortKey,
-    descending,
-  );
+  const all = Array.isArray(recruitments) ? recruitments : [];
+  const sorted = sortRecruitments(all, sortKey, descending);
+  const latestTa = latestOfType(all, "TA");
+  const latestUla = latestOfType(all, "ULA");
+  const visibilityRecruitment = all.find((r) => r.id === visibilityId);
+  const publishRecruitment = all.find((r) => r.id === publishId);
 
   return (
     <div data-testid={`${testIdPrefix}-cards`}>
@@ -223,205 +314,37 @@ export default function RecruitmentCards({
         </p>
       )}
 
-      {sorted.map((recruitment, index) => {
-        const id = (suffix: string) =>
-          `${testIdPrefix}-card-${index}-${suffix}`;
-        const open = recruitment.applicationStatus === "OPEN";
-        const reviewsOpen = recruitment.reviewStatus === "Open";
-        return (
-          <Card
-            key={recruitment.id}
-            className="mb-3"
-            style={{ maxWidth: "48rem" }}
-            data-testid={id("card")}
-          >
-            <Card.Header className="d-flex align-items-center flex-wrap gap-3">
-              <strong className="fs-5" data-testid={id("quarter")}>
-                {yyyyqToQyy(recruitment.quarter)}
-              </strong>
-              <span data-testid={id("type")}>{recruitment.type}</span>
-              <Badge
-                bg={open ? "success" : "secondary"}
-                data-testid={id("applicationStatus")}
-              >
-                {recruitment.applicationStatus}
-              </Badge>
-              <Badge
-                bg={reviewsOpen ? "success" : "secondary"}
-                data-testid={id("reviewStatus")}
-              >
-                Faculty Reviews: {recruitment.reviewStatus}
-              </Badge>
-              {recruitment.assignmentsPublished === true && (
-                <Badge bg="info" data-testid={id("assignmentsPublished")}>
-                  Assignments Published
-                </Badge>
-              )}
-              <span data-testid={id("applications")}>
-                {applicationsText(applicationCounts[recruitment.id] ?? 0)}
-              </span>
-              <OverlayTrigger
-                placement="top"
-                overlay={
-                  <Tooltip id={id("delete-tooltip")}>{DELETE_TOOLTIP}</Tooltip>
-                }
-              >
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  className="ms-auto"
-                  aria-label={DELETE_TOOLTIP}
-                  onClick={() => onDeleteRequested(recruitment)}
-                  data-testid={id("delete-button")}
-                >
-                  <TrashIcon />
-                </Button>
-              </OverlayTrigger>
-            </Card.Header>
-            <Card.Body>
-              <dl className="row mb-0">
-                {DATE_KEYS.map(({ key, label }) => (
-                  <div className="col-sm-6 d-flex" key={key}>
-                    <dt className="me-2">{label}:</dt>
-                    <dd className="mb-1" data-testid={id(key)}>
-                      {recruitment[key] ?? ""}
-                    </dd>
-                  </div>
-                ))}
-                <div className="col-sm-6 d-flex">
-                  <dt className="me-2">Faculty Reviews Opened:</dt>
-                  <dd
-                    className="mb-1"
-                    data-testid={id("facultyReviewOpeningDate")}
-                  >
-                    {recruitment.facultyReviewOpeningDate ?? ""}
-                  </dd>
-                </div>
-                <div className="col-sm-6 d-flex align-items-start">
-                  <dt className="me-2">Faculty Ranking Deadline:</dt>
-                  <dd
-                    className="mb-1"
-                    data-testid={id("facultyRankingDeadline")}
-                  >
-                    {recruitment.facultyRankingDeadline ?? ""}
-                  </dd>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="p-0 ms-2"
-                    onClick={() => openReviewModal(recruitment, "editDeadline")}
-                    data-testid={id("edit-faculty-ranking-deadline")}
-                  >
-                    Change
-                  </Button>
-                </div>
-              </dl>
-            </Card.Body>
-            <Card.Footer className="d-flex flex-wrap gap-2">
-              <OverlayTrigger
-                placement="top"
-                overlay={
-                  <Tooltip id={id("status-tooltip")}>
-                    {open
-                      ? CLOSE_APPLICATIONS_TOOLTIP
-                      : OPEN_APPLICATIONS_TOOLTIP}
-                  </Tooltip>
-                }
-              >
-                <Button
-                  variant={open ? "warning" : "success"}
-                  onClick={() => setStatusModal(recruitment)}
-                  data-testid={id("status-button")}
-                >
-                  {open ? "Close Applications" : "Open Applications"}
-                </Button>
-              </OverlayTrigger>
-              <OverlayTrigger
-                placement="top"
-                overlay={
-                  <Tooltip id={id("review-status-tooltip")}>
-                    {reviewsOpen ? CLOSE_REVIEWS_TOOLTIP : OPEN_REVIEWS_TOOLTIP}
-                  </Tooltip>
-                }
-              >
-                {reviewsOpen ? (
-                  <Button
-                    variant="warning"
-                    onClick={() => setCloseReviewsModal(recruitment)}
-                    data-testid={id("review-status-button")}
-                  >
-                    Close Faculty Reviews
-                  </Button>
-                ) : (
-                  <Button
-                    variant="success"
-                    onClick={() => openReviewModal(recruitment, "open")}
-                    data-testid={id("review-status-button")}
-                  >
-                    Open Faculty Reviews
-                  </Button>
-                )}
-              </OverlayTrigger>
-              <Link
-                className="btn btn-primary"
-                to={`/admin/recruitments/${recruitment.id}/courses`}
-                data-testid={id("courses-button")}
-              >
-                Courses
-              </Link>
-              <Link
-                className="btn btn-secondary"
-                to={`/admin/recruitments/${recruitment.id}/test-application`}
-                title={TEST_APPLICATION_TOOLTIP}
-                data-testid={id("test-button")}
-              >
-                Test Application
-              </Link>
-              {/* A plain link, so the browser saves the file itself; the backend names it after
-                  the recruitment and lays the columns out for its type. */}
-              <a
-                className="btn btn-outline-secondary"
-                href={`/api/admin/applications/csv?recruitmentId=${recruitment.id}`}
-                download={`applications-${recruitment.id}.csv`}
-                data-testid={id("csv-button")}
-              >
-                Download CSV
-              </a>
-              <a
-                className="btn btn-outline-secondary"
-                href={`/api/admin/rankings/csv?recruitmentId=${recruitment.id}`}
-                download={`rankings-${recruitment.id}.csv`}
-                data-testid={id("rankings-csv-button")}
-              >
-                Download Rankings CSV
-              </a>
-              <Link
-                className="btn btn-info"
-                to={`/admin/recruitments/${recruitment.id}/applications`}
-                data-testid={id("review-button")}
-              >
-                Review Applications
-              </Link>
-              <Link
-                className="btn btn-dark"
-                to={`/admin/recruitments/${recruitment.id}/assignments`}
-                data-testid={id("assignments-button")}
-              >
-                Assignments
-              </Link>
-              {recruitment.assignmentsPublished === true && (
-                <Link
-                  className="btn btn-outline-dark"
-                  to={`/recruitments/${recruitment.id}/assignments`}
-                  data-testid={id("published-assignments-button")}
-                >
-                  Published Assignments
-                </Link>
-              )}
-            </Card.Footer>
-          </Card>
-        );
-      })}
+      {sorted.map((recruitment, index) => (
+        <AdminRecruitmentCard
+          key={recruitment.id}
+          recruitment={recruitment}
+          applicationCount={applicationCounts[recruitment.id] ?? 0}
+          defaultExpanded={
+            recruitment.id === latestTa || recruitment.id === latestUla
+          }
+          // Stryker disable next-line StringLiteral : any mode other than open edits the deadline, so an empty mode behaves the same
+          onChangeDeadline={(r) => openReviewModal(r, "editDeadline")}
+          onDeleteRequested={onDeleteRequested}
+          onAction={onStepAction}
+          testIdPrefix={`${testIdPrefix}-card-${index}`}
+        />
+      ))}
+      {visibilityRecruitment !== undefined && (
+        <AllocationVisibilityModal
+          recruitment={visibilityRecruitment}
+          show
+          onHide={() => setVisibilityId(null)}
+          testIdPrefix={`${testIdPrefix}-visibility`}
+        />
+      )}
+      {publishRecruitment !== undefined && (
+        <PublishAssignmentsModal
+          recruitment={publishRecruitment}
+          show
+          onHide={() => setPublishId(null)}
+          testIdPrefix={`${testIdPrefix}-publish`}
+        />
+      )}
       <Modal
         show={statusModal !== null}
         onHide={() => setStatusModal(null)}
