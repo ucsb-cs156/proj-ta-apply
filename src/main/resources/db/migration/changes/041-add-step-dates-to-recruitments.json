@@ -1,0 +1,37 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "041-add-step-dates-to-recruitments",
+        "author": "pc",
+        "comment": "When a recruitment was created, when its allocations were first released to faculty, when faculty review was last closed and when its assignments were last published, for the Recruitment Steps diagram (issue #231). Created is backfilled from the recruitment audit trail.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "recruitments", "columnName": "created_at" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [
+                { "column": { "name": "created_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "allocations_released_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "faculty_review_closed_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "assignments_published_at", "type": "TIMESTAMP" } }
+              ]
+            }
+          },
+          {
+            "sql": {
+              "sql": "UPDATE recruitments SET created_at = (SELECT MIN(t.changed_at) FROM recruitment_audit_trail t WHERE t.recruitment_id = recruitments.id AND t.what_changed = 'created')"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

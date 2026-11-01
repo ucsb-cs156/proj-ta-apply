@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,6 +90,7 @@ public class RecruitmentsController extends ApiController {
                 .applicationStatus(ApplicationStatus.CLOSED)
                 .tentativeOpeningDate(tentativeOpeningDate)
                 .primaryConsiderationDate(primaryConsiderationDate)
+                .createdAt(LocalDateTime.now())
                 .build());
     recruitmentAuditService.recordCreated(recruitment);
 
@@ -142,6 +144,9 @@ public class RecruitmentsController extends ApiController {
     recruitment.setReviewStatus(status);
     if ("Open".equals(status)) {
       recruitment.setFacultyRankingDeadline(facultyRankingDeadline);
+    }
+    if ("Closed".equals(status)) {
+      recruitment.setFacultyReviewClosedAt(LocalDateTime.now());
     }
 
     recruitmentRepository.save(recruitment);
@@ -255,6 +260,10 @@ public class RecruitmentsController extends ApiController {
 
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
     recruitment.setAllocationVisibility(visibility);
+    if (visibility != AllocationVisibility.ADMINS_ONLY
+        && recruitment.getAllocationsReleasedAt() == null) {
+      recruitment.setAllocationsReleasedAt(LocalDateTime.now());
+    }
     recruitmentRepository.save(recruitment);
     recruitmentAuditService.recordChanges(before, recruitment);
     return recruitment;
@@ -284,6 +293,9 @@ public class RecruitmentsController extends ApiController {
 
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
     recruitment.setAssignmentsPublished(published);
+    if (published) {
+      recruitment.setAssignmentsPublishedAt(LocalDateTime.now());
+    }
     recruitmentRepository.save(recruitment);
     recruitmentAuditService.recordChanges(before, recruitment);
     return recruitment;

@@ -108,4 +108,23 @@ public class Recruitment {
   @Column(name = "assignments_published", nullable = false)
   @Builder.Default
   private Boolean assignmentsPublished = false;
+
+  /**
+   * When the recruitment was created (issue #231); null for rows older than the column whose
+   * creation is not in the audit trail.
+   */
+  @Column(name = "created_at")
+  private LocalDateTime createdAt;
+
+  /** When allocation visibility first left ADMINS_ONLY (issue #231); null until it has. */
+  @Column(name = "allocations_released_at")
+  private LocalDateTime allocationsReleasedAt;
+
+  /** When faculty reviews were last closed (issue #231); null until they have been. */
+  @Column(name = "faculty_review_closed_at")
+  private LocalDateTime facultyReviewClosedAt;
+
+  /** When the assignments were last published (issue #231); null until they have been. */
+  @Column(name = "assignments_published_at")
+  private LocalDateTime assignmentsPublishedAt;
 }
