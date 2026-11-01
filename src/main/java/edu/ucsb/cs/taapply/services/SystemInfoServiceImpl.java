@@ -19,6 +19,9 @@ public class SystemInfoServiceImpl extends SystemInfoService {
   @Value("${app.showSwaggerUILink:false}")
   private boolean showSwaggerUILink;
 
+  @Value("${app.enableDeveloperMode:false}")
+  private boolean enableDeveloperMode;
+
   @Value("${app.oauth.login:/oauth2/authorization/google}")
   private String oauthLogin;
 
@@ -49,6 +52,7 @@ public class SystemInfoServiceImpl extends SystemInfoService {
         SystemInfo.builder()
             .springH2ConsoleEnabled(this.springH2ConsoleEnabled)
             .showSwaggerUILink(this.showSwaggerUILink)
+            .enableDeveloperMode(this.enableDeveloperMode)
             .oauthLogin(this.oauthLogin)
             .sourceRepo(this.sourceRepo)
             .commitMessage(commitMessage)

@@ -66,6 +66,19 @@ public class SystemInfoServiceImplTests {
     return stub;
   }
 
+  /** Issue #217: the Developer Mode flag reaches the payload, and is off unless configured. */
+  @Test
+  public void testGetSystemInfo_enableDeveloperModeComesFromTheProperty() {
+    SystemInfoServiceImpl service = new SystemInfoServiceImpl();
+    ReflectionTestUtils.setField(service, "gitProperties", null);
+    ReflectionTestUtils.setField(service, "ucsbQuarterService", stubQuarterService("20244"));
+
+    assertEquals(false, service.getSystemInfo().getEnableDeveloperMode());
+
+    ReflectionTestUtils.setField(service, "enableDeveloperMode", true);
+    assertEquals(true, service.getSystemInfo().getEnableDeveloperMode());
+  }
+
   /** The end quarter is derived, not configured, so verify it reaches the SystemInfo payload. */
   @Test
   public void testGetSystemInfo_endQtrComesFromTheQuarterService() {

@@ -102,6 +102,11 @@ export default function AppNavbar({
                   <NavDropdown.Item as={Link} to="/admin/developer">
                     Developer Info
                   </NavDropdown.Item>
+                  {systemInfo?.enableDeveloperMode && (
+                    <NavDropdown.Item as={Link} to="/admin/developer-mode">
+                      Developer Mode
+                    </NavDropdown.Item>
+                  )}
                 </NavDropdown>
               )}
             </Nav>

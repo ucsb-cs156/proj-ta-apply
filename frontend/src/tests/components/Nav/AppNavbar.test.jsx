@@ -282,6 +282,31 @@ describe("AppNavbar tests", () => {
     expect(adminMenu).not.toHaveTextContent("Developer Info");
   });
 
+  /** Issue #217: the switch's page is offered only where the instance makes it available. */
+  test("the Developer menu offers Developer Mode only when the instance enables it", async () => {
+    renderNavbar(
+      currentUserFixtures.adminUser,
+      systemInfoFixtures.developerModeAvailable,
+    );
+    fireEvent.click(screen.getByText("Developer"));
+    await waitFor(() =>
+      expect(screen.getByText("Developer Mode")).toHaveAttribute(
+        "href",
+        "/admin/developer-mode",
+      ),
+    );
+  });
+
+  test("the Developer menu has no Developer Mode item when the instance does not enable it", async () => {
+    renderNavbar(
+      currentUserFixtures.adminUser,
+      systemInfoFixtures.showingNeither,
+    );
+    fireEvent.click(screen.getByText("Developer"));
+    await waitFor(() => expect(screen.getByText("Jobs")).toBeInTheDocument());
+    expect(screen.queryByText("Developer Mode")).toBeNull();
+  });
+
   test("does not render the Developer menu for non-admin users", () => {
     renderNavbar(
       currentUserFixtures.instructorUser,

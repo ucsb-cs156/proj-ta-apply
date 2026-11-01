@@ -162,6 +162,11 @@ describe("AdminUsersPage tests", () => {
   test("renders empty table when backend unavailable", async () => {
     setupAdminUser();
     axiosMock.onGet(getEndpoint).timeout();
+    // The footer asks about developer mode on every page (issue #217); answer it so the only
+    // error logged is the one this test is about.
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: false, on: false });
 
     const restoreConsole = mockConsole();
 
