@@ -94,7 +94,7 @@ describe("Footer tests", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("the page's registered controls appear to the right of the badge", async () => {
+  test("the page's registered controls appear to the left of the badge, which is last", async () => {
     axiosMock
       .onGet("/api/developerMode")
       .reply(200, { available: true, on: true });
@@ -105,10 +105,10 @@ describe("Footer tests", () => {
     );
     expect(controls).toHaveTextContent("Fake data");
     const group = screen.getByTestId("Footer-developer-mode");
-    expect(group.firstChild).toBe(
+    expect(group.firstChild).toBe(controls);
+    expect(group.lastChild).toBe(
       screen.getByTestId("Footer-developer-mode-badge"),
     );
-    expect(group.lastChild).toBe(controls);
   });
 
   test("the status is read without a toast when the backend cannot answer", async () => {

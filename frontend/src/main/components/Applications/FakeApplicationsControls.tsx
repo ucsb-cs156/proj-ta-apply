@@ -22,7 +22,8 @@ type Props = {
 /**
  * Developer Mode's controls for a recruitment's applications (issue #219): create fake
  * applications, which runs as a job, and delete the fake ones. Shown in the footer's Developer
- * Mode slot, so they appear only while Developer Mode is on.
+ * Mode slot, to the left of the badge with Create beside it, so they appear only while Developer
+ * Mode is on.
  */
 export default function FakeApplicationsControls({
   recruitmentId,
@@ -84,8 +85,8 @@ export default function FakeApplicationsControls({
   );
 
   const openCreate = () => {
-    // Three per course: comfortably inside the range, and enough to rank from.
-    setCount(String(3 * courseCount));
+    // Two per course, which is also the least that may be asked for.
+    setCount(String(MIN_PER_COURSE * courseCount));
     setCoverage("ALL");
     setShowCreate(true);
   };
@@ -103,20 +104,20 @@ export default function FakeApplicationsControls({
     <span data-testid={testIdPrefix}>
       <Button
         size="sm"
-        variant="outline-warning"
-        className="me-2"
-        onClick={openCreate}
-        data-testid={`${testIdPrefix}-create`}
-      >
-        Create Fake Applications
-      </Button>
-      <Button
-        size="sm"
         variant="outline-danger"
+        className="me-2"
         onClick={() => setShowDelete(true)}
         data-testid={`${testIdPrefix}-delete`}
       >
         Delete Fake Applications
+      </Button>
+      <Button
+        size="sm"
+        variant="danger"
+        onClick={openCreate}
+        data-testid={`${testIdPrefix}-create`}
+      >
+        Create Fake Applications
       </Button>
 
       <Modal
@@ -153,22 +154,25 @@ export default function FakeApplicationsControls({
                   {courseCount === 1 ? "course" : "courses"}.
                 </Form.Text>
               </Form.Group>
-              <Form.Group controlId="fake-applications-coverage">
-                <Form.Label>Interest in the courses</Form.Label>
-                <Form.Select
-                  value={coverage}
-                  onChange={(event) =>
-                    setCoverage(event.target.value as FakeCoverage)
-                  }
-                  data-testid={`${testIdPrefix}-coverage`}
-                >
-                  <option value="ALL">
-                    All courses: every course has interested applicants
-                  </option>
-                  <option value="SPARSE">
-                    Sparse: only a few courses attract any interest
-                  </option>
-                </Form.Select>
+              <Form.Group>
+                <Form.Check
+                  type="radio"
+                  id="fake-applications-coverage-all"
+                  name="fake-applications-coverage"
+                  label="Cover all courses with a reasonable number of applicants"
+                  checked={coverage === "ALL"}
+                  onChange={() => setCoverage("ALL")}
+                  data-testid={`${testIdPrefix}-coverage-all`}
+                />
+                <Form.Check
+                  type="radio"
+                  id="fake-applications-coverage-sparse"
+                  name="fake-applications-coverage"
+                  label="Leave some courses with few or no applicants"
+                  checked={coverage === "SPARSE"}
+                  onChange={() => setCoverage("SPARSE")}
+                  data-testid={`${testIdPrefix}-coverage-sparse`}
+                />
               </Form.Group>
             </>
           )}
@@ -184,7 +188,7 @@ export default function FakeApplicationsControls({
             }
             data-testid={`${testIdPrefix}-create-confirm`}
           >
-            Create
+            Create Fake Applications
           </Button>
           <Button
             variant="secondary"
@@ -207,11 +211,12 @@ export default function FakeApplicationsControls({
         </Modal.Header>
         <Modal.Body>
           <p>
-            The fake applications are being entered by a background job. See the{" "}
+            Fake applications are being entered; see the{" "}
             <Link to="/admin/jobs" data-testid={`${testIdPrefix}-jobs-link`}>
               Jobs page
             </Link>{" "}
-            to follow it. They appear in the table once it has finished.
+            for details. Refresh the page a few times, and they should all
+            appear.
           </p>
         </Modal.Body>
         <Modal.Footer>
@@ -220,7 +225,7 @@ export default function FakeApplicationsControls({
             onClick={closeLaunched}
             data-testid={`${testIdPrefix}-launched-close`}
           >
-            Close
+            Cancel
           </Button>
         </Modal.Footer>
       </Modal>

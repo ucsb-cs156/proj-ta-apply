@@ -699,14 +699,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           switch are not there at all. While the switch is on, a red{" "}
           <strong>Developer Mode</strong> badge appears in the footer of every
           page, for everyone, as a reminder that the instance may hold fake
-          data, and page-specific controls for creating that data appear next to
-          the badge as later features add them. Flipping the switch is not
-          recorded in any change history.
+          data. Page-specific controls for creating that data appear in the
+          footer too, in red, just to the left of the badge, and never among the
+          page&apos;s own buttons. Flipping the switch is not recorded in any
+          change history.
         </p>
         <p data-testid="HelpAdminsPage-auto-create-recruitments">
-          While developer mode is on, the recruitments section of the home page
-          has an <strong>Auto Create Recruitments</strong> button. It proposes
-          the quarter after the current one, skipping Summer (and lets you pick
+          While developer mode is on, the footer of the home page has a red{" "}
+          <strong>Auto Create Recruitments</strong> button. It proposes the
+          quarter after the current one, skipping Summer (and lets you pick
           another: the four quarters before the current one up to the next one,
           or the next two in Spring, since only those have courses to fill in),
           and shows what it would do: a TA recruitment and a ULA recruitment for
@@ -730,6 +731,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           checkbox, ticked by default, also sets allocation visibility to{" "}
           <strong>Faculty see their own courses</strong>, recorded in the change
           history like any other visibility change.
+        </p>
+        <p data-testid="HelpAdminsPage-fake-rankings">
+          While developer mode is on, the footer of a recruitment&apos;s Courses
+          page also has a <strong>Create Fake Rankings</strong> button, enabled
+          only while faculty ranking is open. It launches a job that ranks
+          candidates as the faculty would, for every course that has no rankings
+          yet or for a random part of them. Each course gets as many interested
+          candidates as its ranking target asks for, and a checkbox also ranks
+          one or two applicants who did not express interest. Courses that
+          already have rankings are never changed.
         </p>
       </div>
     </BasicLayout>

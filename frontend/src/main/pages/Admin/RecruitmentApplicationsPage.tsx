@@ -3,6 +3,7 @@ import { Button, Form } from "react-bootstrap";
 import { useParams } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import CollapsibleCard from "main/components/Common/CollapsibleCard";
 import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
 import {
   APPLICATIONS_TABLE_KEY,
@@ -244,60 +245,65 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
           testIdPrefix="RecruitmentApplicationsPage-applications"
         />
 
-        <h2 className="h4 mt-4">Change History</h2>
-        <p data-testid="RecruitmentApplicationsPage-audit-intro">
-          Every change to this recruitment itself, newest first: when it was
-          created, each time it was opened or closed, and each date that
-          changed. Changes to individual applications are on the Audit Trail
-          page.
-        </p>
-        <div className="d-flex align-items-end justify-content-between mb-3 gap-3 flex-wrap">
-          <Form.Group controlId="recruitment-audit-page-size">
-            <Form.Label>Page size</Form.Label>
-            <Form.Select
-              value={auditPageSize}
-              onChange={(event) => {
-                setAuditPageSize(Number(event.target.value));
-                setAuditPage(0);
-              }}
-              data-testid="RecruitmentApplicationsPage-audit-page-size"
-            >
-              {AUDIT_PAGE_SIZES.map((sizeOption) => (
-                <option key={sizeOption} value={sizeOption}>
-                  {sizeOption}
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-          <div className="d-flex align-items-center gap-2">
-            <Button
-              variant="secondary"
-              onClick={previousAuditPage}
-              disabled={auditPage === 0}
-              data-testid="RecruitmentApplicationsPage-audit-previous"
-            >
-              Previous
-            </Button>
-            <span data-testid="RecruitmentApplicationsPage-audit-page-indicator">
-              Page {auditPageNumber + 1} of {Math.max(auditTotalPages, 1)}
-            </span>
-            <Button
-              variant="secondary"
-              onClick={() => setAuditPage((previousPage) => previousPage + 1)}
-              disabled={auditPage + 1 >= auditTotalPages}
-              data-testid="RecruitmentApplicationsPage-audit-next"
-            >
-              Next
-            </Button>
+        <CollapsibleCard
+          title="Change History"
+          storageKey="RecruitmentApplicationsPage-changeHistory"
+          testIdPrefix="RecruitmentApplicationsPage-changeHistory"
+        >
+          <p data-testid="RecruitmentApplicationsPage-audit-intro">
+            Every change to this recruitment itself, newest first: when it was
+            created, each time it was opened or closed, and each date that
+            changed. Changes to individual applications are on the Audit Trail
+            page.
+          </p>
+          <div className="d-flex align-items-end justify-content-between mb-3 gap-3 flex-wrap">
+            <Form.Group controlId="recruitment-audit-page-size">
+              <Form.Label>Page size</Form.Label>
+              <Form.Select
+                value={auditPageSize}
+                onChange={(event) => {
+                  setAuditPageSize(Number(event.target.value));
+                  setAuditPage(0);
+                }}
+                data-testid="RecruitmentApplicationsPage-audit-page-size"
+              >
+                {AUDIT_PAGE_SIZES.map((sizeOption) => (
+                  <option key={sizeOption} value={sizeOption}>
+                    {sizeOption}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+            <div className="d-flex align-items-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={previousAuditPage}
+                disabled={auditPage === 0}
+                data-testid="RecruitmentApplicationsPage-audit-previous"
+              >
+                Previous
+              </Button>
+              <span data-testid="RecruitmentApplicationsPage-audit-page-indicator">
+                Page {auditPageNumber + 1} of {Math.max(auditTotalPages, 1)}
+              </span>
+              <Button
+                variant="secondary"
+                onClick={() => setAuditPage((previousPage) => previousPage + 1)}
+                disabled={auditPage + 1 >= auditTotalPages}
+                data-testid="RecruitmentApplicationsPage-audit-next"
+              >
+                Next
+              </Button>
+            </div>
           </div>
-        </div>
-        <p data-testid="RecruitmentApplicationsPage-audit-total">
-          {auditTotal} changes recorded.
-        </p>
-        <RecruitmentAuditTrailTable
-          rows={auditRows}
-          testIdPrefix="RecruitmentApplicationsPage-audit"
-        />
+          <p data-testid="RecruitmentApplicationsPage-audit-total">
+            {auditTotal} changes recorded.
+          </p>
+          <RecruitmentAuditTrailTable
+            rows={auditRows}
+            testIdPrefix="RecruitmentApplicationsPage-audit"
+          />
+        </CollapsibleCard>
       </div>
     </BasicLayout>
   );

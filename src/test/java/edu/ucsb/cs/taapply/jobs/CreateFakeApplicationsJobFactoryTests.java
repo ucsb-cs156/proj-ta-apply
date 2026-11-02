@@ -31,12 +31,14 @@ public class CreateFakeApplicationsJobFactoryTests {
   public void create_wires_in_the_request_and_collaborators() {
     Random random = new Random(5);
 
-    CreateFakeApplicationsJob job = factory.create(7L, 30, FakeCoverage.SPARSE, random);
+    CreateFakeApplicationsJob job =
+        factory.create(7L, 30, FakeCoverage.SPARSE, random, java.time.LocalDate.of(2026, 2, 10));
 
     assertEquals(7L, job.getRecruitmentId());
     assertEquals(30, job.getCount());
     assertEquals(FakeCoverage.SPARSE, job.getCoverage());
     assertSame(random, job.getRandom());
+    assertEquals(java.time.LocalDate.of(2026, 2, 10), job.getToday());
     assertSame(generator, job.getGenerator());
     assertSame(recruitmentRepository, job.getRecruitmentRepository());
     assertSame(recruitmentCourseRepository, job.getRecruitmentCourseRepository());
@@ -48,6 +50,7 @@ public class CreateFakeApplicationsJobFactoryTests {
     CreateFakeApplicationsJob job = factory.create(7L, 30, FakeCoverage.ALL);
 
     assertNotNull(job.getRandom());
+    assertEquals(java.time.LocalDate.now(), job.getToday());
     assertEquals(FakeCoverage.ALL, job.getCoverage());
   }
 }

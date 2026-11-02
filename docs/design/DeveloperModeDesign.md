@@ -9,9 +9,15 @@ deployment that has ENABLE_DEVELOPER_MODE=true.   Turning on this environment va
 provides an extra feature on the Developer Menu to enable or disable developer mode.
 
 When Developer Mode is enabled, a "Developer Mode" badge appears prominently 
-in the footer, flush right.  And then, to the right of this, there can be page
+in the footer, flush right.  And then, to the left of this, there can be page
 specific features and controls for enabling quick set up of test data so that
 the various features of the app can be explored.
+
+Every control that exists only in Developer Mode follows one pattern: it is registered into the
+footer's developer slot (`useDeveloperModeFooterControls`), it is red, and it sits immediately to
+the left of the badge. None of them appears among a page's own buttons. (Issue #252 originally
+said "to the right of the badge"; this document and the footer put them to the left, with the
+badge flush right, as agreed on PR #251.)
 
 All of the features for coming up with fake data and populating the various parts of the
 database should be isolated in their own services so that:
@@ -32,7 +38,7 @@ So far, this iteration just makes it possible to turn developer mode on and off,
 
 # Iteration 2: Admins on Home Page can auto create Recruitments
 
-When developerMode is on, on the home page, Admins see a "Auto Create Recruitments".   When clicked, this button will:
+When developerMode is on, on the home page, Admins see a red "Auto Create Recruitments" button in the footer, just to the left of the Developer Mode badge (not among the page's own buttons; see issue #252).   When clicked, this button will:
 
 * First do some calculations to determine what can/should be auto-created; see below for details.
 * Bring up a modal with a plan to auto create these recruitments.
@@ -84,7 +90,7 @@ Here's what the job should do:
 
 # Iteration 4: When developerMode is on, admins can populate faculty rankings
 
-When developerMode is on, and the admin has opened faculty reviews, they can go to the Courses page. At the bottom of thec courses page, in the footer, just to the right of the developer mode badge, there will be a button [Create Fake Faculty Rankings].
+When developerMode is on, and the admin has opened faculty reviews, they can go to the Courses page. At the bottom of thec courses page, in the footer, just to the left of the developer mode badge, there will be a button [Create Fake Faculty Rankings].
 
 This button will bring up a modal where the admin will have two options:
 

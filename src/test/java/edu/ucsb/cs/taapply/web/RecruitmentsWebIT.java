@@ -269,6 +269,10 @@ public class RecruitmentsWebIT extends WebTestCase {
     // Issue #139: the Applications page lists the recruitment's own audit trail, newest
     // first: the stamped opening date, the status change, then the creation.
     page.getByTestId("HomePageLoggedIn-admin-card-0-applications-button").click();
+    // Issue #255: the Change History card starts closed, so open it first.
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-changeHistory-toggle"))
+        .hasAttribute("aria-expanded", "false");
+    page.getByTestId("RecruitmentApplicationsPage-changeHistory-toggle").click();
     assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-total"))
         .hasText("3 changes recorded.");
     assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-whatChanged"))

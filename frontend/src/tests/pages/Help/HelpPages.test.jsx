@@ -291,6 +291,9 @@ describe("Help pages (issue #140)", () => {
       "a red Developer Mode badge appears in the footer of every page, for everyone,",
     );
     expect(section).toHaveTextContent(
+      "Page-specific controls for creating that data appear in the footer too, in red, just to the left of the badge, and never among the page's own buttons.",
+    );
+    expect(section).toHaveTextContent(
       "Flipping the switch is not recorded in any change history.",
     );
     expect(
@@ -303,7 +306,7 @@ describe("Help pages (issue #140)", () => {
       "HelpAdminsPage-auto-create-recruitments",
     );
     expect(autoCreate).toHaveTextContent(
-      "While developer mode is on, the recruitments section of the home page has an Auto Create Recruitments button. It proposes the quarter after the current one, skipping Summer (and lets you pick another: the four quarters before the current one up to the next one, or the next two in Spring, since only those have courses to fill in),",
+      "While developer mode is on, the footer of the home page has a red Auto Create Recruitments button. It proposes the quarter after the current one, skipping Summer (and lets you pick another: the four quarters before the current one up to the next one, or the next two in Spring, since only those have courses to fill in),",
     );
     expect(autoCreate).toHaveTextContent(
       "with the tentative opening date a week from today and the primary consideration date a week after that. If both exist already there is nothing to create.",
@@ -335,6 +338,23 @@ describe("Help pages (issue #140)", () => {
     expect(
       autoCreate.compareDocumentPosition(fake) &
         Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Issue #220: the Create Fake Rankings button.
+    const rankings = screen.getByTestId("HelpAdminsPage-fake-rankings");
+    expect(rankings).toHaveTextContent(
+      "While developer mode is on, the footer of a recruitment's Courses page also has a Create Fake Rankings button, enabled only while faculty ranking is open.",
+    );
+    expect(rankings).toHaveTextContent(
+      "for every course that has no rankings yet or for a random part of them.",
+    );
+    expect(rankings).toHaveTextContent(
+      "a checkbox also ranks one or two applicants who did not express interest.",
+    );
+    expect(rankings).toHaveTextContent(
+      "Courses that already have rankings are never changed.",
+    );
+    expect(
+      fake.compareDocumentPosition(rankings) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
       document

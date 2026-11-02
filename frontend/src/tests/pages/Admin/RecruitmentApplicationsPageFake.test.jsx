@@ -6,50 +6,43 @@ import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
 
 import RecruitmentApplicationsPage from "main/pages/Admin/RecruitmentApplicationsPage";
+import DeveloperModeFooterProvider from "main/components/Nav/DeveloperModeFooterProvider";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
 import { defaultHiddenColumns } from "main/utils/applicationColumns";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
-import {
-  DeveloperModeFooterControlsContext,
-  DeveloperModeFooterSetterContext,
-} from "main/utils/developerModeFooter";
-import { useState } from "react";
 
 const axiosMock = new AxiosMockAdapter(axios);
 
-/** Stands in for the footer: shows whatever controls the page registers. */
-function FooterHost({ children }) {
-  const [controls, setControls] = useState(null);
-  return (
-    <DeveloperModeFooterSetterContext.Provider value={setControls}>
-      <DeveloperModeFooterControlsContext.Provider value={controls}>
-        {children}
-        <div data-testid="footer-slot">{controls}</div>
-      </DeveloperModeFooterControlsContext.Provider>
-    </DeveloperModeFooterSetterContext.Provider>
-  );
-}
-
+/**
+ * The page through its real layout, with the provider App puts around every route. Nothing here
+ * stands in for the footer: the buttons must get from the page into the real Footer.
+ */
 function renderPage() {
   return render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter initialEntries={["/admin/recruitments/1/applications"]}>
-        <FooterHost>
+        <DeveloperModeFooterProvider>
           <Routes>
             <Route
               path="/admin/recruitments/:recruitmentId/applications"
               element={<RecruitmentApplicationsPage />}
             />
           </Routes>
-        </FooterHost>
+        </DeveloperModeFooterProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
 const course = (id, removed = false) => ({ id, courseId: `C${id}`, removed });
+
+/** True when `before` comes ahead of `after` in the document. */
+const precedes = (before, after) =>
+  Boolean(
+    before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING,
+  );
 
 describe("RecruitmentApplicationsPage fake application controls", () => {
   beforeEach(() => {
@@ -71,17 +64,66 @@ describe("RecruitmentApplicationsPage fake application controls", () => {
     axiosMock
       .onGet("/api/admin/hiddencolumns")
       .reply(200, defaultHiddenColumns("TA"));
-  });
-
-  test("registers the controls in the footer, sized by the courses not removed", async () => {
     axiosMock
       .onGet("/api/recruitmentcourses/all")
       .reply(200, [course(1), course(2), course(3, true)]);
+  });
+
+  test("with developer mode on, a red Create button sits in the footer just left of the badge", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
     renderPage();
 
-    await screen.findByTestId("RecruitmentApplicationsPage-fake-create");
-    expect(screen.getByTestId("footer-slot")).toContainElement(
-      screen.getByTestId("RecruitmentApplicationsPage-fake-delete"),
+    const create = await screen.findByTestId(
+      "RecruitmentApplicationsPage-fake-create",
+    );
+    const remove = screen.getByTestId(
+      "RecruitmentApplicationsPage-fake-delete",
+    );
+    const badge = screen.getByTestId("Footer-developer-mode-badge");
+    const footer = screen.getByTestId("Footer-developer-mode");
+
+    expect(footer).toContainElement(create);
+    expect(footer).toContainElement(remove);
+    expect(create).toHaveClass("btn", "btn-danger", "btn-sm");
+    expect(create).not.toHaveClass("btn-outline-danger");
+    expect(remove).toHaveClass("btn", "btn-outline-danger", "btn-sm");
+    // Left to right: Delete, Create, then the badge, so Create is the button beside it.
+    expect(precedes(remove, create)).toBe(true);
+    expect(precedes(create, badge)).toBe(true);
+    expect(footer.lastChild).toBe(badge);
+  });
+
+  test("with developer mode off, neither button is anywhere", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: false });
+    renderPage();
+
+    await screen.findByTestId("RecruitmentApplicationsPage-count");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/developerMode"),
+      ).toHaveLength(1),
+    );
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-fake-create"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-fake-delete"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("Footer-developer-mode-badge")).toBeNull();
+  });
+
+  test("the controls are sized by the courses not removed", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
+    renderPage();
+
+    await userEvent.click(
+      await screen.findByTestId("RecruitmentApplicationsPage-fake-create"),
     );
     const request = axiosMock.history.get.find(
       (r) => r.url === "/api/recruitmentcourses/all",
@@ -90,10 +132,6 @@ describe("RecruitmentApplicationsPage fake application controls", () => {
       recruitmentId: "1",
       includeRemoved: false,
     });
-
-    await userEvent.click(
-      screen.getByTestId("RecruitmentApplicationsPage-fake-create"),
-    );
     await waitFor(() =>
       expect(
         screen.getByTestId("RecruitmentApplicationsPage-fake-count-help"),
@@ -102,6 +140,9 @@ describe("RecruitmentApplicationsPage fake application controls", () => {
   });
 
   test("a course list that is not an array counts as no courses", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
     axiosMock.onGet("/api/recruitmentcourses/all").reply(200, null);
     renderPage();
 

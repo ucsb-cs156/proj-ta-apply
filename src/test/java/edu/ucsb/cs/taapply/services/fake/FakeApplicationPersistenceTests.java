@@ -58,7 +58,14 @@ class FakeApplicationPersistenceTests {
           recruitments.save(Recruitment.builder().quarter("20261").type(type).build());
       List<Application> made =
           generator()
-              .generate(recruitment, COURSES, 25, FakeCoverage.ALL, new Random(8), new HashSet<>());
+              .generate(
+                  recruitment,
+                  COURSES,
+                  25,
+                  FakeCoverage.ALL,
+                  new Random(8),
+                  new HashSet<>(),
+                  java.time.LocalDate.of(2026, 2, 10));
 
       applications.saveAll(made);
       entityManager.flush();
