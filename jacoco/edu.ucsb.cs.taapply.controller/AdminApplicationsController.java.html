@@ -54,7 +54,7 @@ import org.springframework.web.multipart.MultipartFile;
   @Operation(
       summary = &quot;Every application to a recruitment, oldest first&quot;,
       description =
-          &quot;Test applications are included, flagged by testApplication, so the page can set them&quot;
+          &quot;Test and fake applications are included, flagged by origin, so the page can set them&quot;
               + &quot; apart. 404 for a recruitment that does not exist.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @GetMapping(&quot;/all&quot;)

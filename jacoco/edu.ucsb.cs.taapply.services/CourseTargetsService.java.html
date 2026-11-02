@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
   @Autowired ApplicationRepository applicationRepository;
   @Autowired CandidateRankingRepository candidateRankingRepository;
+  @Autowired DeveloperModeService developerModeService;
 
   /**
    * One course's figures.
@@ -35,7 +36,7 @@ import org.springframework.stereotype.Service;
    *     course, interested or not (the same count as the admin's Rankings column)
    * @param stillNeeded rankingTarget minus rankedCount, never below 0
    */
-<span class="fc" id="L38">  public record CourseTargets(</span>
+<span class="fc" id="L39">  public record CourseTargets(</span>
       Long recruitmentCourseId,
       int allocation,
       int candidateCount,
@@ -45,46 +46,47 @@ import org.springframework.stereotype.Service;
 
   /** The figures for every course given, keyed by course id, loading the applications once. */
   public Map&lt;Long, CourseTargets&gt; targetsFor(Long recruitmentId, List&lt;RecruitmentCourse&gt; courses) {
-<span class="fc" id="L48">    List&lt;Application&gt; real = realApplications(recruitmentId);</span>
-<span class="fc" id="L49">    Map&lt;Long, CourseTargets&gt; result = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L50" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
-<span class="fc" id="L51">      result.put(course.getId(), targetsFor(course, real));</span>
-<span class="fc" id="L52">    }</span>
-<span class="fc" id="L53">    return result;</span>
+<span class="fc" id="L49">    List&lt;Application&gt; real = realApplications(recruitmentId);</span>
+<span class="fc" id="L50">    Map&lt;Long, CourseTargets&gt; result = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">    for (RecruitmentCourse course : courses) {</span>
+<span class="fc" id="L52">      result.put(course.getId(), targetsFor(course, real));</span>
+<span class="fc" id="L53">    }</span>
+<span class="fc" id="L54">    return result;</span>
   }
 
   /** The figures for one course. */
   public CourseTargets targetsFor(Long recruitmentId, RecruitmentCourse course) {
-<span class="fc" id="L58">    return targetsFor(course, realApplications(recruitmentId));</span>
+<span class="fc" id="L59">    return targetsFor(course, realApplications(recruitmentId));</span>
   }
 
   private List&lt;Application&gt; realApplications(Long recruitmentId) {
-<span class="fc" id="L62">    return AssignmentsService.real(</span>
-<span class="fc" id="L63">        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));</span>
+<span class="fc" id="L63">    return AssignmentsService.real(</span>
+<span class="fc" id="L64">        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId),</span>
+<span class="fc" id="L65">        developerModeService.isOn());</span>
   }
 
   private CourseTargets targetsFor(RecruitmentCourse course, List&lt;Application&gt; real) {
-<span class="fc" id="L67">    Set&lt;Long&gt; realIds = real.stream().map(Application::getId).collect(Collectors.toSet());</span>
-<span class="fc" id="L68">    int candidateCount =</span>
+<span class="fc" id="L69">    Set&lt;Long&gt; realIds = real.stream().map(Application::getId).collect(Collectors.toSet());</span>
+<span class="fc" id="L70">    int candidateCount =</span>
         (int)
-<span class="fc" id="L70">            real.stream()</span>
-<span class="fc bfc" id="L71" title="All 2 branches covered.">                .filter(a -&gt; AssignmentsService.preference(a, course.getCourseId()) != null)</span>
-<span class="fc" id="L72">                .count();</span>
-<span class="fc" id="L73">    int rankedCount =</span>
+<span class="fc" id="L72">            real.stream()</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">                .filter(a -&gt; AssignmentsService.preference(a, course.getCourseId()) != null)</span>
+<span class="fc" id="L74">                .count();</span>
+<span class="fc" id="L75">    int rankedCount =</span>
         (int)
-<span class="fc" id="L75">            candidateRankingRepository.findByRecruitmentCourseId(course.getId()).stream()</span>
-<span class="fc bfc" id="L76" title="All 2 branches covered.">                .filter(ranking -&gt; ranking.getRank() != null)</span>
-<span class="fc" id="L77">                .filter(ranking -&gt; realIds.contains(ranking.getApplicationId()))</span>
-<span class="fc" id="L78">                .count();</span>
-<span class="fc bfc" id="L79" title="All 2 branches covered.">    int allocation = course.getAllocation() == null ? 0 : course.getAllocation();</span>
-<span class="fc" id="L80">    int rankingTarget = rankingTarget(allocation, candidateCount);</span>
-<span class="fc" id="L81">    return new CourseTargets(</span>
-<span class="fc" id="L82">        course.getId(),</span>
+<span class="fc" id="L77">            candidateRankingRepository.findByRecruitmentCourseId(course.getId()).stream()</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">                .filter(ranking -&gt; ranking.getRank() != null)</span>
+<span class="fc" id="L79">                .filter(ranking -&gt; realIds.contains(ranking.getApplicationId()))</span>
+<span class="fc" id="L80">                .count();</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">    int allocation = course.getAllocation() == null ? 0 : course.getAllocation();</span>
+<span class="fc" id="L82">    int rankingTarget = rankingTarget(allocation, candidateCount);</span>
+<span class="fc" id="L83">    return new CourseTargets(</span>
+<span class="fc" id="L84">        course.getId(),</span>
         allocation,
         candidateCount,
         rankingTarget,
         rankedCount,
-<span class="fc" id="L87">        stillNeeded(rankingTarget, rankedCount));</span>
+<span class="fc" id="L89">        stillNeeded(rankingTarget, rankedCount));</span>
   }
 
   /**
@@ -92,12 +94,12 @@ import org.springframework.stereotype.Service;
    * never negative, whatever the inputs).
    */
   static int rankingTarget(int allocation, int candidateCount) {
-<span class="fc" id="L95">    return Math.max(0, Math.min(2 * allocation, candidateCount));</span>
+<span class="fc" id="L97">    return Math.max(0, Math.min(2 * allocation, candidateCount));</span>
   }
 
   /** How many more rankings are asked for; never negative. */
   static int stillNeeded(int rankingTarget, int rankedCount) {
-<span class="fc" id="L100">    return Math.max(0, rankingTarget - rankedCount);</span>
+<span class="fc" id="L102">    return Math.max(0, rankingTarget - rankedCount);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
