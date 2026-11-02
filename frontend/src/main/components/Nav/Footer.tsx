@@ -6,8 +6,8 @@ import { useDeveloperModeFooterControlsValue } from "main/utils/developerModeFoo
 /**
  * The page footer. While developer mode is on (issue #217), a red Developer Mode badge sits flush
  * right, and any controls the current page registered through useDeveloperModeFooterControls
- * appear to its right. The badge is for everyone, signed in or not: it marks an instance that
- * holds fake data.
+ * appear to its left, the badge last. The provider wraps the whole app, so any page may call the
+ * hook. The badge is for everyone, signed in or not: it marks an instance that holds fake data.
  */
 export default function Footer() {
   const { data: developerMode } = useDeveloperMode();
@@ -42,14 +42,14 @@ export default function Footer() {
             className="d-flex align-items-center gap-2 ms-auto"
             data-testid="Footer-developer-mode"
           >
-            <Badge bg="danger" data-testid="Footer-developer-mode-badge">
-              Developer Mode
-            </Badge>
             {controls !== null && (
               <span data-testid="Footer-developer-mode-controls">
                 {controls}
               </span>
             )}
+            <Badge bg="danger" data-testid="Footer-developer-mode-badge">
+              Developer Mode
+            </Badge>
           </span>
         )}
       </div>

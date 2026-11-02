@@ -9,7 +9,7 @@ deployment that has ENABLE_DEVELOPER_MODE=true.   Turning on this environment va
 provides an extra feature on the Developer Menu to enable or disable developer mode.
 
 When Developer Mode is enabled, a "Developer Mode" badge appears prominently 
-in the footer, flush right.  And then, to the right of this, there can be page
+in the footer, flush right.  And then, to the left of this, there can be page
 specific features and controls for enabling quick set up of test data so that
 the various features of the app can be explored.
 
@@ -84,7 +84,7 @@ Here's what the job should do:
 
 # Iteration 4: When developerMode is on, admins can populate faculty rankings
 
-When developerMode is on, and the admin has opened faculty reviews, they can go to the Courses page. At the bottom of thec courses page, in the footer, just to the right of the developer mode badge, there will be a button [Create Fake Faculty Rankings].
+When developerMode is on, and the admin has opened faculty reviews, they can go to the Courses page. At the bottom of thec courses page, in the footer, just to the left of the developer mode badge, there will be a button [Create Fake Faculty Rankings].
 
 This button will bring up a modal where the admin will have two options:
 

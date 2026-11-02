@@ -11,6 +11,7 @@ import edu.ucsb.cs.taapply.services.fake.FakeApplicationGenerator;
 import edu.ucsb.cs.taapply.services.fake.FakeCoverage;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobContextConsumer;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -35,6 +36,10 @@ public class CreateFakeApplicationsJob implements JobContextConsumer {
   private int count;
   private FakeCoverage coverage;
   private Random random;
+
+  /** The date the applications are made; their coursework terms run back from its quarter. */
+  private LocalDate today;
+
   private FakeApplicationGenerator generator;
   private RecruitmentRepository recruitmentRepository;
   private RecruitmentCourseRepository recruitmentCourseRepository;
@@ -70,7 +75,7 @@ public class CreateFakeApplicationsJob implements JobContextConsumer {
                 courseIds.size()));
     List<Application> applications =
         generator.generate(
-            recruitment, List.copyOf(courseIds), count, coverage, random, takenEmails);
+            recruitment, List.copyOf(courseIds), count, coverage, random, takenEmails, today);
     applicationRepository.saveAll(applications);
     ctx.log("Created %d fake application(s).".formatted(applications.size()));
   }
