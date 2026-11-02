@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LastOnlineInterceptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.interceptors</a> &gt; <span class="el_source">LastOnlineInterceptor.java</span></div><h1>LastOnlineInterceptor.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.interceptors;
+
+import edu.ucsb.cs.taapply.entity.User;
+import edu.ucsb.cs.taapply.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+/**
+ * Keeps {@link User#getLastOnline() lastOnline} current: on each API request from a signed-in user,
+ * their row is stamped with the time, if the stamp it carries is more than a minute old. The minute
+ * keeps a page load, which makes several requests at once, from writing the row several times.
+ *
+ * &lt;p&gt;Registered in {@code WebConfig} for {@code /api/**}. A request that is not an OIDC login (a
+ * logged-out visitor, or a test's mock user) is left alone, as is a user with no row yet.
+ */
+@Component
+<span class="fc" id="L27">public class LastOnlineInterceptor implements HandlerInterceptor {</span>
+
+  /** How stale a stamp must be before a request refreshes it. */
+<span class="fc" id="L30">  public static final Duration REFRESH_AFTER = Duration.ofMinutes(1);</span>
+
+  @Autowired private UserRepository userRepository;
+
+  @Override
+  public boolean preHandle(
+      HttpServletRequest request, HttpServletResponse response, Object handler) {
+<span class="fc" id="L37">    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">    if (authentication instanceof OAuth2AuthenticationToken oauthToken</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        &amp;&amp; oauthToken.getPrincipal() instanceof OidcUser oidcUser) {</span>
+<span class="fc" id="L40">      Instant now = Instant.now();</span>
+<span class="fc" id="L41">      Optional&lt;User&gt; user = userRepository.findByEmail(oidcUser.getEmail());</span>
+<span class="fc bfc" id="L42" title="All 4 branches covered.">      if (user.isPresent() &amp;&amp; isStale(user.get().getLastOnline(), now)) {</span>
+<span class="fc" id="L43">        user.get().setLastOnline(now);</span>
+<span class="fc" id="L44">        userRepository.save(user.get());</span>
+      }
+    }
+<span class="fc" id="L47">    return true;</span>
+  }
+
+  /** A missing stamp, or one from more than {@link #REFRESH_AFTER} ago. */
+  static boolean isStale(Instant lastOnline, Instant now) {
+<span class="fc bfc" id="L52" title="All 4 branches covered.">    return lastOnline == null || lastOnline.isBefore(now.minus(REFRESH_AFTER));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
