@@ -3,6 +3,13 @@ import { Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { ADMIN_MENU_ENTRIES } from "main/utils/helpPages";
 import useScrollToHash from "main/utils/useScrollToHash";
+import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
+
+/** The warning as it looks when someone else is ranking the same course. */
+// Stryker disable next-line StringLiteral : the example name is fixed and is checked by the tests
+const EXAMPLE_OTHERS = [
+  { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false },
+];
 
 /**
  * The admin's handbook: /help/admins (issue #140). A table of every option on the Admin menu and
@@ -662,6 +669,76 @@ export default function HelpAdminsPage(): React.JSX.Element {
           cut short with a <em>[See value]</em> link that shows the whole thing.
           The trail for one application is also shown on that application&apos;s
           View page.
+        </p>
+        <h2
+          className="my-3 h4"
+          id="simultaneous-editing"
+          data-testid="HelpAdminsPage-simultaneous-editing"
+        >
+          Simultaneous Editing
+        </h2>
+        <p>
+          If you, or another admin, or an instructor, is ranking the same course
+          at the same time, you may get a warning that looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="ranking"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-meaning">
+          <strong>What it means.</strong> The rankings of the same course are
+          open somewhere else: in another tab or window of this browser, on
+          another device, or in the browser of someone else who can rank the
+          course. This applies to the Candidate Ranking page, reached from the
+          course on the Instructor section of the home page. Everyone ranking
+          the course shares one list, so one person&apos;s change can be missed
+          by the other. If you go on, the system will refuse a ranking saved
+          from a copy of the list that is out of date, and say{" "}
+          <em>
+            Rankings for this course changed while you were editing; your change
+            has not been saved.
+          </em>{" "}
+          The table is then read again, what you typed stays in its box, and you
+          can press <strong>Save again</strong> once you have seen the new
+          rankings. Rankings of a <em>different</em> course never cause a
+          warning, even if the same person ranks both, and a page that only
+          shows rankings (read-only) never warns.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-modal">
+          <strong>The question.</strong> The tab or window you opened{" "}
+          <em>last</em> also asks what you want to do, in a box that covers the
+          page until you answer. The one you opened first only shows the
+          warning, so that it never interrupts you while you are typing. The box
+          offers three choices:
+        </p>
+        <ul data-testid="HelpAdminsPage-simultaneous-editing-choices">
+          <li>
+            <strong>Leave this page</strong> takes this tab or window to the
+            home page. Your rankings are safe in the other one.
+          </li>
+          <li>
+            <strong>
+              Wait for the other tabs or windows to close, then resume here
+            </strong>{" "}
+            keeps the page covered. When the other tabs or windows are closed,
+            the box closes by itself within a few seconds and you can carry on
+            here.
+          </li>
+          <li>
+            <strong>Continue anyway</strong> closes the box and keeps the
+            warning on the page. Use it only if you are sure that the other copy
+            will not be used to rank as well. The box does not come back.
+          </li>
+        </ul>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
+          <strong>What to do.</strong> Close all the other tabs or windows that
+          have this course&apos;s rankings open, and keep just one, or agree
+          with the other person on who ranks this course. The warning goes away
+          on its own within a few seconds after the others are closed, or in up
+          to about twenty seconds if one of them could not say that it was
+          leaving, such as when a computer lost its network connection.
         </p>
       </div>
     </BasicLayout>

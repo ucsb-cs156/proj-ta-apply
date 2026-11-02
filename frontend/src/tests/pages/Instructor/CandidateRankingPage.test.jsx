@@ -1,5 +1,11 @@
 import userEvent from "@testing-library/user-event";
-import { render, screen, within, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  within,
+  waitFor,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
 import axios from "axios";
@@ -19,6 +25,12 @@ const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
   ...(await importOriginal()),
   toast: (message) => mockToast(message),
+}));
+
+const mockNavigate = vi.fn();
+vi.mock("react-router", async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
 }));
 
 const axiosMock = new AxiosMockAdapter(axios);
@@ -45,6 +57,7 @@ function renderPage(path = "/recruitments/1/courses/2/ranking") {
 describe("CandidateRankingPage", () => {
   beforeEach(() => {
     mockToast.mockClear();
+    mockNavigate.mockClear();
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock
@@ -842,5 +855,202 @@ describe("CandidateRankingPage", () => {
         screen.getByTestId(`CandidateRankingPage-${key}`),
       ).toHaveTextContent("Not specified");
     });
+  });
+
+  // ---- Issue #279: the multi-tab warning and the version check
+
+  const heartbeatUrl = `${rankingUrl}/heartbeat`;
+  const heartbeats = () =>
+    axiosMock.history.post.filter((r) => r.url === heartbeatUrl);
+  const candidatesUrl = "/api/instructor/recruitments/1/courses/2/candidates";
+  const ranker = {
+    ...instructorRecruitmentsFixtures.candidateRankingPage,
+    canRank: true,
+    reviewStatus: "Open",
+  };
+  const RISK =
+    "Please know that this is risky; we recommend closing all but one of these.";
+  const fay = { label: "fay@ucsb.edu (Fay Faculty)", samePerson: false };
+
+  test("someone who can rank tells the server this tab is on the course, naming the tab", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, ranker);
+    renderPage();
+
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+    expect(heartbeats()[0].headers["X-Client-Id"]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(
+      screen.queryByTestId("CandidateRankingPage-multiple-tabs"),
+    ).toBeNull();
+  });
+
+  test("a page that only reads the rankings sends no heartbeat and never warns", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, { ...ranker, canRank: false });
+    axiosMock
+      .onPost(heartbeatUrl)
+      .reply(200, { others: [fay], heartbeatSeconds: 20, newest: true });
+    renderPage();
+
+    await screen.findByText("Rankings are read-only.");
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(heartbeats()).toHaveLength(0);
+    expect(
+      screen.queryByTestId("CandidateRankingPage-multiple-tabs"),
+    ).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  test("no heartbeat is sent for a link that is not a course", async () => {
+    renderPage("/recruitments/x/courses/y/ranking");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("invalid");
+    expect(axiosMock.history.post).toHaveLength(0);
+  });
+
+  test("another instructor of the course is named in the banner, and the form is still there", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, ranker);
+    axiosMock
+      .onPost(heartbeatUrl)
+      .reply(200, { others: [fay], heartbeatSeconds: 20, newest: false });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("CandidateRankingPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `fay@ucsb.edu (Fay Faculty) is also editing this ranking. ${RISK}`,
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(
+      screen.getByRole("spinbutton", { name: "Ranking for Ada Lovelace" }),
+    ).toBeInTheDocument();
+  });
+
+  test("the newest tab is asked what to do, and Leave this page says goodbye and goes home", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
+    axiosMock.onGet(rankingUrl).reply(200, ranker);
+    axiosMock.onPost(heartbeatUrl).reply(200, {
+      others: [fay],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1000,
+    });
+    renderPage();
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("CandidateRankingPage-multiple-tabs-modal-message"),
+    ).toHaveTextContent(
+      `fay@ucsb.edu (Fay Faculty) is also editing this ranking. ${RISK}`,
+    );
+    fireEvent.click(
+      screen.getByTestId("CandidateRankingPage-multiple-tabs-modal-leave"),
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${rankingUrl}/leave`);
+    expect(init.keepalive).toBe(true);
+    expect(init.headers["X-Client-Id"]).toBe(
+      heartbeats()[0].headers["X-Client-Id"],
+    );
+    expect(mockNavigate).toHaveBeenCalledWith("/");
+    vi.unstubAllGlobals();
+  });
+
+  test("a save names the version the candidates carry and this tab", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, ranker);
+    axiosMock.onPut().reply(200, { rank: 2, version: 4 });
+    renderPage();
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+
+    const box = await screen.findByRole("spinbutton", {
+      name: "Ranking for Ada Lovelace",
+    });
+    fireEvent.change(box, { target: { value: "2" } });
+
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    const put = axiosMock.history.put[0];
+    expect(put.url).toBe(`${candidatesUrl}/1/rank`);
+    expect(put.params).toEqual({ version: 3 });
+    expect(put.headers["X-Client-Id"]).toBe(
+      heartbeats()[0].headers["X-Client-Id"],
+    );
+  });
+
+  test("a refused save reads the candidates again, keeps the typed ranking and says why", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, ranker);
+    let reads = 0;
+    axiosMock.onGet(candidatesUrl).reply(() => {
+      reads += 1;
+      return [
+        200,
+        reads === 1
+          ? candidatesFixtures
+          : candidatesFixtures.map((c) => ({
+              ...c,
+              rank: c.applicationId === 2 ? 1 : c.rank,
+              rankingVersion: 8,
+            })),
+      ];
+    });
+    axiosMock
+      .onPut()
+      .replyOnce(409, { message: "changed", version: 8 })
+      .onPut()
+      .reply(200, { rank: 2, version: 9 });
+    renderPage();
+    const box = await screen.findByRole("spinbutton", {
+      name: "Ranking for Ada Lovelace",
+    });
+
+    fireEvent.change(box, { target: { value: "2" } });
+
+    expect(
+      await screen.findByText(
+        "Rankings for this course changed while you were editing; your change has not been saved.",
+      ),
+    ).toBeInTheDocument();
+    expect(reads).toBe(2);
+    // Grace's ranking, entered elsewhere, is now shown; Ada's pending edit is still in her box.
+    await waitFor(() =>
+      expect(
+        screen.getByRole("spinbutton", { name: "Ranking for Grace Hopper" }),
+      ).toHaveValue(1),
+    );
+    expect(
+      screen.getByRole("spinbutton", { name: "Ranking for Ada Lovelace" }),
+    ).toHaveValue(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save again" }));
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(2));
+    expect(axiosMock.history.put[1].params).toEqual({ version: 8 });
+  });
+
+  test("a refused save whose candidates cannot be read again still says why", async () => {
+    axiosMock.onGet(rankingUrl).reply(200, ranker);
+    let reads = 0;
+    axiosMock.onGet(candidatesUrl).reply(() => {
+      reads += 1;
+      return reads === 1
+        ? [200, candidatesFixtures]
+        : [500, { message: "down" }];
+    });
+    axiosMock.onPut().reply(409, { message: "changed", version: 8 });
+    renderPage();
+    const box = await screen.findByRole("spinbutton", {
+      name: "Ranking for Ada Lovelace",
+    });
+
+    fireEvent.change(box, { target: { value: "2" } });
+
+    expect(
+      await screen.findByText(/Rankings for this course changed/),
+    ).toBeInTheDocument();
+    // The table, and what was typed in it, stay.
+    expect(
+      screen.getByRole("spinbutton", { name: "Ranking for Ada Lovelace" }),
+    ).toHaveValue(2);
   });
 });

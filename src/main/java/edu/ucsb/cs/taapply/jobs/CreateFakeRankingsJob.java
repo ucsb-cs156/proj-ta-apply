@@ -10,11 +10,13 @@ import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
+import edu.ucsb.cs.taapply.services.RankingVersionService;
 import edu.ucsb.cs.taapply.services.fake.FakeRankingScope;
 import edu.ucsb.cs.taapply.services.fake.FakeRankingsGenerator;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobContextConsumer;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -41,6 +43,7 @@ public class CreateFakeRankingsJob implements JobContextConsumer {
   private RecruitmentCourseRepository recruitmentCourseRepository;
   private ApplicationRepository applicationRepository;
   private CandidateRankingRepository candidateRankingRepository;
+  private RankingVersionService rankingVersionService;
 
   @Override
   public void accept(JobContext ctx) throws Exception {
@@ -73,6 +76,11 @@ public class CreateFakeRankingsJob implements JobContextConsumer {
         generator.generate(
             courses, applications, alreadyRanked, scope, includeNotInterested, random);
     candidateRankingRepository.saveAll(rankings);
+    // The rankings of each course changed, so an instructor who has the list open must re-read it
+    // before saving (issue #279).
+    Set<Long> changed = new LinkedHashSet<>();
+    rankings.forEach(ranking -> changed.add(ranking.getRecruitmentCourseId()));
+    changed.forEach(rankingVersionService::bump);
     ctx.log("Created %d fake ranking(s).".formatted(rankings.size()));
   }
 }

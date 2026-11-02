@@ -14,6 +14,7 @@ const candidatesFixtures = [
     gpaOverall: 3.8,
     previousServiceAsUla: 2,
     videoLink: "https://example.edu/ada",
+    rankingVersion: 3,
   },
   {
     applicationId: 2,
@@ -30,6 +31,7 @@ const candidatesFixtures = [
     gpaOverall: 3.6,
     previousServiceAsUla: 10,
     videoLink: "https://example.edu/grace",
+    rankingVersion: 3,
   },
   {
     applicationId: 3,
@@ -46,6 +48,7 @@ const candidatesFixtures = [
     gpaOverall: 3.9,
     previousServiceAsUla: 1,
     videoLink: "https://example.edu/alan",
+    rankingVersion: 3,
   },
   {
     applicationId: 4,
@@ -62,6 +65,7 @@ const candidatesFixtures = [
     gpaOverall: 4,
     previousServiceAsUla: 0,
     videoLink: null,
+    rankingVersion: 3,
   },
 ];
 
@@ -83,6 +87,7 @@ export const candidatesWithNotInterested = [
     gpaOverall: 3.9,
     previousServiceAsUla: 0,
     videoLink: null,
+    rankingVersion: 3,
   },
 ];
 
