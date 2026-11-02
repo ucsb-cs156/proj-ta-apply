@@ -270,7 +270,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
   const fakeAllocationsButton = useMemo(
     () => (
       <Button
-        variant="outline-secondary"
+        variant="danger"
         size="sm"
         disabled={courseCount === 0}
         onClick={() => setShowFakeAllocations(true)}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "react-bootstrap";
 import Modal from "react-bootstrap/Modal";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
@@ -10,6 +10,7 @@ import RecruitmentForm, {
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import AutoCreateRecruitmentsModal from "main/components/Recruitments/AutoCreateRecruitmentsModal";
 import { useDeveloperMode } from "main/utils/developerMode";
+import { useDeveloperModeFooterControls } from "main/utils/developerModeFooter";
 import { useSystemInfo } from "main/utils/systemInfo";
 import { quarterRange } from "main/utils/quarterUtilities";
 import { toast } from "react-toastify";
@@ -58,6 +59,24 @@ export default function RecruitmentsDashboard({
   const [creating, setCreating] = useState(false);
   const [autoCreating, setAutoCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Recruitment | null>(null);
+
+  // Issues #218 and #252: Auto Create Recruitments is a developer-mode control, so it lives in
+  // the footer's developer slot (red, beside the badge), not in this page's own buttons.
+  const autoCreateButton = useMemo(
+    () =>
+      developerModeOn ? (
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={() => setAutoCreating(true)}
+          data-testid={`${testIdPrefix}-auto-create-button`}
+        >
+          Auto Create Recruitments
+        </Button>
+      ) : null,
+    [developerModeOn, testIdPrefix],
+  );
+  useDeveloperModeFooterControls(autoCreateButton);
 
   const createMutation = useBackendMutation<RecruitmentFormFields, Recruitment>(
     (data) => ({
@@ -122,18 +141,6 @@ export default function RecruitmentsDashboard({
       >
         Create New Recruitment
       </Button>
-
-      {/* Developer mode only (issue #218): a plan for the next quarter's recruitments. */}
-      {developerModeOn && (
-        <Button
-          variant="outline-secondary"
-          className="mb-3 ms-2"
-          onClick={() => setAutoCreating(true)}
-          data-testid={`${testIdPrefix}-auto-create-button`}
-        >
-          Auto Create Recruitments
-        </Button>
-      )}
 
       {autoCreating && (
         <AutoCreateRecruitmentsModal

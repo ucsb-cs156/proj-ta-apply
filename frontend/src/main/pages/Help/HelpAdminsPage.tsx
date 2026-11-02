@@ -699,14 +699,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           switch are not there at all. While the switch is on, a red{" "}
           <strong>Developer Mode</strong> badge appears in the footer of every
           page, for everyone, as a reminder that the instance may hold fake
-          data, and page-specific controls for creating that data appear next to
-          the badge as later features add them. Flipping the switch is not
-          recorded in any change history.
+          data. Page-specific controls for creating that data appear in the
+          footer too, in red, just to the left of the badge, and never among the
+          page&apos;s own buttons. Flipping the switch is not recorded in any
+          change history.
         </p>
         <p data-testid="HelpAdminsPage-auto-create-recruitments">
-          While developer mode is on, the recruitments section of the home page
-          has an <strong>Auto Create Recruitments</strong> button. It proposes
-          the quarter after the current one, skipping Summer (and lets you pick
+          While developer mode is on, the footer of the home page has a red{" "}
+          <strong>Auto Create Recruitments</strong> button. It proposes the
+          quarter after the current one, skipping Summer (and lets you pick
           another), and shows what it would do: a TA recruitment and a ULA
           recruitment for that quarter, each only if one does not exist yet,
           with the tentative opening date a week from today and the primary
