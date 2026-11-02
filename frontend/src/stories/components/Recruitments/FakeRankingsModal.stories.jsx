@@ -1,5 +1,4 @@
 import React from "react";
-import { MemoryRouter } from "react-router";
 import { HttpResponse, http } from "msw";
 import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
 
@@ -17,15 +16,15 @@ export default {
   },
 };
 
+// No router here: the shared decorator in .storybook/preview.jsx already wraps every story in
+// one, and react-router refuses a second.
 const Template = (args) => (
-  <MemoryRouter>
-    <FakeRankingsModal
-      recruitmentId={1}
-      onHide={() => {}}
-      testIdPrefix="Story"
-      {...args}
-    />
-  </MemoryRouter>
+  <FakeRankingsModal
+    recruitmentId={1}
+    onHide={() => {}}
+    testIdPrefix="Story"
+    {...args}
+  />
 );
 
 /** The form as it opens: every course without rankings, interested candidates only. */
