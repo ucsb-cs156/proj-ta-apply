@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, ButtonGroup, Form, Modal } from "react-bootstrap";
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
 import AllocationVisibilityModal from "main/components/Recruitments/AllocationVisibilityModal";
 import PublishAssignmentsModal from "main/components/Recruitments/PublishAssignmentsModal";
 import RecruitmentCardLayout from "main/components/Recruitments/RecruitmentCardLayout";
-import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useBackendMutation } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import {
@@ -16,6 +18,7 @@ import {
   MORE_ABOUT_TEXT,
   OPEN_REVIEWS_CONFIRMATION,
   CLOSE_REVIEWS_CONFIRMATION,
+  STALE_CONFIRMATION_MESSAGE,
   earlyCloseWarning,
   statusConfirmation,
 } from "main/utils/recruitmentActions";
@@ -76,7 +79,9 @@ function AdminRecruitmentCard({
   testIdPrefix,
 }: AdminRecruitmentCardProps): React.JSX.Element {
   const navigate = useNavigate();
-  const { data: steps } = useBackend<RecruitmentStepsData | undefined>(
+  const { data: steps } = useRefreshingBackend<
+    RecruitmentStepsData | undefined
+  >(
     [STEPS_QUERY_KEY, recruitment.id],
     {
       // Stryker disable next-line StringLiteral : axios defaults to GET
@@ -283,6 +288,35 @@ export default function RecruitmentCards({
   const sorted = sortRecruitments(all, sortKey, descending);
   const latestTa = latestOfType(all, "TA");
   const latestUla = latestOfType(all, "ULA");
+
+  // Issue #281: the list refreshes by itself, so a confirmation can outlive the state it asked
+  // about (Close Applications after someone else already closed them). It closes, and says so,
+  // rather than offering an action that no longer applies. The deadline being typed lives in this
+  // component's own state, so a refresh never replaces it while its window stays open.
+  const liveOf = (r: Recruitment) => all.find((x) => x.id === r.id);
+  const confirmationStale =
+    (statusModal !== null &&
+      liveOf(statusModal)?.applicationStatus !==
+        statusModal.applicationStatus) ||
+    (closeReviewsModal !== null &&
+      liveOf(closeReviewsModal)?.reviewStatus !== "Open") ||
+    (reviewModal !== null &&
+      (liveOf(reviewModal.recruitment) === undefined ||
+        (reviewModal.mode === "open" &&
+          liveOf(reviewModal.recruitment)?.reviewStatus === "Open")));
+  // Closed while rendering (the state is this component's own), and counted so that the effect
+  // below, which only toasts, runs once for each time it happens.
+  const [staleClosings, setStaleClosings] = useState(0);
+  if (confirmationStale) {
+    setStatusModal(null);
+    setCloseReviewsModal(null);
+    setReviewModal(null);
+    setStaleClosings(staleClosings + 1);
+  }
+  useEffect(() => {
+    if (staleClosings > 0) toast(STALE_CONFIRMATION_MESSAGE);
+  }, [staleClosings]);
+
   const visibilityRecruitment = all.find((r) => r.id === visibilityId);
   const publishRecruitment = all.find((r) => r.id === publishId);
 

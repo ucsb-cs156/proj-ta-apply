@@ -34,6 +34,19 @@ public class SystemInfoServiceImpl extends SystemInfoService {
   @Value("${app.startQtrYYYYQ:20211}")
   private String startQtrYYYYQ;
 
+  // Background refresh timing (issue #281); read as text so a typo falls back to the default.
+  @Value("${app.refresh.adminSec:5}")
+  private String adminRefreshSec;
+
+  @Value("${app.refresh.adminJitter:3}")
+  private String adminRefreshJitter;
+
+  @Value("${app.refresh.nonAdminSec:15}")
+  private String nonAdminRefreshSec;
+
+  @Value("${app.refresh.nonAdminJitter:5}")
+  private String nonAdminRefreshJitter;
+
   // The end of the range is derived from the quarter UCSB says it currently is, so it keeps
   // itself current as quarters roll over; only the start needs configuring.
   @Autowired private UcsbQuarterService ucsbQuarterService;
@@ -48,6 +61,9 @@ public class SystemInfoServiceImpl extends SystemInfoService {
     String commitId =
         this.gitProperties != null ? this.gitProperties.getShortCommitId() : "unknown";
 
+    double adminBase = RefreshSetting.base(adminRefreshSec, 5);
+    double nonAdminBase = RefreshSetting.base(nonAdminRefreshSec, 15);
+
     SystemInfo si =
         SystemInfo.builder()
             .springH2ConsoleEnabled(this.springH2ConsoleEnabled)
@@ -61,6 +77,10 @@ public class SystemInfoServiceImpl extends SystemInfoService {
             .subjectArea(this.subjectArea)
             .startQtrYYYYQ(this.startQtrYYYYQ)
             .endQtrYYYYQ(ucsbQuarterService.getEndQtrYYYYQ())
+            .adminRefreshSec(adminBase)
+            .adminRefreshJitter(RefreshSetting.jitter(adminRefreshJitter, 3, adminBase))
+            .nonAdminRefresh(nonAdminBase)
+            .nonAdminJitter(RefreshSetting.jitter(nonAdminRefreshJitter, 5, nonAdminBase))
             .build();
     log.info("getSystemInfo returns {}", si);
     return si;

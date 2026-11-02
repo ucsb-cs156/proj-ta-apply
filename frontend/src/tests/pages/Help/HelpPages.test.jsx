@@ -107,7 +107,20 @@ function expectSimultaneousEditingSection(page) {
   expect(meaning.nextElementSibling).toBe(modal);
   expect(modal.nextElementSibling).toBe(choices);
   expect(choices.nextElementSibling).toBe(todo);
-  expect(root.lastElementChild).toBe(todo);
+  // Issue #281: the refresh that keeps applications open or closed current ends the section.
+  const refresh = screen.getByTestId(`${page}-simultaneous-editing-refresh`);
+  expect(todo.nextElementSibling).toBe(refresh);
+  expect(root.lastElementChild).toBe(refresh);
+  expect(refresh).toHaveTextContent(
+    "Applications opening and closing. The home page and the application form refresh by themselves, without reloading, about every 15 seconds (somewhere between 10 and 20)",
+  );
+  expect(refresh).toHaveTextContent("There is no warning for that.");
+  expect(refresh).toHaveTextContent(
+    "your draft is kept, as of its last automatic save, but it can no longer be submitted",
+  );
+  expect(refresh).toHaveTextContent(
+    "If a page looks out of date, switch back to it, or reload it.",
+  );
   // The tip that used to carry this warning is gone.
   expect(screen.queryByTestId(`${page}-one-window`)).toBeNull();
 }
@@ -591,17 +604,69 @@ describe("Help pages (issue #140)", () => {
     expect(text("limits")).toMatch(/one server process only/);
     expect(text("limits")).toMatch(/hidden tabs/);
     expect(text("limits")).not.toMatch(/CONCURRENCY_WINDOW_SECONDS/);
-    // The refresh that other pages will use, and that it is not built yet.
-    for (const setting of [
-      "ADMIN_REFRESH_SEC=5",
-      "ADMIN_REFRESH_JITTER=3",
-      "NON_ADMIN_REFRESH=15",
-      "NON_ADMIN_JITTER=5",
-    ]) {
-      expect(text("refresh")).toContain(setting);
-    }
-    expect(text("refresh")).toMatch(/issues #281 and #282/);
-    expect(text("refresh")).toMatch(/This is not implemented yet\./);
+    // Issue #281: the refresh that keeps recruitment state fresh, in place of a warning.
+    expect(text("refresh")).toMatch(
+      /no version check, no detector and no banner/,
+    );
+    expect(text("refresh")).toMatch(/without a page reload/);
+    expect(text("refresh")).toMatch(/a repeated Close does not stamp/);
+    expect(text("refresh-how")).toMatch(/useRefreshingBackend/);
+    expect(text("refresh-how")).toMatch(/refetchInterval/);
+    expect(text("refresh-how")).toMatch(/freshly drawn random time/);
+    expect(text("refresh-how")).toMatch(/uniform between base minus jitter/);
+    expect(text("refresh-how")).toMatch(/synchronized waves of requests/);
+    expect(text("refresh-how")).toMatch(/nextRefreshMs\(timing, random\)/);
+    expect(text("refresh-how")).toMatch(/even one who is also an instructor/);
+    expect(text("refresh-how")).toMatch(/hidden tab does not refresh/);
+    const refreshTable = screen.getByTestId(
+      "HelpDeveloperPage-simultaneous-refresh-table",
+    );
+    expect(
+      [...refreshTable.querySelectorAll("tbody tr")].map((tr) =>
+        [...tr.querySelectorAll("td")].map((td) => td.textContent),
+      ),
+    ).toEqual([
+      ["ADMIN_REFRESH_SEC", "5", "Mean seconds between refreshes for admins."],
+      [
+        "ADMIN_REFRESH_JITTER",
+        "3",
+        "Admins wait uniformly between 5 - 3 and 5 + 3 seconds (2 to 8).",
+      ],
+      [
+        "NON_ADMIN_REFRESH",
+        "15",
+        "Mean seconds between refreshes for instructors and students.",
+      ],
+      [
+        "NON_ADMIN_JITTER",
+        "5",
+        "Instructors and students wait uniformly between 15 - 5 and 15 + 5 seconds (10 to 20).",
+      ],
+    ]);
+    expect(text("refresh-rules")).toMatch(
+      /below 1 second is replaced by its default/,
+    );
+    expect(text("refresh-rules")).toMatch(/larger than its mean/);
+    expect(text("refresh-rules")).toMatch(
+      /no wait is ever shorter than 1 second/,
+    );
+    expect(text("refresh-deploy")).toMatch(/build-time variables only/);
+    expect(text("refresh-deploy")).toMatch(/\/api\/systemInfo/);
+    expect(text("refresh-deploy")).toMatch(
+      /restart the server: no rebuild is needed/,
+    );
+    expect(text("refresh-pages")).toMatch(/HOME_PAGE_QUERY_KEYS/);
+    expect(text("refresh-pages")).toMatch(
+      /\/api\/admin\/recruitments\/\{id\}\/steps/,
+    );
+    expect(text("refresh-pages")).toMatch(
+      /faculty ranking page's header state/,
+    );
+    expect(text("refresh-pages")).toMatch(/never asks an admin endpoint/);
+    expect(text("refresh-input")).toMatch(
+      /never replaces what a person is typing/,
+    );
+    expect(text("refresh-input")).toMatch(/no longer be submitted/);
 
     // Only what has landed is in the table.
     const table = screen.getByTestId("HelpDeveloperPage-simultaneous-table");
@@ -609,7 +674,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(2);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -625,6 +690,88 @@ describe("Help pages (issue #140)", () => {
     expect(rows[0].querySelectorAll("a")[1]).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/285",
+    );
+    // Issue #281: a refresh, so no key.
+    expect(
+      [...rows[1].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Recruitment settings and steps, for admins, instructors and students",
+      "Background refresh; no warning, no version check, no detector",
+      "None (refresh, not a key)",
+      "#286",
+    ]);
+    expect(rows[1].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/286",
+    );
+  });
+
+  /** Issue #281: the last section of the admin and instructor pages. */
+  test.each([
+    [
+      "HelpAdminsPage",
+      HelpAdminsPage,
+      "If you, or another admin, is editing the same thing at the same time, you may get a warning on some pages",
+      "about every 5 seconds (somewhere between 2 and 8, chosen at random each time)",
+    ],
+    [
+      "HelpInstructorsPage",
+      HelpInstructorsPage,
+      "Where a recruitment is in the process",
+      "about every 15 seconds (somewhere between 10 and 20, chosen at random each time)",
+    ],
+  ])(
+    "%s ends with a Simultaneous Editing section about the refresh",
+    async (page, Page, opening, interval) => {
+      renderPage(<Page />);
+      const heading = await screen.findByRole("heading", {
+        level: 2,
+        name: "Simultaneous Editing",
+      });
+      const root = screen.getByTestId(page);
+      const headings = [...root.querySelectorAll("h2")];
+      expect(headings[headings.length - 1]).toBe(heading);
+      expect(heading).toHaveAttribute("id", "simultaneous-editing");
+
+      const refresh = screen.getByTestId(
+        `${page}-simultaneous-editing-refresh`,
+      );
+      expect(refresh).toHaveTextContent(opening);
+      expect(refresh.textContent).toMatch(
+        /refreshes by itself|refresh by themselves/,
+      );
+      expect(refresh).toHaveTextContent(interval);
+      expect(refresh).toHaveTextContent("no warning");
+      const todo = screen.getByTestId(`${page}-simultaneous-editing-todo`);
+      expect(todo).toHaveTextContent("What to do. If a page looks out of date");
+      expect(todo).toHaveTextContent(
+        "switch back to it and it updates at once",
+      );
+      expect(todo).toHaveTextContent("reload the page");
+      expect(heading.nextElementSibling).toBe(refresh);
+      expect(root.lastElementChild).toBe(todo);
+    },
+  );
+
+  test("the admin section says what is safe and when about 15 seconds applies", async () => {
+    renderPage(<HelpAdminsPage />);
+    const safe = await screen.findByTestId(
+      "HelpAdminsPage-simultaneous-editing-safe",
+    );
+    expect(safe).toHaveTextContent(
+      "closing applications that are already closed changes nothing",
+    );
+    expect(safe).toHaveTextContent(
+      "a step whose prerequisites are not met is refused",
+    );
+    expect(safe).toHaveTextContent("it closes itself and tells you");
+    expect(safe).toHaveTextContent(
+      "A date you are typing is never replaced by a refresh.",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-simultaneous-editing-refresh"),
+    ).toHaveTextContent(
+      "and so do instructors and students, about every 15 seconds",
     );
   });
 

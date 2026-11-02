@@ -14,6 +14,15 @@ export interface SystemInfo {
   subjectArea?: string;
   startQtrYYYYQ?: string;
   endQtrYYYYQ?: string;
+  /**
+   * Background refresh timing in seconds (issue #281), from ADMIN_REFRESH_SEC,
+   * ADMIN_REFRESH_JITTER, NON_ADMIN_REFRESH and NON_ADMIN_JITTER. A wait is uniform between
+   * base - jitter and base + jitter. See utils/refreshInterval.
+   */
+  adminRefreshSec?: number;
+  adminRefreshJitter?: number;
+  nonAdminRefresh?: number;
+  nonAdminJitter?: number;
 }
 
 export function useSystemInfo() {

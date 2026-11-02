@@ -79,3 +79,10 @@ export const earlyCloseWarning = (deadline: string): string =>
 
 /** The link text used in every confirmation. */
 export const MORE_ABOUT_TEXT = "More about this action";
+
+/**
+ * Said when a confirmation closes by itself because the recruitment changed while it was open, for
+ * example Close Applications after another admin already closed them (issue #281).
+ */
+export const STALE_CONFIRMATION_MESSAGE =
+  "This recruitment was changed while the window was open, so the window was closed and nothing was changed. The page now shows the current state.";

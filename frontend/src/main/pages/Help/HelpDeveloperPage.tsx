@@ -140,7 +140,8 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           before anything is refused, that another copy is open, and who. The
           full design, including where else it is planned, is{" "}
           <code>docs/design/ConcurrentEditMitigationDesign.md</code>. Only the
-          draft application form uses either so far.
+          draft application form uses either so far; recruitment state is kept
+          fresh by a refresh instead (see below).
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-version">
           <strong>The version check.</strong> A saved thing carries an integer{" "}
@@ -301,20 +302,160 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           raising the two variables makes it rarer. The warning is advice and
           never a lock; the version check still protects the data.
         </p>
+        <h3 className="mt-4 h5" id="state-refresh">
+          Refresh instead of a warning: keeping recruitment state fresh
+        </h3>
         <p data-testid="HelpDeveloperPage-simultaneous-refresh">
-          <strong>Other pages.</strong> Not every page will get a warning.
-          Recruitment state, and the Instructors and non-allocation Courses page
-          saves, are planned to be kept fresh by a <em>refresh</em> instead
-          (issues #281 and #282): a refetch after each save and a background
-          refresh without a page reload, paused in hidden tabs. Each refresh
-          waits a freshly drawn random time, between the base minus the jitter
-          and the base plus the jitter, so clients do not synchronize. The
-          planned settings, all environment variables, are{" "}
-          <code>ADMIN_REFRESH_SEC=5</code> and{" "}
-          <code>ADMIN_REFRESH_JITTER=3</code> (2 to 8 seconds, for admins) and{" "}
-          <code>NON_ADMIN_REFRESH=15</code> and <code>NON_ADMIN_JITTER=5</code>{" "}
-          (10 to 20 seconds, for instructors and students).{" "}
-          <em>This is not implemented yet.</em>
+          <strong>Why a refresh.</strong> Where a recruitment is in the process
+          (its settings and dates, which Recruitment Steps boxes have a green
+          check, whether applications and faculty rankings are open or closed,
+          allocation visibility, whether assignments are published) is read by
+          admins, instructors and students and changed by admins one click at a
+          time. The danger is not two people overwriting one field; it is a copy
+          that has gone stale and shows a step as open that was closed a minute
+          ago. So there is no version check, no detector and no banner (issue
+          #281). Instead every page that shows that state re-reads it in the
+          background, <em>without a page reload</em>, and after every save. The
+          server stays the safeguard: the status endpoints take the target state
+          (<code>status=OPEN</code>), not a toggle, so a click made in the few
+          seconds before a refresh is judged by the server, and the
+          prerequisites of each step are enforced there. Setting the status a
+          recruitment already has changes and records nothing: a repeated Close
+          does not stamp <code>actualClosingDate</code> again.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-refresh-how">
+          <strong>How.</strong> One shared mechanism,{" "}
+          <code>useRefreshingBackend</code> in{" "}
+          <code>main/utils/useRefreshingBackend.ts</code>, takes the same
+          arguments as <code>useBackend</code> and adds a react-query{" "}
+          <code>refetchInterval</code> <em>function</em>. react-query asks it
+          again after every fetch, so each wait is a freshly drawn random time,
+          uniform between <em>base minus jitter</em> and{" "}
+          <em>base plus jitter</em> seconds, not one drawn when the page loaded.
+          The random wait exists to avoid synchronized waves of requests: a
+          classroom of students who open the home page at the same moment drift
+          apart instead of asking the server at the same instant every time. The
+          draw is <code>nextRefreshMs(timing, random)</code> in{" "}
+          <code>main/utils/refreshInterval.ts</code>, which takes the random
+          source as an argument so tests are deterministic. Admins (anyone with
+          the admin role, even one who is also an instructor) use the first pair
+          of settings below; instructors and students use the second. A hidden
+          tab does not refresh (<code>refetchIntervalInBackground</code> is
+          false) and a tab that is shown or focused again refetches at once.
+          Options passed by a caller win over these.
+        </p>
+        <Table
+          striped
+          bordered
+          size="sm"
+          data-testid="HelpDeveloperPage-simultaneous-refresh-table"
+        >
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Default</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-testid="HelpDeveloperPage-refresh-admin-sec">
+              <td>
+                <code>ADMIN_REFRESH_SEC</code>
+              </td>
+              <td>
+                <code>5</code>
+              </td>
+              <td>Mean seconds between refreshes for admins.</td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-refresh-admin-jitter">
+              <td>
+                <code>ADMIN_REFRESH_JITTER</code>
+              </td>
+              <td>
+                <code>3</code>
+              </td>
+              <td>
+                Admins wait uniformly between 5 - 3 and 5 + 3 seconds (2 to 8).
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-refresh-non-admin-refresh">
+              <td>
+                <code>NON_ADMIN_REFRESH</code>
+              </td>
+              <td>
+                <code>15</code>
+              </td>
+              <td>
+                Mean seconds between refreshes for instructors and students.
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-refresh-non-admin-jitter">
+              <td>
+                <code>NON_ADMIN_JITTER</code>
+              </td>
+              <td>
+                <code>5</code>
+              </td>
+              <td>
+                Instructors and students wait uniformly between 15 - 5 and 15 +
+                5 seconds (10 to 20).
+              </td>
+            </tr>
+          </tbody>
+        </Table>
+        <p data-testid="HelpDeveloperPage-simultaneous-refresh-rules">
+          <strong>Bad values.</strong> A typing mistake can never make a client
+          refresh in a tight loop or never. A mean that is missing, not a number
+          or below 1 second is replaced by its default. A jitter that is
+          missing, not a number, negative or larger than its mean is replaced by
+          its default, and a jitter is never larger than its mean. Whatever the
+          settings, no wait is ever shorter than 1 second. The server checks the
+          values when it builds the answer and the browser checks them again, so
+          either side alone is safe.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-refresh-deploy">
+          <strong>Setting them on a deployed instance.</strong> The Vite
+          frontend reads build-time variables only, so these are not Vite
+          variables. They are ordinary environment variables of the server
+          process (in <code>.env</code> on localhost), read into{" "}
+          <code>application.properties</code> and sent to every page in the
+          public <code>/api/systemInfo</code> answer, like{" "}
+          <code>ENABLE_DEVELOPER_MODE</code>. Change the variable and restart
+          the server: no rebuild is needed, and a page picks the new values up
+          the next time it loads. Do not set them very low on a busy instance;
+          the jitter spreads the requests out, but every open page still asks
+          once per interval.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-refresh-pages">
+          <strong>Which pages refresh.</strong> Only the cheap reads that carry
+          the state: the admin recruitment list and each card&apos;s Recruitment
+          Steps (<code>/api/admin/recruitments/all</code> and{" "}
+          <code>/api/admin/recruitments/&#123;id&#125;/steps</code>), the
+          instructor and student sections of the home page (the{" "}
+          <code>HOME_PAGE_QUERY_KEYS</code>:{" "}
+          <code>/api/instructor/recruitments</code>,{" "}
+          <code>/api/recruitments/applicable</code> and{" "}
+          <code>/api/applications/mine</code>, plus{" "}
+          <code>/api/draftApplications/mine</code>), the faculty ranking
+          page&apos;s header state, and the list the application form checks to
+          see that applications are still open. The endpoint that counts
+          applications for each recruitment, and the heavy tables (applications,
+          rankings, assignments), are not refreshed this way, and a
+          student&apos;s home page never asks an admin endpoint. If the
+          Instructors and Courses page work (issue #282) changes which pages
+          refresh, this list is kept in step.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-refresh-input">
+          <strong>Input in progress.</strong> A refresh updates what is shown
+          but never replaces what a person is typing. A deadline being typed
+          lives in the page&apos;s own state, not in the refreshed data. A
+          confirmation for an action that no longer applies (Close applications
+          when they are already closed) closes itself and says so, and nothing
+          is sent. A student whose recruitment closes while the application form
+          is open keeps the form and everything typed: it says that the draft is
+          kept as of its last automatic save and can no longer be submitted,
+          turns off Submit and Save Draft, and stops trying to save (draft saves
+          are refused once applications close, issue #276).
         </p>
         <p>Where the version check and the warning are used so far:</p>
         <Table
@@ -353,6 +494,25 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #285
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-state">
+              <td>
+                Recruitment settings and steps, for admins, instructors and
+                students
+              </td>
+              <td>
+                Background refresh; no warning, no version check, no detector
+              </td>
+              <td>None (refresh, not a key)</td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/286"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #286
                 </a>
               </td>
             </tr>
