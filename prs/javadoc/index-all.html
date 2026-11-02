@@ -786,6 +786,10 @@ six months after it closes (issue #107), as the place for what has changed since
 <dd>
 <div class="block">Returns the value of the <code>content</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/JsonColumnConverter.html#convertToDatabaseColumn(T)" class="member-name-link">convertToDatabaseColumn(T)</a> - Method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/JsonColumnConverter.html" title="class in edu.ucsb.cs.taapply.entity">JsonColumnConverter</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/JsonColumnConverter.html#convertToEntityAttribute(java.lang.String)" class="member-name-link">convertToEntityAttribute(String)</a> - Method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/JsonColumnConverter.html" title="class in edu.ucsb.cs.taapply.entity">JsonColumnConverter</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html#convertToValidEmail(java.lang.String)" class="member-name-link">convertToValidEmail(String)</a> - Static method in class edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html" title="class in edu.ucsb.cs.taapply.utilities">CanonicalFormConverter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/CorsConfig.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.config">CorsConfig</a> - Class in <a href="edu/ucsb/cs/taapply/config/package-summary.html">edu.ucsb.cs.taapply.config</a></dt>
@@ -835,6 +839,8 @@ least one quarter the admin has populated from the UCSB API.</div>
 <dd>
 <div class="block">Returns the value of the <code>courseInterests</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/DraftApplication.CourseInterestsConverter.html#%3Cinit%3E()" class="member-name-link">CourseInterestsConverter()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/DraftApplication.CourseInterestsConverter.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication.CourseInterestsConverter</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#courseNumber()" class="member-name-link">courseNumber()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>courseNumber</code> record component.</div>
@@ -1059,6 +1065,33 @@ makes it available.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#downloadCsv(java.lang.String)" class="member-name-link">downloadCsv(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html#downloadInstructorsCSV()" class="member-name-link">downloadInstructorsCSV()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsCSVController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/DraftApplication.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">An application as it is being filled in (issue #270): what the applicant has entered so far,
+saved as they type so that nothing they have written is ever lost.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/DraftApplication.html#%3Cinit%3E()" class="member-name-link">DraftApplication()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/DraftApplication.CourseInterestsConverter.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">DraftApplication.CourseInterestsConverter</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">Course interests as JSON.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/DraftApplication.LevelsConverter.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">DraftApplication.LevelsConverter</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">Name-to-level maps (topic ratings, ULA interests) as JSON.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/DraftApplication.PriorCourseworkConverter.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">DraftApplication.PriorCourseworkConverter</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">The prior coursework rows as JSON.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">DraftApplicationRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">An applicant's drafts: applications as they are being filled in (issue #270).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#%3Cinit%3E()" class="member-name-link">DraftApplicationsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:E">E</h2>
@@ -1489,9 +1522,15 @@ science courses of a few other universities.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#findByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">findByEmailAndRecruitmentId(String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html#findByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">findByEmailAndRecruitmentId(String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">DraftApplicationRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#findByEmailOrderByIdDesc(java.lang.String)" class="member-name-link">findByEmailOrderByIdDesc(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
 <dd>
 <div class="block">Every application belonging to one person, newest first.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html#findByEmailOrderByIdDesc(java.lang.String)" class="member-name-link">findByEmailOrderByIdDesc(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">DraftApplicationRepository</a></dt>
+<dd>
+<div class="block">Every draft belonging to one person, newest first.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/RecruitmentCourseRepository.html#findByInstructor(java.lang.String)" class="member-name-link">findByInstructor(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentCourseRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentCourseRepository</a></dt>
 <dd>
@@ -2255,6 +2294,12 @@ stamp createdById/createdByEmail on Job records.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/JobUserProviderImpl.html#%3Cinit%3E()" class="member-name-link">JobUserProviderImpl()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/JobUserProviderImpl.html" title="class in edu.ucsb.cs.taapply.services">JobUserProviderImpl</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/JsonColumnConverter.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">JsonColumnConverter&lt;T&gt;</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">Stores a collection as JSON text in one column.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/JsonColumnConverter.html#%3Cinit%3E(com.fasterxml.jackson.core.type.TypeReference,java.util.function.Supplier)" class="member-name-link">JsonColumnConverter(TypeReference, Supplier)</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/JsonColumnConverter.html" title="class in edu.ucsb.cs.taapply.entity">JsonColumnConverter</a></dt>
+<dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:K">K</h2>
 <dl class="index">
@@ -2368,6 +2413,8 @@ application can be pre-filled from it (issue #70).</div>
 <dd>
 <div class="block">Level meaning "all levels"; the API has no such code, so the parameter is omitted instead.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/DraftApplication.LevelsConverter.html#%3Cinit%3E()" class="member-name-link">LevelsConverter()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/DraftApplication.LevelsConverter.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication.LevelsConverter</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RecruitmentStepsService.Link.html#%3Cinit%3E(java.lang.String,java.lang.String)" class="member-name-link">Link(String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentStepsService.Link.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentStepsService.Link</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>Link</code> record class.</div>
@@ -2474,6 +2521,8 @@ to how H2 is used as an in-memory SQL database for these profiles.</div>
 <dt><a href="edu/ucsb/cs/taapply/enums/ClassLevel.html#MS" class="member-name-link">MS</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ClassLevel.html" title="enum class in edu.ucsb.cs.taapply.enums">ClassLevel</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#myApplications()" class="member-name-link">myApplications()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#myDrafts()" class="member-name-link">myDrafts()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:N">N</h2>
@@ -2612,6 +2661,8 @@ application form.</div>
 API and server configuration.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/config/OpenAPIConfig.html#%3Cinit%3E()" class="member-name-link">OpenAPIConfig()</a> - Constructor for class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/OpenAPIConfig.html" title="class in edu.ucsb.cs.taapply.config">OpenAPIConfig</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#openDraft(java.lang.Long)" class="member-name-link">openDraft(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html#openRecruitments()" class="member-name-link">openRecruitments()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
@@ -2763,6 +2814,8 @@ answer, never stored).</div>
 <div class="block">One course an applicant has taken, listed on their application as relevant background.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html#%3Cinit%3E()" class="member-name-link">PriorCoursework()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/DraftApplication.PriorCourseworkConverter.html#%3Cinit%3E()" class="member-name-link">PriorCourseworkConverter()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/DraftApplication.PriorCourseworkConverter.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication.PriorCourseworkConverter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html#%3Cinit%3E(boolean,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">PriorCourseworkFields(boolean, String, String, String, String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.PriorCourseworkFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.PriorCourseworkFields</a></dt>
 <dd>
@@ -3208,6 +3261,8 @@ effect without requiring re-login.</div>
 <h2 class="title" id="I:S">S</h2>
 <dl class="index">
 <dt><a href="edu/ucsb/cs/taapply/controller/NoticesController.html#save(edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.controller.NoticesController.NoticeContent)" class="member-name-link">save(RecruitmentType, NoticesController.NoticeContent)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#saveDraft(java.lang.Long,java.lang.Integer,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">saveDraft(Long, Integer, ApplicationsController.ApplicationFields)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/startup/ScaffoldApplicationRunner.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.startup">ScaffoldApplicationRunner</a> - Class in <a href="edu/ucsb/cs/taapply/startup/package-summary.html">edu.ucsb.cs.taapply.startup</a></dt>
 <dd>&nbsp;</dd>
