@@ -66,6 +66,9 @@ public class RecruitmentStepsService {
   public Steps stepsFor(Recruitment recruitment) {
     Long id = recruitment.getId();
     String courses = "/admin/recruitments/" + id + "/courses";
+    // The view-only page is where the "see" links land; step 3's Allocations link is for setting
+    // them, so it goes to the edit page (issue #278).
+    String coursesEdit = courses + "/edit";
     boolean applicationsOpen = recruitment.getApplicationStatus() == ApplicationStatus.OPEN;
     boolean reviewsOpen = "Open".equals(recruitment.getReviewStatus());
     int target = recruitment.getTotalHiringTarget();
@@ -137,7 +140,7 @@ public class RecruitmentStepsService {
                 null,
                 List.of(
                     new Link("Budget", "/admin/budget/" + qyy(recruitment.getQuarter())),
-                    new Link("Allocations", courses)),
+                    new Link("Allocations", coursesEdit)),
                 null,
                 null,
                 null),

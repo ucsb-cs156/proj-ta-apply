@@ -3,6 +3,13 @@ import { Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { ADMIN_MENU_ENTRIES } from "main/utils/helpPages";
 import useScrollToHash from "main/utils/useScrollToHash";
+import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
+
+/** The warning as it looks when another admin has the same Courses edit page open. */
+// Stryker disable next-line all : the example name is a picture, never a name of anyone
+const EXAMPLE_OTHERS = [
+  { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false },
+];
 
 /**
  * The admin's handbook: /help/admins (issue #140). A table of every option on the Admin menu and
@@ -662,6 +669,84 @@ export default function HelpAdminsPage(): React.JSX.Element {
           cut short with a <em>[See value]</em> link that shows the whole thing.
           The trail for one application is also shown on that application&apos;s
           View page.
+        </p>
+
+        <h2
+          className="my-3 h4"
+          id="simultaneous-editing"
+          data-testid="HelpAdminsPage-simultaneous-editing"
+        >
+          Simultaneous Editing
+        </h2>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-intro">
+          A recruitment&apos;s <strong>Courses</strong> page comes in two forms.
+          The <strong>view-only</strong> page is the one you get when you open
+          it: nothing on it can be changed, and any number of tabs or windows
+          may show it, for you or for other admins, without any warning. Its{" "}
+          <strong>Edit</strong> button, beside the words &ldquo;Edit estimated
+          enrollments, and TA/ULA allocations&rdquo;, takes you to the{" "}
+          <strong>edit page</strong>, where you can change the estimated
+          enrollments and the allocations, run Auto Allocate, and use Populate
+          and the other controls; it has a link back to the view-only page. Only{" "}
+          <em>one</em> tab or window should have a given recruitment&apos;s edit
+          page open at a time. Edit pages of different recruitments never warn
+          each other.
+        </p>
+        <p>
+          If you, or another admin, is editing the same thing at the same time,
+          you may get a warning that looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="page"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-meaning">
+          <strong>What it means.</strong> The same recruitment&apos;s Courses
+          edit page is open somewhere else: in another tab or window of yours
+          (the warning then says &ldquo;You are also editing this page in
+          another tab or window&rdquo;), or on another admin&apos;s computer (it
+          names them, up to three, then &ldquo;and N others&rdquo;). The
+          allocations only make sense together, so a copy that is out of date
+          can leave a total that no longer matches the hiring target. If you go
+          on, the system refuses a change made from a copy that is out of date,
+          tells you, and reads the numbers again; whatever you typed there is
+          lost.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-modal">
+          <strong>The question.</strong> The tab or window you opened{" "}
+          <em>last</em> also asks what you want to do, in a box that covers the
+          page until you answer. The one opened first only shows the warning, so
+          that it never interrupts someone who is typing. The box offers three
+          choices:
+        </p>
+        <ul data-testid="HelpAdminsPage-simultaneous-editing-choices">
+          <li>
+            <strong>Leave this page</strong> takes this tab or window to the
+            view-only Courses page.
+          </li>
+          <li>
+            <strong>
+              Wait for the other tabs or windows to close, then resume here
+            </strong>{" "}
+            keeps the page covered. When the others close, the box closes by
+            itself within a few seconds and you can carry on here.
+          </li>
+          <li>
+            <strong>Continue anyway</strong> closes the box and keeps the
+            warning on the page. Use it only if you are sure the other admin is
+            not changing the allocations. The box does not come back.
+          </li>
+        </ul>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
+          <strong>What to do.</strong> Agree with the other admin who edits,
+          close the other edit pages, and keep just one. To look at the numbers
+          without risk, use the view-only page in as many tabs as you like. The
+          warning goes away on its own within a few seconds after the other
+          copies are closed, or in up to about twenty seconds if the other copy
+          could not say that it was leaving, such as when a computer lost its
+          network connection.
         </p>
       </div>
     </BasicLayout>

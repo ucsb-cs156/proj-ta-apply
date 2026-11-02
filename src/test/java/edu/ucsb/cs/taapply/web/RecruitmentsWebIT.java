@@ -111,6 +111,12 @@ public class RecruitmentsWebIT extends WebTestCase {
     page.getByTestId("RecruitmentForm-submit").click();
   }
 
+  /** Issue #278: the Courses page opens view-only; the Edit button leads to the edit page. */
+  private void openEditPage() {
+    page.getByTestId("RecruitmentCoursesPage-edit-button").click();
+    waitFor(page.getByTestId("RecruitmentCoursesPage-view-link"));
+  }
+
   private void waitFor(Locator locator) {
     for (int i = 0; i < 20 && !locator.isVisible(); i++) {
       page.waitForTimeout(500);
@@ -171,6 +177,8 @@ public class RecruitmentsWebIT extends WebTestCase {
 
     Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     waitFor(firstCourse);
+    openEditPage();
+    waitFor(firstCourse);
     assertThat(page.getByTestId("RecruitmentCoursesPage-add")).isDisabled();
 
     page.getByTestId("RecruitmentCoursesPage-enrollCode").fill("07600");
@@ -192,6 +200,68 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertThat(page.getByText("is section 0101, a discussion or lab")).isVisible();
   }
 
+  /**
+   * Issue #278: the Courses page opens view-only, with an Edit button; the edit page warns when a
+   * second window of the same admin has it open, and the view-only page never does.
+   */
+  @Test
+  public void the_courses_page_is_view_only_and_only_the_edit_page_warns() throws Exception {
+    courseRepository.save(
+        Course.builder().courseId("CMPSC   156").title("ADV APP PROGRAM").needsTa(true).build());
+
+    stubOfferings();
+    setupAdminUser();
+    goToRecruitments();
+    createTaRecruitment();
+
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
+    waitFor(firstRow);
+    page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
+
+    Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    waitFor(firstCourse);
+    // View-only: the Edit button and its words, and nothing to change.
+    assertThat(page.getByTestId("RecruitmentCoursesPage-edit-text"))
+        .containsText("Edit estimated enrollments, and TA/ULA allocations");
+    assertThat(page.getByTestId("RecruitmentCoursesPage-add")).not().isVisible();
+    assertThat(page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-removed-button"))
+        .not()
+        .isVisible();
+
+    // A second window on the view-only page: no warning anywhere.
+    String viewUrl = page.url();
+    com.microsoft.playwright.BrowserContext other =
+        browser.newContext(
+            new com.microsoft.playwright.Browser.NewContextOptions()
+                .setStorageState(page.context().storageState()));
+    com.microsoft.playwright.Page otherPage = other.newPage();
+    otherPage.navigate(viewUrl);
+    assertThat(otherPage.getByTestId("RecruitmentCoursesPage-edit-button")).isVisible();
+    page.waitForTimeout(5000);
+    assertThat(page.getByTestId("RecruitmentCoursesPage-multiple-tabs")).not().isVisible();
+    assertThat(otherPage.getByTestId("RecruitmentCoursesPage-multiple-tabs")).not().isVisible();
+
+    // The edit page in both: each is told about the other; the newer is asked what to do.
+    openEditPage();
+    otherPage.getByTestId("RecruitmentCoursesPage-edit-button").click();
+    var wait =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsVisibleOptions()
+            .setTimeout(20000);
+    assertThat(otherPage.getByTestId("RecruitmentCoursesPage-multiple-tabs")).isVisible(wait);
+    assertThat(page.getByTestId("RecruitmentCoursesPage-multiple-tabs")).isVisible(wait);
+    assertThat(otherPage.getByTestId("RecruitmentCoursesPage-multiple-tabs-modal-leave"))
+        .isVisible();
+
+    // Leave this page goes back to the view-only page, and the first window's warning goes.
+    otherPage.getByTestId("RecruitmentCoursesPage-multiple-tabs-modal-leave").click();
+    assertThat(otherPage.getByTestId("RecruitmentCoursesPage-edit-button")).isVisible();
+    var gone =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsHiddenOptions()
+            .setTimeout(30000);
+    assertThat(page.getByTestId("RecruitmentCoursesPage-multiple-tabs")).isHidden(gone);
+    other.close();
+  }
+
   @Test
   public void a_removed_course_stays_hidden_until_the_toggle_reveals_it() throws Exception {
     courseRepository.save(
@@ -207,6 +277,8 @@ public class RecruitmentsWebIT extends WebTestCase {
     page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 
     Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    waitFor(firstCourse);
+    openEditPage();
     waitFor(firstCourse);
 
     page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-removed-button").click();

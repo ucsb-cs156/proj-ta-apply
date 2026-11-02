@@ -45,7 +45,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(controllers = edu.ucsb.cs.taapply.controller.RecruitmentCoursesController.class)
-@Import(edu.ucsb.cs.taapply.testconfig.TestConfig.class)
+@Import({
+  edu.ucsb.cs.taapply.testconfig.TestConfig.class,
+  edu.ucsb.cs.taapply.testconfig.ResettableDetectorConfig.class
+})
 public class RecruitmentCoursesControllerTests extends ControllerTestCase {
 
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
@@ -492,6 +495,7 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     assertEquals(3, captor.getValue().getAllocation());
     RecruitmentCourse expected = rc(1L, "CMPSC   156", "0100", false);
     expected.setAllocation(3);
+    expected.setAllocationVersion(1);
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
   }
 

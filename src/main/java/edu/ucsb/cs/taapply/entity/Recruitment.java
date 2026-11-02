@@ -83,6 +83,15 @@ public class Recruitment {
   private Integer totalHiringTarget = 1;
 
   /**
+   * Counts the changes that overwrite many allocations at once, Auto Allocate (issue #278). An
+   * allocation edit that carries an older count is refused, since every number it was made against
+   * has moved.
+   */
+  @Column(name = "allocation_bulk_version", nullable = false)
+  @Builder.Default
+  private Integer allocationBulkVersion = 0;
+
+  /**
    * The estimated average cost of one position of this recruitment's type, in dollars and cents
    * (issue #177): per TA on a TA recruitment, per ULA on a ULA recruitment. Entered on the Budget
    * for Quarter page; null until it has been. A planning figure, not audited.

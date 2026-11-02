@@ -18,6 +18,8 @@ import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 import { Link } from "react-router";
 import { isSummerQuarter } from "main/utils/courseColumns";
+import { apiErrorMessage } from "main/utils/apiError";
+import { toast } from "react-toastify";
 
 export type RecruitmentCourse = {
   id: number;
@@ -48,6 +50,8 @@ export type RecruitmentCourse = {
   enrollmentEstimate?: number | null;
   /** Its fractional share of the hiring target by estimate (issue #176); null until computed. */
   unroundedAllocation?: number | null;
+  /** Counts the changes to the allocation (issue #278); an edit carries it to prove it is current. */
+  allocationVersion?: number;
 };
 
 export type RecruitmentCourseRankingSummary = {
@@ -73,6 +77,8 @@ export const CANCELLED = "cancelled";
 /** What the Allocation column's cells need, handed to them through the column's meta. */
 type AllocationColumnMeta = {
   style: CSSProperties;
+  /** The view-only page shows the figure as text. */
+  readOnly: boolean;
   testIdPrefix: string;
   /** What is in each row's box while it has focus, by row id; an absent row shows its value. */
   drafts: Record<number, string>;
@@ -96,6 +102,10 @@ function AllocationCell({
   const course = cell.row.original;
   const draft = meta.drafts[course.id];
   const value = draft ?? String(course.allocation ?? 0);
+  const testId = `${meta.testIdPrefix}-cell-row-${cell.row.index}-allocation`;
+  if (meta.readOnly) {
+    return <span data-testid={testId}>{value}</span>;
+  }
   return (
     <Form.Control
       type="number"
@@ -110,7 +120,7 @@ function AllocationCell({
       disabled={course.removed}
       onChange={(e) => meta.onChange(course, e.target.value)}
       onBlur={meta.onBlur}
-      data-testid={`${meta.testIdPrefix}-cell-row-${cell.row.index}-allocation`}
+      data-testid={testId}
     />
   );
 }
@@ -118,6 +128,8 @@ function AllocationCell({
 /** What the Enrollment Estimate column's cells need, handed to them through the column's meta. */
 type EstimateColumnMeta = {
   style: CSSProperties;
+  /** The view-only page shows the figure as text. */
+  readOnly: boolean;
   testIdPrefix: string;
   drafts: Record<number, string>;
   onChange: (course: RecruitmentCourse, value: string) => void;
@@ -139,6 +151,10 @@ function EnrollmentEstimateCell({
   const draft = meta.drafts[course.id];
   // Stryker disable next-line StringLiteral : a number box shows any non-number as empty anyway
   const value = draft ?? String(course.enrollmentEstimate ?? "");
+  const testId = `${meta.testIdPrefix}-cell-row-${cell.row.index}-enrollmentEstimate`;
+  if (meta.readOnly) {
+    return <span data-testid={testId}>{value}</span>;
+  }
   return (
     <Form.Control
       type="number"
@@ -153,15 +169,20 @@ function EnrollmentEstimateCell({
       disabled={course.removed}
       onChange={(e) => meta.onChange(course, e.target.value)}
       onBlur={() => meta.onBlur(course)}
-      data-testid={`${meta.testIdPrefix}-cell-row-${cell.row.index}-enrollmentEstimate`}
+      data-testid={testId}
     />
   );
 }
 
 /** The request that saves one estimate; shared by the debounced save and the unmount flush. */
-const estimateRequest = (id: number, value: string) => ({
+const estimateRequest = (
+  id: number,
+  value: string,
+  headers?: Record<string, string>,
+) => ({
   url: "/api/recruitmentcourses/enrollmentEstimate",
   method: "PUT",
+  headers,
   // Leaving the parameter out clears the estimate.
   params: value === "" ? { id } : { id, enrollmentEstimate: Number(value) },
 });
@@ -194,6 +215,11 @@ const CopyIcon = (): React.JSX.Element => (
   </svg>
 );
 
+/** What a refused allocation save (409) carries. */
+type ConflictError = {
+  response?: { status?: number; data?: { course?: RecruitmentCourse } };
+};
+
 type RecruitmentCourseTableProps = {
   courses: RecruitmentCourse[];
   /** The recruitment's type, for the headings and tooltips that name it (issue #176). */
@@ -208,6 +234,15 @@ type RecruitmentCourseTableProps = {
   /** Column ids the admin has hidden (issue #185); see {@link columnChoices}. */
   hiddenColumns?: string[];
   testIdPrefix?: string;
+  /**
+   * The view-only page (issue #278): the figures are text, there is no Remove button, and nothing
+   * is saved.
+   */
+  readOnly?: boolean;
+  /** Sent with every save, to name this tab to the multi-tab warning (issue #278). */
+  requestHeaders?: Record<string, string>;
+  /** The recruitment's Auto Allocate count, sent with each allocation edit (issue #278). */
+  allocationBulkVersion?: number;
 };
 
 export default function RecruitmentCourseTable({
@@ -221,6 +256,9 @@ export default function RecruitmentCourseTable({
   // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
   hiddenColumns = [],
   testIdPrefix = "RecruitmentCourseTable",
+  readOnly = false,
+  requestHeaders,
+  allocationBulkVersion,
 }: RecruitmentCourseTableProps): React.JSX.Element {
   const objectToAxiosParams = (
     course: RecruitmentCourse,
@@ -256,22 +294,83 @@ export default function RecruitmentCourseTable({
       // Stryker disable next-line all : the query's initial data is an empty list, never undefined
       (old) => (old ?? []).map((c) => (c.id === saved.id ? saved : c)),
     );
+  // Each allocation save carries the version the row had when the save was made (issue #278), so
+  // the saves of one box, one per keystroke, are sent one after the other, each with the version
+  // the one before it came back with. A refused save (409) ends the run: what was typed after it
+  // was made against numbers that are no longer there, so it is not sent.
+  const versions = useRef<Record<number, number>>({});
+  const allocationQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const waiting = useRef(0);
+  const epoch = useRef(0);
   const allocationMutation = useBackendMutation<
-    { id: number; allocation: number },
+    { id: number; allocation: number; expectedVersion?: number },
     RecruitmentCourse
   >(
-    ({ id, allocation }) => ({
+    ({ id, allocation, expectedVersion }) => ({
       url: "/api/recruitmentcourses/allocation",
       method: "PUT",
-      params: { id, allocation },
+      headers: requestHeaders,
+      params: {
+        id,
+        allocation,
+        expectedVersion,
+        expectedBulkVersion: allocationBulkVersion,
+      },
     }),
-    { onSuccess: replaceInCache },
+    {
+      onSuccess: (saved) => {
+        if (saved.allocationVersion !== undefined) {
+          versions.current[saved.id] = saved.allocationVersion;
+        }
+        replaceInCache(saved);
+      },
+      onError: (error) => {
+        if ((error as ConflictError)?.response?.status !== 409) {
+          toast(`${error}`);
+          return;
+        }
+        epoch.current += 1;
+        toast(apiErrorMessage(error));
+        setAllocationDrafts({});
+        const body = (error as ConflictError).response?.data;
+        if (body?.course !== undefined) {
+          replaceInCache(body.course);
+        }
+        // After a bulk change every old number is suspect, so everything is read again.
+        queryClient.invalidateQueries({
+          queryKey: ["/api/recruitmentcourses/all"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["/api/admin/recruitments/all"],
+        });
+      },
+    },
     ["/api/recruitmentcourses/all", includeRemoved],
   );
   const onAllocationChange = (course: RecruitmentCourse, value: string) => {
     setAllocationDrafts((previous) => ({ ...previous, [course.id]: value }));
     if (isValidAllocation(value)) {
-      allocationMutation.mutate({ id: course.id, allocation: Number(value) });
+      const myEpoch = epoch.current;
+      waiting.current += 1;
+      allocationQueue.current = allocationQueue.current
+        .then(() =>
+          myEpoch !== epoch.current
+            ? undefined
+            : allocationMutation.mutateAsync({
+                id: course.id,
+                allocation: Number(value),
+                expectedVersion:
+                  versions.current[course.id] ?? course.allocationVersion,
+              }),
+        )
+        .catch(() => undefined)
+        .finally(() => {
+          waiting.current -= 1;
+          // Between runs the versions come from the rows as last read, which may be newer.
+          if (waiting.current === 0) {
+            versions.current = {};
+          }
+        });
     }
   };
   // Only the focused box can have a draft, since leaving a box clears it, so clearing them all
@@ -291,7 +390,7 @@ export default function RecruitmentCourseTable({
     { id: number; value: string },
     RecruitmentCourse
   >(
-    ({ id, value }) => estimateRequest(id, value),
+    ({ id, value }) => estimateRequest(id, value, requestHeaders),
     { onSuccess: replaceInCache },
     ["/api/recruitmentcourses/all", includeRemoved],
   );
@@ -323,6 +422,11 @@ export default function RecruitmentCourseTable({
     }
     setEstimateDrafts({});
   };
+  const headersRef = useRef(requestHeaders);
+  // Stryker disable next-line all : the headers never change during a test; the unmount flush is tested
+  useEffect(() => {
+    headersRef.current = requestHeaders;
+  }, [requestHeaders]);
   // Leaving the page within the second still saves: the pending requests are sent directly, since
   // the component's mutation is gone with it. The ref's contents are mutated in place, never
   // replaced, so the object captured here is the live one.
@@ -334,7 +438,7 @@ export default function RecruitmentCourseTable({
       Object.entries(pending).forEach(([id, { timer, value }]) => {
         clearTimeout(timer);
         delete pending[Number(id)];
-        void axios(estimateRequest(Number(id), value));
+        void axios(estimateRequest(Number(id), value, headersRef.current));
       });
     };
   }, []);
@@ -505,6 +609,7 @@ export default function RecruitmentCourseTable({
       meta: {
         ...numeric,
         testIdPrefix,
+        readOnly,
         drafts: estimateDrafts,
         onChange: onEstimateChange,
         onBlur: onEstimateBlur,
@@ -517,6 +622,7 @@ export default function RecruitmentCourseTable({
       meta: {
         ...numeric,
         testIdPrefix,
+        readOnly,
         drafts: allocationDrafts,
         onChange: onAllocationChange,
         onBlur: onAllocationBlur,
@@ -618,26 +724,30 @@ export default function RecruitmentCourseTable({
           },
         ]
       : []),
-    {
-      header: "",
-      id: "removed",
-      accessorKey: "removed",
-      meta: shrinkToContent,
-      // The button's own label and colour say whether the row is removed, so no separate
-      // status column is needed. Removed rows only appear when "show removed" is on.
-      cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => {
-        const course = cell.row.original;
-        return (
-          <Button
-            variant={course.removed ? "success" : "danger"}
-            onClick={() => mutation.mutate(course)}
-            data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-removed-button`}
-          >
-            {course.removed ? "Unremove" : "Remove"}
-          </Button>
-        );
-      },
-    },
+    ...(readOnly
+      ? []
+      : [
+          {
+            header: "",
+            id: "removed",
+            accessorKey: "removed",
+            meta: shrinkToContent,
+            // The button's own label and colour say whether the row is removed, so no separate
+            // status column is needed. Removed rows only appear when "show removed" is on.
+            cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => {
+              const course = cell.row.original;
+              return (
+                <Button
+                  variant={course.removed ? "success" : "danger"}
+                  onClick={() => mutation.mutate(course)}
+                  data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-removed-button`}
+                >
+                  {course.removed ? "Unremove" : "Remove"}
+                </Button>
+              );
+            },
+          },
+        ]),
   ];
 
   return (

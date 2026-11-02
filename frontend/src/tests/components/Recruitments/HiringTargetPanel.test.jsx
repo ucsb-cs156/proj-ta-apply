@@ -29,7 +29,11 @@ const ulaRecruitment = {
   totalHiringTarget: 6,
 };
 
-function renderPanel(recruitment = taRecruitment, allocatedSoFar = 4) {
+function renderPanel(
+  recruitment = taRecruitment,
+  allocatedSoFar = 4,
+  readOnly = false,
+) {
   return render(
     <QueryClientProvider
       client={
@@ -40,6 +44,7 @@ function renderPanel(recruitment = taRecruitment, allocatedSoFar = 4) {
         recruitment={recruitment}
         allocatedSoFar={allocatedSoFar}
         testIdPrefix="Panel"
+        readOnly={readOnly}
       />
     </QueryClientProvider>,
   );
@@ -198,5 +203,22 @@ describe("HiringTargetPanel tests", () => {
     expect(box).toHaveValue(5);
     await userEvent.tab();
     expect(box).toHaveValue(10);
+  });
+
+  test("read-only (the view-only Courses page) shows the target as text, with the totals", () => {
+    renderPanel(taRecruitment, 4, true);
+
+    const target = screen.getByTestId("Panel-totalHiringTarget");
+    expect(target.tagName).toBe("DIV");
+    expect(target).toHaveTextContent(
+      "Total number of TAs expected to be hired: 10",
+    );
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+    expect(screen.getByTestId("Panel-allocated")).toHaveTextContent(
+      "Allocated so far: 4",
+    );
+    expect(screen.getByTestId("Panel-left")).toHaveTextContent(
+      "TA allocations left to assign: 6",
+    );
   });
 });

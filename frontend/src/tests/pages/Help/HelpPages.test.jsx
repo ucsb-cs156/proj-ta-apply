@@ -609,7 +609,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(2);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -626,6 +626,120 @@ describe("Help pages (issue #140)", () => {
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/285",
     );
+    // Issue #278: the Courses edit page.
+    expect(
+      [...rows[1].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Courses edit page (allocations and estimated enrollments); the view-only page never warns",
+      "The whole edit page for one recruitment",
+      "courses-edit:<recruitmentId>",
+      "#286",
+    ]);
+    expect(rows[1].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/286",
+    );
+    const courses = text("courses");
+    expect(courses).toMatch(/view-only page/);
+    expect(courses).toMatch(/\/admin\/recruitments\/:id\/courses\/edit/);
+    expect(courses).toMatch(
+      /POST \/api\/recruitmentcourses\/heartbeat\?recruitmentId=/,
+    );
+    expect(courses).toMatch(/Leave this page goes to the view-only page/);
+    expect(courses).toMatch(/allocation_version column on recruitment_courses/);
+    expect(courses).toMatch(/allocation_bulk_version on recruitments/);
+    expect(courses).toMatch(/expectedVersion and expectedBulkVersion/);
+    expect(courses).toMatch(/409/);
+    expect(text("editing")).toMatch(
+      /draft application form and the Courses edit page use either so far/,
+    );
+  });
+
+  test("the admins page ends with Simultaneous Editing, which covers the view-only and edit Courses pages (issue #278)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const heading = await screen.findByRole("heading", {
+      level: 2,
+      name: "Simultaneous Editing",
+    });
+    const root = screen.getByTestId("HelpAdminsPage");
+    // It ends the page: no other section follows it.
+    const headings = [...root.querySelectorAll("h2")];
+    expect(headings[headings.length - 1]).toBe(heading);
+    expect(heading).toHaveAttribute("id", "simultaneous-editing");
+
+    const intro = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-intro",
+    );
+    expect(heading.nextElementSibling).toBe(intro);
+    expect(intro).toHaveTextContent(
+      "any number of tabs or windows may show it, for you or for other admins, without any warning",
+    );
+    expect(intro).toHaveTextContent(
+      "Its Edit button, beside the words \u201cEdit estimated enrollments, and TA/ULA allocations\u201d, takes you to the edit page",
+    );
+    expect(intro).toHaveTextContent(
+      "Only one tab or window should have a given recruitment's edit page open at a time",
+    );
+    expect(intro).toHaveTextContent(
+      "Edit pages of different recruitments never warn each other",
+    );
+    expect(intro.nextElementSibling).toHaveTextContent(
+      "If you, or another admin, is editing the same thing at the same time, you may get a warning that looks like this:",
+    );
+
+    // A faithful picture of the warning, with a name, and not announced.
+    const example = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-example",
+    );
+    expect(example).toHaveTextContent(
+      "phtcon@ucsb.edu (Phill Conrad) is also editing this page. Please know that this is risky; we recommend closing all but one of these.",
+    );
+    expect(example).toHaveClass("alert", "alert-warning");
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    const meaning = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-meaning",
+    );
+    expect(meaning).toHaveTextContent(
+      "What it means. The same recruitment's Courses edit page is open somewhere else",
+    );
+    expect(meaning).toHaveTextContent(
+      "You are also editing this page in another tab or window",
+    );
+    expect(meaning).toHaveTextContent(
+      "up to three, then \u201cand N others\u201d",
+    );
+    const modal = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-modal",
+    );
+    expect(modal).toHaveTextContent(
+      "The tab or window you opened last also asks what you want to do",
+    );
+    const choices = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-choices",
+    );
+    expect(
+      [...choices.querySelectorAll("li > strong")].map((b) => b.textContent),
+    ).toEqual([
+      "Leave this page",
+      "Wait for the other tabs or windows to close, then resume here",
+      "Continue anyway",
+    ]);
+    expect(choices).toHaveTextContent(
+      "takes this tab or window to the view-only Courses page",
+    );
+    const todo = screen.getByTestId("HelpAdminsPage-simultaneous-editing-todo");
+    expect(todo).toHaveTextContent(
+      "use the view-only page in as many tabs as you like",
+    );
+    expect(todo).toHaveTextContent(
+      "within a few seconds after the other copies are closed",
+    );
+    expect(example.nextElementSibling).toBe(meaning);
+    expect(meaning.nextElementSibling).toBe(modal);
+    expect(modal.nextElementSibling).toBe(choices);
+    expect(choices.nextElementSibling).toBe(todo);
+    expect(root.lastElementChild).toBe(todo);
   });
 
   test("the developer page starts with a table of every Developer menu option linking to its section (issue #266)", async () => {

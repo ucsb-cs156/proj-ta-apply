@@ -461,6 +461,23 @@ an **edit page**.
 * Where a link from elsewhere in the app should land, on the view or the edit page, is left to
   #278 to decide, one link at a time.
 
+**As built (#278).** The view-only page is `/admin/recruitments/:id/courses` and the edit page is
+`/admin/recruitments/:id/courses/edit`; both are `RecruitmentCoursesPage`, the second with `edit`.
+The view-only page hides every control that changes something (Populate, Add by enroll code, the
+estimate fill, Auto assign, the hiring target box, allocation visibility, Publish, Remove, the
+developer buttons) and shows the figures as text; showing removed rows, the column choice, the
+rankings CSV and the copy-emails button are reading aids and stay. The edit page is the page as it
+was, plus the shared banner and modal (noun `page`) and a link back to the view-only page. The
+modal's **Leave this page** goes to the view-only page, since that is the same information without
+the risk. The heartbeat is `POST /api/recruitmentcourses/heartbeat?recruitmentId=`, goodbye is
+`/leave`, both admin-only with a 404 for an unknown recruitment, before anything is recorded; the
+allocation, estimate, fill-estimates and Auto Allocate saves name the tab in `X-Client-Id`.
+Links from elsewhere: the "Courses" button on each recruitment card, and the steps diagram's
+"(see courses)", "(see rankings)", "(see assignments)" and "(see allocations)" land on the
+view-only page; the steps diagram's step 3 "Allocations" link and the Budget page's "Adjust them on
+the ... Recruitment Courses page" link, which are for changing allocations, land on the edit page.
+The Help text for admins and the Developer Help table describe both pages.
+
 This puts the scope principle to work: the warning is only ever about the screens that can change
 something, so someone who is only reading, a common case, never sees it.
 
@@ -471,9 +488,22 @@ cause spurious conflicts. For the bulk operation, which changes every row at onc
 `Recruitment` bumped by Auto Allocate and sent with every cell edit. A cell edit then fails if
 either the row's version or the recruitment's counter has moved.
 
+As built: the columns are `recruitment_courses.allocation_version` and
+`recruitments.allocation_bulk_version` (Liquibase change 044, both `INT NOT NULL DEFAULT 0`). They
+are plain counters and not JPA `@Version`, which would also count the refresh. An edit sends
+`expectedVersion` and `expectedBulkVersion`, both optional so that older callers still work, and a
+mismatch answers `409` with `reloadAll` (true when the bulk counter moved), the recruitment's
+counter, and the row as it now is. The estimates are not versioned, as they were not before: they
+are absolute single-field saves, and the warning is the guard for them. Within one tab, the saves
+of one box (one per keystroke) are sent one after the other, each with the version the previous
+answer carried, so a tab does not conflict with itself.
+
 **On conflict.** For a cell edit, as in (a), show the current value and let the admin choose. After a
 conflict caused by the recruitment counter, reload the whole table, since all the old numbers are
-suspect.
+suspect. As built, a conflict puts the row as it now is into the lists, says why in a toast, reads
+the table and the recruitment again, and drops what was typed after the refused edit; the choice of
+overwriting is not offered here, since the edit page's warning has already asked the admin to be
+the only editor.
 
 **Risks.** Medium, and larger than it was before the split, because the split changes a page that
 other pages link to. `RecruitmentCourse` rows are also written by the course refresh and by the

@@ -140,7 +140,7 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           before anything is refused, that another copy is open, and who. The
           full design, including where else it is planned, is{" "}
           <code>docs/design/ConcurrentEditMitigationDesign.md</code>. Only the
-          draft application form uses either so far.
+          draft application form and the Courses edit page use either so far.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-version">
           <strong>The version check.</strong> A saved thing carries an integer{" "}
@@ -301,6 +301,28 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           raising the two variables makes it rarer. The warning is advice and
           never a lock; the version check still protects the data.
         </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-courses">
+          <strong>The Courses pages.</strong> A recruitment&apos;s Courses page
+          is split in two. The view-only page (
+          <code>/admin/recruitments/:id/courses</code>) is the default, edits
+          nothing, and neither heartbeats nor warns. The edit page (
+          <code>/admin/recruitments/:id/courses/edit</code>) heartbeats{" "}
+          <code>POST /api/recruitmentcourses/heartbeat?recruitmentId=</code>,
+          says goodbye at <code>/leave</code>, names itself in the{" "}
+          <code>X-Client-Id</code> header of the allocation, estimate and Auto
+          Allocate saves, and shows the banner and the modal with the noun
+          &quot;page&quot;; <em>Leave this page</em> goes to the view-only page.
+          Only an admin may heartbeat, and the recruitment must exist, before
+          anything is recorded. The version check is not a JPA version, since
+          the course refresh and the estimates also write the row: a separate{" "}
+          <code>allocation_version</code> column on{" "}
+          <code>recruitment_courses</code> is counted by each allocation edit,
+          and <code>allocation_bulk_version</code> on <code>recruitments</code>{" "}
+          is counted by Auto Allocate. An allocation edit sends both as{" "}
+          <code>expectedVersion</code> and <code>expectedBulkVersion</code> and
+          gets <code>409</code> when either moved; after a bulk conflict the
+          page reads everything again.
+        </p>
         <p data-testid="HelpDeveloperPage-simultaneous-refresh">
           <strong>Other pages.</strong> Not every page will get a warning.
           Recruitment state, and the Instructors and non-allocation Courses page
@@ -353,6 +375,25 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #285
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-courses-edit">
+              <td>
+                Courses edit page (allocations and estimated enrollments); the
+                view-only page never warns
+              </td>
+              <td>The whole edit page for one recruitment</td>
+              <td>
+                <code>courses-edit:&lt;recruitmentId&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/286"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #286
                 </a>
               </td>
             </tr>

@@ -292,7 +292,8 @@ public class RecruitmentStepsServiceTests {
     assertNull(step.href());
     assertNull(step.action());
     assertEquals(
-        List.of(new Link("Budget", "/admin/budget/F26"), new Link("Allocations", COURSES)),
+        List.of(
+            new Link("Budget", "/admin/budget/F26"), new Link("Allocations", COURSES + "/edit")),
         step.titleLinks());
   }
 
