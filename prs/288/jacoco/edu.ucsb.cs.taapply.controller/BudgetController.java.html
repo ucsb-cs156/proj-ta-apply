@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BudgetController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">BudgetController.java</span></div><h1>BudgetController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.Budget;
+import edu.ucsb.cs.taapply.repository.BudgetRepository;
+import edu.ucsb.cs.taapply.services.BudgetService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.math.BigDecimal;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * The Budget for Quarter page (issue #177): the quarters to choose from, and for one quarter the
+ * budget lines and everything derived from them. Planning figures, so none of it is audited.
+ */
+@Tag(name = &quot;Budget&quot;)
+@RequestMapping(&quot;/api/admin/budget&quot;)
+@RestController
+<span class="fc" id="L26">public class BudgetController extends ApiController {</span>
+
+  @Autowired BudgetService budgetService;
+  @Autowired BudgetRepository budgetRepository;
+
+  @Operation(
+      summary = &quot;The quarters that have a recruitment, most recent first&quot;,
+      description = &quot;Each says whether it has a TA recruitment and whether it has a ULA one.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/quarters&quot;)
+  public List&lt;BudgetService.QuarterSummary&gt; quarters() {
+<span class="fc" id="L37">    return budgetService.quarters();</span>
+  }
+
+  @Operation(
+      summary = &quot;One quarter's budget and the figures derived from it&quot;,
+      description =
+          &quot;The budget row (created at zero on first read), each recruitment's hiring target, cost&quot;
+              + &quot; per position, allocation and enrollment totals, and the anticipated expenses,&quot;
+              + &quot; funds and bottom line. 404 when the quarter has no recruitment.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;&quot;)
+  public BudgetService.Summary summary(
+      @Parameter(name = &quot;quarter&quot;, description = &quot;YYYYQ, e.g. 20264&quot;) @RequestParam
+          String quarter) {
+<span class="fc" id="L51">    return budgetService.summary(quarter);</span>
+  }
+
+  @Operation(
+      summary = &quot;Set one or more of a quarter's budget lines&quot;,
+      description =
+          &quot;Any of the three may be given; the others keep their values. Amounts are dollars and&quot;
+              + &quot; cents and must not be negative. Returns the quarter's summary with the new&quot;
+              + &quot; figures.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;&quot;)
+  public BudgetService.Summary update(
+      @Parameter(name = &quot;quarter&quot;) @RequestParam String quarter,
+      @Parameter(name = &quot;unrestrictedBudget&quot;) @RequestParam(required = false)
+          BigDecimal unrestrictedBudget,
+      @Parameter(name = &quot;tasOnlyBudget&quot;) @RequestParam(required = false) BigDecimal tasOnlyBudget,
+      @Parameter(name = &quot;ulasOnlyBudget&quot;) @RequestParam(required = false)
+          BigDecimal ulasOnlyBudget) {
+<span class="fc" id="L69">    requireNotNegative(&quot;unrestrictedBudget&quot;, unrestrictedBudget);</span>
+<span class="fc" id="L70">    requireNotNegative(&quot;tasOnlyBudget&quot;, tasOnlyBudget);</span>
+<span class="fc" id="L71">    requireNotNegative(&quot;ulasOnlyBudget&quot;, ulasOnlyBudget);</span>
+
+<span class="fc" id="L73">    Budget budget = budgetService.budgetFor(quarter);</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    if (unrestrictedBudget != null) {</span>
+<span class="fc" id="L75">      budget.setUnrestrictedBudget(BudgetService.money(unrestrictedBudget));</span>
+    }
+<span class="fc bfc" id="L77" title="All 2 branches covered.">    if (tasOnlyBudget != null) {</span>
+<span class="fc" id="L78">      budget.setTasOnlyBudget(BudgetService.money(tasOnlyBudget));</span>
+    }
+<span class="fc bfc" id="L80" title="All 2 branches covered.">    if (ulasOnlyBudget != null) {</span>
+<span class="fc" id="L81">      budget.setUlasOnlyBudget(BudgetService.money(ulasOnlyBudget));</span>
+    }
+<span class="fc" id="L83">    budgetRepository.save(budget);</span>
+<span class="fc" id="L84">    return budgetService.summary(quarter);</span>
+  }
+
+  private static void requireNotNegative(String name, BigDecimal amount) {
+<span class="fc bfc" id="L88" title="All 4 branches covered.">    if (amount != null &amp;&amp; amount.signum() &lt; 0) {</span>
+<span class="fc" id="L89">      throw new IllegalArgumentException(&quot;%s must not be negative&quot;.formatted(name));</span>
+    }
+<span class="fc" id="L91">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
