@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UcsbQuarterService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">UcsbQuarterService.java</span></div><h1>UcsbQuarterService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.ucsb.cs.taapply.entity.UCSBAPIQuarter;
+import edu.ucsb.cs.taapply.models.Quarter;
+import edu.ucsb.cs.taapply.models.UcsbApiQuarter;
+import edu.ucsb.cs.taapply.repository.UCSBAPIQuarterRepository;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+/**
+ * Derives the last quarter the admin Courses dropdowns should offer, from the quarter UCSB says it
+ * currently is. Only {@code app.startQtrYYYYQ} needs configuring; the end of the range keeps itself
+ * up to date as quarters roll over.
+ *
+ * &lt;p&gt;The rule is ported from proj-courses' {@code UCSBAPIQuarterService}: look ahead one quarter,
+ * except in Spring, when look ahead two so that both Summer and Fall are offered.
+ */
+@Service
+<span class="fc" id="L36">@Slf4j</span>
+public class UcsbQuarterService {
+
+  @Autowired private ObjectMapper objectMapper;
+
+  @Autowired private UCSBAPIQuarterRepository ucsbApiQuarterRepository;
+
+  @Value(&quot;${app.ucsb.api.consumer_key}&quot;)
+  private String apiKey;
+
+  @Value(&quot;${app.ucsb.api.host}&quot;)
+  private String apiHost;
+
+  /** Used only when the UCSB API cannot be reached, so the dropdowns still render something. */
+  @Value(&quot;${app.endQtrYYYYQ:20254}&quot;)
+  private String endQtrFallback;
+
+<span class="fc" id="L53">  private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);</span>
+<span class="fc" id="L54">  private static final Duration READ_TIMEOUT = Duration.ofSeconds(60);</span>
+
+  public static final String CURRENT_QUARTER_ENDPOINT =
+      &quot;{apiHost}/academics/quartercalendar/v1/quarters/current&quot;;
+
+  /** Every quarter the calendar knows, past and future; filtered to a range before saving. */
+  public static final String ALL_QUARTERS_ENDPOINT =
+      &quot;{apiHost}/academics/quartercalendar/v1/quarters&quot;;
+
+  /** The Q digit for Spring, the one quarter we look two ahead from. */
+  static final int SPRING = 2;
+
+  static final int CACHE_DURATION_HOURS = 24;
+
+  private final RestTemplate restTemplate;
+
+<span class="fc" id="L70">  private String cachedCurrentQuarter = null;</span>
+<span class="fc" id="L71">  private Instant cacheTime = null;</span>
+
+<span class="fc" id="L73">  public UcsbQuarterService(RestTemplateBuilder restTemplateBuilder) {</span>
+<span class="fc" id="L74">    this.restTemplate =</span>
+<span class="fc" id="L75">        restTemplateBuilder.connectTimeout(CONNECT_TIMEOUT).readTimeout(READ_TIMEOUT).build();</span>
+<span class="fc" id="L76">  }</span>
+
+  /** Forget the cached quarter entirely, so the next call hits the API. */
+  void clearCurrentQuarterCache() {
+<span class="fc" id="L80">    cachedCurrentQuarter = null;</span>
+<span class="fc" id="L81">    cacheTime = null;</span>
+<span class="fc" id="L82">  }</span>
+
+  /** Keep the cached value but treat it as stale, so the next call refreshes it. */
+  void expireCurrentQuarterCache() {
+<span class="fc" id="L86">    cacheTime = Instant.EPOCH;</span>
+<span class="fc" id="L87">  }</span>
+
+  String urlForCurrentQuarter() {
+<span class="fc" id="L90">    return CURRENT_QUARTER_ENDPOINT.replace(&quot;{apiHost}&quot;, apiHost);</span>
+  }
+
+  String urlForAllQuarters() {
+<span class="fc" id="L94">    return ALL_QUARTERS_ENDPOINT.replace(&quot;{apiHost}&quot;, apiHost);</span>
+  }
+
+  private HttpEntity&lt;String&gt; requestEntity() {
+<span class="fc" id="L98">    HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L99">    headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));</span>
+<span class="fc" id="L100">    headers.setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="fc" id="L101">    headers.set(&quot;ucsb-api-version&quot;, &quot;1.0&quot;);</span>
+<span class="fc" id="L102">    headers.set(&quot;ucsb-api-key&quot;, this.apiKey);</span>
+<span class="fc" id="L103">    return new HttpEntity&lt;&gt;(&quot;body&quot;, headers);</span>
+  }
+
+  /** The whole quarter calendar as the UCSB API returns it (issue #151). */
+  public List&lt;UCSBAPIQuarter&gt; getAllQuartersFromAPI() throws Exception {
+<span class="fc" id="L108">    String url = urlForAllQuarters();</span>
+<span class="fc" id="L109">    log.info(&quot;url={}&quot;, url);</span>
+<span class="fc" id="L110">    ResponseEntity&lt;String&gt; re =</span>
+<span class="fc" id="L111">        restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);</span>
+<span class="fc" id="L112">    List&lt;UCSBAPIQuarter&gt; quarters =</span>
+<span class="fc" id="L113">        objectMapper.readValue(re.getBody(), new TypeReference&lt;List&lt;UCSBAPIQuarter&gt;&gt;() {});</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">    return quarters == null ? List.of() : quarters;</span>
+  }
+
+  /**
+   * Saves every quarter of the calendar from {@code startYYYYQ} to {@code endYYYYQ} inclusive,
+   * overwriting what is on file, and returns them oldest first (issue #151). Quarters outside the
+   * range are left alone, so nothing on file is ever removed.
+   */
+  public List&lt;UCSBAPIQuarter&gt; loadQuarters(String startYYYYQ, String endYYYYQ) throws Exception {
+<span class="fc" id="L123">    int start = Quarter.yyyyqToInt(startYYYYQ);</span>
+<span class="fc" id="L124">    int end = Quarter.yyyyqToInt(endYYYYQ);</span>
+<span class="fc" id="L125">    List&lt;UCSBAPIQuarter&gt; saved = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">    for (UCSBAPIQuarter quarter : getAllQuartersFromAPI()) {</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">      if (quarter.getQuarter() == null) {</span>
+<span class="fc" id="L128">        continue;</span>
+      }
+      int value;
+      try {
+<span class="fc" id="L132">        value = Quarter.yyyyqToInt(quarter.getQuarter());</span>
+<span class="fc" id="L133">      } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L134">        continue;</span>
+<span class="fc" id="L135">      }</span>
+<span class="fc bfc" id="L136" title="All 4 branches covered.">      if (value &gt;= start &amp;&amp; value &lt;= end) {</span>
+<span class="fc" id="L137">        saved.add(ucsbApiQuarterRepository.save(quarter));</span>
+      }
+<span class="fc" id="L139">    }</span>
+<span class="fc" id="L140">    saved.sort((a, b) -&gt; a.getQuarter().compareTo(b.getQuarter()));</span>
+<span class="fc" id="L141">    log.info(&quot;loadQuarters({}, {}) saved {}&quot;, startYYYYQ, endYYYYQ, saved.size());</span>
+<span class="fc" id="L142">    return saved;</span>
+  }
+
+  /** What a refresh of the quarters on file did: the range asked for and the rows saved. */
+<span class="fc" id="L146">  public record QuarterRefresh(String start, String end, List&lt;UCSBAPIQuarter&gt; quarters) {}</span>
+
+  /**
+   * Brings the quarters on file up to the end of the range the dropdowns offer (issue #151): from
+   * the latest quarter on file (or the current quarter, when nothing is on file yet) through the
+   * current quarter plus one, or plus two during Spring, as {@link #endQuarterFor} decides.
+   */
+  public QuarterRefresh refreshThroughEnd() throws Exception {
+<span class="fc" id="L154">    String current = getCurrentQuarterYYYYQ();</span>
+<span class="fc" id="L155">    String end = endQuarterFor(current);</span>
+<span class="fc" id="L156">    int endValue = Quarter.yyyyqToInt(end);</span>
+    // Never past the end: a file already beyond it refreshes just the end quarter.
+<span class="fc" id="L158">    int startValue =</span>
+<span class="fc" id="L159">        Math.min(</span>
+            ucsbApiQuarterRepository
+<span class="fc" id="L161">                .findTopByOrderByQuarterDesc()</span>
+<span class="fc" id="L162">                .map(latest -&gt; Quarter.yyyyqToInt(latest.getQuarter()))</span>
+<span class="fc" id="L163">                .orElse(Quarter.yyyyqToInt(current)),</span>
+            endValue);
+<span class="fc" id="L165">    String start = new Quarter(startValue).getYYYYQ();</span>
+<span class="fc" id="L166">    return new QuarterRefresh(start, end, loadQuarters(start, end));</span>
+  }
+
+  /**
+   * The quarter UCSB says it currently is, in YYYYQ form. Cached for {@value #CACHE_DURATION_HOURS}
+   * hours: this is asked for on every /api/systemInfo call, and the answer changes a handful of
+   * times a year.
+   */
+  public String getCurrentQuarterYYYYQ() throws Exception {
+<span class="fc bfc" id="L175" title="All 2 branches covered.">    if (cachedCurrentQuarter != null</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">        &amp;&amp; Instant.now().isBefore(cacheTime.plus(CACHE_DURATION_HOURS, ChronoUnit.HOURS))) {</span>
+<span class="fc" id="L177">      return cachedCurrentQuarter;</span>
+    }
+
+<span class="fc" id="L180">    String url = urlForCurrentQuarter();</span>
+<span class="fc" id="L181">    log.info(&quot;url={}&quot;, url);</span>
+
+<span class="fc" id="L183">    ResponseEntity&lt;String&gt; re =</span>
+<span class="fc" id="L184">        restTemplate.exchange(url, HttpMethod.GET, requestEntity(), String.class);</span>
+<span class="fc" id="L185">    UcsbApiQuarter quarter = objectMapper.readValue(re.getBody(), UcsbApiQuarter.class);</span>
+
+<span class="fc bfc" id="L187" title="All 4 branches covered.">    if (quarter == null || quarter.getQuarter() == null) {</span>
+<span class="fc" id="L188">      throw new IllegalStateException(&quot;UCSB API returned no current quarter&quot;);</span>
+    }
+
+<span class="fc" id="L191">    cachedCurrentQuarter = quarter.getQuarter();</span>
+<span class="fc" id="L192">    cacheTime = Instant.now();</span>
+<span class="fc" id="L193">    return cachedCurrentQuarter;</span>
+  }
+
+  /**
+   * The last quarter to offer, given the current one: one quarter ahead, or two in Spring so that
+   * both Summer and Fall are reachable.
+   *
+   * @throws IllegalArgumentException if currentQuarterYYYYQ is not a valid YYYYQ value
+   */
+  public static String endQuarterFor(String currentQuarterYYYYQ) {
+<span class="fc" id="L203">    Quarter endQuarter = new Quarter(Quarter.yyyyqToInt(currentQuarterYYYYQ));</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">    int quartersToAdd = (endQuarter.getValue() % 10 == SPRING) ? 2 : 1;</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">    for (int i = 0; i &lt; quartersToAdd; i++) {</span>
+<span class="fc" id="L206">      endQuarter.increment();</span>
+    }
+<span class="fc" id="L208">    return endQuarter.getYYYYQ();</span>
+  }
+
+  /**
+   * The end of the range for the quarter dropdowns. Falls back to {@code app.endQtrYYYYQ} if the
+   * UCSB API is unreachable or returns something unusable, so a bad upstream degrades the range
+   * rather than breaking the page.
+   */
+  public String getEndQtrYYYYQ() {
+    try {
+<span class="fc" id="L218">      return endQuarterFor(getCurrentQuarterYYYYQ());</span>
+<span class="fc" id="L219">    } catch (Exception e) {</span>
+<span class="fc" id="L220">      log.error(&quot;Could not derive end quarter from the UCSB API; using {}&quot;, endQtrFallback, e);</span>
+<span class="fc" id="L221">      return endQtrFallback;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

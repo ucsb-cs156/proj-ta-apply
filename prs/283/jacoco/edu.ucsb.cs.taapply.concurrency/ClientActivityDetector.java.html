@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ClientActivityDetector.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.concurrency</a> &gt; <span class="el_source">ClientActivityDetector.java</span></div><h1>ClientActivityDetector.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.concurrency;
+
+import java.time.Duration;
+import java.util.Map;
+
+/**
+ * Notices when more than one client (a tab, a window, a device) is working on the same thing at
+ * once (issue #273).
+ *
+ * &lt;p&gt;Every request that touches the thing says who sent it, by a random identifier the client made
+ * for itself. The detector remembers which identifiers it saw on each &lt;b&gt;resource key&lt;/b&gt; (any
+ * string, such as {@code &quot;draft:42&quot;}) within the &lt;b&gt;window&lt;/b&gt;, and answers whether anyone other
+ * than the caller was among them. It is advice, not a lock.
+ *
+ * &lt;p&gt;This package depends on nothing else in the application, so that it could be lifted out as a
+ * library of its own. The implementation here keeps its state in memory; see {@link
+ * InMemoryClientActivityDetector} for what that means for more than one server.
+ */
+public interface ClientActivityDetector {
+
+  /** Notes that this client has just been seen on the resource. */
+  void record(String resourceKey, String clientId);
+
+  /** Whether any client other than this one has been seen on the resource within the window. */
+  boolean othersActive(String resourceKey, String clientId);
+
+  /** How long a client counts as active after it was last seen. */
+  Duration window();
+
+  /**
+   * How often a client should send a heartbeat: three a window, so that one lost one is harmless.
+   */
+  default long suggestedHeartbeatSeconds() {
+<span class="fc" id="L34">    return Math.max(1, window().toSeconds() / 3);</span>
+  }
+
+  /**
+   * What to put on a response: records the client, then returns the response headers that tell it
+   * whether others are active and how often to send a heartbeat. Returns no headers for a request
+   * that did not name itself, or named itself unusably.
+   */
+  default Map&lt;String, String&gt; observe(String resourceKey, String clientId) {
+<span class="fc bfc" id="L43" title="All 2 branches covered.">    if (!ConcurrencyHeaders.usable(clientId)) {</span>
+<span class="fc" id="L44">      return Map.of();</span>
+    }
+<span class="fc" id="L46">    record(resourceKey, clientId);</span>
+<span class="fc" id="L47">    return Map.of(</span>
+        ConcurrencyHeaders.OTHER_CLIENTS_ACTIVE,
+<span class="fc" id="L49">        String.valueOf(othersActive(resourceKey, clientId)),</span>
+        ConcurrencyHeaders.HEARTBEAT_SECONDS,
+<span class="fc" id="L51">        String.valueOf(suggestedHeartbeatSeconds()));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

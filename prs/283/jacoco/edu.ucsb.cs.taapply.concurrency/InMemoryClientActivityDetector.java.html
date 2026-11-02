@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InMemoryClientActivityDetector.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.concurrency</a> &gt; <span class="el_source">InMemoryClientActivityDetector.java</span></div><h1>InMemoryClientActivityDetector.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.concurrency;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * A {@link ClientActivityDetector} that keeps what it has seen in memory: for each resource key,
+ * the time each client was last seen.
+ *
+ * &lt;p&gt;The clock and the window are given to the constructor, so that tests run in no time with a
+ * clock they control. Every {@link #record} also forgets everything older than the window, on every
+ * resource, so the state stays as small as the activity of the last window.
+ *
+ * &lt;p&gt;&lt;b&gt;One server only.&lt;/b&gt; A second server process would have a state of its own and the two
+ * would not see each other's clients. The application runs as one instance. If that changes, the
+ * state moves to the database behind this same interface.
+ */
+public class InMemoryClientActivityDetector implements ClientActivityDetector {
+
+  private final Clock clock;
+  private final Duration window;
+<span class="fc" id="L25">  private final Map&lt;String, Map&lt;String, Instant&gt;&gt; seen = new HashMap&lt;&gt;();</span>
+
+<span class="fc" id="L27">  public InMemoryClientActivityDetector(Clock clock, Duration window) {</span>
+<span class="fc bfc" id="L28" title="All 4 branches covered.">    if (window.isZero() || window.isNegative()) {</span>
+<span class="fc" id="L29">      throw new IllegalArgumentException(&quot;The window must be longer than zero&quot;);</span>
+    }
+<span class="fc" id="L31">    this.clock = clock;</span>
+<span class="fc" id="L32">    this.window = window;</span>
+<span class="fc" id="L33">  }</span>
+
+  @Override
+  public Duration window() {
+<span class="fc" id="L37">    return window;</span>
+  }
+
+  /** Whether a client last seen at this time still counts as active at {@code now}. */
+  private boolean active(Instant lastSeen, Instant now) {
+<span class="fc" id="L42">    return lastSeen.isAfter(now.minus(window));</span>
+  }
+
+  @Override
+  public synchronized void record(String resourceKey, String clientId) {
+<span class="fc" id="L47">    Instant now = clock.instant();</span>
+<span class="fc" id="L48">    seen.computeIfAbsent(resourceKey, key -&gt; new HashMap&lt;&gt;()).put(clientId, now);</span>
+<span class="fc" id="L49">    seen.values()</span>
+<span class="fc" id="L50">        .removeIf(</span>
+            clients -&gt; {
+<span class="fc bfc" id="L52" title="All 2 branches covered.">              clients.values().removeIf(lastSeen -&gt; !active(lastSeen, now));</span>
+<span class="fc" id="L53">              return clients.isEmpty();</span>
+            });
+<span class="fc" id="L55">  }</span>
+
+  @Override
+  public synchronized boolean othersActive(String resourceKey, String clientId) {
+<span class="fc" id="L59">    Instant now = clock.instant();</span>
+<span class="fc" id="L60">    return seen.getOrDefault(resourceKey, Map.of()).entrySet().stream()</span>
+<span class="fc bfc" id="L61" title="All 4 branches covered.">        .anyMatch(entry -&gt; !entry.getKey().equals(clientId) &amp;&amp; active(entry.getValue(), now));</span>
+  }
+
+  /** How many resources currently have anyone remembered; for tests of the forgetting. */
+  synchronized int resourcesRemembered() {
+<span class="fc" id="L66">    return seen.size();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
