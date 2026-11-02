@@ -1249,6 +1249,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertTrue(stored.getCancelledAt().isAfter(LocalDateTime.now().minusMinutes(1)));
     // The admin's notes stay stored but are not sent back.
     assertEquals("Strong candidate", stored.getAdminComments());
+    // Issue #280: the assignments page no longer matches the applicants.
+    verify(recruitmentRepository).bumpAssignmentsVersion(3L);
     Map<String, Object> json = responseToJson(response);
     assertEquals("CANCELLED", json.get("status"));
     assertEquals("Found other employment", json.get("cancellationReason"));

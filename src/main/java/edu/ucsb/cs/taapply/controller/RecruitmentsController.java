@@ -304,6 +304,7 @@ public class RecruitmentsController extends ApiController {
       recruitment.setAssignmentsPublishedAt(LocalDateTime.now());
     }
     recruitmentRepository.save(recruitment);
+    recruitmentRepository.bumpAssignmentsVersion(id);
     recruitmentAuditService.recordChanges(before, recruitment);
     return recruitment;
   }

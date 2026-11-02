@@ -3,6 +3,12 @@ import { Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { ADMIN_MENU_ENTRIES } from "main/utils/helpPages";
 import useScrollToHash from "main/utils/useScrollToHash";
+import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
+
+/** The warning as it looks when another admin has the same page open (issue #280). */
+const EXAMPLE_OTHERS = [
+  { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false },
+];
 
 /**
  * The admin's handbook: /help/admins (issue #140). A table of every option on the Admin menu and
@@ -662,6 +668,82 @@ export default function HelpAdminsPage(): React.JSX.Element {
           cut short with a <em>[See value]</em> link that shows the whole thing.
           The trail for one application is also shown on that application&apos;s
           View page.
+        </p>
+
+        <h2
+          className="my-3 h4"
+          id="simultaneous-editing"
+          data-testid="HelpAdminsPage-simultaneous-editing"
+        >
+          Simultaneous Editing
+        </h2>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-intro">
+          If you, or another admin, is editing the same thing at the same time,
+          you may get a warning that looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="assignments page"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-meaning">
+          <strong>What it means.</strong> The same page is open somewhere else:
+          in another tab or window of your browser, on another device, or in the
+          browser of the admin named in the warning. If your own other tab is
+          the only one, the warning says <em>You are also editing</em> instead
+          of a name. Two copies can overwrite or contradict each other, so the
+          system refuses a change made from a copy that is out of date, and asks
+          you to look again. The warning only appears when it is the{" "}
+          <em>exact same thing</em>; the Assignments page of a different
+          recruitment never warns this one, and a page that only shows
+          information does not warn at all.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-assignments">
+          <strong>The Assignments page.</strong> The whole Assignments page of
+          one recruitment counts as one thing, because the counts under each
+          lecture only mean something together. Only one tab or window, and one
+          admin, should have it open at a time. If something changes while you
+          are working, such as another admin&apos;s assignment, publishing the
+          assignments or an applicant cancelling, your next change is not made
+          and you see &ldquo;Assignments changed while you were working. The
+          page has been refreshed; please check the placement and try
+          again.&rdquo; The page already shows the up-to-date assignments, so
+          check them and choose again if the move still makes sense. Your click
+          is not repeated for you.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-modal">
+          <strong>The question.</strong> The tab or window opened <em>last</em>{" "}
+          also asks what you want to do, in a box that covers the page until you
+          answer. The one opened first only shows the warning, so that it is
+          never interrupted while you are working. The box offers three choices:
+        </p>
+        <ul data-testid="HelpAdminsPage-simultaneous-editing-choices">
+          <li>
+            <strong>Leave this page</strong> takes this tab or window to the
+            home page. Nothing is lost; the other copy is untouched.
+          </li>
+          <li>
+            <strong>
+              Wait for the other tabs or windows to close, then resume here
+            </strong>{" "}
+            keeps the page covered. When the other tabs or windows are closed,
+            the box closes by itself within a few seconds and you can carry on
+            here.
+          </li>
+          <li>
+            <strong>Continue anyway</strong> closes the box and keeps the
+            warning on the page. Use it only if you are sure the other admin or
+            tab will not change assignments as well. The box does not come back.
+          </li>
+        </ul>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
+          <strong>What to do.</strong> Close all the other tabs or windows, and
+          keep just one, or ask the other admin to finish first. The warning
+          goes away on its own within a few seconds after the other copies are
+          closed, or in up to about twenty seconds if the other copy could not
+          say that it was leaving, such as when a computer lost its network
+          connection.
         </p>
       </div>
     </BasicLayout>

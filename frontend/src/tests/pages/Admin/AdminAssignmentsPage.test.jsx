@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -20,6 +20,12 @@ vi.mock("react-toastify", async (importOriginal) => {
     toast: (x) => mockToast(x),
   };
 });
+
+const mockNavigate = vi.fn();
+vi.mock("react-router", async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
+}));
 
 const axiosMock = new AxiosMockAdapter(axios);
 
@@ -46,6 +52,11 @@ function renderPage(recruitmentId = 7) {
 
 const assignmentsGets = () =>
   axiosMock.history.get.filter((r) => r.url === "/api/admin/assignments");
+const heartbeats = () =>
+  axiosMock.history.post.filter((r) =>
+    r.url.startsWith("/api/admin/assignments/heartbeat"),
+  );
+const HEARTBEAT = /\/api\/admin\/assignments\/heartbeat/;
 const tentativePuts = () =>
   axiosMock.history.put.filter(
     (r) => r.url === "/api/admin/assignments/tentative",
@@ -54,6 +65,7 @@ const tentativePuts = () =>
 describe("AdminAssignmentsPage tests (issue #179)", () => {
   beforeEach(() => {
     mockToast.mockClear();
+    mockNavigate.mockClear();
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock
@@ -126,10 +138,15 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     await userEvent.selectOptions(select, "30");
 
     await waitFor(() => expect(tentativePuts()).toHaveLength(1));
+    // The version the page last saw goes with the move, and the move names this tab.
     expect(tentativePuts()[0].params).toEqual({
       applicationId: 1,
       recruitmentCourseId: 30,
+      version: 3,
     });
+    expect(tentativePuts()[0].headers["X-Client-Id"]).toBe(
+      heartbeats()[0].headers["X-Client-Id"],
+    );
     await waitFor(() =>
       expect(
         screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
@@ -167,7 +184,7 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     await userEvent.selectOptions(select, "");
 
     await waitFor(() => expect(tentativePuts()).toHaveLength(1));
-    expect(tentativePuts()[0].params).toEqual({ applicationId: 2 });
+    expect(tentativePuts()[0].params).toEqual({ applicationId: 2, version: 3 });
     expect(tentativePuts()[0].params).not.toHaveProperty("recruitmentCourseId");
   });
 
@@ -273,5 +290,251 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(
       await screen.findByTestId("AdminAssignmentsPage-cancelled-empty"),
     ).toHaveTextContent("No applicant has cancelled their application.");
+  });
+
+  // ---- the version check (issue #280) ----
+
+  test("a stale move is refused: the page is refreshed from the answer, the message is shown and the click is not replayed", async () => {
+    axiosMock.onPut("/api/admin/assignments/tentative").reply(409, {
+      message:
+        "Assignments changed while you were working. The page has been refreshed; please check the placement and try again.",
+      assignments: assignmentsFixtures.taPageAfterMove,
+    });
+    renderPage();
+    const select = await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-tentative-select",
+    );
+
+    await userEvent.selectOptions(select, "10");
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Assignments changed while you were working. The page has been refreshed; please check the placement and try again.",
+      ),
+    );
+    expect(mockToast).toHaveBeenCalledTimes(1);
+    // The view now shows what is true, without another read, and nothing was sent again.
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("AdminAssignmentsPage-table-course-30-assigned"),
+      ).toHaveTextContent("Assigned 1"),
+    );
+    expect(tentativePuts()).toHaveLength(1);
+    expect(assignmentsGets()).toHaveLength(1);
+
+    // The next move carries the version of the refreshed page.
+    axiosMock
+      .onPut("/api/admin/assignments/tentative")
+      .reply(200, assignmentsFixtures.taPageAfterMove);
+    await userEvent.selectOptions(
+      screen.getByTestId(
+        "AdminAssignmentsPage-table-cell-row-0-tentative-select",
+      ),
+      "10",
+    );
+    await waitFor(() => expect(tentativePuts()).toHaveLength(2));
+    expect(tentativePuts()[1].params.version).toBe(4);
+  });
+
+  test("a conflict that carries no page is just reported", async () => {
+    axiosMock
+      .onPut("/api/admin/assignments/tentative")
+      .reply(409, { message: "Changed." });
+    renderPage();
+    await userEvent.selectOptions(
+      await screen.findByTestId(
+        "AdminAssignmentsPage-table-cell-row-0-tentative-select",
+      ),
+      "30",
+    );
+    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.stringContaining("status code 409"),
+    );
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-10-assigned"),
+    ).toHaveTextContent("Assigned 1");
+  });
+
+  test("only a conflict refreshes the page from the answer", async () => {
+    axiosMock.onPut("/api/admin/assignments/tentative").reply(400, {
+      message: "Not a conflict",
+      assignments: assignmentsFixtures.taPageAfterMove,
+    });
+    renderPage();
+    await userEvent.selectOptions(
+      await screen.findByTestId(
+        "AdminAssignmentsPage-table-cell-row-0-tentative-select",
+      ),
+      "30",
+    );
+    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.stringContaining("status code 400"),
+    );
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-course-10-assigned"),
+    ).toHaveTextContent("Assigned 1");
+  });
+
+  test("a conflict with no body at all is just reported", async () => {
+    axiosMock.onPut("/api/admin/assignments/tentative").reply(409, null);
+    renderPage();
+    await userEvent.selectOptions(
+      await screen.findByTestId(
+        "AdminAssignmentsPage-table-cell-row-0-tentative-select",
+      ),
+      "30",
+    );
+    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.stringContaining("status code 409"),
+    );
+  });
+
+  test("a refusal from a lost session is logged and not toasted", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    axiosMock.onPut("/api/admin/assignments/tentative").reply(403, {});
+    renderPage();
+    await userEvent.selectOptions(
+      await screen.findByTestId(
+        "AdminAssignmentsPage-table-cell-row-0-tentative-select",
+      ),
+      "30",
+    );
+    await waitFor(() => expect(tentativePuts()).toHaveLength(1));
+    await waitFor(() =>
+      expect(error).toHaveBeenCalledWith(
+        "Backend request failed",
+        expect.anything(),
+      ),
+    );
+    expect(mockToast).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  // ---- the multi-tab warning, whole page (issues #280 and #284) ----
+
+  const RISK =
+    "Please know that this is risky; we recommend closing all but one of these.";
+  const phill = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
+  const me = { label: "me@example.org (Me)", samePerson: true };
+  const MODAL = "AdminAssignmentsPage-multiple-tabs-modal";
+
+  test("the page sends a heartbeat for its recruitment, and only that recruitment's", async () => {
+    renderPage(7);
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+    expect(heartbeats()[0].url).toBe(
+      "/api/admin/assignments/heartbeat?recruitmentId=7",
+    );
+    expect(heartbeats()[0].headers["X-Client-Id"]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+  });
+
+  test("no warning when no one else has the page, or when the heartbeat is unanswered", async () => {
+    renderPage();
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+    expect(
+      screen.queryByTestId("AdminAssignmentsPage-multiple-tabs"),
+    ).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  test("another admin is named in the banner, and an older tab is not interrupted", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [phill],
+      heartbeatSeconds: 20,
+      newest: false,
+      arrivedAtMillis: 1000,
+    });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("AdminAssignmentsPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page. ${RISK}`,
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    // It is advice: the page is still there to use.
+    expect(
+      screen.getByTestId(
+        "AdminAssignmentsPage-table-cell-row-0-tentative-select",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  test("the admin's own other tab is announced as 'You are also editing...'", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [me], heartbeatSeconds: 20 });
+    renderPage();
+    expect(
+      await screen.findByTestId("AdminAssignmentsPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `You are also editing this assignments page in another tab or window. ${RISK}`,
+    );
+  });
+
+  test("the newest tab is asked what to do, and Continue anyway closes the modal and keeps the banner", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [phill],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1000,
+    });
+    renderPage();
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId(`${MODAL}-message`)).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page. ${RISK}`,
+    );
+
+    fireEvent.click(screen.getByTestId(`${MODAL}-continue`));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-multiple-tabs"),
+    ).toBeInTheDocument();
+  });
+
+  test("Leave this page says goodbye for this recruitment, naming this tab, and goes home", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [phill],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1000,
+    });
+    renderPage();
+    await screen.findByRole("dialog");
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+
+    fireEvent.click(screen.getByTestId(`${MODAL}-leave`));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/admin/assignments/leave?recruitmentId=7");
+    expect(init.keepalive).toBe(true);
+    expect(init.headers["X-Client-Id"]).toBe(
+      heartbeats()[0].headers["X-Client-Id"],
+    );
+    expect(mockNavigate).toHaveBeenCalledWith("/");
+    vi.unstubAllGlobals();
+  });
+
+  test("leaving the page by moving elsewhere in the app says goodbye", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
+    const { unmount } = renderPage();
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+
+    unmount();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "/api/admin/assignments/leave?recruitmentId=7",
+    );
+    vi.unstubAllGlobals();
   });
 });

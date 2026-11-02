@@ -139,8 +139,8 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <strong>multi-tab warning</strong> is the courtesy: it tells the user,
           before anything is refused, that another copy is open, and who. The
           full design, including where else it is planned, is{" "}
-          <code>docs/design/ConcurrentEditMitigationDesign.md</code>. Only the
-          draft application form uses either so far.
+          <code>docs/design/ConcurrentEditMitigationDesign.md</code>. The table
+          at the end of this section lists where each is used so far.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-version">
           <strong>The version check.</strong> A saved thing carries an integer{" "}
@@ -149,7 +149,16 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           version, in one atomic step (JPA optimistic locking), and answers with
           it. If not, nothing is changed and the answer is{" "}
           <code>409 Conflict</code> with the draft as it now stands. The form
-          then stops saving, says so, and offers <em>Reload</em>.
+          then stops saving, says so, and offers <em>Reload</em>. Where the
+          saved thing is a whole page of numbers that several admins might
+          touch, a simpler form is used: the Assignments page of a recruitment
+          has a recruitment-level <code>assignmentsVersion</code>, counted up by
+          one atomic update (
+          <code>WHERE id = ? AND assignments_version = ?</code>) on every
+          tentative assignment, on publishing or taking back, and on an
+          applicant cancelling. A stale tentative assignment is answered{" "}
+          <code>409</code> with the current assignments, and the page shows them
+          and a message, without repeating the click.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-heartbeat">
           <strong>The client id and the heartbeat.</strong> Each tab makes a
@@ -353,6 +362,22 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #285
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-assignments">
+              <td>Assignments (admin)</td>
+              <td>The whole assignments page for one recruitment</td>
+              <td>
+                <code>assignments:&lt;recruitmentId&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/287"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #287
                 </a>
               </td>
             </tr>

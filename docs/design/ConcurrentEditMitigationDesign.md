@@ -551,6 +551,38 @@ changed: "Assignments changed while you were working. The page has been refreshe
 placement and try again." The admin's click is not replayed, because after a refresh it may no
 longer be the right move.
 
+**As built (#280).** `recruitments.assignments_version` (an integer starting at 1, in the changeset
+`044-add-assignments-version-to-recruitments`) is the recruitment-level version. It is counted up by
+`RecruitmentRepository.bumpAssignmentsVersionIf(id, expected)`, a single
+`UPDATE ... WHERE id = ? AND assignments_version = ?` whose row count (1 or 0) is the answer, so the
+comparison and the increment are one atomic step. The entity field is `updatable = false`, so saving
+a stale copy of the recruitment can never move it back. The version is bumped by:
+
+* every tentative assignment, which sends the `version` its page last saw (a required parameter) and
+  gets `409 Conflict` with `{message, assignments}` if it has moved, the message being the one above
+  and `assignments` the view as it now stands, so the client refreshes without another read;
+* publishing or taking back the assignments (`PUT /api/admin/recruitments/assignmentsPublished`),
+  unconditionally, and only when the published state really changes;
+* an applicant cancelling (`PUT /api/applications/cancel`), unconditionally.
+
+The `Assignments` view carries `version`, a successful move returns the view with the new version,
+and the Recruitment Steps panel counts read the same assignments, so they need no change of their
+own. On a `409` the page puts the returned view in its cache, shows the message and does not replay
+the click.
+
+The warning is keyed `assignments:<recruitmentId>`. `AdminAssignmentsController` has
+`POST /api/admin/assignments/heartbeat` and `/leave` (`recruitmentId` parameter), both admin-only and
+`404` for an unknown recruitment, and the tentative assignment records the caller as a save does. The
+role check (`403`) happens before the detector is touched, so a non-admin is not recorded, told
+anyone's name, or able to remove an admin's tab by saying goodbye in their name. The page uses the
+shared `useClientActivity`, `MultipleTabsBanner` (noun "assignments page") and `MultipleTabsModal`
+exactly as the draft form does (#283, #285): the newest tab gets the modal (Leave this page, Wait,
+Continue anyway), older tabs only the banner, a goodbye is sent on `pagehide` and when the page
+unmounts, and the timing is the shared `CLIENT_HEARTBEAT_INTERVAL_SEC` and
+`CLIENT_TIMEOUT_MISSED_HEARTBEATS`. A rapid second move from the same page before the first answer
+arrives carries the old version and is refused like any stale move; the refresh then shows the
+first.
+
 **Risks.** Medium. The version has to be bumped everywhere the assignments change: a tentative
 assignment, publish, and an applicant cancelling. It touches the publish path and the counts that
 feed the Recruitment Steps panel. A check this strict would be tiresome if parallel admins were
@@ -665,9 +697,10 @@ is a day or less, M a few days, L about a week.
 
 5. **Assignments: a recruitment-level version on the whole assignments page. (M, #280.)** A version
    bumped by every tentative assignment and by publish, a `409` on a stale assignment with a refresh
-   of the view, and the warning keyed on the recruitment. It is smaller than it first looked (it was
-   L), because one editor at a time is expected and no per-course narrowing is needed. Cover publish
-   and applicant cancellation.
+   of the view, and the warning keyed on the recruitment, with the banner, the modal for the newest
+   tab and the goodbye of #283 and #285. It is smaller than it first looked (it was L), because one
+   editor at a time is expected and no per-course narrowing is needed. Covers publish and applicant
+   cancellation. Built in #280; see section (d), "As built".
 
 6. **Keep recruitment state fresh for admins, instructors and students. (S to M, #281.)** Refresh
    instead of a warning: refetch after each save, a background refresh with random jitter (admins

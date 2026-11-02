@@ -1,0 +1,36 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "044-add-assignments-version-to-recruitments",
+        "author": "pc",
+        "comment": "The version of a recruitment's assignments, counted up by every tentative assignment, publish and applicant cancellation, so that an assignment made from a stale page is refused (issue #280).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "recruitments", "columnName": "assignments_version" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [
+                {
+                  "column": {
+                    "name": "assignments_version",
+                    "type": "INT",
+                    "defaultValueNumeric": 1,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

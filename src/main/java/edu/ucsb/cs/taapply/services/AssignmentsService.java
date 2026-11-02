@@ -175,13 +175,17 @@ public class AssignmentsService {
     return null;
   }
 
-  /** Everything the admin Assignments page needs for one recruitment. */
+  /**
+   * Everything the admin Assignments page needs for one recruitment. {@code version} is the
+   * recruitment's assignments version (issue #280), which a tentative assignment sends back.
+   */
   public record Assignments(
       Long recruitmentId,
       RecruitmentType type,
       List<String> identityHeaders,
       List<CourseSummary> courses,
-      List<AssignmentRow> rows) {}
+      List<AssignmentRow> rows,
+      Integer version) {}
 
   /**
    * The applications that take part in assignments: every application to the recruitment that
@@ -324,6 +328,7 @@ public class AssignmentsService {
         recruitment.getType(),
         identity.stream().map(IdentityColumn::header).toList(),
         summaries,
-        rows);
+        rows,
+        recruitment.getAssignmentsVersion());
   }
 }

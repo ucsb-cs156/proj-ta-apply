@@ -8,7 +8,7 @@ import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
 /** The requests the page makes; `after` is what any change to a dropdown comes back with. */
-const handlers = (page, after) => [
+const handlers = (page, after, others) => [
   http.get("/api/currentUser", () =>
     HttpResponse.json(apiCurrentUserFixtures.adminUser),
   ),
@@ -26,6 +26,14 @@ const handlers = (page, after) => [
     HttpResponse.json(cancelledApplicationsFixtures.two),
   ),
   http.put("/api/admin/assignments/tentative", () => HttpResponse.json(after)),
+  http.post("/api/admin/assignments/heartbeat", () =>
+    HttpResponse.json({
+      others: others ?? [],
+      heartbeatSeconds: 5,
+      newest: false,
+      arrivedAtMillis: 1000,
+    }),
+  ),
 ];
 
 export default {
@@ -64,5 +72,17 @@ NoApplicants.parameters = {
   reactRouter: { initialEntries: ["/admin/recruitments/7/assignments"] },
   msw: {
     handlers: handlers(assignmentsFixtures.empty, assignmentsFixtures.empty),
+  },
+};
+
+/** Another admin has the same page open: the banner names them (the older tab sees no modal). */
+export const AnotherAdminHasItOpen = Template.bind({});
+AnotherAdminHasItOpen.parameters = {
+  msw: {
+    handlers: handlers(
+      assignmentsFixtures.taPage,
+      assignmentsFixtures.taPageAfterMove,
+      [{ label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false }],
+    ),
   },
 };

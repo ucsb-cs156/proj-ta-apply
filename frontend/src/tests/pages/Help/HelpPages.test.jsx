@@ -503,6 +503,13 @@ describe("Help pages (issue #140)", () => {
     // The version check.
     expect(text("version")).toMatch(/409 Conflict/);
     expect(text("version")).toMatch(/optimistic locking/);
+    // Issue #280: the recruitment-level version of the assignments.
+    expect(text("version")).toMatch(/assignmentsVersion/);
+    expect(text("version")).toMatch(/assignments_version =/);
+    expect(text("version")).toMatch(
+      /on every tentative assignment, on publishing or taking back, and on an applicant cancelling/,
+    );
+    expect(text("version")).toMatch(/without repeating the click/);
     // The client id and the heartbeat.
     expect(text("heartbeat")).toMatch(/crypto\.randomUUID\(\)/);
     expect(text("heartbeat")).toMatch(/X-Client-Id/);
@@ -609,7 +616,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(2);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -618,6 +625,18 @@ describe("Help pages (issue #140)", () => {
       "draft:<draftId>",
       "#283, #285",
     ]);
+    expect(
+      [...rows[1].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Assignments (admin)",
+      "The whole assignments page for one recruitment",
+      "assignments:<recruitmentId>",
+      "#287",
+    ]);
+    expect(rows[1].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/287",
+    );
     expect(rows[0].querySelector("a")).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/283",
@@ -626,6 +645,102 @@ describe("Help pages (issue #140)", () => {
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/285",
     );
+  });
+
+  test("the admins page ends with Simultaneous Editing, a picture of the warning with a name, what it means and what to do (issue #280)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const root = await screen.findByTestId("HelpAdminsPage");
+    const heading = screen.getByRole("heading", {
+      level: 2,
+      name: "Simultaneous Editing",
+    });
+    const headings = [...root.querySelectorAll("h2")];
+    expect(headings[headings.length - 1]).toBe(heading);
+
+    const intro = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-intro",
+    );
+    expect(intro).toHaveTextContent(
+      "If you, or another admin, is editing the same thing at the same time, you may get a warning that looks like this:",
+    );
+    const example = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-example",
+    );
+    expect(example).toHaveTextContent(
+      "phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page. Please know that this is risky; we recommend closing all but one of these.",
+    );
+    expect(example).toHaveClass("alert", "alert-warning");
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    const meaning = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-meaning",
+    );
+    expect(meaning).toHaveTextContent("What it means.");
+    expect(meaning).toHaveTextContent("You are also editing");
+    expect(meaning).toHaveTextContent(
+      "The warning only appears when it is the exact same thing;",
+    );
+    expect(meaning).toHaveTextContent(
+      "the Assignments page of a different recruitment never warns this one",
+    );
+    const assignments = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-assignments",
+    );
+    expect(assignments).toHaveTextContent(
+      "The whole Assignments page of one recruitment counts as one thing",
+    );
+    expect(assignments).toHaveTextContent(
+      "Assignments changed while you were working. The page has been refreshed; please check the placement and try again.",
+    );
+    expect(assignments).toHaveTextContent(
+      "Your click is not repeated for you.",
+    );
+
+    const modal = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-modal",
+    );
+    expect(modal).toHaveTextContent(
+      "The tab or window opened last also asks what you want to do",
+    );
+    expect(modal).toHaveTextContent(
+      "The one opened first only shows the warning",
+    );
+    const choices = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-choices",
+    );
+    expect(
+      [...choices.querySelectorAll("li > strong")].map((b) => b.textContent),
+    ).toEqual([
+      "Leave this page",
+      "Wait for the other tabs or windows to close, then resume here",
+      "Continue anyway",
+    ]);
+    expect(choices).toHaveTextContent(
+      "takes this tab or window to the home page",
+    );
+    expect(choices).toHaveTextContent(
+      "then resume here keeps the page covered",
+    );
+    expect(choices).toHaveTextContent("closes by itself within a few seconds");
+    expect(choices).toHaveTextContent("The box does not come back");
+    const todo = screen.getByTestId("HelpAdminsPage-simultaneous-editing-todo");
+    expect(todo).toHaveTextContent(
+      "What to do. Close all the other tabs or windows, and keep just one, or ask the other admin to finish first.",
+    );
+    expect(todo).toHaveTextContent(
+      "within a few seconds after the other copies are closed",
+    );
+    expect(todo).toHaveTextContent("about twenty seconds");
+
+    // In order, and last on the page.
+    expect(heading.nextElementSibling).toBe(intro);
+    expect(intro.nextElementSibling).toBe(example);
+    expect(example.nextElementSibling).toBe(meaning);
+    expect(meaning.nextElementSibling).toBe(assignments);
+    expect(assignments.nextElementSibling).toBe(modal);
+    expect(modal.nextElementSibling).toBe(choices);
+    expect(choices.nextElementSibling).toBe(todo);
+    expect(root.lastElementChild).toBe(todo);
   });
 
   test("the developer page starts with a table of every Developer menu option linking to its section (issue #266)", async () => {
