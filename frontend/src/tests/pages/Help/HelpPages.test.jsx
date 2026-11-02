@@ -141,6 +141,14 @@ describe("Help pages (issue #140)", () => {
       screen.getByText(/Instructor/, { selector: "strong" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/CONRAD P/)).toBeInTheDocument();
+    // Issue #265: the ranking table opens in the default sort and has a button for it.
+    expect(
+      screen.getByText(/The table always opens in the default sort/, {
+        exact: false,
+      }),
+    ).toHaveTextContent(
+      "by your ranking (1 first, unranked last), then by course preference (first choice, second choice, enthusiastic, then would consider), then in the order the applications were submitted. The Default Sort button returns to it",
+    );
     // Issue #178: what an instructor sees once allocations are shown.
     const allocations = screen.getByTestId("HelpInstructorsPage-allocations");
     expect(allocations).toHaveTextContent(

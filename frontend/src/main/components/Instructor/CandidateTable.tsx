@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import axios from "axios";
 import { apiErrorMessage } from "main/utils/apiError";
 import InterestMark from "main/components/Common/InterestMark";
@@ -46,6 +47,11 @@ const preferences = [
   WOULD_CONSIDER,
   NOT_INTERESTED,
 ];
+
+/** The tooltip on the Default Sort button (issue #265). */
+export const DEFAULT_SORT_TOOLTIP =
+  "Sorts by faculty ranking (1 first, unranked last); within a ranking, by course preference (first choice, second choice, Enthusiastic, Would Consider, Not Interested); then in the order the applications were submitted. Rankings are read as of now, so a row does not jump while you type.";
+
 type Column = { key: keyof Candidate; label: string; numeric?: boolean };
 const common: Column[] = [
   { key: "rank", label: "Ranking", numeric: true },
@@ -80,13 +86,14 @@ export default function CandidateTable({
   );
   const [states, setStates] = useState<Record<number, string>>({});
   const [tied, setTied] = useState<number[]>([]);
+  // null is the default sort (issue #265): ranking, then course preference, then submission order.
   const [sort, setSort] = useState<{
     key: keyof Candidate;
     descending: boolean;
-  }>({
-    key: "preference",
-    descending: false,
-  });
+  } | null>(null);
+  // The default sort reads the rankings as they were when it was applied, so that typing a
+  // ranking does not move the row out from under the cursor. Default Sort applies it again.
+  const [defaultRanks, setDefaultRanks] = useState(ranks);
   const queues = useRef<Record<number, Promise<void>>>({});
   const revisions = useRef<Record<number, number>>({});
   const active = useRef(true);
@@ -176,7 +183,20 @@ export default function CandidateTable({
   ];
   const valueOf = (candidate: Candidate, key: keyof Candidate) =>
     key === "rank" ? ranks[candidate.applicationId] : candidate[key];
+  const defaultRank = (candidate: Candidate): number =>
+    defaultRanks[candidate.applicationId] === ""
+      ? Infinity
+      : Number(defaultRanks[candidate.applicationId]);
+  // The candidates arrive in the order the applications were submitted, and sorting is stable,
+  // so equal candidates stay in that order.
   const sorted = [...candidates].sort((a, b) => {
+    if (sort === null) {
+      const byRank = defaultRank(a) - defaultRank(b);
+      if (byRank !== 0 && !Number.isNaN(byRank)) return byRank;
+      return (
+        preferences.indexOf(a.preference) - preferences.indexOf(b.preference)
+      );
+    }
     const left = valueOf(a, sort.key) ?? "";
     const right = valueOf(b, sort.key) ?? "";
     let comparison: number;
@@ -200,6 +220,27 @@ export default function CandidateTable({
   return (
     <section aria-label="Eligible candidates">
       <h2>Candidates</h2>
+      <OverlayTrigger
+        placement="top"
+        overlay={
+          <Tooltip id="CandidateTable-default-sort-tooltip">
+            {DEFAULT_SORT_TOOLTIP}
+          </Tooltip>
+        }
+      >
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          className="mb-2"
+          onClick={() => {
+            setSort(null);
+            setDefaultRanks(ranks);
+          }}
+          data-testid="CandidateTable-default-sort"
+        >
+          Default Sort
+        </Button>
+      </OverlayTrigger>
       {!editable && <p>Rankings are read-only.</p>}
       {candidates.length === 0 ? (
         <p>No eligible candidates for this course.</p>
@@ -212,7 +253,7 @@ export default function CandidateTable({
                   <th
                     key={column.key}
                     aria-sort={
-                      sort.key === column.key
+                      sort?.key === column.key
                         ? sort.descending
                           ? "descending"
                           : "ascending"
@@ -225,7 +266,7 @@ export default function CandidateTable({
                         setSort({
                           key: column.key,
                           descending:
-                            sort.key === column.key && !sort.descending,
+                            sort?.key === column.key && !sort.descending,
                         })
                       }
                     >
