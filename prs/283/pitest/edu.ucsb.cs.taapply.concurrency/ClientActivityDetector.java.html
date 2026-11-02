@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>ClientActivityDetector.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.concurrency;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.time.Duration;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Map;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Notices when more than one client (a tab, a window, a device) is working on the same thing at</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * once (issue #273).</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;Every request that touches the thing says who sent it, by a random identifier the client made</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * for itself. The detector remembers which identifiers it saw on each &#60;b&#62;resource key&#60;/b&#62; (any</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * string, such as {@code &#34;draft:42&#34;}) within the &#60;b&#62;window&#60;/b&#62;, and answers whether anyone other</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * than the caller was among them. It is advice, not a lock.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;This package depends on nothing else in the application, so that it could be lifted out as a</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * library of its own. The implementation here keeps its state in memory; see {@link</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * InMemoryClientActivityDetector} for what that means for more than one server.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>public interface ClientActivityDetector {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Notes that this client has just been seen on the resource. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  void record(String resourceKey, String clientId);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Whether any client other than this one has been seen on the resource within the window. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  boolean othersActive(String resourceKey, String clientId);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** How long a client counts as active after it was last seen. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  Duration window();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_29'/>
+29
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_29'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * How often a client should send a heartbeat: three a window, so that one lost one is harmless.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  default long suggestedHeartbeatSeconds() {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_34'/>
+34
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_34'>2</a>
+<span>
+1. suggestedHeartbeatSeconds : replaced long return with 0 for edu/ucsb/cs/taapply/concurrency/ClientActivityDetector::suggestedHeartbeatSeconds &rarr; KILLED<br/>
+2. suggestedHeartbeatSeconds : Replaced long division with multiplication &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return Math.max(1, window().toSeconds() / 3);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_35'/>
+35
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_35'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * What to put on a response: records the client, then returns the response headers that tell it</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * whether others are active and how often to send a heartbeat. Returns no headers for a request</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   * that did not name itself, or named itself unusably.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_41'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>   */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_42'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  default Map&#60;String, String&#62; observe(String resourceKey, String clientId) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_43'/>
+43
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_43'>1</a>
+<span>
+1. observe : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (!ConcurrencyHeaders.usable(clientId)) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_44'/>
+44
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_44'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      return Map.of();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_45'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_46'/>
+46
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_46'>1</a>
+<span>
+1. observe : removed call to edu/ucsb/cs/taapply/concurrency/ClientActivityDetector::record &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    record(resourceKey, clientId);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_47'/>
+47
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_47'>1</a>
+<span>
+1. observe : replaced return value with Collections.emptyMap for edu/ucsb/cs/taapply/concurrency/ClientActivityDetector::observe &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return Map.of(</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_48'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        ConcurrencyHeaders.OTHER_CLIENTS_ACTIVE,</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_49'/>
+49
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_49'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        String.valueOf(othersActive(resourceKey, clientId)),</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_50'/>
+50
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_50'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        ConcurrencyHeaders.HEARTBEAT_SECONDS,</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_51'/>
+51
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_51'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        String.valueOf(suggestedHeartbeatSeconds()));</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_52'/>
+52
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_52'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@23a5583a_53'/>
+53
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_53'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@23a5583a_34'>34</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_34'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>suggestedHeartbeatSeconds<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:the_heartbeat_is_three_a_window_and_never_less_than_a_second()]</span></span> replaced long return with 0 for edu/ucsb/cs/taapply/concurrency/ClientActivityDetector::suggestedHeartbeatSeconds &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>suggestedHeartbeatSeconds<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:the_heartbeat_is_three_a_window_and_never_less_than_a_second()]</span></span> Replaced long division with multiplication &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@23a5583a_43'>43</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_43'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>observe<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:observe_ignores_a_client_that_did_not_name_itself_usably()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@23a5583a_46'>46</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_46'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>observe<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:observe_records_the_client_and_answers_with_both_headers()]</span></span> removed call to edu/ucsb/cs/taapply/concurrency/ClientActivityDetector::record &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@23a5583a_47'>47</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@23a5583a_47'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>observe<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:observe_records_the_client_and_answers_with_both_headers()]</span></span> replaced return value with Collections.emptyMap for edu/ucsb/cs/taapply/concurrency/ClientActivityDetector::observe &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:the_heartbeat_is_three_a_window_and_never_less_than_a_second()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:observe_records_the_client_and_answers_with_both_headers()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_heartbeat_for_someone_elses_draft_is_forbidden_and_records_nothing()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_heartbeat_changes_nothing_and_reports_whether_others_are_active()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_from_one_client_says_no_other_is_active_and_how_often_to_send_a_heartbeat()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_that_is_refused_as_stale_still_carries_the_warning()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_from_a_second_client_says_the_first_is_active_and_so_does_the_first_after()] (10 ms)</li><li>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:observe_ignores_a_client_that_did_not_name_itself_usably()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_heartbeat_that_names_no_client_is_answered_without_headers()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:saving_a_draft_for_a_deleted_recruitment_is_a_404()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:saving_after_applications_close_is_refused()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_newer_version_than_the_draft_has_is_also_refused()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_with_an_older_version_is_refused_with_the_draft_as_it_now_stands()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_race_with_a_draft_that_has_since_gone_is_not_hidden()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_that_names_no_client_gets_no_warning_headers()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:saving_an_almost_empty_form_is_allowed()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:null_level_answers_are_left_out()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_with_the_current_version_returns_the_draft_with_its_new_version()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_that_loses_a_race_is_refused_with_the_draft_as_it_now_stands()] (21 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:saving_copies_every_field_of_the_form_without_checking_any()] (5 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>
