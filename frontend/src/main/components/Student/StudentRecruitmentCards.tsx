@@ -5,8 +5,13 @@ import type { StudentRecruitment } from "main/components/Recruitments/Recruitmen
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { DATE_KEYS } from "main/utils/recruitmentSort";
 import { applicationFor } from "main/utils/studentRecruitments";
+import {
+  DRAFT_WARNING,
+  draftFor,
+  type DraftApplication,
+} from "main/utils/draftApplications";
 
-/** On the greyed-out Apply Now button of a closed recruitment. */
+/** On the greyed-out Apply button of a closed recruitment. */
 export const NOT_OPEN_TOOLTIP = "Applications are not open yet";
 
 type StudentRecruitmentCardsProps = {
@@ -14,6 +19,8 @@ type StudentRecruitmentCardsProps = {
   recruitments: StudentRecruitment[];
   /** The student's own applications, to tell which recruitments they applied to. */
   applications: Application[];
+  /** The student's drafts: applications started and not yet submitted (issue #270). */
+  drafts?: DraftApplication[];
   onCancelRequested?: (
     application: Application,
     recruitment: StudentRecruitment,
@@ -24,16 +31,22 @@ type StudentRecruitmentCardsProps = {
 /**
  * One card per current or recent recruitment, as a student sees it (issue #107): the same header
  * and dates as the admin's cards, a badge saying whether they have applied, and the buttons that
- * fit: Apply Now, View/Edit or View/Comment, and Cancel my Application.
+ * fit: Apply to be a TA (or ULA) or, for an application begun and not submitted, Continue editing
+ * draft application with a warning that it is not yet complete (issue #270); View submitted
+ * application or View/Comment; and Cancel my Application.
  */
 export default function StudentRecruitmentCards({
   recruitments,
   applications,
+  // Stryker disable next-line all : don't test default value of empty list
+  drafts = [],
   onCancelRequested = () => {},
   testIdPrefix = "StudentRecruitmentCards",
 }: StudentRecruitmentCardsProps): React.JSX.Element {
   const list = Array.isArray(recruitments) ? recruitments : [];
   const applicationList = Array.isArray(applications) ? applications : [];
+  // Stryker disable next-line all : don't test default value of empty list
+  const draftList = Array.isArray(drafts) ? drafts : [];
 
   return (
     <div data-testid={testIdPrefix}>
@@ -43,11 +56,15 @@ export default function StudentRecruitmentCards({
         const open = recruitment.applicationStatus === "OPEN";
         const application = applicationFor(applicationList, recruitment.id);
         const cancelled = application?.status === "CANCELLED";
+        const draft = draftFor(draftList, recruitment.id);
+        const applyLabel = `Apply to be a ${recruitment.type}`;
         const badge = cancelled
           ? { bg: "secondary", text: "Application cancelled" }
           : application
             ? { bg: "success", text: "Application on File" }
-            : { bg: "secondary", text: "No application submitted yet" };
+            : draft
+              ? { bg: "warning", text: "Draft application, not submitted" }
+              : { bg: "secondary", text: "No application submitted yet" };
         return (
           <Card
             key={recruitment.id}
@@ -68,6 +85,7 @@ export default function StudentRecruitmentCards({
               </Badge>
               <Badge
                 bg={badge.bg}
+                text={badge.bg === "warning" ? "dark" : undefined}
                 className="ms-auto"
                 data-testid={id("applied")}
               >
@@ -87,15 +105,34 @@ export default function StudentRecruitmentCards({
               </dl>
             </Card.Body>
             <Card.Footer className="d-flex flex-wrap gap-2">
-              {application === undefined &&
-                (open ? (
+              {application === undefined && open && draft !== undefined && (
+                <div>
                   <Link
                     className="btn btn-success"
                     to={`/apply/${recruitment.id}`}
-                    data-testid={id("apply")}
+                    data-testid={id("draft")}
                   >
-                    Apply Now
+                    Continue editing draft application
                   </Link>
+                  <div
+                    className="text-danger mt-2"
+                    data-testid={id("draft-warning")}
+                  >
+                    {DRAFT_WARNING}
+                  </div>
+                </div>
+              )}
+              {application === undefined &&
+                (open ? (
+                  draft === undefined && (
+                    <Link
+                      className="btn btn-success"
+                      to={`/apply/${recruitment.id}`}
+                      data-testid={id("apply")}
+                    >
+                      {applyLabel}
+                    </Link>
+                  )
                 ) : (
                   <OverlayTrigger
                     placement="top"
@@ -117,7 +154,7 @@ export default function StudentRecruitmentCards({
                         style={{ pointerEvents: "none" }}
                         data-testid={id("apply")}
                       >
-                        Apply Now
+                        {applyLabel}
                       </Button>
                     </span>
                   </OverlayTrigger>
@@ -133,7 +170,7 @@ export default function StudentRecruitmentCards({
                   {cancelled
                     ? "View my Application"
                     : open
-                      ? "View/Edit my Application"
+                      ? "View submitted application"
                       : "View/Comment on My Application"}
                 </Link>
               )}

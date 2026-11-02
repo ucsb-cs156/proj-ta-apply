@@ -3,6 +3,7 @@ import React from "react";
 import { HttpResponse, http } from "msw";
 import ApplyPage from "main/pages/Applications/ApplyPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 import coursesFixtures from "fixtures/coursesFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
@@ -52,7 +53,15 @@ const common = [
   http.post("/api/applications/post", () =>
     HttpResponse.json(applicationsFixtures.oneUlaApplication),
   ),
+  // Saving as you go (issue #270): the draft the form opens, and the saves into it.
+  http.put("/api/draftApplications", () =>
+    HttpResponse.json(draftApplicationsFixtures.savedUlaDraft),
+  ),
 ];
+
+const openEmptyDraft = http.post("/api/draftApplications/open", () =>
+  HttpResponse.json(draftApplicationsFixtures.emptyUlaDraft),
+);
 
 export default {
   title: "pages/Applications/ApplyPage",
@@ -70,6 +79,21 @@ FirstTimeApplicant.parameters = {
   msw: {
     handlers: [
       ...common,
+      openEmptyDraft,
+      http.get("/api/applications/prefill", () => HttpResponse.json([])),
+    ],
+  },
+};
+
+/** Resuming a draft: what was typed and saved before comes back, and Save Draft is beside Submit. */
+export const ResumedDraft = Template.bind({});
+ResumedDraft.parameters = {
+  msw: {
+    handlers: [
+      ...common,
+      http.post("/api/draftApplications/open", () =>
+        HttpResponse.json(draftApplicationsFixtures.savedUlaDraft),
+      ),
       http.get("/api/applications/prefill", () => HttpResponse.json([])),
     ],
   },
@@ -81,6 +105,7 @@ PrefilledFromAPreviousApplication.parameters = {
   msw: {
     handlers: [
       ...common,
+      openEmptyDraft,
       http.get("/api/applications/prefill", () =>
         HttpResponse.json([applicationsFixtures.oneUlaApplication]),
       ),

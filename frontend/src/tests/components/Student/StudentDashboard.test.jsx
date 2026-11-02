@@ -9,6 +9,7 @@ import { vi } from "vitest";
 import StudentDashboard from "main/components/Student/StudentDashboard";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 
 const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
@@ -22,13 +23,18 @@ const axiosMock = new AxiosMockAdapter(axios);
 const three = recruitmentsFixtures.threeRecruitments;
 const [upcomingTa, openUla, closedTa] = three;
 
-function renderDashboard(recruitments = three, applications = []) {
+function renderDashboard(
+  recruitments = three,
+  applications = [],
+  drafts = undefined,
+) {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
         <StudentDashboard
           recruitments={recruitments}
           applications={applications}
+          drafts={drafts}
           testIdPrefix="D"
         />
       </MemoryRouter>
@@ -70,6 +76,15 @@ describe("StudentDashboard tests", () => {
     expect(screen.getByTestId("D-current-card-1-card")).toBeInTheDocument();
     expect(screen.queryByTestId("D-none-open")).toBeNull();
     expect(screen.queryByTestId("D-past")).toBeNull();
+  });
+
+  test("a draft reaches the current card, which offers to continue it", () => {
+    renderDashboard(three, [], [draftApplicationsFixtures.savedUlaDraft]);
+
+    expect(screen.getByTestId("D-current-card-2-draft")).toHaveTextContent(
+      "Continue editing draft application",
+    );
+    expect(screen.queryByTestId("D-current-card-2-apply")).toBeNull();
   });
 
   test("with nothing upcoming the heading is not shown, and with nothing current it says so", () => {

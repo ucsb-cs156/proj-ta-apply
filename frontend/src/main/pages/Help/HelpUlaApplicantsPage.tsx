@@ -16,10 +16,10 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           The department opens a <strong>recruitment</strong> for Undergraduate
           Learning Assistant (ULA) positions once a quarter, and your home page
           says where things stand. While a recruitment is open it shows an{" "}
-          <strong>Apply</strong> link; before one opens it shows the tentative
-          opening date; and when none is open, that applications are not
-          currently being accepted. Sign in with your UCSB Google account to see
-          it.
+          <strong>Apply to be a ULA</strong> link; before one opens it shows the
+          tentative opening date; and when none is open, that applications are
+          not currently being accepted. Sign in with your UCSB Google account to
+          see it.
         </p>
         <p>
           You can edit your application as often as you like until the
@@ -121,8 +121,18 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             entry jumps to the field.
           </li>
           <li>
-            Your answers are saved only when you submit; you can come back and
-            submit again at any time before the primary consideration date.
+            Nothing you type is lost: the form saves a <strong>draft</strong>{" "}
+            every few seconds as you go. <strong>Save Draft</strong>, beside the
+            submit button, saves it at once and takes you back to your home
+            page, where the recruitment&apos;s card offers{" "}
+            <strong>Continue editing draft application</strong>. A draft is not
+            an application, and incomplete applications are not considered, so
+            submit it before the recruitment closes.
+          </li>
+          <li>
+            Once you have submitted, the card shows{" "}
+            <strong>View submitted application</strong>. You can still edit it
+            there until the primary consideration date.
           </li>
         </ul>
       </div>

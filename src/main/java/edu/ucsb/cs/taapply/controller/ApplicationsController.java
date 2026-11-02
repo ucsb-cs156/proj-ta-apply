@@ -14,6 +14,7 @@ import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
@@ -55,6 +56,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ApplicationsController extends ApiController {
 
   @Autowired ApplicationRepository applicationRepository;
+  @Autowired DraftApplicationRepository draftApplicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired NoticeVersionRepository noticeVersionRepository;
   @Autowired ApplicationAccessService applicationAccessService;
@@ -239,6 +241,10 @@ public class ApplicationsController extends ApiController {
             .build();
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
+    // The application is complete now, so the draft it grew from has done its job (issue #270).
+    draftApplicationRepository
+        .findByEmailAndRecruitmentId(currentEmail(), recruitmentId)
+        .ifPresent(draftApplicationRepository::delete);
     return forApplicant(application);
   }
 

@@ -8,6 +8,7 @@ import InstructorRecruitmentCards, {
   type InstructorRecruitment,
 } from "main/components/Instructor/InstructorRecruitmentCards";
 import { useBackend } from "main/utils/useBackend";
+import type { DraftApplication } from "main/utils/draftApplications";
 
 /**
  * The home page, in a section per role (issue #107): Admin (the recruitments, whole, as issue #141
@@ -59,6 +60,19 @@ export default function HomePageLoggedIn(): React.JSX.Element {
     options,
   );
 
+  // Applications begun and not yet submitted (issue #270), so a card can offer to continue one.
+  const { data: drafts } = useBackend<DraftApplication[]>(
+    // Stryker disable next-line all : the cache key is not observable from here
+    ["/api/draftApplications/mine"],
+    // Stryker disable next-line all : axios sends a GET whatever the method says
+    { method: "GET", url: "/api/draftApplications/mine" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    // Stryker disable next-line all : whether a failure toasts is not tested for each request
+    false,
+    options,
+  );
+
   // The Student heading only earns its place when there is another section to tell it from
   // (issue #118); a plain student's page is the student section and nothing else.
   const otherSections = isAdmin || isInstructor;
@@ -97,6 +111,8 @@ export default function HomePageLoggedIn(): React.JSX.Element {
           <StudentDashboard
             recruitments={recruitments ?? []}
             applications={applications ?? []}
+            // Stryker disable next-line all : don't test default value of empty list
+            drafts={drafts ?? []}
             testIdPrefix="HomePageLoggedIn-dashboard"
           />
         </section>

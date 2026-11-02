@@ -7,6 +7,7 @@ import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Course;
+import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
@@ -19,6 +20,7 @@ import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
+import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
@@ -87,6 +89,7 @@ public class ApplicationsWebIT extends WebTestCase {
   @Autowired NoticeVersionRepository noticeVersionRepository;
   @Autowired edu.ucsb.cs.taapply.repository.UCSBAPIQuarterRepository ucsbApiQuarterRepository;
   @Autowired ApplicationRepository applicationRepository;
+  @Autowired DraftApplicationRepository draftApplicationRepository;
   @Autowired CourseRepository courseRepository;
 
   /** The notice every TA applicant must agree to. */
@@ -267,7 +270,7 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId(card + "cancel")).containsText("Cancel my Application");
 
     // And it opens for editing, with the answers that were given.
-    assertThat(page.getByTestId(card + "view")).containsText("View/Edit my Application");
+    assertThat(page.getByTestId(card + "view")).containsText("View submitted application");
     page.getByTestId(card + "view").click();
     assertThat(page.getByTestId("ApplicationPage-status")).containsText("PENDING");
     assertThat(page.getByTestId("ApplicationPage-firstName")).hasValue("Chris");
@@ -291,6 +294,148 @@ public class ApplicationsWebIT extends WebTestCase {
 
     page.reload();
     assertThat(page.getByTestId("ApplicationPage-lastName")).hasValue("Gaucho-Smith");
+  }
+
+  /**
+   * Issue #270: nothing typed is lost. Opening the form makes a draft; Save Draft keeps what was
+   * typed and returns home, where the card offers to continue it; continuing brings it back;
+   * submitting turns it into the application and removes the draft.
+   */
+  @Test
+  public void a_draft_is_saved_resumed_and_replaced_by_the_application() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    setupRegularUser();
+    goTo("/");
+    String card = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    assertThat(page.getByTestId(card + "apply")).containsText("Apply to be a TA");
+    page.getByTestId(card + "apply").click();
+
+    // Opening the form made the draft, empty.
+    assertThat(page.getByTestId("ApplyPage-saveDraft")).isVisible();
+    assertThat(page.getByTestId("ApplyPage-submit")).isVisible();
+    assertEquals(1, draftApplicationRepository.count());
+    assertEquals(null, draftApplicationRepository.findAll().iterator().next().getFirstName());
+
+    // Incomplete, and saved all the same: no required answer is asked for.
+    page.getByTestId("ApplyPage-firstName").fill("Dana");
+    page.getByTestId("ApplyPage-gpaMajor").fill("3.4");
+    page.getByTestId("ApplyPage-comments").fill("Saved before I finished");
+    page.getByTestId("ApplyPage-saveDraft").click();
+
+    // Home again, where the card offers the draft instead of Apply and warns it is incomplete.
+    assertThat(page.getByTestId(card + "applied")).containsText("Draft application");
+    assertThat(page.getByTestId(card + "draft")).containsText("Continue editing draft application");
+    assertThat(page.getByTestId(card + "draft-warning"))
+        .containsText(
+            "Your application is not yet complete; incomplete applications are not considered.");
+    assertThat(page.getByTestId(card + "apply")).not().isVisible();
+    assertEquals(1, draftApplicationRepository.count());
+    DraftApplication saved = draftApplicationRepository.findAll().iterator().next();
+    assertEquals("Dana", saved.getFirstName());
+    assertEquals(3.4, saved.getGpaMajor());
+    assertEquals("Saved before I finished", saved.getComments());
+    assertEquals(0, applicationRepository.count());
+
+    // Continuing brings back what was typed.
+    page.getByTestId(card + "draft").click();
+    assertThat(page.getByTestId("ApplyPage-firstName")).hasValue("Dana");
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).hasValue("3.4");
+    assertThat(page.getByTestId("ApplyPage-comments")).hasValue("Saved before I finished");
+    // Still the one draft: opening it again made no second.
+    assertEquals(1, draftApplicationRepository.count());
+
+    fillAndSubmit();
+
+    // Submitted: the application is on file and the draft is gone.
+    assertThat(page.getByTestId(card + "applied")).containsText("Application on File");
+    assertThat(page.getByTestId(card + "view")).containsText("View submitted application");
+    assertThat(page.getByTestId(card + "draft")).not().isVisible();
+    assertEquals(1, applicationRepository.count());
+    assertEquals(0, draftApplicationRepository.count());
+  }
+
+  /**
+   * Issue #270: without pressing anything, what is typed reaches the draft within a few seconds.
+   */
+  @Test
+  public void what_is_typed_is_saved_to_the_draft_without_pressing_anything() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    page.getByTestId("ApplyPage-comments").fill("Typed and left alone");
+
+    // Polled, since the save comes a few seconds after the typing.
+    long deadline = System.currentTimeMillis() + 15000;
+    String saved = null;
+    while (System.currentTimeMillis() < deadline) {
+      saved = draftApplicationRepository.findAll().iterator().next().getComments();
+      if (saved != null) {
+        break;
+      }
+      Thread.sleep(250);
+    }
+    assertEquals("Typed and left alone", saved);
+
+    // Closing the page and coming back finds it, though Save Draft was never pressed.
+    goTo("/apply/" + recruitment.getId());
+    assertThat(page.getByTestId("ApplyPage-comments")).hasValue("Typed and left alone");
+    assertEquals(1, draftApplicationRepository.count());
+    assertEquals(0, applicationRepository.count());
+  }
+
+  /**
+   * Issue #270: a draft saved from a second window is not silently overwritten by the first. The
+   * first window is told, does not go home, and can reload to see what the second saved.
+   */
+  @Test
+  public void a_draft_saved_in_another_window_is_not_overwritten() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+    setupRegularUser();
+    String applyUrl = "/apply/" + recruitment.getId();
+    goTo(applyUrl);
+    assertThat(page.getByTestId("ApplyPage-saveDraft")).isVisible();
+
+    // A second window, signed in as the same person, opens the same draft and saves it.
+    com.microsoft.playwright.BrowserContext other =
+        browser.newContext(
+            new com.microsoft.playwright.Browser.NewContextOptions()
+                .setStorageState(page.context().storageState()));
+    com.microsoft.playwright.Page otherPage = other.newPage();
+    otherPage.navigate(page.url());
+    otherPage.getByTestId("ApplyPage-comments").fill("From the second window");
+    otherPage.getByTestId("ApplyPage-saveDraft").click();
+    assertThat(otherPage.getByTestId("HomePageLoggedIn-student")).isVisible();
+    assertEquals(
+        "From the second window",
+        draftApplicationRepository.findAll().iterator().next().getComments());
+
+    // The first window still has the draft as it opened it. Saving is refused, and says why.
+    page.getByTestId("ApplyPage-comments").fill("From the first window");
+    page.getByTestId("ApplyPage-saveDraft").click();
+    assertThat(page.getByTestId("ApplyPage-conflict"))
+        .containsText(
+            "This draft was changed in another tab or window. Reload to see the latest version.");
+    assertThat(page.getByTestId("ApplyPage-submit")).isVisible();
+    assertEquals(
+        "From the second window",
+        draftApplicationRepository.findAll().iterator().next().getComments());
+
+    // Reload shows what the second window saved, and the draft can be saved again.
+    page.getByTestId("ApplyPage-conflict-reload").click();
+    assertThat(page.getByTestId("ApplyPage-comments")).hasValue("From the second window");
+    assertThat(page.getByTestId("ApplyPage-conflict")).not().isVisible();
+    page.getByTestId("ApplyPage-comments").fill("Now from the first window");
+    page.getByTestId("ApplyPage-saveDraft").click();
+    assertThat(page.getByTestId("HomePageLoggedIn-student")).isVisible();
+    assertEquals(
+        "Now from the first window",
+        draftApplicationRepository.findAll().iterator().next().getComments());
+    assertEquals(1, draftApplicationRepository.count());
   }
 
   /** Any signed-in user sees every open recruitment, each labelled with its type. */

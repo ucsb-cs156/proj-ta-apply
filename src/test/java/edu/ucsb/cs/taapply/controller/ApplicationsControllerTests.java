@@ -20,6 +20,7 @@ import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFields;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
@@ -35,6 +36,7 @@ import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
@@ -64,6 +66,7 @@ import org.springframework.test.web.servlet.MvcResult;
 public class ApplicationsControllerTests extends ControllerTestCase {
 
   @MockitoBean ApplicationRepository applicationRepository;
+  @MockitoBean DraftApplicationRepository draftApplicationRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean NoticeVersionRepository noticeVersionRepository;
   @MockitoBean UserRepository userRepository;
@@ -689,6 +692,72 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     Application expected = expectedFrom(null, 1L, GRAD_EMAIL, null);
     assertEquals(expected, saved());
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void submitting_deletes_the_draft_it_grew_from() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    DraftApplication draft =
+        DraftApplication.builder().id(5L).recruitmentId(1L).email(GRAD_EMAIL).build();
+    when(draftApplicationRepository.findByEmailAndRecruitmentId(GRAD_EMAIL, 1L))
+        .thenReturn(Optional.of(draft));
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    verify(applicationRepository, times(1)).save(any(Application.class));
+    verify(draftApplicationRepository, times(1)).delete(draft);
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void submitting_without_a_draft_deletes_nothing() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(draftApplicationRepository.findByEmailAndRecruitmentId(GRAD_EMAIL, 1L))
+        .thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    verify(draftApplicationRepository, never()).delete(any(DraftApplication.class));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_refused_submission_keeps_the_draft() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(withCourses(List.of(course("CMPSC 8")))))
+                .with(csrf()))
+        .andExpect(status().isBadRequest());
+
+    verify(draftApplicationRepository, never()).delete(any(DraftApplication.class));
+    verify(draftApplicationRepository, never())
+        .findByEmailAndRecruitmentId(any(String.class), any(Long.class));
   }
 
   @WithMockUser(

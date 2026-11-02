@@ -1,0 +1,334 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "043-create-draft-applications-table",
+        "author": "pc",
+        "comment": "An application as it is being filled in (issue #270): the applicant-supplied fields of applications, none of them required, saved as the form is edited. The collections are kept as JSON text since a draft is only ever read and written whole.",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "tableExists": {
+                "tableName": "draft_applications"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "draft_applications",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": {
+                      "nullable": false,
+                      "primaryKey": true
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "recruitment_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "email",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "updated_at",
+                    "type": "TIMESTAMP"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "notice_version_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "first_name",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "middle_name",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "last_name",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "major",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "gpa_major",
+                    "type": "DOUBLE"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "gpa_overall",
+                    "type": "DOUBLE"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "year_in_program",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "graduation_date",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "prev_experience",
+                    "type": "VARCHAR(4000)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "comments",
+                    "type": "VARCHAR(4000)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "first_choice_course",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "second_choice_course",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "available_for_lectures_first_choice",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "available_for_lectures_second_choice",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "available_for_discussion_first_choice",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "available_for_discussion_second_choice",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "availability_comments_first_choice",
+                    "type": "VARCHAR(4000)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "availability_comments_second_choice",
+                    "type": "VARCHAR(4000)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "residency_status",
+                    "type": "VARCHAR(32)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "language_exam",
+                    "type": "VARCHAR(32)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "language_exam_date_passed",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "class_level",
+                    "type": "VARCHAR(8)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "video_link",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "previous_service_as_ula",
+                    "type": "INT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "perm_number",
+                    "type": "VARCHAR(64)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "bs_ms_student",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "student_status_next_quarter",
+                    "type": "VARCHAR(32)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "wants_ta_eligibility",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "other_campus_job",
+                    "type": "VARCHAR(32)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "prior_ucsb_employment",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "employee_id",
+                    "type": "VARCHAR(64)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "i9_appointment",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "training_commitment",
+                    "type": "VARCHAR(32)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "training_commitment_explanation",
+                    "type": "VARCHAR(4000)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "changing_major",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "prior_coursework",
+                    "type": "VARCHAR(100000)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "topic_proficiencies",
+                    "type": "VARCHAR(100000)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "interests",
+                    "type": "VARCHAR(100000)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "course_interests",
+                    "type": "VARCHAR(100000)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "INT",
+                    "defaultValueNumeric": 0,
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addUniqueConstraint": {
+              "tableName": "draft_applications",
+              "columnNames": "email, recruitment_id",
+              "constraintName": "uk_draft_applications_email_recruitment"
+            }
+          },
+          {
+            "addForeignKeyConstraint": {
+              "baseTableName": "draft_applications",
+              "baseColumnNames": "recruitment_id",
+              "referencedTableName": "recruitments",
+              "referencedColumnNames": "id",
+              "constraintName": "fk_draft_applications_recruitment",
+              "onDelete": "CASCADE"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

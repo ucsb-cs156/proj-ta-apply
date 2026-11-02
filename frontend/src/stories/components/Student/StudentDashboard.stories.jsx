@@ -4,6 +4,7 @@ import StudentDashboard from "main/components/Student/StudentDashboard";
 import CancelApplicationModals from "main/components/Student/CancelApplicationModals";
 import StudentRecruitmentCards from "main/components/Student/StudentRecruitmentCards";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 
 // S26 TA not yet opened; W26 ULA open; W26 TA closed on 2026-02-01.
@@ -31,6 +32,14 @@ NothingOpen.args = { recruitments: [], applications: [] };
 
 export const NotYetApplied = Template.bind({});
 NotYetApplied.args = { recruitments: three, applications: [] };
+
+/** Begun and not submitted: Continue editing draft application, with the red warning. */
+export const WithADraft = Template.bind({});
+WithADraft.args = {
+  recruitments: three,
+  applications: [],
+  drafts: [draftApplicationsFixtures.savedUlaDraft],
+};
 
 /** Try Cancel my Application: the two-step confirmation. */
 export const WithApplications = Template.bind({});

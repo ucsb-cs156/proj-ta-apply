@@ -773,7 +773,16 @@ describe("Help pages (issue #140)", () => {
     expect(
       (await screen.findByTestId("HelpUlaApplicantsPage")).querySelector("p")
         .textContent,
-    ).toMatch(/While a recruitment is open it shows an Apply link/);
+    ).toMatch(/While a recruitment is open it shows an Apply to be a ULA link/);
+    expect(screen.getByTestId("HelpUlaApplicantsPage").textContent).toMatch(
+      /saves a draft every few seconds as you go/,
+    );
+    expect(screen.getByTestId("HelpUlaApplicantsPage").textContent).toMatch(
+      /Continue editing draft application/,
+    );
+    expect(screen.getByTestId("HelpUlaApplicantsPage").textContent).toMatch(
+      /View submitted application/,
+    );
     const items = [
       ...screen
         .getByTestId("HelpUlaApplicantsPage-asked-for")

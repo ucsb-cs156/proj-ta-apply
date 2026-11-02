@@ -1,4 +1,11 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -8,6 +15,7 @@ import { vi } from "vitest";
 
 import ApplyPage from "main/pages/Applications/ApplyPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import courseSectionsFixtures from "fixtures/courseSectionsFixtures";
 import courseInstructorsFixtures from "fixtures/courseInstructorsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
@@ -30,6 +38,14 @@ vi.mock("react-router", async (importOriginal) => ({
 const axiosMock = new AxiosMockAdapter(axios);
 
 const [, openUla] = recruitmentsFixtures.threeRecruitments;
+const { emptyUlaDraft, savedUlaDraft } = draftApplicationsFixtures;
+
+/** The submissions of the application itself, apart from the draft calls beside them. */
+const submissions = () =>
+  axiosMock.history.post.filter((r) => r.url === "/api/applications/post");
+/** The saves of the draft. */
+const draftSaves = () =>
+  axiosMock.history.put.filter((r) => r.url === "/api/draftApplications");
 const courses = ["CMPSC     8", "CMPSC   156"];
 
 function renderPage(recruitmentId = 2) {
@@ -113,6 +129,9 @@ describe("ApplyPage tests", () => {
       .onGet("/api/recruitments/options")
       .reply(200, appSettingsFixtures.ulaOptions);
     axiosMock.onGet("/api/applications/prefill").reply(200, []);
+    // Opening the form starts a draft, and what is typed is saved to it (issue #270).
+    axiosMock.onPost("/api/draftApplications/open").reply(200, emptyUlaDraft);
+    axiosMock.onPut("/api/draftApplications").reply(200, savedUlaDraft);
     // No application yet for this recruitment, so the form is offered.
     axiosMock.onGet("/api/applications/mine").reply(200, []);
     // No notice written yet for most tests, so the form asks for no agreement.
@@ -221,12 +240,12 @@ describe("ApplyPage tests", () => {
     await fillUlaRequired();
     await userEvent.click(screen.getByTestId("ApplyPage-submit"));
     await waitFor(() => expect(box).toHaveClass("is-invalid"));
-    expect(axiosMock.history.post.length).toBe(0);
+    expect(submissions().length).toBe(0);
 
     await userEvent.click(box);
     await userEvent.click(screen.getByTestId("ApplyPage-submit"));
-    await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
-    expect(JSON.parse(axiosMock.history.post[0].data).noticeVersionId).toBe(3);
+    await waitFor(() => expect(submissions().length).toBe(1));
+    expect(JSON.parse(submissions()[0].data).noticeVersionId).toBe(3);
   });
 
   /** The majors and topics come from the lists for this recruitment's type. */
@@ -455,11 +474,10 @@ describe("ApplyPage tests", () => {
     await fillUlaRequired();
     await userEvent.click(screen.getByTestId("ApplyPage-submit"));
 
-    await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
-    expect(axiosMock.history.post[0].url).toBe("/api/applications/post");
-    expect(axiosMock.history.post[0].params).toEqual({ recruitmentId: "2" });
+    await waitFor(() => expect(submissions().length).toBe(1));
+    expect(submissions()[0].params).toEqual({ recruitmentId: "2" });
 
-    const sent = JSON.parse(axiosMock.history.post[0].data);
+    const sent = JSON.parse(submissions()[0].data);
     expect(sent.firstName).toBe("Chris");
     expect(sent.major).toBe("Computer Science");
     expect(sent.topicProficiencies).toEqual({ React: 2 });
@@ -515,7 +533,461 @@ describe("ApplyPage tests", () => {
     await fillUlaRequired();
     await userEvent.click(screen.getByTestId("ApplyPage-submit"));
 
-    await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
+    await waitFor(() => expect(submissions().length).toBe(1));
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  // ---- drafts (issue #270) ----
+
+  test("opening the form starts, or resumes, the draft for the recruitment", async () => {
+    renderPage();
+
+    expect(await screen.findByTestId("ApplyPage-submit")).toBeInTheDocument();
+    const opens = axiosMock.history.post.filter(
+      (r) => r.url === "/api/draftApplications/open",
+    );
+    expect(opens.length).toBe(1);
+    expect(opens[0].params).toEqual({ recruitmentId: "2" });
+    // Nothing was typed, so nothing is saved.
+    expect(draftSaves().length).toBe(0);
+  });
+
+  test("there is no form until the draft is there to save into", async () => {
+    let release;
+    axiosMock.onPost("/api/draftApplications/open").reply(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve([200, emptyUlaDraft]);
+        }),
+    );
+
+    renderPage();
+
+    await waitFor(() => expect(release).toBeDefined());
+    expect(screen.queryByTestId("ApplyPage-submit")).toBeNull();
+    // No conflict is announced just because there is no draft yet.
+    expect(screen.queryByTestId("ApplyPage-conflict")).toBeNull();
+    release();
+    expect(await screen.findByTestId("ApplyPage-submit")).toBeInTheDocument();
+  });
+
+  test("the draft is not asked for again when the window regains focus", async () => {
+    renderPage();
+    await screen.findByTestId("ApplyPage-submit");
+    const opens = () =>
+      axiosMock.history.post.filter(
+        (r) => r.url === "/api/draftApplications/open",
+      ).length;
+    expect(opens()).toBe(1);
+
+    window.dispatchEvent(new Event("visibilitychange"));
+    window.dispatchEvent(new Event("focus"));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(opens()).toBe(1);
+  });
+
+  test("an empty draft is filled in from the earlier application", async () => {
+    axiosMock
+      .onGet("/api/applications/prefill")
+      .reply(200, [applicationsFixtures.oneUlaApplication]);
+
+    renderPage();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-firstName")).toHaveValue("Chris"),
+    );
+  });
+
+  test("a draft the form saved earlier is what comes back, not the earlier application", async () => {
+    axiosMock
+      .onGet("/api/applications/prefill")
+      .reply(200, [applicationsFixtures.oneUlaApplication]);
+    axiosMock.onPost("/api/draftApplications/open").reply(200, savedUlaDraft);
+
+    renderPage();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-firstName")).toHaveValue("Dana"),
+    );
+    expect(screen.getByTestId("ApplyPage-lastName")).toHaveValue("Draft");
+    expect(screen.getByTestId("ApplyPage-gpaMajor")).toHaveValue(3.4);
+    expect(screen.getByTestId("ApplyPage-comments")).toHaveValue(
+      "Saved before I finished",
+    );
+  });
+
+  test("an applicant who has already applied is not given a draft", async () => {
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [applicationsFixtures.oneUlaApplication]);
+
+    renderPage(applicationsFixtures.oneUlaApplication.recruitmentId);
+
+    expect(
+      await screen.findByTestId("redirected-to-application"),
+    ).toBeInTheDocument();
+    expect(
+      axiosMock.history.post.filter(
+        (r) => r.url === "/api/draftApplications/open",
+      ).length,
+    ).toBe(0);
+  });
+
+  test("if the draft cannot be started the form says so", async () => {
+    axiosMock
+      .onPost("/api/draftApplications/open")
+      .reply(400, { message: "Applications are not currently open" });
+
+    renderPage();
+
+    expect(
+      await screen.findByTestId("ApplyPage-draft-failed"),
+    ).toHaveTextContent("The application could not be started.");
+    // And the failure is reported like any other failed request.
+    expect(mockToast).toHaveBeenCalledWith(
+      "Error communicating with backend via POST on /api/draftApplications/open",
+    );
+    expect(screen.queryByTestId("ApplyPage-submit")).toBeNull();
+  });
+
+  /** Typing is saved a few seconds later, not at every keystroke. */
+  test("what is typed is saved to the draft every few seconds", async () => {
+    renderPage();
+    const comments = await screen.findByTestId("ApplyPage-comments");
+
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      fireEvent.change(comments, { target: { value: "Hello" } });
+      fireEvent.change(comments, { target: { value: "Hello there" } });
+      act(() => {
+        vi.advanceTimersByTime(2900);
+      });
+      expect(draftSaves().length).toBe(0);
+      // Typing on does not push the save back.
+      fireEvent.change(comments, { target: { value: "Hello there, ULA" } });
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+
+    await waitFor(() => expect(draftSaves().length).toBe(1));
+    expect(draftSaves()[0].params).toEqual({ id: 21, version: 0 });
+    const sent = JSON.parse(draftSaves()[0].data);
+    expect(sent.comments).toBe("Hello there, ULA");
+    // Incomplete as it is, and not agreed to anything yet.
+    expect(sent.gpaMajor).toBeNull();
+    expect(sent.noticeVersionId).toBeNull();
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  test("changing an answer and changing it back saves nothing", async () => {
+    renderPage();
+    const comments = await screen.findByTestId("ApplyPage-comments");
+
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      fireEvent.change(comments, { target: { value: "Hello" } });
+      fireEvent.change(comments, { target: { value: "" } });
+      act(() => {
+        vi.advanceTimersByTime(10000);
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(draftSaves().length).toBe(0);
+  });
+
+  test("leaving the form saves what has not been saved yet", async () => {
+    const { unmount } = renderPage();
+    const comments = await screen.findByTestId("ApplyPage-comments");
+
+    fireEvent.change(comments, { target: { value: "Before I go" } });
+    expect(draftSaves().length).toBe(0);
+    unmount();
+
+    await waitFor(() => expect(draftSaves().length).toBe(1));
+    expect(JSON.parse(draftSaves()[0].data).comments).toBe("Before I go");
+  });
+
+  test("a draft that could not be saved says so", async () => {
+    axiosMock
+      .onPut("/api/draftApplications")
+      .reply(500, { message: "Something broke" });
+    const { unmount } = renderPage();
+    fireEvent.change(await screen.findByTestId("ApplyPage-comments"), {
+      target: { value: "Hello" },
+    });
+    unmount();
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Your draft could not be saved: Something broke",
+      ),
+    );
+  });
+
+  test("a save refused because the session is gone is not toasted", async () => {
+    axiosMock.onPut("/api/draftApplications").reply(403, { message: "No" });
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    const { unmount } = renderPage();
+    fireEvent.change(await screen.findByTestId("ApplyPage-comments"), {
+      target: { value: "Hello" },
+    });
+    unmount();
+
+    await waitFor(() => expect(draftSaves().length).toBe(1));
+    expect(mockToast).not.toHaveBeenCalled();
+    // Quiet, but not silent: it is logged.
+    await waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith(
+        "Backend request failed",
+        expect.anything(),
+      ),
+    );
+    consoleError.mockRestore();
+  });
+
+  test("Save Draft saves at once, says so, and returns home", async () => {
+    renderPage();
+    fireEvent.change(await screen.findByTestId("ApplyPage-comments"), {
+      target: { value: "Half done" },
+    });
+    expect(screen.getByTestId("ApplyPage-saveDraft")).toHaveTextContent(
+      "Save Draft",
+    );
+
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
+    expect(draftSaves().length).toBe(1);
+    expect(draftSaves()[0].params).toEqual({ id: 21, version: 0 });
+    expect(JSON.parse(draftSaves()[0].data).comments).toBe("Half done");
+    expect(mockToast).toHaveBeenCalledWith(
+      "Your draft has been saved. It is not an application until you submit it.",
+    );
+    // Required answers are not asked for: nothing was submitted.
+    expect(submissions().length).toBe(0);
+    expect(screen.queryByTestId("ApplyPage-missing")).toBeNull();
+  });
+
+  test("Save Draft with nothing typed still saves, and leaving afterwards does not save again", async () => {
+    const { unmount } = renderPage();
+
+    await userEvent.click(await screen.findByTestId("ApplyPage-saveDraft"));
+    await waitFor(() => expect(draftSaves().length).toBe(1));
+    unmount();
+
+    expect(draftSaves().length).toBe(1);
+  });
+
+  // ---- concurrent edits ----
+
+  /** The server's answer to a refused save: the message and the draft as it now stands. */
+  const theOtherTabsDraft = {
+    ...savedUlaDraft,
+    firstName: "Other",
+    version: 7,
+    comments: "Typed in the other tab",
+  };
+  const conflictBody = {
+    message:
+      "This draft was changed in another tab or window. Reload to see the latest version.",
+    version: 7,
+    draft: theOtherTabsDraft,
+  };
+
+  test("saves made one after the other, before the first is answered, go in order with the right versions", async () => {
+    let answerFirst;
+    let puts = 0;
+    axiosMock.onPut("/api/draftApplications").reply(() => {
+      puts += 1;
+      if (puts === 1) {
+        return new Promise((resolve) => {
+          answerFirst = () => resolve([200, { ...savedUlaDraft, version: 1 }]);
+        });
+      }
+      return [200, { ...savedUlaDraft, version: 2 }];
+    });
+    renderPage();
+    const comments = await screen.findByTestId("ApplyPage-comments");
+
+    // The first save goes when the form is left...
+    fireEvent.change(comments, { target: { value: "one" } });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    await waitFor(() => expect(answerFirst).toBeDefined());
+    // ...and a second change is saved by the button again before it is answered.
+    fireEvent.change(comments, { target: { value: "two" } });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    expect(draftSaves().length).toBe(1);
+
+    answerFirst();
+    await waitFor(() => expect(draftSaves().length).toBe(2));
+    expect(draftSaves().map((r) => r.params.version)).toEqual([0, 1]);
+  });
+
+  test("a stale autosave says the draft was changed elsewhere, and nothing more is saved", async () => {
+    axiosMock.onPut("/api/draftApplications").reply(409, conflictBody);
+    const { unmount } = renderPage();
+    const comments = await screen.findByTestId("ApplyPage-comments");
+
+    expect(screen.queryByTestId("ApplyPage-conflict")).toBeNull();
+    fireEvent.change(comments, { target: { value: "mine" } });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+
+    expect(await screen.findByTestId("ApplyPage-conflict")).toHaveTextContent(
+      "This draft was changed in another tab or window. Reload to see the latest version.",
+    );
+    expect(screen.getByTestId("ApplyPage-conflict-reload")).toHaveTextContent(
+      "Reload",
+    );
+    // Save Draft did not take the applicant home.
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockToast).not.toHaveBeenCalled();
+    expect(draftSaves().length).toBe(1);
+
+    // Further typing, and leaving the form, send nothing to the draft.
+    fireEvent.change(comments, { target: { value: "mine again" } });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    unmount();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(draftSaves().length).toBe(1);
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test("Reload fetches the draft as it now stands and refills the form from it", async () => {
+    let puts = 0;
+    axiosMock.onPut("/api/draftApplications").reply(() => {
+      puts += 1;
+      return puts === 1
+        ? [409, conflictBody]
+        : [200, { ...theOtherTabsDraft, version: 8 }];
+    });
+    let opens = 0;
+    axiosMock.onPost("/api/draftApplications/open").reply(() => {
+      opens += 1;
+      return [200, opens === 1 ? emptyUlaDraft : theOtherTabsDraft];
+    });
+    renderPage();
+    const comments = await screen.findByTestId("ApplyPage-comments");
+    fireEvent.change(comments, { target: { value: "mine" } });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    await screen.findByTestId("ApplyPage-conflict");
+
+    const lookups = (url) =>
+      axiosMock.history.get.filter((r) => r.url === url).length;
+    const coursesBefore = lookups("/api/recruitments/courses");
+    await userEvent.click(screen.getByTestId("ApplyPage-conflict-reload"));
+
+    // The form starts again from the other tab's draft, and the warning is gone.
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-firstName")).toHaveValue("Other"),
+    );
+    expect(screen.getByTestId("ApplyPage-comments")).toHaveValue(
+      "Typed in the other tab",
+    );
+    expect(screen.queryByTestId("ApplyPage-conflict")).toBeNull();
+    expect(
+      axiosMock.history.post.filter(
+        (r) => r.url === "/api/draftApplications/open",
+      ).length,
+    ).toBe(2);
+    // Only the draft was fetched again, not everything else on the page.
+    expect(lookups("/api/recruitments/courses")).toBe(coursesBefore);
+
+    // And saving works again, from the version that came back.
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    await waitFor(() => expect(draftSaves().length).toBe(2));
+    expect(draftSaves()[1].params).toEqual({ id: 21, version: 7 });
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
+  });
+
+  test("Reload also looks again for an application submitted elsewhere", async () => {
+    axiosMock.onPut("/api/draftApplications").reply(409, conflictBody);
+    renderPage();
+    fireEvent.change(await screen.findByTestId("ApplyPage-comments"), {
+      target: { value: "mine" },
+    });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    await screen.findByTestId("ApplyPage-conflict");
+    const lookups = () =>
+      axiosMock.history.get.filter((r) => r.url === "/api/applications/mine")
+        .length;
+    const before = lookups();
+
+    // The other tab submitted: the draft is gone and the application is on file.
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [applicationsFixtures.oneUlaApplication]);
+    axiosMock
+      .onPost("/api/draftApplications/open")
+      .reply(400, { message: "You already have an application" });
+    await userEvent.click(screen.getByTestId("ApplyPage-conflict-reload"));
+
+    expect(
+      await screen.findByTestId("redirected-to-application"),
+    ).toBeInTheDocument();
+    expect(lookups()).toBeGreaterThan(before);
+  });
+
+  test("a save that fails for another reason is not taken for a conflict", async () => {
+    axiosMock
+      .onPut("/api/draftApplications")
+      .reply(500, { message: "Something broke" });
+    renderPage();
+    fireEvent.change(await screen.findByTestId("ApplyPage-comments"), {
+      target: { value: "mine" },
+    });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Your draft could not be saved: Something broke",
+      ),
+    );
+    expect(screen.queryByTestId("ApplyPage-conflict")).toBeNull();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test("submitting does not save the draft again as the form is left", async () => {
+    axiosMock
+      .onPost("/api/applications/post")
+      .reply(200, applicationsFixtures.oneUlaApplication);
+    const { unmount } = renderPage();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-firstName")).toBeInTheDocument(),
+    );
+    await userEvent.clear(screen.getByTestId("ApplyPage-firstName"));
+    await userEvent.type(screen.getByTestId("ApplyPage-firstName"), "Chris");
+    await userEvent.clear(screen.getByTestId("ApplyPage-lastName"));
+    await userEvent.type(screen.getByTestId("ApplyPage-lastName"), "Gaucho");
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-major").options.length).toBe(4),
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplyPage-major"),
+      "Computer Science",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplyPage-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await addCourse("ApplyPage", "CMPSC 16");
+    await fillUlaRequired();
+    // Whatever the timer has sent so far was sent while the draft still existed.
+    await userEvent.click(screen.getByTestId("ApplyPage-submit"));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
+    const before = draftSaves().length;
+
+    unmount();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(draftSaves().length).toBe(before);
   });
 });
