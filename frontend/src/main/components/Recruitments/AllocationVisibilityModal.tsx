@@ -3,7 +3,10 @@ import { Button, Form, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackendMutation } from "main/utils/useBackend";
-import { STEPS_QUERY_KEY } from "main/utils/recruitmentSteps";
+import {
+  HOME_PAGE_QUERY_KEYS,
+  STEPS_QUERY_KEY,
+} from "main/utils/recruitmentSteps";
 import {
   ALLOCATION_VISIBILITY_NOTE,
   ALLOCATION_VISIBILITY_OPTIONS,
@@ -46,7 +49,7 @@ export default function AllocationVisibilityModal({
         onHide();
       },
     },
-    ["/api/admin/recruitments/all", STEPS_QUERY_KEY],
+    ["/api/admin/recruitments/all", STEPS_QUERY_KEY, ...HOME_PAGE_QUERY_KEYS],
   );
 
   return (

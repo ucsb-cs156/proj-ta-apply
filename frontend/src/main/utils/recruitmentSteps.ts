@@ -54,6 +54,20 @@ export type RecruitmentStepsData = {
  */
 export const STEPS_QUERY_KEY = "/api/admin/recruitments/steps";
 
+/**
+ * The queries behind the instructor and student sections of the home page (issue #250). Anything
+ * an admin does to a recruitment that those sections show (creating or deleting it, opening or
+ * closing applications or reviews, changing allocation visibility, publishing assignments) must
+ * refresh them too, or an instructor or student looking at the page keeps seeing stale cards.
+ * `useBackendMutation` invalidates each key as a prefix, so the instructor query, whose key also
+ * carries the email, is matched.
+ */
+export const HOME_PAGE_QUERY_KEYS = [
+  "/api/instructor/recruitments",
+  "/api/recruitments/applicable",
+  "/api/applications/mine",
+];
+
 export const STEP_COUNT = 9;
 
 /** The lines of each box's title, for a TA or ULA recruitment. */

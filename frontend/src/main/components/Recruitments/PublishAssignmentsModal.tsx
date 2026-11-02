@@ -8,7 +8,10 @@ import {
   publishModalText,
   unmetPrerequisite,
 } from "main/utils/publishedAssignments";
-import { STEPS_QUERY_KEY } from "main/utils/recruitmentSteps";
+import {
+  HOME_PAGE_QUERY_KEYS,
+  STEPS_QUERY_KEY,
+} from "main/utils/recruitmentSteps";
 
 type PublishAssignmentsModalProps = {
   recruitment: Recruitment;
@@ -52,7 +55,7 @@ export default function PublishAssignmentsModal({
       },
       onError: (error) => setRefusal(apiErrorMessage(error)),
     },
-    ["/api/admin/recruitments/all", STEPS_QUERY_KEY],
+    ["/api/admin/recruitments/all", STEPS_QUERY_KEY, ...HOME_PAGE_QUERY_KEYS],
   );
 
   return (

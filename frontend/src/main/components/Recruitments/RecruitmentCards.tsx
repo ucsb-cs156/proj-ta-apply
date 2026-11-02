@@ -21,6 +21,7 @@ import {
 } from "main/utils/recruitmentActions";
 import {
   STEPS_QUERY_KEY,
+  HOME_PAGE_QUERY_KEYS,
   type RecruitmentStepAction,
   type RecruitmentStepsData,
 } from "main/utils/recruitmentSteps";
@@ -30,7 +31,11 @@ import {
 } from "main/utils/workingDays";
 
 /** Re-read after every change: the recruitment list, and every recruitment's steps. */
-const REFRESH_KEYS = ["/api/admin/recruitments/all", STEPS_QUERY_KEY];
+const REFRESH_KEYS = [
+  "/api/admin/recruitments/all",
+  STEPS_QUERY_KEY,
+  ...HOME_PAGE_QUERY_KEYS,
+];
 
 /**
  * The id of the most recent recruitment (by quarter, then id) of one type, whose diagram starts
