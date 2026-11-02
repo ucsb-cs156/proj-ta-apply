@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/284-multi-tab-goodbye","number":285,"title":"Multi-tab warning: goodbye on close, faster detection, and a modal for the newer tab (closes #284)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/285"}]
+pull_requests: []
