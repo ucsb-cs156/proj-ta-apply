@@ -10,6 +10,7 @@ import edu.ucsb.cs.taapply.models.Quarter;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
+import edu.ucsb.cs.taapply.services.AllocationVisibilityService;
 import edu.ucsb.cs.taapply.services.ApplicationVisibility;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
@@ -58,6 +59,7 @@ public class RecruitmentsController extends ApiController {
   @Autowired PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
   @Autowired RecruitmentAuditService recruitmentAuditService;
   @Autowired AllocationService allocationService;
+  @Autowired AllocationVisibilityService allocationVisibilityService;
   @Autowired AssignmentsService assignmentsService;
   @Autowired DeveloperModeService developerModeService;
 
@@ -260,19 +262,7 @@ public class RecruitmentsController extends ApiController {
         recruitmentRepository
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
-    if (visibility == recruitment.getAllocationVisibility()) {
-      return recruitment;
-    }
-
-    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
-    recruitment.setAllocationVisibility(visibility);
-    if (visibility != AllocationVisibility.ADMINS_ONLY
-        && recruitment.getAllocationsReleasedAt() == null) {
-      recruitment.setAllocationsReleasedAt(LocalDateTime.now());
-    }
-    recruitmentRepository.save(recruitment);
-    recruitmentAuditService.recordChanges(before, recruitment);
-    return recruitment;
+    return allocationVisibilityService.change(recruitment, visibility);
   }
 
   @Operation(
