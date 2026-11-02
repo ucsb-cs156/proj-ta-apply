@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/219c-fake-applications-design-rules","number":251,"title":"Fake applications: follow the Developer Mode design's ALL/SPARSE rules, today's quarter and TA coursework rules (follow-up to #248, issue #219)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/251"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"adminui/249-diagram-tweaks","number":254,"title":"Admin UX tweaks to the live Recruitment Steps diagram (issue #249)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/254"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/219c-fake-applications-design-rules","number":251,"title":"Fake applications: follow the Developer Mode design's ALL/SPARSE rules, today's quarter and TA coursework rules (follow-up to #248, issue #219)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/251"}]
