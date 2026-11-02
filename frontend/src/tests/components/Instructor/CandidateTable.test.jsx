@@ -1,7 +1,10 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
-import CandidateTable from "main/components/Instructor/CandidateTable";
+import userEvent from "@testing-library/user-event";
+import CandidateTable, {
+  DEFAULT_SORT_TOOLTIP,
+} from "main/components/Instructor/CandidateTable";
 import candidatesFixtures from "fixtures/candidatesFixtures";
 
 const mock = new AxiosMockAdapter(axios);
@@ -92,14 +95,113 @@ describe("CandidateTable", () => {
 
   test("preference has semantic, reversible sorting, not alphabetical order", () => {
     table({ candidates: [...candidatesFixtures].reverse() });
+    fireEvent.click(screen.getByRole("button", { name: "Course Preference" }));
     expect(names()).toEqual(["Ada", "Grace", "Alan", "Katherine"]);
+    expect(
+      screen.getByRole("columnheader", { name: "Course Preference" }),
+    ).toHaveAttribute("aria-sort", "ascending");
     fireEvent.click(screen.getByRole("button", { name: "Course Preference" }));
     expect(names()).toEqual(["Katherine", "Alan", "Grace", "Ada"]);
     expect(
       screen.getByRole("columnheader", { name: "Course Preference" }),
     ).toHaveAttribute("aria-sort", "descending");
+  });
+
+  // Submission order is the order of the array: 1 F, 2 A, 3 B, 4 C, 5 D, 6 E.
+  const submitted = [
+    ["F", null, "2nd Choice"],
+    ["A", null, "1st Choice"],
+    ["B", 2, "Would Consider"],
+    ["C", 2, "Enthusiastic"],
+    ["D", 1, "Would Consider"],
+    ["E", null, "1st Choice"],
+  ].map(([firstName, rank, preference], i) => ({
+    ...candidatesFixtures[0],
+    applicationId: i + 1,
+    firstName,
+    lastName: `${firstName}son`,
+    rank,
+    preference,
+  }));
+
+  test("the page starts in the default sort: ranking, then preference, then submission order", () => {
+    table({ candidates: submitted });
+    // Ranked first (1, then the two 2s by preference), then the unranked by preference, with
+    // equal preferences in submission order (A before E).
+    expect(names()).toEqual(["D", "C", "B", "A", "E", "F"]);
+    for (const header of screen.getAllByRole("columnheader")) {
+      expect(header).toHaveAttribute("aria-sort", "none");
+    }
+  });
+
+  test("equal ranking and equal preference stay in submission order", () => {
+    table({
+      candidates: submitted.map((candidate) => ({
+        ...candidate,
+        rank: 1,
+        preference: "Enthusiastic",
+      })),
+    });
+    expect(names()).toEqual(["F", "A", "B", "C", "D", "E"]);
+  });
+
+  test("Not Interested candidates sort after the others with the same ranking", () => {
+    table({
+      candidates: [
+        { ...submitted[0], rank: null, preference: "Not Interested" },
+        { ...submitted[1], rank: null, preference: "Would Consider" },
+      ],
+    });
+    expect(names()).toEqual(["A", "F"]);
+  });
+
+  test("Default Sort goes back to the default after sorting by another column", () => {
+    table({ candidates: submitted });
+    fireEvent.click(screen.getByRole("button", { name: "First Name" }));
+    expect(names()).toEqual(["A", "B", "C", "D", "E", "F"]);
+    fireEvent.click(screen.getByRole("button", { name: "Default Sort" }));
+    expect(names()).toEqual(["D", "C", "B", "A", "E", "F"]);
+    for (const header of screen.getAllByRole("columnheader")) {
+      expect(header).toHaveAttribute("aria-sort", "none");
+    }
+  });
+
+  test("the first click on a column after the default sort is ascending", () => {
+    table({ candidates: submitted });
     fireEvent.click(screen.getByRole("button", { name: "Course Preference" }));
-    expect(names()).toEqual(["Ada", "Grace", "Alan", "Katherine"]);
+    expect(
+      screen.getByRole("columnheader", { name: "Course Preference" }),
+    ).toHaveAttribute("aria-sort", "ascending");
+  });
+
+  test("Default Sort has a tooltip that explains the order", async () => {
+    table({ candidates: submitted });
+    const button = screen.getByTestId("CandidateTable-default-sort");
+    expect(button).toHaveTextContent("Default Sort");
+    await userEvent.hover(button);
+    const tooltip = await screen.findByText(DEFAULT_SORT_TOOLTIP);
+    expect(tooltip.closest('[role="tooltip"]')).toHaveAttribute(
+      "id",
+      "CandidateTable-default-sort-tooltip",
+    );
+    expect(DEFAULT_SORT_TOOLTIP).toMatch(/faculty ranking/);
+    expect(DEFAULT_SORT_TOOLTIP).toMatch(/course preference/);
+    expect(DEFAULT_SORT_TOOLTIP).toMatch(
+      /order the applications were submitted/,
+    );
+  });
+
+  test("typing a ranking does not move the row until Default Sort is clicked", () => {
+    table({ candidates: submitted });
+    expect(names()).toEqual(["D", "C", "B", "A", "E", "F"]);
+    fireEvent.change(input("F Fson"), {
+      target: { value: "1" },
+    });
+    expect(names()).toEqual(["D", "C", "B", "A", "E", "F"]);
+    fireEvent.click(screen.getByRole("button", { name: "Default Sort" }));
+    // F and D now both have ranking 1. F's preference (2nd Choice) is stronger than D's
+    // (Would Consider), so F comes first.
+    expect(names()).toEqual(["F", "D", "C", "B", "A", "E"]);
   });
 
   test.each([

@@ -56,10 +56,15 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           multiple courses in that recruitment, it also links to your other
           sections. The table contains real applicants who chose this course or
           expressed enthusiasm or willingness to consider it. Each section has
-          independent rankings. Click any column heading to sort; course
-          preference sorts from first choice to second choice, enthusiastic,
-          then would consider. Contact an admin if a course or ranking page is
-          unavailable.
+          independent rankings. The table always opens in the default sort: by
+          your ranking (1 first, unranked last), then by course preference
+          (first choice, second choice, enthusiastic, then would consider), then
+          in the order the applications were submitted. The{" "}
+          <strong>Default Sort</strong> button returns to it after you sort by
+          another column, and also re-reads any rankings you have just typed.
+          Click any column heading to sort by that column; course preference
+          sorts from first choice to second choice, enthusiastic, then would
+          consider. Contact an admin if a course or ranking page is unavailable.
         </p>
         <p>
           Enter any integer from 1 through the number of candidates. Each valid
