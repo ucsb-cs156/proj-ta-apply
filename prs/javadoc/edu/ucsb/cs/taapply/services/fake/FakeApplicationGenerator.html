@@ -58,7 +58,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(edu.ucsb.cs.taapply.services.fake.FakeCoursework,edu.ucsb.cs.taapply.repository.TaTopicRepository,edu.ucsb.cs.taapply.repository.UlaTopicRepository,edu.ucsb.cs.taapply.repository.UlaInterestRepository,edu.ucsb.cs.taapply.repository.TaMajorRepository,edu.ucsb.cs.taapply.repository.UlaMajorRepository)" tabindex="0">FakeApplicationGenerator(FakeCoursework, TaTopicRepository, UlaTopicRepository, UlaInterestRepository, TaMajorRepository, UlaMajorRepository)</a></li>
+<li><a href="#%3Cinit%3E(edu.ucsb.cs.taapply.services.fake.FakeCoursework,edu.ucsb.cs.taapply.repository.CourseRepository,edu.ucsb.cs.taapply.repository.TaTopicRepository,edu.ucsb.cs.taapply.repository.UlaTopicRepository,edu.ucsb.cs.taapply.repository.UlaInterestRepository,edu.ucsb.cs.taapply.repository.TaMajorRepository,edu.ucsb.cs.taapply.repository.UlaMajorRepository)" tabindex="0">FakeApplicationGenerator(FakeCoursework, CourseRepository, TaTopicRepository, UlaTopicRepository, UlaInterestRepository, TaMajorRepository, UlaMajorRepository)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -102,7 +102,8 @@ that quarter. Graduation is counted from the recruitment's own year.</div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(edu.ucsb.cs.taapply.services.fake.FakeCoursework,edu.ucsb.cs.taapply.repository.TaTopicRepository,edu.ucsb.cs.taapply.repository.UlaTopicRepository,edu.ucsb.cs.taapply.repository.UlaInterestRepository,edu.ucsb.cs.taapply.repository.TaMajorRepository,edu.ucsb.cs.taapply.repository.UlaMajorRepository)" class="member-name-link">FakeApplicationGenerator</a><wbr>(<a href="FakeCoursework.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a>&nbsp;coursework,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(edu.ucsb.cs.taapply.services.fake.FakeCoursework,edu.ucsb.cs.taapply.repository.CourseRepository,edu.ucsb.cs.taapply.repository.TaTopicRepository,edu.ucsb.cs.taapply.repository.UlaTopicRepository,edu.ucsb.cs.taapply.repository.UlaInterestRepository,edu.ucsb.cs.taapply.repository.TaMajorRepository,edu.ucsb.cs.taapply.repository.UlaMajorRepository)" class="member-name-link">FakeApplicationGenerator</a><wbr>(<a href="FakeCoursework.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a>&nbsp;coursework,
+ <a href="../../repository/CourseRepository.html" title="interface in edu.ucsb.cs.taapply.repository">CourseRepository</a>&nbsp;courseRepository,
  <a href="../../repository/TaTopicRepository.html" title="interface in edu.ucsb.cs.taapply.repository">TaTopicRepository</a>&nbsp;taTopicRepository,
  <a href="../../repository/UlaTopicRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UlaTopicRepository</a>&nbsp;ulaTopicRepository,
  <a href="../../repository/UlaInterestRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UlaInterestRepository</a>&nbsp;ulaInterestRepository,
@@ -153,11 +154,12 @@ takenEmails</code>, which gains the new ones.</div>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(edu.ucsb.cs.taapply.services.fake.FakeCoursework,edu.ucsb.cs.taapply.repository.TaTopicRepository,edu.ucsb.cs.taapply.repository.UlaTopicRepository,edu.ucsb.cs.taapply.repository.UlaInterestRepository,edu.ucsb.cs.taapply.repository.TaMajorRepository,edu.ucsb.cs.taapply.repository.UlaMajorRepository)">
+<section class="detail" id="&lt;init&gt;(edu.ucsb.cs.taapply.services.fake.FakeCoursework,edu.ucsb.cs.taapply.repository.CourseRepository,edu.ucsb.cs.taapply.repository.TaTopicRepository,edu.ucsb.cs.taapply.repository.UlaTopicRepository,edu.ucsb.cs.taapply.repository.UlaInterestRepository,edu.ucsb.cs.taapply.repository.TaMajorRepository,edu.ucsb.cs.taapply.repository.UlaMajorRepository)">
 <h3>FakeApplicationGenerator</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Autowired
 </span><span class="modifiers">public</span>&nbsp;<span class="element-name">FakeApplicationGenerator</span><wbr><span class="parameters">(<a href="FakeCoursework.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a>&nbsp;coursework,
+ <a href="../../repository/CourseRepository.html" title="interface in edu.ucsb.cs.taapply.repository">CourseRepository</a>&nbsp;courseRepository,
  <a href="../../repository/TaTopicRepository.html" title="interface in edu.ucsb.cs.taapply.repository">TaTopicRepository</a>&nbsp;taTopicRepository,
  <a href="../../repository/UlaTopicRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UlaTopicRepository</a>&nbsp;ulaTopicRepository,
  <a href="../../repository/UlaInterestRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UlaInterestRepository</a>&nbsp;ulaInterestRepository,
