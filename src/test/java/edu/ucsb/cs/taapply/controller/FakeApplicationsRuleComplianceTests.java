@@ -11,6 +11,7 @@ import edu.ucsb.cs.taapply.entity.TaTopic;
 import edu.ucsb.cs.taapply.entity.UlaInterest;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
@@ -39,6 +40,7 @@ public class FakeApplicationsRuleComplianceTests {
   private final FakeApplicationGenerator generator =
       new FakeApplicationGenerator(
           new FakeCoursework(),
+          mock(CourseRepository.class),
           taTopics,
           ulaTopics,
           ulaInterests,
