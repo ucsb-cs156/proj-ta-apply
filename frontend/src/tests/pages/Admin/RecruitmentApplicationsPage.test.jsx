@@ -36,8 +36,18 @@ function renderPage(recruitmentId = 1) {
   );
 }
 
+// The Change History card starts closed; the audit tests open it first.
+async function openChangeHistory() {
+  await userEvent.click(
+    await screen.findByTestId(
+      "RecruitmentApplicationsPage-changeHistory-toggle",
+    ),
+  );
+}
+
 describe("RecruitmentApplicationsPage tests", () => {
   beforeEach(() => {
+    localStorage.clear();
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock
@@ -430,8 +440,74 @@ describe("RecruitmentApplicationsPage tests", () => {
 
   // ---- issue #139: the recruitment's own audit trail, at the bottom, paged ----
 
+  test("the Change History card starts closed, and opening it shows the trail", async () => {
+    renderPage(1);
+
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Change History" }),
+    ).toBeInTheDocument();
+    const toggle = screen.getByTestId(
+      "RecruitmentApplicationsPage-changeHistory-toggle",
+    );
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveTextContent("▸ Change History");
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-audit-intro"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-audit-total"),
+    ).toBeNull();
+
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).toHaveTextContent("▾ Change History");
+    const total = await screen.findByTestId(
+      "RecruitmentApplicationsPage-audit-total",
+    );
+    await waitFor(() => expect(total).toHaveTextContent("3 changes recorded."));
+
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(
+      screen.queryByTestId("RecruitmentApplicationsPage-audit-total"),
+    ).toBeNull();
+  });
+
+  test("the Change History card remembers open and closed in local storage", async () => {
+    const { unmount } = renderPage(1);
+    await openChangeHistory();
+    await screen.findByTestId("RecruitmentApplicationsPage-audit-total");
+    expect(
+      localStorage.getItem(
+        "collapsibleCard.RecruitmentApplicationsPage-changeHistory",
+      ),
+    ).toBe("open");
+    unmount();
+
+    // Back on the page, it is still open.
+    renderPage(1);
+    const total = await screen.findByTestId(
+      "RecruitmentApplicationsPage-audit-total",
+    );
+    await waitFor(() => expect(total).toHaveTextContent("3 changes recorded."));
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-changeHistory-toggle"),
+    ).toHaveAttribute("aria-expanded", "true");
+
+    // Closing it is remembered too.
+    await userEvent.click(
+      screen.getByTestId("RecruitmentApplicationsPage-changeHistory-toggle"),
+    );
+    expect(
+      localStorage.getItem(
+        "collapsibleCard.RecruitmentApplicationsPage-changeHistory",
+      ),
+    ).toBe("closed");
+  });
+
   test("lists the recruitment's change history at the bottom, newest first, asked for by id", async () => {
     renderPage(1);
+    await openChangeHistory();
 
     expect(
       await screen.findByRole("heading", { level: 2, name: "Change History" }),
@@ -494,6 +570,7 @@ describe("RecruitmentApplicationsPage tests", () => {
       ];
     });
     renderPage(1);
+    await openChangeHistory();
 
     const indicator = await screen.findByTestId(
       "RecruitmentApplicationsPage-audit-page-indicator",
@@ -561,6 +638,7 @@ describe("RecruitmentApplicationsPage tests", () => {
       .onGet("/api/admin/recruitmentaudittrail/all")
       .reply(200, recruitmentAuditTrailFixtures.emptyPage);
     renderPage(1);
+    await openChangeHistory();
 
     expect(
       await screen.findByTestId("RecruitmentApplicationsPage-audit-total"),
@@ -581,6 +659,7 @@ describe("RecruitmentApplicationsPage tests", () => {
   test("before the trail arrives, the section is there with nothing in it", async () => {
     axiosMock.onGet("/api/admin/recruitmentaudittrail/all").timeout();
     renderPage(1);
+    await openChangeHistory();
 
     expect(
       await screen.findByRole("heading", { level: 2, name: "Change History" }),
