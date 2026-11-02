@@ -91,6 +91,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/BudgetController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">BudgetController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/CoursesController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">CoursesController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DeveloperAllocationsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">DeveloperAllocationsController</a></li>
+<li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DeveloperFakeApplicationsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">DeveloperFakeApplicationsController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DeveloperModeController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">DeveloperModeController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">HiddenColumnsController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></li>
@@ -122,6 +123,8 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/CorsConfig.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.config">CorsConfig</a> (implements org.springframework.web.servlet.config.annotation.WebMvcConfigurer)</li>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/Course.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">Course</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/CourseTargetsService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService</a></li>
+<li class="circle">edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJob.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeApplicationsJob</a> (implements edu.ucsb.cs156.jobs.services.JobContextConsumer)</li>
+<li class="circle">edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeApplicationsJobFactory</a></li>
 <li class="circle">edu.ucsb.cs.taapply.model.<a href="edu/ucsb/cs/taapply/model/CurrentUser.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.model">CurrentUser</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/CurrentUserService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">CurrentUserService</a>
 <ul>
@@ -135,6 +138,9 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeAllocationsService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeAllocationsService</a></li>
+<li class="circle">edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeApplicationGenerator</a></li>
+<li class="circle">edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a></li>
+<li class="circle">edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeNames.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeNames</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/FrontendController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">FrontendController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/FrontendProxyController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">FrontendProxyController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/GlobalSetting.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">GlobalSetting</a></li>
@@ -318,6 +324,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/CourseInterest.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">CourseInterest</a></li>
 <li class="circle">edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/EnrollmentEstimateSource.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">EnrollmentEstimateSource</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeAllocationsService.Estimates.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeAllocationsService.Estimates</a></li>
+<li class="circle">edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoverage.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeCoverage</a></li>
 <li class="circle">edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/LanguageExamStatus.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">LanguageExamStatus</a></li>
 <li class="circle">edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/OtherCampusJob.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">OtherCampusJob</a></li>
 <li class="circle">edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/RecruitmentType.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a></li>
@@ -359,6 +366,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.models">CourseSections.Meeting</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/CourseTargetsService.CourseTargets.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.Status.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService.Status</a></li>
+<li class="circle">edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.OtherCourse.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework.OtherCourse</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.AdminCourseRankingSummary.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.AdminCourseRankingSummary</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.AllocationRow.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.AllocationRow</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a></li>
