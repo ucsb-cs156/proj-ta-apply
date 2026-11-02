@@ -5,6 +5,7 @@ import AxiosMockAdapter from "axios-mock-adapter";
 
 import App from "App";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
 import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
 import { defaultHiddenColumns } from "main/utils/applicationColumns";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
@@ -86,5 +87,31 @@ describe("App", () => {
     expect(
       screen.queryByTestId("RecruitmentApplicationsPage-fake-create"),
     ).not.toBeInTheDocument();
+  });
+
+  test("the admin home page puts Auto Create Recruitments in the footer, left of the badge (issue #252)", async () => {
+    window.history.pushState({}, "", "/");
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
+    axiosMock.onGet("/api/admin/recruitments/applicationCounts").reply(200, {});
+    axiosMock.onGet("/api/recruitments/applicable").reply(200, []);
+    axiosMock.onGet("/api/applications/mine").reply(200, []);
+    axiosMock
+      .onGet(/\/api\/admin\/recruitments\/\d+\/steps$/)
+      .reply(200, recruitmentStepsFixtures.fresh);
+    renderApp();
+
+    const auto = await screen.findByTestId(
+      "HomePageLoggedIn-admin-auto-create-button",
+    );
+    const badge = screen.getByTestId("Footer-developer-mode-badge");
+    expect(screen.getByTestId("Footer-developer-mode")).toContainElement(auto);
+    expect(auto).toHaveClass("btn-danger");
+    expect(
+      Boolean(
+        auto.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
   });
 });

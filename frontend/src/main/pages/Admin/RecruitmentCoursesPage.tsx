@@ -278,7 +278,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
   const developerButtons = (
     <>
       <Button
-        variant="outline-secondary"
+        variant="danger"
         size="sm"
         className="me-2"
         disabled={courseCount === 0}

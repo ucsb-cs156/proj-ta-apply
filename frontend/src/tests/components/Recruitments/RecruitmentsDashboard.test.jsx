@@ -7,6 +7,8 @@ import AxiosMockAdapter from "axios-mock-adapter";
 import { vi } from "vitest";
 
 import RecruitmentsDashboard from "main/components/Recruitments/RecruitmentsDashboard";
+import Footer from "main/components/Nav/Footer";
+import DeveloperModeFooterProvider from "main/components/Nav/DeveloperModeFooterProvider";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
@@ -26,7 +28,10 @@ function renderDashboard(queryClient = new QueryClient()) {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <RecruitmentsDashboard />
+        <DeveloperModeFooterProvider>
+          <RecruitmentsDashboard />
+          <Footer />
+        </DeveloperModeFooterProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -413,7 +418,18 @@ describe("RecruitmentsDashboard tests", () => {
       "RecruitmentsDashboard-auto-create-button",
     );
     expect(button).toHaveTextContent("Auto Create Recruitments");
-    expect(button).toHaveClass("btn-outline-secondary", "ms-2", "mb-3");
+    // Issue #252: in the footer's developer slot, red, and just left of the badge: not among the
+    // page's own buttons.
+    expect(button).toHaveClass("btn-danger", "btn-sm");
+    expect(
+      screen.getByTestId("Footer-developer-mode-controls"),
+    ).toContainElement(button);
+    expect(screen.getByTestId("Footer-developer-mode-controls")).toBe(
+      screen.getByTestId("Footer-developer-mode-badge").previousElementSibling,
+    );
+    expect(
+      screen.getByTestId("RecruitmentsDashboard-dashboard"),
+    ).not.toContainElement(button);
     expect(
       screen.queryByTestId("RecruitmentsDashboard-auto-create-modal"),
     ).not.toBeInTheDocument();

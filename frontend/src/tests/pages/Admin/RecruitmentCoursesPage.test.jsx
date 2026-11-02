@@ -1412,6 +1412,8 @@ describe("RecruitmentCoursesPage tests", () => {
       "RecruitmentCoursesPage-fake-allocations",
     );
     expect(button).toHaveTextContent("Fake Hiring Targets and Allocations");
+    // Issue #252: every developer-mode control is red, like the badge it sits beside.
+    expect(button).toHaveClass("btn-danger");
     expect(
       screen.queryByTestId(
         "RecruitmentCoursesPage-fake-allocations-modal-modal",
