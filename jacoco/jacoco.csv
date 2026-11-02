@@ -69,6 +69,7 @@ taapply,edu.ucsb.cs.taapply.enums,AllocationVisibility,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,OtherCampusJob,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,EnrollmentEstimateSource,0,15,0,0,0,3,0,1,0,1
 taapply,edu.ucsb.cs.taapply.enums,ApplicationOrigin,0,21,0,0,0,4,0,1,0,1
+taapply,edu.ucsb.cs.taapply.controller,DeveloperFakeApplicationsController,0,168,0,14,0,35,0,15,0,8
 taapply,edu.ucsb.cs.taapply.controller,NoticesController,0,66,0,4,0,12,0,9,0,7
 taapply,edu.ucsb.cs.taapply.controller,HiddenColumnsController,0,146,0,14,0,43,0,14,0,7
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CourseDetails,0,32,0,0,0,7,0,2,0,2
@@ -121,7 +122,12 @@ taapply,edu.ucsb.cs.taapply.controller,ApiController,0,59,0,0,0,17,0,9,0,9
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController,0,1035,0,104,0,272,0,96,0,44
 taapply,edu.ucsb.cs.taapply.entity,RecruitmentCourse,0,15,0,6,0,1,0,4,0,1
 taapply,edu.ucsb.cs.taapply.services.fake,FakeAllocationsService.Estimates,0,21,0,0,0,4,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services.fake,FakeCoursework,0,485,0,38,0,93,0,35,0,16
+taapply,edu.ucsb.cs.taapply.services.fake,FakeCoverage,0,15,0,0,0,3,0,1,0,1
+taapply,edu.ucsb.cs.taapply.services.fake,FakeApplicationGenerator,0,912,0,83,0,185,0,64,0,21
 taapply,edu.ucsb.cs.taapply.services.fake,FakeAllocationsService,0,116,0,18,0,26,0,13,0,4
+taapply,edu.ucsb.cs.taapply.services.fake,FakeNames,0,246,0,0,0,13,0,2,0,2
+taapply,edu.ucsb.cs.taapply.services.fake,FakeCoursework.OtherCourse,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.errors,UpstreamApiException,0,5,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.errors,ForbiddenException,0,4,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.errors,EntityNotFoundException,0,21,0,0,0,4,0,2,0,2
@@ -132,6 +138,8 @@ taapply,edu.ucsb.cs.taapply.jobs,PopulateRecruitmentCoursesJob.Offered,0,12,0,0,
 taapply,edu.ucsb.cs.taapply.jobs,PopulateCoursesJobFactory,0,34,0,0,0,13,0,3,0,3
 taapply,edu.ucsb.cs.taapply.jobs,PopulateRecruitmentCoursesJob,0,624,0,76,0,141,0,54,0,16
 taapply,edu.ucsb.cs.taapply.jobs,RecruitmentCoursesRefreshScheduler,0,109,0,10,0,29,0,11,0,6
+taapply,edu.ucsb.cs.taapply.jobs,CreateFakeApplicationsJob,0,127,0,4,0,24,0,5,0,3
+taapply,edu.ucsb.cs.taapply.jobs,CreateFakeApplicationsJobFactory,0,35,0,0,0,12,0,3,0,3
 taapply,edu.ucsb.cs.taapply.models,UcsbSection,0,12,0,4,0,1,0,3,0,1
 taapply,edu.ucsb.cs.taapply.models,CourseSections,0,157,0,14,0,38,0,16,0,9
 taapply,edu.ucsb.cs.taapply.models,Quarter,0,169,0,18,0,37,0,19,0,10
