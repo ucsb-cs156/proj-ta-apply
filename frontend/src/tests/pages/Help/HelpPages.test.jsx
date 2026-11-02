@@ -702,11 +702,11 @@ describe("Help pages (issue #140)", () => {
       "Budget",
       "One quarter's budget (compare-and-set for a recruitment's average cost and hiring target, keyed recruitment:<id>)",
       "budget:<quarter>",
-      "#286",
+      "#290",
     ]);
     expect(rows[1].querySelector("a")).toHaveAttribute(
       "href",
-      "https://github.com/ucsb-cs156/proj-ta-apply/pull/286",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/290",
     );
     expect(text("editing")).toMatch(
       /draft application form and the Budget page use them so far/,
@@ -714,6 +714,10 @@ describe("Help pages (issue #140)", () => {
     expect(text("compare")).toMatch(/expected/);
     expect(text("compare")).toMatch(/409 Conflict/);
     expect(text("compare")).toMatch(/Use theirs and Overwrite/);
+    expect(text("compare")).toMatch(
+      /otherwise nothing changes and the answer is 409 Conflict with the current value/,
+    );
+    expect(text("compare")).toMatch(/and offers Use theirs and Overwrite/);
     expect(rows[0].querySelector("a")).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/283",
