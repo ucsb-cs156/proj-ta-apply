@@ -95,6 +95,7 @@ function expectSimultaneousEditingSection(page) {
   expect(choices).toHaveTextContent(
     "takes this tab or window to the home page",
   );
+  expect(choices).toHaveTextContent("then resume here keeps the form covered");
   expect(choices).toHaveTextContent("closes by itself within a few seconds");
   expect(choices).toHaveTextContent("The box does not come back");
   expect(todo).toHaveTextContent(
@@ -538,6 +539,16 @@ describe("Help pages (issue #140)", () => {
     expect(text("goodbye")).toMatch(/sendBeacon/);
     expect(text("goodbye")).toMatch(/pageshow/);
     expect(text("goodbye")).toMatch(/Delivery is not guaranteed/);
+    // The words run together right, across the elements they are built from.
+    for (const phrase of [
+      "says so, with POST /api/draftApplications/leave?id= and the same X-Client-Id, so that",
+      "(not beforeunload or unload,",
+      "It uses fetch with keepalive: true, not sendBeacon,",
+      "After pagehide the tab stops its heartbeats",
+      "(pageshow with persisted), it announces",
+    ]) {
+      expect(text("goodbye")).toContain(phrase);
+    }
     // The modal and how the newer tab is chosen.
     expect(text("detector")).toMatch(/newest/);
     expect(text("detector")).toMatch(/arrivedAtMillis/);
@@ -548,6 +559,13 @@ describe("Help pages (issue #140)", () => {
       /Wait for the other tabs or windows to close, then resume here/,
     );
     expect(text("modal")).toMatch(/Continue anyway/);
+    for (const phrase of [
+      "The answer says newest and arrivedAtMillis.",
+      "with three choices: Leave this page (says goodbye",
+      "window.close()), Wait for the other tabs or windows to close, then resume here (the page stays covered",
+    ]) {
+      expect(text("modal")).toContain(phrase);
+    }
     expect(text("modal")).toMatch(/older tabs keep only the banner/);
     expect(text("modal")).toMatch(/Enter is ignored for the first second/);
     // Timing, and its two environment variables.
