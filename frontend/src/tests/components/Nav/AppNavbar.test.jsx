@@ -171,6 +171,7 @@ describe("AppNavbar tests", () => {
     );
     expect(screen.queryByText("For Instructors")).toBeNull();
     expect(screen.queryByText("For Admins")).toBeNull();
+    expect(screen.queryByText("For Developers")).toBeNull();
     // Issue #99: the CSV formats page is admin-only, so it is not offered to anyone else.
     expect(screen.queryByText("CSV Upload/Download Formats")).toBeNull();
     expect(
@@ -195,6 +196,7 @@ describe("AppNavbar tests", () => {
       "/help/instructors",
     );
     expect(screen.queryByText("For Admins")).toBeNull();
+    expect(screen.queryByText("For Developers")).toBeNull();
     expect(screen.queryByText("Notices Fields")).toBeNull();
     expect(screen.queryByText("CSV Upload/Download Formats")).toBeNull();
     // Issue #232: the Recruitment Steps page is for instructors as well as admins.
@@ -239,6 +241,11 @@ describe("AppNavbar tests", () => {
       "href",
       "/help/admins",
     );
+    // Issue #266: the Developer menu and Developer Mode have their own page.
+    expect(screen.getByText("For Developers")).toHaveAttribute(
+      "href",
+      "/help/developer",
+    );
     expect(screen.getByText("Notices Fields")).toHaveAttribute(
       "href",
       "/help/notice-fields",
@@ -256,6 +263,7 @@ describe("AppNavbar tests", () => {
       "For TA Applicants",
       "For ULA Applicants",
       "For Admins",
+      "For Developers",
       "Recruitment Steps",
       "Notices Fields",
       "CSV Upload/Download Formats",

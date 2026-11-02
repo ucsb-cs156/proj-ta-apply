@@ -112,6 +112,20 @@ If the button is pressed, use this heuristic to come up with a best effort alloc
    allocation by one.  Repeat this process until the allocation reaches the totalHiringTarget.
 3. Then return to the page, showing the new allocation targets.
 
+**Revision (issue #257): at least one each.** The rounding heuristic above applies only when there are
+more courses (non-removed sections) than the hiring target, since then some courses must get none. When
+the number of courses is less than or equal to the hiring target, every course gets at least one, and the
+rest are placed to minimize the largest absolute allocation delta over all courses:
+
+1. Give every course an allocation of 1.
+2. Repeat until the total is the hiring target: give one more to the course with the largest
+   `unroundedAllocation - allocation` (the first in page order on ties).
+
+This greedy method is exactly optimal for "minimize the maximum of |allocation - unroundedAllocation|
+subject to every allocation being at least 1 and the total being the hiring target", so no approximation
+or heuristic is involved; the proof is in the comments of `MinimaxAllocator`. It runs in O(n * (T - n))
+time for n courses and a hiring target of T.
+
 The help pages should explain that the purpose of this features is to give Admins a way to make a first cut
 allocation that is based on enrollment, to try to come as close as possible, but that this should not necessarily
 be considered the final allocation; Admins have the flexibility to adjust this initial allocation up or down based on a number of factors, 

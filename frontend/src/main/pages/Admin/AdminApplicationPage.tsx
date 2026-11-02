@@ -16,6 +16,7 @@ import {
   originLabel,
   submittedText,
 } from "main/utils/adminApplications";
+import CollapsibleCard from "main/components/Common/CollapsibleCard";
 import AuditTrailTable, {
   type AuditTrailRow,
 } from "main/components/AuditTrail/AuditTrailTable";
@@ -81,6 +82,9 @@ export default function AdminApplicationPage(): React.JSX.Element {
     // Stryker disable next-line all : the guard only avoids a pointless request
     { enabled: Boolean(recruitment) },
   );
+
+  // Stryker disable next-line all : the query already supplies an empty list, so this is only for types
+  const auditRows = auditTrail ?? [];
 
   const saveMutation = useBackendMutation<string, Application>(
     (adminComments) => ({
@@ -173,20 +177,25 @@ export default function AdminApplicationPage(): React.JSX.Element {
               </Button>
             </Form>
 
-            <h2 className="h4 mt-4">Audit Trail</h2>
-            {(auditTrail ?? []).length === 0 ? (
-              <p
-                className="text-muted"
-                data-testid="AdminApplicationPage-audit-none"
-              >
-                No admin has changed this application.
-              </p>
-            ) : (
-              <AuditTrailTable
-                rows={auditTrail ?? []}
-                testIdPrefix="AdminApplicationPage-audit"
-              />
-            )}
+            <CollapsibleCard
+              title="Audit Trail"
+              storageKey="AdminApplicationPage-auditTrail"
+              testIdPrefix="AdminApplicationPage-auditCard"
+            >
+              {auditRows.length === 0 ? (
+                <p
+                  className="text-muted mb-0"
+                  data-testid="AdminApplicationPage-audit-none"
+                >
+                  No admin has changed this application.
+                </p>
+              ) : (
+                <AuditTrailTable
+                  rows={auditRows}
+                  testIdPrefix="AdminApplicationPage-audit"
+                />
+              )}
+            </CollapsibleCard>
           </>
         )}
       </div>

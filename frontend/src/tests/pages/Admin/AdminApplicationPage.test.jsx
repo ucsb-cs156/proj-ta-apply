@@ -23,6 +23,9 @@ vi.mock("react-toastify", async (importOriginal) => ({
 
 const axiosMock = new AxiosMockAdapter(axios);
 
+// The one remembered setting for the Audit Trail card, shared by every application (issue #267).
+const AUDIT_KEY = "collapsibleCard.AdminApplicationPage-auditTrail";
+
 const ula = applicationsFixtures.oneUlaApplication;
 const ta = applicationsFixtures.oneTaApplication;
 
@@ -48,6 +51,7 @@ function renderPage(id = ula.id) {
 describe("AdminApplicationPage tests", () => {
   beforeEach(() => {
     mockToast.mockClear();
+    localStorage.clear();
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock
@@ -85,6 +89,7 @@ describe("AdminApplicationPage tests", () => {
 
   /** The rows for this application only, asked for by the recruitment's type and the id. */
   test("ends with this application's audit trail, or a note that there is none", async () => {
+    localStorage.setItem(AUDIT_KEY, "open");
     renderPage();
 
     expect(
@@ -103,6 +108,7 @@ describe("AdminApplicationPage tests", () => {
     axiosMock
       .onGet("/api/admin/audittrail/application")
       .reply(200, auditTrailFixtures.threeRows.slice(1));
+    localStorage.setItem(AUDIT_KEY, "open");
     renderPage();
 
     expect(
@@ -115,6 +121,66 @@ describe("AdminApplicationPage tests", () => {
     ).toHaveTextContent("comments");
     expect(screen.queryByTestId("AdminApplicationPage-audit-none")).toBeNull();
     expect(screen.getByText("Audit Trail")).toBeInTheDocument();
+  });
+
+  test("the Audit Trail card starts closed, with its table and note hidden", async () => {
+    axiosMock
+      .onGet("/api/admin/audittrail/application")
+      .reply(200, auditTrailFixtures.threeRows.slice(1));
+    renderPage();
+
+    const toggle = await screen.findByTestId(
+      "AdminApplicationPage-auditCard-toggle",
+    );
+    expect(toggle).toHaveTextContent("Audit Trail");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(
+      screen.queryByTestId(
+        "AdminApplicationPage-audit-cell-row-0-col-fieldName",
+      ),
+    ).toBeNull();
+    expect(screen.queryByTestId("AdminApplicationPage-audit-none")).toBeNull();
+    expect(localStorage.getItem(AUDIT_KEY)).toBeNull();
+  });
+
+  test("clicking the title opens the card and remembers it; clicking again closes and remembers that", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const toggle = await screen.findByTestId(
+      "AdminApplicationPage-auditCard-toggle",
+    );
+    await user.click(toggle);
+    expect(
+      await screen.findByTestId("AdminApplicationPage-audit-none"),
+    ).toBeInTheDocument();
+    expect(localStorage.getItem(AUDIT_KEY)).toBe("open");
+
+    await user.click(toggle);
+    expect(screen.queryByTestId("AdminApplicationPage-audit-none")).toBeNull();
+    expect(localStorage.getItem(AUDIT_KEY)).toBe("closed");
+  });
+
+  test("one setting is shared by every application: opening it for one leaves it open for another", async () => {
+    const user = userEvent.setup();
+    const first = renderPage(ula.id);
+    await user.click(
+      await screen.findByTestId("AdminApplicationPage-auditCard-toggle"),
+    );
+    expect(localStorage.getItem(AUDIT_KEY)).toBe("open");
+    first.unmount();
+
+    renderPage(ta.id);
+    expect(
+      await screen.findByTestId("AdminApplicationPage-audit-none"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("AdminApplicationPage-auditCard-toggle"),
+    ).toHaveAttribute("aria-expanded", "true");
+    // No per-application or per-recruitment entry was written.
+    expect(
+      Object.keys(localStorage).filter((k) => k.startsWith("collapsibleCard.")),
+    ).toEqual([AUDIT_KEY]);
   });
 
   /** Issue #150: the admin's view fills the notice's fields from the recruitment. */

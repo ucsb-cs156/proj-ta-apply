@@ -47,7 +47,13 @@ public class AllocationService {
 
   /**
    * Overwrites every non-removed section's allocation with a best effort at the hiring target from
-   * the enrollment estimates, and returns the sections in page order:
+   * the enrollment estimates, and returns the sections in page order.
+   *
+   * <p>When there are at least as many hires as sections, every section gets at least one, and the
+   * rest are placed so that the largest {@code |allocation - unroundedAllocation|} over all
+   * sections is as small as it can be; {@link MinimaxAllocator} solves this exactly (issue #257).
+   *
+   * <p>When there are more sections than hires, some sections must get none, and the allocation is:
    *
    * <ol>
    *   <li>each section gets its unrounded share rounded to the nearest whole number (half up);
@@ -62,9 +68,17 @@ public class AllocationService {
    */
   public List<RecruitmentCourse> autoAllocate(Recruitment recruitment) {
     List<RecruitmentCourse> active = recompute(recruitment);
-    if (!active.isEmpty()) {
-      int target = recruitment.getTotalHiringTarget();
-
+    int target = recruitment.getTotalHiringTarget();
+    if (!active.isEmpty() && active.size() <= target) {
+      int[] allocation =
+          MinimaxAllocator.allocate(
+              active.stream().mapToDouble(RecruitmentCourse::getUnroundedAllocation).toArray(),
+              target);
+      for (int i = 0; i < allocation.length; i++) {
+        active.get(i).setAllocation(allocation[i]);
+        recruitmentCourseRepository.save(active.get(i));
+      }
+    } else if (!active.isEmpty()) {
       int sum = 0;
       for (RecruitmentCourse row : active) {
         int rounded = (int) Math.floor(row.getUnroundedAllocation() + 0.5);

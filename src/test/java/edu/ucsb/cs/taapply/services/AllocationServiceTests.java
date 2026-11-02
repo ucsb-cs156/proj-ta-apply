@@ -13,6 +13,7 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,7 +141,7 @@ public class AllocationServiceTests {
     assertEquals(List.of(unnumbered, numbered), service.recompute(recruitment(2)));
   }
 
-  // ---- autoAllocate ----
+  // ---- autoAllocate: at least as many hires as sections (issue #257) ----
 
   @Test
   public void auto_allocate_rounds_when_the_rounded_shares_already_add_up() {
@@ -160,58 +161,40 @@ public class AllocationServiceTests {
     verify(recruitmentCourseRepository, times(2)).save(c);
   }
 
-  /** Shares 2.5, 2.5, 2.5, 2.5 of 10: half rounds up to 3 each (12), so two must give one back. */
+  /** Shares 2.5 each of 10: every section is 0.5 away either way; the extras go in page order. */
   @Test
-  public void auto_allocate_rounds_half_up_then_takes_from_the_sections_furthest_over() {
-    RecruitmentCourse a = row(1L, "CMPSC     8", "0100", 100, 0);
-    RecruitmentCourse b = row(2L, "CMPSC    16", "0100", 100, 0);
-    RecruitmentCourse c = row(3L, "CMPSC    24", "0100", 100, 0);
-    RecruitmentCourse d = row(4L, "CMPSC    32", "0100", 100, 0);
-    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(a, b, c, d));
+  public void auto_allocate_splits_tied_halves_in_page_order() {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(equalRows(4, 100));
 
-    List<RecruitmentCourse> result = service.autoAllocate(recruitment(10));
-
-    // All tied at +0.5 over; ties go to the first in page order, each time.
-    assertEquals(List.of(2, 2, 3, 3), allocations(result));
+    assertEquals(List.of(3, 3, 2, 2), allocations(service.autoAllocate(recruitment(10))));
   }
 
-  /** Shares 1.4, 1.4, 1.4, 1.4, 1.4 of 7 round down to 5, so two must be topped up. */
+  /** Shares 1.4 each of 7: two sections must be topped up, the first two in page order. */
   @Test
-  public void auto_allocate_rounds_down_then_gives_to_the_sections_furthest_under() {
-    RecruitmentCourse a = row(1L, "CMPSC     8", "0100", 100, 0);
-    RecruitmentCourse b = row(2L, "CMPSC    16", "0100", 100, 0);
-    RecruitmentCourse c = row(3L, "CMPSC    24", "0100", 100, 0);
-    RecruitmentCourse d = row(4L, "CMPSC    32", "0100", 100, 0);
-    RecruitmentCourse e = row(5L, "CMPSC    40", "0100", 100, 0);
-    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(a, b, c, d, e));
+  public void auto_allocate_tops_up_the_first_sections_when_all_are_tied() {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(equalRows(5, 100));
 
-    List<RecruitmentCourse> result = service.autoAllocate(recruitment(7));
-
-    // All tied at -0.4 under; the first two in page order gain one.
-    assertEquals(List.of(2, 2, 1, 1, 1), allocations(result));
+    assertEquals(List.of(2, 2, 1, 1, 1), allocations(service.autoAllocate(recruitment(7))));
   }
 
-  /** The section most over its share gives first, even when it is not the first section. */
+  /** The first section is the best fit as it is, so the extras go to the later ones. */
   @Test
-  public void auto_allocate_takes_from_the_most_over_first() {
-    // Shares of 9 by 50, 100, 100, 100 over 350: 1.29, 2.57, 2.57, 2.57 -> rounded 1, 3, 3, 3
-    // = 10. The first section is under its share (-0.29); the second (+0.43, first of the tie)
-    // gives one back.
+  public void auto_allocate_gives_extras_to_the_sections_furthest_under_their_share() {
+    // Shares of 9 by 50, 100, 100, 100 over 350: 1.29, 2.57, 2.57, 2.57. The first stays at 1
+    // (0.29 under); two of the others go up to 3 (0.43 over) and one stays at 2 (0.57 under).
     RecruitmentCourse a = row(1L, "CMPSC     8", "0100", 50, 0);
     RecruitmentCourse b = row(2L, "CMPSC    16", "0100", 100, 0);
     RecruitmentCourse c = row(3L, "CMPSC    24", "0100", 100, 0);
     RecruitmentCourse d = row(4L, "CMPSC    32", "0100", 100, 0);
     when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(a, b, c, d));
 
-    assertEquals(List.of(1, 2, 3, 3), allocations(service.autoAllocate(recruitment(9))));
+    assertEquals(List.of(1, 3, 3, 2), allocations(service.autoAllocate(recruitment(9))));
   }
 
-  /** The section most under its share gains first, even when it is not the first section. */
   @Test
-  public void auto_allocate_gives_to_the_most_under_first() {
-    // Shares of 10 by 140, 100, 100, 100 over 440: 3.18, 2.27, 2.27, 2.27 -> rounded 3, 2, 2, 2
-    // = 9. The first section is the least under (-0.18); the second (-0.27, first of the tie)
-    // gains one.
+  public void auto_allocate_keeps_the_largest_gap_as_small_as_possible() {
+    // Shares of 10 by 140, 100, 100, 100 over 440: 3.18, 2.27, 2.27, 2.27. Giving the first 4
+    // would leave it 0.82 off; the best is 3, 3, 2, 2 with 0.73 the largest gap.
     RecruitmentCourse a = row(1L, "CMPSC     8", "0100", 140, 0);
     RecruitmentCourse b = row(2L, "CMPSC    16", "0100", 100, 0);
     RecruitmentCourse c = row(3L, "CMPSC    24", "0100", 100, 0);
@@ -221,25 +204,20 @@ public class AllocationServiceTests {
     assertEquals(List.of(3, 3, 2, 2), allocations(service.autoAllocate(recruitment(10))));
   }
 
-  /** Two sections give in turn: after the first gives, it is no longer the most over. */
   @Test
-  public void auto_allocate_takes_from_a_different_section_each_time_as_the_excesses_change() {
-    // Shares of 11 by 100, 100, 240 over 440: 2.5, 2.5, 6.0 -> 3, 3, 6 = 12; the first (tied
-    // most over) gives one: 2, 3, 6.
+  public void auto_allocate_rounds_shares_that_do_not_tie() {
+    // Shares of 11 by 100, 100, 240 over 440: 2.5, 2.5, 6.0.
     RecruitmentCourse a = row(1L, "CMPSC     8", "0100", 100, 0);
     RecruitmentCourse b = row(2L, "CMPSC    16", "0100", 100, 0);
     RecruitmentCourse c = row(3L, "CMPSC    24", "0100", 240, 0);
     when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(a, b, c));
-    assertEquals(List.of(2, 3, 6), allocations(service.autoAllocate(recruitment(11))));
+    assertEquals(List.of(3, 2, 6), allocations(service.autoAllocate(recruitment(11))));
 
-    // Shares of 13: 2.95, 2.95, 7.09 -> 3, 3, 7 = 13 exactly; nothing to adjust.
+    // Shares of 13: 2.95, 2.95, 7.09 -> 3, 3, 7 exactly.
     assertEquals(List.of(3, 3, 7), allocations(service.autoAllocate(recruitment(13))));
   }
 
-  /**
-   * Every share is 0.0 when no section has an estimate, so the target is handed out one at a time
-   * to the least over section: the first, then the second (the first is now +1), and so on.
-   */
+  /** Every share is 0.0 when no section has an estimate, so the target is dealt out evenly. */
   @Test
   public void auto_allocate_with_no_estimates_deals_the_target_out_in_order() {
     RecruitmentCourse a = row(1L, "CMPSC     8", "0100", 0, 5);
@@ -250,17 +228,19 @@ public class AllocationServiceTests {
     assertEquals(List.of(2, 2, 1), allocations(service.autoAllocate(recruitment(5))));
   }
 
-  /** A section with no estimate rounds to 0 and stays there: it is never the most over. */
+  /** A section with no estimate would round to 0, but still gets the minimum of one. */
   @Test
-  public void auto_allocate_never_takes_a_section_below_zero() {
-    // Shares of 3 by 0, 100, 100 over 200: 0.0, 1.5, 1.5 -> 0, 2, 2 = 4 > 3. The second (+0.5,
-    // first of the tie) gives; the first, at 0.0, is untouched.
+  public void auto_allocate_gives_every_section_at_least_one() {
+    // Shares of 3 by 0, 100, 100 over 200: 0.0, 1.5, 1.5. The only split with a one each is 1,
+    // 1, 1.
     RecruitmentCourse zero = row(1L, "CMPSC     8", "0100", 0, 0);
     RecruitmentCourse b = row(2L, "CMPSC    16", "0100", 100, 0);
     RecruitmentCourse c = row(3L, "CMPSC    24", "0100", 100, 0);
     when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(zero, b, c));
+    assertEquals(List.of(1, 1, 1), allocations(service.autoAllocate(recruitment(3))));
 
-    assertEquals(List.of(0, 1, 2), allocations(service.autoAllocate(recruitment(3))));
+    // With a fourth hire, shares are 0.0, 2.0, 2.0 and the extra goes to the first of the tied.
+    assertEquals(List.of(1, 2, 1), allocations(service.autoAllocate(recruitment(4))));
   }
 
   @Test
@@ -285,5 +265,102 @@ public class AllocationServiceTests {
     when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of());
     assertTrue(service.autoAllocate(recruitment(5)).isEmpty());
     verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  // ---- autoAllocate: more sections than hires ----
+
+  /** Five sections at share 0.6 round to 1 each (5); the first two in page order give. */
+  @Test
+  public void auto_allocate_takes_from_the_first_sections_when_over_target() {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(equalRows(5, 100));
+
+    assertEquals(List.of(0, 0, 1, 1, 1), allocations(service.autoAllocate(recruitment(3))));
+  }
+
+  /** The first section gives, is then no longer the most over, and the next one gives. */
+  @Test
+  public void auto_allocate_takes_from_a_different_section_each_time_as_the_excesses_change() {
+    // Six shares of 0.5 round half up to 1 each (6) against a target of 3.
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(equalRows(6, 100));
+
+    assertEquals(List.of(0, 0, 0, 1, 1, 1), allocations(service.autoAllocate(recruitment(3))));
+  }
+
+  /** The section most over its share gives first, even when it is not the first section. */
+  @Test
+  public void auto_allocate_takes_from_the_most_over_first() {
+    // Shares of 3 by 40, 100 x5 over 540: 0.22, 0.56 x5 -> 0, 1 x5 = 5. The first is under its
+    // share (-0.22) and keeps its zero; the others are 0.44 over, and the first of them gives.
+    List<RecruitmentCourse> rows = new ArrayList<>();
+    rows.add(row(1L, "CMPSC     8", "0100", 40, 0));
+    for (int i = 2; i <= 6; i++) {
+      rows.add(row(i, "CMPSC " + (10 * i), "0100", 100, 0));
+    }
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(rows);
+
+    assertEquals(List.of(0, 0, 0, 1, 1, 1), allocations(service.autoAllocate(recruitment(3))));
+  }
+
+  /** Five shares of 0.4 round to 0, so two must be topped up, the first two in page order. */
+  @Test
+  public void auto_allocate_gives_to_a_different_section_each_time_as_the_excesses_change() {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(equalRows(5, 100));
+
+    assertEquals(List.of(1, 1, 0, 0, 0), allocations(service.autoAllocate(recruitment(2))));
+  }
+
+  /** The section most under its share gains first, even when it is not the first section. */
+  @Test
+  public void auto_allocate_gives_to_the_most_under_first() {
+    // Shares of 2 by 140, 100 x4 over 540: 0.52, 0.37 x4 -> 1, 0 x4 = 1. The first is over its
+    // share (+0.48); the others are 0.37 under, and the first of them gains.
+    List<RecruitmentCourse> rows = new ArrayList<>();
+    rows.add(row(1L, "CMPSC     8", "0100", 140, 0));
+    for (int i = 2; i <= 5; i++) {
+      rows.add(row(i, "CMPSC " + (10 * i), "0100", 100, 0));
+    }
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(rows);
+
+    assertEquals(List.of(1, 1, 0, 0, 0), allocations(service.autoAllocate(recruitment(2))));
+  }
+
+  /** Among sections with the same allocation, the one with the smallest share is most over. */
+  @Test
+  public void auto_allocate_judges_over_and_under_by_the_difference_from_the_share() {
+    // Shares of 2 by 60, 50, 50, 40 over 200: 0.6, 0.5, 0.5, 0.4 -> 1, 1, 1, 0 = 3. The second
+    // and third are 0.5 over, the first only 0.4: the second gives.
+    List<RecruitmentCourse> over = new ArrayList<>();
+    int[] estimates = {60, 50, 50, 40};
+    for (int i = 0; i < estimates.length; i++) {
+      over.add(row(i + 1, "CMPSC " + (10 * (i + 1)), "0100", estimates[i], 0));
+    }
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(over);
+    assertEquals(List.of(1, 0, 1, 0), allocations(service.autoAllocate(recruitment(2))));
+
+    // Shares of 1 by 10, 45, 45 over 100: 0.1, 0.45, 0.45 -> 0, 0, 0 = 0. The second is the
+    // first of the two furthest under their share (-0.45), so it gains, not the first (-0.1).
+    List<RecruitmentCourse> under = new ArrayList<>();
+    int[] smaller = {10, 45, 45};
+    for (int i = 0; i < smaller.length; i++) {
+      under.add(row(i + 1, "CMPSC " + (10 * (i + 1)), "0100", smaller[i], 0));
+    }
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(under);
+    assertEquals(List.of(0, 1, 0), allocations(service.autoAllocate(recruitment(1))));
+  }
+
+  /** With no hires at all, nothing is allocated. */
+  @Test
+  public void auto_allocate_with_a_zero_target_allocates_nothing() {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(equalRows(2, 100));
+
+    assertEquals(List.of(0, 0), allocations(service.autoAllocate(recruitment(0))));
+  }
+
+  private static List<RecruitmentCourse> equalRows(int count, int estimate) {
+    List<RecruitmentCourse> rows = new ArrayList<>();
+    for (int i = 1; i <= count; i++) {
+      rows.add(row(i, "CMPSC " + (10 * i), "0100", estimate, 0));
+    }
+    return rows;
   }
 }

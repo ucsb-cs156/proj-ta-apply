@@ -29,6 +29,7 @@ export const HELP_PAGES: HelpPage[] = [
     audience: "instructor",
   },
   { path: "/help/admins", label: "For Admins", audience: "admin" },
+  { path: "/help/developer", label: "For Developers", audience: "admin" },
   {
     path: "/help/recruitment-steps",
     label: "Recruitment Steps",
@@ -144,6 +145,10 @@ export const ADMIN_MENU_ENTRIES: AdminMenuEntry[] = [
     section: "audit-trail",
     summary: "Every change an admin has made to a student's application.",
   },
+];
+
+/** The Developer menu's options, explained on the For Developers page (issue #266). */
+export const DEVELOPER_MENU_ENTRIES: AdminMenuEntry[] = [
   {
     menu: "Developer",
     label: "Jobs",
