@@ -45,7 +45,7 @@ When developerMode is on, on the home page, Admins see a red "Auto Create Recrui
 * Offer the admin a choice to proceed, or cancel.
 
 Here are the rules for populating the auto-create:
-* Determine the quarter that follows the current quarter, skipping summer quarter.  This will be the quarter for the recruitment that is to be created.   There should be a quarter selector that allows the Admin to select a different quarter, if desired.
+* Determine the quarter that follows the current quarter, skipping summer quarter.  This will be the quarter for the recruitment that is to be created.   There should be a quarter selector that allows the Admin to select a different quarter, if desired. The selector ranges from the current quarter minus 4 (a full academic year back) to the current quarter plus 1, or plus 2 in Spring, when both the Summer and Fall schedules are available. Quarters further out have no courses to populate a recruitment with.
 * If there is already a recruitment for that quarter for TAs, skip creating one for TAs.
 * If there is already a recruitment for that quarter for ULAs, skip creating one for ULAs.
 * If there is then nothing to be created, state so, and the only option offered to the Admin is "Cancel".

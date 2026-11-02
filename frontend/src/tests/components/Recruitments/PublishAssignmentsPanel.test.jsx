@@ -21,13 +21,15 @@ const axiosMock = new AxiosMockAdapter(axios);
 const taRecruitment = recruitmentsFixtures.threeRecruitments[2];
 const ulaRecruitment = recruitmentsFixtures.threeRecruitments[1];
 
-function renderPanel(recruitment = taRecruitment, prefix = "Panel") {
+function renderPanel(
+  recruitment = taRecruitment,
+  prefix = "Panel",
+  queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  }),
+) {
   return render(
-    <QueryClientProvider
-      client={
-        new QueryClient({ defaultOptions: { queries: { retry: false } } })
-      }
-    >
+    <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <PublishAssignmentsPanel
           recruitment={recruitment}
@@ -123,6 +125,28 @@ describe("PublishAssignmentsPanel tests", () => {
     await waitFor(() =>
       expect(screen.queryByTestId("Panel-modal")).not.toBeInTheDocument(),
     );
+  });
+
+  test("publishing refreshes the admin and the home page queries (issue #250)", async () => {
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    renderPanel(taRecruitment, "Panel", queryClient);
+    await userEvent.click(screen.getByTestId("Panel-button"));
+    await screen.findByTestId("Panel-modal");
+    await userEvent.click(screen.getByTestId("Panel-confirm"));
+
+    await waitFor(() => expect(puts()).toHaveLength(1));
+    for (const key of [
+      "/api/admin/recruitments/all",
+      "/api/admin/recruitments/steps",
+      "/api/instructor/recruitments",
+      "/api/recruitments/applicable",
+      "/api/applications/mine",
+    ]) {
+      await waitFor(() =>
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: [key] }),
+      );
+    }
   });
 
   test("No closes the modal and publishes nothing", async () => {

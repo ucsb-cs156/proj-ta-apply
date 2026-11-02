@@ -306,7 +306,7 @@ describe("Help pages (issue #140)", () => {
       "HelpAdminsPage-auto-create-recruitments",
     );
     expect(autoCreate).toHaveTextContent(
-      "While developer mode is on, the footer of the home page has a red Auto Create Recruitments button. It proposes the quarter after the current one, skipping Summer (and lets you pick another),",
+      "While developer mode is on, the footer of the home page has a red Auto Create Recruitments button. It proposes the quarter after the current one, skipping Summer (and lets you pick another: the four quarters before the current one up to the next one, or the next two in Spring, since only those have courses to fill in),",
     );
     expect(autoCreate).toHaveTextContent(
       "with the tentative opening date a week from today and the primary consideration date a week after that. If both exist already there is nothing to create.",

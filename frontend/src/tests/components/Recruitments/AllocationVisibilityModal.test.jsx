@@ -175,6 +175,14 @@ describe("AllocationVisibilityModal tests", () => {
       expect(invalidate).toHaveBeenCalledWith({
         queryKey: ["/api/admin/recruitments/all"],
       });
+      // Issue #250: what faculty see on the home page changes with the visibility.
+      for (const key of [
+        "/api/instructor/recruitments",
+        "/api/recruitments/applicable",
+        "/api/applications/mine",
+      ]) {
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: [key] });
+      }
     },
   );
 

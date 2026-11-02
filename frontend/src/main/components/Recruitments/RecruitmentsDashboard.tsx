@@ -8,6 +8,7 @@ import RecruitmentForm, {
   type RecruitmentFormFields,
 } from "main/components/Recruitments/RecruitmentForm";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { HOME_PAGE_QUERY_KEYS } from "main/utils/recruitmentSteps";
 import AutoCreateRecruitmentsModal from "main/components/Recruitments/AutoCreateRecruitmentsModal";
 import { useDeveloperMode } from "main/utils/developerMode";
 import { useDeveloperModeFooterControls } from "main/utils/developerModeFooter";
@@ -95,6 +96,7 @@ export default function RecruitmentsDashboard({
     [
       "/api/admin/recruitments/all",
       "/api/admin/recruitments/applicationCounts",
+      ...HOME_PAGE_QUERY_KEYS,
     ],
   );
 
@@ -108,6 +110,7 @@ export default function RecruitmentsDashboard({
     [
       "/api/admin/recruitments/all",
       "/api/admin/recruitments/applicationCounts",
+      ...HOME_PAGE_QUERY_KEYS,
     ],
   );
 

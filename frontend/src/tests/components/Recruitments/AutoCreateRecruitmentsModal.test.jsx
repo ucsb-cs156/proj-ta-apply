@@ -64,7 +64,7 @@ describe("AutoCreateRecruitmentsModal tests", () => {
       [...screen.getByTestId("Auto-quarter").querySelectorAll("option")].map(
         (o) => o.textContent,
       ),
-    ).toEqual(["F26", "W27", "S27", "M27", "F27", "W28"]);
+    ).toEqual(["F25", "W26", "S26", "M26", "F26", "W27"]);
     expect(screen.getByTestId("Auto-ta")).toHaveTextContent(
       "A TA recruitment for W27 will be created.",
     );
@@ -169,19 +169,19 @@ describe("AutoCreateRecruitmentsModal tests", () => {
   });
 
   test("choosing another quarter recomputes the plan", async () => {
-    renderModal([recruitment("20272", "TA"), recruitment("20272", "ULA")]);
+    renderModal([recruitment("20262", "TA"), recruitment("20262", "ULA")]);
     expect(screen.queryByTestId("Auto-nothing")).not.toBeInTheDocument();
 
-    await userEvent.selectOptions(screen.getByTestId("Auto-quarter"), "20272");
+    await userEvent.selectOptions(screen.getByTestId("Auto-quarter"), "20262");
 
-    expect(screen.getByTestId("Auto-nothing")).toHaveTextContent("S27");
-    await userEvent.selectOptions(screen.getByTestId("Auto-quarter"), "20274");
+    expect(screen.getByTestId("Auto-nothing")).toHaveTextContent("S26");
+    await userEvent.selectOptions(screen.getByTestId("Auto-quarter"), "20263");
     expect(screen.getByTestId("Auto-ta")).toHaveTextContent(
-      "A TA recruitment for F27 will be created.",
+      "A TA recruitment for M26 will be created.",
     );
     await userEvent.click(screen.getByTestId("Auto-create"));
     await waitFor(() => expect(posts()).toHaveLength(2));
-    expect(posts().map((r) => r.params.quarter)).toEqual(["20274", "20274"]);
+    expect(posts().map((r) => r.params.quarter)).toEqual(["20263", "20263"]);
   });
 
   test("Cancel and the close control send nothing", async () => {
