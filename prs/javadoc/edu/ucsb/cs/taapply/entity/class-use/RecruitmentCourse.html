@@ -66,6 +66,8 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.services">edu.ucsb.cs.taapply.services</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.services.fake">edu.ucsb.cs.taapply.services.fake</a></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <section class="class-uses">
 <ul class="block-list">
@@ -112,12 +114,18 @@ loadScripts(document, 'script');</script>
 <div class="block">Returns the value of the <code>courses</code> record component.</div>
 </div>
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentCoursesController.</span><code><a href="../../controller/RecruitmentCoursesController.html#refresh(java.lang.Long)" class="member-name-link">refresh</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">DeveloperAllocationsController.</span><code><a href="../../controller/DeveloperAllocationsController.html#fakeAllocations(java.lang.Long,int,edu.ucsb.cs.taapply.services.fake.FakeAllocationsService.Estimates,boolean)" class="member-name-link">fakeAllocations</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ int&nbsp;hiringTarget,
+ <a href="../../services/fake/FakeAllocationsService.Estimates.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeAllocationsService.Estimates</a>&nbsp;estimates,
+ boolean&nbsp;setVisibility)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">RecruitmentCoursesController.</span><code><a href="../../controller/RecruitmentCoursesController.html#setEnrollmentEstimates(java.lang.Long,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource)" class="member-name-link">setEnrollmentEstimates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
- <a href="../../enums/EnrollmentEstimateSource.html" title="enum class in edu.ucsb.cs.taapply.enums">EnrollmentEstimateSource</a>&nbsp;source)</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">RecruitmentCoursesController.</span><code><a href="../../controller/RecruitmentCoursesController.html#refresh(java.lang.Long)" class="member-name-link">refresh</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentCoursesController.</span><code><a href="../../controller/RecruitmentCoursesController.html#setEnrollmentEstimates(java.lang.Long,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource)" class="member-name-link">setEnrollmentEstimates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ <a href="../../enums/EnrollmentEstimateSource.html" title="enum class in edu.ucsb.cs.taapply.enums">EnrollmentEstimateSource</a>&nbsp;source)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <div class="caption"><span>Methods in <a href="../../controller/package-summary.html">edu.ucsb.cs.taapply.controller</a> with parameters of type <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span></div>
 <div class="summary-table three-column-summary">
@@ -301,6 +309,25 @@ same course and section.</div>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses)</code></div>
 <div class="col-last odd-row-color">
 <div class="block">The figures for every course given, keyed by course id, loading the applications once.</div>
+</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="edu.ucsb.cs.taapply.services.fake">
+<h2>Uses of <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a> in <a href="../../services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a></h2>
+<div class="caption"><span>Methods in <a href="../../services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a> that return types with arguments of type <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">FakeAllocationsService.</span><code><a href="../../services/fake/FakeAllocationsService.html#fake(java.lang.Long,int,edu.ucsb.cs.taapply.services.fake.FakeAllocationsService.Estimates,boolean)" class="member-name-link">fake</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+ int&nbsp;hiringTarget,
+ <a href="../../services/fake/FakeAllocationsService.Estimates.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeAllocationsService.Estimates</a>&nbsp;estimates,
+ boolean&nbsp;setVisibility)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Fakes the recruitment's hiring target and allocations.</div>
 </div>
 </div>
 </section>

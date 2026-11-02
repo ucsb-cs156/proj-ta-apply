@@ -11,6 +11,7 @@ edu.ucsb.cs.taapply.model
 edu.ucsb.cs.taapply.models
 edu.ucsb.cs.taapply.repository
 edu.ucsb.cs.taapply.services
+edu.ucsb.cs.taapply.services.fake
 edu.ucsb.cs.taapply.services.wiremock
 edu.ucsb.cs.taapply.startup
 edu.ucsb.cs.taapply.utilities
