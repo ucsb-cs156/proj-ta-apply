@@ -804,4 +804,91 @@ describe("CandidateTable", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("Save failed:");
   });
+
+  test("a failure that is null is not taken for a refusal", async () => {
+    const put = vi.spyOn(axios, "put").mockRejectedValueOnce(null);
+    table({ onConflict: vi.fn() });
+
+    fireEvent.change(input(), { target: { value: "2" } });
+    await settle();
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Save failed:");
+    put.mockRestore();
+  });
+
+  test("a refusal of an edit that has since been replaced says nothing about the old one", async () => {
+    mock.resetHandlers();
+    const resolvers = [];
+    mock.onPut().reply(() => new Promise((resolve) => resolvers.push(resolve)));
+    table({ onConflict: () => new Promise(() => {}) });
+
+    fireEvent.change(input(), { target: { value: "2" } });
+    fireEvent.change(input(), { target: { value: "3" } });
+    await act(async () => resolvers[0](conflict()));
+    await settle();
+
+    expect(screen.queryByText(CHANGED)).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saving...");
+  });
+
+  test("a row that was saved before the refusal shows the list read again, not what was typed", async () => {
+    mock.resetHandlers();
+    mock.onPut(`${apiUrl}/1/rank`).reply(200, { rank: 2, version: 4 });
+    mock.onPut(`${apiUrl}/2/rank`).reply(...conflict());
+    table({
+      onConflict: async () =>
+        reread().map((c) => ({
+          ...c,
+          rank: c.applicationId === 1 ? 5 : c.rank,
+        })),
+    });
+
+    fireEvent.change(input(), { target: { value: "2" } });
+    await settle();
+    fireEvent.change(input("Grace Hopper"), { target: { value: "4" } });
+    await settle();
+
+    expect(input()).toHaveValue(5);
+    expect(input("Grace Hopper")).toHaveValue(4);
+  });
+
+  test("candidates the list read again leaves unranked sort after the ranked ones", async () => {
+    mock.resetHandlers();
+    mock.onPut().reply(...conflict());
+    table({
+      onConflict: async () =>
+        candidatesFixtures.map((c) => ({
+          ...c,
+          rank: c.applicationId === 4 ? 1 : null,
+          rankingVersion: 9,
+        })),
+    });
+
+    fireEvent.change(input("Grace Hopper"), { target: { value: "2" } });
+    await settle();
+
+    expect(names()).toEqual(["Katherine", "Ada", "Grace", "Alan"]);
+  });
+
+  test("a save made while an earlier one is still being sent waits for it", async () => {
+    mock.resetHandlers();
+    const resolvers = [];
+    mock.onPut().reply(() => new Promise((resolve) => resolvers.push(resolve)));
+    table();
+
+    fireEvent.change(input(), { target: { value: "2" } });
+    fireEvent.change(input("Grace Hopper"), { target: { value: "4" } });
+    await act(async () => resolvers[0]([200, { rank: 2, version: 4 }]));
+    await settle();
+    expect(mock.history.put).toHaveLength(2);
+
+    fireEvent.change(input("Alan Turing"), { target: { value: "1" } });
+    await settle();
+
+    expect(mock.history.put).toHaveLength(2);
+    await act(async () => resolvers[1]([200, { rank: 4, version: 5 }]));
+    await settle();
+    expect(mock.history.put).toHaveLength(3);
+    expect(mock.history.put[2].params).toEqual({ version: 5 });
+  });
 });

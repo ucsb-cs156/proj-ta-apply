@@ -191,26 +191,23 @@ export default function CandidateTable({
         }
       } catch (error) {
         if (isConflict(error)) {
+          // Stryker disable next-line AssignmentOperator : any change makes the queued attempts stale
           generation.current += 1;
           refuse();
           const fresh = (await onConflict?.()) ?? null;
           if (fresh !== null) {
             version.current = fresh[0]?.rankingVersion ?? version.current;
-            if (active.current) {
-              const read = Object.fromEntries(
-                fresh.map((c) => [c.applicationId, c.rank?.toString() ?? ""]),
-              );
-              // What the server now has, except in the boxes that hold an edit it has not accepted.
-              setRanks((previous) => ({
-                ...read,
-                ...Object.fromEntries(
-                  [...unsaved.current]
-                    .filter((id) => id in previous)
-                    .map((id) => [id, previous[id]]),
-                ),
-              }));
-              setDefaultRanks(read);
-            }
+            const read = Object.fromEntries(
+              fresh.map((c) => [c.applicationId, c.rank?.toString() ?? ""]),
+            );
+            // What the server now has, except in the boxes that hold an edit it has not accepted.
+            setRanks((previous) => ({
+              ...read,
+              ...Object.fromEntries(
+                [...unsaved.current].map((id) => [id, previous[id]]),
+              ),
+            }));
+            setDefaultRanks(read);
           }
         } else if (current()) {
           setStates((previous) => ({

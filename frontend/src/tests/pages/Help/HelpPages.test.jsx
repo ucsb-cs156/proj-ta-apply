@@ -73,6 +73,12 @@ function expectRankingSimultaneousEditingSection(page, intro) {
   );
   expect(meaning).toHaveTextContent("press Save again");
   expect(meaning).toHaveTextContent(
+    "from a copy of the list that is out of date, and say Rankings for this course changed",
+  );
+  expect(meaning).toHaveTextContent(
+    "your change has not been saved. The table is then read again",
+  );
+  expect(meaning).toHaveTextContent(
     "Rankings of a different course never cause a warning",
   );
   const modal = screen.getByTestId(`${page}-simultaneous-editing-modal`);
@@ -91,6 +97,7 @@ function expectRankingSimultaneousEditingSection(page, intro) {
     "Continue anyway",
   ]);
   expect(choices).toHaveTextContent("Your rankings are safe in the other one");
+  expect(choices).toHaveTextContent("then resume here keeps the page covered");
   expect(choices).toHaveTextContent("closes by itself within a few seconds");
   expect(choices).toHaveTextContent("The box does not come back");
   const todo = screen.getByTestId(`${page}-simultaneous-editing-todo`);
@@ -724,11 +731,11 @@ describe("Help pages (issue #140)", () => {
       "Faculty rankings",
       "One recruitment course's ranking list",
       "ranking:<recruitmentCourseId>",
-      "#286",
+      "#287",
     ]);
     expect(rows[1].querySelector("a")).toHaveAttribute(
       "href",
-      "https://github.com/ucsb-cs156/proj-ta-apply/pull/286",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/287",
     );
     for (const phrase of [
       "bumped by every rank edit and by the Developer Mode fake rankings job",
