@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.entity.*;
 import edu.ucsb.cs.taapply.enums.*;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.model.CurrentUser;
 import edu.ucsb.cs.taapply.repository.*;
 import edu.ucsb.cs.taapply.services.CurrentUserService;
@@ -52,6 +53,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
 
   @org.springframework.test.context.bean.override.mockito.MockitoBean
   CurrentUserService currentUserService;
+
+  @org.springframework.test.context.bean.override.mockito.MockitoBean
+  edu.ucsb.cs.taapply.services.DeveloperModeService developerModeService;
 
   private static final String BASE = "/api/instructor/recruitments/10/courses/20/candidates";
   private Recruitment recruitment;
@@ -169,7 +173,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
             .courseInterests(Map.of("CMPSC   156", CourseInterest.NOT_INTERESTED))
             .build();
     Application absent = ignored.toBuilder().id(35L).courseInterests(Map.of()).build();
-    Application test = application.toBuilder().id(36L).testApplication(true).build();
+    Application test = application.toBuilder().id(36L).origin(ApplicationOrigin.ADMIN_TEST).build();
     application.setCourseInterests(Map.of("CMPSC   156", CourseInterest.WOULD_CONSIDER));
     application.setSecondChoiceCourse("CMPSC   156");
     when(applicationRepository.findByRecruitmentIdOrderByIdAsc(10L))
@@ -318,7 +322,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
             put(BASE + "/999/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
     mockMvc.perform(get(BASE + "/999")).andExpect(status().isForbidden());
-    application.setTestApplication(true);
+    application.setOrigin(ApplicationOrigin.ADMIN_TEST);
     mockMvc.perform(get(BASE + "/30")).andExpect(status().isForbidden());
     mockMvc
         .perform(
@@ -405,7 +409,8 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     application.setFirstChoiceCourse("CMPSC   156");
     Application otherCourseApplication =
         application.toBuilder().id(31L).firstChoiceCourse("OTHER").build();
-    Application testApplication = application.toBuilder().id(32L).testApplication(true).build();
+    Application testApplication =
+        application.toBuilder().id(32L).origin(ApplicationOrigin.ADMIN_TEST).build();
     // Cancelled by the applicant: its ranking no longer counts (issue #199).
     Application cancelledApplication =
         application.toBuilder().id(33L).status(ApplicationReviewStatus.CANCELLED).build();
@@ -782,7 +787,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
         actual);
     assertFalse(actual.contains("adminComments"));
     assertFalse(actual.contains("status"));
-    assertFalse(actual.contains("testApplication"));
+    assertFalse(actual.contains("origin"));
   }
 
   // ---- issue #199: cancelled applications and the not-interested opt-in ----
@@ -810,7 +815,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     Application cancelledTest =
         application.toBuilder()
             .id(33L)
-            .testApplication(true)
+            .origin(ApplicationOrigin.ADMIN_TEST)
             .status(ApplicationReviewStatus.CANCELLED)
             .build();
     return List.of(application, cancelled, notInterested, cancelledTest);

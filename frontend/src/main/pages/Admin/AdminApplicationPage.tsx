@@ -13,6 +13,7 @@ import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import {
   adminApplicationEditPath,
   applicationsListPath,
+  originLabel,
   submittedText,
 } from "main/utils/adminApplications";
 import AuditTrailTable, {
@@ -115,8 +116,8 @@ export default function AdminApplicationPage(): React.JSX.Element {
               Edit
             </Link>
             <p data-testid="AdminApplicationPage-about">
-              {application.testApplication ? "Test application" : "Application"}{" "}
-              from {application.email}, submitted{" "}
+              {originLabel(application.origin) || "Application"} from{" "}
+              {application.email}, submitted{" "}
               {submittedText(application.submittedAt)}. Status:{" "}
               {application.status}.
             </p>

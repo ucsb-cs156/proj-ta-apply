@@ -22,7 +22,7 @@ export type ApplicationSummaryData = Omit<
   Application,
   | "adminComments"
   | "postApplicationComments"
-  | "testApplication"
+  | "origin"
   | "status"
   | "cancelledAt"
   | "cancellationReason"

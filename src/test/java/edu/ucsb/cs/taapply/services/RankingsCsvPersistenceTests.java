@@ -7,6 +7,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
@@ -29,6 +30,10 @@ import org.springframework.test.context.ActiveProfiles;
 @Import({RankingsCsvService.class, AssignmentsService.class})
 class RankingsCsvPersistenceTests {
   @Autowired RankingsCsvService service;
+
+  @org.springframework.test.context.bean.override.mockito.MockitoBean
+  DeveloperModeService developerModeService;
+
   @Autowired RecruitmentRepository recruitments;
   @Autowired RecruitmentCourseRepository courses;
   @Autowired ApplicationRepository applications;
@@ -55,7 +60,7 @@ class RankingsCsvPersistenceTests {
         Application.builder()
             .recruitmentId(recruitment.getId())
             .email(email)
-            .testApplication(test)
+            .origin(test ? ApplicationOrigin.ADMIN_TEST : ApplicationOrigin.APPLICANT)
             .build());
   }
 

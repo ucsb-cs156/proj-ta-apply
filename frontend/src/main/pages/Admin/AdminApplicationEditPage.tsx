@@ -15,7 +15,10 @@ import {
   type ApplicationPayload,
 } from "main/utils/applicationFields";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
-import { adminApplicationPath } from "main/utils/adminApplications";
+import {
+  adminApplicationPath,
+  originLabel,
+} from "main/utils/adminApplications";
 
 /**
  * A student's application open for an admin to correct: /admin/applications/:id/edit. The same
@@ -130,9 +133,9 @@ export default function AdminApplicationEditPage(): React.JSX.Element {
         {application && (
           <>
             <p data-testid="AdminApplicationEditPage-about">
-              {application.testApplication ? "Test application" : "Application"}{" "}
-              from {application.email}. Every field you change is recorded in
-              the audit trail.
+              {originLabel(application.origin) || "Application"} from{" "}
+              {application.email}. Every field you change is recorded in the
+              audit trail.
             </p>
             <Button
               variant="secondary"

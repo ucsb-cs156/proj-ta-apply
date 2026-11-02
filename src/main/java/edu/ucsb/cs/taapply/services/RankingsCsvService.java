@@ -32,6 +32,7 @@ public class RankingsCsvService {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired AssignmentsService assignmentsService;
+  @Autowired DeveloperModeService developerModeService;
 
   /** Labels, in the first column, of the three planning rows under the header. */
   static final String ALLOCATION_ROW = "Allocation";
@@ -57,8 +58,9 @@ public class RankingsCsvService {
     List<Application> applications =
         applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId());
     // Counted like the Assignments page: real, uncancelled applicants only.
+    boolean developerModeOn = developerModeService.isOn();
     Map<Long, Integer> assigned =
-        AssignmentsService.assignedCounts(AssignmentsService.real(applications));
+        AssignmentsService.assignedCounts(AssignmentsService.real(applications, developerModeOn));
     String[] allocationRow = planningRow(ALLOCATION_ROW, columns.size() + courses.size());
     String[] assignedRow = planningRow(ASSIGNED_ROW, allocationRow.length);
     String[] leftRow = planningRow(LEFT_ROW, allocationRow.length);
@@ -79,7 +81,7 @@ public class RankingsCsvService {
     writer.writeNext(assignedRow);
     writer.writeNext(leftRow);
     for (Application application : applications) {
-      if (!application.isTestApplication()) {
+      if (ApplicationVisibility.isReal(application, developerModeOn)) {
         writer.writeNext(
             columns.stream()
                 .map(c -> ApplicationCsvService.text(c.value().apply(application)))

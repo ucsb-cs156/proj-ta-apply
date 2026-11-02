@@ -30,7 +30,7 @@ type RecruitmentCourseLike = {
  * /admin/recruitments/:recruitmentId/test-application
  *
  * <p>The form is the same component applicants use, fed the same way, so what the admin sees is
- * what an applicant would see. Submitting saves a real row flagged testApplication=true; the
+ * what an applicant would see. Submitting saves a real row marked origin ADMIN_TEST; the
  * backend skips the type and open/closed checks, so a recruitment can be tried before it opens.
  */
 export default function TestApplicationPage(): React.JSX.Element {
@@ -105,7 +105,8 @@ export default function TestApplicationPage(): React.JSX.Element {
 
   const saved = (mine ?? []).find(
     (a) =>
-      String(a.recruitmentId) === String(recruitmentId) && a.testApplication,
+      String(a.recruitmentId) === String(recruitmentId) &&
+      a.origin === "ADMIN_TEST",
   );
 
   const mutation = useBackendMutation<ApplicationPayload, Application>(

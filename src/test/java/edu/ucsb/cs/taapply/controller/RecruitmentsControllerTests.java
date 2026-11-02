@@ -19,8 +19,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
+import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJob;
@@ -30,11 +32,13 @@ import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
+import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs156.jobs.services.JobService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,6 +55,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @Import(edu.ucsb.cs.taapply.testconfig.TestConfig.class)
 public class RecruitmentsControllerTests extends ControllerTestCase {
 
+  @MockitoBean DeveloperModeService developerModeService;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean JobService jobService;
@@ -601,8 +606,15 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             List.of(
                 recruitment(2L, "20261", RecruitmentType.ULA),
                 recruitment(1L, "20261", RecruitmentType.TA)));
-    when(applicationRepository.countByRecruitmentIdAndTestApplicationFalse(1L)).thenReturn(15L);
-    when(applicationRepository.countByRecruitmentIdAndTestApplicationFalse(2L)).thenReturn(0L);
+    List<Application> fifteen = new ArrayList<>();
+    for (int i = 0; i < 15; i++) {
+      fifteen.add(Application.builder().recruitmentId(1L).build());
+    }
+    // Test and fake applications do not count while Developer Mode is off (issue #219).
+    fifteen.add(Application.builder().origin(ApplicationOrigin.ADMIN_TEST).build());
+    fifteen.add(Application.builder().origin(ApplicationOrigin.DEVELOPER_MODE).build());
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(1L)).thenReturn(fifteen);
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(2L)).thenReturn(List.of());
 
     MvcResult response =
         mockMvc
@@ -611,6 +623,29 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertEquals("{\"1\":15,\"2\":0}", response.getResponse().getContentAsString());
+  }
+
+  /** Developer Mode counts test and fake applications as real, so every feature can be tried. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void test_and_fake_applications_count_in_developer_mode() throws Exception {
+    when(developerModeService.isOn()).thenReturn(true);
+    when(recruitmentRepository.findAll())
+        .thenReturn(List.of(recruitment(1L, "20261", RecruitmentType.TA)));
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(1L))
+        .thenReturn(
+            List.of(
+                Application.builder().build(),
+                Application.builder().origin(ApplicationOrigin.ADMIN_TEST).build(),
+                Application.builder().origin(ApplicationOrigin.DEVELOPER_MODE).build()));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/recruitments/applicationCounts"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals("{\"1\":3}", response.getResponse().getContentAsString());
   }
 
   @WithMockUser(roles = {"ADMIN"})

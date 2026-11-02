@@ -36,7 +36,7 @@ public class ApplicationCsvService {
           new Column("submittedAt", Application::getSubmittedAt),
           new Column("email", Application::getEmail),
           new Column("status", Application::getStatus),
-          new Column("testApplication", Application::isTestApplication),
+          new Column("origin", Application::getOrigin),
           new Column("firstName", Application::getFirstName),
           new Column("middleName", Application::getMiddleName),
           new Column("lastName", Application::getLastName),

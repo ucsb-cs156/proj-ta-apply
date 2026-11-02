@@ -4,6 +4,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.OtherCampusJob;
@@ -245,7 +246,7 @@ public class ApplicationsController extends ApiController {
       summary = "Enter a test application as an admin",
       description =
           "Lets an admin preview the form for a recruitment by submitting it as if they were an"
-              + " applicant. The result is saved with testApplication=true. The type and open/closed"
+              + " applicant. The result is saved with origin=ADMIN_TEST. The type and open/closed"
               + " checks that apply to real applicants are skipped, so a recruitment can be tested"
               + " before it opens. An admin has at most one test application per recruitment:"
               + " submitting again replaces the earlier answers.")
@@ -272,7 +273,7 @@ public class ApplicationsController extends ApiController {
 
     // An admin who is also a grad student may have a real application here; a test run must
     // never silently turn that into a test application.
-    if (existing.isPresent() && !existing.get().isTestApplication()) {
+    if (existing.isPresent() && existing.get().getOrigin() != ApplicationOrigin.ADMIN_TEST) {
       throw new IllegalArgumentException(
           "You already have a real application for this recruitment");
     }
@@ -284,7 +285,7 @@ public class ApplicationsController extends ApiController {
                     .recruitmentId(recruitmentId)
                     .email(currentEmail())
                     .status(ApplicationReviewStatus.PENDING)
-                    .testApplication(true)
+                    .origin(ApplicationOrigin.ADMIN_TEST)
                     .build());
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);

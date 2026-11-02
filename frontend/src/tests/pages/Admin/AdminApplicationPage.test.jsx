@@ -191,6 +191,25 @@ describe("AdminApplicationPage tests", () => {
     ).toBeNull();
   });
 
+  test("a fake application from developer mode says so", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    axiosMock
+      .onGet("/api/admin/applications", { params: { id: "9" } })
+      .reply(200, {
+        ...applicationsFixtures.oneTestApplication,
+        origin: "DEVELOPER_MODE",
+        id: 9,
+        noticeVersionId: null,
+      });
+    renderPage(9);
+
+    expect(
+      await screen.findByTestId("AdminApplicationPage-about"),
+    ).toHaveTextContent(
+      "Fake application (developer mode) from admin@ucsb.edu",
+    );
+  });
+
   /** Also the case of a recruitment the page cannot find: the heading has no suffix, TA form. */
   test("a test application says so", async () => {
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
@@ -205,7 +224,7 @@ describe("AdminApplicationPage tests", () => {
 
     expect(
       await screen.findByTestId("AdminApplicationPage-about"),
-    ).toHaveTextContent("Test application from admin@ucsb.edu");
+    ).toHaveTextContent("Test application (admin) from admin@ucsb.edu");
     expect(
       screen.getByRole("heading", { level: 1, name: "Application 9" }),
     ).toBeInTheDocument();

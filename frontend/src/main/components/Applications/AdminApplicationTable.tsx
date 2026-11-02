@@ -3,6 +3,7 @@ import type { Cell } from "@tanstack/react-table";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import type { Application } from "main/components/Applications/ApplicationTable";
+import ApplicationOriginBadge from "main/components/Applications/ApplicationOriginBadge";
 import {
   adminApplicationEditPath,
   adminApplicationPath,
@@ -74,14 +75,11 @@ export default function AdminApplicationTable({
             >
               {application.id}
             </Link>
-            {application.testApplication && (
-              <span
-                className="badge text-bg-secondary ms-2"
-                data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-id-test`}
-              >
-                test
-              </span>
-            )}
+            <ApplicationOriginBadge
+              origin={application.origin}
+              short
+              testId={`${testIdPrefix}-cell-row-${cell.row.index}-col-id-test`}
+            />
           </>
         );
       },

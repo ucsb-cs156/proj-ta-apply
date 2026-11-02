@@ -10,6 +10,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
@@ -29,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class RankingsCsvServiceTests {
+  @Mock DeveloperModeService developerModeService;
   @Mock ApplicationRepository applicationRepository;
   @Mock RecruitmentCourseRepository recruitmentCourseRepository;
   @Mock CandidateRankingRepository candidateRankingRepository;
@@ -177,7 +179,7 @@ class RankingsCsvServiceTests {
     Application first = applicant(1);
     first.setTentativeAssignmentId(40L);
     Application test = applicant(2);
-    test.setTestApplication(true);
+    test.setOrigin(ApplicationOrigin.ADMIN_TEST);
     test.setTentativeAssignmentId(10L);
     Application blank = Application.builder().id(4L).recruitmentId(7L).build();
     Application noInterests = applicant(5);
