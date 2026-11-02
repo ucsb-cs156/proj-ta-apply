@@ -713,6 +713,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
           course lists are filled in the usual way; nothing is opened, and no
           hiring target is set.
         </p>
+        <p data-testid="HelpAdminsPage-fake-allocations">
+          While developer mode is on, the footer of a recruitment&apos;s Courses
+          page has a <strong>Fake Hiring Targets and Allocations</strong>{" "}
+          button. It sets the recruitment&apos;s hiring target (one position per
+          course unless you choose another number, up to three per course),
+          fills in the enrollment estimates from the schedule&apos;s maximum
+          enrollment, from current enrollment, or leaves the ones already
+          entered, and then auto-assigns the allocations across the courses,
+          exactly as the <em>Auto assign allocations</em> button does. A
+          checkbox, ticked by default, also sets allocation visibility to{" "}
+          <strong>Faculty see their own courses</strong>, recorded in the change
+          history like any other visibility change.
+        </p>
       </div>
     </BasicLayout>
   );

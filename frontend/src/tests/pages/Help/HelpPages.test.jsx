@@ -309,6 +309,27 @@ describe("Help pages (issue #140)", () => {
       heading.compareDocumentPosition(autoCreate) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    // Issue #225: the Fake Hiring Targets and Allocations button.
+    const fake = screen.getByTestId("HelpAdminsPage-fake-allocations");
+    expect(fake).toHaveTextContent(
+      "While developer mode is on, the footer of a recruitment's Courses page has a Fake Hiring Targets and Allocations button.",
+    );
+    expect(fake).toHaveTextContent(
+      "one position per course unless you choose another number, up to three per course",
+    );
+    expect(fake).toHaveTextContent(
+      "from the schedule's maximum enrollment, from current enrollment, or leaves the ones already entered",
+    );
+    expect(fake).toHaveTextContent(
+      "auto-assigns the allocations across the courses, exactly as the Auto assign allocations button does.",
+    );
+    expect(fake).toHaveTextContent(
+      "A checkbox, ticked by default, also sets allocation visibility to Faculty see their own courses, recorded in the change history like any other visibility change.",
+    );
+    expect(
+      autoCreate.compareDocumentPosition(fake) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(
       document
         .getElementById("developer-info")

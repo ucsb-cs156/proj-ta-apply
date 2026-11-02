@@ -1388,4 +1388,146 @@ describe("RecruitmentCoursesPage tests", () => {
       screen.queryByTestId("RecruitmentCoursesPage-publish-button"),
     ).not.toBeInTheDocument();
   });
+
+  /** Issue #225: Developer Mode's Fake Hiring Targets and Allocations, in the footer. */
+  test("with developer mode on, the footer button opens the modal sized to the non-removed courses", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
+    axiosMock
+      .onPost("/api/admin/developer/fakeAllocations")
+      .reply(200, notRemoved);
+    // Even if a removed course is in the list, it does not count towards the default target.
+    axiosMock
+      .onGet("/api/recruitmentcourses/all", {
+        params: { recruitmentId: "7", includeRemoved: false },
+      })
+      .reply(200, recruitmentCoursesFixtures.fourCourses);
+    expect(notRemoved.length).toBeLessThan(
+      recruitmentCoursesFixtures.fourCourses.length,
+    );
+    renderPage();
+
+    const button = await screen.findByTestId(
+      "RecruitmentCoursesPage-fake-allocations",
+    );
+    expect(button).toHaveTextContent("Fake Hiring Targets and Allocations");
+    expect(
+      screen.queryByTestId(
+        "RecruitmentCoursesPage-fake-allocations-modal-modal",
+      ),
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(button);
+    expect(
+      await screen.findByTestId(
+        "RecruitmentCoursesPage-fake-allocations-modal-modal",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId(
+        "RecruitmentCoursesPage-fake-allocations-modal-target",
+      ),
+    ).toHaveValue(notRemoved.length);
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-fake-allocations-modal-fake"),
+    );
+    await waitFor(() =>
+      expect(
+        axiosMock.history.post.filter(
+          (r) => r.url === "/api/admin/developer/fakeAllocations",
+        )[0].params,
+      ).toEqual({
+        recruitmentId: "7",
+        hiringTarget: notRemoved.length,
+        estimates: "MAX",
+        setVisibility: true,
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId(
+          "RecruitmentCoursesPage-fake-allocations-modal-modal",
+        ),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  test("the fake allocations button is disabled while the courses load, and when there are none", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
+    // The courses never arrive: the button is there, but there is nothing to fake yet.
+    axiosMock
+      .onGet("/api/recruitmentcourses/all", {
+        params: { recruitmentId: "7", includeRemoved: false },
+      })
+      .reply(() => new Promise(() => {}));
+    const { unmount } = renderPage();
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-fake-allocations"),
+    ).toBeDisabled();
+    unmount();
+
+    // A recruitment whose every course was removed has nothing to allocate to either.
+    axiosMock
+      .onGet("/api/recruitmentcourses/all", {
+        params: { recruitmentId: "7", includeRemoved: false },
+      })
+      .reply(200, []);
+    renderPage();
+    const button = await screen.findByTestId(
+      "RecruitmentCoursesPage-fake-allocations",
+    );
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/recruitmentcourses/all",
+        ).length,
+      ).toBeGreaterThan(1),
+    );
+    expect(button).toBeDisabled();
+  });
+
+  test("Cancel closes the fake allocations modal", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: true });
+    renderPage();
+
+    await userEvent.click(
+      await screen.findByTestId("RecruitmentCoursesPage-fake-allocations"),
+    );
+    await userEvent.click(
+      await screen.findByTestId(
+        "RecruitmentCoursesPage-fake-allocations-modal-cancel",
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId(
+          "RecruitmentCoursesPage-fake-allocations-modal-modal",
+        ),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  test("there is no fake allocations button while developer mode is off", async () => {
+    axiosMock
+      .onGet("/api/developerMode")
+      .reply(200, { available: true, on: false });
+    renderPage();
+
+    await screen.findByTestId("RecruitmentCoursesPage-publish-button");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/developerMode")
+          .length,
+      ).toBeGreaterThan(0),
+    );
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-fake-allocations"),
+    ).not.toBeInTheDocument();
+  });
 });
