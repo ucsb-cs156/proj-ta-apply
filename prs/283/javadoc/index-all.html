@@ -764,7 +764,16 @@ order.</div>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a> - Interface in <a href="edu/ucsb/cs/taapply/concurrency/package-summary.html">edu.ucsb.cs.taapply.concurrency</a></dt>
 <dd>
 <div class="block">Notices when more than one client (a tab, a window, a device) is working on the same thing at
-once (issue #273).</div>
+once, and who they are (issue #273).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a> - Record Class in <a href="edu/ucsb/cs/taapply/concurrency/package-summary.html">edu.ucsb.cs.taapply.concurrency</a></dt>
+<dd>
+<div class="block">Who a client is, as the application tells the detector (issue #273): an opaque, stable key for
+the person, and the label to show other people.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#%3Cinit%3E(java.lang.String,java.lang.String)" class="member-name-link">ClientIdentity(String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>ClientIdentity</code> record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/HiringDecisions.html#CLOSE_APPLICATIONS_FIRST" class="member-name-link">CLOSE_APPLICATIONS_FIRST</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/HiringDecisions.html" title="class in edu.ucsb.cs.taapply.services">HiringDecisions</a></dt>
 <dd>&nbsp;</dd>
@@ -789,8 +798,8 @@ six months after it closes (issue #107), as the place for what has changed since
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ConcurrencyHeaders.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">ConcurrencyHeaders</a> - Class in <a href="edu/ucsb/cs/taapply/concurrency/package-summary.html">edu.ucsb.cs.taapply.concurrency</a></dt>
 <dd>
-<div class="block">The names of the HTTP headers the multi-tab warning uses (issue #273), and the one rule about
-what a client may send.</div>
+<div class="block">The one HTTP header the multi-tab warning uses (issue #273), and the rule about what a client may
+send in it.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UsersPageDTO.html#content()" class="member-name-link">content()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UsersPageDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UsersPageDTO</a></dt>
 <dd>
@@ -1231,6 +1240,18 @@ both Summer and Fall are reachable.</div>
 <dt><a href="edu/ucsb/cs/taapply/errors/EntityNotFoundException.html#%3Cinit%3E(java.lang.String)" class="member-name-link">EntityNotFoundException(String)</a> - Constructor for exception class edu.ucsb.cs.taapply.errors.<a href="edu/ucsb/cs/taapply/errors/EntityNotFoundException.html" title="class in edu.ucsb.cs.taapply.errors">EntityNotFoundException</a></dt>
 <dd>
 <div class="block">For an entity looked up by something other than its id.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/Presence.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
 <dd>
@@ -1820,6 +1841,18 @@ applicant, and anyone in the admin or instructor tables whatever their address.<
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApiController.html#handleUpstreamApiException(java.lang.Throwable)" class="member-name-link">handleUpstreamApiException(Throwable)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/Presence.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -2031,9 +2064,14 @@ same course and section.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#heartbeat(java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/concurrency/ConcurrencyHeaders.html#HEARTBEAT_SECONDS" class="member-name-link">HEARTBEAT_SECONDS</a> - Static variable in class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ConcurrencyHeaders.html" title="class in edu.ucsb.cs.taapply.concurrency">ConcurrencyHeaders</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#heartbeat(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">heartbeat(String, String, ClientIdentity)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
 <dd>
-<div class="block">Response: how often, in seconds, the client should send a heartbeat.</div>
+<div class="block">The answer to a heartbeat: records the client, then says who else is active and how often to
+beat.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/Presence.html#heartbeatSeconds()" class="member-name-link">heartbeatSeconds()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>heartbeatSeconds</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/HiddenColumn.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">HiddenColumn</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
 <dd>
@@ -2150,8 +2188,8 @@ routing works correctly in production.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/InMemoryClientActivityDetector.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">InMemoryClientActivityDetector</a> - Class in <a href="edu/ucsb/cs/taapply/concurrency/package-summary.html">edu.ucsb.cs.taapply.concurrency</a></dt>
 <dd>
-<div class="block">A <a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> that keeps what it has seen in memory: for each resource key,
-the time each client was last seen.</div>
+<div class="block">A <a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> that keeps what it has seen in memory: for each resource key and
+client, when it was last seen and who it is.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/InMemoryClientActivityDetector.html#%3Cinit%3E(java.time.Clock,java.time.Duration)" class="member-name-link">InMemoryClientActivityDetector(Clock, Duration)</a> - Constructor for class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/InMemoryClientActivityDetector.html" title="class in edu.ucsb.cs.taapply.concurrency">InMemoryClientActivityDetector</a></dt>
 <dd>&nbsp;</dd>
@@ -2345,6 +2383,14 @@ stamp createdById/createdByEmail on Job records.</div>
 </dl>
 <h2 class="title" id="I:L">L</h2>
 <dl class="index">
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#label()" class="member-name-link">label()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>label</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#label()" class="member-name-link">label()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>label</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RecruitmentStepsService.Step.html#label()" class="member-name-link">label()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentStepsService.Step.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentStepsService.Step</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>label</code> record component.</div>
@@ -2506,6 +2552,10 @@ overwriting what is on file, and returns them oldest first (issue #151).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MAX_INTEREST" class="member-name-link">MAX_INTEREST</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#MAX_LABEL_LENGTH" class="member-name-link">MAX_LABEL_LENGTH</a> - Static variable in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
+<dd>
+<div class="block">The longest label that is kept, in characters (code points, so no character is split).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MAX_TA_PROFICIENCY" class="member-name-link">MAX_TA_PROFICIENCY</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>
 <div class="block">A TA applicant rates each topic 1 (lowest) to 5 (highest).</div>
@@ -2625,6 +2675,11 @@ trailing spaces removed.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/OtherCampusJob.html#NOT_SURE" class="member-name-link">NOT_SURE</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/OtherCampusJob.html" title="enum class in edu.ucsb.cs.taapply.enums">OtherCampusJob</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#note(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">note(String, String, ClientIdentity)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
+<dd>
+<div class="block">Records the client if it named itself usably (see <a href="edu/ucsb/cs/taapply/concurrency/ConcurrencyHeaders.html#usable(java.lang.String)"><code>ConcurrencyHeaders.usable(String)</code></a>); does
+nothing otherwise.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/NoticesController.NoticeContent.html#%3Cinit%3E(java.lang.String)" class="member-name-link">NoticeContent(String)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.NoticeContent.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController.NoticeContent</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>NoticeContent</code> record class.</div>
@@ -2676,11 +2731,6 @@ application form.</div>
 </dl>
 <h2 class="title" id="I:O">O</h2>
 <dl class="index">
-<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#observe(java.lang.String,java.lang.String)" class="member-name-link">observe(String, String)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
-<dd>
-<div class="block">What to put on a response: records the client, then returns the response headers that tell it
-whether others are active and how often to send a heartbeat.</div>
-</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CourseDetails.html#of(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">of(RecruitmentCourse)</a> - Static method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CourseDetails.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CourseDetails</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.InstructorRecruitment.html#of(edu.ucsb.cs.taapply.entity.Recruitment,java.util.List)" class="member-name-link">of(Recruitment, List)</a> - Static method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.InstructorRecruitment.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a></dt>
@@ -2719,10 +2769,6 @@ for an international student, a domestic one otherwise.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html#OTHER" class="member-name-link">OTHER</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ResidencyStatus</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/concurrency/ConcurrencyHeaders.html#OTHER_CLIENTS_ACTIVE" class="member-name-link">OTHER_CLIENTS_ACTIVE</a> - Static variable in class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ConcurrencyHeaders.html" title="class in edu.ucsb.cs.taapply.concurrency">ConcurrencyHeaders</a></dt>
-<dd>
-<div class="block">Response: <code>true</code> if some other client was seen on the same resource recently.</div>
-</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#otherCampusJob()" class="member-name-link">otherCampusJob()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>otherCampusJob</code> record component.</div>
@@ -2732,6 +2778,16 @@ for an international student, a domestic one otherwise.</div>
 <div class="block">Whether a ULA applicant will hold another UC job in the same quarter; asked so the hiring
 paperwork can be planned, never used to decide the application.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a> - Record Class in <a href="edu/ucsb/cs/taapply/concurrency/package-summary.html">edu.ucsb.cs.taapply.concurrency</a></dt>
+<dd>
+<div class="block">One other person who is active on the same resource (issue #273): the label to show, and whether
+they are the same person as the one asking, which means another tab, window or device of their
+own.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#%3Cinit%3E(java.lang.String,boolean)" class="member-name-link">OtherClient(String, boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>OtherClient</code> record class.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.OtherCourse.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">OtherCourse(String, String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.OtherCourse.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework.OtherCourse</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>OtherCourse</code> record class.</div>
@@ -2740,9 +2796,14 @@ paperwork can be planned, never used to decide the application.</div>
 <dd>
 <div class="block">Returns the value of the <code>otherCourses</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/Presence.html#others()" class="member-name-link">others()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>others</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#othersActive(java.lang.String,java.lang.String)" class="member-name-link">othersActive(String, String)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
 <dd>
-<div class="block">Whether any client other than this one has been seen on the resource within the window.</div>
+<div class="block">The other people active on the resource within the window, one for each person, in order of
+label.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/InMemoryClientActivityDetector.html#othersActive(java.lang.String,java.lang.String)" class="member-name-link">othersActive(String, String)</a> - Method in class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/InMemoryClientActivityDetector.html" title="class in edu.ucsb.cs.taapply.concurrency">InMemoryClientActivityDetector</a></dt>
 <dd>&nbsp;</dd>
@@ -2770,6 +2831,10 @@ paperwork can be planned, never used to decide the application.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#permNumber()" class="member-name-link">permNumber()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>permNumber</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#personKey()" class="member-name-link">personKey()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>personKey</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ClassLevel.html#PHD" class="member-name-link">PHD</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ClassLevel.html" title="enum class in edu.ucsb.cs.taapply.enums">ClassLevel</a></dt>
 <dd>&nbsp;</dd>
@@ -2837,6 +2902,15 @@ answer, never stored).</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/interceptors/RoleUpdateInterceptor.html#preHandle(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,java.lang.Object)" class="member-name-link">preHandle(HttpServletRequest, HttpServletResponse, Object)</a> - Method in class edu.ucsb.cs.taapply.interceptors.<a href="edu/ucsb/cs/taapply/interceptors/RoleUpdateInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">RoleUpdateInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/Presence.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a> - Record Class in <a href="edu/ucsb/cs/taapply/concurrency/package-summary.html">edu.ucsb.cs.taapply.concurrency</a></dt>
+<dd>
+<div class="block">What a heartbeat is answered with (issue #273): who else is active on the resource, and how often
+to send the next heartbeat.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/Presence.html#%3Cinit%3E(java.util.List,long)" class="member-name-link">Presence(List, long)</a> - Constructor for record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>Presence</code> record class.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#prevExperience()" class="member-name-link">prevExperience()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>prevExperience</code> record component.</div>
@@ -3051,11 +3125,11 @@ section when the estimates add up to nothing.</div>
 <div class="block">Records every difference between the snapshot taken before the edit and the application as it
 is now, and returns the rows written (empty when nothing changed).</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#record(java.lang.String,java.lang.String)" class="member-name-link">record(String, String)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">record(String, String, ClientIdentity)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
 <dd>
-<div class="block">Notes that this client has just been seen on the resource.</div>
+<div class="block">Notes that this client, who is this person, has just been seen on the resource.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/concurrency/InMemoryClientActivityDetector.html#record(java.lang.String,java.lang.String)" class="member-name-link">record(String, String)</a> - Method in class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/InMemoryClientActivityDetector.html" title="class in edu.ucsb.cs.taapply.concurrency">InMemoryClientActivityDetector</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/InMemoryClientActivityDetector.html#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">record(String, String, ClientIdentity)</a> - Method in class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/InMemoryClientActivityDetector.html" title="class in edu.ucsb.cs.taapply.concurrency">InMemoryClientActivityDetector</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html#recordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordChanges(RecruitmentAuditService.Snapshot, Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService</a></dt>
 <dd>
@@ -3322,6 +3396,10 @@ effect without requiring re-login.</div>
 </dl>
 <h2 class="title" id="I:S">S</h2>
 <dl class="index">
+<dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#samePerson()" class="member-name-link">samePerson()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>samePerson</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/NoticesController.html#save(edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.controller.NoticesController.NoticeContent)" class="member-name-link">save(RecruitmentType, NoticesController.NoticeContent)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#saveDraft(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">saveDraft(Long, Integer, String, ApplicationsController.ApplicationFields)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
@@ -3657,6 +3735,18 @@ for; ULA positions are funded for undergraduates only.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.ApplicationOptions.html#topics()" class="member-name-link">topics()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.ApplicationOptions.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController.ApplicationOptions</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>topics</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/Presence.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
 <dd>

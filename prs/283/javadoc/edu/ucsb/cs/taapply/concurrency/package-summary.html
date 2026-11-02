@@ -80,7 +80,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <div id="class-summary">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab4" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab4', 2)" class="table-tab">Record Classes</button></div>
 <div id="class-summary.tabpanel" role="tabpanel" aria-labelledby="class-summary-tab0">
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
@@ -88,17 +88,33 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color class-summary class-summary-tab1"><a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">Notices when more than one client (a tab, a window, a device) is working on the same thing at
-once (issue #273).</div>
+once, and who they are (issue #273).</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ConcurrencyHeaders.html" title="class in edu.ucsb.cs.taapply.concurrency">ConcurrencyHeaders</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">The names of the HTTP headers the multi-tab warning uses (issue #273), and the one rule about
-what a client may send.</div>
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="block">Who a client is, as the application tells the detector (issue #273): an opaque, stable key for
+the person, and the label to show other people.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="InMemoryClientActivityDetector.html" title="class in edu.ucsb.cs.taapply.concurrency">InMemoryClientActivityDetector</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ConcurrencyHeaders.html" title="class in edu.ucsb.cs.taapply.concurrency">ConcurrencyHeaders</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">A <a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> that keeps what it has seen in memory: for each resource key,
-the time each client was last seen.</div>
+<div class="block">The one HTTP header the multi-tab warning uses (issue #273), and the rule about what a client may
+send in it.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="InMemoryClientActivityDetector.html" title="class in edu.ucsb.cs.taapply.concurrency">InMemoryClientActivityDetector</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">A <a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> that keeps what it has seen in memory: for each resource key and
+client, when it was last seen and who it is.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab4">
+<div class="block">One other person who is active on the same resource (issue #273): the label to show, and whether
+they are the same person as the one asking, which means another tab, window or device of their
+own.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="block">What a heartbeat is answered with (issue #273): who else is active on the resource, and how often
+to send the next heartbeat.</div>
 </div>
 </div>
 </div>

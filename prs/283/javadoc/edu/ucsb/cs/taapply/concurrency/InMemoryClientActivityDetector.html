@@ -64,7 +64,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#window()" tabindex="0">window()</a></li>
-<li><a href="#record(java.lang.String,java.lang.String)" tabindex="0">record(String, String)</a></li>
+<li><a href="#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" tabindex="0">record(String, String, ClientIdentity)</a></li>
 <li><a href="#othersActive(java.lang.String,java.lang.String)" tabindex="0">othersActive(String, String)</a></li>
 </ol>
 </li>
@@ -88,11 +88,11 @@ loadScripts(document, 'script');</script>
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">InMemoryClientActivityDetector</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></span></div>
-<div class="block">A <a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> that keeps what it has seen in memory: for each resource key,
-the time each client was last seen.
+<div class="block">A <a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> that keeps what it has seen in memory: for each resource key and
+client, when it was last seen and who it is.
 
 <p>The clock and the window are given to the constructor, so that tests run in no time with a
-clock they control. Every <a href="#record(java.lang.String,java.lang.String)"><code>record(String, String)</code></a> also forgets everything older than the window, on every
+clock they control. Every <a href="#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)"><code>record(String, String, ClientIdentity)</code></a> also forgets everything older than the window, on every
 resource, so the state stays as small as the activity of the last window.
 
 <p><b>One server only.</b> A second server process would have a state of its own and the two
@@ -127,17 +127,19 @@ state moves to the database behind this same interface.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#othersActive(java.lang.String,java.lang.String)" class="member-name-link">othersActive</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Whether any client other than this one has been seen on the resource within the window.</div>
+<div class="block">The other people active on the resource within the window, one for each person, in order of
+label.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#record(java.lang.String,java.lang.String)" class="member-name-link">record</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">record</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId,
+ <a href="ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a>&nbsp;identity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Notes that this client has just been seen on the resource.</div>
+<div class="block">Notes that this client, who is this person, has just been seen on the resource.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#window()" class="member-name-link">window</a>()</code></div>
@@ -152,7 +154,7 @@ state moves to the database behind this same interface.</div>
 <code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-edu.ucsb.cs.taapply.concurrency.ClientActivityDetector">Methods inherited from interface&nbsp;<a href="ClientActivityDetector.html#method-summary" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></h3>
-<code><a href="ClientActivityDetector.html#observe(java.lang.String,java.lang.String)" title="observe(String, String)">observe</a>, <a href="ClientActivityDetector.html#suggestedHeartbeatSeconds()" title="suggestedHeartbeatSeconds()">suggestedHeartbeatSeconds</a></code></div>
+<code><a href="ClientActivityDetector.html#heartbeat(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" title="heartbeat(String, String, ClientIdentity)">heartbeat</a>, <a href="ClientActivityDetector.html#note(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" title="note(String, String, ClientIdentity)">note</a>, <a href="ClientActivityDetector.html#suggestedHeartbeatSeconds()" title="suggestedHeartbeatSeconds()">suggestedHeartbeatSeconds</a></code></div>
 </section>
 </li>
 </ul>
@@ -196,16 +198,17 @@ state moves to the database behind this same interface.</div>
 </section>
 </li>
 <li>
-<section class="detail" id="record(java.lang.String,java.lang.String)">
+<section class="detail" id="record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)">
 <h3>record</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">record</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ClientActivityDetector.html#record(java.lang.String,java.lang.String)">ClientActivityDetector</a></code></span></div>
-<div class="block">Notes that this client has just been seen on the resource.</div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId,
+ <a href="ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a>&nbsp;identity)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ClientActivityDetector.html#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)">ClientActivityDetector</a></code></span></div>
+<div class="block">Notes that this client, who is this person, has just been seen on the resource.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="ClientActivityDetector.html#record(java.lang.String,java.lang.String)">record</a></code>&nbsp;in interface&nbsp;<code><a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></code></dd>
+<dd><code><a href="ClientActivityDetector.html#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)">record</a></code>&nbsp;in interface&nbsp;<code><a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></code></dd>
 </dl>
 </div>
 </section>
@@ -214,10 +217,13 @@ state moves to the database behind this same interface.</div>
 <section class="detail" id="othersActive(java.lang.String,java.lang.String)">
 <h3>othersActive</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">othersActive</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a>&gt;</span>&nbsp;<span class="element-name">othersActive</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ClientActivityDetector.html#othersActive(java.lang.String,java.lang.String)">ClientActivityDetector</a></code></span></div>
-<div class="block">Whether any client other than this one has been seen on the resource within the window.</div>
+<div class="block">The other people active on the resource within the window, one for each person, in order of
+label. A person is marked <a href="OtherClient.html#samePerson()"><code>OtherClient.samePerson()</code></a> if they are the same person as the
+caller, which means the caller has another tab or window open. The caller's own client is never
+among them. A caller who has not been recorded is nobody's same person.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="ClientActivityDetector.html#othersActive(java.lang.String,java.lang.String)">othersActive</a></code>&nbsp;in interface&nbsp;<code><a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></code></dd>

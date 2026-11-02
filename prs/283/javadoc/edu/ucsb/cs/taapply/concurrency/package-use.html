@@ -61,6 +61,8 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.config">edu.ucsb.cs.taapply.config</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.controller">edu.ucsb.cs.taapply.controller</a></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <section class="package-uses">
 <ul class="block-list">
@@ -73,7 +75,23 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color"><a href="class-use/ClientActivityDetector.html#edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></div>
 <div class="col-last even-row-color">
 <div class="block">Notices when more than one client (a tab, a window, a device) is working on the same thing at
-once (issue #273).</div>
+once, and who they are (issue #273).</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/ClientIdentity.html#edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></div>
+<div class="col-last odd-row-color">
+<div class="block">Who a client is, as the application tells the detector (issue #273): an opaque, stable key for
+the person, and the label to show other people.</div>
+</div>
+<div class="col-first even-row-color"><a href="class-use/OtherClient.html#edu.ucsb.cs.taapply.concurrency">OtherClient</a></div>
+<div class="col-last even-row-color">
+<div class="block">One other person who is active on the same resource (issue #273): the label to show, and whether
+they are the same person as the one asking, which means another tab, window or device of their
+own.</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/Presence.html#edu.ucsb.cs.taapply.concurrency">Presence</a></div>
+<div class="col-last odd-row-color">
+<div class="block">What a heartbeat is answered with (issue #273): who else is active on the resource, and how often
+to send the next heartbeat.</div>
 </div>
 </div>
 </section>
@@ -87,7 +105,21 @@ once (issue #273).</div>
 <div class="col-first even-row-color"><a href="class-use/ClientActivityDetector.html#edu.ucsb.cs.taapply.config">ClientActivityDetector</a></div>
 <div class="col-last even-row-color">
 <div class="block">Notices when more than one client (a tab, a window, a device) is working on the same thing at
-once (issue #273).</div>
+once, and who they are (issue #273).</div>
+</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="edu.ucsb.cs.taapply.controller">
+<div class="caption"><span>Classes in <a href="package-summary.html">edu.ucsb.cs.taapply.concurrency</a> used by <a href="../controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></span></div>
+<div class="summary-table two-column-summary">
+<div class="table-header col-first">Class</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><a href="class-use/Presence.html#edu.ucsb.cs.taapply.controller">Presence</a></div>
+<div class="col-last even-row-color">
+<div class="block">What a heartbeat is answered with (issue #273): who else is active on the resource, and how often
+to send the next heartbeat.</div>
 </div>
 </div>
 </section>
