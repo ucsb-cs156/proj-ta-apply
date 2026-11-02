@@ -22,6 +22,9 @@ import RecruitmentAuditTrailTable, {
   type RecruitmentAuditTrailPage,
 } from "main/components/Recruitments/RecruitmentAuditTrailTable";
 import { AUDIT_PAGE_SIZES } from "main/utils/recruitmentAuditTrail";
+import type { RecruitmentCourse } from "main/components/Recruitments/RecruitmentCourseTable";
+import FakeApplicationsControls from "main/components/Applications/FakeApplicationsControls";
+import { useDeveloperModeFooterControls } from "main/utils/developerModeFooter";
 
 // Stryker disable next-line all : the page before the first answer; nothing reads its fields
 const emptyAuditPage: RecruitmentAuditTrailPage = {
@@ -57,6 +60,33 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
     [],
   );
   const applicationList = Array.isArray(applications) ? applications : [];
+
+  // Issue #219: Developer Mode's fake applications are created and deleted from the footer. How many
+  // may be asked for depends on how many courses the recruitment has left.
+  const { data: courses } = useBackend<RecruitmentCourse[]>(
+    ["/api/recruitmentcourses/all", false],
+    {
+      method: "GET",
+      url: "/api/recruitmentcourses/all",
+      params: { recruitmentId, includeRemoved: false },
+    },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+  const courseCount = (Array.isArray(courses) ? courses : []).filter(
+    (c) => !c.removed,
+  ).length;
+  const fakeApplicationsControls = useMemo(
+    () => (
+      <FakeApplicationsControls
+        recruitmentId={recruitmentId}
+        courseCount={courseCount}
+        testIdPrefix="RecruitmentApplicationsPage-fake"
+      />
+    ),
+    [recruitmentId, courseCount],
+  );
+  useDeveloperModeFooterControls(fakeApplicationsControls);
 
   // Issue #189: which columns the admin has hidden on this recruitment's table, kept on the
   // backend so they stay hidden across visits and browsers. The first time a recruitment's table
