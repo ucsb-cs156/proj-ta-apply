@@ -561,6 +561,10 @@ describe("Help pages (issue #140)", () => {
     expect(auto).toHaveTextContent(
       "Delta is that share minus the allocation, green with a plus sign when a lecture is owed positions and red when it has more than its share",
     );
+    // Issue #257: at least one each when there are enough positions.
+    expect(auto).toHaveTextContent(
+      "When there are at least as many positions as lectures, every lecture gets at least one, and the rest are given out one at a time to the lecture furthest under its share, so that the biggest gap between any lecture's allocation and its share is as small as it can be. When there are fewer positions than lectures, each lecture gets its share rounded",
+    );
     expect(auto).toHaveTextContent(
       "The purpose of this feature is to give admins a way to make a first-cut allocation based on enrollment, as close to fair as the numbers allow; it should not necessarily be considered the final allocation. Admins have the flexibility to adjust it up or down based on the particular needs of specific courses and other relevant factors.",
     );

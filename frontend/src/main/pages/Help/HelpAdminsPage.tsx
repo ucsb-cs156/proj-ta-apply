@@ -365,15 +365,20 @@ export default function HelpAdminsPage(): React.JSX.Element {
           than its share; and the <strong>TA:student ratio</strong> is the
           estimated students per position. <em>Auto assign TA allocations</em>{" "}
           (or ULA) fills the Allocation column from those shares, after a
-          warning that it overwrites every allocation: each lecture gets its
-          share rounded, then positions are taken from the lectures furthest
-          over their share, or given to those furthest under it, one at a time
-          until the total is exactly the hiring target. The purpose of this
-          feature is to give admins a way to make a first-cut allocation based
-          on enrollment, as close to fair as the numbers allow; it should not
-          necessarily be considered the final allocation. Admins have the
-          flexibility to adjust it up or down based on the particular needs of
-          specific courses and other relevant factors.
+          warning that it overwrites every allocation. When there are at least
+          as many positions as lectures, every lecture gets at least one, and
+          the rest are given out one at a time to the lecture furthest under its
+          share, so that the biggest gap between any lecture&apos;s allocation
+          and its share is as small as it can be. When there are fewer positions
+          than lectures, each lecture gets its share rounded, then positions are
+          taken from the lectures furthest over their share, or given to those
+          furthest under it, one at a time until the total is exactly the hiring
+          target. The purpose of this feature is to give admins a way to make a
+          first-cut allocation based on enrollment, as close to fair as the
+          numbers allow; it should not necessarily be considered the final
+          allocation. Admins have the flexibility to adjust it up or down based
+          on the particular needs of specific courses and other relevant
+          factors.
         </p>
         <p
           id="allocation-visibility"
