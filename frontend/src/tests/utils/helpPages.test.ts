@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   ADMIN_MENU_ENTRIES,
+  DEVELOPER_MENU_ENTRIES,
   HELP_PAGES,
   VIDEO_INSTRUCTIONS_TEXT,
   VIDEO_INSTRUCTIONS_URL,
@@ -26,6 +27,7 @@ describe("helpPages", () => {
         audience: "instructor",
       },
       { path: "/help/admins", label: "For Admins", audience: "admin" },
+      { path: "/help/developer", label: "For Developers", audience: "admin" },
       {
         path: "/help/recruitment-steps",
         label: "Recruitment Steps",
@@ -53,7 +55,7 @@ describe("helpPages", () => {
     );
   });
 
-  test("every Admin and Developer menu option has an entry with a section", () => {
+  test("every Admin menu option and home page link has an entry with a section", () => {
     expect(ADMIN_MENU_ENTRIES.map((e) => [e.menu, e.label, e.path])).toEqual([
       ["Admin", "Users", "/admin/users"],
       ["Admin", "Admins", "/admin/admins"],
@@ -66,9 +68,6 @@ describe("helpPages", () => {
       ["Admin", "ULA App Settings", "/admin/settings/ula"],
       ["Admin", "Legacy TA Application", "/admin/legacy-ta-application"],
       ["Admin", "Audit Trail", "/admin/audittrail"],
-      ["Developer", "Jobs", "/admin/jobs"],
-      ["Developer", "Developer Info", "/admin/developer"],
-      ["Developer", "Developer Mode", "/admin/developer-mode"],
     ]);
     expect(ADMIN_MENU_ENTRIES.map((e) => e.section)).toEqual([
       "users",
@@ -82,11 +81,26 @@ describe("helpPages", () => {
       "ula-app-settings",
       "legacy-ta-application",
       "audit-trail",
+    ]);
+    ADMIN_MENU_ENTRIES.forEach((entry) => {
+      expect(entry.summary.length).toBeGreaterThan(20);
+    });
+  });
+
+  test("every Developer menu option has an entry with a section (issue #266)", () => {
+    expect(
+      DEVELOPER_MENU_ENTRIES.map((e) => [e.menu, e.label, e.path]),
+    ).toEqual([
+      ["Developer", "Jobs", "/admin/jobs"],
+      ["Developer", "Developer Info", "/admin/developer"],
+      ["Developer", "Developer Mode", "/admin/developer-mode"],
+    ]);
+    expect(DEVELOPER_MENU_ENTRIES.map((e) => e.section)).toEqual([
       "jobs",
       "developer-info",
       "developer-mode",
     ]);
-    ADMIN_MENU_ENTRIES.forEach((entry) => {
+    DEVELOPER_MENU_ENTRIES.forEach((entry) => {
       expect(entry.summary.length).toBeGreaterThan(20);
     });
   });

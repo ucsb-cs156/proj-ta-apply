@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
@@ -87,6 +87,24 @@ describe("App", () => {
     expect(
       screen.queryByTestId("RecruitmentApplicationsPage-fake-create"),
     ).not.toBeInTheDocument();
+  });
+
+  test("/help/developer is the Developer help page, for admins only (issue #266)", async () => {
+    window.history.pushState({}, "", "/help/developer");
+    renderApp();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "For Developers" }),
+    ).toBeInTheDocument();
+    cleanup();
+
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.userOnly);
+    renderApp();
+    expect(
+      await screen.findByText("You do not have access to this page."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("For Developers")).toBeNull();
   });
 
   test("the admin home page puts Auto Create Recruitments in the footer, left of the badge (issue #252)", async () => {
