@@ -275,31 +275,28 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
     recruitment?.reviewStatus,
     courseCount,
   );
-  const developerButtons = useMemo(
-    () => (
-      <>
-        <Button
-          variant="outline-secondary"
-          size="sm"
-          className="me-2"
-          disabled={courseCount === 0}
-          onClick={() => setShowFakeAllocations(true)}
-          data-testid="RecruitmentCoursesPage-fake-allocations"
-        >
-          Fake Hiring Targets and Allocations
-        </Button>
-        <Button
-          variant="outline-secondary"
-          size="sm"
-          disabled={!fakeRankingsEnabled}
-          onClick={() => setShowFakeRankings(true)}
-          data-testid="RecruitmentCoursesPage-fake-rankings"
-        >
-          Create Fake Rankings
-        </Button>
-      </>
-    ),
-    [courseCount, fakeRankingsEnabled],
+  const developerButtons = (
+    <>
+      <Button
+        variant="outline-secondary"
+        size="sm"
+        className="me-2"
+        disabled={courseCount === 0}
+        onClick={() => setShowFakeAllocations(true)}
+        data-testid="RecruitmentCoursesPage-fake-allocations"
+      >
+        Fake Hiring Targets and Allocations
+      </Button>
+      <Button
+        variant="outline-secondary"
+        size="sm"
+        disabled={!fakeRankingsEnabled}
+        onClick={() => setShowFakeRankings(true)}
+        data-testid="RecruitmentCoursesPage-fake-rankings"
+      >
+        Create Fake Rankings
+      </Button>
+    </>
   );
 
   const addMutation = useBackendMutation<string, RecruitmentCourse>(

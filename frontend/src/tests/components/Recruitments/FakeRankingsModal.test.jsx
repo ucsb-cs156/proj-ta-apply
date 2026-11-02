@@ -106,6 +106,11 @@ describe("FakeRankingsModal tests", () => {
       "/admin/jobs",
     );
     expect(screen.getByTestId("Fake-jobs-link")).toHaveTextContent("Jobs page");
+    expect(
+      screen.getByTestId("Fake-jobs-link").parentElement.textContent,
+    ).toBe(
+      "The fake rankings are being entered by a background job. See the Jobs page to follow it. The ranking counts update once it has finished.",
+    );
     await waitFor(() =>
       expect(invalidate).toHaveBeenCalledWith({
         queryKey: ["/api/instructor/recruitments/admin-course-rankings"],
