@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AllocationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">AllocationService.java</span></div><h1>AllocationService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import java.util.Comparator;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * The arithmetic behind the allocation columns of the Recruitment Courses page (issue #176): each
+ * section's fractional share of the hiring target by enrollment estimate, and the first-cut
+ * allocation an admin can ask for from it.
+ *
+ * &lt;p&gt;Removed sections take no part in either: they are not offered, so they neither claim a share
+ * nor count in the total of the estimates. A section with no estimate counts as 0 students.
+ */
+@Service
+<span class="fc" id="L20">public class AllocationService {</span>
+
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+
+  /** Course id first, then section: the order the page lists rows in, used to break ties. */
+<span class="fc" id="L25">  private static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_THEN_SECTION =</span>
+<span class="fc" id="L26">      Comparator.comparing(RecruitmentCourse::getCourseId)</span>
+<span class="fc" id="L27">          .thenComparing(</span>
+<span class="fc" id="L28">              RecruitmentCourse::getSection, Comparator.nullsFirst(Comparator.naturalOrder()));</span>
+
+  /**
+   * Recomputes and stores {@code unroundedAllocation} for every non-removed section of the
+   * recruitment: {@code totalHiringTarget * estimate / total of the estimates}, or 0.0 for every
+   * section when the estimates add up to nothing. Returns the sections it recomputed, in page
+   * order.
+   */
+  public List&lt;RecruitmentCourse&gt; recompute(Recruitment recruitment) {
+<span class="fc" id="L37">    List&lt;RecruitmentCourse&gt; active = activeRows(recruitment);</span>
+<span class="fc" id="L38">    double total = active.stream().mapToDouble(AllocationService::estimateOf).sum();</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">    for (RecruitmentCourse row : active) {</span>
+      double share =
+<span class="fc bfc" id="L41" title="All 2 branches covered.">          total == 0 ? 0.0 : recruitment.getTotalHiringTarget() * (estimateOf(row) / total);</span>
+<span class="fc" id="L42">      row.setUnroundedAllocation(share);</span>
+<span class="fc" id="L43">      recruitmentCourseRepository.save(row);</span>
+<span class="fc" id="L44">    }</span>
+<span class="fc" id="L45">    return active;</span>
+  }
+
+  /**
+   * Overwrites every non-removed section's allocation with a best effort at the hiring target from
+   * the enrollment estimates, and returns the sections in page order:
+   *
+   * &lt;ol&gt;
+   *   &lt;li&gt;each section gets its unrounded share rounded to the nearest whole number (half up);
+   *   &lt;li&gt;while the total is above the target, the section furthest above its share (the largest
+   *       {@code allocation - unroundedAllocation}) loses one; while the total is below the target,
+   *       the section furthest below its share gains one. Ties go to the first section in page
+   *       order. No section ever goes below zero: see the note in the code.
+   * &lt;/ol&gt;
+   *
+   * &lt;p&gt;The sign convention is the opposite of the page's Delta column, which shows {@code
+   * unroundedAllocation - allocation}; here &quot;furthest above its share&quot; is what has to give.
+   */
+  public List&lt;RecruitmentCourse&gt; autoAllocate(Recruitment recruitment) {
+<span class="fc" id="L64">    List&lt;RecruitmentCourse&gt; active = recompute(recruitment);</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    if (!active.isEmpty()) {</span>
+<span class="fc" id="L66">      int target = recruitment.getTotalHiringTarget();</span>
+
+<span class="fc" id="L68">      int sum = 0;</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">      for (RecruitmentCourse row : active) {</span>
+<span class="fc" id="L70">        int rounded = (int) Math.floor(row.getUnroundedAllocation() + 0.5);</span>
+<span class="fc" id="L71">        row.setAllocation(rounded);</span>
+<span class="fc" id="L72">        sum += rounded;</span>
+<span class="fc" id="L73">      }</span>
+      // Whenever the total is above the target, the excesses add up to more than zero, so the most
+      // over section has a positive excess and therefore an allocation above zero: taking one from
+      // it can never go below zero.
+<span class="fc bfc" id="L77" title="All 2 branches covered.">      while (sum &gt; target) {</span>
+<span class="fc" id="L78">        RecruitmentCourse mostOver = active.get(0);</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        for (RecruitmentCourse row : active) {</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">          if (excess(row) &gt; excess(mostOver)) {</span>
+<span class="fc" id="L81">            mostOver = row;</span>
+          }
+<span class="fc" id="L83">        }</span>
+<span class="fc" id="L84">        mostOver.setAllocation(mostOver.getAllocation() - 1);</span>
+<span class="fc" id="L85">        sum--;</span>
+<span class="fc" id="L86">      }</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">      while (sum &lt; target) {</span>
+<span class="fc" id="L88">        RecruitmentCourse mostUnder = active.get(0);</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        for (RecruitmentCourse row : active) {</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">          if (excess(row) &lt; excess(mostUnder)) {</span>
+<span class="fc" id="L91">            mostUnder = row;</span>
+          }
+<span class="fc" id="L93">        }</span>
+<span class="fc" id="L94">        mostUnder.setAllocation(mostUnder.getAllocation() + 1);</span>
+<span class="fc" id="L95">        sum++;</span>
+<span class="fc" id="L96">      }</span>
+
+<span class="fc bfc" id="L98" title="All 2 branches covered.">      for (RecruitmentCourse row : active) {</span>
+<span class="fc" id="L99">        recruitmentCourseRepository.save(row);</span>
+<span class="fc" id="L100">      }</span>
+    }
+<span class="fc" id="L102">    return active;</span>
+  }
+
+  /** How far a section's allocation is above its fair share; negative when below. */
+  private static double excess(RecruitmentCourse row) {
+<span class="fc" id="L107">    return row.getAllocation() - row.getUnroundedAllocation();</span>
+  }
+
+  private static double estimateOf(RecruitmentCourse row) {
+<span class="fc bfc" id="L111" title="All 2 branches covered.">    return row.getEnrollmentEstimate() == null ? 0 : row.getEnrollmentEstimate();</span>
+  }
+
+  private List&lt;RecruitmentCourse&gt; activeRows(Recruitment recruitment) {
+<span class="fc" id="L115">    return recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L117">        .sorted(BY_COURSE_THEN_SECTION)</span>
+<span class="fc" id="L118">        .toList();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

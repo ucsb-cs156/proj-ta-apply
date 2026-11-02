@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentCoursesRefreshScheduler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.jobs</a> &gt; <span class="el_source">RecruitmentCoursesRefreshScheduler.java</span></div><h1>RecruitmentCoursesRefreshScheduler.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.jobs;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs156.jobs.services.JobRateLimit;
+import edu.ucsb.cs156.jobs.services.JobService;
+import java.time.LocalDate;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+/**
+ * Re-fills the course list of every recruitment that still matters, on a schedule (issue #124), the
+ * way the Populate button does by hand: one {@link PopulateRecruitmentCoursesJob} per recruitment,
+ * run through the job service so each shows up on Developer &gt; Jobs with its log.
+ *
+ * &lt;p&gt;Which recruitments matter: those open for applications, those created but not yet opened (so
+ * their lists are ready on opening day), and those that closed within the last six months, since
+ * hiring goes on after applications close. Older ones are left alone.
+ *
+ * &lt;p&gt;Only present when {@code app.recruitmentCourses.refreshEnabled} is true; the cron expression
+ * is {@code app.recruitmentCourses.refreshCron}, nightly at 03:00 Pacific by default.
+ */
+@Component
+@ConditionalOnProperty(name = &quot;app.recruitmentCourses.refreshEnabled&quot;, havingValue = &quot;true&quot;)
+<span class="fc" id="L31">@Slf4j</span>
+<span class="fc" id="L32">public class RecruitmentCoursesRefreshScheduler {</span>
+
+  @Autowired private RecruitmentRepository recruitmentRepository;
+  @Autowired private PopulateRecruitmentCoursesJobFactory populateRecruitmentCoursesJobFactory;
+  @Autowired private JobService jobService;
+  @Autowired private JobRateLimit jobRateLimit;
+  @Autowired private ApplicationAccessService applicationAccessService;
+
+  /** Whether a recruitment's course list is still worth refreshing today. */
+  public boolean isEligible(Recruitment recruitment, LocalDate today) {
+<span class="fc bfc" id="L42" title="All 2 branches covered.">    return recruitment.getApplicationStatus() == ApplicationStatus.OPEN</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        || recruitment.getActualOpeningDate() == null</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        || applicationAccessService.recentlyClosed(recruitment, today);</span>
+  }
+
+  /** The scheduled entry point: today's eligible recruitments. */
+  @Scheduled(
+      cron = &quot;${app.recruitmentCourses.refreshCron:0 0 3 * * *}&quot;,
+      zone = &quot;America/Los_Angeles&quot;)
+  public void refresh() {
+<span class="fc" id="L52">    refresh(LocalDate.now());</span>
+<span class="fc" id="L53">  }</span>
+
+  /** Launches one Populate job per recruitment eligible on the given day, pausing between them. */
+  public int refresh(LocalDate today) {
+<span class="fc" id="L57">    List&lt;Recruitment&gt; eligible =</span>
+<span class="fc" id="L58">        recruitmentRepository.findAllByOrderByQuarterDescTypeAsc().stream()</span>
+<span class="fc" id="L59">            .filter(r -&gt; isEligible(r, today))</span>
+<span class="fc" id="L60">            .toList();</span>
+<span class="fc" id="L61">    log.info(&quot;Scheduled refresh: {} recruitment(s) to repopulate&quot;, eligible.size());</span>
+
+<span class="fc" id="L63">    int launched = 0;</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">    for (Recruitment recruitment : eligible) {</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">      if (launched &gt; 0) {</span>
+        try {
+<span class="fc" id="L67">          jobRateLimit.sleep();</span>
+<span class="fc" id="L68">        } catch (InterruptedException e) {</span>
+          // Shutting down: stop launching, and leave the flag set for whoever asked. The flag is
+          // set last: logging while interrupted can clear it.
+<span class="fc" id="L71">          log.warn(&quot;Scheduled refresh interrupted after {} launch(es)&quot;, launched);</span>
+<span class="fc" id="L72">          Thread.currentThread().interrupt();</span>
+<span class="fc" id="L73">          break;</span>
+<span class="fc" id="L74">        }</span>
+      }
+<span class="fc" id="L76">      jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));</span>
+<span class="fc" id="L77">      launched++;</span>
+<span class="fc" id="L78">      log.info(</span>
+          &quot;Scheduled refresh: launched Populate for {} {} (id {})&quot;,
+<span class="fc" id="L80">          recruitment.getType(),</span>
+<span class="fc" id="L81">          recruitment.getQuarter(),</span>
+<span class="fc" id="L82">          recruitment.getId());</span>
+<span class="fc" id="L83">    }</span>
+<span class="fc" id="L84">    return launched;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
