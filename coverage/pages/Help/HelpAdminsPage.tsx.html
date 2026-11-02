@@ -782,10 +782,7 @@
 <a name='L717'></a><a href='#L717'>717</a>
 <a name='L718'></a><a href='#L718'>718</a>
 <a name='L719'></a><a href='#L719'>719</a>
-<a name='L720'></a><a href='#L720'>720</a>
-<a name='L721'></a><a href='#L721'>721</a>
-<a name='L722'></a><a href='#L722'>722</a>
-<a name='L723'></a><a href='#L723'>723</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L720'></a><a href='#L720'>720</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -812,9 +809,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1550,14 +1544,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Download Rankings CSV
         &lt;/h2&gt;
         &lt;p&gt;
-          On a recruitment&amp;apos;s Courses page,{" "}
-          &lt;strong&gt;Download Rankings CSV&lt;/strong&gt; saves that recruitment&amp;apos;s
-          faculty rankings as a spreadsheet-ready file. This is separate from{" "}
-          &lt;strong&gt;Download Applications as CSV&lt;/strong&gt; on its Applications
-          page, which exports application answers. Rankings include every real
-          applicant, even those with no interests or rankings; test applications
-          are excluded. Unset rankings are blank, not zero, and ties are
-          preserved.
+          On a recruitment card, &lt;strong&gt;Download Rankings CSV&lt;/strong&gt; saves
+          that recruitment&amp;apos;s faculty rankings as a spreadsheet-ready file.
+          This is separate from &lt;strong&gt;Download CSV&lt;/strong&gt;, which exports
+          application answers. Rankings include every real applicant, even those
+          with no interests or rankings; test applications are excluded. Unset
+          rankings are blank, not zero, and ties are preserved.
         &lt;/p&gt;
         &lt;p&gt;
           TA columns are first name, last name, email, major, class level, year
@@ -1695,15 +1687,14 @@ export default function HelpAdminsPage(): React.JSX.Element {
             on your home page, create a recruitment for the quarter and type.
             Its course list is filled automatically from the quarter&amp;apos;s
             schedule; check it with &lt;em&gt;Courses&lt;/em&gt;, try the form with{" "}
-            &lt;em&gt;Test Application&lt;/em&gt; (on the Applications page), then open
-            applications from step 2 of the diagram.
+            &lt;em&gt;Test Application&lt;/em&gt;, then &lt;em&gt;Open Applications&lt;/em&gt;.
           &lt;/li&gt;
           &lt;li&gt;
             &lt;strong&gt;While open:&lt;/strong&gt; applicants apply and edit until the
-            primary consideration date. The &lt;em&gt;Applications&lt;/em&gt; page and its{" "}
-            &lt;em&gt;Download Applications as CSV&lt;/em&gt; show what has come in; a
-            student&amp;apos;s answers can be corrected on their behalf, with every
-            change recorded in the &lt;strong&gt;Audit Trail&lt;/strong&gt;.
+            primary consideration date. &lt;em&gt;Review Applications&lt;/em&gt; and{" "}
+            &lt;em&gt;Download CSV&lt;/em&gt; show what has come in; a student&amp;apos;s
+            answers can be corrected on their behalf, with every change recorded
+            in the &lt;strong&gt;Audit Trail&lt;/strong&gt;.
           &lt;/li&gt;
           &lt;li&gt;
             &lt;strong&gt;Afterwards:&lt;/strong&gt; &lt;em&gt;Close Applications&lt;/em&gt;, plan the
@@ -2034,15 +2025,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
             &lt;strong&gt;Test Application.&lt;/strong&gt; The form exactly as an applicant
             for this recruitment sees it, even before it opens. Submitting saves
             a test application that never counts as a real one and is marked as
-            such wherever it appears. The button is at the top of the
-            Applications page.
+            such wherever it appears. It is no longer a button on the card and
+            is being given a new home on the Applications page.
           &lt;/li&gt;
           &lt;li&gt;
-            &lt;strong&gt;Download Applications as CSV.&lt;/strong&gt; Every application to
-            the recruitment as a spreadsheet, with the columns for its type (the
-            layout is on the CSV formats page). The button is at the top of the
-            Applications page; the rankings download,{" "}
-            &lt;strong&gt;Download Rankings CSV&lt;/strong&gt;, is on the Courses page.
+            &lt;strong&gt;Download CSV.&lt;/strong&gt; Every application to the recruitment
+            as a spreadsheet, with the columns for its type (the layout is on
+            the CSV formats page). It is no longer a button on the card and is
+            being moved to the Applications page, with the rankings download
+            moving to the Courses page.
           &lt;/li&gt;
           &lt;li&gt;
             &lt;strong&gt;Applications.&lt;/strong&gt; The list of applications, with a
@@ -2236,7 +2227,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-02T01:18:48.755Z
+                at 2026-11-02T01:19:00.291Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
