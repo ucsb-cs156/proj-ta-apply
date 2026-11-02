@@ -121,13 +121,7 @@ nor count in the total of the estimates. A section with no estimate counts as 0 
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#autoAllocate(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">autoAllocate</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Overwrites every non-removed section's allocation with a best effort at the hiring target from
-the enrollment estimates, and returns the sections in page order:
-
-
-  each section gets its unrounded share rounded to the nearest whole number (half up);
-  while the total is above the target, the section furthest above its share (the largest
-      <code>allocation - unroundedAllocation</code>) loses one; while the total is below the target,
-      the section furthest below its share gains one.</div>
+the enrollment estimates, and returns the sections in page order.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#recompute(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recompute</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
@@ -187,7 +181,13 @@ order.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;</span>&nbsp;<span class="element-name">autoAllocate</span><wbr><span class="parameters">(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</span></div>
 <div class="block">Overwrites every non-removed section's allocation with a best effort at the hiring target from
-the enrollment estimates, and returns the sections in page order:
+the enrollment estimates, and returns the sections in page order.
+
+<p>When there are at least as many hires as sections, every section gets at least one, and the
+rest are placed so that the largest <code>|allocation - unroundedAllocation|</code> over all
+sections is as small as it can be; <code>MinimaxAllocator</code> solves this exactly (issue #257).
+
+<p>When there are more sections than hires, some sections must get none, and the allocation is:
 
 <ol>
   <li>each section gets its unrounded share rounded to the nearest whole number (half up);
