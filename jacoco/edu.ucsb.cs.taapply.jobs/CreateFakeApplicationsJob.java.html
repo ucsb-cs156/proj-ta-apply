@@ -11,6 +11,7 @@ import edu.ucsb.cs.taapply.services.fake.FakeApplicationGenerator;
 import edu.ucsb.cs.taapply.services.fake.FakeCoverage;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobContextConsumer;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -35,6 +36,10 @@ public class CreateFakeApplicationsJob implements JobContextConsumer {
   private int count;
   private FakeCoverage coverage;
   private Random random;
+
+  /** The date the applications are made; their coursework terms run back from its quarter. */
+  private LocalDate today;
+
   private FakeApplicationGenerator generator;
   private RecruitmentRepository recruitmentRepository;
   private RecruitmentCourseRepository recruitmentCourseRepository;
@@ -42,37 +47,37 @@ public class CreateFakeApplicationsJob implements JobContextConsumer {
 
   @Override
   public void accept(JobContext ctx) throws Exception {
-<span class="fc" id="L45">    Recruitment recruitment =</span>
+<span class="fc" id="L50">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L47">            .findById(recruitmentId)</span>
-<span class="fc" id="L48">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L52">            .findById(recruitmentId)</span>
+<span class="fc" id="L53">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
 
     // Applicants choose from the courses on offer, by course id; several sections share one id.
-<span class="fc" id="L51">    Set&lt;String&gt; courseIds = new TreeSet&lt;&gt;();</span>
+<span class="fc" id="L56">    Set&lt;String&gt; courseIds = new TreeSet&lt;&gt;();</span>
     for (RecruitmentCourse course :
-<span class="fc bfc" id="L53" title="All 2 branches covered.">        recruitmentCourseRepository.findByRecruitmentId(recruitmentId)) {</span>
-<span class="fc bfc" id="L54" title="All 2 branches covered.">      if (!course.isRemoved()) {</span>
-<span class="fc" id="L55">        courseIds.add(course.getCourseId());</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        recruitmentCourseRepository.findByRecruitmentId(recruitmentId)) {</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">      if (!course.isRemoved()) {</span>
+<span class="fc" id="L60">        courseIds.add(course.getCourseId());</span>
       }
-<span class="fc" id="L57">    }</span>
-<span class="fc" id="L58">    Set&lt;String&gt; takenEmails = new HashSet&lt;&gt;();</span>
-<span class="fc" id="L59">    applicationRepository</span>
-<span class="fc" id="L60">        .findByRecruitmentIdOrderByIdAsc(recruitmentId)</span>
-<span class="fc" id="L61">        .forEach(existing -&gt; takenEmails.add(existing.getEmail()));</span>
+<span class="fc" id="L62">    }</span>
+<span class="fc" id="L63">    Set&lt;String&gt; takenEmails = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L64">    applicationRepository</span>
+<span class="fc" id="L65">        .findByRecruitmentIdOrderByIdAsc(recruitmentId)</span>
+<span class="fc" id="L66">        .forEach(existing -&gt; takenEmails.add(existing.getEmail()));</span>
 
-<span class="fc" id="L63">    ctx.log(</span>
+<span class="fc" id="L68">    ctx.log(</span>
         &quot;Creating %d fake %s applications to %s with %s coverage over %d course(s)&quot;
-<span class="fc" id="L65">            .formatted(</span>
-<span class="fc" id="L66">                count,</span>
-<span class="fc" id="L67">                recruitment.getType(),</span>
-<span class="fc" id="L68">                recruitment.getQuarter(),</span>
+<span class="fc" id="L70">            .formatted(</span>
+<span class="fc" id="L71">                count,</span>
+<span class="fc" id="L72">                recruitment.getType(),</span>
+<span class="fc" id="L73">                recruitment.getQuarter(),</span>
                 coverage,
-<span class="fc" id="L70">                courseIds.size()));</span>
-<span class="fc" id="L71">    List&lt;Application&gt; applications =</span>
-<span class="fc" id="L72">        generator.generate(</span>
-<span class="fc" id="L73">            recruitment, List.copyOf(courseIds), count, coverage, random, takenEmails);</span>
-<span class="fc" id="L74">    applicationRepository.saveAll(applications);</span>
-<span class="fc" id="L75">    ctx.log(&quot;Created %d fake application(s).&quot;.formatted(applications.size()));</span>
-<span class="fc" id="L76">  }</span>
+<span class="fc" id="L75">                courseIds.size()));</span>
+<span class="fc" id="L76">    List&lt;Application&gt; applications =</span>
+<span class="fc" id="L77">        generator.generate(</span>
+<span class="fc" id="L78">            recruitment, List.copyOf(courseIds), count, coverage, random, takenEmails, today);</span>
+<span class="fc" id="L79">    applicationRepository.saveAll(applications);</span>
+<span class="fc" id="L80">    ctx.log(&quot;Created %d fake application(s).&quot;.formatted(applications.size()));</span>
+<span class="fc" id="L81">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
