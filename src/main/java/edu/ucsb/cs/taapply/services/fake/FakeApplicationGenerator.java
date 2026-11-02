@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.services.fake;
 
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.Course;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.TaMajor;
@@ -16,6 +17,7 @@ import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
+import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
@@ -48,6 +50,7 @@ public class FakeApplicationGenerator {
   static final List<String> TA_RESIDENCY_EXAM_PASS_QUARTERS = List.of("F23", "W24", "S24", "F24");
 
   private final FakeCoursework coursework;
+  private final CourseRepository courseRepository;
   private final TaTopicRepository taTopicRepository;
   private final UlaTopicRepository ulaTopicRepository;
   private final UlaInterestRepository ulaInterestRepository;
@@ -57,12 +60,14 @@ public class FakeApplicationGenerator {
   @Autowired
   public FakeApplicationGenerator(
       FakeCoursework coursework,
+      CourseRepository courseRepository,
       TaTopicRepository taTopicRepository,
       UlaTopicRepository ulaTopicRepository,
       UlaInterestRepository ulaInterestRepository,
       TaMajorRepository taMajorRepository,
       UlaMajorRepository ulaMajorRepository) {
     this.coursework = coursework;
+    this.courseRepository = courseRepository;
     this.taTopicRepository = taTopicRepository;
     this.ulaTopicRepository = ulaTopicRepository;
     this.ulaInterestRepository = ulaInterestRepository;
@@ -93,6 +98,7 @@ public class FakeApplicationGenerator {
       Collections.sort(interests);
     }
     int latest = FakeCoursework.latestQuarter(today);
+    Map<String, String> titles = courseTitles();
 
     List<Application> applications = new ArrayList<>();
     for (int i = 0; i < count; i++) {
@@ -101,10 +107,34 @@ public class FakeApplicationGenerator {
               ? ula(recruitment, random, topics, majors, interests, latest)
               : ta(recruitment, random, topics, majors, latest);
       identity(application, recruitment, random, takenEmails);
+      addTitles(application, titles);
       applications.add(application);
     }
     FakeCourseChoices.assign(applications, courseIds, coverage, random);
     return applications;
+  }
+
+  /** The title of every course in the course table, by normalized course id ("CMPSC 156"). */
+  private Map<String, String> courseTitles() {
+    Map<String, String> titles = new HashMap<>();
+    for (Course course : courseRepository.findAll()) {
+      if (course.getTitle() != null && !course.getTitle().isBlank()) {
+        titles.put(course.getCourseId(), course.getTitle());
+      }
+    }
+    return titles;
+  }
+
+  /**
+   * Fills in the title of each UCSB course on the transcript from the course table, as a real
+   * applicant's bulk-add does (issue #262). A course the table does not have keeps no title.
+   */
+  private static void addTitles(Application application, Map<String, String> titles) {
+    for (PriorCoursework course : application.getPriorCoursework()) {
+      if (course.isUcsbCourse()) {
+        course.setCourseTitle(titles.get(course.getCourseNumber()));
+      }
+    }
   }
 
   private List<String> topicNames(RecruitmentType type) {

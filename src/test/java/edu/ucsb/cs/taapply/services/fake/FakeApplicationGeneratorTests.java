@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.Course;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.TaMajor;
@@ -22,6 +23,7 @@ import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
+import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
@@ -46,6 +48,7 @@ public class FakeApplicationGeneratorTests {
   static final LocalDate TODAY = LocalDate.of(2026, 2, 10);
 
   private final FakeCoursework coursework = new FakeCoursework();
+  private final CourseRepository courses = mock(CourseRepository.class);
   private final TaTopicRepository taTopics = mock(TaTopicRepository.class);
   private final UlaTopicRepository ulaTopics = mock(UlaTopicRepository.class);
   private final UlaInterestRepository ulaInterests = mock(UlaInterestRepository.class);
@@ -53,7 +56,7 @@ public class FakeApplicationGeneratorTests {
   private final UlaMajorRepository ulaMajors = mock(UlaMajorRepository.class);
   private final FakeApplicationGenerator generator =
       new FakeApplicationGenerator(
-          coursework, taTopics, ulaTopics, ulaInterests, taMajors, ulaMajors);
+          coursework, courses, taTopics, ulaTopics, ulaInterests, taMajors, ulaMajors);
 
   private static Recruitment recruitment(RecruitmentType type) {
     return Recruitment.builder().id(7L).quarter("20261").type(type).build();
@@ -556,5 +559,70 @@ public class FakeApplicationGeneratorTests {
                 UlaMajor.builder().name("Physics").build()));
 
     assertEquals(forward, fingerprint(RecruitmentType.ULA, FakeCoverage.ALL));
+  }
+
+  // ---- course titles (issue #262) ----
+
+  @Test
+  public void ucsb_courses_get_their_titles_from_the_course_table_and_others_keep_theirs() {
+    withSettings();
+    when(courses.findAll())
+        .thenReturn(
+            List.of(
+                Course.builder().courseId("CMPSC 8").title("Intro to Computer Science").build(),
+                Course.builder().courseId("CMPSC 16").title("Problem Solving II").build(),
+                Course.builder().courseId("CMPSC 24").title("Problem Solving III").build(),
+                Course.builder().courseId("CMPSC 32").title("Object Oriented Design").build(),
+                Course.builder().courseId("CMPSC 40").title("   ").build(),
+                Course.builder().courseId("CMPSC 64").title(null).build()));
+    Set<String> titled = Set.of("CMPSC 8", "CMPSC 16", "CMPSC 24", "CMPSC 32");
+    int ucsbRows = 0;
+    int unknownRows = 0;
+    for (RecruitmentType type : RecruitmentType.values()) {
+      for (Application a : generate(type, 60, FakeCoverage.ALL)) {
+        for (PriorCoursework c : a.getPriorCoursework()) {
+          if (c.isUcsbCourse()) {
+            if (titled.contains(c.getCourseNumber())) {
+              ucsbRows++;
+              assertNotNull(c.getCourseTitle());
+              assertFalse(c.getCourseTitle().isBlank());
+            } else {
+              unknownRows++;
+              assertNull(c.getCourseTitle());
+            }
+          } else {
+            assertNotNull(c.getCourseTitle());
+          }
+        }
+      }
+    }
+    assertTrue(ucsbRows > 0);
+    assertTrue(unknownRows > 0);
+  }
+
+  @Test
+  public void each_ucsb_title_is_exactly_the_one_the_table_has_for_that_course() {
+    withSettings();
+    when(courses.findAll())
+        .thenReturn(
+            List.of(
+                Course.builder().courseId("CMPSC 8").title("Title of eight").build(),
+                Course.builder().courseId("CMPSC 16").title("Title of sixteen").build(),
+                Course.builder().courseId("CMPSC 24").title("Title of twenty-four").build()));
+    Map<String, String> expected =
+        Map.of(
+            "CMPSC 8", "Title of eight",
+            "CMPSC 16", "Title of sixteen",
+            "CMPSC 24", "Title of twenty-four");
+    int checked = 0;
+    for (Application a : generate(RecruitmentType.ULA, 60, FakeCoverage.ALL)) {
+      for (PriorCoursework c : a.getPriorCoursework()) {
+        if (expected.containsKey(c.getCourseNumber())) {
+          checked++;
+          assertEquals(expected.get(c.getCourseNumber()), c.getCourseTitle());
+        }
+      }
+    }
+    assertTrue(checked > 0);
   }
 }

@@ -11,6 +11,7 @@ import edu.ucsb.cs.taapply.entity.UlaInterest;
 import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.TaMajorRepository;
 import edu.ucsb.cs.taapply.repository.TaTopicRepository;
@@ -35,6 +36,7 @@ class FakeApplicationPersistenceTests {
 
   @Autowired RecruitmentRepository recruitments;
   @Autowired ApplicationRepository applications;
+  @Autowired CourseRepository courses;
   @Autowired TaTopicRepository taTopics;
   @Autowired UlaTopicRepository ulaTopics;
   @Autowired UlaInterestRepository ulaInterests;
@@ -46,7 +48,7 @@ class FakeApplicationPersistenceTests {
 
   private FakeApplicationGenerator generator() {
     return new FakeApplicationGenerator(
-        new FakeCoursework(), taTopics, ulaTopics, ulaInterests, taMajors, ulaMajors);
+        new FakeCoursework(), courses, taTopics, ulaTopics, ulaInterests, taMajors, ulaMajors);
   }
 
   @Test
