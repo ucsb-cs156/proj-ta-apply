@@ -4,6 +4,7 @@ import {
   FOOTNOTE_LINE_2,
   LEGEND_HARD,
   LEGEND_SOFT,
+  LIVE_STEP_3_LINE_HEIGHT,
   STEP_COUNT,
   STEP_EDGES,
   layoutRecruitmentSteps,
@@ -171,6 +172,24 @@ describe("recruitmentSteps", () => {
     expect(edgeOf(layout, 6, 7).d).toBe(
       "M 541.0 198.0 C 624.5 198.0, 624.5 177.0, 624.5 156.0 V 140.0",
     );
+  });
+
+  test("step 3's title lines are further apart in live mode only (issue #249)", () => {
+    const live = layoutRecruitmentSteps("TA", true);
+    const staticLayout = layoutRecruitmentSteps("TA");
+    expect(boxOf(live, 3).lineHeight).toBe(28);
+    expect(LIVE_STEP_3_LINE_HEIGHT).toBe(28);
+    // The block stays centred in the top 62 units: 28 apart instead of 16 moves the first line up 6.
+    expect(boxOf(live, 3).firstBaseline).toBeCloseTo(
+      boxOf(staticLayout, 3).firstBaseline - 6,
+      5,
+    );
+    for (const n of [1, 2, 4, 5, 6, 7, 8, 9]) {
+      expect(boxOf(live, n).lineHeight).toBe(16);
+    }
+    for (let n = 1; n <= 9; n++) {
+      expect(boxOf(staticLayout, n).lineHeight).toBe(16);
+    }
   });
 
   test("the legend and footnote wording", () => {

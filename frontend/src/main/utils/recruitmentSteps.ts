@@ -30,8 +30,13 @@ export type RecruitmentStepStatus = {
   action?: RecruitmentStepAction;
   /** Step 3: the words of the title that link to different pages ("Budget", "Allocations"). */
   titleLinks?: StepLink[];
-  /** Steps 7 and 9: "(see rankings)" / "(see assignments)". */
-  secondaryLink?: StepLink;
+  /** A plain line under the box, above its links: "7 courses" (step 1), "12 applications" (2, 4). */
+  detail?: string;
+  /**
+   * The links under the box, one per line: "(see courses)", "(see applications)", "(see
+   * allocations)", "(see rankings)" and "(see assignments)" (issue #249).
+   */
+  links?: StepLink[];
   /** Step 9: hiring decisions are released but applications or faculty ranking were reopened. */
   tentative?: boolean;
   /** Step 9, not yet released: the first prerequisite of releasing that is not met (issue #237). */
@@ -116,6 +121,11 @@ export const FOOTNOTE_LINE_2 =
 // The generator's constants.
 export const FONT_SIZE = 13;
 export const LINE_HEIGHT = 16;
+/**
+ * In live mode step 3's two title lines, "Budget /" and "Allocations", are further apart than
+ * other titles' lines, so it is clear they are two separate links (issue #249).
+ */
+export const LIVE_STEP_3_LINE_HEIGHT = 28;
 const CHAR_WIDTH = 5.9;
 export const BOX_HEIGHT = 62;
 /** Live boxes are taller: the bottom 16 units hold the status label. */
@@ -160,6 +170,8 @@ export type BoxGeometry = {
   cx: number;
   cy: number;
   lines: string[];
+  /** The distance between title lines. */
+  lineHeight: number;
   /** The baseline of the first title line. */
   firstBaseline: number;
   /** Where the number starts, and where the title lines start (the hanging indent). */
@@ -247,6 +259,7 @@ export const layoutRecruitmentSteps = (
     // The title block is centred in the top BOX_HEIGHT units; a live box's extra height is below.
     const titleCy = top + BOX_HEIGHT / 2;
     const k = lines[n].length;
+    const lineHeight = live && n === 3 ? LIVE_STEP_3_LINE_HEIGHT : LINE_HEIGHT;
     return {
       number: n,
       x: bx,
@@ -256,7 +269,8 @@ export const layoutRecruitmentSteps = (
       cx: bx + w / 2,
       cy: top + height / 2,
       lines: lines[n],
-      firstBaseline: titleCy - (LINE_HEIGHT * (k - 1)) / 2 + FONT_SIZE * 0.35,
+      lineHeight,
+      firstBaseline: titleCy - (lineHeight * (k - 1)) / 2 + FONT_SIZE * 0.35,
       numberX: bx + PAD_LEFT,
       labelX: bx + PAD_LEFT + NUMBER_WIDTH,
     };

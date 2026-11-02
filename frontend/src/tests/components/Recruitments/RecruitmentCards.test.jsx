@@ -31,12 +31,30 @@ const stepsFor = (recruitment) => ({
   recruitmentId: recruitment.id,
   type: recruitment.type,
   steps: [
-    { number: 1, done: true, label: `Created #${recruitment.id}` },
+    {
+      number: 1,
+      done: true,
+      label: `Created #${recruitment.id}`,
+      detail: "4 courses",
+      links: [
+        {
+          text: "(see courses)",
+          href: `/admin/recruitments/${recruitment.id}/courses`,
+        },
+      ],
+    },
     {
       number: 2,
       done: false,
       label: "Tentative: 2026-01-05",
       action: "openApplications",
+      detail: "12 applications",
+      links: [
+        {
+          text: "(see applications)",
+          href: `/admin/recruitments/${recruitment.id}/applications`,
+        },
+      ],
     },
     {
       number: 3,
@@ -55,39 +73,73 @@ const stepsFor = (recruitment) => ({
       done: false,
       label: "Prim. Consid: 2026-01-20",
       action: "closeApplications",
+      detail: "12 applications",
+      links: [
+        {
+          text: "(see applications)",
+          href: `/admin/recruitments/${recruitment.id}/applications`,
+        },
+      ],
     },
     {
       number: 5,
       done: false,
       label: "Not released yet",
       action: "allocationVisibility",
+      links: [
+        {
+          text: "(see allocations)",
+          href: `/admin/recruitments/${recruitment.id}/courses`,
+        },
+      ],
     },
-    { number: 6, done: false, label: "Not opened yet", action: "openReviews" },
+    {
+      number: 6,
+      done: false,
+      label: "Not opened yet",
+      action: "openReviews",
+      links: [
+        {
+          text: "(see rankings)",
+          href: `/admin/recruitments/${recruitment.id}/courses`,
+        },
+      ],
+    },
     {
       number: 7,
       done: false,
       label: "Not closed yet",
       action: "closeReviews",
-      secondaryLink: {
-        text: "(see rankings)",
-        href: `/admin/recruitments/${recruitment.id}/courses`,
-      },
+      links: [
+        {
+          text: "(see rankings)",
+          href: `/admin/recruitments/${recruitment.id}/courses`,
+        },
+      ],
     },
     {
       number: 8,
       done: false,
       label: "Still to assign: 1",
       href: `/admin/recruitments/${recruitment.id}/assignments`,
+      links: [
+        {
+          text: "(see assignments)",
+          href: `/admin/recruitments/${recruitment.id}/courses`,
+        },
+      ],
     },
     {
       number: 9,
       done: false,
       label: "Not released yet",
       action: "publishAssignments",
-      secondaryLink: {
-        text: "(see assignments)",
-        href: `/admin/recruitments/${recruitment.id}/courses`,
-      },
+      links: [
+        {
+          text: "(see assignments)",
+          href: `/admin/recruitments/${recruitment.id}/courses`,
+        },
+      ],
     },
   ],
 });
@@ -1273,14 +1325,31 @@ describe("RecruitmentCards tests", () => {
       "/admin/recruitments/1/assignments",
     );
 
+    for (const [step, path] of [
+      [1, "courses"],
+      [2, "applications"],
+      [4, "applications"],
+      [5, "courses"],
+      [6, "courses"],
+      [7, "courses"],
+      [8, "courses"],
+    ]) {
+      // Back to a different page first, so each click is seen to move.
+      await userEvent.click(
+        screen.getByTestId("Cards-card-1-steps-steps-step-8-link"),
+      );
+      expect(screen.getByTestId("where")).toHaveTextContent(
+        "/admin/recruitments/1/assignments",
+      );
+      await userEvent.click(
+        screen.getByTestId(`Cards-card-1-steps-steps-step-${step}-link-0`),
+      );
+      expect(screen.getByTestId("where")).toHaveTextContent(
+        `/admin/recruitments/1/${path}`,
+      );
+    }
     await userEvent.click(
-      screen.getByTestId("Cards-card-1-steps-steps-step-7-secondary-link"),
-    );
-    expect(screen.getByTestId("where")).toHaveTextContent(
-      "/admin/recruitments/1/courses",
-    );
-    await userEvent.click(
-      screen.getByTestId("Cards-card-1-steps-steps-step-9-secondary-link"),
+      screen.getByTestId("Cards-card-1-steps-steps-step-9-link-0"),
     );
     expect(screen.getByTestId("where")).toHaveTextContent(
       "/admin/recruitments/1/courses",

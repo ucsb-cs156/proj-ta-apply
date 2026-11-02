@@ -37,6 +37,10 @@ public class RecruitmentStepsServiceTests {
   @MockitoBean AssignmentsService assignmentsService;
 
   private static final String COURSES = "/admin/recruitments/7/courses";
+  private static final List<Link> SEE_APPLICATIONS =
+      List.of(new Link("(see applications)", "/admin/recruitments/7/applications"));
+  private static final List<Link> SEE_RANKINGS = List.of(new Link("(see rankings)", COURSES));
+  private static final List<Link> SEE_ASSIGNMENTS = List.of(new Link("(see assignments)", COURSES));
 
   /** A recruitment that has only just been created: nothing done but step 1. */
   private static Recruitment fresh() {
@@ -113,8 +117,9 @@ public class RecruitmentStepsServiceTests {
 
     JsonNode json = new ObjectMapper().valueToTree(steps);
     JsonNode first = json.get("steps").get(0);
-    // Step 1 is a bare number, flag and label.
-    assertEquals(List.of("number", "done", "label"), List.copyOf(fieldNames(first)));
+    // Step 1 has a number, flag, label, the course count and the (see courses) link.
+    assertEquals(
+        List.of("number", "done", "label", "detail", "links"), List.copyOf(fieldNames(first)));
     assertEquals("ULA", json.get("type").asText());
     // Step 9 is the only one with a tentative flag.
     assertTrue(json.get("steps").get(8).has("tentative"));
@@ -134,11 +139,34 @@ public class RecruitmentStepsServiceTests {
   @Test
   public void step_1_is_always_done_and_says_when_when_it_is_known() {
     assertEquals(
-        new Step(1, true, "Created: 2026-08-20", null, null, null, null, null), step(fresh(), 1));
+        new Step(
+            1,
+            true,
+            "Created: 2026-08-20",
+            "0 courses",
+            null,
+            null,
+            null,
+            List.of(new Link("(see courses)", COURSES)),
+            null,
+            null),
+        step(fresh(), 1));
 
     Recruitment legacy = fresh();
     legacy.setCreatedAt(null);
-    assertEquals(new Step(1, true, "Created", null, null, null, null, null), step(legacy, 1));
+    assertEquals(
+        new Step(
+            1,
+            true,
+            "Created",
+            "0 courses",
+            null,
+            null,
+            null,
+            List.of(new Link("(see courses)", COURSES)),
+            null,
+            null),
+        step(legacy, 1));
   }
 
   // ---- steps 2 and 4: applications ----
@@ -146,7 +174,17 @@ public class RecruitmentStepsServiceTests {
   @Test
   public void step_2_offers_to_open_until_applications_have_opened() {
     assertEquals(
-        new Step(2, false, "Tentative: 2026-09-01", null, "openApplications", null, null, null),
+        new Step(
+            2,
+            false,
+            "Tentative: 2026-09-01",
+            "0 applications",
+            null,
+            "openApplications",
+            null,
+            SEE_APPLICATIONS,
+            null,
+            null),
         step(fresh(), 2));
 
     Recruitment noDate = fresh();
@@ -161,7 +199,17 @@ public class RecruitmentStepsServiceTests {
     open.setActualOpeningDate(LocalDate.of(2026, 9, 2));
 
     assertEquals(
-        new Step(2, true, "Opened: 2026-09-02", null, "closeApplications", null, null, null),
+        new Step(
+            2,
+            true,
+            "Opened: 2026-09-02",
+            "0 applications",
+            null,
+            "closeApplications",
+            null,
+            SEE_APPLICATIONS,
+            null,
+            null),
         step(open, 2));
     // Closing again later does not make step 2 undone, and the modal turns back to opening.
     open.setApplicationStatus(ApplicationStatus.CLOSED);
@@ -172,7 +220,17 @@ public class RecruitmentStepsServiceTests {
   @Test
   public void step_4_shows_the_primary_consideration_date_until_applications_are_closed() {
     assertEquals(
-        new Step(4, false, "Prim. Consid: 2026-09-15", null, "openApplications", null, null, null),
+        new Step(
+            4,
+            false,
+            "Prim. Consid: 2026-09-15",
+            "0 applications",
+            null,
+            "openApplications",
+            null,
+            SEE_APPLICATIONS,
+            null,
+            null),
         step(fresh(), 4));
 
     Recruitment noDate = fresh();
@@ -193,7 +251,17 @@ public class RecruitmentStepsServiceTests {
     closed.setActualClosingDate(LocalDate.of(2026, 9, 20));
 
     assertEquals(
-        new Step(4, true, "Closed: 2026-09-20", null, "openApplications", null, null, null),
+        new Step(
+            4,
+            true,
+            "Closed: 2026-09-20",
+            "0 applications",
+            null,
+            "openApplications",
+            null,
+            SEE_APPLICATIONS,
+            null,
+            null),
         step(closed, 4));
   }
 
@@ -271,14 +339,34 @@ public class RecruitmentStepsServiceTests {
     r.setAllocationVisibility(AllocationVisibility.OWN_COURSES);
     r.setAllocationsReleasedAt(LocalDateTime.of(2026, 10, 3, 9, 0));
     assertEquals(
-        new Step(5, true, "Released: 2026-10-03", null, "allocationVisibility", null, null, null),
+        new Step(
+            5,
+            true,
+            "Released: 2026-10-03",
+            null,
+            null,
+            "allocationVisibility",
+            null,
+            List.of(new Link("(see allocations)", COURSES)),
+            null,
+            null),
         step(r, 5));
 
     r.setAllocationVisibility(AllocationVisibility.ALL_COURSES);
     assertTrue(step(r, 5).done());
 
     assertEquals(
-        new Step(5, false, "Not released yet", null, "allocationVisibility", null, null, null),
+        new Step(
+            5,
+            false,
+            "Not released yet",
+            null,
+            null,
+            "allocationVisibility",
+            null,
+            List.of(new Link("(see allocations)", COURSES)),
+            null,
+            null),
         step(fresh(), 5));
   }
 
@@ -303,22 +391,33 @@ public class RecruitmentStepsServiceTests {
   @Test
   public void step_6_offers_to_open_until_reviews_have_opened() {
     assertEquals(
-        new Step(6, false, "Not opened yet", null, "openReviews", null, null, null),
+        new Step(
+            6, false, "Not opened yet", null, null, "openReviews", null, SEE_RANKINGS, null, null),
         step(fresh(), 6));
 
     Recruitment open = fresh();
     open.setReviewStatus("Open");
     open.setFacultyReviewOpeningDate(LocalDate.of(2026, 10, 5));
     assertEquals(
-        new Step(6, true, "Opened: 2026-10-05", null, "closeReviews", null, null, null),
+        new Step(
+            6,
+            true,
+            "Opened: 2026-10-05",
+            null,
+            null,
+            "closeReviews",
+            null,
+            SEE_RANKINGS,
+            null,
+            null),
         step(open, 6));
   }
 
   @Test
   public void step_7_shows_the_deadline_while_reviews_are_open_and_not_closed_yet_without_one() {
-    Link rankings = new Link("(see rankings)", COURSES);
     assertEquals(
-        new Step(7, false, "Not closed yet", null, "openReviews", null, rankings, null),
+        new Step(
+            7, false, "Not closed yet", null, null, "openReviews", null, SEE_RANKINGS, null, null),
         step(fresh(), 7));
 
     Recruitment open = fresh();
@@ -326,20 +425,39 @@ public class RecruitmentStepsServiceTests {
     open.setFacultyReviewOpeningDate(LocalDate.of(2026, 10, 5));
     open.setFacultyRankingDeadline(LocalDate.of(2026, 10, 15));
     assertEquals(
-        new Step(7, false, "Deadline: 2026-10-15", null, "closeReviews", null, rankings, null),
+        new Step(
+            7,
+            false,
+            "Deadline: 2026-10-15",
+            null,
+            null,
+            "closeReviews",
+            null,
+            SEE_RANKINGS,
+            null,
+            null),
         step(open, 7));
   }
 
   @Test
   public void step_7_is_done_when_closed_and_says_when_if_it_is_known() {
-    Link rankings = new Link("(see rankings)", COURSES);
     Recruitment closed = fresh();
     closed.setReviewStatus("Closed");
     closed.setFacultyReviewOpeningDate(LocalDate.of(2026, 10, 5));
     closed.setFacultyRankingDeadline(LocalDate.of(2026, 10, 15));
     closed.setFacultyReviewClosedAt(LocalDateTime.of(2026, 10, 16, 8, 0));
     assertEquals(
-        new Step(7, true, "Closed: 2026-10-16", null, "openReviews", null, rankings, null),
+        new Step(
+            7,
+            true,
+            "Closed: 2026-10-16",
+            null,
+            null,
+            "openReviews",
+            null,
+            SEE_RANKINGS,
+            null,
+            null),
         step(closed, 7));
 
     closed.setFacultyReviewClosedAt(null);
@@ -360,9 +478,11 @@ public class RecruitmentStepsServiceTests {
             8,
             false,
             "Still to assign: 2",
+            null,
             "/admin/recruitments/7/assignments",
             null,
             null,
+            SEE_ASSIGNMENTS,
             null,
             null),
         step(r, 8));
@@ -397,9 +517,10 @@ public class RecruitmentStepsServiceTests {
             false,
             "Not released yet",
             null,
+            null,
             "publishAssignments",
             null,
-            new Link("(see assignments)", COURSES),
+            SEE_ASSIGNMENTS,
             false,
             "Close Faculty Ranking before releasing hiring decisions."),
         step(fresh(), 9));
@@ -418,11 +539,13 @@ public class RecruitmentStepsServiceTests {
             9,
             true,
             "Released: 2026-11-01",
+            null,
             "/recruitments/7/assignments",
             null,
             null,
-            new Link("(see assignments)", COURSES),
-            false),
+            SEE_ASSIGNMENTS,
+            false,
+            null),
         step(r, 9));
 
     r.setAssignmentsPublishedAt(null);
@@ -499,5 +622,49 @@ public class RecruitmentStepsServiceTests {
     for (int number = 1; number <= 8; number++) {
       assertNull(step(fresh(), number).blockedReason());
     }
+  }
+
+  // ---- the counts and links under the boxes (issue #249) ----
+
+  @Test
+  public void step_1_counts_the_courses_that_have_not_been_removed() {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L))
+        .thenReturn(List.of(course(1, 1, false), course(2, 1, false), course(3, 1, true)));
+    assertEquals("2 courses", step(fresh(), 1).detail());
+
+    when(recruitmentCourseRepository.findByRecruitmentId(7L))
+        .thenReturn(List.of(course(1, 1, false), course(3, 1, true)));
+    assertEquals("1 course", step(fresh(), 1).detail());
+  }
+
+  @Test
+  public void steps_2_and_4_count_the_real_applications_and_link_to_them() {
+    when(assignmentsService.realApplications(7L))
+        .thenReturn(List.of(assignedTo(1, 10L), assignedTo(2, null), assignedTo(3, null)));
+    for (int number : new int[] {2, 4}) {
+      assertEquals("3 applications", step(fresh(), number).detail());
+      assertEquals(SEE_APPLICATIONS, step(fresh(), number).links());
+    }
+
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of(assignedTo(1, null)));
+    assertEquals("1 application", step(fresh(), 2).detail());
+  }
+
+  @Test
+  public void only_steps_1_2_and_4_have_a_detail_line() {
+    for (int number : new int[] {3, 5, 6, 7, 8, 9}) {
+      assertNull(step(fresh(), number).detail());
+    }
+  }
+
+  @Test
+  public void every_step_but_3_has_its_links_and_3_keeps_its_two_title_links() {
+    assertNull(step(fresh(), 3).links());
+    assertEquals(2, step(fresh(), 3).titleLinks().size());
+    assertEquals(List.of(new Link("(see allocations)", COURSES)), step(fresh(), 5).links());
+    assertEquals(SEE_RANKINGS, step(fresh(), 6).links());
+    assertEquals(SEE_RANKINGS, step(fresh(), 7).links());
+    assertEquals(SEE_ASSIGNMENTS, step(fresh(), 8).links());
+    assertEquals(SEE_ASSIGNMENTS, step(fresh(), 9).links());
   }
 }

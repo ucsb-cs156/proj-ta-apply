@@ -57,16 +57,18 @@ public class RecruitmentStepsControllerTests extends ControllerTestCase {
             7L,
             RecruitmentType.TA,
             List.of(
-                new Step(1, true, "Created: 2026-08-20", null, null, null, null, null),
+                new Step(1, true, "Created: 2026-08-20", null, null, null, null, null, null, null),
                 new Step(
                     9,
                     false,
                     "Not released yet",
                     null,
+                    null,
                     "publishAssignments",
                     null,
-                    new Link("(see assignments)", "/admin/recruitments/7/courses"),
-                    false)));
+                    List.of(new Link("(see assignments)", "/admin/recruitments/7/courses")),
+                    false,
+                    null)));
     when(recruitmentStepsService.stepsFor(recruitment)).thenReturn(steps);
 
     MvcResult response =
@@ -81,8 +83,8 @@ public class RecruitmentStepsControllerTests extends ControllerTestCase {
         "{\"recruitmentId\":7,\"type\":\"TA\",\"steps\":[{\"number\":1,\"done\":true,"
             + "\"label\":\"Created: 2026-08-20\"},{\"number\":9,\"done\":false,"
             + "\"label\":\"Not released yet\",\"action\":\"publishAssignments\","
-            + "\"secondaryLink\":{\"text\":\"(see assignments)\","
-            + "\"href\":\"/admin/recruitments/7/courses\"},\"tentative\":false}]}",
+            + "\"links\":[{\"text\":\"(see assignments)\","
+            + "\"href\":\"/admin/recruitments/7/courses\"}],\"tentative\":false}]}",
         response.getResponse().getContentAsString());
   }
 

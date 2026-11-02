@@ -6,7 +6,6 @@ import {
   FOOTNOTE_LINE_2,
   LEGEND_HARD,
   LEGEND_SOFT,
-  LINE_HEIGHT,
   TENTATIVE_NOTE,
   layoutRecruitmentSteps,
   type BoxGeometry,
@@ -25,6 +24,8 @@ const LINK_INK = "#0d6efd";
 /** The Tentative note: dark amber, readable on white and distinct from the links. */
 const TENTATIVE_INK = "#92400e";
 const TENTATIVE_LINE_HEIGHT = 12;
+/** The lines under a box (its count, then its links) are this far apart; the first is this far down. */
+const UNDER_BOX_LINE_HEIGHT = 13;
 /**
  * The note in three lines under step 9, each but the last ending in a space so the text reads as
  * the one sentence.
@@ -99,7 +100,7 @@ export default function RecruitmentStepsDiagram({
       `${testIdPrefix}-step-${box.number}-${suffix}`;
     const titleLinks = status?.titleLinks;
     const spans = box.lines.map((line, i) => (
-      <tspan key={i} x={box.labelX} dy={i === 0 ? undefined : LINE_HEIGHT}>
+      <tspan key={i} x={box.labelX} dy={i === 0 ? undefined : box.lineHeight}>
         {titleLinks === undefined
           ? line
           : // Step 3: each linked word becomes its own link, the rest stays plain text.
@@ -260,24 +261,42 @@ export default function RecruitmentStepsDiagram({
                 ))}
               </text>
             )}
-            {status?.secondaryLink !== undefined && (
+            {status?.detail !== undefined && (
+              <text
+                x={box.x + 4}
+                y={box.y + box.height + UNDER_BOX_LINE_HEIGHT}
+                fontSize={11}
+                fill={LEGEND_INK}
+                textAnchor="start"
+                data-testid={`${testIdPrefix}-step-${box.number}-detail`}
+              >
+                {status.detail}
+              </text>
+            )}
+            {status?.links?.map((link, i) => (
               <a
-                href={status.secondaryLink.href}
-                onClick={follow(status.secondaryLink.href)}
-                data-testid={`${testIdPrefix}-step-${box.number}-secondary-link`}
+                key={link.text}
+                href={link.href}
+                onClick={follow(link.href)}
+                data-testid={`${testIdPrefix}-step-${box.number}-link-${i}`}
               >
                 <text
                   x={box.x + 4}
-                  y={box.y + box.height + 13}
+                  y={
+                    box.y +
+                    box.height +
+                    UNDER_BOX_LINE_HEIGHT *
+                      (i + (status.detail === undefined ? 1 : 2))
+                  }
                   fontSize={11}
                   fill={LINK_INK}
                   textAnchor="start"
                   style={{ textDecoration: "underline" }}
                 >
-                  {status.secondaryLink.text}
+                  {link.text}
                 </text>
               </a>
-            )}
+            ))}
           </g>
         );
       })}
