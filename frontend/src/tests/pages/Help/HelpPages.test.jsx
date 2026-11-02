@@ -8,6 +8,7 @@ import HelpTaApplicantsPage from "main/pages/Help/HelpTaApplicantsPage";
 import HelpUlaApplicantsPage from "main/pages/Help/HelpUlaApplicantsPage";
 import HelpInstructorsPage from "main/pages/Help/HelpInstructorsPage";
 import HelpAdminsPage from "main/pages/Help/HelpAdminsPage";
+import HelpDeveloperPage from "main/pages/Help/HelpDeveloperPage";
 import HelpNoticeFieldsPage from "main/pages/Help/HelpNoticeFieldsPage";
 import {
   NOTICE_FIELD_EXAMPLES,
@@ -15,6 +16,7 @@ import {
 } from "main/utils/noticeFields";
 import {
   ADMIN_MENU_ENTRIES,
+  DEVELOPER_MENU_ENTRIES,
   VIDEO_INSTRUCTIONS_URL,
 } from "main/utils/helpPages";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
@@ -276,14 +278,14 @@ describe("Help pages (issue #140)", () => {
     ).toBeTruthy();
   });
 
-  test("the admins page explains the Developer Mode switch (issue #217)", async () => {
-    renderPage(<HelpAdminsPage />);
-    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+  test("the developer page explains the Developer Mode switch (issue #217, moved by #266)", async () => {
+    renderPage(<HelpDeveloperPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Developers" });
 
     const heading = document.getElementById("developer-mode");
     expect(heading.tagName).toBe("H2");
-    expect(heading).toHaveTextContent("Developer Mode (Developer menu)");
-    const section = screen.getByTestId("HelpAdminsPage-developer-mode");
+    expect(heading).toHaveTextContent("Developer Mode");
+    const section = screen.getByTestId("HelpDeveloperPage-developer-mode");
     expect(section).toHaveTextContent(
       "is a switch for test instances only. It exists only where the instance was started with ENABLE_DEVELOPER_MODE=true;",
     );
@@ -301,15 +303,19 @@ describe("Help pages (issue #140)", () => {
         .getAllByRole("link", { name: "Developer Mode" })
         .map((link) => link.getAttribute("href")),
     ).toEqual(["#developer-mode", "/admin/developer-mode"]);
+    // Issue #266: the Admin page no longer carries these sections.
     // Issue #218: the Auto Create Recruitments button.
     const autoCreate = screen.getByTestId(
-      "HelpAdminsPage-auto-create-recruitments",
+      "HelpDeveloperPage-auto-create-recruitments",
     );
     expect(autoCreate).toHaveTextContent(
       "While developer mode is on, the footer of the home page has a red Auto Create Recruitments button. It proposes the quarter after the current one, skipping Summer (and lets you pick another: the four quarters before the current one up to the next one, or the next two in Spring, since only those have courses to fill in),",
     );
     expect(autoCreate).toHaveTextContent(
       "with the tentative opening date a week from today and the primary consideration date a week after that. If both exist already there is nothing to create.",
+    );
+    expect(autoCreate).toHaveTextContent(
+      "If both exist already there is nothing to create. Create Recruitments then creates them exactly as the Create New Recruitment button would,",
     );
     expect(autoCreate).toHaveTextContent(
       "nothing is opened, and no hiring target is set.",
@@ -319,7 +325,7 @@ describe("Help pages (issue #140)", () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     // Issue #225: the Fake Hiring Targets and Allocations button.
-    const fake = screen.getByTestId("HelpAdminsPage-fake-allocations");
+    const fake = screen.getByTestId("HelpDeveloperPage-fake-allocations");
     expect(fake).toHaveTextContent(
       "While developer mode is on, the footer of a recruitment's Courses page has a Fake Hiring Targets and Allocations button.",
     );
@@ -340,7 +346,7 @@ describe("Help pages (issue #140)", () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     // Issue #220: the Create Fake Rankings button.
-    const rankings = screen.getByTestId("HelpAdminsPage-fake-rankings");
+    const rankings = screen.getByTestId("HelpDeveloperPage-fake-rankings");
     expect(rankings).toHaveTextContent(
       "While developer mode is on, the footer of a recruitment's Courses page also has a Create Fake Rankings button, enabled only while faculty ranking is open.",
     );
@@ -361,6 +367,81 @@ describe("Help pages (issue #140)", () => {
         .getElementById("developer-info")
         .compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  test("the admins page no longer carries the Developer sections, and points to their page (issue #266)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+    ["jobs", "developer-info", "developer-mode"].forEach((id) =>
+      expect(document.getElementById(id)).toBeNull(),
+    );
+    expect(screen.queryByTestId("HelpAdminsPage-developer-mode")).toBeNull();
+    expect(
+      screen.queryByTestId("HelpAdminsPage-auto-create-recruitments"),
+    ).toBeNull();
+    expect(screen.queryByTestId("HelpAdminsPage-fake-allocations")).toBeNull();
+    expect(screen.queryByTestId("HelpAdminsPage-fake-rankings")).toBeNull();
+    expect(
+      screen.getByTestId("HelpAdminsPage-developer-help"),
+    ).toHaveTextContent(
+      "The Developer menu and Developer Mode are described on their own page, For Developers.",
+    );
+    expect(
+      screen.getByRole("link", { name: "For Developers" }),
+    ).toHaveAttribute("href", "/help/developer");
+  });
+
+  test("the developer page starts with a table of every Developer menu option linking to its section (issue #266)", async () => {
+    renderPage(<HelpDeveloperPage />);
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "For Developers" }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("HelpDeveloperPage-intro")).toHaveTextContent(
+      "The Developer menu is offered to admins. For the rest of the admin's handbook, see For Admins.",
+    );
+    expect(screen.getByRole("link", { name: "For Admins" })).toHaveAttribute(
+      "href",
+      "/help/admins",
+    );
+    const table = screen.getByTestId("HelpDeveloperPage-menu");
+    expect(table.querySelectorAll("tbody tr")).toHaveLength(
+      DEVELOPER_MENU_ENTRIES.length,
+    );
+    DEVELOPER_MENU_ENTRIES.forEach((entry) => {
+      const row = screen.getByTestId(`HelpDeveloperPage-menu-${entry.section}`);
+      const cells = [...row.querySelectorAll("td")].map((td) => td.textContent);
+      expect(cells).toEqual([entry.label, entry.summary]);
+      expect(row.querySelector("a")).toHaveAttribute(
+        "href",
+        `#${entry.section}`,
+      );
+      const section = document.getElementById(entry.section);
+      expect(section.tagName).toBe("H2");
+      expect(section.textContent).toBe(entry.label);
+    });
+    expect(
+      screen
+        .getAllByRole("link", { name: "Jobs" })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["#jobs", "/admin/jobs"]);
+    expect(
+      screen
+        .getAllByRole("link", { name: "Developer Info" })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["#developer-info", "/admin/developer"]);
+  });
+
+  test("arriving at the developer page with a hash scrolls to that section (issue #266)", async () => {
+    const scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    renderPage(<HelpDeveloperPage />, ["/help/developer#developer-mode"]);
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "For Developers" }),
+    ).toBeInTheDocument();
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView.mock.instances[0]).toBe(
+      document.getElementById("developer-mode"),
+    );
   });
 
   test("the admins page starts with a table of every menu option linking to its section", async () => {
