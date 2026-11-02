@@ -65,15 +65,23 @@ with three additions:
 
 | # | Bottom label | Done when | Link(s) |
 |---|---|---|---|
-| 1 | `Created: {date the recruitment was created}` | always | none |
-| 2 | `Opened: {actualOpeningDate}` once opened; before that `Tentative: {tentativeOpeningDate}` | actualOpeningDate is set | the Open Applications modal |
-| 3 | `Hiring Target: {n}` (the target is never unset: it defaults to 1, which is obviously wrong in practice and signals that action is needed) | the allocations add up to the target | the word **Budget** → the Budget for Quarter page for the recruitment's quarter; the word **Allocations** → the Recruitment Courses page |
-| 4 | `Closed: {actualClosingDate}` once closed; before that `Prim. Consid: {primaryConsiderationDate}` | actualClosingDate is set and applications are closed | the Close Applications modal |
-| 5 | `Released: {date}` or `Not released yet` | visibility is not "admins only" | the Allocation Visibility modal (three radio options) |
-| 6 | `Opened: {date faculty rankings opened}` or `Not opened yet` | faculty review opening date set | the Open Faculty Rankings modal |
+| 1 | `Created: {date the recruitment was created}`; just `Created` for an old recruitment whose date was never recorded | always | under the box, a line **n courses** and a link **(see courses)** → the Courses page |
+| 2 | `Opened: {actualOpeningDate}` once opened; before that `Tentative: {tentativeOpeningDate}` | actualOpeningDate is set | the Open Applications modal; under the box, a line **n applications** and a link **(see applications)** → the Applications page |
+| 3 | `Hiring Target: {n}` (the target is never unset: it defaults to 1, which is obviously wrong in practice and signals that action is needed) | the allocations add up to the target | the word **Budget** → the Budget for Quarter page for the recruitment's quarter; the word **Allocations** → the Recruitment Courses page; the two words are set well apart (two ordinary lines of text apart, not one), so it is plain that they are two separate links |
+| 4 | `Closed: {actualClosingDate}` once closed; before that `Prim. Consid: {primaryConsiderationDate}` | actualClosingDate is set and applications are closed | the Close Applications modal; under the box, the same **n applications** line and **(see applications)** link as step 2 |
+| 5 | `Released: {date}` or `Not released yet` | visibility is not "admins only" | the Allocation Visibility modal (three radio options); and a separate link **(see allocations)** → the Courses page |
+| 6 | `Opened: {date faculty rankings opened}` or `Not opened yet` | faculty review opening date set | the Open Faculty Rankings modal; and a separate link **(see rankings)** → the Courses page, the same as under step 7 |
 | 7 | `Closed: {date faculty rankings closed}`; before that `Deadline: {facultyRankingDeadline}` if a deadline is set, else `Not closed yet` | reviews closed after having been open | the Close Faculty Rankings modal; and a separate link **(see rankings)** → the Courses page |
-| 8 | `Still to assign: n` while tentative assignments < target; `Assignment complete` otherwise | assignments ≥ target | the Assignments page |
+| 8 | `Still to assign: n` while tentative assignments < target; `Assignment complete` otherwise | assignments ≥ target | the Assignments page; and a separate link **(see assignments)** → the Courses page, the same as under step 9 |
 | 9 | `Released: {date hiring decisions released}` or `Not released yet`, followed by the reopening note below when it applies | assignments published | before publishing, the Release Assignments (publish) modal; after publishing, the published Assignments page; and a separate link **(see assignments)** → the Courses page |
+
+The counts and links under the boxes come from the same steps endpoint as the labels. **n courses**
+counts the recruitment's courses that have not been removed. **n applications** counts the real,
+non-cancelled applications: applications made by applicants, plus test and fake ones only in
+developer mode. It is therefore the same number the Assignments page works from, and it can be
+smaller than the count on the card's own application button, which also includes cancelled
+applications. The created date in step 1 is stamped when the recruitment is created; recruitments
+that predate the field were filled in from their audit trail.
 
 ### Hiring decisions and reopening
 

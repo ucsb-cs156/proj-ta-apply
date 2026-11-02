@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.services;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
@@ -35,9 +36,12 @@ public class RecruitmentStepsService {
   /**
    * One step's status. Fields that do not apply to the step are null and left out of the JSON.
    *
+   * @param detail a plain line under the box, above the links: "7 courses" under step 1, "12
+   *     applications" under steps 2 and 4 (issue #249)
    * @param action the card modal the title opens, instead of {@code href}
    * @param titleLinks step 3 only: the words "Budget" and "Allocations", each its own link
-   * @param secondaryLink steps 7 and 9: the "(see rankings)" / "(see assignments)" link
+   * @param links the links under the box: "(see courses)", "(see applications)", "(see
+   *     allocations)", "(see rankings)" and "(see assignments)", one per line
    * @param tentative step 9 only: hiring decisions are released but applications or faculty ranking
    *     have been reopened
    * @param blockedReason step 9 only, while not released: the message naming the first prerequisite
@@ -48,26 +52,13 @@ public class RecruitmentStepsService {
       int number,
       boolean done,
       String label,
+      String detail,
       String href,
       String action,
       List<Link> titleLinks,
-      Link secondaryLink,
+      List<Link> links,
       Boolean tentative,
-      String blockedReason) {
-
-    /** A step with no blocked reason, which is every step but an unreleased step 9. */
-    public Step(
-        int number,
-        boolean done,
-        String label,
-        String href,
-        String action,
-        List<Link> titleLinks,
-        Link secondaryLink,
-        Boolean tentative) {
-      this(number, done, label, href, action, titleLinks, secondaryLink, tentative, null);
-    }
-  }
+      String blockedReason) {}
 
   public record Steps(Long recruitmentId, RecruitmentType type, List<Step> steps) {}
 
@@ -78,13 +69,14 @@ public class RecruitmentStepsService {
     boolean applicationsOpen = recruitment.getApplicationStatus() == ApplicationStatus.OPEN;
     boolean reviewsOpen = "Open".equals(recruitment.getReviewStatus());
     int target = recruitment.getTotalHiringTarget();
-    int allocated =
+    List<RecruitmentCourse> activeCourses =
         recruitmentCourseRepository.findByRecruitmentId(id).stream()
             .filter(course -> !course.isRemoved())
-            .mapToInt(RecruitmentCourse::getAllocation)
-            .sum();
+            .toList();
+    int allocated = activeCourses.stream().mapToInt(RecruitmentCourse::getAllocation).sum();
+    List<Application> realApplications = assignmentsService.realApplications(id);
     int assigned =
-        AssignmentsService.assignedCounts(assignmentsService.realApplications(id)).values().stream()
+        AssignmentsService.assignedCounts(realApplications).values().stream()
             .mapToInt(Integer::intValue)
             .sum();
     boolean published = Boolean.TRUE.equals(recruitment.getAssignmentsPublished());
@@ -96,9 +88,15 @@ public class RecruitmentStepsService {
     boolean reviewClosed = "Closed".equals(recruitment.getReviewStatus());
     boolean assignmentComplete = assigned >= target;
 
-    // Steps 2 and 4 open the same modal, whichever way the applications are going; so do 6 and 7.
     String applicationsAction = applicationsOpen ? "closeApplications" : "openApplications";
     String reviewsAction = reviewsOpen ? "closeReviews" : "openReviews";
+
+    String applications = "/admin/recruitments/" + id + "/applications";
+    String coursesCount = count(activeCourses.size(), "course");
+    String applicationsCount = count(realApplications.size(), "application");
+    List<Link> seeApplications = List.of(new Link("(see applications)", applications));
+    List<Link> seeRankings = List.of(new Link("(see rankings)", courses));
+    List<Link> seeAssignments = List.of(new Link("(see assignments)", courses));
 
     return new Steps(
         id,
@@ -110,9 +108,11 @@ public class RecruitmentStepsService {
                 recruitment.getCreatedAt() == null
                     ? "Created"
                     : "Created: " + dateOf(recruitment.getCreatedAt()),
+                coursesCount,
                 null,
                 null,
                 null,
+                List.of(new Link("(see courses)", courses)),
                 null,
                 null),
             new Step(
@@ -121,9 +121,11 @@ public class RecruitmentStepsService {
                 opened
                     ? "Opened: " + recruitment.getActualOpeningDate()
                     : "Tentative: " + orNotSet(recruitment.getTentativeOpeningDate()),
+                applicationsCount,
                 null,
                 applicationsAction,
                 null,
+                seeApplications,
                 null,
                 null),
             new Step(
@@ -132,9 +134,11 @@ public class RecruitmentStepsService {
                 "Hiring Target: " + target,
                 null,
                 null,
+                null,
                 List.of(
                     new Link("Budget", "/admin/budget/" + qyy(recruitment.getQuarter())),
                     new Link("Allocations", courses)),
+                null,
                 null,
                 null),
             new Step(
@@ -143,9 +147,11 @@ public class RecruitmentStepsService {
                 closed
                     ? "Closed: " + recruitment.getActualClosingDate()
                     : "Prim. Consid: " + orNotSet(recruitment.getPrimaryConsiderationDate()),
+                applicationsCount,
                 null,
                 applicationsAction,
                 null,
+                seeApplications,
                 null,
                 null),
             new Step(
@@ -155,8 +161,10 @@ public class RecruitmentStepsService {
                     ? "Released" + datedSuffix(recruitment.getAllocationsReleasedAt())
                     : "Not released yet",
                 null,
+                null,
                 "allocationVisibility",
                 null,
+                List.of(new Link("(see allocations)", courses)),
                 null,
                 null),
             new Step(
@@ -166,8 +174,10 @@ public class RecruitmentStepsService {
                     ? "Opened: " + recruitment.getFacultyReviewOpeningDate()
                     : "Not opened yet",
                 null,
+                null,
                 reviewsAction,
                 null,
+                seeRankings,
                 null,
                 null),
             new Step(
@@ -179,9 +189,11 @@ public class RecruitmentStepsService {
                         ? "Not closed yet"
                         : "Deadline: " + recruitment.getFacultyRankingDeadline(),
                 null,
+                null,
                 reviewsAction,
                 null,
-                new Link("(see rankings)", courses),
+                seeRankings,
+                null,
                 null),
             new Step(
                 8,
@@ -189,9 +201,11 @@ public class RecruitmentStepsService {
                 assignmentComplete
                     ? "Assignment complete"
                     : "Still to assign: " + (target - assigned),
+                null,
                 "/admin/recruitments/" + id + "/assignments",
                 null,
                 null,
+                seeAssignments,
                 null,
                 null),
             new Step(
@@ -200,12 +214,18 @@ public class RecruitmentStepsService {
                 published
                     ? "Released" + datedSuffix(recruitment.getAssignmentsPublishedAt())
                     : "Not released yet",
+                null,
                 published ? "/recruitments/" + id + "/assignments" : null,
                 published ? null : "publishAssignments",
                 null,
-                new Link("(see assignments)", courses),
+                seeAssignments,
                 HiringDecisions.isTentative(recruitment),
                 published ? null : HiringDecisions.unmetPrerequisite(recruitment, assigned > 0))));
+  }
+
+  /** "1 course" or "7 courses". */
+  private static String count(int n, String noun) {
+    return n + " " + noun + (n == 1 ? "" : "s");
   }
 
   /** "Tentative: not set" rather than "Tentative: null" for a date nobody entered. */

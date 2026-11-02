@@ -368,10 +368,10 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(screen.queryByTestId("D-step-3-link")).not.toBeInTheDocument();
     });
 
-    test("steps 7 and 9 carry their secondary links under the box", async () => {
+    test("steps 6 to 9 carry their links under the box", async () => {
       const { onNavigate } = renderLive(recruitmentStepsFixtures.fresh);
 
-      const rankings = screen.getByTestId("D-step-7-secondary-link");
+      const rankings = screen.getByTestId("D-step-7-link-0");
       expect(rankings).toHaveTextContent("(see rankings)");
       expect(rankings).toHaveAttribute("href", "/admin/recruitments/1/courses");
       // Under the box's left end: x + 4, y + height + 13, so step 6's arrow can enter at the right.
@@ -382,16 +382,100 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(text).toHaveAttribute("fill", "#0d6efd");
       expect(text).toHaveAttribute("font-size", "11");
       expect(text.style.textDecoration).toBe("underline");
-      const assignments = screen.getByTestId("D-step-9-secondary-link");
+      // Step 6 has the same link as step 7, and step 8 the same as step 9 (issue #249).
+      expect(screen.getByTestId("D-step-6-link-0")).toHaveTextContent(
+        "(see rankings)",
+      );
+      expect(screen.getByTestId("D-step-8-link-0")).toHaveTextContent(
+        "(see assignments)",
+      );
+      const assignments = screen.getByTestId("D-step-9-link-0");
       expect(assignments).toHaveTextContent("(see assignments)");
       await userEvent.click(assignments);
       expect(onNavigate).toHaveBeenLastCalledWith(
         "/admin/recruitments/1/courses",
       );
-      expect(
-        screen.queryByTestId("D-step-8-secondary-link"),
-      ).not.toBeInTheDocument();
-      expect(within(step(1)).queryByRole("link")).toBeNull();
+    });
+
+    test("step 1 has its course count, then the (see courses) link beneath it", async () => {
+      const { onNavigate } = renderLive(recruitmentStepsFixtures.fresh);
+
+      const count = screen.getByTestId("D-step-1-detail");
+      expect(count).toHaveTextContent("4 courses");
+      // Box 1 is at x 20, y 110, height 78: the count is one line below it, the link the next.
+      expect(count).toHaveAttribute("x", "24");
+      expect(count).toHaveAttribute("y", "201");
+      expect(count).toHaveAttribute("font-size", "11");
+      expect(count).toHaveAttribute("text-anchor", "start");
+      const link = screen.getByTestId("D-step-1-link-0");
+      // The count and the link are drawn inside step 1's own group.
+      expect(within(step(1)).getByText("4 courses")).toBe(count);
+      expect(within(step(1)).getByRole("link")).toBe(link);
+      expect(link.querySelector("text")).toHaveAttribute("y", "214");
+      expect(link.querySelector("text")).toHaveAttribute("x", "24");
+      await userEvent.click(link);
+      expect(onNavigate).toHaveBeenLastCalledWith(
+        "/admin/recruitments/1/courses",
+      );
+    });
+
+    test("steps 2 and 4 have their application count, then the (see applications) link", async () => {
+      const { onNavigate } = renderLive(
+        recruitmentStepsFixtures.applicationsOpen,
+      );
+
+      for (const n of [2, 4]) {
+        expect(screen.getByTestId(`D-step-${n}-detail`)).toHaveTextContent(
+          "12 applications",
+        );
+        const link = screen.getByTestId(`D-step-${n}-link-0`);
+        expect(link).toHaveTextContent("(see applications)");
+        expect(link).toHaveAttribute(
+          "href",
+          "/admin/recruitments/1/applications",
+        );
+        // The count is 13 below the box and the link 26.
+        const box = screen.getByTestId(`D-step-${n}-label`);
+        expect(box).toBeInTheDocument();
+        expect(Number(link.querySelector("text").getAttribute("y"))).toBe(
+          Number(screen.getByTestId(`D-step-${n}-detail`).getAttribute("y")) +
+            13,
+        );
+      }
+      await userEvent.click(screen.getByTestId("D-step-4-link-0"));
+      expect(onNavigate).toHaveBeenLastCalledWith(
+        "/admin/recruitments/1/applications",
+      );
+    });
+
+    test("step 5 has a (see allocations) link, and step 3 has none", async () => {
+      const { onNavigate } = renderLive(recruitmentStepsFixtures.fresh);
+
+      const link = screen.getByTestId("D-step-5-link-0");
+      expect(link).toHaveTextContent("(see allocations)");
+      expect(screen.queryByTestId("D-step-5-detail")).not.toBeInTheDocument();
+      await userEvent.click(link);
+      expect(onNavigate).toHaveBeenLastCalledWith(
+        "/admin/recruitments/1/courses",
+      );
+      expect(screen.queryByTestId("D-step-3-link-0")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("D-step-3-detail")).not.toBeInTheDocument();
+    });
+
+    test("step 3's two links are further apart than other titles' lines", () => {
+      renderLive(recruitmentStepsFixtures.fresh);
+
+      const budget = screen.getByTestId("D-step-3-link-Budget");
+      const allocations = screen.getByTestId("D-step-3-link-Allocations");
+      expect(budget.parentElement).toHaveAttribute("x", "183");
+      expect(allocations.parentElement).toHaveAttribute("x", "183");
+      expect(allocations.parentElement).toHaveAttribute("dy", "28");
+      // The other two-line titles keep the ordinary 16.
+      const tspans = screen
+        .getByTestId("D-step-2-title")
+        .querySelectorAll("tspan[dy]");
+      expect(tspans).toHaveLength(1);
+      expect(tspans[0]).toHaveAttribute("dy", "16");
     });
 
     test("the ULA fixture draws ULA titles with live data", () => {
