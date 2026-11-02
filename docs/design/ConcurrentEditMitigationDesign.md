@@ -421,6 +421,28 @@ budget is now 45,000.00; you entered 40,000.00") and offers **Use theirs** and *
 Overwrite re-sends with the current version. Letting the user force the issue is reasonable here:
 one field, one number, and the user can see both.
 
+**As built (#277).** `budgets` has a `version` column (JPA `@Version`, migration 044).
+`PUT /api/admin/budget` takes the `version` the page last saw and answers `409` with the quarter's
+summary as it now stands and its version; without a `version` the save is unconditional. The page
+sends each save one after another, with the version from the previous answer, and takes the version
+from a refused save, so a refusal updates the whole page to what is stored. Average cost and hiring
+target use compare-and-set: `PUT /api/admin/recruitments/avgCostPerPosition` and `/totalHiringTarget`
+take an optional `expected`, and answer `409` with the recruitment when the stored value is no
+longer that (a missing `expected` saves unconditionally, which is how a cost not yet entered is
+first set). The read, compare and write are one step within the server process (a lock), which is
+enough for a single instance; the key `recruitment:<id>` names the thing compared, though nothing
+is recorded under it. Per figure, a refusal leaves a notice with **Use theirs** and **Overwrite**;
+typing more in that box is kept for Overwrite and is not sent.
+
+The multi-tab warning is the mechanism of Part 1, used as the draft form uses it, with the noun
+"budget" and key `budget:<quarter>`: `POST /api/admin/budget/heartbeat?quarter=` and
+`POST /api/admin/budget/leave?quarter=`, banner for every tab and modal for the newest. The
+authorization is the admin role, checked by Spring before the controller runs, so a caller who is
+not an admin gets `403` and is neither recorded nor told any name nor able to remove anyone. A save
+(`X-Client-Id`) also counts the tab as present. Timing is the same two environment variables as for
+drafts. Different quarters never warn each other; the recruitment saves are not recorded under any
+key, since the heartbeat of the page already covers them.
+
 **Risks.** Low. The budget is a planning figure and "changes are not audited" (see the `Budget`
 class comment), so there is no history to reconcile. The hiring target is shared with the
 allocations (see (b)), so a conflict on it should refresh the allocation summary too.

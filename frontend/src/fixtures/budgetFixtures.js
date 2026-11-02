@@ -14,6 +14,7 @@ const budgetFixtures = {
       unrestrictedBudget: 100000.0,
       tasOnlyBudget: 20000.25,
       ulasOnlyBudget: 5000.0,
+      version: 3,
     },
     ta: {
       recruitmentId: 5,
@@ -48,6 +49,7 @@ const budgetFixtures = {
       unrestrictedBudget: 0,
       tasOnlyBudget: 0,
       ulasOnlyBudget: 0,
+      version: 3,
     },
     ta: null,
     ula: {
@@ -73,6 +75,7 @@ const budgetFixtures = {
       unrestrictedBudget: 50000.0,
       tasOnlyBudget: 0,
       ulasOnlyBudget: 0,
+      version: 3,
     },
     ta: {
       recruitmentId: 1,

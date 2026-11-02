@@ -1,13 +1,23 @@
-import { Link, useParams } from "react-router";
-import { Col, Row, Table } from "react-bootstrap";
+import { Link, useNavigate, useParams } from "react-router";
+import { Alert, Button, Col, Row, Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import SavedOnChangeInput from "main/components/Budget/SavedOnChangeInput";
 import type {
   BudgetSide,
   BudgetSummary,
 } from "main/components/Budget/budgetTypes";
-import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
-import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import {
+  BUDGET_KEY,
+  useBudgetSaves,
+  type BudgetLine,
+  type Side,
+} from "main/components/Budget/useBudgetSaves";
+import {
+  MultipleTabsBanner,
+  MultipleTabsModal,
+  useClientActivity,
+} from "main/concurrency";
+import { useBackend } from "main/utils/useBackend";
 import { qyyToYyyyq } from "main/utils/quarterUtilities";
 import { isValidHiringTarget } from "main/utils/allocations";
 import {
@@ -18,12 +28,7 @@ import {
   overallRatioDisplay,
 } from "main/utils/currency";
 
-type BudgetLine = "unrestrictedBudget" | "tasOnlyBudget" | "ulasOnlyBudget";
-type Side = "ta" | "ula";
 const TYPE_OF: Record<Side, "TA" | "ULA"> = { ta: "TA", ula: "ULA" };
-
-/** The query key of the summary; every mutation on the page invalidates it. */
-const BUDGET_KEY = "/api/admin/budget";
 
 /**
  * Admin → Budget for Quarter → one quarter: /admin/budget/:qyy (issue #177). The average cost of a
@@ -33,6 +38,15 @@ const BUDGET_KEY = "/api/admin/budget";
  */
 export default function BudgetPage(): React.JSX.Element {
   const { qyy } = useParams();
+  // Made afresh for each quarter, so nothing the page knows about one is taken for another's.
+  return <BudgetForQuarter key={qyy} qyy={qyy} />;
+}
+
+function BudgetForQuarter({
+  qyy,
+}: {
+  qyy: string | undefined;
+}): React.JSX.Element {
   const yyyyq = qyyToYyyyq(qyy);
 
   const { data: summary } = useBackend<BudgetSummary | null>(
@@ -43,43 +57,17 @@ export default function BudgetPage(): React.JSX.Element {
     { enabled: yyyyq !== null },
   );
 
-  const budgetMutation = useBackendMutation<
-    { line: BudgetLine; amount: string },
-    BudgetSummary
-  >(
-    ({ line, amount }) => ({
-      url: BUDGET_KEY,
-      method: "PUT",
-      params: { quarter: yyyyq, [line]: amount },
-    }),
-    {},
-    [BUDGET_KEY],
-  );
-
-  const costMutation = useBackendMutation<
-    { id: number; amount: string },
-    Recruitment
-  >(
-    ({ id, amount }) => ({
-      url: "/api/admin/recruitments/avgCostPerPosition",
-      method: "PUT",
-      params: { id, avgCostPerPosition: amount },
-    }),
-    {},
-    [BUDGET_KEY],
-  );
-
-  const targetMutation = useBackendMutation<
-    { id: number; target: string },
-    Recruitment
-  >(
-    ({ id, target }) => ({
-      url: "/api/admin/recruitments/totalHiringTarget",
-      method: "PUT",
-      params: { id, totalHiringTarget: Number(target) },
-    }),
-    {},
-    [BUDGET_KEY],
+  // Tells the server this tab is on this quarter's budget, and learns whether another one is
+  // (issues #277, #284). It starts once the quarter is known to exist.
+  const activity = useClientActivity({
+    heartbeatUrl: summary ? `${BUDGET_KEY}/heartbeat?quarter=${yyyyq}` : null,
+    leaveUrl: summary ? `${BUDGET_KEY}/leave?quarter=${yyyyq}` : null,
+  });
+  const navigate = useNavigate();
+  const { conflicts, save, takeTheirs, overwrite } = useBudgetSaves(
+    yyyyq,
+    summary,
+    activity.headers,
   );
 
   if (yyyyq === null) {
@@ -134,7 +122,7 @@ export default function BudgetPage(): React.JSX.Element {
         onSave={(amount) => {
           // Stryker disable next-line all : the box is disabled, so this cannot be reached
           if (s === null) return;
-          costMutation.mutate({ id: s.recruitmentId, amount });
+          save(`cost-${which}`, amount);
         }}
       />
     );
@@ -147,7 +135,7 @@ export default function BudgetPage(): React.JSX.Element {
       prefix="$"
       stored={dollarsForInput(summary.budget[line])}
       isValid={isValidDollars}
-      onSave={(amount) => budgetMutation.mutate({ line, amount })}
+      onSave={(amount) => save(line, amount)}
     />
   );
 
@@ -172,9 +160,7 @@ export default function BudgetPage(): React.JSX.Element {
           stored={String(s.totalHiringTarget)}
           isValid={isValidHiringTarget}
           width="6em"
-          onSave={(target) =>
-            targetMutation.mutate({ id: s.recruitmentId, target })
-          }
+          onSave={(target) => save(`target-${which}`, target)}
         />
         <div data-testid={`BudgetPage-target-${which}-allocated`}>
           {type}s allocated to courses so far: {s.totalAllocation}
@@ -238,6 +224,53 @@ export default function BudgetPage(): React.JSX.Element {
     <BasicLayout>
       <div className="pt-2" data-testid="BudgetPage">
         {header}
+        <MultipleTabsBanner
+          others={activity.others}
+          noun="budget"
+          testId="BudgetPage-multiple-tabs"
+        />
+        {/* Only the newest tab is asked; the older ones keep the banner alone. */}
+        <MultipleTabsModal
+          others={activity.others}
+          newest={activity.newest}
+          arrivedAt={activity.arrivedAt}
+          noun="budget"
+          onLeave={() => {
+            activity.leave();
+            navigate("/");
+          }}
+          testId="BudgetPage-multiple-tabs-modal"
+        />
+        {conflicts.map((conflict) => (
+          <Alert
+            key={conflict.field}
+            variant="warning"
+            data-testid={`BudgetPage-conflict-${conflict.field}`}
+          >
+            <span data-testid={`BudgetPage-conflict-${conflict.field}-message`}>
+              The {conflict.name} was changed in another tab or window. It is
+              now {conflict.current}; you entered {conflict.entered}.
+            </span>
+            <Button
+              className="ms-2"
+              size="sm"
+              variant="outline-secondary"
+              data-testid={`BudgetPage-conflict-${conflict.field}-theirs`}
+              onClick={() => takeTheirs(conflict.field)}
+            >
+              Use theirs
+            </Button>
+            <Button
+              className="ms-2"
+              size="sm"
+              variant="warning"
+              data-testid={`BudgetPage-conflict-${conflict.field}-overwrite`}
+              onClick={() => overwrite(conflict.field)}
+            >
+              Overwrite
+            </Button>
+          </Alert>
+        ))}
         <>
           <h2 className="h4 mt-3">Costs and funds</h2>
           <p className="small">

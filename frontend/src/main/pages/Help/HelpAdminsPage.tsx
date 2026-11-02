@@ -1,8 +1,14 @@
 import { Link } from "react-router";
 import { Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
+import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
 import { ADMIN_MENU_ENTRIES } from "main/utils/helpPages";
 import useScrollToHash from "main/utils/useScrollToHash";
+
+/** The warning as it looks when another admin has the same budget open. */
+const EXAMPLE_OTHERS = [
+  { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false },
+];
 
 /**
  * The admin's handbook: /help/admins (issue #140). A table of every option on the Admin menu and
@@ -662,6 +668,85 @@ export default function HelpAdminsPage(): React.JSX.Element {
           cut short with a <em>[See value]</em> link that shows the whole thing.
           The trail for one application is also shown on that application&apos;s
           View page.
+        </p>
+
+        <h2
+          className="my-3 h4"
+          data-testid="HelpAdminsPage-simultaneous-editing"
+        >
+          Simultaneous Editing
+        </h2>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-intro">
+          If you, or another admin, is editing the same thing at the same time,
+          you may get a warning. So far this is the Budget for Quarter page, for
+          one quarter&apos;s budget. If another admin has the same
+          quarter&apos;s budget open, the warning looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="budget"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-names">
+          It names the other people who have it open, up to three and then
+          &quot;and 2 others&quot;. If the other copy is your own, in another
+          tab or window, it says &quot;You are also editing this budget in
+          another tab or window.&quot;, and if both are open it says &quot;You
+          and phtcon@ucsb.edu (Phill Conrad) are also editing this budget in
+          other windows or tabs.&quot; Two admins on different quarters never
+          see it.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-meaning">
+          <strong>What it means.</strong> The same quarter&apos;s budget is open
+          somewhere else, in another tab or window of this browser, on another
+          device, or by another admin. Every box saves as it is typed, so the
+          last save would win and the earlier one would be lost without anyone
+          noticing. If you go on, the system will refuse a save from a copy that
+          is out of date; see below.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-modal">
+          <strong>The question.</strong> The tab or window opened <em>last</em>{" "}
+          also asks what you want to do, in a box that covers the page until you
+          answer. The one opened first only shows the warning, so that it never
+          interrupts whoever is typing. The box offers three choices:
+        </p>
+        <ul data-testid="HelpAdminsPage-simultaneous-editing-choices">
+          <li>
+            <strong>Leave this page</strong> takes this tab or window to the
+            home page.
+          </li>
+          <li>
+            <strong>
+              Wait for the other tabs or windows to close, then resume here
+            </strong>{" "}
+            keeps the page covered. When the others close, the box closes by
+            itself within a few seconds and you can carry on here.
+          </li>
+          <li>
+            <strong>Continue anyway</strong> closes the box and keeps the
+            warning on the page. Use it only if you are sure you and the other
+            admin will not change the same figure. The box does not come back.
+          </li>
+        </ul>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-conflict">
+          <strong>If a save is refused.</strong> When a figure was changed by
+          someone else after your page last showed it, your save is not made.
+          The page keeps what you typed and says, for example, &quot;The
+          TAs-only budget was changed in another tab or window. It is now
+          $45,000.00; you entered $40,000.00.&quot; The page then shows what is
+          stored. Choose <strong>Use theirs</strong> to keep what is stored and
+          drop what you typed, or <strong>Overwrite</strong> to save what you
+          typed over it. This applies to the three budget lines, the average
+          cost per TA and per ULA, and the two hiring targets.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
+          <strong>What to do.</strong> Close all the other tabs or windows and
+          keep just one, or agree with the other admin who will make the
+          changes. The warning goes away on its own within a few seconds after
+          the other copies are closed, or in up to about twenty seconds if the
+          other copy could not say that it was leaving, such as when a computer
+          lost its network connection.
         </p>
       </div>
     </BasicLayout>

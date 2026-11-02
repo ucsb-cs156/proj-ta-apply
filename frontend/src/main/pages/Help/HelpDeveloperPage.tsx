@@ -140,7 +140,8 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           before anything is refused, that another copy is open, and who. The
           full design, including where else it is planned, is{" "}
           <code>docs/design/ConcurrentEditMitigationDesign.md</code>. Only the
-          draft application form uses either so far.
+          draft application form and the Budget page use them so far, as the
+          table at the end of this section lists.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-version">
           <strong>The version check.</strong> A saved thing carries an integer{" "}
@@ -150,6 +151,18 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           it. If not, nothing is changed and the answer is{" "}
           <code>409 Conflict</code> with the draft as it now stands. The form
           then stops saving, says so, and offers <em>Reload</em>.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-compare">
+          <strong>Compare-and-set.</strong> Where a version column would be
+          heavy, a save carries the value the page last saw (
+          <code>expected</code>) and the server applies it only if that is still
+          the stored value; otherwise nothing changes and the answer is{" "}
+          <code>409 Conflict</code> with the current value. The Budget page uses
+          a version for the budget&apos;s three lines and compare-and-set for a
+          recruitment&apos;s average cost and hiring target, which the
+          recruitment&apos;s row shares with many other pages. The page keeps
+          what the user typed, says what is stored now, and offers{" "}
+          <em>Use theirs</em> and <em>Overwrite</em>.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-heartbeat">
           <strong>The client id and the heartbeat.</strong> Each tab makes a
@@ -353,6 +366,26 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #285
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-budget">
+              <td>Budget</td>
+              <td>
+                One quarter&apos;s budget (compare-and-set for a
+                recruitment&apos;s average cost and hiring target, keyed{" "}
+                <code>recruitment:&lt;id&gt;</code>)
+              </td>
+              <td>
+                <code>budget:&lt;quarter&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/286"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #286
                 </a>
               </td>
             </tr>
