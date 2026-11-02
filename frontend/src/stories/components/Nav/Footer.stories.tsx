@@ -38,7 +38,7 @@ export const DeveloperModeOn: Story = {
   },
 };
 
-/** A page has registered controls for the slot to the right of the badge. */
+/** A page has registered controls for the slot, which appear to the left of the badge. */
 export const DeveloperModeOnWithControls: Story = {
   parameters: DeveloperModeOn.parameters,
   render: () => (

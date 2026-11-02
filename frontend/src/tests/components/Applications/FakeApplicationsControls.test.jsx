@@ -51,17 +51,18 @@ describe("FakeApplicationsControls tests", () => {
     );
   });
 
-  test("the create form proposes three per course and states the allowed range", async () => {
+  test("the create form proposes two per course, the least allowed, and states the range", async () => {
     renderControls(5);
     await userEvent.click(screen.getByTestId("Fake-create"));
 
-    expect(screen.getByTestId("Fake-count")).toHaveValue(15);
+    expect(screen.getByTestId("Fake-count")).toHaveValue(10);
     expect(screen.getByTestId("Fake-count")).toHaveAttribute("min", "10");
     expect(screen.getByTestId("Fake-count")).toHaveAttribute("max", "50");
     expect(screen.getByTestId("Fake-count-help")).toHaveTextContent(
       "Between 10 and 50: 2 to 10 for each of this recruitment's 5 courses.",
     );
-    expect(screen.getByTestId("Fake-coverage")).toHaveValue("ALL");
+    expect(screen.getByTestId("Fake-coverage-all")).toBeChecked();
+    expect(screen.getByTestId("Fake-coverage-sparse")).not.toBeChecked();
   });
 
   test("the help says course in the singular for one course", async () => {
@@ -97,10 +98,7 @@ describe("FakeApplicationsControls tests", () => {
     await userEvent.click(screen.getByTestId("Fake-create"));
     await userEvent.clear(screen.getByTestId("Fake-count"));
     await userEvent.type(screen.getByTestId("Fake-count"), "20");
-    await userEvent.selectOptions(
-      screen.getByTestId("Fake-coverage"),
-      "SPARSE",
-    );
+    await userEvent.click(screen.getByTestId("Fake-coverage-sparse"));
     await userEvent.click(screen.getByTestId("Fake-create-confirm"));
 
     await screen.findByText("Fake applications are being entered");
@@ -226,7 +224,7 @@ describe("FakeApplicationsControls tests", () => {
       await screen.findByTestId("Fake-launched-modal"),
     ).toBeInTheDocument();
     expect(screen.getByTestId("Fake-launched-modal")).toHaveTextContent(
-      "See the Jobs page to follow it.",
+      "Fake applications are being entered; see the Jobs page for details. Refresh the page a few times, and they should all appear.",
     );
     await userEvent.click(screen.getByTestId("Fake-launched-close"));
     await waitFor(() =>
@@ -285,10 +283,7 @@ describe("FakeApplicationsControls tests", () => {
     await userEvent.click(screen.getByTestId("Fake-create"));
     await userEvent.clear(screen.getByTestId("Fake-count"));
     await userEvent.type(screen.getByTestId("Fake-count"), "44");
-    await userEvent.selectOptions(
-      screen.getByTestId("Fake-coverage"),
-      "SPARSE",
-    );
+    await userEvent.click(screen.getByTestId("Fake-coverage-sparse"));
     await userEvent.click(screen.getByTestId("Fake-create-cancel"));
     await waitFor(() =>
       expect(screen.queryByTestId("Fake-count")).not.toBeInTheDocument(),
@@ -296,8 +291,9 @@ describe("FakeApplicationsControls tests", () => {
 
     await userEvent.click(screen.getByTestId("Fake-create"));
 
-    expect(screen.getByTestId("Fake-count")).toHaveValue(15);
-    expect(screen.getByTestId("Fake-coverage")).toHaveValue("ALL");
+    expect(screen.getByTestId("Fake-count")).toHaveValue(10);
+    expect(screen.getByTestId("Fake-coverage-all")).toBeChecked();
+    expect(screen.getByTestId("Fake-coverage-sparse")).not.toBeChecked();
   });
 
   test("a count out of range is marked invalid and one in range is not", async () => {
@@ -325,5 +321,40 @@ describe("FakeApplicationsControls tests", () => {
         screen.queryByTestId("Fake-delete-confirm"),
       ).not.toBeInTheDocument(),
     );
+  });
+
+  test("the two coverage choices are radio buttons worded as the design has them", async () => {
+    axiosMock.onPost(url).reply(200, { id: 3 });
+    renderControls(5);
+    await userEvent.click(screen.getByTestId("Fake-create"));
+
+    expect(
+      screen.getByLabelText(
+        "Cover all courses with a reasonable number of applicants",
+      ),
+    ).toBe(screen.getByTestId("Fake-coverage-all"));
+    expect(
+      screen.getByLabelText("Leave some courses with few or no applicants"),
+    ).toBe(screen.getByTestId("Fake-coverage-sparse"));
+    expect(screen.getByTestId("Fake-coverage-all")).toHaveAttribute(
+      "type",
+      "radio",
+    );
+
+    // Choosing sparse and then all again sends all.
+    expect(screen.getByTestId("Fake-coverage-sparse")).not.toBeChecked();
+    await userEvent.click(screen.getByTestId("Fake-coverage-sparse"));
+    expect(screen.getByTestId("Fake-coverage-sparse")).toBeChecked();
+    expect(screen.getByTestId("Fake-coverage-all")).not.toBeChecked();
+    await userEvent.click(screen.getByTestId("Fake-coverage-all"));
+    expect(screen.getByTestId("Fake-coverage-sparse")).not.toBeChecked();
+    await userEvent.click(screen.getByTestId("Fake-create-confirm"));
+
+    await waitFor(() => expect(axiosMock.history.post).toHaveLength(1));
+    expect(axiosMock.history.post[0].params).toEqual({
+      recruitmentId: "7",
+      count: 10,
+      coverage: "ALL",
+    });
   });
 });

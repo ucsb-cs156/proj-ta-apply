@@ -43,6 +43,7 @@ public class CreateFakeApplicationsJobTests {
   @Mock private ApplicationRepository applicationRepository;
 
   private final Random random = new Random(1);
+  private static final java.time.LocalDate TODAY = java.time.LocalDate.of(2026, 2, 10);
   private Job jobStarted;
   private JobContext ctx;
 
@@ -58,6 +59,7 @@ public class CreateFakeApplicationsJobTests {
         .count(40)
         .coverage(coverage)
         .random(random)
+        .today(TODAY)
         .generator(generator)
         .recruitmentRepository(recruitmentRepository)
         .recruitmentCourseRepository(recruitmentCourseRepository)
@@ -93,7 +95,7 @@ public class CreateFakeApplicationsJobTests {
                 Application.builder().email("a@ucsb.edu").build(),
                 Application.builder().email("b@fake.ucsb.edu").build()));
     List<Application> made = List.of(Application.builder().email("new@fake.ucsb.edu").build());
-    when(generator.generate(any(), any(), anyInt(), any(), any(), any())).thenReturn(made);
+    when(generator.generate(any(), any(), anyInt(), any(), any(), any(), any())).thenReturn(made);
 
     job(FakeCoverage.SPARSE).accept(ctx);
 
@@ -105,7 +107,8 @@ public class CreateFakeApplicationsJobTests {
             eq(40),
             eq(FakeCoverage.SPARSE),
             eq(random),
-            taken.capture());
+            taken.capture(),
+            eq(TODAY));
     assertEquals(Set.of("a@ucsb.edu", "b@fake.ucsb.edu"), taken.getValue());
     verify(applicationRepository).saveAll(made);
     assertTrue(
@@ -134,6 +137,7 @@ public class CreateFakeApplicationsJobTests {
     assertEquals(40, job.getCount());
     assertEquals(FakeCoverage.ALL, job.getCoverage());
     assertSame(random, job.getRandom());
+    assertEquals(TODAY, job.getToday());
     assertSame(generator, job.getGenerator());
   }
 }

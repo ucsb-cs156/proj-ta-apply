@@ -109,7 +109,13 @@ public class FakeApplicationsRuleComplianceTests {
 
     for (Application a :
         generator.generate(
-            recruitment, COURSES, 500, FakeCoverage.ALL, new Random(11), new HashSet<>())) {
+            recruitment,
+            COURSES,
+            500,
+            FakeCoverage.ALL,
+            new Random(11),
+            new HashSet<>(),
+            java.time.LocalDate.of(2026, 2, 10))) {
       ApplicationFields fields = fieldsOf(a);
       ApplicationsController.requireCoursework(type, fields);
       ApplicationsController.requireUlaAnswers(type, fields);

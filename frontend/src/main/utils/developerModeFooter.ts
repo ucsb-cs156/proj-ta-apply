@@ -2,10 +2,11 @@ import { createContext, useContext, useEffect, type ReactNode } from "react";
 
 /**
  * The footer's developer-mode slot (issue #217): the controls a page has registered to appear to
- * the right of the Developer Mode badge. Two contexts, so that a page registering controls does
+ * the left of the Developer Mode badge. Two contexts, so that a page registering controls does
  * not itself re-render when the slot's contents change (which would re-register and loop): the
  * footer reads the controls context; registering pages use only the stable setter context. The
- * provider lives in BasicLayout.
+ * provider wraps the whole app (see App), so any page may call the hook directly; BasicLayout has
+ * a fallback provider for pages mounted without App.
  */
 export type SetDeveloperModeFooterControls = (controls: ReactNode) => void;
 
