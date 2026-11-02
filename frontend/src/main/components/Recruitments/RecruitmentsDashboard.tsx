@@ -11,12 +11,17 @@ import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { HOME_PAGE_QUERY_KEYS } from "main/utils/recruitmentSteps";
 import AutoCreateRecruitmentsModal from "main/components/Recruitments/AutoCreateRecruitmentsModal";
 import { useDeveloperMode } from "main/utils/developerMode";
-import { useSystemInfo } from "main/utils/systemInfo";
-import { quarterRange } from "main/utils/quarterUtilities";
+import {
+  nextNonSummerQuarter,
+  selectableQuarters,
+} from "main/utils/autoCreateRecruitments";
+import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { toast } from "react-toastify";
 
 type RecruitmentsDashboardProps = {
   testIdPrefix?: string;
+  /** Injected so tests and stories can fix the date; defaults to now. */
+  today?: Date;
 };
 
 /**
@@ -27,18 +32,20 @@ type RecruitmentsDashboardProps = {
  */
 export default function RecruitmentsDashboard({
   testIdPrefix = "RecruitmentsDashboard",
+  today = new Date(),
 }: RecruitmentsDashboardProps): React.JSX.Element {
-  const { data: systemInfo } = useSystemInfo();
   const { data: developerMode } = useDeveloperMode();
   // Stryker disable next-line all : the query's initial data is the "off" status, never undefined
   const developerModeOn = developerMode?.on === true;
 
-  // Stryker disable OptionalChaining
-  const startQtr = systemInfo?.startQtrYYYYQ || "20211";
-  const endQtr = systemInfo?.endQtrYYYYQ || "20254";
-  // Stryker restore OptionalChaining
-
-  const quarters = quarterRange(startQtr, endQtr);
+  // The Create New Recruitment form offers a full academic year back through the next quarter (two
+  // in Spring), the quarters that have courses to work with, and proposes the next one that is
+  // not Summer: the quarter after this one, which is the normal case.
+  const quarters = selectableQuarters(today).map((yyyyq) => ({
+    yyyyq,
+    qyy: yyyyqToQyy(yyyyq),
+  }));
+  const defaultQuarter = nextNonSummerQuarter(today);
 
   const { data: recruitments } = useBackend<Recruitment[]>(
     ["/api/admin/recruitments/all"],
@@ -158,6 +165,7 @@ export default function RecruitmentsDashboard({
           <Modal.Header closeButton>Create New Recruitment</Modal.Header>
           <RecruitmentForm
             quarters={quarters}
+            defaultQuarter={defaultQuarter}
             submitAction={(data) => createMutation.mutate(data)}
             onCancel={() => setCreating(false)}
           />

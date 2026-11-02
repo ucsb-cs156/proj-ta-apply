@@ -22,11 +22,11 @@ vi.mock("react-toastify", async (importOriginal) => {
 
 const axiosMock = new AxiosMockAdapter(axios);
 
-function renderDashboard(queryClient = new QueryClient()) {
+function renderDashboard(queryClient = new QueryClient(), today = undefined) {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <RecruitmentsDashboard />
+        <RecruitmentsDashboard today={today} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -120,7 +120,8 @@ describe("RecruitmentsDashboard tests", () => {
   });
 
   test("creating a recruitment posts the form from its modal, toasts and closes it", async () => {
-    renderDashboard();
+    // Monday 2026-01-05, in Winter: the form proposes Spring 2026.
+    renderDashboard(new QueryClient(), new Date(2026, 0, 5));
     await userEvent.click(
       await screen.findByTestId("RecruitmentsDashboard-create-button"),
     );
@@ -145,7 +146,7 @@ describe("RecruitmentsDashboard tests", () => {
 
     await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
     expect(axiosMock.history.post[0].params).toEqual({
-      quarter: "20211",
+      quarter: "20262",
       type: "ULA",
       tentativeOpeningDate: "2026-01-05",
       primaryConsiderationDate: "2026-01-20",
@@ -352,22 +353,95 @@ describe("RecruitmentsDashboard tests", () => {
     expect(axiosMock.history.delete.length).toBe(0);
   });
 
-  test("falls back to default quarter bounds when systemInfo has none", async () => {
-    axiosMock.onGet("/api/systemInfo").reply(200, {
-      springH2ConsoleEnabled: false,
-      showSwaggerUILink: false,
-      oauthLogin: "/oauth2/authorization/google",
-      sourceRepo: "",
-    });
+  // ---- Issue #256: the quarters the Create New Recruitment form offers ----
 
-    renderDashboard();
+  const openCreateForm = async (today) => {
+    renderDashboard(new QueryClient(), today);
     await userEvent.click(
       await screen.findByTestId("RecruitmentsDashboard-create-button"),
     );
+    return await screen.findByTestId("RecruitmentForm.Quarter");
+  };
+  const optionValues = (select) =>
+    within(select)
+      .getAllByRole("option")
+      .map((o) => o.value);
 
+  test("in Fall the quarter selector runs from four quarters back to the next one, and defaults to the next one", async () => {
+    // 2026-11-01 is in Fall 2026: F25 to W27, and the next quarter, W27, is the default.
+    const select = await openCreateForm(new Date(2026, 10, 1));
+    expect(optionValues(select)).toEqual([
+      "20254",
+      "20261",
+      "20262",
+      "20263",
+      "20264",
+      "20271",
+    ]);
+    expect(select).toHaveValue("20271");
     expect(
-      await screen.findByTestId("RecruitmentForm.Quarter"),
-    ).toBeInTheDocument();
+      within(select)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual(["F25", "W26", "S26", "M26", "F26", "W27"]);
+  });
+
+  test("in Winter the default is Spring, the quarter after", async () => {
+    const select = await openCreateForm(new Date(2026, 0, 5));
+    expect(optionValues(select)).toEqual([
+      "20251",
+      "20252",
+      "20253",
+      "20254",
+      "20261",
+      "20262",
+    ]);
+    expect(select).toHaveValue("20262");
+  });
+
+  test("in Spring the selector reaches two quarters ahead and the default skips Summer to Fall", async () => {
+    const select = await openCreateForm(new Date(2026, 4, 1));
+    expect(optionValues(select)).toEqual([
+      "20252",
+      "20253",
+      "20254",
+      "20261",
+      "20262",
+      "20263",
+      "20264",
+    ]);
+    expect(select).toHaveValue("20264");
+  });
+
+  test("in Summer the default is Fall", async () => {
+    const select = await openCreateForm(new Date(2026, 6, 15));
+    expect(select).toHaveValue("20264");
+  });
+
+  test("submitting without touching the quarter creates the recruitment for the default quarter", async () => {
+    await openCreateForm(new Date(2026, 10, 1));
+    await userEvent.type(
+      screen.getByTestId("RecruitmentForm-tentativeOpeningDate"),
+      "2026-11-05",
+    );
+    await userEvent.type(
+      screen.getByTestId("RecruitmentForm-primaryConsiderationDate"),
+      "2026-11-20",
+    );
+    await userEvent.click(screen.getByTestId("RecruitmentForm-submit"));
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.post.filter(
+          (r) => r.url === "/api/admin/recruitments/post",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.post.find(
+        (r) => r.url === "/api/admin/recruitments/post",
+      ).params.quarter,
+    ).toBe("20271");
   });
 
   // ---- Issue #218: Auto Create Recruitments, developer mode only ----
