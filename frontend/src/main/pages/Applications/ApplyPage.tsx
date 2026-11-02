@@ -107,7 +107,7 @@ export default function ApplyPage(): React.JSX.Element {
     draft,
     failed: draftFailed,
     conflicted,
-    otherClientsActive,
+    others,
     autosave,
     saveAndLeave,
     reload,
@@ -173,12 +173,11 @@ export default function ApplyPage(): React.JSX.Element {
         </h1>
         {/* The form waits for the list of existing applications, so it is never offered to someone
             whose submission would be refused, and for the draft it saves into. */}
-        {otherClientsActive && (
-          <MultipleTabsBanner
-            noun="application"
-            testId="ApplyPage-multiple-tabs"
-          />
-        )}
+        <MultipleTabsBanner
+          others={others}
+          noun="application"
+          testId="ApplyPage-multiple-tabs"
+        />
         {conflicted && (
           <Alert variant="danger" data-testid="ApplyPage-conflict">
             <span data-testid="ApplyPage-conflict-message">

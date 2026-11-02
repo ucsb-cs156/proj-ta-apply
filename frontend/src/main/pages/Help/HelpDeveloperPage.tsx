@@ -42,6 +42,12 @@ export default function HelpDeveloperPage(): React.JSX.Element {
             ))}
           </tbody>
         </Table>
+        <p data-testid="HelpDeveloperPage-more">
+          Not on the menu, but for developers:{" "}
+          <a href="#simultaneous-editing">Simultaneous Editing</a> explains,
+          under the hood, how the app copes with the same thing being open in
+          more than one tab or window.
+        </p>
 
         <h2 className="my-3 h4" id="jobs">
           Jobs
@@ -120,6 +126,137 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           one or two applicants who did not express interest. Courses that
           already have rankings are never changed.
         </p>
+
+        <h2 className="my-3 h4" id="simultaneous-editing">
+          Simultaneous Editing
+        </h2>
+        <p data-testid="HelpDeveloperPage-simultaneous-editing">
+          Some screens save as the user works, so the same screen open twice, in
+          two tabs, two windows or on two devices, would let the last save
+          silently overwrite the first. Two mechanisms deal with it. The{" "}
+          <strong>version check</strong> is the safeguard: it refuses a save
+          from a copy that is out of date. The{" "}
+          <strong>multi-tab warning</strong> is the courtesy: it tells the user,
+          before anything is refused, that another copy is open, and who. The
+          full design, including where else it is planned, is{" "}
+          <code>docs/design/ConcurrentEditMitigationDesign.md</code>. Only the
+          draft application form uses either so far.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-version">
+          <strong>The version check.</strong> A saved thing carries an integer{" "}
+          <code>version</code> that starts at 1. A save sends the version the
+          copy last saw. If it still matches, the server saves and counts a new
+          version, in one atomic step (JPA optimistic locking), and answers with
+          it. If not, nothing is changed and the answer is{" "}
+          <code>409 Conflict</code> with the draft as it now stands. The form
+          then stops saving, says so, and offers <em>Reload</em>.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-heartbeat">
+          <strong>The client id and the heartbeat.</strong> Each tab makes a
+          random identifier with <code>crypto.randomUUID()</code> and keeps it
+          in memory only, never in storage, so a duplicated or restored tab does
+          not inherit another&apos;s. It goes to the server in the{" "}
+          <code>X-Client-Id</code> header of every save, and of a{" "}
+          <strong>heartbeat</strong>:{" "}
+          <code>POST /api/draftApplications/heartbeat?id=</code>, sent as soon
+          as the draft is open and then as often as the server asks. A heartbeat
+          changes nothing, not even the draft&apos;s version. It exists so that
+          a tab that is open but idle is seen too.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-detector">
+          <strong>The detector and its identity.</strong> A{" "}
+          <code>ClientActivityDetector</code>, in the package{" "}
+          <code>edu.ucsb.cs.taapply.concurrency</code>, which imports nothing
+          from the rest of the app, remembers for each <em>resource key</em> (
+          <code>draft:&lt;draftId&gt;</code>) and each client id when it was
+          last seen and who it is. The <em>app</em> says who: a stable person
+          key (the user&apos;s email) and a label to show others (
+          <code>email (Full Name)</code>, or just the email), and the detector
+          treats the key and the label as opaque. It answers the heartbeat with
+          a JSON body,{" "}
+          <code>{`{"others": [{"label", "samePerson"}], "heartbeatSeconds"}`}</code>
+          : one entry for each other <em>person</em>, however many tabs they
+          have open, with <code>samePerson</code> true for the user&apos;s own
+          other tabs. Names are in the body and not in headers because they are
+          not always ASCII and can be long. A label is cut to 200 characters. In
+          the browser a pure function composes the sentence (&quot;You are also
+          editing this application in another tab or window.&quot;,
+          &quot;phtcon@ucsb.edu (Phill Conrad) is also editing this
+          application.&quot;, and so on, three people named and the rest
+          counted) and the banner shows it as text, never as markup.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-authorization">
+          <strong>Authorization.</strong> The detector tells names to anyone who
+          asks, so the app must check that the caller may use the resource{" "}
+          <em>before</em> it records the caller or asks who else is there.
+          Otherwise anyone could probe resource keys to learn who is working
+          where. For a draft only its owner may heartbeat or save, and anyone
+          else gets <code>403</code> with nothing recorded and no names in the
+          answer. Every future use must make the same check first.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-limits">
+          <strong>Limits and timing.</strong> The detector keeps its state in
+          memory, so it works for one server process only; with several, each
+          would see only its own requests, and the state would have to move to
+          the database behind the same interface. A restart forgets who was
+          open, so the warning is absent for up to one window. A client counts
+          as active for a <strong>window</strong> after it was last seen: 60
+          seconds by default (<code>CONCURRENCY_WINDOW_SECONDS</code>). The
+          heartbeat is a third of that, 20 seconds, and the server tells the
+          client so in each answer; the integration tests use a 6 second window
+          and so a 2 second heartbeat. The warning clears by itself once the
+          other copies have been closed for a window. It is advice and never a
+          lock; the version check still protects the data.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-refresh">
+          <strong>Other pages.</strong> Not every page will get a warning.
+          Recruitment state, and the Instructors and non-allocation Courses page
+          saves, are planned to be kept fresh by a <em>refresh</em> instead
+          (issues #281 and #282): a refetch after each save and a background
+          refresh without a page reload, paused in hidden tabs. Each refresh
+          waits a freshly drawn random time, between the base minus the jitter
+          and the base plus the jitter, so clients do not synchronize. The
+          planned settings, all environment variables, are{" "}
+          <code>ADMIN_REFRESH_SEC=5</code> and{" "}
+          <code>ADMIN_REFRESH_JITTER=3</code> (2 to 8 seconds, for admins) and{" "}
+          <code>NON_ADMIN_REFRESH=15</code> and <code>NON_ADMIN_JITTER=5</code>{" "}
+          (10 to 20 seconds, for instructors and students).{" "}
+          <em>This is not implemented yet.</em>
+        </p>
+        <p>Where the version check and the warning are used so far:</p>
+        <Table
+          striped
+          bordered
+          size="sm"
+          data-testid="HelpDeveloperPage-simultaneous-table"
+        >
+          <thead>
+            <tr>
+              <th>Page</th>
+              <th>Scope</th>
+              <th>Key</th>
+              <th>PR</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-draft">
+              <td>Application form draft</td>
+              <td>One applicant&apos;s draft for one recruitment</td>
+              <td>
+                <code>draft:&lt;draftId&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/283"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #283
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </Table>
       </div>
     </BasicLayout>
   );

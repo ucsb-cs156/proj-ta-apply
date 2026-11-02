@@ -65,53 +65,115 @@ one version, and it is why the warning below matters: it makes the conflict rare
 
 ### Mitigation 2. The multi-tab warning (#273)
 
-The version check says "no" after the fact. The warning says "careful" before it.
+The version check says "no" after the fact. The warning says "careful" before it, and says who.
 
 **Client.** When a screen that autosaves opens, it makes a random identifier for this copy,
 `crypto.randomUUID()`, and keeps it in memory only, never in `localStorage` or `sessionStorage`. A
 copy that is duplicated or restored must not inherit another copy's identifier. The client sends the
-identifier with:
+identifier, as the request header `X-Client-Id`, with:
 
-* every save, as a request header (`X-Client-Id`), and
+* every save, and
 * a lightweight **heartbeat** while the screen is open, one as soon as it opens and then as often
-  as the server asks (every 20 seconds by default), which exists only to let the server see copies
-  that are open but idle. A heartbeat changes nothing: not the saved thing, and not its version.
+  as the server asks (every 20 seconds by default). The heartbeat exists to let the server see
+  copies that are open but idle, and to bring back who else is there. It changes nothing: not the
+  saved thing, and not its version.
 
-If a response says that other copies are active, the screen shows a banner:
+**Identity.** The detector must be able to name people, but it must not know what a person is. So
+the application hands it an opaque **identity** with every client it records:
 
-> The server has detected multiple tabs or windows open on the same application. Please know that
-> this is risky; we recommend closing all but one of these.
+* a stable **person key**, which says whether two clients are the same person. For this app it is
+  the user's email address;
+* a **label**, which is what other people are shown. For this app it is `email (Full Name)`, or
+  just the email if the user has no name. A label longer than 200 characters is cut short with an
+  ellipsis (never in the middle of a character), so no one's name can swell an answer.
 
-The banner goes when a later response says the other copies are gone. The wording says "application"
-for draft applications. The banner component takes its noun as a parameter, so that other screens
-say "budget", "ranking" and so on.
+The detector treats both as opaque text. The application builds the identity from the current user
+(`User.email` and `User.fullName`) in its controller and passes it in.
 
-**Server.** A small detector class answers one question: how many distinct clients have touched this
-resource recently?
+**Server.** A small detector answers one question: who, other than the caller, is working on this
+resource now?
 
 * It is a map from a **resource key** (a string such as `draft:42`) to a map from client id to the
-  time that client was last seen.
-* `record(resourceKey, clientId)` stores "now" for that client. It also drops entries older than the
-  window, for every resource and not only this one, so the map does not grow without bound.
-* `othersActive(resourceKey, clientId)` is true if any client other than this one was seen within
-  the **window**. The default is 60 seconds (`app.concurrency.window-seconds`, or the environment
-  variable `CONCURRENCY_WINDOW_SECONDS`). The heartbeat is a third of the window and at least a
-  second, so one lost heartbeat does not make a copy disappear. The server tells the client this in
-  each answer, so the two are tuned together: the integration tests use a six-second window and so a
-  two-second heartbeat, which lets a warning be watched appearing and clearing.
+  time that client was last seen and the identity it gave.
+* `record(resourceKey, clientId, identity)` stores "now" and the identity for that client. It also
+  drops entries older than the window, for every resource and not only this one, so the map does
+  not grow without bound.
+* `othersActive(resourceKey, clientId)` returns the other people active within the **window**, as a
+  list of `{label, samePerson}`, **one entry for each person** however many tabs they have open,
+  sorted by label. An entry has `samePerson` true if it is the same person as the caller (the
+  caller's own other tab or window); the caller's own client is never in the list. The caller is
+  compared by the identity recorded for its client id; a caller that was not recorded is nobody's
+  same person.
+* The default window is 60 seconds (`app.concurrency.window-seconds`, or the environment variable
+  `CONCURRENCY_WINDOW_SECONDS`). The heartbeat is a third of the window and at least a second, so
+  one lost heartbeat does not make a copy disappear. The server tells the client how often to beat
+  in each heartbeat answer, so the two are tuned together: the integration tests use a six-second
+  window and so a two-second heartbeat, which lets a warning be watched appearing and clearing.
 * The clock and the window length are constructor arguments, so tests run in zero time with a fake
   clock.
-* The save and heartbeat endpoints call `observe(resourceKey, clientId)`, which records the client
-  and returns the response headers: `X-Other-Clients-Active` (`true` or `false`, from
-  `othersActive`) and `X-Heartbeat-Seconds` (how often to send a heartbeat). They are headers and
-  not a field of the body so that they ride on any response, including a refused `409` save and a
-  heartbeat's empty `204`, without changing the shape of any body. A request that names no client,
-  or names one that is blank or longer than 100 characters, is not recorded and gets no headers.
-* The resource key for a draft application is `draft:<draftId>`. The heartbeat is
-  `POST /api/draftApplications/heartbeat?id=`. Like a save, it is allowed only for the draft's owner.
+* Two helpers keep the controllers short. `note(resourceKey, clientId, identity)` records the client
+  if it named itself usably (present, not blank, at most 100 characters) and otherwise does
+  nothing; saves call it. `heartbeat(resourceKey, clientId, identity)` records the client and
+  returns the answer; a client that did not name itself usably is not recorded and is told of no
+  one.
+
+**Wire format.** Names do not belong in headers: they are not always ASCII and they can be long. So
+the only header is the request's `X-Client-Id`, and everything the server has to say is the JSON
+body of the **heartbeat's** answer:
+
+```json
+{
+  "others": [
+    { "label": "phtcon@ucsb.edu (Phill Conrad)", "samePerson": false },
+    { "label": "me@example.org (Me)", "samePerson": true }
+  ],
+  "heartbeatSeconds": 20
+}
+```
+
+A save is answered exactly as it was before the warning existed; it only counts the client as
+present. The banner therefore learns of the others, and their names, at the next heartbeat: within
+one heartbeat of someone arriving, and within one window plus one heartbeat of them leaving. This
+was chosen as the simplest correct design: one source of names, one body to parse, no header
+encoding, and nothing to keep in step between a header cue on saves and the list from the
+heartbeat.
+
+The client reads the body defensively. Anything unexpected (a list that is not a list, an entry
+without a label, an interval that is not a positive number) is left out, and a heartbeat that fails
+is ignored and tried again at the next time, so the banner shows what the server last said.
+
+**Authorization.** The detector tells names to whoever asks. Therefore the application must check
+that the caller **may use the resource before** it records the caller or asks who else is there.
+Otherwise anyone could try resource keys and learn who is working where. For a draft application
+only its owner may use it, so the controller loads the draft and answers `403` for anyone else
+(`404` if there is none) before the detector is touched, for a heartbeat and for a save alike. The
+refused caller is not recorded, is told no names, and the response does not contain any.
+
+> **The rule for every future resource.** A heartbeat endpoint checks, with the same check the
+> resource's own edits use, that the caller may access the resource; only then does it record the
+> caller and answer with the others. A resource that several people may use (the budget, the
+> assignments) will show the names of the other people allowed to use it, and a person who may not
+> use it learns nothing. A new resource's tests must include the refusal and that nothing was
+> recorded by it.
+
+**The banner.** The client turns the list into a sentence with a pure function (`describeOthers`)
+and shows it, then the sentence *Please know that this is risky; we recommend closing all but one
+of these.* The noun is a parameter: "application" for a draft application, and "page", "budget",
+"ranking" and so on for other screens. The names are rendered as text, which React escapes, never as
+markup. A long name wraps instead of widening the page.
+
+| Who else is active | Sentence (noun "page") |
+|---|---|
+| no one | nothing is shown |
+| only the user's own other tabs | You are also editing this page in another tab or window. |
+| one other person | phtcon@ucsb.edu (Phill Conrad) is also editing this page. |
+| the user and one other person | You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs. |
+| two or three other people | A and B are also editing this page. / A, B and C are also editing this page. |
+| the user and two or three | You, A and B are also editing this page in other windows or tabs. |
+| more than three other people | A, B, C and 2 others are also editing this page. (three named, the rest counted; "1 other" for one) |
 
 The warning clears by itself. Once the extra copies are closed, they stop heartbeating, they age out
-of the window, and the next response to the remaining copy says `false`.
+of the window, and the next heartbeat of the remaining copy lists no one, so the banner goes.
 
 **What the warning is not.** It is advice, not a lock. A user who ignores it is still protected by
 the version check.
@@ -131,9 +193,12 @@ the version check.
   background tab may have its timers throttled by the browser. The 60-second window is chosen to
   ride that out in most browsers.
 * **One copy only** never sees either mechanism. This is as intended.
-* **Different people editing the same thing** are not distinguished from one person with two copies.
-  Both are conflicts and both are handled the same way. The warning text, which talks of "tabs or
-  windows", is slightly off in that case. The version check is right either way.
+* **Different people editing the same thing** are named in the warning, and told apart from the
+  user's own other tabs (*You*). Both are conflicts and both are handled the same way by the
+  version check. A draft application has one owner, so its warning is only ever about the owner's
+  own tabs; the names matter for resources that several people may use (Part 2).
+* **Names are shown to people who may use the resource, and to no one else.** That is the
+  authorization rule above, and it is the application's job, not the detector's.
 * **No merging.** The mechanism detects and refuses. It does not combine two sets of edits. Where
   the edits are to different fields of one record this is a real cost, which Part 2 returns to.
 
@@ -147,27 +212,29 @@ The pieces are written so that they could later be lifted out as libraries witho
 | Client | A folder of its own, `frontend/src/main/concurrency/` | React and `axios`. No import from `main/components`, `main/pages` or `main/utils`, and the banner uses plain Bootstrap class names rather than a component library |
 | Tests | `src/test/.../concurrency/` and `frontend/src/tests/concurrency/` | The same, plus a fake clock |
 
-The server package holds the detector interface (`ClientActivityDetector`, with the `observe`
-method that builds the response headers), its in-memory implementation
-(`InMemoryClientActivityDetector`), and the names of the headers and the one rule about what a
-client id may be (`ConcurrencyHeaders`). The one place that knows about Spring is outside the
-package: `config/ConcurrencyConfig` makes the detector bean with the real clock and the window
-setting. The `409` is built by the application's own controller, since what a refused save says is
-the application's business.
+The server package holds the detector interface (`ClientActivityDetector`, with the `note` and
+`heartbeat` helpers), its in-memory implementation (`InMemoryClientActivityDetector`), the identity
+the app supplies (`ClientIdentity`), the entries it answers with (`OtherClient`), the heartbeat's
+answer (`Presence`), and the name of the header and the one rule about what a client id may be
+(`ConcurrencyHeaders`). The one place that knows about Spring is outside the package:
+`config/ConcurrencyConfig` makes the detector bean with the real clock and the window setting. The
+`409` is built by the application's own controller, since what a refused save says is the
+application's business. So is who the user is: the controller builds the identity from the current
+user.
 
 The client folder holds the hook that makes the identifier, sends the heartbeat and reads the
-answers (`useClientActivity`), the header names and a case-insensitive header reader (`headers`),
-and the banner (`MultipleTabsBanner`). The conflict message with its Reload button is not in it: what
-Reload does depends on the screen, so it stays in the application. Each piece takes what it needs by
-parameter, such as the heartbeat URL, the noun in the banner, or the function that reloads, and
-never reaches into the app. An import of `main/...` from the client
-folder, or of `edu.ucsb.cs.taapply.entity` from the server package, is a bug in this design. A lint
-rule or an architecture test can enforce it.
+answers (`useClientActivity`), the header name (`headers`), the pure functions that read the answer
+and compose the sentence (`others`), and the banner (`MultipleTabsBanner`). The conflict message
+with its Reload button is not in it: what Reload does depends on the screen, so it stays in the
+application. Each piece takes what it needs by parameter, such as the heartbeat URL, the noun in the
+banner, or the function that reloads, and never reaches into the app. An import of `main/...` from
+the client folder, or of `edu.ucsb.cs.taapply.entity` from the server package, is a bug in this
+design. A lint rule or an architecture test can enforce it.
 
-How each application screen uses them (what its resource key is, what its `409` body contains, what
-Reload does) stays in the application, outside these folders. For draft applications the wiring is
-in `DraftApplicationsController` on the server, and in `useDraftSaving` and `ApplyPage` on the
-client.
+How each application screen uses them (what its resource key is, who may use the resource, what its
+`409` body contains, what Reload does) stays in the application, outside these folders. For draft
+applications the wiring is in `DraftApplicationsController` on the server, and in `useDraftSaving`
+and `ApplyPage` on the client.
 
 The draft applications design, in `DraftApplicationsDesign.md`, describes the first use of the
 version check. This document is where the mechanism is described in general.

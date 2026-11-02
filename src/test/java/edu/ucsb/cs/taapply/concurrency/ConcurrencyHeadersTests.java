@@ -10,10 +10,8 @@ import org.junit.jupiter.api.Test;
 public class ConcurrencyHeadersTests {
 
   @Test
-  public void the_header_names_are_the_ones_the_client_uses() {
+  public void the_header_name_is_the_one_the_client_uses() {
     assertEquals("X-Client-Id", ConcurrencyHeaders.CLIENT_ID);
-    assertEquals("X-Other-Clients-Active", ConcurrencyHeaders.OTHER_CLIENTS_ACTIVE);
-    assertEquals("X-Heartbeat-Seconds", ConcurrencyHeaders.HEARTBEAT_SECONDS);
   }
 
   @Test

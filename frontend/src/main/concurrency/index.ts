@@ -1,8 +1,11 @@
+export { CLIENT_ID_HEADER } from "./headers";
 export {
-  CLIENT_ID_HEADER,
-  HEARTBEAT_SECONDS_HEADER,
-  OTHER_CLIENTS_ACTIVE_HEADER,
-  headerValue,
-} from "./headers";
+  MAX_NAMED,
+  RISK_SENTENCE,
+  describeOthers,
+  readPresence,
+  type OtherClient,
+  type Presence,
+} from "./others";
 export { DEFAULT_HEARTBEAT_MS, useClientActivity } from "./useClientActivity";
 export { default as MultipleTabsBanner } from "./MultipleTabsBanner";

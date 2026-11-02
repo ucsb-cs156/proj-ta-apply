@@ -1,16 +1,14 @@
 package edu.ucsb.cs.taapply.concurrency;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.Map;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /** The detector on its own: no Spring, no application classes, a clock the test moves. */
@@ -40,111 +38,195 @@ public class InMemoryClientActivityDetectorTests {
     }
   }
 
+  private static final ClientIdentity ADA = new ClientIdentity("ada@example.org", "Ada (Ada L)");
+  private static final ClientIdentity BEN = new ClientIdentity("ben@example.org", "Ben (Ben B)");
+  private static final ClientIdentity CAL =
+      new ClientIdentity("cal@example.org", "cal@example.org");
+
   private final MovableClock clock = new MovableClock();
   private final InMemoryClientActivityDetector detector =
       new InMemoryClientActivityDetector(clock, Duration.ofSeconds(60));
 
   @Test
   public void nobody_is_active_before_anyone_is_seen() {
-    assertFalse(detector.othersActive("draft:1", "a"));
+    assertEquals(List.of(), detector.othersActive("draft:1", "a"));
   }
 
   @Test
   public void a_client_alone_does_not_see_itself_as_another() {
-    detector.record("draft:1", "a");
-    assertFalse(detector.othersActive("draft:1", "a"));
+    detector.record("draft:1", "a", ADA);
+    assertEquals(List.of(), detector.othersActive("draft:1", "a"));
   }
 
   @Test
-  public void a_second_client_makes_each_see_the_other() {
-    detector.record("draft:1", "a");
-    detector.record("draft:1", "b");
-    assertTrue(detector.othersActive("draft:1", "a"));
-    assertTrue(detector.othersActive("draft:1", "b"));
+  public void a_second_person_is_named_to_the_first_and_the_first_to_the_second() {
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:1", "b", BEN);
+
+    assertEquals(
+        List.of(new OtherClient("Ben (Ben B)", false)), detector.othersActive("draft:1", "a"));
+    assertEquals(
+        List.of(new OtherClient("Ada (Ada L)", false)), detector.othersActive("draft:1", "b"));
   }
 
   @Test
-  public void a_client_who_was_never_recorded_sees_those_who_were() {
-    detector.record("draft:1", "a");
-    assertTrue(detector.othersActive("draft:1", "never-seen"));
+  public void a_second_tab_of_the_same_person_is_marked_as_the_same_person() {
+    detector.record("draft:1", "tab-1", ADA);
+    detector.record("draft:1", "tab-2", ADA);
+
+    assertEquals(
+        List.of(new OtherClient("Ada (Ada L)", true)), detector.othersActive("draft:1", "tab-1"));
+    assertEquals(
+        List.of(new OtherClient("Ada (Ada L)", true)), detector.othersActive("draft:1", "tab-2"));
+  }
+
+  @Test
+  public void several_tabs_of_one_other_person_are_one_entry() {
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:1", "b-1", BEN);
+    detector.record("draft:1", "b-2", BEN);
+    detector.record("draft:1", "b-3", BEN);
+
+    assertEquals(
+        List.of(new OtherClient("Ben (Ben B)", false)), detector.othersActive("draft:1", "a"));
+  }
+
+  @Test
+  public void the_same_person_and_other_people_are_all_listed_each_once() {
+    detector.record("draft:1", "ada-1", ADA);
+    detector.record("draft:1", "ada-2", ADA);
+    detector.record("draft:1", "ben", BEN);
+    detector.record("draft:1", "cal", CAL);
+
+    assertEquals(
+        List.of(
+            new OtherClient("Ada (Ada L)", true),
+            new OtherClient("Ben (Ben B)", false),
+            new OtherClient("cal@example.org", false)),
+        detector.othersActive("draft:1", "ada-1"));
+  }
+
+  @Test
+  public void people_are_in_order_of_label_ignoring_case() {
+    detector.record("draft:1", "me", CAL);
+    detector.record("draft:1", "x", new ClientIdentity("z", "zed"));
+    detector.record("draft:1", "y", new ClientIdentity("a", "Alpha"));
+    detector.record("draft:1", "w", new ClientIdentity("m", "mike"));
+
+    assertEquals(
+        List.of("Alpha", "mike", "zed"),
+        detector.othersActive("draft:1", "me").stream().map(OtherClient::label).toList());
+  }
+
+  @Test
+  public void people_whose_labels_differ_only_in_case_are_still_in_a_fixed_order() {
+    detector.record("draft:1", "me", CAL);
+    detector.record("draft:1", "x", new ClientIdentity("1", "sam"));
+    detector.record("draft:1", "y", new ClientIdentity("2", "Sam"));
+
+    assertEquals(
+        List.of("Sam", "sam"),
+        detector.othersActive("draft:1", "me").stream().map(OtherClient::label).toList());
+  }
+
+  @Test
+  public void a_caller_who_was_never_recorded_sees_those_who_were_and_is_nobodys_same_person() {
+    detector.record("draft:1", "a", ADA);
+
+    assertEquals(
+        List.of(new OtherClient("Ada (Ada L)", false)),
+        detector.othersActive("draft:1", "never-seen"));
   }
 
   @Test
   public void clients_on_other_resources_do_not_count() {
-    detector.record("draft:1", "a");
-    detector.record("draft:2", "b");
-    assertFalse(detector.othersActive("draft:1", "a"));
-    assertFalse(detector.othersActive("draft:2", "b"));
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:2", "b", BEN);
+
+    assertEquals(List.of(), detector.othersActive("draft:1", "a"));
+    assertEquals(List.of(), detector.othersActive("draft:2", "b"));
   }
 
   @Test
   public void another_client_stops_counting_exactly_when_the_window_has_passed() {
-    detector.record("draft:1", "a");
-    detector.record("draft:1", "b");
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:1", "b", BEN);
 
     clock.advance(Duration.ofSeconds(59));
-    assertTrue(detector.othersActive("draft:1", "a"));
+    assertEquals(1, detector.othersActive("draft:1", "a").size());
 
     // Exactly one window since b was seen: no longer active.
     clock.advance(Duration.ofSeconds(1));
-    assertFalse(detector.othersActive("draft:1", "a"));
+    assertEquals(List.of(), detector.othersActive("draft:1", "a"));
   }
 
   @Test
   public void seeing_a_client_again_keeps_it_active() {
-    detector.record("draft:1", "a");
-    detector.record("draft:1", "b");
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:1", "b", BEN);
 
     clock.advance(Duration.ofSeconds(40));
-    detector.record("draft:1", "b");
+    detector.record("draft:1", "b", BEN);
     clock.advance(Duration.ofSeconds(40));
 
     // a was last seen 80 seconds ago and b 40, and only a is the one asking.
-    assertTrue(detector.othersActive("draft:1", "a"));
-    assertFalse(detector.othersActive("draft:1", "b"));
+    assertEquals(
+        List.of(new OtherClient("Ben (Ben B)", false)), detector.othersActive("draft:1", "a"));
+    assertEquals(List.of(), detector.othersActive("draft:1", "b"));
+  }
+
+  @Test
+  public void a_client_seen_again_is_known_by_the_identity_it_last_gave() {
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:1", "b", new ClientIdentity("ben@example.org", "Ben (old name)"));
+    detector.record("draft:1", "b", BEN);
+
+    assertEquals(
+        List.of(new OtherClient("Ben (Ben B)", false)), detector.othersActive("draft:1", "a"));
   }
 
   @Test
   public void the_warning_clears_once_the_other_copy_goes_quiet() {
-    detector.record("draft:1", "a");
-    detector.record("draft:1", "b");
-    assertTrue(detector.othersActive("draft:1", "a"));
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:1", "b", BEN);
+    assertEquals(1, detector.othersActive("draft:1", "a").size());
 
     // b is closed and stops beating; a goes on being seen.
     for (int i = 0; i < 4; i++) {
       clock.advance(Duration.ofSeconds(20));
-      detector.record("draft:1", "a");
+      detector.record("draft:1", "a", ADA);
     }
-    assertFalse(detector.othersActive("draft:1", "a"));
+    assertEquals(List.of(), detector.othersActive("draft:1", "a"));
   }
 
   @Test
   public void recording_forgets_what_is_older_than_the_window_on_every_resource() {
-    detector.record("draft:1", "a");
-    detector.record("draft:2", "b");
-    detector.record("draft:2", "c");
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:2", "b", BEN);
+    detector.record("draft:2", "c", CAL);
     assertEquals(2, detector.resourcesRemembered());
 
     clock.advance(Duration.ofSeconds(61));
-    detector.record("draft:3", "d");
+    detector.record("draft:3", "d", ADA);
 
     // Only the resource just recorded is left; the others aged out without being touched.
     assertEquals(1, detector.resourcesRemembered());
-    assertFalse(detector.othersActive("draft:2", "x"));
+    assertEquals(List.of(), detector.othersActive("draft:2", "x"));
   }
 
   @Test
   public void recording_keeps_a_resource_while_any_of_its_clients_is_recent() {
-    detector.record("draft:1", "old");
+    detector.record("draft:1", "old", ADA);
     clock.advance(Duration.ofSeconds(50));
-    detector.record("draft:1", "recent");
+    detector.record("draft:1", "recent", BEN);
     clock.advance(Duration.ofSeconds(20));
-    detector.record("draft:2", "other");
+    detector.record("draft:2", "other", CAL);
 
     assertEquals(2, detector.resourcesRemembered());
     // old aged out of draft:1, recent has not.
-    assertTrue(detector.othersActive("draft:1", "old"));
-    assertFalse(detector.othersActive("draft:1", "recent"));
+    assertEquals(
+        List.of(new OtherClient("Ben (Ben B)", false)), detector.othersActive("draft:1", "old"));
+    assertEquals(List.of(), detector.othersActive("draft:1", "recent"));
   }
 
   @Test
@@ -180,28 +262,39 @@ public class InMemoryClientActivityDetectorTests {
   }
 
   @Test
-  public void observe_records_the_client_and_answers_with_both_headers() {
-    Map<String, String> first = detector.observe("draft:1", "a");
-    assertEquals(
-        Map.of(
-            ConcurrencyHeaders.OTHER_CLIENTS_ACTIVE, "false",
-            ConcurrencyHeaders.HEARTBEAT_SECONDS, "20"),
-        first);
+  public void a_heartbeat_records_the_client_and_answers_with_the_others_and_the_interval() {
+    Presence first = detector.heartbeat("draft:1", "a", ADA);
+    assertEquals(new Presence(List.of(), 20), first);
 
-    Map<String, String> second = detector.observe("draft:1", "b");
-    assertEquals("true", second.get(ConcurrencyHeaders.OTHER_CLIENTS_ACTIVE));
+    Presence second = detector.heartbeat("draft:1", "b", BEN);
+    assertEquals(new Presence(List.of(new OtherClient("Ada (Ada L)", false)), 20), second);
     // It really did record: a now sees b without having been recorded since.
-    assertTrue(detector.othersActive("draft:1", "a"));
+    assertEquals(
+        List.of(new OtherClient("Ben (Ben B)", false)), detector.othersActive("draft:1", "a"));
   }
 
   @Test
-  public void observe_ignores_a_client_that_did_not_name_itself_usably() {
-    assertEquals(Map.of(), detector.observe("draft:1", null));
-    assertEquals(Map.of(), detector.observe("draft:1", ""));
-    assertEquals(Map.of(), detector.observe("draft:1", "   "));
+  public void a_heartbeat_from_a_client_that_did_not_name_itself_usably_is_not_recorded_or_told() {
+    detector.record("draft:1", "a", ADA);
+
+    for (String bad :
+        new String[] {null, "", "   ", "x".repeat(ConcurrencyHeaders.MAX_CLIENT_ID_LENGTH + 1)}) {
+      assertEquals(new Presence(List.of(), 20), detector.heartbeat("draft:1", bad, BEN));
+    }
+    // Nobody was recorded by those: a sees no one.
+    assertEquals(List.of(), detector.othersActive("draft:1", "a"));
+  }
+
+  @Test
+  public void noting_records_a_usable_client_and_ignores_the_rest() {
+    detector.note("draft:1", "a", ADA);
+    detector.note("draft:1", null, BEN);
+    detector.note("draft:1", " ", BEN);
+    detector.note("draft:1", "x".repeat(ConcurrencyHeaders.MAX_CLIENT_ID_LENGTH + 1), BEN);
+
+    assertEquals(1, detector.resourcesRemembered());
     assertEquals(
-        Map.of(),
-        detector.observe("draft:1", "x".repeat(ConcurrencyHeaders.MAX_CLIENT_ID_LENGTH + 1)));
-    assertEquals(0, detector.resourcesRemembered());
+        List.of(new OtherClient("Ada (Ada L)", false)),
+        detector.othersActive("draft:1", "someone"));
   }
 }

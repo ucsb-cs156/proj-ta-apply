@@ -9,6 +9,8 @@ import {
 
 const axiosMock = new AxiosMockAdapter(axios);
 const URL = "/thing/heartbeat?id=1";
+const PHILL = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
+const ME = { label: "me@example.org (Me)", samePerson: true };
 
 const beats = () => axiosMock.history.post.filter((r) => r.url === URL);
 
@@ -59,17 +61,17 @@ describe("useClientActivity", () => {
     local.mockRestore();
   });
 
-  test("nobody else is active to begin with, and nothing is sent without a URL", async () => {
+  test("no one else is there to begin with, and nothing is sent without a URL", async () => {
     const { result } = renderHook(() =>
       useClientActivity({ heartbeatUrl: null }),
     );
     await advance(120_000);
-    expect(result.current.othersActive).toBe(false);
+    expect(result.current.others).toEqual([]);
     expect(axiosMock.history.post.length).toBe(0);
   });
 
   test("sends a heartbeat at once, naming itself, and then every 20 seconds", async () => {
-    axiosMock.onPost(URL).reply(204);
+    axiosMock.onPost(URL).reply(200, { others: [] });
     const { result } = renderHook(() =>
       useClientActivity({ heartbeatUrl: URL }),
     );
@@ -91,7 +93,7 @@ describe("useClientActivity", () => {
   });
 
   test("the time between heartbeats can be given", async () => {
-    axiosMock.onPost(URL).reply(204);
+    axiosMock.onPost(URL).reply(200, { others: [] });
     renderHook(() =>
       useClientActivity({ heartbeatUrl: URL, defaultIntervalMs: 5000 }),
     );
@@ -103,40 +105,49 @@ describe("useClientActivity", () => {
     expect(beats().length).toBe(2);
   });
 
-  test("a response that says others are active shows it, and a later one that says not clears it", async () => {
-    axiosMock
-      .onPost(URL)
-      .replyOnce(204, null, { "x-other-clients-active": "true" })
-      .onPost(URL)
-      .reply(204, null, { "x-other-clients-active": "false" });
+  test("the others an answer lists are shown, with who they are", async () => {
+    axiosMock.onPost(URL).reply(200, { others: [ME, PHILL] });
     const { result } = renderHook(() =>
       useClientActivity({ heartbeatUrl: URL }),
     );
 
     await advance(0);
-    expect(result.current.othersActive).toBe(true);
-    await advance(DEFAULT_HEARTBEAT_MS);
-    expect(result.current.othersActive).toBe(false);
+    expect(result.current.others).toEqual([ME, PHILL]);
   });
 
-  test("a response that does not mention others leaves what was known", async () => {
+  test("each answer replaces the last, so the names go when the others have", async () => {
     axiosMock
       .onPost(URL)
-      .replyOnce(204, null, { "x-other-clients-active": "true" })
+      .replyOnce(200, { others: [ME, PHILL] })
       .onPost(URL)
-      .reply(204);
+      .replyOnce(200, { others: [PHILL] })
+      .onPost(URL)
+      .reply(200, { others: [] });
     const { result } = renderHook(() =>
       useClientActivity({ heartbeatUrl: URL }),
     );
 
     await advance(0);
+    expect(result.current.others).toEqual([ME, PHILL]);
     await advance(DEFAULT_HEARTBEAT_MS);
-    expect(beats().length).toBe(2);
-    expect(result.current.othersActive).toBe(true);
+    expect(result.current.others).toEqual([PHILL]);
+    await advance(DEFAULT_HEARTBEAT_MS);
+    expect(result.current.others).toEqual([]);
+  });
+
+  test("an answer that is not what was expected is no one", async () => {
+    axiosMock.onPost(URL).reply(200, "<html>not json</html>");
+    const { result } = renderHook(() =>
+      useClientActivity({ heartbeatUrl: URL }),
+    );
+
+    await advance(0);
+    expect(beats().length).toBe(1);
+    expect(result.current.others).toEqual([]);
   });
 
   test("the server says how often it wants a heartbeat, and it is obeyed", async () => {
-    axiosMock.onPost(URL).reply(204, null, { "x-heartbeat-seconds": "2" });
+    axiosMock.onPost(URL).reply(200, { others: [], heartbeatSeconds: 2 });
     renderHook(() => useClientActivity({ heartbeatUrl: URL }));
 
     await advance(0);
@@ -152,13 +163,13 @@ describe("useClientActivity", () => {
   test("a heartbeat interval that is not a positive number is ignored", async () => {
     axiosMock
       .onPost(URL)
-      .replyOnce(204, null, { "x-heartbeat-seconds": "soon" })
+      .replyOnce(200, { others: [], heartbeatSeconds: "soon" })
       .onPost(URL)
-      .replyOnce(204, null, { "x-heartbeat-seconds": "0" })
+      .replyOnce(200, { others: [], heartbeatSeconds: 0 })
       .onPost(URL)
-      .replyOnce(204, null, { "x-heartbeat-seconds": "-5" })
+      .replyOnce(200, { others: [], heartbeatSeconds: -5 })
       .onPost(URL)
-      .reply(204);
+      .reply(200, { others: [] });
     renderHook(() => useClientActivity({ heartbeatUrl: URL }));
 
     await advance(0);
@@ -169,46 +180,59 @@ describe("useClientActivity", () => {
     expect(beats().length).toBe(4);
   });
 
-  test("observe takes in the headers of any response, such as a save's", async () => {
-    const { result } = renderHook(() =>
-      useClientActivity({ heartbeatUrl: null }),
-    );
+  test("an answer with no interval leaves the one in use", async () => {
+    axiosMock
+      .onPost(URL)
+      .replyOnce(200, { others: [], heartbeatSeconds: 2 })
+      .onPost(URL)
+      .reply(200, { others: [] });
+    renderHook(() => useClientActivity({ heartbeatUrl: URL }));
 
-    act(() => {
-      result.current.observe({
-        "x-other-clients-active": "true",
-        "x-heartbeat-seconds": "30",
-      });
-    });
-    expect(result.current.othersActive).toBe(true);
-
-    act(() => {
-      result.current.observe({ "x-other-clients-active": "false" });
-    });
-    expect(result.current.othersActive).toBe(false);
-
-    act(() => {
-      result.current.observe(undefined);
-    });
-    expect(result.current.othersActive).toBe(false);
+    await advance(0);
+    await advance(2000);
+    expect(beats().length).toBe(2);
+    // The second answer named none, so the 2 seconds go on.
+    await advance(2000);
+    expect(beats().length).toBe(3);
   });
 
-  test("a heartbeat that fails is tried again at the next time", async () => {
+  test("a heartbeat that fails is tried again at the next time, and leaves the names as they were", async () => {
     axiosMock
+      .onPost(URL)
+      .replyOnce(200, { others: [PHILL] })
       .onPost(URL)
       .replyOnce(500)
       .onPost(URL)
-      .reply(204, null, { "x-other-clients-active": "true" });
+      .reply(200, { others: [] });
     const { result } = renderHook(() =>
       useClientActivity({ heartbeatUrl: URL }),
     );
 
     await advance(0);
-    expect(beats().length).toBe(1);
-    expect(result.current.othersActive).toBe(false);
+    expect(result.current.others).toEqual([PHILL]);
     await advance(DEFAULT_HEARTBEAT_MS);
     expect(beats().length).toBe(2);
-    expect(result.current.othersActive).toBe(true);
+    // Missed, so what was last said stands.
+    expect(result.current.others).toEqual([PHILL]);
+    await advance(DEFAULT_HEARTBEAT_MS);
+    expect(beats().length).toBe(3);
+    expect(result.current.others).toEqual([]);
+  });
+
+  test("a heartbeat the server refuses is not shown and does not stop the next", async () => {
+    axiosMock
+      .onPost(URL)
+      .replyOnce(403, { message: "No" })
+      .onPost(URL)
+      .reply(200, { others: [PHILL] });
+    const { result } = renderHook(() =>
+      useClientActivity({ heartbeatUrl: URL }),
+    );
+
+    await advance(0);
+    expect(result.current.others).toEqual([]);
+    await advance(DEFAULT_HEARTBEAT_MS);
+    expect(result.current.others).toEqual([PHILL]);
   });
 
   test("stops when the hook goes, and a heartbeat that comes back late is ignored", async () => {
@@ -216,8 +240,7 @@ describe("useClientActivity", () => {
     axiosMock.onPost(URL).reply(
       () =>
         new Promise((resolve) => {
-          finish = () =>
-            resolve([204, null, { "x-other-clients-active": "true" }]);
+          finish = () => resolve([200, { others: [PHILL] }]);
         }),
     );
     const { result, unmount } = renderHook(() =>
@@ -231,13 +254,13 @@ describe("useClientActivity", () => {
     await advance(120_000);
 
     expect(beats().length).toBe(1);
-    expect(result.current.othersActive).toBe(false);
+    expect(result.current.others).toEqual([]);
   });
 
   test("a new URL stops the old heartbeat and starts one for the new thing", async () => {
     const OTHER = "/thing/heartbeat?id=2";
-    axiosMock.onPost(URL).reply(204);
-    axiosMock.onPost(OTHER).reply(204);
+    axiosMock.onPost(URL).reply(200, { others: [] });
+    axiosMock.onPost(OTHER).reply(200, { others: [] });
     const { rerender } = renderHook(
       ({ url }: { url: string | null }) =>
         useClientActivity({ heartbeatUrl: url }),
@@ -263,13 +286,10 @@ describe("useClientActivity", () => {
     axiosMock.onPost(URL).reply(
       () =>
         new Promise((resolve) => {
-          finish = () =>
-            resolve([204, null, { "x-other-clients-active": "true" }]);
+          finish = () => resolve([200, { others: [PHILL] }]);
         }),
     );
-    axiosMock
-      .onPost(OTHER)
-      .reply(204, null, { "x-other-clients-active": "false" });
+    axiosMock.onPost(OTHER).reply(200, { others: [] });
     const { result, rerender } = renderHook(
       ({ url }: { url: string | null }) =>
         useClientActivity({ heartbeatUrl: url }),
@@ -283,11 +303,11 @@ describe("useClientActivity", () => {
     finish();
     await advance(0);
 
-    expect(result.current.othersActive).toBe(false);
+    expect(result.current.others).toEqual([]);
   });
 
   test("goes quiet when the URL is taken away", async () => {
-    axiosMock.onPost(URL).reply(204);
+    axiosMock.onPost(URL).reply(200, { others: [] });
     const { rerender } = renderHook(
       ({ url }: { url: string | null }) =>
         useClientActivity({ heartbeatUrl: url }),

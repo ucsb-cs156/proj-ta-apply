@@ -12,10 +12,14 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
+import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
+import edu.ucsb.cs.taapply.concurrency.OtherClient;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFields;
 import edu.ucsb.cs.taapply.entity.DraftApplication;
@@ -55,7 +59,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @Import({
   edu.ucsb.cs.taapply.testconfig.TestConfig.class,
   ApplicationAccessService.class,
-  edu.ucsb.cs.taapply.config.ConcurrencyConfig.class
+  DraftApplicationsControllerTests.DetectorConfig.class
 })
 public class DraftApplicationsControllerTests extends ControllerTestCase {
 
@@ -63,6 +67,52 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean UserRepository userRepository;
+  @org.springframework.beans.factory.annotation.Autowired ResettableDetector detector;
+
+  /**
+   * The application's detector, but one that can be emptied. The detector is one bean for the whole
+   * test class, and a mutation tester runs the tests again and again in one JVM, so what one run
+   * recorded would otherwise be there for the next.
+   */
+  static class ResettableDetector implements ClientActivityDetector {
+    private volatile ClientActivityDetector delegate = fresh();
+
+    private static ClientActivityDetector fresh() {
+      return new edu.ucsb.cs.taapply.config.ConcurrencyConfig().clientActivityDetector(60);
+    }
+
+    void reset() {
+      delegate = fresh();
+    }
+
+    @Override
+    public void record(String resourceKey, String clientId, ClientIdentity identity) {
+      delegate.record(resourceKey, clientId, identity);
+    }
+
+    @Override
+    public List<OtherClient> othersActive(String resourceKey, String clientId) {
+      return delegate.othersActive(resourceKey, clientId);
+    }
+
+    @Override
+    public java.time.Duration window() {
+      return delegate.window();
+    }
+  }
+
+  @org.springframework.boot.test.context.TestConfiguration
+  static class DetectorConfig {
+    @org.springframework.context.annotation.Bean
+    ResettableDetector clientActivityDetector() {
+      return new ResettableDetector();
+    }
+  }
+
+  @org.junit.jupiter.api.BeforeEach
+  public void forgetWhoWasThere() {
+    detector.reset();
+  }
 
   /** MockCurrentUserServiceImpl derives the email from the mock user's name. */
   private static final String EMAIL = "grad@example.org";
@@ -733,10 +783,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   // ---- The multi-tab warning (issue #273) ----
 
   private static final String CLIENT_ID = "X-Client-Id";
-  private static final String OTHERS = "X-Other-Clients-Active";
-  private static final String HEARTBEAT = "X-Heartbeat-Seconds";
 
-  // The detector is one bean for the whole class, so each test below uses a draft of its own.
+  /** What the mock user "grad" is called to other people. */
+  private static final String GRAD_LABEL = "grad@example.org (Fake grad)";
 
   /** One save, as the named client, of the draft at the version it has. */
   private org.springframework.test.web.servlet.ResultActions saveAs(
@@ -746,6 +795,12 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsString(NEARLY_EMPTY))
             .with(csrf());
+    return mockMvc.perform(clientId == null ? request : request.header(CLIENT_ID, clientId));
+  }
+
+  private org.springframework.test.web.servlet.ResultActions heartbeatAs(long id, String clientId)
+      throws Exception {
+    var request = post("/api/draftApplications/heartbeat?id=" + id).with(csrf());
     return mockMvc.perform(clientId == null ? request : request.header(CLIENT_ID, clientId));
   }
 
@@ -761,78 +816,185 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
       username = "grad",
       roles = {"USER"})
   @Test
-  public void a_save_from_one_client_says_no_other_is_active_and_how_often_to_send_a_heartbeat()
+  public void a_heartbeat_from_the_only_client_finds_no_one_else_and_says_how_often_to_beat()
       throws Exception {
-    draftIsOpenAndSaves(101L);
+    when(draftApplicationRepository.findById(101L)).thenReturn(Optional.of(draft(101L, EMAIL)));
 
-    saveAs(101L, "only-tab", 3)
+    heartbeatAs(101L, "only-tab")
         .andExpect(status().isOk())
-        .andExpect(header().string(OTHERS, "false"))
-        .andExpect(header().string(HEARTBEAT, "20"));
+        .andExpect(content().json("{\"others\":[],\"heartbeatSeconds\":20}", true));
   }
 
   @WithMockUser(
       username = "grad",
       roles = {"USER"})
   @Test
-  public void a_save_from_a_second_client_says_the_first_is_active_and_so_does_the_first_after()
-      throws Exception {
-    draftIsOpenAndSaves(102L);
+  public void a_second_tab_of_the_same_user_is_named_as_the_same_person() throws Exception {
+    when(draftApplicationRepository.findById(102L)).thenReturn(Optional.of(draft(102L, EMAIL)));
 
-    saveAs(102L, "first-tab", 3).andExpect(header().string(OTHERS, "false"));
-    saveAs(102L, "second-tab", 3).andExpect(header().string(OTHERS, "true"));
-    saveAs(102L, "first-tab", 3).andExpect(header().string(OTHERS, "true"));
+    heartbeatAs(102L, "first-tab").andExpect(jsonPath("$.others.length()").value(0));
+    heartbeatAs(102L, "second-tab")
+        .andExpect(jsonPath("$.others.length()").value(1))
+        .andExpect(jsonPath("$.others[0].label").value(GRAD_LABEL))
+        .andExpect(jsonPath("$.others[0].samePerson").value(true));
+    heartbeatAs(102L, "first-tab")
+        .andExpect(jsonPath("$.others[0].label").value(GRAD_LABEL))
+        .andExpect(jsonPath("$.others[0].samePerson").value(true));
   }
 
   @WithMockUser(
       username = "grad",
       roles = {"USER"})
   @Test
-  public void a_save_that_names_no_client_gets_no_warning_headers() throws Exception {
+  public void a_save_counts_as_being_there_for_the_other_tabs_heartbeats() throws Exception {
     draftIsOpenAndSaves(103L);
 
-    saveAs(103L, null, 3)
-        .andExpect(status().isOk())
-        .andExpect(header().doesNotExist(OTHERS))
-        .andExpect(header().doesNotExist(HEARTBEAT));
+    saveAs(103L, "typing-tab", 3).andExpect(status().isOk());
+    heartbeatAs(103L, "idle-tab")
+        .andExpect(jsonPath("$.others.length()").value(1))
+        .andExpect(jsonPath("$.others[0].samePerson").value(true));
   }
 
   @WithMockUser(
       username = "grad",
       roles = {"USER"})
   @Test
-  public void a_save_that_is_refused_as_stale_still_carries_the_warning() throws Exception {
+  public void a_save_that_is_refused_as_stale_still_counts_as_being_there() throws Exception {
     draftIsOpenAndSaves(104L);
 
-    saveAs(104L, "conflict-first", 3).andExpect(header().string(OTHERS, "false"));
-    saveAs(104L, "conflict-second", 2)
-        .andExpect(status().isConflict())
-        .andExpect(header().string(OTHERS, "true"))
-        .andExpect(header().string(HEARTBEAT, "20"));
-  }
-
-  private org.springframework.test.web.servlet.ResultActions heartbeatAs(long id, String clientId)
-      throws Exception {
-    var request = post("/api/draftApplications/heartbeat?id=" + id).with(csrf());
-    return mockMvc.perform(clientId == null ? request : request.header(CLIENT_ID, clientId));
+    saveAs(104L, "stale-tab", 2).andExpect(status().isConflict());
+    heartbeatAs(104L, "other-tab").andExpect(jsonPath("$.others.length()").value(1));
   }
 
   @WithMockUser(
       username = "grad",
       roles = {"USER"})
   @Test
-  public void a_heartbeat_changes_nothing_and_reports_whether_others_are_active() throws Exception {
-    DraftApplication stored = draft(105L, EMAIL);
-    stored.setComments("As saved");
-    when(draftApplicationRepository.findById(105L)).thenReturn(Optional.of(stored));
+  public void a_save_answers_exactly_as_before_with_no_warning_in_it() throws Exception {
+    draftIsOpenAndSaves(105L);
 
-    heartbeatAs(105L, "beat-first")
-        .andExpect(status().isNoContent())
-        .andExpect(header().string(OTHERS, "false"))
-        .andExpect(header().string(HEARTBEAT, "20"));
-    heartbeatAs(105L, "beat-second")
-        .andExpect(status().isNoContent())
-        .andExpect(header().string(OTHERS, "true"));
+    saveAs(105L, "named-tab", 3)
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(105))
+        .andExpect(jsonPath("$.others").doesNotExist());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void other_people_on_the_same_resource_are_named_with_a_label_that_may_not_be_ascii()
+      throws Exception {
+    when(draftApplicationRepository.findById(106L)).thenReturn(Optional.of(draft(106L, EMAIL)));
+    // A resource that more than one person can use (a later use of the detector) would have people
+    // other than the owner on it; here the detector is told of one directly.
+    detector.record(
+        "draft:106", "jose-tab", new ClientIdentity("jose@example.org", "José (José Álvarez)"));
+
+    heartbeatAs(106L, "my-tab")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.others.length()").value(1))
+        .andExpect(jsonPath("$.others[0].label").value("José (José Álvarez)"))
+        .andExpect(jsonPath("$.others[0].samePerson").value(false));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void other_people_and_my_own_other_tab_are_all_listed_once_each() throws Exception {
+    when(draftApplicationRepository.findById(107L)).thenReturn(Optional.of(draft(107L, EMAIL)));
+    detector.record(
+        "draft:107", "ben-tab-1", new ClientIdentity("ben@example.org", "ben@example.org"));
+    detector.record(
+        "draft:107", "ben-tab-2", new ClientIdentity("ben@example.org", "ben@example.org"));
+
+    heartbeatAs(107L, "my-first-tab");
+    heartbeatAs(107L, "my-second-tab")
+        .andExpect(jsonPath("$.others.length()").value(2))
+        .andExpect(jsonPath("$.others[0].label").value("ben@example.org"))
+        .andExpect(jsonPath("$.others[0].samePerson").value(false))
+        .andExpect(jsonPath("$.others[1].label").value(GRAD_LABEL))
+        .andExpect(jsonPath("$.others[1].samePerson").value(true));
+  }
+
+  /** A signed-in user whose account has the given name, or none. */
+  private static org.springframework.test.web.servlet.request.RequestPostProcessor signedInAs(
+      String email, String name) {
+    return org.springframework.security.test.web.servlet.request
+        .SecurityMockMvcRequestPostProcessors.oauth2Login()
+        .authorities(
+            new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"))
+        .attributes(
+            attributes -> {
+              attributes.put("sub", "sub-" + email);
+              attributes.put("email", email);
+              if (name != null) {
+                attributes.put("name", name);
+              }
+            });
+  }
+
+  @Test
+  public void a_user_with_a_name_is_labelled_by_the_email_and_the_name() throws Exception {
+    when(draftApplicationRepository.findById(108L))
+        .thenReturn(Optional.of(draft(108L, "named@example.org")));
+
+    mockMvc
+        .perform(
+            post("/api/draftApplications/heartbeat?id=108")
+                .header(CLIENT_ID, "named-tab")
+                .with(signedInAs("named@example.org", "  Nora Named  "))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    // The name is trimmed and put in parentheses after the email.
+    assertEquals(
+        List.of(new OtherClient("named@example.org (Nora Named)", false)),
+        detector.othersActive("draft:108", "observer"));
+  }
+
+  @Test
+  public void a_user_with_no_name_or_a_blank_one_is_labelled_by_the_email_alone() throws Exception {
+    when(draftApplicationRepository.findById(116L))
+        .thenReturn(Optional.of(draft(116L, "nameless@example.org")));
+    when(draftApplicationRepository.findById(117L))
+        .thenReturn(Optional.of(draft(117L, "blank@example.org")));
+
+    mockMvc
+        .perform(
+            post("/api/draftApplications/heartbeat?id=116")
+                .header(CLIENT_ID, "nameless-tab")
+                .with(signedInAs("nameless@example.org", null))
+                .with(csrf()))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(
+            post("/api/draftApplications/heartbeat?id=117")
+                .header(CLIENT_ID, "blank-tab")
+                .with(signedInAs("blank@example.org", "   "))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(
+        List.of(new OtherClient("nameless@example.org", false)),
+        detector.othersActive("draft:116", "observer"));
+    assertEquals(
+        List.of(new OtherClient("blank@example.org", false)),
+        detector.othersActive("draft:117", "observer"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_heartbeat_changes_nothing() throws Exception {
+    DraftApplication stored = draft(109L, EMAIL);
+    stored.setComments("As saved");
+    when(draftApplicationRepository.findById(109L)).thenReturn(Optional.of(stored));
+
+    heartbeatAs(109L, "beat-first").andExpect(status().isOk());
+    heartbeatAs(109L, "beat-second").andExpect(status().isOk());
 
     // Not saved, and not changed: the draft and its version are as they were.
     verify(draftApplicationRepository, never()).save(any());
@@ -844,42 +1006,82 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
       username = "grad",
       roles = {"USER"})
   @Test
-  public void a_heartbeat_that_names_no_client_is_answered_without_headers() throws Exception {
-    when(draftApplicationRepository.findById(106L)).thenReturn(Optional.of(draft(106L, EMAIL)));
+  public void a_heartbeat_that_names_no_client_finds_no_one_and_is_not_recorded() throws Exception {
+    when(draftApplicationRepository.findById(110L)).thenReturn(Optional.of(draft(110L, EMAIL)));
 
-    heartbeatAs(106L, null)
-        .andExpect(status().isNoContent())
-        .andExpect(header().doesNotExist(OTHERS))
-        .andExpect(header().doesNotExist(HEARTBEAT));
+    heartbeatAs(110L, null)
+        .andExpect(status().isOk())
+        .andExpect(content().json("{\"others\":[],\"heartbeatSeconds\":20}", true));
+    heartbeatAs(110L, "   ").andExpect(jsonPath("$.others.length()").value(0));
+    // Neither left a mark.
+    assertEquals(List.of(), detector.othersActive("draft:110", "observer"));
   }
 
   @WithMockUser(
       username = "grad",
       roles = {"USER"})
   @Test
-  public void a_heartbeat_for_someone_elses_draft_is_forbidden_and_records_nothing()
+  public void a_save_that_names_no_client_is_not_recorded() throws Exception {
+    draftIsOpenAndSaves(111L);
+
+    saveAs(111L, null, 3).andExpect(status().isOk());
+    assertEquals(List.of(), detector.othersActive("draft:111", "observer"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_heartbeat_for_someone_elses_draft_is_forbidden_names_no_one_and_records_nothing()
       throws Exception {
-    when(draftApplicationRepository.findById(107L))
-        .thenReturn(Optional.of(draft(107L, "someone.else@example.org")));
+    when(draftApplicationRepository.findById(112L))
+        .thenReturn(Optional.of(draft(112L, "someone.else@example.org")));
+    // The owner is working on it, and the intruder must not learn that.
+    detector.record(
+        "draft:112",
+        "owners-tab",
+        new ClientIdentity("someone.else@example.org", "someone.else@example.org (The Owner)"));
 
-    heartbeatAs(107L, "intruder").andExpect(status().isForbidden());
-    // The intruder left no mark: the owner's own client sees nobody else.
-    when(draftApplicationRepository.findById(107L)).thenReturn(Optional.of(draft(107L, EMAIL)));
-    heartbeatAs(107L, "owner-tab").andExpect(header().string(OTHERS, "false"));
+    var result = heartbeatAs(112L, "intruder").andExpect(status().isForbidden()).andReturn();
+
+    assertEquals(false, result.getResponse().getContentAsString().contains("The Owner"));
+    assertEquals(false, result.getResponse().getContentAsString().contains("someone.else"));
+    // And the intruder left no mark: only the owner's tab is there.
+    assertEquals(
+        List.of(new OtherClient("someone.else@example.org (The Owner)", false)),
+        detector.othersActive("draft:112", "observer"));
   }
 
   @WithMockUser(
       username = "grad",
       roles = {"USER"})
   @Test
-  public void a_heartbeat_for_a_draft_that_does_not_exist_is_not_found() throws Exception {
-    when(draftApplicationRepository.findById(9L)).thenReturn(Optional.empty());
+  public void a_save_to_someone_elses_draft_is_forbidden_and_records_nothing() throws Exception {
+    when(draftApplicationRepository.findById(113L))
+        .thenReturn(Optional.of(draft(113L, "someone.else@example.org")));
 
-    heartbeatAs(9L, "lost-tab").andExpect(status().isNotFound());
+    saveAs(113L, "intruder", 3).andExpect(status().isForbidden());
+
+    assertEquals(List.of(), detector.othersActive("draft:113", "observer"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_heartbeat_for_a_draft_that_does_not_exist_is_not_found_and_records_nothing()
+      throws Exception {
+    when(draftApplicationRepository.findById(114L)).thenReturn(Optional.empty());
+
+    heartbeatAs(114L, "lost-tab").andExpect(status().isNotFound());
+
+    assertEquals(List.of(), detector.othersActive("draft:114", "observer"));
   }
 
   @Test
-  public void a_heartbeat_needs_a_signed_in_user() throws Exception {
-    heartbeatAs(5L, "anonymous-tab").andExpect(status().is4xxClientError());
+  public void a_heartbeat_needs_a_signed_in_user_and_records_nothing() throws Exception {
+    heartbeatAs(115L, "anonymous-tab").andExpect(status().is4xxClientError());
+
+    assertEquals(List.of(), detector.othersActive("draft:115", "observer"));
   }
 }

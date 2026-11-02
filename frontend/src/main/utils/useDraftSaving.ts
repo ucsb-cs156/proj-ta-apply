@@ -50,7 +50,8 @@ type DraftSavingOptions = {
  * {@link reload} fetches the draft as it now stands so the form can start again from it.
  *
  * The page also learns early, before any save is refused, whether the draft is open in another tab
- * or window (issue #273): see {@link useClientActivity}, which this uses for it.
+ * or window (issue #273), and who has it open: see {@link useClientActivity}, which this uses for
+ * it. Every save names this tab, and a heartbeat does too, so the server knows it is there.
  */
 export function useDraftSaving({
   recruitmentId,
@@ -116,7 +117,6 @@ export function useDraftSaving({
           headers: activity.headers,
           data: payload,
         });
-        activity.observe(response.headers);
         state.version = response.data.version;
         // Stryker disable all : cache invalidation is not observable from here
         queryClient.invalidateQueries({
@@ -125,10 +125,6 @@ export function useDraftSaving({
         // Stryker restore all
         return true;
       } catch (error) {
-        // A refused save says whether others are about, too.
-        activity.observe(
-          (error as { response?: { headers?: unknown } }).response?.headers,
-        );
         if (isConflict(error)) {
           state.blocked = target;
           setConflictFor(target);
@@ -153,8 +149,8 @@ export function useDraftSaving({
     failed,
     /** The draft has been saved from somewhere else, so nothing more is saved from here. */
     conflicted: conflictFor !== null && conflictFor === draft,
-    /** Another tab or window has the draft open too, as the server last said. */
-    otherClientsActive: activity.othersActive,
+    /** The other people with the draft open too (the user's own other tabs included), as the server last said. */
+    others: activity.others,
     /** The quiet save while the form is filled in. */
     autosave: (payload: ApplicationPayload) => {
       void save(payload);

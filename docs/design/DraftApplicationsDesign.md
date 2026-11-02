@@ -103,28 +103,37 @@ last would silently overwrite the other's changes, so a save is **versioned** (o
 * Submitting is not versioned: it turns whatever the server holds into the application and removes
   the draft.
 
-### Warning about a second tab (issue #273)
+### Warning about a second tab, and who is in it (issue #273)
 
 The version check refuses a stale save after the fact. A second mechanism warns before any save is
 refused, as soon as the server sees that the same draft is open in more than one tab, window or
-device.
+device, and says who.
 
-* The form makes a random identifier for itself when it opens (in memory only) and sends it with every
-  save, as the `X-Client-Id` header, and with a **heartbeat**: `POST /api/draftApplications/heartbeat?id=`
-  as soon as the draft is open, and then every 20 seconds. The heartbeat changes nothing about the
-  draft, not even its version, and is allowed only for the draft's owner.
-* The server remembers which identifiers it has seen for `draft:<draftId>` in the last minute. Every
-  answer to a save (a refused one too) and to a heartbeat says, in the `X-Other-Clients-Active`
-  header, whether any other identifier was among them, and, in `X-Heartbeat-Seconds`, how often to
-  send the next heartbeat.
-* While the answer says another copy is active, the apply page shows a warning above the form: *The
-  server has detected multiple tabs or windows open on the same application. Please know that this is
-  risky; we recommend closing all but one of these.* It goes by itself once the other copy has been
-  closed for a minute. It is advice and nothing is disabled; the version check still protects the
-  draft.
+* The form makes a random identifier for itself when it opens (in memory only) and sends it, as the
+  `X-Client-Id` header, with every save and with a **heartbeat**:
+  `POST /api/draftApplications/heartbeat?id=`, sent as soon as the draft is open and then as often as
+  the server asks (every 20 seconds by default). A heartbeat changes nothing about the draft, not
+  even its version.
+* The server remembers which clients it has seen for `draft:<draftId>` in the last minute, and who
+  each is. The controller supplies the identity from the current user: the email address is the
+  person, and the label is `email (Full Name)`, or just the email if there is no name.
+* **Only the draft's owner may save or heartbeat.** The controller checks the owner first and
+  answers `403` to anyone else before anything is recorded or any name is returned. Since a draft has
+  one owner, the others a heartbeat can list are always the owner's own other tabs.
+* The heartbeat is answered with a JSON body listing the other people active, one entry for each
+  person, with a label and whether it is the same person, and how often to send the next heartbeat.
+  Saves are answered as before. Names are in the body and not in headers because they are not always
+  ASCII and can be long.
+* While the list is not empty, the apply page shows a warning above the form. Since a draft has one
+  owner, it reads:
+  *You are also editing this application in another tab or window. Please know that this is risky; we
+  recommend closing all but one of these.* It goes by itself once the other copy has been closed for a
+  minute. It is advice and nothing is disabled; the version check still protects the draft. The
+  applicant Help pages end with a *Simultaneous Editing* section that shows the warning and says what
+  to do.
 * The detector and the client hook are in packages of their own with no knowledge of drafts, so that
-  other screens can use them. How they work and where else they are planned for is in
-  `ConcurrentEditMitigationDesign.md`.
+  other screens can use them. How they work, the wire format, the authorization rule for every
+  resource, and where else they are planned for, is in `ConcurrentEditMitigationDesign.md`.
 
 ## The home page
 

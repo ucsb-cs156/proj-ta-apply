@@ -472,7 +472,7 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-multiple-tabs")).isVisible(wait);
     assertThat(page.getByTestId("ApplyPage-multiple-tabs"))
         .containsText(
-            "The server has detected multiple tabs or windows open on the same application."
+            "You are also editing this application in another tab or window."
                 + " Please know that this is risky; we recommend closing all but one of these.");
     // The form is still there to use, and the draft is still the one.
     assertThat(page.getByTestId("ApplyPage-submit")).isVisible();
@@ -485,6 +485,25 @@ public class ApplicationsWebIT extends WebTestCase {
             .setTimeout(30000);
     assertThat(page.getByTestId("ApplyPage-multiple-tabs")).isHidden(gone);
     assertEquals(1, draftApplicationRepository.count());
+  }
+
+  /**
+   * Issue #273: the applicant Help pages end with a Simultaneous Editing section that shows the
+   * warning.
+   */
+  @Test
+  public void the_help_pages_explain_simultaneous_editing() throws Exception {
+    setupRegularUser();
+
+    goTo("/help/ta-applicants");
+    assertThat(page.getByTestId("HelpTaApplicantsPage-simultaneous-editing"))
+        .containsText("Simultaneous Editing");
+    assertThat(page.getByTestId("HelpTaApplicantsPage-simultaneous-editing-example"))
+        .containsText("You are also editing this application in another tab or window.");
+
+    goTo("/help/ula-applicants");
+    assertThat(page.getByTestId("HelpUlaApplicantsPage-simultaneous-editing-example"))
+        .containsText("Please know that this is risky; we recommend closing all but one of these.");
   }
 
   /** Any signed-in user sees every open recruitment, each labelled with its type. */

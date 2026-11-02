@@ -1,12 +1,15 @@
 package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
 import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
+import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFields;
 import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -23,7 +26,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -127,25 +129,34 @@ public class DraftApplicationsController extends ApiController {
   }
 
   /**
-   * Notes that the client that sent this request is working on the draft, and returns the response
-   * headers that tell it whether any other tab or window is too (issue #273). The draft is
-   * identified to the detector as {@code draft:<id>}.
+   * Who the current user is to the detector (issue #273): the email address is the person, and the
+   * label other people see is the email address followed by the full name in parentheses, or the
+   * email address alone if there is no name.
    */
-  private HttpHeaders activity(Long id, String clientId) {
-    HttpHeaders headers = new HttpHeaders();
-    headers.setAll(clientActivityDetector.observe("draft:" + id, clientId));
-    return headers;
+  private ClientIdentity identity() {
+    User user = getCurrentUser().getUser();
+    String name = user.getFullName();
+    String label =
+        name == null || name.isBlank()
+            ? user.getEmail()
+            : user.getEmail() + " (" + name.trim() + ")";
+    return new ClientIdentity(user.getEmail(), label);
+  }
+
+  /** The detector's name for a draft. */
+  private static String resourceKey(Long id) {
+    return "draft:" + id;
   }
 
   /** What a refused save tells the form: why, and the draft as it now stands. */
-  private ResponseEntity<Object> conflict(DraftApplication current, HttpHeaders headers) {
+  private ResponseEntity<Object> conflict(DraftApplication current) {
     Map<String, Object> body = new LinkedHashMap<>();
     body.put(
         "message",
         "This draft was changed in another tab or window. Reload to see the latest version.");
     body.put("version", current.getVersion());
     body.put("draft", current);
-    return ResponseEntity.status(HttpStatus.CONFLICT).headers(headers).body(body);
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
   }
 
   @Operation(
@@ -156,8 +167,8 @@ public class DraftApplicationsController extends ApiController {
               + " saw (from opening the draft or from its last save); if the draft has been saved"
               + " since, by another tab or window, nothing is changed and the answer is 409"
               + " Conflict with the draft as it now stands. A successful save returns the draft"
-              + " with its new version. A save that names its client (X-Client-Id) is also answered with"
-              + " X-Other-Clients-Active, whether another tab or window has been working on the draft.")
+              + " with its new version. A save that names its client (X-Client-Id) also tells the server this tab or"
+              + " window is working on the draft, for the multi-tab warning; see the heartbeat.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("")
   public ResponseEntity<Object> saveDraft(
@@ -166,36 +177,39 @@ public class DraftApplicationsController extends ApiController {
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
       @RequestBody ApplicationFields fields) {
     DraftApplication draft = mine(id);
-    HttpHeaders headers = activity(id, clientId);
+    clientActivityDetector.note(resourceKey(id), clientId, identity());
     if (!applicationAccessService.editable(recruitment(draft.getRecruitmentId()))) {
       throw new ForbiddenException("Applications are closed, so this draft can no longer be saved");
     }
     if (!version.equals(draft.getVersion())) {
-      return conflict(draft, headers);
+      return conflict(draft);
     }
     apply(fields, draft);
     try {
-      return ResponseEntity.ok().headers(headers).body(draftApplicationRepository.save(draft));
+      return ResponseEntity.ok(draftApplicationRepository.save(draft));
     } catch (ObjectOptimisticLockingFailureException e) {
       // Another save got in between reading the draft and writing it.
-      return conflict(draftApplicationRepository.findById(id).orElseThrow(() -> e), headers);
+      return conflict(draftApplicationRepository.findById(id).orElseThrow(() -> e));
     }
   }
 
   @Operation(
-      summary = "Say that this tab or window still has the draft open",
+      summary = "Say that this tab or window still has the draft open, and learn who else does",
       description =
           "Changes nothing about the draft, not even its version. Tells the server this client"
-              + " (X-Client-Id) is still here, so that other tabs or windows on the same draft can"
-              + " be warned, and answers with X-Other-Clients-Active, whether any other is, and"
-              + " X-Heartbeat-Seconds, how often to send this.")
+              + " (X-Client-Id) is still here, and answers with the other people who have the draft"
+              + " open (a label for each, and whether it is the same person in another tab or"
+              + " window) and how often to send this. Only the draft's owner may ask, and nothing"
+              + " is recorded or told to anyone else.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PostMapping("/heartbeat")
-  public ResponseEntity<Void> heartbeat(
+  public Presence heartbeat(
       @Parameter(name = "id") @RequestParam Long id,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    // The owner check comes first and throws, so that nothing below runs for anyone else: they are
+    // neither recorded nor told who is working here.
     mine(id);
-    return ResponseEntity.noContent().headers(activity(id, clientId)).build();
+    return clientActivityDetector.heartbeat(resourceKey(id), clientId, identity());
   }
 
   /** Name-to-level answers as sent, without the null entries and in a stable order. */

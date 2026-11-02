@@ -1,23 +1,17 @@
 package edu.ucsb.cs.taapply.concurrency;
 
 /**
- * The names of the HTTP headers the multi-tab warning uses (issue #273), and the one rule about
- * what a client may send.
+ * The one HTTP header the multi-tab warning uses (issue #273), and the rule about what a client may
+ * send in it.
  *
- * <p>The client names itself in a request header, and the server answers in two response headers,
- * so that the answer can ride on any response (a save, a refused save, a heartbeat) without
- * changing the shape of its body.
+ * <p>The client names itself in a request header. Nothing comes back in headers: names are not
+ * always plain ASCII and can be long, so what the server has to say, including who else is active,
+ * is the JSON body of the heartbeat's answer (see {@link Presence}).
  */
 public final class ConcurrencyHeaders {
 
   /** Request: the random identifier a tab or window made for itself when it opened. */
   public static final String CLIENT_ID = "X-Client-Id";
-
-  /** Response: {@code true} if some other client was seen on the same resource recently. */
-  public static final String OTHER_CLIENTS_ACTIVE = "X-Other-Clients-Active";
-
-  /** Response: how often, in seconds, the client should send a heartbeat. */
-  public static final String HEARTBEAT_SECONDS = "X-Heartbeat-Seconds";
 
   /** The longest client identifier that is kept; a UUID is 36 characters. */
   public static final int MAX_CLIENT_ID_LENGTH = 100;

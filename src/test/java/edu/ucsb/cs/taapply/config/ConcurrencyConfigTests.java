@@ -4,8 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
 import edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.OtherClient;
 import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class ConcurrencyConfigTests {
@@ -22,9 +25,9 @@ public class ConcurrencyConfigTests {
   public void it_uses_the_real_clock() {
     ClientActivityDetector detector = new ConcurrencyConfig().clientActivityDetector(60);
 
-    detector.record("draft:1", "a");
-    detector.record("draft:1", "b");
+    detector.record("draft:1", "a", new ClientIdentity("a@example.org", "a"));
+    detector.record("draft:1", "b", new ClientIdentity("b@example.org", "b"));
     // Seen a moment ago by the system clock, so well within a minute.
-    assertTrue(detector.othersActive("draft:1", "a"));
+    assertEquals(List.of(new OtherClient("a", false)), detector.othersActive("draft:1", "b"));
   }
 }

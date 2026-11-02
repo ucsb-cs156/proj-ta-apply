@@ -1,4 +1,9 @@
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
+import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
+
+/** The warning as it looks when your own other tab has the application open. */
+// Stryker disable next-line StringLiteral : the label of the user's own tab is never shown
+const EXAMPLE_OTHERS = [{ label: "you", samePerson: true }];
 
 /** What a TA applicant should know before starting the form: /help/ta-applicants (issue #140). */
 export default function HelpTaApplicantsPage(): React.JSX.Element {
@@ -91,18 +96,43 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
             an application, and incomplete applications are not considered, so
             submit it before the recruitment closes.
           </li>
-          <li data-testid="HelpTaApplicantsPage-one-window">
-            Keep your application open in only one tab or window at a time. If
-            the server sees it open in more than one, a warning appears above
-            the form, because a save from one could replace what you typed in
-            another. Close the extras and the warning goes away.
-          </li>
           <li>
             Once you have submitted, the card shows{" "}
             <strong>View submitted application</strong>. You can still edit it
             there until the primary consideration date.
           </li>
         </ul>
+
+        <h2
+          className="my-3 h4"
+          data-testid="HelpTaApplicantsPage-simultaneous-editing"
+        >
+          Simultaneous Editing
+        </h2>
+        <p>
+          If you try to edit the same application in more than one tab or
+          window, you may get a warning that looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="application"
+          announce={false}
+          testId="HelpTaApplicantsPage-simultaneous-editing-example"
+        />
+        <p data-testid="HelpTaApplicantsPage-simultaneous-editing-meaning">
+          <strong>What it means.</strong> The same draft is open somewhere else,
+          in another tab or window of this browser or on another device. Both
+          copies save to the same draft, so one copy can overwrite the
+          other&apos;s changes. If you go on, the system will refuse a save from
+          a copy that is out of date and ask you to reload, and what you typed
+          in the old copy since then is lost.
+        </p>
+        <p data-testid="HelpTaApplicantsPage-simultaneous-editing-todo">
+          <strong>What to do.</strong> Close all the other tabs or windows, and
+          keep just one. If the form asks you to reload, reload it to see the
+          latest version of your draft. The warning goes away on its own a short
+          while after the other copies are closed.
+        </p>
       </div>
     </BasicLayout>
   );
