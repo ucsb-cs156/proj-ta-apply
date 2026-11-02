@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HiringDecisions.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">HiringDecisions.java</span></div><h1>HiringDecisions.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+
+/**
+ * The rules about releasing hiring decisions, i.e. publishing a recruitment's assignments (issue
+ * #237; design in docs/design/AdminUserInterfaceDesign.md, &quot;Hiring decisions and reopening&quot;). One
+ * place, so the endpoint that refuses a release, the steps endpoint and the published assignments
+ * page all agree.
+ */
+public final class HiringDecisions {
+
+  private HiringDecisions() {}
+
+  public static final String CLOSE_RANKING_FIRST =
+      &quot;Close Faculty Ranking before releasing hiring decisions.&quot;;
+  public static final String CLOSE_APPLICATIONS_FIRST =
+      &quot;Close Applications before releasing hiring decisions.&quot;;
+  public static final String ASSIGN_FIRST =
+      &quot;Assign candidates to slots before releasing hiring decisions.&quot;;
+
+  /**
+   * The first prerequisite of releasing hiring decisions that is not met, as the message to show,
+   * or null when all are: faculty ranking is closed, applications are closed, and at least one
+   * candidate has been assigned.
+   */
+  public static String unmetPrerequisite(Recruitment recruitment, boolean anyAssigned) {
+<span class="fc bfc" id="L29" title="All 2 branches covered.">    if (!&quot;Closed&quot;.equals(recruitment.getReviewStatus())) {</span>
+<span class="fc" id="L30">      return CLOSE_RANKING_FIRST;</span>
+    }
+<span class="fc bfc" id="L32" title="All 2 branches covered.">    if (recruitment.getApplicationStatus() == ApplicationStatus.OPEN) {</span>
+<span class="fc" id="L33">      return CLOSE_APPLICATIONS_FIRST;</span>
+    }
+<span class="fc bfc" id="L35" title="All 2 branches covered.">    return anyAssigned ? null : ASSIGN_FIRST;</span>
+  }
+
+  /**
+   * Whether the released hiring decisions are now tentative: they were released, and applications
+   * or faculty ranking have been reopened since. Never &quot;final&quot;: a later reopening is always
+   * possible.
+   */
+  public static boolean isTentative(Recruitment recruitment) {
+<span class="fc bfc" id="L44" title="All 2 branches covered.">    return Boolean.TRUE.equals(recruitment.getAssignmentsPublished())</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">        &amp;&amp; (recruitment.getApplicationStatus() == ApplicationStatus.OPEN</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">            || &quot;Open&quot;.equals(recruitment.getReviewStatus()));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentStepsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">RecruitmentStepsService.java</span></div><h1>RecruitmentStepsService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.AllocationVisibility;
+import edu.ucsb.cs.taapply.enums.ApplicationStatus;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+/**
+ * Where a recruitment stands in the nine steps of the Recruitment Steps flow (issue #231, design in
+ * docs/design/AdminUserInterfaceDesign.md): for each step whether it is done, the label shown along
+ * the bottom of its box, and what its title opens (a page or one of the card's modals). The
+ * response matches the types in {@code frontend/src/main/utils/recruitmentSteps.ts}, so the
+ * frontend only draws it.
+ *
+ * &lt;p&gt;Steps: 1 Create, 2 Open Applications, 3 Budget / Allocations, 4 Close Applications, 5 Release
+ * Allocations, 6 Open Faculty Ranking, 7 Close Faculty Ranking, 8 Assign Candidates, 9 Release
+ * Hiring Decisions.
+ */
+@Service
+<span class="fc" id="L27">public class RecruitmentStepsService {</span>
+
+  @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired AssignmentsService assignmentsService;
+
+  /** A link the diagram draws: a word of a title, or a &quot;(see rankings)&quot; line. */
+<span class="fc" id="L33">  public record Link(String text, String href) {}</span>
+
+  /**
+   * One step's status. Fields that do not apply to the step are null and left out of the JSON.
+   *
+   * @param action the card modal the title opens, instead of {@code href}
+   * @param titleLinks step 3 only: the words &quot;Budget&quot; and &quot;Allocations&quot;, each its own link
+   * @param secondaryLink steps 7 and 9: the &quot;(see rankings)&quot; / &quot;(see assignments)&quot; link
+   * @param tentative step 9 only: hiring decisions are released but applications or faculty ranking
+   *     have been reopened
+   * @param blockedReason step 9 only, while not released: the message naming the first prerequisite
+   *     of releasing hiring decisions that is not met (issue #237); null when all are
+   */
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+<span class="fc" id="L47">  public record Step(</span>
+      int number,
+      boolean done,
+      String label,
+      String href,
+      String action,
+      List&lt;Link&gt; titleLinks,
+      Link secondaryLink,
+      Boolean tentative,
+      String blockedReason) {
+
+    /** A step with no blocked reason, which is every step but an unreleased step 9. */
+    public Step(
+        int number,
+        boolean done,
+        String label,
+        String href,
+        String action,
+        List&lt;Link&gt; titleLinks,
+        Link secondaryLink,
+        Boolean tentative) {
+<span class="fc" id="L68">      this(number, done, label, href, action, titleLinks, secondaryLink, tentative, null);</span>
+<span class="fc" id="L69">    }</span>
+  }
+
+<span class="fc" id="L72">  public record Steps(Long recruitmentId, RecruitmentType type, List&lt;Step&gt; steps) {}</span>
+
+  /** The status of all nine steps of the recruitment, in order. */
+  public Steps stepsFor(Recruitment recruitment) {
+<span class="fc" id="L76">    Long id = recruitment.getId();</span>
+<span class="fc" id="L77">    String courses = &quot;/admin/recruitments/&quot; + id + &quot;/courses&quot;;</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    boolean applicationsOpen = recruitment.getApplicationStatus() == ApplicationStatus.OPEN;</span>
+<span class="fc" id="L79">    boolean reviewsOpen = &quot;Open&quot;.equals(recruitment.getReviewStatus());</span>
+<span class="fc" id="L80">    int target = recruitment.getTotalHiringTarget();</span>
+<span class="fc" id="L81">    int allocated =</span>
+<span class="fc" id="L82">        recruitmentCourseRepository.findByRecruitmentId(id).stream()</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">            .filter(course -&gt; !course.isRemoved())</span>
+<span class="fc" id="L84">            .mapToInt(RecruitmentCourse::getAllocation)</span>
+<span class="fc" id="L85">            .sum();</span>
+<span class="fc" id="L86">    int assigned =</span>
+<span class="fc" id="L87">        AssignmentsService.assignedCounts(assignmentsService.realApplications(id)).values().stream()</span>
+<span class="fc" id="L88">            .mapToInt(Integer::intValue)</span>
+<span class="fc" id="L89">            .sum();</span>
+<span class="fc" id="L90">    boolean published = Boolean.TRUE.equals(recruitment.getAssignmentsPublished());</span>
+
+<span class="fc bfc" id="L92" title="All 2 branches covered.">    boolean opened = recruitment.getActualOpeningDate() != null;</span>
+<span class="fc bfc" id="L93" title="All 4 branches covered.">    boolean closed = recruitment.getActualClosingDate() != null &amp;&amp; !applicationsOpen;</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">    boolean released = recruitment.getAllocationVisibility() != AllocationVisibility.ADMINS_ONLY;</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">    boolean reviewOpened = recruitment.getFacultyReviewOpeningDate() != null;</span>
+<span class="fc" id="L96">    boolean reviewClosed = &quot;Closed&quot;.equals(recruitment.getReviewStatus());</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">    boolean assignmentComplete = assigned &gt;= target;</span>
+
+    // Steps 2 and 4 open the same modal, whichever way the applications are going; so do 6 and 7.
+<span class="fc bfc" id="L100" title="All 2 branches covered.">    String applicationsAction = applicationsOpen ? &quot;closeApplications&quot; : &quot;openApplications&quot;;</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">    String reviewsAction = reviewsOpen ? &quot;closeReviews&quot; : &quot;openReviews&quot;;</span>
+
+<span class="fc" id="L103">    return new Steps(</span>
+        id,
+<span class="fc" id="L105">        recruitment.getType(),</span>
+<span class="fc" id="L106">        List.of(</span>
+            new Step(
+                1,
+                true,
+<span class="fc bfc" id="L110" title="All 2 branches covered.">                recruitment.getCreatedAt() == null</span>
+<span class="fc" id="L111">                    ? &quot;Created&quot;</span>
+<span class="fc" id="L112">                    : &quot;Created: &quot; + dateOf(recruitment.getCreatedAt()),</span>
+                null,
+                null,
+                null,
+                null,
+                null),
+            new Step(
+                2,
+                opened,
+<span class="fc bfc" id="L121" title="All 2 branches covered.">                opened</span>
+<span class="fc" id="L122">                    ? &quot;Opened: &quot; + recruitment.getActualOpeningDate()</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">                    : &quot;Tentative: &quot; + orNotSet(recruitment.getTentativeOpeningDate()),</span>
+                null,
+                applicationsAction,
+                null,
+                null,
+                null),
+            new Step(
+                3,
+                allocated == target,
+                &quot;Hiring Target: &quot; + target,
+                null,
+                null,
+<span class="fc" id="L135">                List.of(</span>
+<span class="fc" id="L136">                    new Link(&quot;Budget&quot;, &quot;/admin/budget/&quot; + qyy(recruitment.getQuarter())),</span>
+                    new Link(&quot;Allocations&quot;, courses)),
+                null,
+                null),
+            new Step(
+                4,
+                closed,
+<span class="fc bfc" id="L143" title="All 2 branches covered.">                closed</span>
+<span class="fc" id="L144">                    ? &quot;Closed: &quot; + recruitment.getActualClosingDate()</span>
+<span class="fc" id="L145">                    : &quot;Prim. Consid: &quot; + orNotSet(recruitment.getPrimaryConsiderationDate()),</span>
+                null,
+                applicationsAction,
+                null,
+                null,
+                null),
+            new Step(
+                5,
+                released,
+<span class="fc bfc" id="L154" title="All 2 branches covered.">                released</span>
+<span class="fc" id="L155">                    ? &quot;Released&quot; + datedSuffix(recruitment.getAllocationsReleasedAt())</span>
+<span class="fc" id="L156">                    : &quot;Not released yet&quot;,</span>
+                null,
+                &quot;allocationVisibility&quot;,
+                null,
+                null,
+                null),
+            new Step(
+                6,
+                reviewOpened,
+<span class="fc bfc" id="L165" title="All 2 branches covered.">                reviewOpened</span>
+<span class="fc" id="L166">                    ? &quot;Opened: &quot; + recruitment.getFacultyReviewOpeningDate()</span>
+<span class="fc" id="L167">                    : &quot;Not opened yet&quot;,</span>
+                null,
+                reviewsAction,
+                null,
+                null,
+                null),
+            new Step(
+                7,
+                reviewClosed,
+<span class="fc bfc" id="L176" title="All 2 branches covered.">                reviewClosed</span>
+<span class="fc" id="L177">                    ? &quot;Closed&quot; + datedSuffix(recruitment.getFacultyReviewClosedAt())</span>
+<span class="fc bfc" id="L178" title="All 2 branches covered.">                    : recruitment.getFacultyRankingDeadline() == null</span>
+<span class="fc" id="L179">                        ? &quot;Not closed yet&quot;</span>
+<span class="fc" id="L180">                        : &quot;Deadline: &quot; + recruitment.getFacultyRankingDeadline(),</span>
+                null,
+                reviewsAction,
+                null,
+                new Link(&quot;(see rankings)&quot;, courses),
+                null),
+            new Step(
+                8,
+                assignmentComplete,
+<span class="fc bfc" id="L189" title="All 2 branches covered.">                assignmentComplete</span>
+<span class="fc" id="L190">                    ? &quot;Assignment complete&quot;</span>
+<span class="fc" id="L191">                    : &quot;Still to assign: &quot; + (target - assigned),</span>
+                &quot;/admin/recruitments/&quot; + id + &quot;/assignments&quot;,
+                null,
+                null,
+                null,
+                null),
+            new Step(
+                9,
+                published,
+<span class="fc bfc" id="L200" title="All 2 branches covered.">                published</span>
+<span class="fc" id="L201">                    ? &quot;Released&quot; + datedSuffix(recruitment.getAssignmentsPublishedAt())</span>
+<span class="fc" id="L202">                    : &quot;Not released yet&quot;,</span>
+<span class="fc bfc" id="L203" title="All 2 branches covered.">                published ? &quot;/recruitments/&quot; + id + &quot;/assignments&quot; : null,</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">                published ? null : &quot;publishAssignments&quot;,</span>
+                null,
+                new Link(&quot;(see assignments)&quot;, courses),
+<span class="fc" id="L207">                HiringDecisions.isTentative(recruitment),</span>
+<span class="fc bfc" id="L208" title="All 4 branches covered.">                published ? null : HiringDecisions.unmetPrerequisite(recruitment, assigned &gt; 0))));</span>
+  }
+
+  /** &quot;Tentative: not set&quot; rather than &quot;Tentative: null&quot; for a date nobody entered. */
+  private static String orNotSet(Object date) {
+<span class="fc bfc" id="L213" title="All 2 branches covered.">    return date == null ? &quot;not set&quot; : date.toString();</span>
+  }
+
+  /** &quot;: 2026-02-03&quot; for a stamped date, or nothing for a legacy row that was never stamped. */
+  private static String datedSuffix(LocalDateTime stamp) {
+<span class="fc bfc" id="L218" title="All 2 branches covered.">    return stamp == null ? &quot;&quot; : &quot;: &quot; + dateOf(stamp);</span>
+  }
+
+  private static String dateOf(LocalDateTime stamp) {
+<span class="fc" id="L222">    return stamp.toLocalDate().toString();</span>
+  }
+
+  /**
+   * The quarter as admins write it: &quot;20264&quot; becomes &quot;F26&quot; (W, S, M or F, then the two-digit year).
+   * The frontend has the same conversion; the backend needs it for the Budget page link.
+   */
+  static String qyy(String yyyyq) {
+<span class="fc" id="L230">    String letters = &quot;WSMF&quot;;</span>
+<span class="fc" id="L231">    return letters.charAt(Character.digit(yyyyq.charAt(4), 10) - 1) + yyyyq.substring(2, 4);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
