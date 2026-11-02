@@ -269,6 +269,9 @@ public class RecruitmentCoursesConcurrencyTests extends ControllerTestCase {
     as(put("/api/recruitmentcourses/allocation?id=1&allocation=3&expectedVersion=3"), "tab")
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.reloadAll").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value("This allocation was changed in another tab or window. Reload to see it."))
         .andExpect(jsonPath("$.allocationBulkVersion").isEmpty())
         .andExpect(jsonPath("$.course.allocation").value(1))
         .andExpect(jsonPath("$.course.allocationVersion").value(4));
@@ -290,6 +293,11 @@ public class RecruitmentCoursesConcurrencyTests extends ControllerTestCase {
             "tab")
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.reloadAll").value(true))
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    "All the allocations were changed in another tab or window. Reload to see"
+                        + " them."))
         .andExpect(jsonPath("$.allocationBulkVersion").value(2));
 
     verify(recruitmentCourseRepository, never()).save(any());
@@ -319,5 +327,55 @@ public class RecruitmentCoursesConcurrencyTests extends ControllerTestCase {
 
     assertEquals(3, recruitment.getAllocationBulkVersion());
     verify(recruitmentRepository).save(recruitment);
+  }
+
+  /** A signed-in admin whose account has the given name, or none. */
+  private static org.springframework.test.web.servlet.request.RequestPostProcessor adminNamed(
+      String email, String name) {
+    return org.springframework.security.test.web.servlet.request
+        .SecurityMockMvcRequestPostProcessors.oauth2Login()
+        .authorities(
+            new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"))
+        .attributes(
+            attributes -> {
+              attributes.put("sub", "sub-" + email);
+              attributes.put("email", email);
+              if (name != null) {
+                attributes.put("name", name);
+              }
+            });
+  }
+
+  @Test
+  public void an_admin_is_labelled_by_the_email_and_the_trimmed_name_or_the_email_alone()
+      throws Exception {
+    mockMvc
+        .perform(
+            post("/api/recruitmentcourses/heartbeat?recruitmentId=7")
+                .header(CLIENT_ID, "named-tab")
+                .with(adminNamed("named@example.org", " Nora Named "))
+                .with(csrf()))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(
+            post("/api/recruitmentcourses/heartbeat?recruitmentId=7")
+                .header(CLIENT_ID, "nameless-tab")
+                .with(adminNamed("nameless@example.org", null))
+                .with(csrf()))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(
+            post("/api/recruitmentcourses/heartbeat?recruitmentId=7")
+                .header(CLIENT_ID, "blank-tab")
+                .with(adminNamed("blank@example.org", "   "))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(
+        List.of(
+            new OtherClient("blank@example.org", false),
+            new OtherClient("named@example.org (Nora Named)", false),
+            new OtherClient("nameless@example.org", false)),
+        detector.othersActive(KEY, "observer"));
   }
 }

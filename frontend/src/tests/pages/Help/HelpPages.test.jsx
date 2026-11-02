@@ -633,11 +633,11 @@ describe("Help pages (issue #140)", () => {
       "Courses edit page (allocations and estimated enrollments); the view-only page never warns",
       "The whole edit page for one recruitment",
       "courses-edit:<recruitmentId>",
-      "#286",
+      "#288",
     ]);
     expect(rows[1].querySelector("a")).toHaveAttribute(
       "href",
-      "https://github.com/ucsb-cs156/proj-ta-apply/pull/286",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/288",
     );
     const courses = text("courses");
     expect(courses).toMatch(/view-only page/);
