@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RoleEmailCsvService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services</a> &gt; <span class="el_source">RoleEmailCsvService.java</span></div><h1>RoleEmailCsvService.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services;
+
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
+import edu.ucsb.cs.taapply.utilities.CanonicalFormConverter;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
+/**
+ * Bulk upload of email addresses into one of the role tables, from a CSV file.
+ *
+ * &lt;p&gt;Written for the instructors upload endpoint, and once shared with the grad students one, so
+ * any later role table behaves identically rather than merely similarly. The caller supplies only
+ * what differs: how to tell whether an address is already present, and how to store a new one.
+ *
+ * &lt;p&gt;The file must have a header row containing a column named {@code email} (case-insensitive);
+ * any additional columns are ignored, except one the caller may name as carrying an extra value for
+ * each row (the instructors upload uses {@code catalogName}, issue #172). Rows are processed
+ * independently: an address already present is a no-op rather than an error, and a malformed row is
+ * skipped and reported rather than aborting the rows that already succeeded. Re-uploading the same
+ * file is therefore safe.
+ */
+@Service
+<span class="fc" id="L36">@Slf4j</span>
+<span class="fc" id="L37">public class RoleEmailCsvService {</span>
+
+  public static final String EMAIL_HEADER = &quot;email&quot;;
+
+  // Deliberately permissive: a sanity check against obviously-bad rows, not an attempt to fully
+  // validate an address per RFC 5322.
+<span class="fc" id="L43">  private static final Pattern EMAIL_PATTERN = Pattern.compile(&quot;^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$&quot;);</span>
+
+  /** Summary of what an upload did, so the admin can see which rows did not take effect. */
+<span class="fc" id="L46">  public static record UploadResult(</span>
+      int inserted, int alreadyPresent, int invalid, List&lt;String&gt; invalidEmails) {}
+
+  /**
+   * Reads the file and stores each valid, not-yet-present address, passing along the row's value of
+   * one optional column (issue #172).
+   *
+   * @param optionalColumn header name of a column whose value accompanies each address; matched
+   *     like {@code email} (case-insensitive, whitespace-tolerant), null when the file lacks the
+   *     column or the cell is blank
+   * @param exists whether the address is already in the target table
+   * @param save stores a new address and its optional value; called only for valid, absent
+   *     addresses
+   * @param updateExisting called instead of {@code save} for a valid address already present (still
+   *     counted as already present), so the optional value can be applied to it
+   */
+  public UploadResult upload(
+      MultipartFile file,
+      String optionalColumn,
+      Predicate&lt;String&gt; exists,
+      BiConsumer&lt;String, String&gt; save,
+      BiConsumer&lt;String, String&gt; updateExisting)
+      throws IOException, CsvException {
+
+<span class="fc" id="L70">    int inserted = 0;</span>
+<span class="fc" id="L71">    int alreadyPresent = 0;</span>
+<span class="fc" id="L72">    List&lt;String&gt; invalidEmails = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L74">    try (InputStream inputStream = new BufferedInputStream(file.getInputStream());</span>
+<span class="fc" id="L75">        InputStreamReader reader = new InputStreamReader(inputStream);</span>
+<span class="fc" id="L76">        CSVReader csvReader = new CSVReader(reader)) {</span>
+
+<span class="fc" id="L78">      String[] headers = csvReader.readNext();</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">      if (headers == null) {</span>
+<span class="fc" id="L80">        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;CSV file is empty&quot;);</span>
+      }
+
+<span class="fc" id="L83">      int emailColumn = emailColumnIndex(headers);</span>
+<span class="fc" id="L84">      int extraColumn = columnIndex(headers, optionalColumn);</span>
+
+      String[] row;
+<span class="fc bfc" id="L87" title="All 2 branches covered.">      while ((row = csvReader.readNext()) != null) {</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        if (row.length &lt;= emailColumn) {</span>
+<span class="fc" id="L89">          continue;</span>
+        }
+<span class="fc" id="L91">        String raw = row[emailColumn].trim();</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        if (raw.isEmpty()) {</span>
+<span class="fc" id="L93">          continue;</span>
+        }
+<span class="fc" id="L95">        String email = CanonicalFormConverter.convertToValidEmail(raw).strip();</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (!EMAIL_PATTERN.matcher(email).matches()) {</span>
+<span class="fc" id="L97">          invalidEmails.add(raw);</span>
+<span class="fc" id="L98">          continue;</span>
+        }
+<span class="fc bfc" id="L100" title="All 4 branches covered.">        String extra = extraColumn &lt; 0 || row.length &lt;= extraColumn ? &quot;&quot; : row[extraColumn].trim();</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">        String extraValue = extra.isEmpty() ? null : extra;</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        if (exists.test(email)) {</span>
+<span class="fc" id="L103">          alreadyPresent++;</span>
+<span class="fc" id="L104">          updateExisting.accept(email, extraValue);</span>
+<span class="fc" id="L105">          continue;</span>
+        }
+<span class="fc" id="L107">        save.accept(email, extraValue);</span>
+<span class="fc" id="L108">        inserted++;</span>
+<span class="fc" id="L109">      }</span>
+    }
+
+<span class="fc" id="L112">    log.info(</span>
+        &quot;Role email CSV upload: inserted={} alreadyPresent={} invalid={}&quot;,
+<span class="fc" id="L114">        inserted,</span>
+<span class="fc" id="L115">        alreadyPresent,</span>
+<span class="fc" id="L116">        invalidEmails.size());</span>
+
+<span class="fc" id="L118">    return new UploadResult(inserted, alreadyPresent, invalidEmails.size(), invalidEmails);</span>
+  }
+
+  /** Locates the {@code email} column, tolerating case and surrounding whitespace. */
+  static int emailColumnIndex(String[] headers) {
+<span class="fc" id="L123">    int index = columnIndex(headers, EMAIL_HEADER);</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">    if (index &lt; 0) {</span>
+<span class="fc" id="L125">      throw new ResponseStatusException(</span>
+          HttpStatus.BAD_REQUEST,
+<span class="fc" id="L127">          String.format(&quot;CSV file must have a column named '%s'&quot;, EMAIL_HEADER));</span>
+    }
+<span class="fc" id="L129">    return index;</span>
+  }
+
+  /** The named column's index, tolerating case and surrounding whitespace; -1 when absent. */
+  static int columnIndex(String[] headers, String name) {
+<span class="fc bfc" id="L134" title="All 2 branches covered.">    for (int i = 0; i &lt; headers.length; i++) {</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">      if (name.equalsIgnoreCase(headers[i].trim())) {</span>
+<span class="fc" id="L136">        return i;</span>
+      }
+    }
+<span class="fc" id="L139">    return -1;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
