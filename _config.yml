@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/266-developer-help-page","number":272,"title":"Move Developer sections of Admin Help page into a For Developers page (closes #266)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/272"}]
+pull_requests: []
