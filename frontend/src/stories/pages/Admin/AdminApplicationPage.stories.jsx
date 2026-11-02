@@ -39,15 +39,34 @@ export default {
   component: AdminApplicationPage,
 };
 
-/** Rendered under a Route so useParams() sees the id in the story's initialEntries. */
-const Template = () => (
-  <Routes>
-    <Route path="/admin/applications/:id" element={<AdminApplicationPage />} />
-  </Routes>
-);
+const AUDIT_KEY = "collapsibleCard.AdminApplicationPage-auditTrail";
 
-/** A ULA application with admin comments already written, and two audited changes. */
-export const UlaWithComments = Template.bind({});
+/**
+ * Rendered under a Route so useParams() sees the id in the story's initialEntries. Each story sets
+ * the Audit Trail card's remembered setting itself, so it starts as the story says, not as the last
+ * story left it.
+ */
+const templateWith = (auditOpen) => {
+  const Template = () => {
+    if (auditOpen) {
+      localStorage.setItem(AUDIT_KEY, "open");
+    } else {
+      localStorage.removeItem(AUDIT_KEY);
+    }
+    return (
+      <Routes>
+        <Route
+          path="/admin/applications/:id"
+          element={<AdminApplicationPage />}
+        />
+      </Routes>
+    );
+  };
+  return Template;
+};
+
+/** A ULA application with admin comments already written, and two audited changes (Audit Trail card open). */
+export const UlaWithComments = templateWith(true).bind({});
 UlaWithComments.parameters = {
   reactRouter: routeTo(applicationsFixtures.oneUlaApplication.id),
   msw: {
@@ -61,8 +80,8 @@ UlaWithComments.parameters = {
   },
 };
 
-/** A TA application nobody has commented on or edited yet. */
-export const TaNoCommentsYet = Template.bind({});
+/** A TA application nobody has commented on or edited yet; the Audit Trail card is closed. */
+export const TaNoCommentsYet = templateWith(false).bind({});
 TaNoCommentsYet.parameters = {
   reactRouter: routeTo(applicationsFixtures.oneTaApplication.id),
   msw: {

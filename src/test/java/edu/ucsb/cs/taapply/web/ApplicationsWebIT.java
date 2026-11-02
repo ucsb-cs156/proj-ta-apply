@@ -608,6 +608,11 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
     assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
         .hasValue("Interview on Tuesday");
+    // The Audit Trail card starts closed; open it (the setting is remembered from here on).
+    assertThat(page.getByTestId("AdminApplicationPage-auditCard-toggle"))
+        .hasAttribute("aria-expanded", "false");
+    assertThat(page.getByTestId("AdminApplicationPage-audit-none")).not().isVisible();
+    page.getByTestId("AdminApplicationPage-auditCard-toggle").click();
     // Nothing edited yet, so the audit trail section says so.
     assertThat(page.getByTestId("AdminApplicationPage-audit-none")).isVisible();
 
