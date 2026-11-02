@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/219b-fake-applications","number":248,"title":"Developer Mode 3b: Create Fake Applications and Delete Fake Applications (closes #219)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/248"}]
+pull_requests: []
