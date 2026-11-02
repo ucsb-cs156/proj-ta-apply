@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"adminui/234-move-card-buttons","number":246,"title":"Admin UI 5: Test Application and Download Applications as CSV on the Applications page; Download Rankings CSV on the Courses page (closes #234)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/246"}]
+pull_requests: []
