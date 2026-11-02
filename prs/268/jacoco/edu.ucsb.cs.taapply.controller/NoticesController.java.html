@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NoticesController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">NoticesController.java</span></div><h1>NoticesController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.NoticeVersion;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDateTime;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * The &quot;Notices, Terms and Conditions&quot; text for the TA and ULA application forms, kept as an
+ * append-only history of versions. Applicants read; admins read the history and append.
+ */
+@Tag(name = &quot;Notices&quot;)
+@RequestMapping(&quot;/api&quot;)
+@RestController
+<span class="fc" id="L29">@Slf4j</span>
+<span class="fc" id="L30">public class NoticesController extends ApiController {</span>
+
+  @Autowired NoticeVersionRepository noticeVersionRepository;
+
+  /** The body of a save: the new text. */
+<span class="fc" id="L35">  public static record NoticeContent(String content) {}</span>
+
+  @Operation(
+      summary = &quot;The current notice for a form type, as a list of zero or one&quot;,
+      description =
+          &quot;The most recently saved version for TA or ULA. An empty list means no notice has been&quot;
+              + &quot; written yet, in which case the form shows none and asks for no agreement.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/notices/current&quot;)
+  public List&lt;NoticeVersion&gt; current(@Parameter(name = &quot;type&quot;) @RequestParam RecruitmentType type) {
+<span class="fc" id="L45">    return noticeVersionRepository.findFirstByTypeOrderByIdDesc(type).stream().toList();</span>
+  }
+
+  @Operation(
+      summary = &quot;One saved version by id&quot;,
+      description = &quot;So an application can show exactly the text its applicant agreed to.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+  @GetMapping(&quot;/notices&quot;)
+  public NoticeVersion byId(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
+<span class="fc" id="L54">    return noticeVersionRepository</span>
+<span class="fc" id="L55">        .findById(id)</span>
+<span class="fc" id="L56">        .orElseThrow(() -&gt; new EntityNotFoundException(NoticeVersion.class, id));</span>
+  }
+
+  @Operation(summary = &quot;Every saved version for a form type, newest first&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/admin/notices/all&quot;)
+  public List&lt;NoticeVersion&gt; history(@Parameter(name = &quot;type&quot;) @RequestParam RecruitmentType type) {
+<span class="fc" id="L63">    return noticeVersionRepository.findAllByTypeOrderByIdDesc(type);</span>
+  }
+
+  @Operation(
+      summary = &quot;Save a new version of the notice for a form type&quot;,
+      description =
+          &quot;Every save is a new version with its own id and timestamp; earlier versions are kept so&quot;
+              + &quot; applications can keep pointing at the text their applicants agreed to. 400 if the&quot;
+              + &quot; text is blank.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/admin/notices&quot;)
+  public NoticeVersion save(
+      @Parameter(name = &quot;type&quot;) @RequestParam RecruitmentType type,
+      @RequestBody NoticeContent body) {
+<span class="fc bfc" id="L77" title="All 2 branches covered.">    String content = body.content() == null ? &quot;&quot; : body.content().strip();</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    if (content.isEmpty()) {</span>
+<span class="fc" id="L79">      throw new IllegalArgumentException(&quot;The notice text cannot be blank&quot;);</span>
+    }
+    NoticeVersion version =
+<span class="fc" id="L82">        NoticeVersion.builder().type(type).content(content).createdAt(LocalDateTime.now()).build();</span>
+<span class="fc" id="L83">    return noticeVersionRepository.save(version);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
