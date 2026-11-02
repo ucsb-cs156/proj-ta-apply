@@ -16,6 +16,8 @@ import {
 } from "main/utils/courseColumns";
 import AllocationVisibilityPanel from "main/components/Recruitments/AllocationVisibilityPanel";
 import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
+import FakeAllocationsModal from "main/components/Recruitments/FakeAllocationsModal";
+import { useDeveloperModeFooterControls } from "main/utils/developerModeFooter";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
@@ -24,6 +26,19 @@ import { autoAssignTooltip } from "main/utils/allocations";
 import { toast } from "react-toastify";
 
 /** The course list for one recruitment: /admin/recruitments/:recruitmentId/courses */
+/**
+ * Registers the page's developer-mode controls in the footer. It has to be rendered inside
+ * BasicLayout, which provides the footer slot; the page itself sits outside it.
+ */
+function DeveloperFooterControls({
+  controls,
+}: {
+  controls: React.ReactNode;
+}): null {
+  useDeveloperModeFooterControls(controls);
+  return null;
+}
+
 export default function RecruitmentCoursesPage(): React.JSX.Element {
   const { recruitmentId } = useParams();
 
@@ -246,6 +261,27 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
     ["/api/recruitmentcourses/all"],
   );
 
+  // Issue #225: the developer-mode button, in the footer's developer slot (which shows only while
+  // developer mode is on), opens the Fake Hiring Targets and Allocations modal.
+  const [showFakeAllocations, setShowFakeAllocations] = useState(false);
+  // Stryker disable next-line all : useBackend answers [] until the list arrives; this guards the type only
+  const loadedCourses = courses ?? [];
+  const courseCount = loadedCourses.filter((c) => !c.removed).length;
+  const fakeAllocationsButton = useMemo(
+    () => (
+      <Button
+        variant="outline-secondary"
+        size="sm"
+        disabled={courseCount === 0}
+        onClick={() => setShowFakeAllocations(true)}
+        data-testid="RecruitmentCoursesPage-fake-allocations"
+      >
+        Fake Hiring Targets and Allocations
+      </Button>
+    ),
+    [courseCount],
+  );
+
   const addMutation = useBackendMutation<string, RecruitmentCourse>(
     (code) => ({
       url: "/api/recruitmentcourses/post",
@@ -271,6 +307,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
 
   return (
     <BasicLayout>
+      <DeveloperFooterControls controls={fakeAllocationsButton} />
       <div className="pt-2">
         <h1>Recruitment Courses</h1>
         <p>
@@ -527,6 +564,14 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           <PublishAssignmentsPanel
             recruitment={recruitment}
             testIdPrefix="RecruitmentCoursesPage-publish"
+          />
+        )}
+        {showFakeAllocations && (
+          <FakeAllocationsModal
+            recruitmentId={recruitmentId as string}
+            courseCount={courseCount}
+            onHide={() => setShowFakeAllocations(false)}
+            testIdPrefix="RecruitmentCoursesPage-fake-allocations-modal"
           />
         )}
       </div>
