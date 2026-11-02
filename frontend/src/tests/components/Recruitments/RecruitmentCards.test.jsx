@@ -420,7 +420,7 @@ describe("RecruitmentCards tests", () => {
     expect(axiosMock.history.put[0].url).toBe("/api/admin/recruitments/status");
     expect(axiosMock.history.put[0].params).toEqual({ id: 3, status: "OPEN" });
     // The list is refreshed from the backend afterwards, and the modal closes.
-    await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(invalidateQueriesSpy).toHaveBeenCalledTimes(5));
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({
       queryKey: ["/api/admin/recruitments/all"],
     });
@@ -428,6 +428,14 @@ describe("RecruitmentCards tests", () => {
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({
       queryKey: ["/api/admin/recruitments/steps"],
     });
+    // Issue #250: the instructor and student sections of the home page are re-read too.
+    for (const key of [
+      "/api/instructor/recruitments",
+      "/api/recruitments/applicable",
+      "/api/applications/mine",
+    ]) {
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: [key] });
+    }
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
     await userEvent.click(closeButton);

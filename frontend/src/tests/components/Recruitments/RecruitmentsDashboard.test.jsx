@@ -22,15 +22,23 @@ vi.mock("react-toastify", async (importOriginal) => {
 
 const axiosMock = new AxiosMockAdapter(axios);
 
-function renderDashboard() {
+function renderDashboard(queryClient = new QueryClient()) {
   return render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <RecruitmentsDashboard />
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
+
+// The queries behind the instructor and student sections of the home page. An admin action that
+// changes what they show (issue #250) must refresh all of them, without a page reload.
+const HOME_PAGE_KEYS = [
+  "/api/instructor/recruitments",
+  "/api/recruitments/applicable",
+  "/api/applications/mine",
+];
 
 describe("RecruitmentsDashboard tests", () => {
   beforeEach(() => {
@@ -151,6 +159,36 @@ describe("RecruitmentsDashboard tests", () => {
     );
   });
 
+  test("creating a recruitment refreshes the admin and the home page queries", async () => {
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    renderDashboard(queryClient);
+    await userEvent.click(
+      await screen.findByTestId("RecruitmentsDashboard-create-button"),
+    );
+    await screen.findByTestId("RecruitmentForm-submit");
+    await userEvent.type(
+      screen.getByTestId("RecruitmentForm-tentativeOpeningDate"),
+      "2026-01-05",
+    );
+    await userEvent.type(
+      screen.getByTestId("RecruitmentForm-primaryConsiderationDate"),
+      "2026-01-20",
+    );
+    await userEvent.click(screen.getByTestId("RecruitmentForm-submit"));
+
+    await waitFor(() => expect(axiosMock.history.post.length).toBe(1));
+    for (const key of [
+      "/api/admin/recruitments/all",
+      "/api/admin/recruitments/applicationCounts",
+      ...HOME_PAGE_KEYS,
+    ]) {
+      await waitFor(() =>
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: [key] }),
+      );
+    }
+  });
+
   test("the create modal is centred and its close button dismisses it", async () => {
     renderDashboard();
     await userEvent.click(
@@ -269,6 +307,32 @@ describe("RecruitmentsDashboard tests", () => {
     await waitFor(() => expect(axiosMock.history.delete.length).toBe(1));
     // The cards are sorted newest quarter first, TA before ULA: card 1 is W26 TA, id 1.
     expect(axiosMock.history.delete[0].params).toEqual({ id: 1 });
+  });
+
+  test("deleting a recruitment refreshes the admin and the home page queries", async () => {
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    renderDashboard(queryClient);
+    await screen.findByTestId("RecruitmentsDashboard-card-1-delete-button");
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentsDashboard-card-1-delete-button"),
+    );
+    await userEvent.click(
+      await screen.findByTestId("RecruitmentDeleteModal-confirm"),
+    );
+
+    await waitFor(() => expect(axiosMock.history.delete.length).toBe(1));
+    // Prefix matching means the instructor key also covers its per-user variant.
+    for (const key of [
+      "/api/admin/recruitments/all",
+      "/api/admin/recruitments/applicationCounts",
+      ...HOME_PAGE_KEYS,
+    ]) {
+      await waitFor(() =>
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: [key] }),
+      );
+    }
   });
 
   test("cancelling the modal deletes nothing", async () => {
