@@ -124,6 +124,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/Admin.html#%3Cinit%3E()" class="member-name-link">Admin()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/Admin.html" title="class in edu.ucsb.cs.taapply.entity">Admin</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html#ADMIN_TEST" class="member-name-link">ADMIN_TEST</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationOrigin</a></dt>
+<dd>
+<div class="block">Entered by an admin to preview the form.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>
 <div class="block">An admin's view of the applications to a recruitment: the whole list, one application in full,
@@ -276,6 +280,10 @@ allocation an admin can ask for from it.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html#applicableRecruitments()" class="member-name-link">applicableRecruitments()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html#APPLICANT" class="member-name-link">APPLICANT</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationOrigin</a></dt>
+<dd>
+<div class="block">Entered by a real applicant.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/models/ApplicantRecruitmentDto.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.models">ApplicantRecruitmentDto</a> - Record Class in <a href="edu/ucsb/cs/taapply/models/package-summary.html">edu.ucsb.cs.taapply.models</a></dt>
 <dd>
 <div class="block">The recruitment fields applicants need, without faculty-only review lifecycle details.</div>
@@ -349,6 +357,11 @@ open in a spreadsheet.</div>
 <dd>
 <div class="block">Creates an instance of a <code>ApplicationOptions</code> record class.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationOrigin</a> - Enum Class in <a href="edu/ucsb/cs/taapply/enums/package-summary.html">edu.ucsb.cs.taapply.enums</a></dt>
+<dd>
+<div class="block">Where an application came from (issue #219): a real applicant, an admin previewing the form (the
+Test Application page), or the Developer Mode generator of fake data.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a> - Enum Class in <a href="edu/ucsb/cs/taapply/enums/package-summary.html">edu.ucsb.cs.taapply.enums</a></dt>
@@ -380,6 +393,10 @@ open in a spreadsheet.</div>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationStatus.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a> - Enum Class in <a href="edu/ucsb/cs/taapply/enums/package-summary.html">edu.ucsb.cs.taapply.enums</a></dt>
 <dd>
 <div class="block">Whether applications are currently being accepted for a recruitment.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">ApplicationVisibility</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">The one rule for which applications count (issue #219).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJob.html#applyOffering(edu.ucsb.cs.taapply.entity.RecruitmentCourse,java.lang.Long,java.lang.String,edu.ucsb.cs.taapply.models.UcsbCourseOffering,edu.ucsb.cs.taapply.models.UcsbSection)" class="member-name-link">applyOffering(RecruitmentCourse, Long, String, UcsbCourseOffering, UcsbSection)</a> - Static method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateRecruitmentCoursesJob</a></dt>
 <dd>
@@ -621,9 +638,13 @@ enrollment totals, and the anticipated expenses, funds and bottom line.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#cancelled(java.lang.Long,java.lang.Long)" class="member-name-link">cancelled(Long, Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#cancelled(java.util.List)" class="member-name-link">cancelled(List)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html#cancelled(java.util.List,boolean)" class="member-name-link">cancelled(List, boolean)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html" title="class in edu.ucsb.cs.taapply.services">ApplicationVisibility</a></dt>
 <dd>
-<div class="block">The cancelled ones among the given applications, test applications left out.</div>
+<div class="block">The applications that count and that the applicant cancelled.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#cancelled(java.util.List,boolean)" class="member-name-link">cancelled(List, boolean)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dd>
+<div class="block">The cancelled ones among the given applications that count.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html#CANCELLED" class="member-name-link">CANCELLED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a></dt>
 <dd>&nbsp;</dd>
@@ -754,10 +775,6 @@ six months after it closes (issue #107), as the place for what has changed since
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/CorsConfig.html#%3Cinit%3E()" class="member-name-link">CorsConfig()</a> - Constructor for class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/CorsConfig.html" title="class in edu.ucsb.cs.taapply.config">CorsConfig</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#countByRecruitmentIdAndTestApplicationFalse(java.lang.Long)" class="member-name-link">countByRecruitmentIdAndTestApplicationFalse(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
-<dd>
-<div class="block">How many real (non-test) applications one recruitment has.</div>
-</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CandidateRankingPage.html#course()" class="member-name-link">course()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CandidateRankingPage.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateRankingPage</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>course</code> record component.</div>
@@ -922,6 +939,10 @@ how many they have ranked, and how many are still needed.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#deleteRecruitment(java.lang.Long)" class="member-name-link">deleteRecruitment(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html#DEVELOPER_MODE" class="member-name-link">DEVELOPER_MODE</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationOrigin</a></dt>
+<dd>
+<div class="block">Created by the Developer Mode "Create Fake Applications" job.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DeveloperModeController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">DeveloperModeController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>
 <div class="block">The Developer Mode switch (issue #217): anyone, signed in or not, may ask whether it is on (the
@@ -2036,6 +2057,10 @@ have logged in: until then both names are null.</div>
 <dd>
 <div class="block">A primary section is a lecture; its number ends in "00".</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html#isReal(edu.ucsb.cs.taapply.entity.Application,boolean)" class="member-name-link">isReal(Application, boolean)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html" title="class in edu.ucsb.cs.taapply.services">ApplicationVisibility</a></dt>
+<dd>
+<div class="block">Whether the application counts as a real one, ignoring whether it was cancelled.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/HiringDecisions.html#isTentative(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">isTentative(Recruitment)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/HiringDecisions.html" title="class in edu.ucsb.cs.taapply.services">HiringDecisions</a></dt>
 <dd>
 <div class="block">Whether the released hiring decisions are now tentative: they were released, and applications
@@ -2678,14 +2703,19 @@ like) from it.</div>
 <dd>
 <div class="block">The distinct, trimmed, non-blank names in the file, in file order.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#real(java.util.List)" class="member-name-link">real(List)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html#real(java.util.List,boolean)" class="member-name-link">real(List, boolean)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html" title="class in edu.ucsb.cs.taapply.services">ApplicationVisibility</a></dt>
 <dd>
-<div class="block">The given applications without test applications and without cancelled ones.</div>
+<div class="block">The applications that count and that the applicant has not cancelled.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#real(java.util.List,boolean)" class="member-name-link">real(List, boolean)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
+<dd>
+<div class="block">The given applications that count and were not cancelled; see <a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html" title="class in edu.ucsb.cs.taapply.services"><code>ApplicationVisibility</code></a>.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#realApplications(java.lang.Long)" class="member-name-link">realApplications(Long)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
 <dd>
-<div class="block">The applications that take part in assignments: every application to the recruitment that is
-neither a test application nor cancelled by the applicant, in the order they were created.</div>
+<div class="block">The applications that take part in assignments: every application to the recruitment that
+counts (see <a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html" title="class in edu.ucsb.cs.taapply.services"><code>ApplicationVisibility</code></a>) and was not cancelled by the applicant, in the order
+they were created.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#RECENT_MONTHS" class="member-name-link">RECENT_MONTHS</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAccessService</a></dt>
 <dd>
@@ -3795,6 +3825,10 @@ one optional column (issue #172).</div>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationOrigin</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationReviewStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationReviewStatus</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
@@ -3840,6 +3874,11 @@ one optional column (issue #172).</div>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/AllocationVisibility.html#values()" class="member-name-link">values()</a> - Static method in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/AllocationVisibility.html" title="enum class in edu.ucsb.cs.taapply.enums">AllocationVisibility</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html#values()" class="member-name-link">values()</a> - Static method in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationOrigin.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationOrigin</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
