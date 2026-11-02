@@ -11,7 +11,7 @@ import java.util.List;
  * client made for itself, and the application says who that client is, as a {@link ClientIdentity}.
  * The detector remembers which clients it saw on each &lt;b&gt;resource key&lt;/b&gt; (any string, such as
  * {@code &quot;draft:42&quot;}) within the &lt;b&gt;window&lt;/b&gt;, and answers who, other than the caller, was among
- * them. It is advice, not a lock.
+ * them, and whether the caller arrived after all of them. It is advice, not a lock.
  *
  * &lt;p&gt;&lt;b&gt;Authorization is the caller's job.&lt;/b&gt; The detector answers anyone who asks, and tells them
  * names. The application must check that the caller may use the resource &lt;em&gt;before&lt;/em&gt; it records
@@ -35,14 +35,31 @@ public interface ClientActivityDetector {
    */
   List&lt;OtherClient&gt; othersActive(String resourceKey, String clientId);
 
-  /** How long a client counts as active after it was last seen. */
-  Duration window();
+  /**
+   * Notes that this client has gone (issue #284): its tab or window was closed or left. It stops
+   * counting at once, instead of when the window has passed. Delivery of such a goodbye is not
+   * guaranteed, so the window stays as the fallback. A client that was not recorded is no change.
+   */
+  void leave(String resourceKey, String clientId);
 
   /**
-   * How often a client should send a heartbeat: three a window, so that one lost one is harmless.
+   * When this client arrived, as against the others active on the resource: see {@link Arrival}. A
+   * caller who has not been recorded is told it did not arrive last, and at time zero.
    */
+  Arrival arrival(String resourceKey, String clientId);
+
+  /**
+   * How long a client counts as active after it was last seen: the heartbeat interval times the
+   * number of heartbeats that may be missed.
+   */
+  Duration window();
+
+  /** How often an open client should send a heartbeat. */
+  Duration heartbeatInterval();
+
+  /** The heartbeat interval in whole seconds, rounded up and never less than one. */
   default long suggestedHeartbeatSeconds() {
-<span class="fc" id="L45">    return Math.max(1, window().toSeconds() / 3);</span>
+<span class="fc" id="L62">    return Math.max(1, (heartbeatInterval().toMillis() + 999) / 1000);</span>
   }
 
   /**
@@ -50,21 +67,27 @@ public interface ClientActivityDetector {
    * nothing otherwise. For requests that are not heartbeats, such as saves.
    */
   default void note(String resourceKey, String clientId, ClientIdentity identity) {
-<span class="fc bfc" id="L53" title="All 2 branches covered.">    if (ConcurrencyHeaders.usable(clientId)) {</span>
-<span class="fc" id="L54">      record(resourceKey, clientId, identity);</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">    if (ConcurrencyHeaders.usable(clientId)) {</span>
+<span class="fc" id="L71">      record(resourceKey, clientId, identity);</span>
     }
-<span class="fc" id="L56">  }</span>
+<span class="fc" id="L73">  }</span>
 
   /**
-   * The answer to a heartbeat: records the client, then says who else is active and how often to
-   * beat. A client that did not name itself usably is not recorded and is told of no one.
+   * The answer to a heartbeat: records the client, then says who else is active, how often to beat,
+   * and whether it arrived last (issue #284). A client that did not name itself usably is not
+   * recorded and is told of no one.
    */
   default Presence heartbeat(String resourceKey, String clientId, ClientIdentity identity) {
-<span class="fc bfc" id="L63" title="All 2 branches covered.">    if (!ConcurrencyHeaders.usable(clientId)) {</span>
-<span class="fc" id="L64">      return new Presence(List.of(), suggestedHeartbeatSeconds());</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">    if (!ConcurrencyHeaders.usable(clientId)) {</span>
+<span class="fc" id="L82">      return new Presence(List.of(), suggestedHeartbeatSeconds(), false, 0);</span>
     }
-<span class="fc" id="L66">    record(resourceKey, clientId, identity);</span>
-<span class="fc" id="L67">    return new Presence(othersActive(resourceKey, clientId), suggestedHeartbeatSeconds());</span>
+<span class="fc" id="L84">    record(resourceKey, clientId, identity);</span>
+<span class="fc" id="L85">    Arrival arrival = arrival(resourceKey, clientId);</span>
+<span class="fc" id="L86">    return new Presence(</span>
+<span class="fc" id="L87">        othersActive(resourceKey, clientId),</span>
+<span class="fc" id="L88">        suggestedHeartbeatSeconds(),</span>
+<span class="fc" id="L89">        arrival.newest(),</span>
+<span class="fc" id="L90">        arrival.arrivedAtMillis());</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
