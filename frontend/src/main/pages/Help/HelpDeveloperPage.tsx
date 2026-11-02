@@ -373,11 +373,11 @@ export default function HelpDeveloperPage(): React.JSX.Element {
               </td>
               <td>
                 <a
-                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/287"
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/289"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  #287
+                  #289
                 </a>
               </td>
             </tr>

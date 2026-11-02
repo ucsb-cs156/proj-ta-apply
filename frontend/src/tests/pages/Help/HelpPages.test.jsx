@@ -631,11 +631,11 @@ describe("Help pages (issue #140)", () => {
       "Assignments (admin)",
       "The whole assignments page for one recruitment",
       "assignments:<recruitmentId>",
-      "#287",
+      "#289",
     ]);
     expect(rows[1].querySelector("a")).toHaveAttribute(
       "href",
-      "https://github.com/ucsb-cs156/proj-ta-apply/pull/287",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/289",
     );
     expect(rows[0].querySelector("a")).toHaveAttribute(
       "href",
