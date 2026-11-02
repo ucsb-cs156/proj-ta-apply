@@ -22,7 +22,8 @@ type Props = {
 /**
  * Developer Mode's controls for a recruitment's applications (issue #219): create fake
  * applications, which runs as a job, and delete the fake ones. Shown in the footer's Developer
- * Mode slot, so they appear only while Developer Mode is on.
+ * Mode slot, to the left of the badge with Create beside it, so they appear only while Developer
+ * Mode is on.
  */
 export default function FakeApplicationsControls({
   recruitmentId,
@@ -103,20 +104,20 @@ export default function FakeApplicationsControls({
     <span data-testid={testIdPrefix}>
       <Button
         size="sm"
-        variant="outline-warning"
-        className="me-2"
-        onClick={openCreate}
-        data-testid={`${testIdPrefix}-create`}
-      >
-        Create Fake Applications
-      </Button>
-      <Button
-        size="sm"
         variant="outline-danger"
+        className="me-2"
         onClick={() => setShowDelete(true)}
         data-testid={`${testIdPrefix}-delete`}
       >
         Delete Fake Applications
+      </Button>
+      <Button
+        size="sm"
+        variant="danger"
+        onClick={openCreate}
+        data-testid={`${testIdPrefix}-create`}
+      >
+        Create Fake Applications
       </Button>
 
       <Modal
