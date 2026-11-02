@@ -61,8 +61,8 @@ import org.springframework.web.bind.annotation.RestController;
 <span class="fc" id="L61">    User user = getCurrentUser().getUser();</span>
 <span class="fc" id="L62">    String name = user.getFullName();</span>
     String label =
-<span class="pc bpc" id="L64" title="2 of 4 branches missed.">        name == null || name.isBlank()</span>
-<span class="nc" id="L65">            ? user.getEmail()</span>
+<span class="fc bfc" id="L64" title="All 4 branches covered.">        name == null || name.isBlank()</span>
+<span class="fc" id="L65">            ? user.getEmail()</span>
 <span class="fc" id="L66">            : user.getEmail() + &quot; (&quot; + name.trim() + &quot;)&quot;;</span>
 <span class="fc" id="L67">    return new ClientIdentity(user.getEmail(), label);</span>
   }
