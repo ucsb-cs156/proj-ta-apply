@@ -64,7 +64,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
-<li><a href="#reachableFrom(java.lang.String)" tabindex="0">reachableFrom(String)</a></li>
+<li><a href="#latestQuarter(java.time.LocalDate)" tabindex="0">latestQuarter(LocalDate)</a></li>
 <li><a href="#graduateCourses()" tabindex="0">graduateCourses()</a></li>
 <li><a href="#ucsb(java.util.Random,int,int)" tabindex="0">ucsb(Random, int, int)</a></li>
 <li><a href="#ucsbGraduate(java.util.Random,int,int)" tabindex="0">ucsbGraduate(Random, int, int)</a></li>
@@ -88,8 +88,8 @@ loadScripts(document, 'script');</script>
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">FakeCoursework</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Plausible prior coursework for fake applicants (issue #219), built from two data files: the CMPSC
-prerequisite graph, which gives a believable order to take UCSB courses in, and a list of
-computer science courses at other universities.</div>
+prerequisite graph, which gives a believable order to take UCSB courses in, and the computer
+science courses of a few other universities.</div>
 </div>
 </section>
 <section class="summary">
@@ -129,7 +129,7 @@ computer science courses at other universities.</div>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -140,34 +140,33 @@ computer science courses at other universities.</div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The graduate (200-level and up) CMPSC courses, in catalog order.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#other(java.util.Random,int,boolean,int)" class="member-name-link">other</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static int</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#latestQuarter(java.time.LocalDate)" class="member-name-link">latestQuarter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">The quarter of the latest course on a fake transcript: the quarter containing <code>today</code>, by
+the same month rule as the front end (January to March is 1, April to June 2, July and August
+3, September to December 4).</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#other(java.util.Random,int,boolean,int)" class="member-name-link">other</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
  int&nbsp;wanted,
  boolean&nbsp;international,
- int&nbsp;referenceQuarter)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block"><code>wanted</code> distinct courses from other universities, each with the school it was taken at.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#reachableFrom(java.lang.String)" class="member-name-link">reachableFrom</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;start)</code></div>
+ int&nbsp;latestQuarter)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">The courses that can be taken once <code>start</code> has been, in breadth-first order: the course
-itself, then every course that lists it as a prerequisite, then every course that lists one of
-those, and so on.</div>
+<div class="block">Up to <code>wanted</code> distinct courses from one school chosen at random: an international school
+for an international student, a domestic one otherwise.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ucsb(java.util.Random,int,int)" class="member-name-link">ucsb</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
  int&nbsp;wanted,
- int&nbsp;referenceQuarter)</code></div>
+ int&nbsp;latestQuarter)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Up to <code>wanted</code> UCSB courses, walked from CMPSC 8 or 16 (chosen by the generator) in
-prerequisite order, with terms stepping forward one quarter per course and ending the quarter
-before <code>referenceQuarter</code>.</div>
+<div class="block">Up to <code>wanted</code> UCSB courses, taken from CMPSC 8 or 16 (chosen by the generator) onward.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ucsbGraduate(java.util.Random,int,int)" class="member-name-link">ucsbGraduate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
  int&nbsp;wanted,
- int&nbsp;referenceQuarter)</code></div>
+ int&nbsp;latestQuarter)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Up to <code>wanted</code> graduate UCSB courses, chosen at random, each with a recent term.</div>
 </div>
@@ -205,13 +204,14 @@ before <code>referenceQuarter</code>.</div>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="reachableFrom(java.lang.String)">
-<h3>reachableFrom</h3>
+<section class="detail" id="latestQuarter(java.time.LocalDate)">
+<h3>latestQuarter</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">reachableFrom</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;start)</span></div>
-<div class="block">The courses that can be taken once <code>start</code> has been, in breadth-first order: the course
-itself, then every course that lists it as a prerequisite, then every course that lists one of
-those, and so on. Taking them in this order never takes a course before one it needs.</div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">latestQuarter</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</span></div>
+<div class="block">The quarter of the latest course on a fake transcript: the quarter containing <code>today</code>, by
+the same month rule as the front end (January to March is 1, April to June 2, July and August
+3, September to December 4). Summer has no CMPSC courses, so a summer date counts as spring,
+which makes April to August quarter 2.</div>
 </div>
 </section>
 </li>
@@ -230,10 +230,13 @@ those, and so on. Taking them in this order never takes a course before one it n
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</span>&nbsp;<span class="element-name">ucsb</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
  int&nbsp;wanted,
- int&nbsp;referenceQuarter)</span></div>
-<div class="block">Up to <code>wanted</code> UCSB courses, walked from CMPSC 8 or 16 (chosen by the generator) in
-prerequisite order, with terms stepping forward one quarter per course and ending the quarter
-before <code>referenceQuarter</code>. Fewer come back when fewer are reachable.</div>
+ int&nbsp;latestQuarter)</span></div>
+<div class="block">Up to <code>wanted</code> UCSB courses, taken from CMPSC 8 or 16 (chosen by the generator) onward.
+The walk is a breadth-first traversal of the prerequisite graph in which the next course is
+chosen at random from the frontier: the courses that list a course already taken as a
+prerequisite. A course is therefore never taken before one it follows, and fewer than <code>
+wanted</code> come back when the graph runs out. Terms step forward one quarter per course and end at
+<code>latestQuarter</code>.</div>
 </div>
 </section>
 </li>
@@ -243,7 +246,7 @@ before <code>referenceQuarter</code>. Fewer come back when fewer are reachable.<
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</span>&nbsp;<span class="element-name">ucsbGraduate</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
  int&nbsp;wanted,
- int&nbsp;referenceQuarter)</span></div>
+ int&nbsp;latestQuarter)</span></div>
 <div class="block">Up to <code>wanted</code> graduate UCSB courses, chosen at random, each with a recent term.</div>
 </div>
 </section>
@@ -255,9 +258,9 @@ before <code>referenceQuarter</code>. Fewer come back when fewer are reachable.<
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</span>&nbsp;<span class="element-name">other</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
  int&nbsp;wanted,
  boolean&nbsp;international,
- int&nbsp;referenceQuarter)</span></div>
-<div class="block"><code>wanted</code> distinct courses from other universities, each with the school it was taken at.
-International schools for an international student, domestic otherwise.</div>
+ int&nbsp;latestQuarter)</span></div>
+<div class="block">Up to <code>wanted</code> distinct courses from one school chosen at random: an international school
+for an international student, a domestic one otherwise.</div>
 </div>
 </section>
 </li>

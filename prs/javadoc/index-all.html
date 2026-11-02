@@ -54,6 +54,8 @@ loadScripts(document, 'script');</script>
 <dl class="index">
 <dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJob.html#accept(edu.ucsb.cs156.jobs.services.JobContext)" class="member-name-link">accept(JobContext)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJob.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeApplicationsJob</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJob.html#accept(edu.ucsb.cs156.jobs.services.JobContext)" class="member-name-link">accept(JobContext)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJob.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeRankingsJob</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/PopulateCoursesJob.html#accept(edu.ucsb.cs156.jobs.services.JobContext)" class="member-name-link">accept(JobContext)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/PopulateCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateCoursesJob</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJob.html#accept(edu.ucsb.cs156.jobs.services.JobContext)" class="member-name-link">accept(JobContext)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateRecruitmentCoursesJob</a></dt>
@@ -189,6 +191,8 @@ logged in: until then both names are null.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#all(java.lang.String)" class="member-name-link">all(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoverage.html#ALL" class="member-name-link">ALL</a> - Enum constant in enum class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoverage.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeCoverage</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeRankingScope.html#ALL" class="member-name-link">ALL</a> - Enum constant in enum class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeRankingScope.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeRankingScope</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/AllocationVisibility.html#ALL_COURSES" class="member-name-link">ALL_COURSES</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/AllocationVisibility.html" title="enum class in edu.ucsb.cs.taapply.enums">AllocationVisibility</a></dt>
 <dd>
@@ -426,6 +430,8 @@ topics an applicant may pick from, and for ULAs the interest areas they rate.</d
 <div class="block">A row of any of the lists, as the frontend sees it.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html#areEquivalentEmails(java.lang.String,java.lang.String)" class="member-name-link">areEquivalentEmails(String, String)</a> - Static method in class edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html" title="class in edu.ucsb.cs.taapply.utilities">CanonicalFormConverter</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCourseChoices.html#assign(java.util.List,java.util.List,edu.ucsb.cs.taapply.services.fake.FakeCoverage,java.util.Random)" class="member-name-link">assign(List, List, FakeCoverage, Random)</a> - Static method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCourseChoices.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCourseChoices</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/HiringDecisions.html#ASSIGN_FIRST" class="member-name-link">ASSIGN_FIRST</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/HiringDecisions.html" title="class in edu.ucsb.cs.taapply.services">HiringDecisions</a></dt>
 <dd>&nbsp;</dd>
@@ -905,9 +911,19 @@ how many they have ranked, and how many are still needed.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html#create(java.lang.Long,int,edu.ucsb.cs.taapply.services.fake.FakeCoverage)" class="member-name-link">create(Long, int, FakeCoverage)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeApplicationsJobFactory</a></dt>
 <dd>
+<div class="block">A job with a fresh, unseeded random source, for today.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html#create(java.lang.Long,int,edu.ucsb.cs.taapply.services.fake.FakeCoverage,java.util.Random,java.time.LocalDate)" class="member-name-link">create(Long, int, FakeCoverage, Random, LocalDate)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeApplicationsJobFactory</a></dt>
+<dd>
+<div class="block">A job drawing from the given random source and date, so a test can fix the outcome.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DeveloperFakeRankingsController.html#create(java.lang.Long,edu.ucsb.cs.taapply.services.fake.FakeRankingScope,boolean)" class="member-name-link">create(Long, FakeRankingScope, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DeveloperFakeRankingsController.html" title="class in edu.ucsb.cs.taapply.controller">DeveloperFakeRankingsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJobFactory.html#create(java.lang.Long,edu.ucsb.cs.taapply.services.fake.FakeRankingScope,boolean)" class="member-name-link">create(Long, FakeRankingScope, boolean)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeRankingsJobFactory</a></dt>
+<dd>
 <div class="block">A job with a fresh, unseeded random source.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html#create(java.lang.Long,int,edu.ucsb.cs.taapply.services.fake.FakeCoverage,java.util.Random)" class="member-name-link">create(Long, int, FakeCoverage, Random)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeApplicationsJobFactory</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJobFactory.html#create(java.lang.Long,edu.ucsb.cs.taapply.services.fake.FakeRankingScope,boolean,java.util.Random)" class="member-name-link">create(Long, FakeRankingScope, boolean, Random)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeRankingsJobFactory</a></dt>
 <dd>
 <div class="block">A job drawing from the given random source, so a test can fix the outcome.</div>
 </dd>
@@ -929,6 +945,19 @@ origin DEVELOPER_MODE, to one recruitment.</div>
 <div class="block">Wires collaborators into <a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJob.html" title="class in edu.ucsb.cs.taapply.jobs"><code>CreateFakeApplicationsJob</code></a>, as the other job factories do.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html#%3Cinit%3E()" class="member-name-link">CreateFakeApplicationsJobFactory()</a> - Constructor for class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeApplicationsJobFactory</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJob.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeRankingsJob</a> - Class in <a href="edu/ucsb/cs/taapply/jobs/package-summary.html">edu.ucsb.cs.taapply.jobs</a></dt>
+<dd>
+<div class="block">Developer Mode's "Create Fake Rankings" (issue #220): ranks candidates for some or all of a
+recruitment's courses, as the faculty would.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJob.html#%3Cinit%3E()" class="member-name-link">CreateFakeRankingsJob()</a> - Constructor for class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJob.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeRankingsJob</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJobFactory.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeRankingsJobFactory</a> - Class in <a href="edu/ucsb/cs/taapply/jobs/package-summary.html">edu.ucsb.cs.taapply.jobs</a></dt>
+<dd>
+<div class="block">Wires collaborators into <a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJob.html" title="class in edu.ucsb.cs.taapply.jobs"><code>CreateFakeRankingsJob</code></a>, as the other job factories do.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJobFactory.html#%3Cinit%3E()" class="member-name-link">CreateFakeRankingsJobFactory()</a> - Constructor for class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeRankingsJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeRankingsJobFactory</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html#csv(edu.ucsb.cs.taapply.entity.Recruitment,java.lang.String)" class="member-name-link">csv(Recruitment, String)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">PublishedAssignmentsService</a></dt>
 <dd>
@@ -1000,6 +1029,12 @@ origin DEVELOPER_MODE, to one recruitment.</div>
 <div class="block">Developer Mode's fake applications (issue #219).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DeveloperFakeApplicationsController.html#%3Cinit%3E()" class="member-name-link">DeveloperFakeApplicationsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DeveloperFakeApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DeveloperFakeApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DeveloperFakeRankingsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">DeveloperFakeRankingsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">Developer Mode's fake faculty rankings (issue #220).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/DeveloperFakeRankingsController.html#%3Cinit%3E()" class="member-name-link">DeveloperFakeRankingsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DeveloperFakeRankingsController.html" title="class in edu.ucsb.cs.taapply.controller">DeveloperFakeRankingsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DeveloperModeController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">DeveloperModeController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>
@@ -1377,11 +1412,16 @@ both Summer and Fall are reachable.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html#%3Cinit%3E(edu.ucsb.cs.taapply.services.fake.FakeCoursework,edu.ucsb.cs.taapply.repository.TaTopicRepository,edu.ucsb.cs.taapply.repository.UlaTopicRepository,edu.ucsb.cs.taapply.repository.UlaInterestRepository,edu.ucsb.cs.taapply.repository.TaMajorRepository,edu.ucsb.cs.taapply.repository.UlaMajorRepository)" class="member-name-link">FakeApplicationGenerator(FakeCoursework, TaTopicRepository, UlaTopicRepository, UlaInterestRepository, TaMajorRepository, UlaMajorRepository)</a> - Constructor for class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeApplicationGenerator</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCourseChoices.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeCourseChoices</a> - Class in <a href="edu/ucsb/cs/taapply/services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a></dt>
+<dd>
+<div class="block">First choice, second choice and course interests for a batch of fake applications (issue #219),
+following the rules of the Developer Mode design.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a> - Class in <a href="edu/ucsb/cs/taapply/services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a></dt>
 <dd>
 <div class="block">Plausible prior coursework for fake applicants (issue #219), built from two data files: the CMPSC
-prerequisite graph, which gives a believable order to take UCSB courses in, and a list of
-computer science courses at other universities.</div>
+prerequisite graph, which gives a believable order to take UCSB courses in, and the computer
+science courses of a few other universities.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html#%3Cinit%3E()" class="member-name-link">FakeCoursework()</a> - Constructor for class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a></dt>
 <dd>&nbsp;</dd>
@@ -1397,6 +1437,16 @@ computer science courses at other universities.</div>
 <dd>
 <div class="block">Names and sentences for fake applicants.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeRankingScope.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeRankingScope</a> - Enum Class in <a href="edu/ucsb/cs/taapply/services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a></dt>
+<dd>
+<div class="block">How many courses get fake faculty rankings (issue #220).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeRankingsGenerator.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services.fake">FakeRankingsGenerator</a> - Class in <a href="edu/ucsb/cs/taapply/services/fake/package-summary.html">edu.ucsb.cs.taapply.services.fake</a></dt>
+<dd>
+<div class="block">Builds the fake faculty rankings of Developer Mode (issue #220).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeRankingsGenerator.html#%3Cinit%3E()" class="member-name-link">FakeRankingsGenerator()</a> - Constructor for class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeRankingsGenerator.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeRankingsGenerator</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#familyName()" class="member-name-link">familyName()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>familyName</code> record component.</div>
@@ -1546,11 +1596,13 @@ the stored PAT cannot reach).</div>
 </dl>
 <h2 class="title" id="I:G">G</h2>
 <dl class="index">
-<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html#generate(edu.ucsb.cs.taapply.entity.Recruitment,java.util.List,int,edu.ucsb.cs.taapply.services.fake.FakeCoverage,java.util.Random,java.util.Set)" class="member-name-link">generate(Recruitment, List, int, FakeCoverage, Random, Set)</a> - Method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeApplicationGenerator</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html#generate(edu.ucsb.cs.taapply.entity.Recruitment,java.util.List,int,edu.ucsb.cs.taapply.services.fake.FakeCoverage,java.util.Random,java.util.Set,java.time.LocalDate)" class="member-name-link">generate(Recruitment, List, int, FakeCoverage, Random, Set, LocalDate)</a> - Method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeApplicationGenerator.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeApplicationGenerator</a></dt>
 <dd>
 <div class="block"><code>count</code> fake applications to <code>recruitment</code>, none sharing an email with <code>
 takenEmails</code>, which gains the new ones.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeRankingsGenerator.html#generate(java.util.List,java.util.List,java.util.Set,edu.ucsb.cs.taapply.services.fake.FakeRankingScope,boolean,java.util.Random)" class="member-name-link">generate(List, List, Set, FakeRankingScope, boolean, Random)</a> - Method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeRankingsGenerator.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeRankingsGenerator</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApiController.html#genericMessage(java.lang.String)" class="member-name-link">genericMessage(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html#getAllQuartersFromAPI()" class="member-name-link">getAllQuartersFromAPI()</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></dt>
@@ -2266,6 +2318,12 @@ their row is stamped with the time, if the stamp it carries is more than a minut
 <dd>
 <div class="block">Returns the value of the <code>lastPopulatedAt</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html#latestQuarter(java.time.LocalDate)" class="member-name-link">latestQuarter(LocalDate)</a> - Static method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a></dt>
+<dd>
+<div class="block">The quarter of the latest course on a fake transcript: the quarter containing <code>today</code>, by
+the same month rule as the front end (January to March is 1, April to June 2, July and August
+3, September to December 4).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/JobsController.html#launchPopulateCourses(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">launchPopulateCourses(String, String, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/JobsController.html" title="class in edu.ucsb.cs.taapply.controller">JobsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/JobsController.html#launchPopulateRecruitmentCourses(java.lang.Long)" class="member-name-link">launchPopulateRecruitmentCourses(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/JobsController.html" title="class in edu.ucsb.cs.taapply.controller">JobsController</a></dt>
@@ -2565,7 +2623,8 @@ API and server configuration.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html#other(java.util.Random,int,boolean,int)" class="member-name-link">other(Random, int, boolean, int)</a> - Method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a></dt>
 <dd>
-<div class="block"><code>wanted</code> distinct courses from other universities, each with the school it was taken at.</div>
+<div class="block">Up to <code>wanted</code> distinct courses from one school chosen at random: an international school
+for an international student, a domestic one otherwise.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html#OTHER" class="member-name-link">OTHER</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ResidencyStatus</a></dt>
 <dd>&nbsp;</dd>
@@ -2848,12 +2907,6 @@ like) from it.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#ranksFor(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">ranksFor(RecruitmentCourse)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
 <dd>
 <div class="block">The ranks one section gave, keyed by application id.</div>
-</dd>
-<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html#reachableFrom(java.lang.String)" class="member-name-link">reachableFrom(String)</a> - Method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a></dt>
-<dd>
-<div class="block">The courses that can be taken once <code>start</code> has been, in breadth-first order: the course
-itself, then every course that lists it as a prerequisite, then every course that lists one of
-those, and so on.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/NameListCsvService.html#read(org.springframework.web.multipart.MultipartFile)" class="member-name-link">read(MultipartFile)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/NameListCsvService.html" title="class in edu.ucsb.cs.taapply.services">NameListCsvService</a></dt>
 <dd>
@@ -3282,6 +3335,8 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dd>
 <div class="block">Creates an instance of a <code>Snapshot</code> record class.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeRankingScope.html#SOME" class="member-name-link">SOME</a> - Enum constant in enum class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeRankingScope.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeRankingScope</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AuditTrailController.html#SORTABLE" class="member-name-link">SORTABLE</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AuditTrailController.html" title="class in edu.ucsb.cs.taapply.controller">AuditTrailController</a></dt>
 <dd>
 <div class="block">The columns the page may sort by: every column of the table.</div>
@@ -3755,9 +3810,7 @@ for; ULA positions are funded for undergraduates only.</div>
 <dl class="index">
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html#ucsb(java.util.Random,int,int)" class="member-name-link">ucsb(Random, int, int)</a> - Method in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoursework.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeCoursework</a></dt>
 <dd>
-<div class="block">Up to <code>wanted</code> UCSB courses, walked from CMPSC 8 or 16 (chosen by the generator) in
-prerequisite order, with terms stepping forward one quarter per course and ending the quarter
-before <code>referenceQuarter</code>.</div>
+<div class="block">Up to <code>wanted</code> UCSB courses, taken from CMPSC 8 or 16 (chosen by the generator) onward.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RoleAssignmentService.html#UCSB_EMAIL_SUFFIX" class="member-name-link">UCSB_EMAIL_SUFFIX</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RoleAssignmentService.html" title="class in edu.ucsb.cs.taapply.services">RoleAssignmentService</a></dt>
 <dd>&nbsp;</dd>
@@ -4053,6 +4106,10 @@ one optional column (issue #172).</div>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeRankingScope.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeRankingScope.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeRankingScope</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/AllocationVisibility.html#values()" class="member-name-link">values()</a> - Static method in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/AllocationVisibility.html" title="enum class in edu.ucsb.cs.taapply.enums">AllocationVisibility</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
@@ -4124,6 +4181,11 @@ the order they are declared.</div>
 the order they are declared.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeCoverage.html#values()" class="member-name-link">values()</a> - Static method in enum class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeCoverage.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeCoverage</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/fake/FakeRankingScope.html#values()" class="member-name-link">values()</a> - Static method in enum class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeRankingScope.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeRankingScope</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>

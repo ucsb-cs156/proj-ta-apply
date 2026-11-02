@@ -75,23 +75,22 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color"><span class="type-name-label">FakeCoursework.</span><code><a href="../../services/fake/FakeCoursework.html#other(java.util.Random,int,boolean,int)" class="member-name-link">other</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
  int&nbsp;wanted,
  boolean&nbsp;international,
- int&nbsp;referenceQuarter)</code></div>
+ int&nbsp;latestQuarter)</code></div>
 <div class="col-last even-row-color">
-<div class="block"><code>wanted</code> distinct courses from other universities, each with the school it was taken at.</div>
+<div class="block">Up to <code>wanted</code> distinct courses from one school chosen at random: an international school
+for an international student, a domestic one otherwise.</div>
 </div>
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</code></div>
 <div class="col-second odd-row-color"><span class="type-name-label">FakeCoursework.</span><code><a href="../../services/fake/FakeCoursework.html#ucsb(java.util.Random,int,int)" class="member-name-link">ucsb</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
  int&nbsp;wanted,
- int&nbsp;referenceQuarter)</code></div>
+ int&nbsp;latestQuarter)</code></div>
 <div class="col-last odd-row-color">
-<div class="block">Up to <code>wanted</code> UCSB courses, walked from CMPSC 8 or 16 (chosen by the generator) in
-prerequisite order, with terms stepping forward one quarter per course and ending the quarter
-before <code>referenceQuarter</code>.</div>
+<div class="block">Up to <code>wanted</code> UCSB courses, taken from CMPSC 8 or 16 (chosen by the generator) onward.</div>
 </div>
 <div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a>&gt;</code></div>
 <div class="col-second even-row-color"><span class="type-name-label">FakeCoursework.</span><code><a href="../../services/fake/FakeCoursework.html#ucsbGraduate(java.util.Random,int,int)" class="member-name-link">ucsbGraduate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
  int&nbsp;wanted,
- int&nbsp;referenceQuarter)</code></div>
+ int&nbsp;latestQuarter)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Up to <code>wanted</code> graduate UCSB courses, chosen at random, each with a recent term.</div>
 </div>

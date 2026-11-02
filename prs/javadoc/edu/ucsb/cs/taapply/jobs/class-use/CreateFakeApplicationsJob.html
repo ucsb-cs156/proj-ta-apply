@@ -76,15 +76,16 @@ loadScripts(document, 'script');</script>
  int&nbsp;count,
  <a href="../../services/fake/FakeCoverage.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeCoverage</a>&nbsp;coverage)</code></div>
 <div class="col-last even-row-color">
-<div class="block">A job with a fresh, unseeded random source.</div>
+<div class="block">A job with a fresh, unseeded random source, for today.</div>
 </div>
 <div class="col-first odd-row-color"><code><a href="../CreateFakeApplicationsJob.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeApplicationsJob</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">CreateFakeApplicationsJobFactory.</span><code><a href="../CreateFakeApplicationsJobFactory.html#create(java.lang.Long,int,edu.ucsb.cs.taapply.services.fake.FakeCoverage,java.util.Random)" class="member-name-link">create</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
+<div class="col-second odd-row-color"><span class="type-name-label">CreateFakeApplicationsJobFactory.</span><code><a href="../CreateFakeApplicationsJobFactory.html#create(java.lang.Long,int,edu.ucsb.cs.taapply.services.fake.FakeCoverage,java.util.Random,java.time.LocalDate)" class="member-name-link">create</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
  int&nbsp;count,
  <a href="../../services/fake/FakeCoverage.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeCoverage</a>&nbsp;coverage,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Random.html" title="class or interface in java.util" class="external-link">Random</a>&nbsp;random,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html" title="class or interface in java.time" class="external-link">LocalDate</a>&nbsp;today)</code></div>
 <div class="col-last odd-row-color">
-<div class="block">A job drawing from the given random source, so a test can fix the outcome.</div>
+<div class="block">A job drawing from the given random source and date, so a test can fix the outcome.</div>
 </div>
 </div>
 </section>
