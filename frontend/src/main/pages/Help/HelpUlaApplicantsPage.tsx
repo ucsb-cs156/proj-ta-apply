@@ -129,6 +129,12 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             an application, and incomplete applications are not considered, so
             submit it before the recruitment closes.
           </li>
+          <li data-testid="HelpUlaApplicantsPage-one-window">
+            Keep your application open in only one tab or window at a time. If
+            the server sees it open in more than one, a warning appears above
+            the form, because a save from one could replace what you typed in
+            another. Close the extras and the warning goes away.
+          </li>
           <li>
             Once you have submitted, the card shows{" "}
             <strong>View submitted application</strong>. You can still edit it

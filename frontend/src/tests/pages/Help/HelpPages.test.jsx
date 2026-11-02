@@ -73,6 +73,11 @@ describe("Help pages (issue #140)", () => {
         name: "For TA Applicants",
       }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("HelpTaApplicantsPage-one-window"),
+    ).toHaveTextContent(
+      "Keep your application open in only one tab or window at a time.",
+    );
     const items = [
       ...screen
         .getByTestId("HelpTaApplicantsPage-asked-for")
@@ -779,6 +784,11 @@ describe("Help pages (issue #140)", () => {
     );
     expect(screen.getByTestId("HelpUlaApplicantsPage").textContent).toMatch(
       /Continue editing draft application/,
+    );
+    expect(
+      screen.getByTestId("HelpUlaApplicantsPage-one-window"),
+    ).toHaveTextContent(
+      "Keep your application open in only one tab or window at a time.",
     );
     expect(screen.getByTestId("HelpUlaApplicantsPage").textContent).toMatch(
       /View submitted application/,

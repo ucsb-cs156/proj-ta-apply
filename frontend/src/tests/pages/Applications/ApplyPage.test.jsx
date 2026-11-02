@@ -990,4 +990,129 @@ describe("ApplyPage tests", () => {
 
     expect(draftSaves().length).toBe(before);
   });
+
+  // ---- the multi-tab warning (issue #273) ----
+
+  /** The heartbeats this tab has sent. */
+  const heartbeats = () =>
+    axiosMock.history.post.filter((r) =>
+      r.url.startsWith("/api/draftApplications/heartbeat"),
+    );
+  const bannerText =
+    "The server has detected multiple tabs or windows open on the same application. Please know that this is risky; we recommend closing all but one of these.";
+
+  test("the heartbeat and the saves name this tab by the same identifier", async () => {
+    renderPage();
+    const comments = await screen.findByTestId("ApplyPage-comments");
+
+    // A heartbeat goes as soon as the draft is open, for that draft.
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+    expect(heartbeats()[0].url).toBe("/api/draftApplications/heartbeat?id=21");
+
+    fireEvent.change(comments, { target: { value: "Hello" } });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    await waitFor(() => expect(draftSaves().length).toBe(1));
+
+    const id = heartbeats()[0].headers["X-Client-Id"];
+    expect(id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(draftSaves()[0].headers["X-Client-Id"]).toBe(id);
+  });
+
+  test("no warning is shown unless the server says another tab is open", async () => {
+    axiosMock
+      .onPost(/\/api\/draftApplications\/heartbeat/)
+      .reply(204, null, { "x-other-clients-active": "false" });
+    renderPage();
+    await screen.findByTestId("ApplyPage-comments");
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+
+    expect(screen.queryByTestId("ApplyPage-multiple-tabs")).toBeNull();
+  });
+
+  test("the warning is shown when a heartbeat is answered that another tab is open", async () => {
+    axiosMock
+      .onPost(/\/api\/draftApplications\/heartbeat/)
+      .reply(204, null, { "x-other-clients-active": "true" });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("ApplyPage-multiple-tabs"),
+    ).toHaveTextContent(bannerText);
+    // It is advice: the form is still there to use.
+    expect(screen.getByTestId("ApplyPage-comments")).toBeInTheDocument();
+    expect(screen.getByTestId("ApplyPage-submit")).toBeInTheDocument();
+  });
+
+  test("the warning follows what each save is answered, and goes when the others have", async () => {
+    let puts = 0;
+    axiosMock.onPut("/api/draftApplications").reply(() => {
+      puts += 1;
+      return [
+        200,
+        savedUlaDraft,
+        { "x-other-clients-active": puts === 1 ? "true" : "false" },
+      ];
+    });
+    renderPage();
+    const comments = await screen.findByTestId("ApplyPage-comments");
+
+    fireEvent.change(comments, { target: { value: "one" } });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    expect(
+      await screen.findByTestId("ApplyPage-multiple-tabs"),
+    ).toHaveTextContent(bannerText);
+
+    fireEvent.change(comments, { target: { value: "two" } });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("ApplyPage-multiple-tabs")).toBeNull(),
+    );
+    expect(draftSaves().length).toBe(2);
+  });
+
+  test("a save that is refused as stale still brings the news of other tabs", async () => {
+    axiosMock.onPut("/api/draftApplications").reply(
+      409,
+      {
+        message:
+          "This draft was changed in another tab or window. Reload to see the latest version.",
+        version: 7,
+        draft: { ...savedUlaDraft, version: 7 },
+      },
+      { "x-other-clients-active": "true" },
+    );
+    renderPage();
+    fireEvent.change(await screen.findByTestId("ApplyPage-comments"), {
+      target: { value: "mine" },
+    });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+
+    expect(await screen.findByTestId("ApplyPage-conflict")).toBeInTheDocument();
+    expect(screen.getByTestId("ApplyPage-multiple-tabs")).toHaveTextContent(
+      bannerText,
+    );
+  });
+
+  test("a save that fails with no answer at all leaves the warning as it was", async () => {
+    axiosMock
+      .onPost(/\/api\/draftApplications\/heartbeat/)
+      .reply(204, null, { "x-other-clients-active": "true" });
+    axiosMock.onPut("/api/draftApplications").networkError();
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    renderPage();
+    await screen.findByTestId("ApplyPage-multiple-tabs");
+
+    fireEvent.change(screen.getByTestId("ApplyPage-comments"), {
+      target: { value: "Hello" },
+    });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    await waitFor(() => expect(draftSaves().length).toBe(1));
+
+    expect(screen.getByTestId("ApplyPage-multiple-tabs")).toBeInTheDocument();
+    consoleError.mockRestore();
+  });
 });

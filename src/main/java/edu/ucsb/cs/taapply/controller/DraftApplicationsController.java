@@ -1,5 +1,7 @@
 package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFields;
 import edu.ucsb.cs.taapply.entity.DraftApplication;
@@ -21,6 +23,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -29,6 +32,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,6 +56,7 @@ public class DraftApplicationsController extends ApiController {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired ApplicationAccessService applicationAccessService;
+  @Autowired ClientActivityDetector clientActivityDetector;
 
   private String currentEmail() {
     return getCurrentUser().getUser().getEmail();
@@ -121,15 +126,26 @@ public class DraftApplicationsController extends ApiController {
     }
   }
 
+  /**
+   * Notes that the client that sent this request is working on the draft, and returns the response
+   * headers that tell it whether any other tab or window is too (issue #273). The draft is
+   * identified to the detector as {@code draft:<id>}.
+   */
+  private HttpHeaders activity(Long id, String clientId) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setAll(clientActivityDetector.observe("draft:" + id, clientId));
+    return headers;
+  }
+
   /** What a refused save tells the form: why, and the draft as it now stands. */
-  private ResponseEntity<Object> conflict(DraftApplication current) {
+  private ResponseEntity<Object> conflict(DraftApplication current, HttpHeaders headers) {
     Map<String, Object> body = new LinkedHashMap<>();
     body.put(
         "message",
         "This draft was changed in another tab or window. Reload to see the latest version.");
     body.put("version", current.getVersion());
     body.put("draft", current);
-    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    return ResponseEntity.status(HttpStatus.CONFLICT).headers(headers).body(body);
   }
 
   @Operation(
@@ -140,27 +156,46 @@ public class DraftApplicationsController extends ApiController {
               + " saw (from opening the draft or from its last save); if the draft has been saved"
               + " since, by another tab or window, nothing is changed and the answer is 409"
               + " Conflict with the draft as it now stands. A successful save returns the draft"
-              + " with its new version.")
+              + " with its new version. A save that names its client (X-Client-Id) is also answered with"
+              + " X-Other-Clients-Active, whether another tab or window has been working on the draft.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("")
   public ResponseEntity<Object> saveDraft(
       @Parameter(name = "id") @RequestParam Long id,
       @Parameter(name = "version") @RequestParam Integer version,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
       @RequestBody ApplicationFields fields) {
     DraftApplication draft = mine(id);
+    HttpHeaders headers = activity(id, clientId);
     if (!applicationAccessService.editable(recruitment(draft.getRecruitmentId()))) {
       throw new ForbiddenException("Applications are closed, so this draft can no longer be saved");
     }
     if (!version.equals(draft.getVersion())) {
-      return conflict(draft);
+      return conflict(draft, headers);
     }
     apply(fields, draft);
     try {
-      return ResponseEntity.ok(draftApplicationRepository.save(draft));
+      return ResponseEntity.ok().headers(headers).body(draftApplicationRepository.save(draft));
     } catch (ObjectOptimisticLockingFailureException e) {
       // Another save got in between reading the draft and writing it.
-      return conflict(draftApplicationRepository.findById(id).orElseThrow(() -> e));
+      return conflict(draftApplicationRepository.findById(id).orElseThrow(() -> e), headers);
     }
+  }
+
+  @Operation(
+      summary = "Say that this tab or window still has the draft open",
+      description =
+          "Changes nothing about the draft, not even its version. Tells the server this client"
+              + " (X-Client-Id) is still here, so that other tabs or windows on the same draft can"
+              + " be warned, and answers with X-Other-Clients-Active, whether any other is, and"
+              + " X-Heartbeat-Seconds, how often to send this.")
+  @PreAuthorize("hasRole('ROLE_USER')")
+  @PostMapping("/heartbeat")
+  public ResponseEntity<Void> heartbeat(
+      @Parameter(name = "id") @RequestParam Long id,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    mine(id);
+    return ResponseEntity.noContent().headers(activity(id, clientId)).build();
   }
 
   /** Name-to-level answers as sent, without the null entries and in a stable order. */

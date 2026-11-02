@@ -6,8 +6,10 @@ import type { ApplicationPayload } from "main/utils/applicationFields";
 import type { DraftApplication } from "main/utils/draftApplications";
 import { apiErrorMessage, shouldToastBackendError } from "main/utils/apiError";
 import { useBackend } from "main/utils/useBackend";
+import { useClientActivity } from "main/concurrency";
 
 const OPEN_URL = "/api/draftApplications/open";
+const HEARTBEAT_URL = "/api/draftApplications/heartbeat";
 
 /** Whether a failed request was the server refusing a stale save (409 Conflict). */
 export const isConflict = (error: unknown): boolean =>
@@ -46,6 +48,9 @@ type DraftSavingOptions = {
  * draft was saved from another tab or window since) is refused with 409 Conflict. When that happens
  * nothing more is saved from this page, {@link conflicted} is true so the page can say so, and
  * {@link reload} fetches the draft as it now stands so the form can start again from it.
+ *
+ * The page also learns early, before any save is refused, whether the draft is open in another tab
+ * or window (issue #273): see {@link useClientActivity}, which this uses for it.
  */
 export function useDraftSaving({
   recruitmentId,
@@ -73,6 +78,11 @@ export function useDraftSaving({
       retry: false,
     },
   );
+
+  // Tells the server this tab is working on the draft, and learns whether another one is.
+  const activity = useClientActivity({
+    heartbeatUrl: draft ? `${HEARTBEAT_URL}?id=${draft.id}` : null,
+  });
 
   const saves = useRef<SaveState>({
     draft: null,
@@ -103,8 +113,10 @@ export function useDraftSaving({
           method: "PUT",
           url: "/api/draftApplications",
           params: { id: target.id, version: state.version },
+          headers: activity.headers,
           data: payload,
         });
+        activity.observe(response.headers);
         state.version = response.data.version;
         // Stryker disable all : cache invalidation is not observable from here
         queryClient.invalidateQueries({
@@ -113,6 +125,10 @@ export function useDraftSaving({
         // Stryker restore all
         return true;
       } catch (error) {
+        // A refused save says whether others are about, too.
+        activity.observe(
+          (error as { response?: { headers?: unknown } }).response?.headers,
+        );
         if (isConflict(error)) {
           state.blocked = target;
           setConflictFor(target);
@@ -137,6 +153,8 @@ export function useDraftSaving({
     failed,
     /** The draft has been saved from somewhere else, so nothing more is saved from here. */
     conflicted: conflictFor !== null && conflictFor === draft,
+    /** Another tab or window has the draft open too, as the server last said. */
+    otherClientsActive: activity.othersActive,
     /** The quiet save while the form is filled in. */
     autosave: (payload: ApplicationPayload) => {
       void save(payload);

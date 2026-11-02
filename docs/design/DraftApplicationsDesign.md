@@ -103,8 +103,28 @@ last would silently overwrite the other's changes, so a save is **versioned** (o
 * Submitting is not versioned: it turns whatever the server holds into the application and removes
   the draft.
 
-A later change will warn when the same application is open in a second tab at all, before anything
-is saved; that is a separate piece of work.
+### Warning about a second tab (issue #273)
+
+The version check refuses a stale save after the fact. A second mechanism warns before any save is
+refused, as soon as the server sees that the same draft is open in more than one tab, window or
+device.
+
+* The form makes a random identifier for itself when it opens (in memory only) and sends it with every
+  save, as the `X-Client-Id` header, and with a **heartbeat**: `POST /api/draftApplications/heartbeat?id=`
+  as soon as the draft is open, and then every 20 seconds. The heartbeat changes nothing about the
+  draft, not even its version, and is allowed only for the draft's owner.
+* The server remembers which identifiers it has seen for `draft:<draftId>` in the last minute. Every
+  answer to a save (a refused one too) and to a heartbeat says, in the `X-Other-Clients-Active`
+  header, whether any other identifier was among them, and, in `X-Heartbeat-Seconds`, how often to
+  send the next heartbeat.
+* While the answer says another copy is active, the apply page shows a warning above the form: *The
+  server has detected multiple tabs or windows open on the same application. Please know that this is
+  risky; we recommend closing all but one of these.* It goes by itself once the other copy has been
+  closed for a minute. It is advice and nothing is disabled; the version check still protects the
+  draft.
+* The detector and the client hook are in packages of their own with no knowledge of drafts, so that
+  other screens can use them. How they work and where else they are planned for is in
+  `ConcurrentEditMitigationDesign.md`.
 
 ## The home page
 
