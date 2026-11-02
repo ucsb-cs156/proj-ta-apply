@@ -53,6 +53,7 @@ loadScripts(document, 'script');</script>
 <ul class="horizontal contents-list">
 <li><a href="edu/ucsb/cs/taapply/package-tree.html">edu.ucsb.cs.taapply</a>, </li>
 <li><a href="edu/ucsb/cs/taapply/collections/package-tree.html">edu.ucsb.cs.taapply.collections</a>, </li>
+<li><a href="edu/ucsb/cs/taapply/concurrency/package-tree.html">edu.ucsb.cs.taapply.concurrency</a>, </li>
 <li><a href="edu/ucsb/cs/taapply/config/package-tree.html">edu.ucsb.cs.taapply.config</a>, </li>
 <li><a href="edu/ucsb/cs/taapply/controller/package-tree.html">edu.ucsb.cs.taapply.controller</a>, </li>
 <li><a href="edu/ucsb/cs/taapply/entity/package-tree.html">edu.ucsb.cs.taapply.entity</a>, </li>
@@ -122,6 +123,8 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/CandidateRanking.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">CandidateRanking</a></li>
 <li class="circle">edu.ucsb.cs.taapply.utilities.<a href="edu/ucsb/cs/taapply/utilities/CanonicalFormConverter.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.utilities">CanonicalFormConverter</a></li>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/CatalogName.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">CatalogName</a></li>
+<li class="circle">edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/ConcurrencyConfig.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.config">ConcurrencyConfig</a></li>
+<li class="circle">edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ConcurrencyHeaders.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">ConcurrencyHeaders</a></li>
 <li class="circle">edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/CorsConfig.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.config">CorsConfig</a> (implements org.springframework.web.servlet.config.annotation.WebMvcConfigurer)</li>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/Course.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">Course</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/CourseTargetsService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService</a></li>
@@ -155,6 +158,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HealthController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">HealthController</a></li>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/HiddenColumn.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">HiddenColumn</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/HiringDecisions.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">HiringDecisions</a></li>
+<li class="circle">edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/InMemoryClientActivityDetector.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">InMemoryClientActivityDetector</a> (implements edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a>)</li>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/Instructor.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">Instructor</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/JobUserProviderImpl.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">JobUserProviderImpl</a> (implements edu.ucsb.cs156.jobs.services.JobUserProvider)</li>
 <li class="circle">edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/JsonColumnConverter.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">JsonColumnConverter</a>&lt;T&gt; (implements jakarta.persistence.AttributeConverter&lt;X,<wbr>Y&gt;)
@@ -255,6 +259,7 @@ loadScripts(document, 'script');</script>
 <section class="hierarchy">
 <h2 title="Interface Hierarchy">Interface Hierarchy</h2>
 <ul>
+<li class="circle">edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></li>
 <li class="circle">org.springframework.security.oauth2.client.userinfo.OAuth2UserService&lt;R,<wbr>U&gt;
 <ul>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/GoogleSignInService.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.services">GoogleSignInService</a></li>
@@ -378,6 +383,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.QuarterSummary.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">BudgetService.QuarterSummary</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Side.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">BudgetService.Summary</a></li>
+<li class="circle">edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></li>
 <li class="circle">edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.models">CourseSections</a></li>
 <li class="circle">edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.models">CourseSections.Meeting</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/CourseTargetsService.CourseTargets.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a></li>
@@ -396,6 +402,8 @@ loadScripts(document, 'script');</script>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyUlaApplicationCsvService.ImportResult.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">LegacyUlaApplicationCsvService.ImportResult</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/NameListCsvService.UploadResult.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">NameListCsvService.UploadResult</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.NoticeContent.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">NoticesController.NoticeContent</a></li>
+<li class="circle">edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></li>
+<li class="circle">edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/Presence.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.Table.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">PublishedAssignmentsService.Table</a></li>
 <li class="circle">edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.Snapshot.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a></li>
 <li class="circle">edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO</a></li>

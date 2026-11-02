@@ -65,7 +65,8 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#myDrafts()" tabindex="0">myDrafts()</a></li>
 <li><a href="#openDraft(java.lang.Long)" tabindex="0">openDraft(Long)</a></li>
-<li><a href="#saveDraft(java.lang.Long,java.lang.Integer,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" tabindex="0">saveDraft(Long, Integer, ApplicationsController.ApplicationFields)</a></li>
+<li><a href="#saveDraft(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" tabindex="0">saveDraft(Long, Integer, String, ApplicationsController.ApplicationFields)</a></li>
+<li><a href="#heartbeat(java.lang.Long,java.lang.String)" tabindex="0">heartbeat(Long, String)</a></li>
 </ol>
 </li>
 </ol>
@@ -123,17 +124,22 @@ user's.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#myDrafts()" class="member-name-link">myDrafts</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../concurrency/Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#heartbeat(java.lang.Long,java.lang.String)" class="member-name-link">heartbeat</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#openDraft(java.lang.Long)" class="member-name-link">openDraft</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#myDrafts()" class="member-name-link">myDrafts</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveDraft(java.lang.Long,java.lang.Integer,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">saveDraft</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;version,
- <a href="ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a>&nbsp;fields)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#openDraft(java.lang.Long)" class="member-name-link">openDraft</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveDraft(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">saveDraft</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;version,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId,
+ <a href="ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a>&nbsp;fields)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -192,7 +198,7 @@ user's.</div>
 </section>
 </li>
 <li>
-<section class="detail" id="saveDraft(java.lang.Long,java.lang.Integer,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)">
+<section class="detail" id="saveDraft(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)">
 <h3>saveDraft</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
@@ -201,8 +207,23 @@ user's.</div>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  @RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;version,
+ @RequestHeader(value="X-Client-Id",required=false)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId,
  @RequestBody
  <a href="ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a>&nbsp;fields)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="heartbeat(java.lang.Long,java.lang.String)">
+<h3>heartbeat</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
+@PostMapping("/heartbeat")
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../concurrency/Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></span>&nbsp;<span class="element-name">heartbeat</span><wbr><span class="parameters">(@RequestParam
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ @RequestHeader(value="X-Client-Id",required=false)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</span></div>
 </div>
 </section>
 </li>
