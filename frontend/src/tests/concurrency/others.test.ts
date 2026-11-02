@@ -1,0 +1,236 @@
+import { describe, expect, test } from "vitest";
+import {
+  MAX_NAMED,
+  RISK_SENTENCE,
+  describeOthers,
+  readPresence,
+  type OtherClient,
+} from "main/concurrency/others";
+
+const person = (label: string): OtherClient => ({ label, samePerson: false });
+const you: OtherClient = { label: "me@example.org (Me)", samePerson: true };
+const PHILL = "phtcon@ucsb.edu (Phill Conrad)";
+
+describe("describeOthers", () => {
+  test("says nothing when no one else is editing", () => {
+    expect(describeOthers([], "page")).toBe("");
+  });
+
+  test("only the user's own other tabs", () => {
+    expect(describeOthers([you], "page")).toBe(
+      "You are also editing this page in another tab or window.",
+    );
+  });
+
+  test("one other person", () => {
+    expect(describeOthers([person(PHILL)], "page")).toBe(
+      "phtcon@ucsb.edu (Phill Conrad) is also editing this page.",
+    );
+  });
+
+  test("the user and one other person", () => {
+    expect(describeOthers([you, person(PHILL)], "page")).toBe(
+      "You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs.",
+    );
+  });
+
+  test("the order of the list does not matter to the sentence", () => {
+    expect(describeOthers([person(PHILL), you], "page")).toBe(
+      describeOthers([you, person(PHILL)], "page"),
+    );
+  });
+
+  test("two other people are joined with 'and'", () => {
+    expect(describeOthers([person("A"), person("B")], "page")).toBe(
+      "A and B are also editing this page.",
+    );
+  });
+
+  test("three other people are joined with commas and 'and'", () => {
+    expect(
+      describeOthers([person("A"), person("B"), person("C")], "page"),
+    ).toBe("A, B and C are also editing this page.");
+  });
+
+  test("four other people: three are named and one is counted", () => {
+    expect(
+      describeOthers(
+        [person("A"), person("B"), person("C"), person("D")],
+        "page",
+      ),
+    ).toBe("A, B, C and 1 other are also editing this page.");
+  });
+
+  test("five other people: three are named and two are counted", () => {
+    expect(
+      describeOthers(
+        ["A", "B", "C", "D", "E"].map((name) => person(name)),
+        "page",
+      ),
+    ).toBe("A, B, C and 2 others are also editing this page.");
+  });
+
+  test("a great many other people", () => {
+    const crowd = Array.from({ length: 12 }, (_, i) => person(`P${i}`));
+    expect(describeOthers(crowd, "page")).toBe(
+      "P0, P1, P2 and 9 others are also editing this page.",
+    );
+  });
+
+  test("the user and two other people", () => {
+    expect(describeOthers([you, person("A"), person("B")], "page")).toBe(
+      "You, A and B are also editing this page in other windows or tabs.",
+    );
+  });
+
+  test("the user and three other people", () => {
+    expect(
+      describeOthers([you, person("A"), person("B"), person("C")], "page"),
+    ).toBe(
+      "You, A, B and C are also editing this page in other windows or tabs.",
+    );
+  });
+
+  test("the user and four other people", () => {
+    expect(
+      describeOthers(
+        [you, person("A"), person("B"), person("C"), person("D")],
+        "page",
+      ),
+    ).toBe(
+      "You, A, B, C and 1 other are also editing this page in other windows or tabs.",
+    );
+  });
+
+  test("the user and five other people", () => {
+    expect(
+      describeOthers(
+        [you, ...["A", "B", "C", "D", "E"].map((name) => person(name))],
+        "page",
+      ),
+    ).toBe(
+      "You, A, B, C and 2 others are also editing this page in other windows or tabs.",
+    );
+  });
+
+  test("the user listed twice is still one 'You'", () => {
+    expect(describeOthers([you, { ...you }, person("A")], "page")).toBe(
+      "You and A are also editing this page in other windows or tabs.",
+    );
+  });
+
+  test("at most three other people are named", () => {
+    expect(MAX_NAMED).toBe(3);
+  });
+
+  test("the noun is whatever it is told", () => {
+    expect(describeOthers([you], "application")).toBe(
+      "You are also editing this application in another tab or window.",
+    );
+    expect(describeOthers([person("A")], "budget")).toBe(
+      "A is also editing this budget.",
+    );
+    expect(describeOthers([you, person("A")], "ranking")).toBe(
+      "You and A are also editing this ranking in other windows or tabs.",
+    );
+  });
+
+  test("a long name is kept whole", () => {
+    const long = `${"Averyveryverylongname".repeat(15)}@example.org (${"Long ".repeat(40)}Name)`;
+    expect(describeOthers([person(long)], "page")).toBe(
+      `${long} is also editing this page.`,
+    );
+  });
+
+  test("a name is text: markup in it is left exactly as it is", () => {
+    const sneaky = '<img src=x onerror="alert(1)"> & <b>bold</b>';
+    expect(describeOthers([person(sneaky)], "page")).toBe(
+      `${sneaky} is also editing this page.`,
+    );
+  });
+
+  test("names that are not plain ASCII are kept", () => {
+    expect(
+      describeOthers([person("josé@example.org (José Álvarez 李)")], "page"),
+    ).toBe("josé@example.org (José Álvarez 李) is also editing this page.");
+  });
+});
+
+describe("RISK_SENTENCE", () => {
+  test("is the agreed sentence", () => {
+    expect(RISK_SENTENCE).toBe(
+      "Please know that this is risky; we recommend closing all but one of these.",
+    );
+  });
+});
+
+describe("readPresence", () => {
+  test("reads the others and the interval", () => {
+    expect(
+      readPresence({
+        others: [{ label: PHILL, samePerson: false }],
+        heartbeatSeconds: 20,
+      }),
+    ).toEqual({
+      others: [{ label: PHILL, samePerson: false }],
+      intervalMs: 20000,
+    });
+  });
+
+  test("an answer with no one else and no interval", () => {
+    expect(readPresence({ others: [] })).toEqual({
+      others: [],
+      intervalMs: undefined,
+    });
+  });
+
+  test("nothing at all is no one", () => {
+    expect(readPresence(undefined)).toEqual({
+      others: [],
+      intervalMs: undefined,
+    });
+    expect(readPresence(null)).toEqual({ others: [], intervalMs: undefined });
+    expect(readPresence("")).toEqual({ others: [], intervalMs: undefined });
+    expect(readPresence({})).toEqual({ others: [], intervalMs: undefined });
+  });
+
+  test("others that is not a list is no one", () => {
+    expect(readPresence({ others: "Phill" }).others).toEqual([]);
+    expect(
+      readPresence({ others: { label: "x", samePerson: true } }).others,
+    ).toEqual([]);
+  });
+
+  test("entries that are not well formed are left out, the good ones kept", () => {
+    const good = { label: "A", samePerson: true };
+    expect(
+      readPresence({
+        others: [
+          good,
+          null,
+          undefined,
+          "A",
+          7,
+          {},
+          { label: "B" },
+          { samePerson: true },
+          { label: 5, samePerson: true },
+          { label: "", samePerson: false },
+          { label: "C", samePerson: "yes" },
+        ],
+      }).others,
+    ).toEqual([good]);
+  });
+
+  test("an interval must be a positive finite number", () => {
+    expect(readPresence({ heartbeatSeconds: 2 }).intervalMs).toBe(2000);
+    expect(readPresence({ heartbeatSeconds: 0.5 }).intervalMs).toBe(500);
+    expect(readPresence({ heartbeatSeconds: 0 }).intervalMs).toBeUndefined();
+    expect(readPresence({ heartbeatSeconds: -3 }).intervalMs).toBeUndefined();
+    expect(readPresence({ heartbeatSeconds: "20" }).intervalMs).toBeUndefined();
+    expect(readPresence({ heartbeatSeconds: NaN }).intervalMs).toBeUndefined();
+    expect(
+      readPresence({ heartbeatSeconds: Infinity }).intervalMs,
+    ).toBeUndefined();
+  });
+});

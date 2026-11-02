@@ -1,10 +1,15 @@
 package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
+import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
+import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFields;
 import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -29,6 +34,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,6 +58,7 @@ public class DraftApplicationsController extends ApiController {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired ApplicationAccessService applicationAccessService;
+  @Autowired ClientActivityDetector clientActivityDetector;
 
   private String currentEmail() {
     return getCurrentUser().getUser().getEmail();
@@ -121,6 +128,26 @@ public class DraftApplicationsController extends ApiController {
     }
   }
 
+  /**
+   * Who the current user is to the detector (issue #273): the email address is the person, and the
+   * label other people see is the email address followed by the full name in parentheses, or the
+   * email address alone if there is no name.
+   */
+  private ClientIdentity identity() {
+    User user = getCurrentUser().getUser();
+    String name = user.getFullName();
+    String label =
+        name == null || name.isBlank()
+            ? user.getEmail()
+            : user.getEmail() + " (" + name.trim() + ")";
+    return new ClientIdentity(user.getEmail(), label);
+  }
+
+  /** The detector's name for a draft. */
+  private static String resourceKey(Long id) {
+    return "draft:" + id;
+  }
+
   /** What a refused save tells the form: why, and the draft as it now stands. */
   private ResponseEntity<Object> conflict(DraftApplication current) {
     Map<String, Object> body = new LinkedHashMap<>();
@@ -140,14 +167,17 @@ public class DraftApplicationsController extends ApiController {
               + " saw (from opening the draft or from its last save); if the draft has been saved"
               + " since, by another tab or window, nothing is changed and the answer is 409"
               + " Conflict with the draft as it now stands. A successful save returns the draft"
-              + " with its new version.")
+              + " with its new version. A save that names its client (X-Client-Id) also tells the server this tab or"
+              + " window is working on the draft, for the multi-tab warning; see the heartbeat.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("")
   public ResponseEntity<Object> saveDraft(
       @Parameter(name = "id") @RequestParam Long id,
       @Parameter(name = "version") @RequestParam Integer version,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
       @RequestBody ApplicationFields fields) {
     DraftApplication draft = mine(id);
+    clientActivityDetector.note(resourceKey(id), clientId, identity());
     if (!applicationAccessService.editable(recruitment(draft.getRecruitmentId()))) {
       throw new ForbiddenException("Applications are closed, so this draft can no longer be saved");
     }
@@ -161,6 +191,25 @@ public class DraftApplicationsController extends ApiController {
       // Another save got in between reading the draft and writing it.
       return conflict(draftApplicationRepository.findById(id).orElseThrow(() -> e));
     }
+  }
+
+  @Operation(
+      summary = "Say that this tab or window still has the draft open, and learn who else does",
+      description =
+          "Changes nothing about the draft, not even its version. Tells the server this client"
+              + " (X-Client-Id) is still here, and answers with the other people who have the draft"
+              + " open (a label for each, and whether it is the same person in another tab or"
+              + " window) and how often to send this. Only the draft's owner may ask, and nothing"
+              + " is recorded or told to anyone else.")
+  @PreAuthorize("hasRole('ROLE_USER')")
+  @PostMapping("/heartbeat")
+  public Presence heartbeat(
+      @Parameter(name = "id") @RequestParam Long id,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    // The owner check comes first and throws, so that nothing below runs for anyone else: they are
+    // neither recorded nor told who is working here.
+    mine(id);
+    return clientActivityDetector.heartbeat(resourceKey(id), clientId, identity());
   }
 
   /** Name-to-level answers as sent, without the null entries and in a stable order. */

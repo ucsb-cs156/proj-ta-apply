@@ -6,8 +6,10 @@ import type { ApplicationPayload } from "main/utils/applicationFields";
 import type { DraftApplication } from "main/utils/draftApplications";
 import { apiErrorMessage, shouldToastBackendError } from "main/utils/apiError";
 import { useBackend } from "main/utils/useBackend";
+import { useClientActivity } from "main/concurrency";
 
 const OPEN_URL = "/api/draftApplications/open";
+const HEARTBEAT_URL = "/api/draftApplications/heartbeat";
 
 /** Whether a failed request was the server refusing a stale save (409 Conflict). */
 export const isConflict = (error: unknown): boolean =>
@@ -46,6 +48,10 @@ type DraftSavingOptions = {
  * draft was saved from another tab or window since) is refused with 409 Conflict. When that happens
  * nothing more is saved from this page, {@link conflicted} is true so the page can say so, and
  * {@link reload} fetches the draft as it now stands so the form can start again from it.
+ *
+ * The page also learns early, before any save is refused, whether the draft is open in another tab
+ * or window (issue #273), and who has it open: see {@link useClientActivity}, which this uses for
+ * it. Every save names this tab, and a heartbeat does too, so the server knows it is there.
  */
 export function useDraftSaving({
   recruitmentId,
@@ -73,6 +79,11 @@ export function useDraftSaving({
       retry: false,
     },
   );
+
+  // Tells the server this tab is working on the draft, and learns whether another one is.
+  const activity = useClientActivity({
+    heartbeatUrl: draft ? `${HEARTBEAT_URL}?id=${draft.id}` : null,
+  });
 
   const saves = useRef<SaveState>({
     draft: null,
@@ -103,6 +114,7 @@ export function useDraftSaving({
           method: "PUT",
           url: "/api/draftApplications",
           params: { id: target.id, version: state.version },
+          headers: activity.headers,
           data: payload,
         });
         state.version = response.data.version;
@@ -137,6 +149,8 @@ export function useDraftSaving({
     failed,
     /** The draft has been saved from somewhere else, so nothing more is saved from here. */
     conflicted: conflictFor !== null && conflictFor === draft,
+    /** The other people with the draft open too (the user's own other tabs included), as the server last said. */
+    others: activity.others,
     /** The quiet save while the form is filled in. */
     autosave: (payload: ApplicationPayload) => {
       void save(payload);

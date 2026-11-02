@@ -1,4 +1,9 @@
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
+import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
+
+/** The warning as it looks when your own other tab has the application open. */
+// Stryker disable next-line StringLiteral : the label of the user's own tab is never shown
+const EXAMPLE_OTHERS = [{ label: "you", samePerson: true }];
 import {
   VIDEO_INSTRUCTIONS_TEXT,
   VIDEO_INSTRUCTIONS_URL,
@@ -135,6 +140,37 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             there until the primary consideration date.
           </li>
         </ul>
+
+        <h2
+          className="my-3 h4"
+          data-testid="HelpUlaApplicantsPage-simultaneous-editing"
+        >
+          Simultaneous Editing
+        </h2>
+        <p>
+          If you try to edit the same application in more than one tab or
+          window, you may get a warning that looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="application"
+          announce={false}
+          testId="HelpUlaApplicantsPage-simultaneous-editing-example"
+        />
+        <p data-testid="HelpUlaApplicantsPage-simultaneous-editing-meaning">
+          <strong>What it means.</strong> The same draft is open somewhere else,
+          in another tab or window of this browser or on another device. Both
+          copies save to the same draft, so one copy can overwrite the
+          other&apos;s changes. If you go on, the system will refuse a save from
+          a copy that is out of date and ask you to reload, and what you typed
+          in the old copy since then is lost.
+        </p>
+        <p data-testid="HelpUlaApplicantsPage-simultaneous-editing-todo">
+          <strong>What to do.</strong> Close all the other tabs or windows, and
+          keep just one. If the form asks you to reload, reload it to see the
+          latest version of your draft. The warning goes away on its own a short
+          while after the other copies are closed.
+        </p>
       </div>
     </BasicLayout>
   );

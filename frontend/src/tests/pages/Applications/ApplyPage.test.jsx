@@ -990,4 +990,127 @@ describe("ApplyPage tests", () => {
 
     expect(draftSaves().length).toBe(before);
   });
+
+  // ---- the multi-tab warning (issue #273) ----
+
+  /** The heartbeats this tab has sent. */
+  const heartbeats = () =>
+    axiosMock.history.post.filter((r) =>
+      r.url.startsWith("/api/draftApplications/heartbeat"),
+    );
+  const HEARTBEAT = /\/api\/draftApplications\/heartbeat/;
+  const RISK =
+    "Please know that this is risky; we recommend closing all but one of these.";
+  const phill = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
+  const me = { label: "me@example.org (Me)", samePerson: true };
+
+  test("the heartbeat and the saves name this tab by the same identifier", async () => {
+    renderPage();
+    const comments = await screen.findByTestId("ApplyPage-comments");
+
+    // A heartbeat goes as soon as the draft is open, for that draft.
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+    expect(heartbeats()[0].url).toBe("/api/draftApplications/heartbeat?id=21");
+
+    fireEvent.change(comments, { target: { value: "Hello" } });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+    await waitFor(() => expect(draftSaves().length).toBe(1));
+
+    const id = heartbeats()[0].headers["X-Client-Id"];
+    expect(id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(draftSaves()[0].headers["X-Client-Id"]).toBe(id);
+  });
+
+  test("no warning is shown when the server says no one else has the draft open", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [], heartbeatSeconds: 20 });
+    renderPage();
+    await screen.findByTestId("ApplyPage-comments");
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+
+    expect(screen.queryByTestId("ApplyPage-multiple-tabs")).toBeNull();
+  });
+
+  test("no warning is shown if the heartbeat cannot be answered at all", async () => {
+    // The default for these tests: nothing answers a heartbeat.
+    renderPage();
+    await screen.findByTestId("ApplyPage-comments");
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+
+    expect(screen.queryByTestId("ApplyPage-multiple-tabs")).toBeNull();
+  });
+
+  test("the user's own other tab is announced as 'You are also editing...'", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [me], heartbeatSeconds: 20 });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("ApplyPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `You are also editing this application in another tab or window. ${RISK}`,
+    );
+    // It is advice: the form is still there to use.
+    expect(screen.getByTestId("ApplyPage-comments")).toBeInTheDocument();
+    expect(screen.getByTestId("ApplyPage-submit")).toBeInTheDocument();
+  });
+
+  test("another person is named", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [me, phill], heartbeatSeconds: 20 });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("ApplyPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this application in other windows or tabs. ${RISK}`,
+    );
+  });
+
+  test("the warning goes when a later heartbeat says the others have gone", async () => {
+    let beats = 0;
+    axiosMock.onPost(HEARTBEAT).reply(() => {
+      beats += 1;
+      // The server asks for a heartbeat every twentieth of a second, to keep the test short.
+      return [
+        200,
+        { others: beats === 1 ? [phill] : [], heartbeatSeconds: 0.05 },
+      ];
+    });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("ApplyPage-multiple-tabs"),
+    ).toHaveTextContent(
+      "phtcon@ucsb.edu (Phill Conrad) is also editing this application.",
+    );
+    await waitFor(() =>
+      expect(screen.queryByTestId("ApplyPage-multiple-tabs")).toBeNull(),
+    );
+  });
+
+  test("the warning does not take the place of the conflict message", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [me], heartbeatSeconds: 20 });
+    axiosMock.onPut("/api/draftApplications").reply(409, {
+      message:
+        "This draft was changed in another tab or window. Reload to see the latest version.",
+      version: 7,
+      draft: { ...savedUlaDraft, version: 7 },
+    });
+    renderPage();
+    fireEvent.change(await screen.findByTestId("ApplyPage-comments"), {
+      target: { value: "mine" },
+    });
+    await userEvent.click(screen.getByTestId("ApplyPage-saveDraft"));
+
+    expect(await screen.findByTestId("ApplyPage-conflict")).toBeInTheDocument();
+    expect(screen.getByTestId("ApplyPage-multiple-tabs")).toBeInTheDocument();
+  });
 });

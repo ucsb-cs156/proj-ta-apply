@@ -5,8 +5,10 @@ more than one browser tab, window or device, and how that protection could be ex
 applications (issues #270 and #273) to the budget, the allocations, the faculty rankings and the
 assignments.
 
-It has two parts. Part 1 is the mechanism, on the server and on the client. Part 2 looks at four
-other places in the app where the same problem exists and proposes iterations, easiest first.
+It has two parts. Part 1 is the mechanism, on the server and on the client, as built for draft
+applications. Part 2 looks at four other places in the app where the same problem exists, then at
+recruitment state and the other course page saves, which are better kept fresh by refreshing than
+by warning, and proposes iterations, easiest first.
 
 ## Part 1. The mechanism
 
@@ -63,43 +65,115 @@ one version, and it is why the warning below matters: it makes the conflict rare
 
 ### Mitigation 2. The multi-tab warning (#273)
 
-The version check says "no" after the fact. The warning says "careful" before it.
+The version check says "no" after the fact. The warning says "careful" before it, and says who.
 
 **Client.** When a screen that autosaves opens, it makes a random identifier for this copy,
 `crypto.randomUUID()`, and keeps it in memory only, never in `localStorage` or `sessionStorage`. A
 copy that is duplicated or restored must not inherit another copy's identifier. The client sends the
-identifier with:
+identifier, as the request header `X-Client-Id`, with:
 
-* every save, as a request header (`X-Client-Id`), and
-* a lightweight **heartbeat** every 20 seconds while the screen is open, which exists only to let
-  the server see copies that are open but idle.
+* every save, and
+* a lightweight **heartbeat** while the screen is open, one as soon as it opens and then as often
+  as the server asks (every 20 seconds by default). The heartbeat exists to let the server see
+  copies that are open but idle, and to bring back who else is there. It changes nothing: not the
+  saved thing, and not its version.
 
-If a response says that other copies are active, the screen shows a banner:
+**Identity.** The detector must be able to name people, but it must not know what a person is. So
+the application hands it an opaque **identity** with every client it records:
 
-> The server has detected multiple tabs or windows open on the same application. Please know that
-> this is risky; we recommend closing all but one of these.
+* a stable **person key**, which says whether two clients are the same person. For this app it is
+  the user's email address;
+* a **label**, which is what other people are shown. For this app it is `email (Full Name)`, or
+  just the email if the user has no name. A label longer than 200 characters is cut short with an
+  ellipsis (never in the middle of a character), so no one's name can swell an answer.
 
-The banner goes when a later response says the other copies are gone. The wording says "application"
-for draft applications. The banner component takes its noun as a parameter, so that other screens
-say "budget", "ranking" and so on.
+The detector treats both as opaque text. The application builds the identity from the current user
+(`User.email` and `User.fullName`) in its controller and passes it in.
 
-**Server.** A small detector class answers one question: how many distinct clients have touched this
-resource recently?
+**Server.** A small detector answers one question: who, other than the caller, is working on this
+resource now?
 
 * It is a map from a **resource key** (a string such as `draft:42`) to a map from client id to the
-  time that client was last seen.
-* `record(resourceKey, clientId)` stores "now" for that client. It also drops entries older than the
-  window while it is there, so the map does not grow without bound.
-* `othersActive(resourceKey, clientId)` is true if any client other than this one was seen within
-  the **window**. The default is 60 seconds, three times the heartbeat, so one lost heartbeat does
-  not make a copy disappear.
+  time that client was last seen and the identity it gave.
+* `record(resourceKey, clientId, identity)` stores "now" and the identity for that client. It also
+  drops entries older than the window, for every resource and not only this one, so the map does
+  not grow without bound.
+* `othersActive(resourceKey, clientId)` returns the other people active within the **window**, as a
+  list of `{label, samePerson}`, **one entry for each person** however many tabs they have open,
+  sorted by label. An entry has `samePerson` true if it is the same person as the caller (the
+  caller's own other tab or window); the caller's own client is never in the list. The caller is
+  compared by the identity recorded for its client id; a caller that was not recorded is nobody's
+  same person.
+* The default window is 60 seconds (`app.concurrency.window-seconds`, or the environment variable
+  `CONCURRENCY_WINDOW_SECONDS`). The heartbeat is a third of the window and at least a second, so
+  one lost heartbeat does not make a copy disappear. The server tells the client how often to beat
+  in each heartbeat answer, so the two are tuned together: the integration tests use a six-second
+  window and so a two-second heartbeat, which lets a warning be watched appearing and clearing.
 * The clock and the window length are constructor arguments, so tests run in zero time with a fake
   clock.
-* The save and heartbeat endpoints call `record`, then put `othersActive` in the response as a
-  boolean (`otherClientsActive`) alongside the saved value.
+* Two helpers keep the controllers short. `note(resourceKey, clientId, identity)` records the client
+  if it named itself usably (present, not blank, at most 100 characters) and otherwise does
+  nothing; saves call it. `heartbeat(resourceKey, clientId, identity)` records the client and
+  returns the answer; a client that did not name itself usably is not recorded and is told of no
+  one.
+
+**Wire format.** Names do not belong in headers: they are not always ASCII and they can be long. So
+the only header is the request's `X-Client-Id`, and everything the server has to say is the JSON
+body of the **heartbeat's** answer:
+
+```json
+{
+  "others": [
+    { "label": "phtcon@ucsb.edu (Phill Conrad)", "samePerson": false },
+    { "label": "me@example.org (Me)", "samePerson": true }
+  ],
+  "heartbeatSeconds": 20
+}
+```
+
+A save is answered exactly as it was before the warning existed; it only counts the client as
+present. The banner therefore learns of the others, and their names, at the next heartbeat: within
+one heartbeat of someone arriving, and within one window plus one heartbeat of them leaving. This
+was chosen as the simplest correct design: one source of names, one body to parse, no header
+encoding, and nothing to keep in step between a header cue on saves and the list from the
+heartbeat.
+
+The client reads the body defensively. Anything unexpected (a list that is not a list, an entry
+without a label, an interval that is not a positive number) is left out, and a heartbeat that fails
+is ignored and tried again at the next time, so the banner shows what the server last said.
+
+**Authorization.** The detector tells names to whoever asks. Therefore the application must check
+that the caller **may use the resource before** it records the caller or asks who else is there.
+Otherwise anyone could try resource keys and learn who is working where. For a draft application
+only its owner may use it, so the controller loads the draft and answers `403` for anyone else
+(`404` if there is none) before the detector is touched, for a heartbeat and for a save alike. The
+refused caller is not recorded, is told no names, and the response does not contain any.
+
+> **The rule for every future resource.** A heartbeat endpoint checks, with the same check the
+> resource's own edits use, that the caller may access the resource; only then does it record the
+> caller and answer with the others. A resource that several people may use (the budget, the
+> assignments) will show the names of the other people allowed to use it, and a person who may not
+> use it learns nothing. A new resource's tests must include the refusal and that nothing was
+> recorded by it.
+
+**The banner.** The client turns the list into a sentence with a pure function (`describeOthers`)
+and shows it, then the sentence *Please know that this is risky; we recommend closing all but one
+of these.* The noun is a parameter: "application" for a draft application, and "page", "budget",
+"ranking" and so on for other screens. The names are rendered as text, which React escapes, never as
+markup. A long name wraps instead of widening the page.
+
+| Who else is active | Sentence (noun "page") |
+|---|---|
+| no one | nothing is shown |
+| only the user's own other tabs | You are also editing this page in another tab or window. |
+| one other person | phtcon@ucsb.edu (Phill Conrad) is also editing this page. |
+| the user and one other person | You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs. |
+| two or three other people | A and B are also editing this page. / A, B and C are also editing this page. |
+| the user and two or three | You, A and B are also editing this page in other windows or tabs. |
+| more than three other people | A, B, C and 2 others are also editing this page. (three named, the rest counted; "1 other" for one) |
 
 The warning clears by itself. Once the extra copies are closed, they stop heartbeating, they age out
-of the window, and the next response to the remaining copy says `false`.
+of the window, and the next heartbeat of the remaining copy lists no one, so the banner goes.
 
 **What the warning is not.** It is advice, not a lock. A user who ignores it is still protected by
 the version check.
@@ -119,9 +193,12 @@ the version check.
   background tab may have its timers throttled by the browser. The 60-second window is chosen to
   ride that out in most browsers.
 * **One copy only** never sees either mechanism. This is as intended.
-* **Different people editing the same thing** are not distinguished from one person with two copies.
-  Both are conflicts and both are handled the same way. The warning text, which talks of "tabs or
-  windows", is slightly off in that case. The version check is right either way.
+* **Different people editing the same thing** are named in the warning, and told apart from the
+  user's own other tabs (*You*). Both are conflicts and both are handled the same way by the
+  version check. A draft application has one owner, so its warning is only ever about the owner's
+  own tabs; the names matter for resources that several people may use (Part 2).
+* **Names are shown to people who may use the resource, and to no one else.** That is the
+  authorization rule above, and it is the application's job, not the detector's.
 * **No merging.** The mechanism detects and refuses. It does not combine two sets of edits. Where
   the edits are to different fields of one record this is a real cost, which Part 2 returns to.
 
@@ -131,28 +208,69 @@ The pieces are written so that they could later be lifted out as libraries witho
 
 | | Where | Depends on |
 |---|---|---|
-| Server | A package of its own, `edu.ucsb.cs.taapply.concurrency` | The JDK, and `jakarta.servlet` for the header read. No entity, repository or service from the app |
-| Client | A folder of its own, `frontend/src/main/concurrency/` | React, and `axios` for the header. No import from `main/components`, `main/pages` or `main/utils` |
+| Server | A package of its own, `edu.ucsb.cs.taapply.concurrency` | The JDK only. No entity, repository or service from the app, and not even Spring |
+| Client | A folder of its own, `frontend/src/main/concurrency/` | React and `axios`. No import from `main/components`, `main/pages` or `main/utils`, and the banner uses plain Bootstrap class names rather than a component library |
 | Tests | `src/test/.../concurrency/` and `frontend/src/tests/concurrency/` | The same, plus a fake clock |
 
-The server package holds the detector, the interface it implements, the in-memory implementation
-and the small exception that becomes a `409`. The client folder holds the hook that makes and sends
-the identifier and heartbeat, the banner, and the conflict message with its Reload button. Each
-piece takes what it needs by parameter, such as the resource key, the noun in the banner, or the
-function that reloads, and never reaches into the app. An import of `main/...` from the client
-folder, or of `edu.ucsb.cs.taapply.entity` from the server package, is a bug in this design. A lint
-rule or an architecture test can enforce it.
+The server package holds the detector interface (`ClientActivityDetector`, with the `note` and
+`heartbeat` helpers), its in-memory implementation (`InMemoryClientActivityDetector`), the identity
+the app supplies (`ClientIdentity`), the entries it answers with (`OtherClient`), the heartbeat's
+answer (`Presence`), and the name of the header and the one rule about what a client id may be
+(`ConcurrencyHeaders`). The one place that knows about Spring is outside the package:
+`config/ConcurrencyConfig` makes the detector bean with the real clock and the window setting. The
+`409` is built by the application's own controller, since what a refused save says is the
+application's business. So is who the user is: the controller builds the identity from the current
+user.
 
-How each application screen uses them (what its resource key is, what its `409` body contains, what
-Reload does) stays in the application, outside these folders.
+The client folder holds the hook that makes the identifier, sends the heartbeat and reads the
+answers (`useClientActivity`), the header name (`headers`), the pure functions that read the answer
+and compose the sentence (`others`), and the banner (`MultipleTabsBanner`). The conflict message
+with its Reload button is not in it: what Reload does depends on the screen, so it stays in the
+application. Each piece takes what it needs by parameter, such as the heartbeat URL, the noun in the
+banner, or the function that reloads, and never reaches into the app. An import of `main/...` from
+the client folder, or of `edu.ucsb.cs.taapply.entity` from the server package, is a bug in this
+design. A lint rule or an architecture test can enforce it.
+
+How each application screen uses them (what its resource key is, who may use the resource, what its
+`409` body contains, what Reload does) stays in the application, outside these folders. For draft
+applications the wiring is in `DraftApplicationsController` on the server, and in `useDraftSaving`
+and `ApplyPage` on the client.
 
 The draft applications design, in `DraftApplicationsDesign.md`, describes the first use of the
 version check. This document is where the mechanism is described in general.
 
 ## Part 2. Extending it to the rest of the app
 
-The notes below come from reading the code that saves each of the four things. Two facts hold for
-all of them.
+The notes below come from reading the code that saves each of the four things surveyed so far. Two
+more follow, recruitment state and the other course page saves, where the answer is to refresh and
+not to warn. Each one is tracked by an issue.
+
+### The scope principle
+
+The warning fires only when **the exact same thing** is being edited in more than one tab, window or
+device. Different things never warn each other. Two tabs on two different recruitments, or one tab
+on the Budget and one on the Courses page, say nothing. Several tabs open on a **view-only** page
+are always fine: a page that cannot change anything does not heartbeat and cannot show the banner.
+
+This is what decides the resource key of each use. The key names the thing whose copies must not
+disagree, and no more. A draft application is one applicant's draft for one recruitment. A ranking
+list is one course's list. Some screens are best treated as one thing as a whole, such as the
+allocations edit page and the assignments page for one recruitment, because the numbers on them only
+mean something together.
+
+### Scope of each issue
+
+| Issue | Page | Scope | Resource key | Order |
+|---|---|---|---|---|
+| #273 | Application form draft | One applicant's draft for one recruitment | `draft:<draftId>` | first |
+| #277 | Budget | One quarter's budget (compare-and-set for a recruitment's average cost and hiring target) | `budget:<quarter>` | 2 |
+| #278 | Courses allocations and estimated enrollments | The whole edit page for one recruitment | `courses-edit:<recruitmentId>` | 3 |
+| #279 | Faculty rankings | One recruitment course's ranking list | `ranking:<recruitmentCourseId>` | 4 |
+| #280 | Assignments | The whole assignments page for one recruitment | `assignments:<recruitmentId>` | 5 |
+| #281 | Recruitment settings and workflow steps, for admins, instructors and students | No warning; background refresh plus refetch after each save | None (refresh, not a key) | extension |
+| #282 | Instructors page and non-allocation Courses page saves | No warning; same background refresh as #281 plus a refetch after each save | None (refresh, not a key) | extension |
+
+### Two facts that hold for the surveyed screens
 
 **Saves are single-field and absolute.** Each save sends one new value for one field or one row, not
 a whole document. For example, `PUT /api/admin/budget` receives only the line that was edited, and
@@ -176,7 +294,9 @@ does not notice that a different field changed, which, given the first fact abov
 A version column is the better choice when a save depends on several fields, or on other rows, being
 as the user saw them.
 
-### (a) The budget for a quarter
+### (a) The budget for a quarter (#277)
+
+Resource key `budget:<quarter>`, as in the table above.
 
 **What saves.** `BudgetController`, `PUT /api/admin/budget?quarter=`, sets any of the three lines
 (`unrestrictedBudget`, `tasOnlyBudget`, `ulasOnlyBudget`) on the single `budgets` row for the
@@ -188,10 +308,10 @@ another leaves whichever saved last. The summary on screen, computed on the serv
 after each save, is right for the saver and stale in the other tab, so two admins can disagree about
 how much money there is. Admins are few, so this is rare, but the number matters.
 
-**Fit.** Resource key `budget:<quarter>`. A version column on `budgets` covers all three lines. It is
-one row per resource, the simplest case there is. For the two recruitment fields, a version on
-`Recruitment` would be heavier, since that row is edited from many pages, so compare-and-set on those
-two fields is the lighter choice.
+**Fit.** A version column on `budgets` covers all three lines. It is one row per resource, the
+simplest case there is. For the two recruitment fields, a version on `Recruitment` would be heavier,
+since that row is edited from many pages, so compare-and-set on those two fields is the lighter
+choice.
 
 **On conflict.** The page keeps what the user typed, shows the current value beside it ("The TAs-only
 budget is now 45,000.00; you entered 40,000.00") and offers **Use theirs** and **Overwrite**.
@@ -202,13 +322,17 @@ one field, one number, and the user can see both.
 class comment), so there is no history to reconcile. The hiring target is shared with the
 allocations (see (b)), so a conflict on it should refresh the allocation summary too.
 
-### (b) The allocations to courses
+### (b) The allocations and estimated enrollments (#278)
+
+Resource key `courses-edit:<recruitmentId>`. The unit is **the whole edit page for a recruitment**:
+only one tab or window should have it open at a time.
 
 **What saves.** `RecruitmentCoursesController`,
 `PUT /api/recruitmentcourses/allocation?id=&allocation=`, sets the allocation on one
-`RecruitmentCourse` row, from the cell the admin edits in `RecruitmentCourseTable.tsx`. Separately,
-`POST /api/recruitmentcourses/autoAllocate` overwrites the allocation of every non-removed course in
-the recruitment in one request (#176, with the minimum-of-one rule from #257).
+`RecruitmentCourse` row, from the cell the admin edits in `RecruitmentCourseTable.tsx`. The same
+page edits the estimated enrollments. Separately, `POST /api/recruitmentcourses/autoAllocate`
+overwrites the allocation of every non-removed course in the recruitment in one request (#176, with
+the minimum-of-one rule from #257).
 
 **What goes wrong today.** Two cases.
 
@@ -218,23 +342,43 @@ the recruitment in one request (#176, with the minimum-of-one rule from #257).
    target. A single cell edit from there writes one number into a table whose other rows have all
    changed, and the total no longer equals the target. No error occurs.
 
-**Fit.** Row-level for the cell edit: resource key `course:<id>`, with a version on
-`recruitment_courses`. The bulk operation needs a recruitment-level guard, because it changes every
-row at once: a counter on `Recruitment`, bumped by Auto Allocate and sent with every cell edit. A
-cell edit then fails if either the row's version or the recruitment's counter has moved. A counter
-on `Recruitment` spares the cell edit from needing every row's new version after a bulk change.
+Both come from the same cause: the numbers on the page only mean something together, and a second
+copy that can edit them is a second copy that can break them.
+
+**Fit: split the page in two.** The Courses page for a recruitment becomes a **view-only page** and
+an **edit page**.
+
+* The **view-only page** is the default. Nothing on it is editable. It never heartbeats, never
+  warns, and any number of tabs can have it open.
+* The **edit page** is essentially today's page, with the cells editable. It sends the heartbeat and
+  shows the banner, keyed `courses-edit:<recruitmentId>`.
+* The view-only page has an **Edit** button, with the text beside it "Edit estimated enrollments,
+  and TA/ULA allocations", so that an admin knows why they would press it. The button leads to the
+  edit page.
+* Where a link from elsewhere in the app should land, on the view or the edit page, is left to
+  #278 to decide, one link at a time.
+
+This puts the scope principle to work: the warning is only ever about the screens that can change
+something, so someone who is only reading, a common case, never sees it.
+
+**The version check stays as the safety net.** The warning is advice, and an admin can ignore it.
+Row-level for the cell edit: an `allocationVersion` column on `recruitment_courses`, a separate
+column so that the course refresh and the enrollment estimates, which also write the row, do not
+cause spurious conflicts. For the bulk operation, which changes every row at once, a counter on
+`Recruitment` bumped by Auto Allocate and sent with every cell edit. A cell edit then fails if
+either the row's version or the recruitment's counter has moved.
 
 **On conflict.** For a cell edit, as in (a), show the current value and let the admin choose. After a
 conflict caused by the recruitment counter, reload the whole table, since all the old numbers are
 suspect.
 
-**Risks.** Medium. `RecruitmentCourse` rows are also written by the course refresh and by the
-enrollment estimates, which are not allocation edits. If the row's version moved for those reasons, a
-cell edit would be refused for a change the user did not care about. Keep a separate
-`allocationVersion` column for this purpose. That is cleaner than accepting spurious conflicts and is
-recommended.
+**Risks.** Medium, and larger than it was before the split, because the split changes a page that
+other pages link to. `RecruitmentCourse` rows are also written by the course refresh and by the
+enrollment estimates, which is why the version column is its own.
 
-### (c) The faculty rankings for a recruitment course
+### (c) The faculty rankings for a recruitment course (#279)
+
+Resource key `ranking:<recruitmentCourseId>`, as in the table above.
 
 **What saves.** `InstructorRecruitmentsController`,
 `PUT /api/instructor/recruitments/{recruitmentId}/courses/{recruitmentCourseId}/candidates/{applicationId}/rank`,
@@ -253,14 +397,13 @@ endpoint is open to instructors and to admins.
 * The rankings feed the Candidates Ranked and Rankings Still Needed counts, so the admin's picture is
   wrong until the next re-read.
 
-**Fit.** Resource key `ranking:<recruitmentCourseId>`: the whole list for the course, even though
-each save is one row, because a rank only means something relative to the others. The multi-tab
-warning is the most valuable half here, since the stale picture is the real hazard. A version on the
-course's ranking as a whole, bumped by any rank edit on that course, gives a sound check: an edit is
-refused if the list changed since the copy last read it. That is stricter than compare-and-set on
-one row and refuses edits that would have been fine, such as two instructors ranking different
-candidates. It is acceptable only together with the conflict handling below, which makes a refusal
-cheap.
+**Fit.** The whole list for the course is the thing, even though each save is one row, because a rank
+only means something relative to the others. The multi-tab warning is the most valuable half here,
+since the stale picture is the real hazard. A version on the course's ranking as a whole, bumped by
+any rank edit on that course, gives a sound check: an edit is refused if the list changed since the
+copy last read it. That is stricter than compare-and-set on one row and refuses edits that would have
+been fine, such as two instructors ranking different candidates. It is acceptable only together with
+the conflict handling below, which makes a refusal cheap.
 
 **On conflict.** Do not discard the instructor's rank. Re-read the list, keep the pending edit in
 the box, show "Rankings for this course changed while you were editing; your change has not been
@@ -273,7 +416,10 @@ frequent, so conflict handling that irritates will be noticed. Rankings are only
 faculty review is Open, which limits the exposure. The Developer Mode job that creates fake rankings
 (#220) writes these rows too and must bump the same version.
 
-### (d) The assignments
+### (d) The assignments (#280)
+
+Resource key `assignments:<recruitmentId>`. The unit is **the whole assignments page for a
+recruitment**.
 
 **What saves.** `AdminAssignmentsController`, `PUT /api/admin/assignments/tentative`, sets or clears
 `tentativeAssignmentId` on one application. The page (`AdminAssignmentsPage.tsx`) sends one request
@@ -289,11 +435,11 @@ Assignments are admin-only. Publishing them is a separate step (#243).
 * An admin working from a stale page after the other has published, or after an applicant has
   cancelled, acts on a state that no longer exists.
 
-**Fit.** Resource key `assignments:<recruitmentId>`. What matters (how many are assigned to each
-course, who is unassigned) are properties of the set of assignments, not of any one row, so a
-per-row version would catch only the case where the same applicant is assigned twice. A
-recruitment-level version, bumped by every tentative assignment and by publish, catches both, and the
-multi-tab warning, keyed the same way, says that someone else is working on the same recruitment.
+**Fit.** What matters (how many are assigned to each course, who is unassigned) are properties of the
+set of assignments, not of any one row. The expectation is that **only one admin edits the
+assignments for a recruitment at a time**, which is what the multi-tab warning, keyed the same way,
+tells them. So the check can be simple: a **recruitment-level version**, bumped by every tentative
+assignment and by publish. A save carries the version it last saw and is refused if it has moved.
 The response to a save already carries the whole view, so on success the client can take the new
 version from it without an extra read.
 
@@ -302,50 +448,136 @@ changed: "Assignments changed while you were working. The page has been refreshe
 placement and try again." The admin's click is not replayed, because after a refresh it may no
 longer be the right move.
 
-**Risks.** Highest. A recruitment-level version means any admin edit refuses every other admin's
-pending edit, so two admins assigning in parallel would collide constantly unless the check is
-narrowed: refuse only if the target course's count or the applicant's current assignment has changed
-since the client read them. That is a compare-and-set over several fields and is the most intricate
-part of this whole design. It touches the publish path and the counts that feed the Recruitment Steps
-panel. It should come last.
+**Risks.** Medium. The version has to be bumped everywhere the assignments change: a tentative
+assignment, publish, and an applicant cancelling. It touches the publish path and the counts that
+feed the Recruitment Steps panel. A check this strict would be tiresome if parallel admins were
+expected, but one editor is expected, and the warning exists to keep it that way.
+
+### (e) Keeping recruitment state fresh (#281)
+
+**Refresh instead of a warning.** For the recruitment's settings and workflow steps (dates, status,
+the per-step actions on the Recruitment Steps panel) there is **no version check, no detector and no
+banner**. These pages are read by admins, instructors and students, and edited by admins one click
+at a time. The danger is not two people overwriting a field. It is a copy that has gone stale and
+shows a step as open that was closed a minute ago, so someone acts on a state that no longer exists.
+The remedy is to keep every copy fresh, which is cheaper than warning about it and helps the people
+who are only reading.
+
+**What it looks like.**
+
+* **Refetch after each save.** Whatever a page changes, it re-reads the state that depends on it, as
+  the cards already do for their own saves.
+* **A background refresh every few seconds, without a full page reload.** The data is re-read in the
+  background and the page updates in place. See **Refresh timing** below.
+* **Paused in hidden tabs.** A tab that cannot be seen does not poll. When it is shown again, or the
+  window gets focus, it refetches at once, so that coming back to a tab never shows the old state for
+  longer than one request.
+* **Cheap queries only.** Only the light reads that feed the state are refreshed, such as the
+  recruitment steps and the recruitment list. The heavy tables (applications, rankings, assignments)
+  are not polled by this mechanism.
+* **Never overwrite input in progress.** A refresh updates what is displayed. It does not replace a
+  field the user is typing in, or an edit they have not saved.
+* **A repeated Close is a no-op on the server.** Closing a step that is already closed (or opening
+  one that is already open) succeeds and changes nothing, so a click from a copy that is a few
+  seconds stale is harmless instead of an error or a second state change.
+
+**Refresh timing.** After each refresh, a client waits a **freshly drawn random time**, uniform
+between *base - jitter* and *base + jitter* seconds, before the next one. The randomness is the
+point: clients that all started together, such as a classroom of students opening the home page at
+the same moment, drift apart instead of asking the server at the same instant every time. Admins are
+few and need the freshest picture. Instructors and students are many, so they wait longer.
+
+| Who | Base | Jitter | Waits between | Environment variables |
+|---|---|---|---|---|
+| Admins | 5 s | 3 s | 2 to 8 s | `ADMIN_REFRESH_SEC=5`, `ADMIN_REFRESH_JITTER=3` |
+| Instructors and students | 15 s | 5 s | 10 to 20 s | `NON_ADMIN_REFRESH=15`, `NON_ADMIN_JITTER=5` |
+
+All four are environment variables, with the values above as the defaults, so the load can be tuned
+without a release. A value that is missing, not a number, zero or negative (for a base), or a jitter
+that is negative or larger than its base is replaced by the safe default, so a typing mistake in the
+settings can never make a client refresh in a tight loop or never.
+
+**Means.** The app already reads this state through react-query, which supports all of the above:
+a refetch interval, no refetching while the tab is hidden, and refetching on focus. The work is in
+choosing the intervals, in the server making the step actions idempotent, and in making sure each
+refreshed page keeps what is being typed.
+
+**Key.** None. This is a refresh, not a key, so it does not use the detector or the banner.
+
+**First step of the issue.** A survey, written into this section, before any code: which queries feed
+the recruitment state on the admin, instructor and student pages, how expensive each is, and which
+step actions are not yet idempotent. The survey updates this document.
+
+### (f) The Instructors page and the other Courses page saves (#282)
+
+**Refresh instead of a warning.** The same approach as (e), with the same background refresh, the
+same timing and the same rules (paused in hidden tabs, refetch on focus, cheap queries only, never
+overwrite input in progress), plus a refetch after each save. There is no version check, detector
+or banner, and no resource key.
+
+**What saves there.** The Instructors page: adding an instructor, uploading a list of instructors,
+and deleting an instructor, and setting a catalog name. The Courses page, apart from the
+allocations: removing a course, setting its flags, and the enrollment estimates where they are saved
+from there. These are one-click or one-field saves, each of which a stale copy can repeat or
+contradict (deleting an instructor who is already gone, removing a course twice), so the remedy is a
+fresh picture and, on the server, saves that are safe to repeat.
+
+**What stays with #278.** The allocations and the estimated enrollments edited on the edit page are
+part of the Courses page split in (b), where the whole edit page is guarded with a heartbeat and a
+banner. #282 covers the saves that are left.
+
+**First step of the issue.** A survey, written into this section, before any code: each save on the
+two pages, which are already safe to repeat, and which queries a page needs refreshed. The survey
+updates this document.
 
 ## Iterations
 
-In order, easiest first. Each is written to become an issue. Sizes are rough: S is a day or less, M a
-few days, L about a week.
+In order, easiest first. Each is written to become an issue, and most already are. Sizes are rough: S
+is a day or less, M a few days, L about a week.
 
 1. **Extract the mechanism and cover draft applications. (M, issues #270 and #273.)** The version
    check on drafts, the detector, the client hook and banner, in their own package and folder with
-   their own tests, plus this document's Part 1. This is the base that everything below uses, and it
-   is already planned.
+   their own tests, plus this document's Part 1. This is the base that everything below uses.
 
-2. **Budget: version the quarter's budget row and warn about multiple copies. (S.)** One row per
-   quarter, one admin at a time in practice, the smallest possible user of the mechanism. Add a
+2. **Budget: version the quarter's budget row and warn about multiple copies. (S, #277.)** One row
+   per quarter, one admin at a time in practice, the smallest possible user of the mechanism. Add a
    `version` to `budgets`, a `409` on a stale `PUT /api/admin/budget`, the **Use theirs** and
    **Overwrite** choice, and the banner on the Budget page. Use compare-and-set for the recruitment's
    average cost and hiring target. It proves the mechanism on a second, unrelated screen and shows
    whether the package really is free of application knowledge.
 
-3. **Allocations: guard the cell edit and the bulk Auto Allocate. (M.)** Add `allocationVersion` to
-   `recruitment_courses` and a bulk-change counter to `Recruitment`. Cell edits send both and get a
-   `409` when either has moved. Auto Allocate bumps the counter and returns the new table, and the
-   table reloads after a counter conflict. This adds the one idea the budget lacks, a
-   recruitment-level change that invalidates every row, but still has only admin users and
-   single-field saves.
+3. **Allocations: split the Courses page into view and edit, then guard the edit page. (L, #278.)**
+   The page split is new work, so this is larger than it first looked (it was M). A view-only page
+   that never warns, with an Edit button; an edit page that heartbeats and warns, keyed
+   `courses-edit:<recruitmentId>`; and, as the safety net, `allocationVersion` on `recruitment_courses`
+   and a bulk-change counter on `Recruitment` for the cell edit and for Auto Allocate. This adds the
+   one idea the budget lacks, a recruitment-level change that invalidates every row, still with only
+   admin users and single-field saves.
 
-4. **Rankings: version a course's ranking list and keep the user's pending edit on conflict. (L.)** A
-   version on the course's rankings, bumped by every rank edit (including the Developer Mode fake
-   rankings job), a `409` on a stale edit, the warning keyed on the course, and the "your change has
-   not been saved" handling that keeps the edit in the box. More users, a hot path and a state
-   machine in the client make it bigger than the first three, but each save is still one row.
+4. **Rankings: version a course's ranking list and keep the user's pending edit on conflict. (L,
+   #279.)** A version on the course's rankings, bumped by every rank edit (including the Developer
+   Mode fake rankings job), a `409` on a stale edit, the warning keyed on the course, and the "your
+   change has not been saved" handling that keeps the edit in the box. More users, a hot path and a
+   state machine in the client make it bigger than the first three, but each save is still one row.
 
-5. **Assignments: narrow the check to the affected course and applicant. (L.)** A recruitment-level
-   version first, then narrowed so that parallel admins do not collide: refuse a tentative assignment
-   only if the target course's count or the applicant's assignment changed since the client read
-   them. Refresh the view on conflict. Cover publish and applicant cancellation. This is last
-   because the check spans rows, the counts are shared with the steps panel, and it is the one place
-   where a too-strict check makes the screen unusable and a too-loose one allows an over-assigned
-   course.
+5. **Assignments: a recruitment-level version on the whole assignments page. (M, #280.)** A version
+   bumped by every tentative assignment and by publish, a `409` on a stale assignment with a refresh
+   of the view, and the warning keyed on the recruitment. It is smaller than it first looked (it was
+   L), because one editor at a time is expected and no per-course narrowing is needed. Cover publish
+   and applicant cancellation.
+
+6. **Keep recruitment state fresh for admins, instructors and students. (S to M, #281.)** Refresh
+   instead of a warning: refetch after each save, a background refresh with random jitter (admins
+   2 to 8 seconds, instructors and students 10 to 20, set by environment variables), paused in hidden tabs and refetched on focus, cheap queries
+   only, never overwriting input in progress, and a repeated Close made a no-op on the server. It
+   needs no version check, detector or banner. A survey first, which updates section (e) of this
+   document.
+
+7. **Keep the Instructors page and Courses page saves fresh. (S to M, #282.)** Refresh instead of a
+   warning, with the same background refresh as #281 and a refetch after each save, for adding,
+   uploading and deleting instructors, setting a catalog name, and the Courses page saves other than
+   the allocations and estimates (which stay with #278). No version check, detector or banner. A
+   survey first, which updates section (f) of this document.
 
 After iteration 2 it is worth stopping to look at what the second user of the package needed that the
 first did not, and to fix the package before three more screens depend on it. That is also the moment

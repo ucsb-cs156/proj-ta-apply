@@ -438,6 +438,74 @@ public class ApplicationsWebIT extends WebTestCase {
     assertEquals(1, draftApplicationRepository.count());
   }
 
+  /**
+   * Issue #273: a second window on the same draft brings a warning in both, and the warning goes
+   * once the second window is closed. The integration profile shortens the window to six seconds
+   * (and so the heartbeat to two) so this can be watched happening.
+   */
+  @Test
+  public void a_second_window_on_the_same_draft_brings_a_warning_that_goes_when_it_closes()
+      throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    assertThat(page.getByTestId("ApplyPage-saveDraft")).isVisible();
+
+    // Alone, there is nothing to warn about.
+    assertThat(page.getByTestId("ApplyPage-multiple-tabs")).not().isVisible();
+
+    // A second window, signed in as the same person, opens the same draft.
+    com.microsoft.playwright.BrowserContext other =
+        browser.newContext(
+            new com.microsoft.playwright.Browser.NewContextOptions()
+                .setStorageState(page.context().storageState()));
+    com.microsoft.playwright.Page otherPage = other.newPage();
+    otherPage.navigate(page.url());
+    assertThat(otherPage.getByTestId("ApplyPage-saveDraft")).isVisible();
+
+    // Both are told, the first at its next heartbeat and the second at its first.
+    var wait =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsVisibleOptions()
+            .setTimeout(20000);
+    assertThat(otherPage.getByTestId("ApplyPage-multiple-tabs")).isVisible(wait);
+    assertThat(page.getByTestId("ApplyPage-multiple-tabs")).isVisible(wait);
+    assertThat(page.getByTestId("ApplyPage-multiple-tabs"))
+        .containsText(
+            "You are also editing this application in another tab or window."
+                + " Please know that this is risky; we recommend closing all but one of these.");
+    // The form is still there to use, and the draft is still the one.
+    assertThat(page.getByTestId("ApplyPage-submit")).isVisible();
+    assertEquals(1, draftApplicationRepository.count());
+
+    // Closing the second window lets the warning go: it ages out, and the first window hears so.
+    other.close();
+    var gone =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsHiddenOptions()
+            .setTimeout(30000);
+    assertThat(page.getByTestId("ApplyPage-multiple-tabs")).isHidden(gone);
+    assertEquals(1, draftApplicationRepository.count());
+  }
+
+  /**
+   * Issue #273: the applicant Help pages end with a Simultaneous Editing section that shows the
+   * warning.
+   */
+  @Test
+  public void the_help_pages_explain_simultaneous_editing() throws Exception {
+    setupRegularUser();
+
+    goTo("/help/ta-applicants");
+    assertThat(page.getByTestId("HelpTaApplicantsPage-simultaneous-editing"))
+        .containsText("Simultaneous Editing");
+    assertThat(page.getByTestId("HelpTaApplicantsPage-simultaneous-editing-example"))
+        .containsText("You are also editing this application in another tab or window.");
+
+    goTo("/help/ula-applicants");
+    assertThat(page.getByTestId("HelpUlaApplicantsPage-simultaneous-editing-example"))
+        .containsText("Please know that this is risky; we recommend closing all but one of these.");
+  }
+
   /** Any signed-in user sees every open recruitment, each labelled with its type. */
   @Test
   public void a_regular_user_sees_open_recruitments_of_both_types() throws Exception {

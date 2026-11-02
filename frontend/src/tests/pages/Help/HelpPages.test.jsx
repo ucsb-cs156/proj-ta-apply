@@ -35,6 +35,56 @@ const renderPage = (page, initialEntries = ["/"]) =>
     </QueryClientProvider>,
   );
 
+/**
+ * The last section of each applicant page (issue #273): "Simultaneous Editing", a picture of the
+ * warning, what it means and what to do.
+ */
+function expectSimultaneousEditingSection(page) {
+  const root = screen.getByTestId(page);
+  const heading = screen.getByRole("heading", {
+    level: 2,
+    name: "Simultaneous Editing",
+  });
+  // It ends the page: no other section follows it.
+  const headings = [...root.querySelectorAll("h2")];
+  expect(headings[headings.length - 1]).toBe(heading);
+
+  expect(heading.nextElementSibling).toHaveTextContent(
+    "If you try to edit the same application in more than one tab or window, you may get a warning that looks like this:",
+  );
+  // A faithful picture of the warning: the same banner, and the 'You are also editing' message.
+  const example = screen.getByTestId(`${page}-simultaneous-editing-example`);
+  expect(example).toHaveTextContent(
+    "You are also editing this application in another tab or window. Please know that this is risky; we recommend closing all but one of these.",
+  );
+  expect(example).toHaveClass("alert", "alert-warning");
+  // It is a picture and not a warning about anything, so it is not announced.
+  expect(screen.queryByRole("alert")).toBeNull();
+
+  const meaning = screen.getByTestId(`${page}-simultaneous-editing-meaning`);
+  expect(meaning).toHaveTextContent(
+    "What it means. The same draft is open somewhere else",
+  );
+  expect(meaning).toHaveTextContent(
+    "one copy can overwrite the other's changes",
+  );
+  expect(meaning).toHaveTextContent(
+    "the system will refuse a save from a copy that is out of date and ask you to reload",
+  );
+  const todo = screen.getByTestId(`${page}-simultaneous-editing-todo`);
+  expect(todo).toHaveTextContent(
+    "What to do. Close all the other tabs or windows, and keep just one.",
+  );
+  expect(todo).toHaveTextContent("If the form asks you to reload, reload it");
+  // In order, and last on the page.
+  expect(heading.nextElementSibling.nextElementSibling).toBe(example);
+  expect(example.nextElementSibling).toBe(meaning);
+  expect(meaning.nextElementSibling).toBe(todo);
+  expect(root.lastElementChild).toBe(todo);
+  // The tip that used to carry this warning is gone.
+  expect(screen.queryByTestId(`${page}-one-window`)).toBeNull();
+}
+
 describe("Help pages (issue #140)", () => {
   test("admin help distinguishes rankings CSV and explains historical export policy", async () => {
     renderPage(<HelpAdminsPage />);
@@ -73,6 +123,7 @@ describe("Help pages (issue #140)", () => {
         name: "For TA Applicants",
       }),
     ).toBeInTheDocument();
+    expectSimultaneousEditingSection("HelpTaApplicantsPage");
     const items = [
       ...screen
         .getByTestId("HelpTaApplicantsPage-asked-for")
@@ -397,6 +448,99 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByRole("link", { name: "For Developers" }),
     ).toHaveAttribute("href", "/help/developer");
+  });
+
+  test("the developer page explains simultaneous editing under the hood, with a table of where it is used (issue #273)", async () => {
+    renderPage(<HelpDeveloperPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Developers" });
+
+    // Pointed to from the top, and a section of its own.
+    expect(screen.getByTestId("HelpDeveloperPage-more")).toHaveTextContent(
+      "Not on the menu, but for developers: Simultaneous Editing explains, under the hood,",
+    );
+    expect(
+      screen.getByRole("link", { name: "Simultaneous Editing" }),
+    ).toHaveAttribute("href", "#simultaneous-editing");
+    const heading = document.getElementById("simultaneous-editing");
+    expect(heading.tagName).toBe("H2");
+    expect(heading.textContent).toBe("Simultaneous Editing");
+
+    const text = (id) =>
+      screen.getByTestId(`HelpDeveloperPage-simultaneous-${id}`).textContent;
+    // The two mechanisms and where the design is written down.
+    expect(text("editing")).toMatch(/version check/);
+    expect(text("editing")).toMatch(/multi-tab warning/);
+    expect(text("editing")).toMatch(
+      /docs\/design\/ConcurrentEditMitigationDesign\.md/,
+    );
+    // The version check.
+    expect(text("version")).toMatch(/409 Conflict/);
+    expect(text("version")).toMatch(/optimistic locking/);
+    // The client id and the heartbeat.
+    expect(text("heartbeat")).toMatch(/crypto\.randomUUID\(\)/);
+    expect(text("heartbeat")).toMatch(/X-Client-Id/);
+    expect(text("heartbeat")).toMatch(
+      /POST \/api\/draftApplications\/heartbeat\?id=/,
+    );
+    expect(text("heartbeat")).toMatch(
+      /changes nothing, not even the draft's version/,
+    );
+    // The detector and its identity.
+    expect(text("detector")).toMatch(/ClientActivityDetector/);
+    expect(text("detector")).toMatch(/edu\.ucsb\.cs\.taapply\.concurrency/);
+    expect(text("detector")).toMatch(/draft:<draftId>/);
+    expect(text("detector")).toMatch(/email \(Full Name\)/);
+    expect(text("detector")).toMatch(/one entry for each other person/);
+    expect(text("detector")).toMatch(
+      /Names are in the body and not in headers/,
+    );
+    expect(text("detector")).toMatch(/200 characters/);
+    expect(text("detector")).toMatch(/never as markup/);
+    // Authorization.
+    expect(text("authorization")).toMatch(/before it records the caller/);
+    expect(text("authorization")).toMatch(/403/);
+    expect(text("authorization")).toMatch(
+      /Every future use must make the same check first/,
+    );
+    // Limits and timing.
+    expect(text("limits")).toMatch(/one server process only/);
+    expect(text("limits")).toMatch(/60 seconds/);
+    expect(text("limits")).toMatch(/CONCURRENCY_WINDOW_SECONDS/);
+    expect(text("limits")).toMatch(/20 seconds/);
+    expect(text("limits")).toMatch(
+      /6 second window and so a 2 second heartbeat/,
+    );
+    // The refresh that other pages will use, and that it is not built yet.
+    for (const setting of [
+      "ADMIN_REFRESH_SEC=5",
+      "ADMIN_REFRESH_JITTER=3",
+      "NON_ADMIN_REFRESH=15",
+      "NON_ADMIN_JITTER=5",
+    ]) {
+      expect(text("refresh")).toContain(setting);
+    }
+    expect(text("refresh")).toMatch(/issues #281 and #282/);
+    expect(text("refresh")).toMatch(/This is not implemented yet\./);
+
+    // Only what has landed is in the table.
+    const table = screen.getByTestId("HelpDeveloperPage-simultaneous-table");
+    expect(
+      [...table.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual(["Page", "Scope", "Key", "PR"]);
+    const rows = [...table.querySelectorAll("tbody tr")];
+    expect(rows).toHaveLength(1);
+    expect(
+      [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Application form draft",
+      "One applicant's draft for one recruitment",
+      "draft:<draftId>",
+      "#283",
+    ]);
+    expect(rows[0].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/283",
+    );
   });
 
   test("the developer page starts with a table of every Developer menu option linking to its section (issue #266)", async () => {
@@ -780,6 +924,7 @@ describe("Help pages (issue #140)", () => {
     expect(screen.getByTestId("HelpUlaApplicantsPage").textContent).toMatch(
       /Continue editing draft application/,
     );
+    expectSimultaneousEditingSection("HelpUlaApplicantsPage");
     expect(screen.getByTestId("HelpUlaApplicantsPage").textContent).toMatch(
       /View submitted application/,
     );

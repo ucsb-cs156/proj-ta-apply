@@ -18,6 +18,7 @@ import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { NoticeVersion } from "main/utils/notices";
 import { draftWasSaved } from "main/utils/draftApplications";
 import { useDraftSaving } from "main/utils/useDraftSaving";
+import { MultipleTabsBanner } from "main/concurrency";
 
 /**
  * Creating an application against one open recruitment: /apply/:recruitmentId.
@@ -106,6 +107,7 @@ export default function ApplyPage(): React.JSX.Element {
     draft,
     failed: draftFailed,
     conflicted,
+    others,
     autosave,
     saveAndLeave,
     reload,
@@ -171,6 +173,11 @@ export default function ApplyPage(): React.JSX.Element {
         </h1>
         {/* The form waits for the list of existing applications, so it is never offered to someone
             whose submission would be refused, and for the draft it saves into. */}
+        <MultipleTabsBanner
+          others={others}
+          noun="application"
+          testId="ApplyPage-multiple-tabs"
+        />
         {conflicted && (
           <Alert variant="danger" data-testid="ApplyPage-conflict">
             <span data-testid="ApplyPage-conflict-message">
