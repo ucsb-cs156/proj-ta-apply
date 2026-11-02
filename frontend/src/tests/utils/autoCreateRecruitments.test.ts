@@ -27,24 +27,55 @@ describe("autoCreateRecruitments", () => {
     expect(nextNonSummerQuarter()).toMatch(/^\d{4}[124]$/);
   });
 
-  test("the selector offers the current quarter and the five after it", () => {
+  test("the selector offers the four quarters before the current one and the next one", () => {
+    // Fall: a full academic year back, one ahead (Winter of the next year).
     expect(selectableQuarters(new Date(2026, 9, 31))).toEqual([
-      "20264",
-      "20271",
-      "20272",
-      "20273",
-      "20274",
-      "20281",
-    ]);
-    expect(selectableQuarters(new Date(2026, 0, 5))).toEqual([
+      "20254",
       "20261",
       "20262",
       "20263",
       "20264",
       "20271",
-      "20272",
     ]);
-    expect(selectableQuarters()).toHaveLength(6);
+    // Winter: the years roll back over the new year.
+    expect(selectableQuarters(new Date(2026, 0, 5))).toEqual([
+      "20251",
+      "20252",
+      "20253",
+      "20254",
+      "20261",
+      "20262",
+    ]);
+    // Summer: one ahead, which is Fall.
+    expect(selectableQuarters(new Date(2026, 6, 1))).toEqual([
+      "20253",
+      "20254",
+      "20261",
+      "20262",
+      "20263",
+      "20264",
+    ]);
+  });
+
+  test("in Spring the selector reaches two quarters ahead, so Summer and Fall are both offered", () => {
+    expect(selectableQuarters(new Date(2026, 3, 1))).toEqual([
+      "20252",
+      "20253",
+      "20254",
+      "20261",
+      "20262",
+      "20263",
+      "20264",
+    ]);
+    expect(selectableQuarters(new Date(2026, 5, 30))).toHaveLength(7);
+    expect(selectableQuarters()).not.toHaveLength(0);
+  });
+
+  test("the default quarter is always one the selector offers", () => {
+    for (let month = 0; month < 12; month++) {
+      const day = new Date(2026, month, 15);
+      expect(selectableQuarters(day)).toContain(nextNonSummerQuarter(day));
+    }
   });
 
   test("calendar days are added across month and year ends", () => {

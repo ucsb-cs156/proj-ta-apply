@@ -24,13 +24,23 @@ export const nextNonSummerQuarter = (today: Date = new Date()): string => {
   return String(next % 10 === 3 ? nextQuarter(next) : next);
 };
 
+/** The quarter before `yyyyq` (YYYYQ as a number): Winter goes back to Fall of the year before. */
+const previousQuarter = (yyyyq: number): number =>
+  yyyyq % 10 === 1 ? yyyyq - 10 + 3 : yyyyq - 1;
+
 /**
- * The quarters the selector offers: the one today falls in and the five after it, so the admin can
- * choose something other than the default. As YYYYQ strings, oldest first.
+ * The quarters the selector offers: the four before the one today falls in (a full academic year,
+ * so there are courses to work with) through the one after it, or the two after it in Spring, when
+ * both the Summer and Fall schedules are available. As YYYYQ strings, oldest first.
  */
 export const selectableQuarters = (today: Date = new Date()): string[] => {
-  const quarters: number[] = [toNumericYYYYQ(quarterOfDate(today))];
-  while (quarters.length < 6) {
+  const current = toNumericYYYYQ(quarterOfDate(today));
+  const quarters: number[] = [current];
+  for (let i = 0; i < 4; i++) {
+    quarters.unshift(previousQuarter(quarters[0]));
+  }
+  const after = current % 10 === 2 ? 2 : 1;
+  for (let i = 0; i < after; i++) {
     quarters.push(nextQuarter(quarters[quarters.length - 1]));
   }
   return quarters.map(String);

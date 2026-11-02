@@ -707,14 +707,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           While developer mode is on, the recruitments section of the home page
           has an <strong>Auto Create Recruitments</strong> button. It proposes
           the quarter after the current one, skipping Summer (and lets you pick
-          another), and shows what it would do: a TA recruitment and a ULA
-          recruitment for that quarter, each only if one does not exist yet,
-          with the tentative opening date a week from today and the primary
-          consideration date a week after that. If both exist already there is
-          nothing to create. <em>Create Recruitments</em> then creates them
-          exactly as the <em>Create New Recruitment</em> button would, so their
-          course lists are filled in the usual way; nothing is opened, and no
-          hiring target is set.
+          another: the four quarters before the current one up to the next one,
+          or the next two in Spring, since only those have courses to fill in),
+          and shows what it would do: a TA recruitment and a ULA recruitment for
+          that quarter, each only if one does not exist yet, with the tentative
+          opening date a week from today and the primary consideration date a
+          week after that. If both exist already there is nothing to create.{" "}
+          <em>Create Recruitments</em> then creates them exactly as the{" "}
+          <em>Create New Recruitment</em> button would, so their course lists
+          are filled in the usual way; nothing is opened, and no hiring target
+          is set.
         </p>
         <p data-testid="HelpAdminsPage-fake-allocations">
           While developer mode is on, the footer of a recruitment&apos;s Courses
