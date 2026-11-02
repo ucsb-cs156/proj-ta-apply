@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/256-create-quarter-selector","number":264,"title":"Create Recruitment form: quarter range current - 4 to + 1 (+ 2 in Spring), default next quarter (closes #256)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/264"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/255-change-history-card","number":263,"title":"Put the Change History in a card that is closed by default (closes #255)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/263"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/256-create-quarter-selector","number":264,"title":"Create Recruitment form: quarter range current - 4 to + 1 (+ 2 in Spring), default next quarter (closes #256)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/264"}]
