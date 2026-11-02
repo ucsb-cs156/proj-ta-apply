@@ -9,12 +9,15 @@ import UpcomingRecruitmentsTable from "main/components/Student/UpcomingRecruitme
 import { useBackendMutation } from "main/utils/useBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { classifyRecruitments } from "main/utils/studentRecruitments";
+import type { DraftApplication } from "main/utils/draftApplications";
 
 type StudentDashboardProps = {
   /** Every recruitment, past or present. */
   recruitments: StudentRecruitment[];
   /** The student's own applications. */
   applications: Application[];
+  /** The student's drafts: applications started and not yet submitted (issue #270). */
+  drafts?: DraftApplication[];
   testIdPrefix?: string;
 };
 
@@ -30,6 +33,8 @@ type PendingCancel = {
 export default function StudentDashboard({
   recruitments,
   applications,
+  // Stryker disable next-line all : don't test default value of empty list
+  drafts = [],
   testIdPrefix = "StudentDashboard",
 }: StudentDashboardProps): React.JSX.Element {
   const { upcoming, current, past } = classifyRecruitments(
@@ -83,6 +88,7 @@ export default function StudentDashboard({
         <StudentRecruitmentCards
           recruitments={current}
           applications={applicationList}
+          drafts={drafts}
           onCancelRequested={(application, recruitment) =>
             setPendingCancel({ application, recruitment })
           }

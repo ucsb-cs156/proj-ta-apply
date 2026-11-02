@@ -1,3 +1,4 @@
+import { Alert, Button } from "react-bootstrap";
 import type { CourseInstructors } from "main/utils/courseLabels";
 import { Navigate, useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
@@ -15,8 +16,17 @@ import { useNoticeFillIn } from "main/utils/useNoticeFillIn";
 import { useCurrentUser } from "main/utils/currentUser";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { NoticeVersion } from "main/utils/notices";
+import { draftWasSaved } from "main/utils/draftApplications";
+import { useDraftSaving } from "main/utils/useDraftSaving";
 
-/** Creating an application against one open recruitment: /apply/:recruitmentId */
+/**
+ * Creating an application against one open recruitment: /apply/:recruitmentId.
+ *
+ * Nothing the applicant types is lost (issue #270). Opening the form starts a draft for the
+ * recruitment, or resumes the one already there, and what is entered is saved to it every few
+ * seconds and again when the page is left. Save Draft saves at once and returns to the home page;
+ * Submit turns the draft into the application and the server removes it.
+ */
 export default function ApplyPage(): React.JSX.Element {
   const { recruitmentId } = useParams();
   const navigate = useNavigate();
@@ -91,6 +101,27 @@ export default function ApplyPage(): React.JSX.Element {
     (a) => String(a.recruitmentId) === String(recruitmentId),
   );
 
+  // The draft for this recruitment, and the saving into it (issue #270).
+  const {
+    draft,
+    failed: draftFailed,
+    conflicted,
+    autosave,
+    saveAndLeave,
+    reload,
+    stop,
+  } = useDraftSaving({
+    recruitmentId,
+    // Stryker disable next-line all : the guard only avoids a request that would be refused
+    enabled: Boolean(recruitment) && mineFetched && !existing,
+    onSavedAndLeft: () => {
+      toast(
+        "Your draft has been saved. It is not an application until you submit it.",
+      );
+      navigate("/");
+    },
+  });
+
   // The current "Notices, Terms and Conditions" for this kind of form; empty until one is written.
   const { data: notices } = useBackend<NoticeVersion[]>(
     ["/api/notices/current", recruitment?.type],
@@ -115,11 +146,14 @@ export default function ApplyPage(): React.JSX.Element {
     }),
     {
       onSuccess: () => {
+        // The server has removed the draft; the form being left must not save to it once more.
+        stop();
         toast("Your application has been submitted.");
         navigate("/");
       },
     },
-    ["/api/applications/mine"],
+    // Stryker disable next-line all : cache invalidation is not observable from here
+    ["/api/applications/mine", "/api/draftApplications/mine"],
   );
 
   if (existing) {
@@ -136,31 +170,67 @@ export default function ApplyPage(): React.JSX.Element {
             `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`}
         </h1>
         {/* The form waits for the list of existing applications, so it is never offered to someone
-            whose submission would be refused. */}
-        {recruitment && mineFetched && (
-          <ApplicationForm
-            type={recruitment.type}
-            courses={courses ?? []}
-            instructors={instructors ?? {}}
-            recruitmentId={recruitmentId}
-            majors={options?.majors ?? []}
-            topics={options?.topics ?? []}
-            interests={options?.interests ?? []}
-            notice={(notices ?? [])[0] ?? null}
-            noticeFillIn={noticeFillIn}
-            initialContents={(prefill ?? [])[0]}
-            defaultNames={{
-              firstName: currentUser.root?.user?.givenName,
-              lastName: currentUser.root?.user?.familyName,
-            }}
-            submitAction={(payload) => mutation.mutate(payload)}
-            buttonLabel="Submit Application"
-            testIdPrefix="ApplyPage"
-          />
+            whose submission would be refused, and for the draft it saves into. */}
+        {conflicted && (
+          <Alert variant="danger" data-testid="ApplyPage-conflict">
+            <span data-testid="ApplyPage-conflict-message">
+              This draft was changed in another tab or window. Reload to see the
+              latest version.
+            </span>
+            <Button
+              className="ms-2"
+              size="sm"
+              variant="danger"
+              onClick={() => reload()}
+              data-testid="ApplyPage-conflict-reload"
+            >
+              Reload
+            </Button>
+          </Alert>
         )}
+        {
+          // Stryker disable next-line all : the draft is only asked for once the recruitment and the list are there
+          recruitment && mineFetched && draft && (
+            <ApplicationForm
+              // A reloaded draft is a new start: the form takes its answers afresh.
+              key={draft.version}
+              type={recruitment.type}
+              courses={courses ?? []}
+              instructors={instructors ?? {}}
+              recruitmentId={recruitmentId}
+              majors={options?.majors ?? []}
+              topics={options?.topics ?? []}
+              interests={options?.interests ?? []}
+              notice={(notices ?? [])[0] ?? null}
+              noticeFillIn={noticeFillIn}
+              // A draft the form has saved before is what the applicant left; a new one has nothing
+              // of its own, so the answers from their earlier application fill it in.
+              // Stryker disable next-line all : don't test default value of empty list
+              initialContents={
+                draftWasSaved(draft) ? draft : (prefill ?? [])[0]
+              }
+              defaultNames={{
+                firstName: currentUser.root?.user?.givenName,
+                lastName: currentUser.root?.user?.familyName,
+              }}
+              submitAction={(payload) => mutation.mutate(payload)}
+              onDraftChange={autosave}
+              onSaveDraft={saveAndLeave}
+              buttonLabel="Submit Application"
+              testIdPrefix="ApplyPage"
+            />
+          )
+        }
         {!recruitment && (
           <p data-testid="ApplyPage-unavailable">
             That recruitment is not one you can apply to.
+          </p>
+        )}
+        {/* A draft is only asked for once there is a recruitment, so a failure implies one. */}
+        {draftFailed && (
+          <p data-testid="ApplyPage-draft-failed">
+            The application could not be started. Applications may not be open
+            for this recruitment.
           </p>
         )}
       </div>

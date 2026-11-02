@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, Button, Col, Form, Row, Table } from "react-bootstrap";
 import {
   CHOICE_CELL_STYLE,
@@ -6,7 +6,7 @@ import {
   SELECTION_TABLE_CLASS,
 } from "main/utils/formTableLayout";
 import { useForm } from "react-hook-form";
-import type { Application } from "main/components/Applications/ApplicationTable";
+import type { ApplicationAnswers } from "main/utils/draftApplications";
 import CourseSectionsCard from "main/components/Applications/CourseSectionsCard";
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import PriorCourseworkSection from "main/components/PriorCoursework/PriorCourseworkSection";
@@ -115,16 +115,55 @@ type ApplicationFormProps = {
   notice?: NoticeVersion | null;
   /** The recruitment's quarter and deadline, filled into the notice's fields (issue #150). */
   noticeFillIn?: NoticeFillIn | null;
-  initialContents?: Partial<Application>;
+  initialContents?: ApplicationAnswers;
   /**
    * Names from the signed-in Google account, used only where the application itself has none.
    * Google gives no middle name, so that field has no fallback.
    */
   defaultNames?: { firstName?: string | null; lastName?: string | null };
   submitAction: (payload: ApplicationPayload) => void;
+  /**
+   * Called with everything entered so far, complete or not, a few seconds after the answers change
+   * and again when the form is left, so that nothing typed is ever lost (issue #270). Without it
+   * the form saves nothing until it is submitted.
+   */
+  onDraftChange?: (payload: ApplicationPayload) => void;
+  /**
+   * Shows a Save Draft button beside the submit button, which calls this with everything entered
+   * so far, whether or not it is complete (issue #270).
+   */
+  onSaveDraft?: (payload: ApplicationPayload) => void;
   buttonLabel?: string;
   testIdPrefix?: string;
 };
+
+/** How long after the answers change the draft is saved: every few seconds while typing goes on. */
+export const DRAFT_SAVE_DELAY_MS = 3000;
+
+/** What the form needs to remember between renders to save its draft; see {@link flushDraft}. */
+type DraftSaver = {
+  /** The draft as last sent, or as first shown; null until the form has rendered once. */
+  savedKey: string | null;
+  /** The newest changes not sent yet. */
+  pending: { key: string; payload: ApplicationPayload } | null;
+  timer: ReturnType<typeof setTimeout> | null;
+  send: ((payload: ApplicationPayload) => void) | undefined;
+};
+
+/**
+ * Sends the changes waiting to be saved, if any. Called when the timer fires and when the form is
+ * left; a timer that fires with nothing waiting (the changes went another way) does nothing.
+ */
+function flushDraft(saver: DraftSaver): void {
+  saver.timer = null;
+  const pending = saver.pending;
+  if (pending === null) {
+    return;
+  }
+  saver.pending = null;
+  saver.savedKey = pending.key;
+  saver.send?.(pending.payload);
+}
 
 const asString = (value: unknown): string =>
   value === null || value === undefined ? "" : String(value);
@@ -186,6 +225,8 @@ export default function ApplicationForm({
   initialContents,
   defaultNames,
   submitAction,
+  onDraftChange,
+  onSaveDraft,
   buttonLabel = "Submit",
   testIdPrefix = "ApplicationForm",
 }: ApplicationFormProps): React.JSX.Element {
@@ -281,6 +322,9 @@ export default function ApplicationForm({
     "trainingCommitment",
     "languageExam",
   ]);
+  // Every answer, for the draft: unlike the few above, which decide what is shown, it changes on any
+  // keystroke. Only a form that saves a draft pays for it.
+  const everything = onDraftChange || onSaveDraft ? watch() : null;
   const [
     firstChoice,
     secondChoice,
@@ -407,6 +451,61 @@ export default function ApplicationForm({
             .map((interest) => [interest, interestLevels[interest]]),
         ),
   });
+
+  /**
+   * Everything entered so far, as a draft (issue #270): the same payload a submission sends, but
+   * nothing is required of it, and the notice is agreed to only if the box has been ticked.
+   */
+  const draftKey =
+    everything === null
+      ? null
+      : JSON.stringify({
+          ...toPayload(answers(everything, major.trim())),
+          noticeVersionId: agreedTo,
+        });
+
+  const saver = useRef<DraftSaver>({
+    savedKey: null,
+    pending: null,
+    timer: null,
+    send: undefined,
+  });
+  useEffect(() => {
+    saver.current.send = onDraftChange;
+  });
+  useEffect(() => {
+    const s = saver.current;
+    if (draftKey === null) return;
+    if (s.savedKey === null) {
+      // The form as first shown is what is stored already, or has nothing worth storing yet.
+      s.savedKey = draftKey;
+      return;
+    }
+    if (draftKey === s.savedKey) {
+      // Changed and changed back before it was sent.
+      s.pending = null;
+      return;
+    }
+    s.pending = { key: draftKey, payload: JSON.parse(draftKey) };
+    // Not restarted by the next keystroke, so a long stretch of typing still saves every few
+    // seconds rather than only once it stops.
+    s.timer ??= setTimeout(() => flushDraft(s), DRAFT_SAVE_DELAY_MS);
+  }, [draftKey]);
+  // Leaving the form (the back button, a link) sends whatever has not been saved yet.
+  useEffect(() => {
+    const s = saver.current;
+    return () => flushDraft(s);
+  }, []);
+
+  const saveDraft = () => {
+    // Stryker disable next-line all : the button is only shown with onSaveDraft, which needs the key
+    if (draftKey === null || !onSaveDraft) return;
+    const s = saver.current;
+    // Sent now, so the changes waiting for the timer are in it and need no second save.
+    s.pending = null;
+    s.savedKey = draftKey;
+    onSaveDraft(JSON.parse(draftKey));
+  };
 
   /** The major and the agreement are outside react-hook-form, so their required checks run here. */
   const submit = (data: RegisteredFields) => {
@@ -1552,6 +1651,16 @@ export default function ApplicationForm({
         <Button type="submit" data-testid={id("submit")}>
           {buttonLabel}
         </Button>
+        {onSaveDraft && (
+          <Button
+            type="button"
+            variant="outline-secondary"
+            onClick={saveDraft}
+            data-testid={id("saveDraft")}
+          >
+            Save Draft
+          </Button>
+        )}
         {missing.length > 0 && (
           <div
             className="text-danger small"

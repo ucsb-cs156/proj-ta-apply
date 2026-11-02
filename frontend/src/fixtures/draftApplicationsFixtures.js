@@ -1,0 +1,71 @@
+/** Drafts (issue #270): applications as they are being filled in. */
+
+/** What opening the form makes the first time: nothing but who and which recruitment. */
+const emptyUlaDraft = {
+  id: 21,
+  recruitmentId: 2,
+  email: "ula@ucsb.edu",
+  updatedAt: "2026-01-10T09:00:00",
+  version: 0,
+  noticeVersionId: null,
+  firstName: null,
+  middleName: null,
+  lastName: null,
+  major: null,
+  gpaMajor: null,
+  gpaOverall: null,
+  yearInProgram: null,
+  graduationDate: null,
+  prevExperience: null,
+  comments: null,
+  firstChoiceCourse: null,
+  secondChoiceCourse: null,
+  availableForLecturesFirstChoice: null,
+  availableForLecturesSecondChoice: null,
+  availableForDiscussionFirstChoice: null,
+  availableForDiscussionSecondChoice: null,
+  availabilityCommentsFirstChoice: null,
+  availabilityCommentsSecondChoice: null,
+  courseInterests: {},
+  topicProficiencies: {},
+  interests: {},
+  priorCoursework: [],
+  residencyStatus: null,
+  languageExam: null,
+  languageExamDatePassed: null,
+  classLevel: null,
+  videoLink: null,
+  previousServiceAsUla: null,
+  permNumber: null,
+  bsMsStudent: null,
+  studentStatusNextQuarter: null,
+  wantsTaEligibility: null,
+  otherCampusJob: null,
+  priorUcsbEmployment: null,
+  employeeId: null,
+  i9Appointment: null,
+  trainingCommitment: null,
+  trainingCommitmentExplanation: null,
+  changingMajor: null,
+};
+
+/** A draft the form has saved: a name and a few answers, nowhere near complete. */
+const savedUlaDraft = {
+  ...emptyUlaDraft,
+  updatedAt: "2026-01-11T10:30:00",
+  version: 4,
+  firstName: "Dana",
+  middleName: "",
+  lastName: "Draft",
+  major: "Computer Science",
+  gpaMajor: 3.4,
+  comments: "Saved before I finished",
+  availableForLecturesFirstChoice: false,
+  availableForLecturesSecondChoice: false,
+  availableForDiscussionFirstChoice: false,
+  availableForDiscussionSecondChoice: false,
+};
+
+const draftApplicationsFixtures = { emptyUlaDraft, savedUlaDraft };
+
+export default draftApplicationsFixtures;

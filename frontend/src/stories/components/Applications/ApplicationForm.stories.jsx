@@ -53,6 +53,18 @@ UlaApplication.args = {
   submitAction: (payload) => console.log("submit", payload),
 };
 
+/** Saving as you go (issue #270): a Save Draft button beside Submit, and a save a few seconds after a change. */
+export const SavingADraft = Template.bind({});
+SavingADraft.args = {
+  type: "TA",
+  courses,
+  majors: taMajors,
+  topics: taTopics,
+  submitAction: (payload) => console.log("submit", payload),
+  onDraftChange: (payload) => console.log("autosave", payload),
+  onSaveDraft: (payload) => console.log("save draft", payload),
+};
+
 /** With nothing to copy from, the names come from the signed-in Google account. */
 export const NamesFromTheGoogleAccount = Template.bind({});
 NamesFromTheGoogleAccount.args = {

@@ -2,6 +2,7 @@ import React from "react";
 import { HttpResponse, http } from "msw";
 import HomePageLoggedIn from "main/pages/Home/HomePageLoggedIn";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
@@ -31,6 +32,9 @@ const handlers = (user, backend = {}) => [
   ),
   http.get("/api/applications/mine", () =>
     HttpResponse.json(backend.applications ?? []),
+  ),
+  http.get("/api/draftApplications/mine", () =>
+    HttpResponse.json(backend.drafts ?? []),
   ),
   http.get("/api/instructor/recruitments", () =>
     HttpResponse.json(backend.instructorRecruitments ?? []),
@@ -63,7 +67,18 @@ Student.parameters = {
   },
 };
 
-/** Applied to both current recruitments: View/Edit, View/Comment and Cancel buttons. */
+/** An application begun and not submitted: Continue editing, with a red warning. */
+export const StudentWithADraft = Template.bind({});
+StudentWithADraft.parameters = {
+  msw: {
+    handlers: handlers(apiCurrentUserFixtures.userOnly, {
+      recruitments: three,
+      drafts: [draftApplicationsFixtures.savedUlaDraft],
+    }),
+  },
+};
+
+/** Applied to both current recruitments: View, View/Comment and Cancel buttons. */
 export const StudentWithApplications = Template.bind({});
 StudentWithApplications.parameters = {
   msw: {

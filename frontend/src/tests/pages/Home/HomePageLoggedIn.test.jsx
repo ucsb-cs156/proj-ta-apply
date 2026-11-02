@@ -9,6 +9,7 @@ import HomePageLoggedIn from "main/pages/Home/HomePageLoggedIn";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
 import instructorRecruitmentsFixtures from "fixtures/instructorRecruitmentsFixtures";
@@ -40,6 +41,9 @@ function renderHome(currentUserFixture, backend = {}) {
   axiosMock
     .onGet("/api/applications/mine")
     .reply(200, backend.applications ?? []);
+  axiosMock
+    .onGet("/api/draftApplications/mine")
+    .reply(200, backend.drafts ?? []);
   axiosMock
     .onGet("/api/instructor/recruitments")
     .reply(200, backend.instructorRecruitments ?? []);
@@ -250,6 +254,29 @@ describe("HomePageLoggedIn tests", () => {
     expect(closedTa.id).toBe(1);
   });
 
+  test("the drafts feed the student section: a card offers to continue one", async () => {
+    renderHome(apiCurrentUserFixtures.userOnly, {
+      recruitments: recruitmentsFixtures.threeRecruitments,
+      drafts: [draftApplicationsFixtures.savedUlaDraft],
+    });
+
+    const draft = await screen.findByTestId(
+      "HomePageLoggedIn-dashboard-current-card-2-draft",
+    );
+    expect(draft).toHaveTextContent("Continue editing draft application");
+    expect(draft).toHaveAttribute("href", "/apply/2");
+    expect(
+      screen.getByTestId(
+        "HomePageLoggedIn-dashboard-current-card-2-draft-warning",
+      ),
+    ).toHaveTextContent("Your application is not yet complete");
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/draftApplications/mine",
+      ),
+    ).toHaveLength(1);
+  });
+
   test("a past application is listed under Past Recruitments", async () => {
     vi.setSystemTime(new Date(2026, 9, 1, 12, 0, 0));
     renderHome(apiCurrentUserFixtures.userOnly, {
@@ -291,6 +318,7 @@ describe("HomePageLoggedIn tests", () => {
       axiosMock.history.get.filter(
         (r) =>
           r.url === "/api/applications/mine" ||
+          r.url === "/api/draftApplications/mine" ||
           r.url === "/api/recruitments/applicable",
       ),
     ).toHaveLength(0);

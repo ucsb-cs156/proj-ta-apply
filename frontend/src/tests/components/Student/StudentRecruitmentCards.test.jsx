@@ -8,6 +8,7 @@ import StudentRecruitmentCards, {
 } from "main/components/Student/StudentRecruitmentCards";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 
 // W26 ULA OPEN (id 2); W26 TA CLOSED on 2026-02-01 (id 1).
 const [, openUla, closedTa] = recruitmentsFixtures.threeRecruitments;
@@ -19,12 +20,14 @@ function renderCards(
   recruitments = [openUla, closedTa],
   applications = [],
   onCancelRequested = vi.fn(),
+  drafts = undefined,
 ) {
   render(
     <MemoryRouter>
       <StudentRecruitmentCards
         recruitments={recruitments}
         applications={applications}
+        drafts={drafts}
         onCancelRequested={onCancelRequested}
         testIdPrefix="S"
       />
@@ -75,24 +78,28 @@ describe("StudentRecruitmentCards tests", () => {
     expect(screen.queryByText(/Faculty Ranking Deadline/)).toBeNull();
   });
 
-  test("without an application: a grey badge, and Apply Now live only when open", async () => {
+  test("without an application: a grey badge, and Apply live only when open", async () => {
     renderCards();
 
     const badge = screen.getByTestId("S-card-2-applied");
     expect(badge).toHaveTextContent("No application submitted yet");
     expect(badge).toHaveClass("badge", "bg-secondary", "ms-auto");
+    expect(badge).not.toHaveClass("text-dark");
 
     const apply = screen.getByTestId("S-card-2-apply");
-    expect(apply).toHaveTextContent("Apply Now");
+    expect(apply).toHaveTextContent("Apply to be a ULA");
     expect(apply).toHaveAttribute("href", "/apply/2");
     expect(apply).toHaveClass("btn", "btn-success");
     expect(screen.queryByTestId("S-card-2-view")).toBeNull();
     expect(screen.queryByTestId("S-card-2-cancel")).toBeNull();
+    // With no draft there is nothing to continue.
+    expect(screen.queryByTestId("S-card-2-draft")).toBeNull();
+    expect(screen.queryByTestId("S-card-2-draft-warning")).toBeNull();
 
     // Closed: greyed out, with a tooltip on its wrapper.
     const closedApply = screen.getByTestId("S-card-1-apply");
     expect(closedApply).toBeDisabled();
-    expect(closedApply).toHaveTextContent("Apply Now");
+    expect(closedApply).toHaveTextContent("Apply to be a TA");
     expect(closedApply).toHaveClass("btn-secondary");
     expect(closedApply).toHaveStyle({ pointerEvents: "none" });
     expect(closedApply).not.toHaveAttribute("href");
@@ -103,17 +110,18 @@ describe("StudentRecruitmentCards tests", () => {
     expect(NOT_OPEN_TOOLTIP).toBe("Applications are not open yet");
   });
 
-  test("with an application: a green badge, View/Edit while open, View/Comment once closed, and Cancel", async () => {
+  test("with an application: a green badge, View submitted application while open, View/Comment once closed, and Cancel", async () => {
     const onCancelRequested = renderCards([openUla, closedTa], [ulaApp, taApp]);
 
     expect(screen.getByTestId("S-card-2-applied")).toHaveTextContent(
       "Application on File",
     );
     expect(screen.getByTestId("S-card-2-applied")).toHaveClass("bg-success");
+    expect(screen.getByTestId("S-card-2-applied")).not.toHaveClass("text-dark");
     expect(screen.queryByTestId("S-card-2-apply")).toBeNull();
 
     const edit = screen.getByTestId("S-card-2-view");
-    expect(edit).toHaveTextContent("View/Edit my Application");
+    expect(edit).toHaveTextContent("View submitted application");
     expect(edit).toHaveAttribute("href", "/applications/2");
     expect(edit).toHaveClass("btn", "btn-success");
 
@@ -133,6 +141,57 @@ describe("StudentRecruitmentCards tests", () => {
     expect(onCancelRequested).toHaveBeenLastCalledWith(ulaApp, openUla);
   });
 
+  test("with a draft and applications open: Continue editing, with a red warning, instead of Apply", () => {
+    renderCards([openUla, closedTa], [], vi.fn(), [
+      draftApplicationsFixtures.savedUlaDraft,
+    ]);
+
+    const badge = screen.getByTestId("S-card-2-applied");
+    expect(badge).toHaveTextContent("Draft application, not submitted");
+    expect(badge).toHaveClass("badge", "bg-warning", "text-dark", "ms-auto");
+    const draft = screen.getByTestId("S-card-2-draft");
+    expect(draft).toHaveTextContent("Continue editing draft application");
+    expect(draft).toHaveAttribute("href", "/apply/2");
+    expect(draft).toHaveClass("btn", "btn-success");
+    const warning = screen.getByTestId("S-card-2-draft-warning");
+    expect(warning).toHaveTextContent(
+      "Your application is not yet complete; incomplete applications are not considered.",
+    );
+    expect(warning).toHaveClass("text-danger");
+    expect(screen.queryByTestId("S-card-2-apply")).toBeNull();
+    expect(screen.queryByTestId("S-card-2-view")).toBeNull();
+    expect(screen.queryByTestId("S-card-2-cancel")).toBeNull();
+
+    // Another recruitment, with no draft, is as before.
+    expect(screen.getByTestId("S-card-1-applied")).toHaveTextContent(
+      "No application submitted yet",
+    );
+    expect(screen.queryByTestId("S-card-1-draft")).toBeNull();
+    expect(screen.queryByTestId("S-card-1-draft-warning")).toBeNull();
+  });
+
+  test("a draft for a recruitment that has closed offers nothing to continue", () => {
+    renderCards([closedTa], [], vi.fn(), [
+      { ...draftApplicationsFixtures.savedUlaDraft, recruitmentId: 1 },
+    ]);
+
+    expect(screen.queryByTestId("S-card-1-draft")).toBeNull();
+    expect(screen.queryByTestId("S-card-1-draft-warning")).toBeNull();
+    expect(screen.getByTestId("S-card-1-apply")).toBeDisabled();
+  });
+
+  test("a submitted application wins over a draft left behind", () => {
+    renderCards([openUla], [ulaApp], vi.fn(), [
+      draftApplicationsFixtures.savedUlaDraft,
+    ]);
+
+    expect(screen.getByTestId("S-card-2-applied")).toHaveTextContent(
+      "Application on File",
+    );
+    expect(screen.queryByTestId("S-card-2-draft")).toBeNull();
+    expect(screen.getByTestId("S-card-2-view")).toBeInTheDocument();
+  });
+
   test("a cancelled application: a grey badge, a plain View link and no Cancel", () => {
     renderCards([openUla], [applicationsFixtures.oneCancelledApplication]);
 
@@ -150,7 +209,11 @@ describe("StudentRecruitmentCards tests", () => {
   test("tolerates non-array props and has defaults", async () => {
     render(
       <MemoryRouter>
-        <StudentRecruitmentCards recruitments={null} applications={null} />
+        <StudentRecruitmentCards
+          recruitments={null}
+          applications={null}
+          drafts={null}
+        />
       </MemoryRouter>,
     );
     expect(screen.getByTestId("StudentRecruitmentCards")).toBeEmptyDOMElement();
