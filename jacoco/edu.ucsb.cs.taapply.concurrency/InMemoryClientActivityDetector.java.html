@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InMemoryClientActivityDetector.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.concurrency</a> &gt; <span class="el_source">InMemoryClientActivityDetector.java</span></div><h1>InMemoryClientActivityDetector.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.concurrency;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * A {@link ClientActivityDetector} that keeps what it has seen in memory: for each resource key and
+ * client, when it was last seen and who it is.
+ *
+ * &lt;p&gt;The clock and the window are given to the constructor, so that tests run in no time with a
+ * clock they control. Every {@link #record} also forgets everything older than the window, on every
+ * resource, so the state stays as small as the activity of the last window.
+ *
+ * &lt;p&gt;&lt;b&gt;One server only.&lt;/b&gt; A second server process would have a state of its own and the two
+ * would not see each other's clients. The application runs as one instance. If that changes, the
+ * state moves to the database behind this same interface.
+ */
+public class InMemoryClientActivityDetector implements ClientActivityDetector {
+
+  /** When a client was last seen, and who it is. */
+<span class="fc" id="L26">  private record Seen(Instant at, ClientIdentity identity) {}</span>
+
+<span class="fc" id="L28">  private static final Comparator&lt;OtherClient&gt; BY_LABEL =</span>
+<span class="fc" id="L29">      Comparator.comparing(OtherClient::label, String.CASE_INSENSITIVE_ORDER)</span>
+<span class="fc" id="L30">          .thenComparing(OtherClient::label);</span>
+
+  private final Clock clock;
+  private final Duration window;
+<span class="fc" id="L34">  private final Map&lt;String, Map&lt;String, Seen&gt;&gt; seen = new HashMap&lt;&gt;();</span>
+
+<span class="fc" id="L36">  public InMemoryClientActivityDetector(Clock clock, Duration window) {</span>
+<span class="fc bfc" id="L37" title="All 4 branches covered.">    if (window.isZero() || window.isNegative()) {</span>
+<span class="fc" id="L38">      throw new IllegalArgumentException(&quot;The window must be longer than zero&quot;);</span>
+    }
+<span class="fc" id="L40">    this.clock = clock;</span>
+<span class="fc" id="L41">    this.window = window;</span>
+<span class="fc" id="L42">  }</span>
+
+  @Override
+  public Duration window() {
+<span class="fc" id="L46">    return window;</span>
+  }
+
+  /** Whether a client last seen at this time still counts as active at {@code now}. */
+  private boolean active(Instant lastSeen, Instant now) {
+<span class="fc" id="L51">    return lastSeen.isAfter(now.minus(window));</span>
+  }
+
+  @Override
+  public synchronized void record(String resourceKey, String clientId, ClientIdentity identity) {
+<span class="fc" id="L56">    Instant now = clock.instant();</span>
+<span class="fc" id="L57">    seen.computeIfAbsent(resourceKey, key -&gt; new HashMap&lt;&gt;())</span>
+<span class="fc" id="L58">        .put(clientId, new Seen(now, identity));</span>
+<span class="fc" id="L59">    seen.values()</span>
+<span class="fc" id="L60">        .removeIf(</span>
+            clients -&gt; {
+<span class="fc bfc" id="L62" title="All 2 branches covered.">              clients.values().removeIf(client -&gt; !active(client.at(), now));</span>
+<span class="fc" id="L63">              return clients.isEmpty();</span>
+            });
+<span class="fc" id="L65">  }</span>
+
+  @Override
+  public synchronized List&lt;OtherClient&gt; othersActive(String resourceKey, String clientId) {
+<span class="fc" id="L69">    Instant now = clock.instant();</span>
+<span class="fc" id="L70">    Map&lt;String, Seen&gt; clients = seen.getOrDefault(resourceKey, Map.of());</span>
+<span class="fc" id="L71">    Seen caller = clients.get(clientId);</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">    String callerKey = caller == null ? null : caller.identity().personKey();</span>
+
+    // One entry for each person, however many of their clients are active.
+<span class="fc" id="L75">    Map&lt;String, OtherClient&gt; people = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L76">    clients.forEach(</span>
+        (id, client) -&gt; {
+<span class="fc bfc" id="L78" title="All 4 branches covered.">          if (!id.equals(clientId) &amp;&amp; active(client.at(), now)) {</span>
+<span class="fc" id="L79">            ClientIdentity who = client.identity();</span>
+<span class="fc" id="L80">            people.putIfAbsent(</span>
+<span class="fc" id="L81">                who.personKey(), new OtherClient(who.label(), who.personKey().equals(callerKey)));</span>
+          }
+<span class="fc" id="L83">        });</span>
+<span class="fc" id="L84">    return people.values().stream().sorted(BY_LABEL).toList();</span>
+  }
+
+  /** How many resources currently have anyone remembered; for tests of the forgetting. */
+  synchronized int resourcesRemembered() {
+<span class="fc" id="L89">    return seen.size();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
