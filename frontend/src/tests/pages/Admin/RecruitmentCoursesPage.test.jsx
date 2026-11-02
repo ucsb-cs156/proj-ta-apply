@@ -1388,4 +1388,27 @@ describe("RecruitmentCoursesPage tests", () => {
       screen.queryByTestId("RecruitmentCoursesPage-publish-button"),
     ).not.toBeInTheDocument();
   });
+
+  /** Issue #234: the rankings download moved here from the recruitment card. */
+  test("has Download Rankings CSV among the course-level actions", async () => {
+    renderPage();
+    const link = await screen.findByTestId(
+      "RecruitmentCoursesPage-rankings-csv",
+    );
+
+    expect(link).toHaveTextContent("Download Rankings CSV");
+    expect(link.tagName).toBe("A");
+    expect(link).toHaveAttribute(
+      "href",
+      "/api/admin/rankings/csv?recruitmentId=7",
+    );
+    expect(link).toHaveAttribute("download", "rankings-7.csv");
+    expect(link).toHaveClass("btn", "btn-outline-primary", "btn-sm");
+    // Below the enrollment-estimate actions.
+    expect(
+      screen
+        .getByTestId("RecruitmentCoursesPage-fill-estimates")
+        .compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });

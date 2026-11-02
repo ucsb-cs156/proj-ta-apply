@@ -271,6 +271,38 @@ describe("RecruitmentApplicationsPage tests", () => {
       )
       .map((request) => request.params);
 
+  /** Issue #234: the two controls that used to be on the recruitment card are at the top. */
+  test("has Download Applications as CSV and Test Application at the top, for this recruitment", async () => {
+    renderPage(2);
+
+    await screen.findByRole("heading", { level: 1 });
+    const header = screen.getByTestId("RecruitmentApplicationsPage-header");
+    const download = screen.getByTestId(
+      "RecruitmentApplicationsPage-header-download-csv",
+    );
+    expect(download).toHaveTextContent("Download Applications as CSV");
+    expect(download).toHaveAttribute(
+      "href",
+      "/api/admin/applications/csv?recruitmentId=2",
+    );
+    expect(download).toHaveAttribute("download", "applications-2.csv");
+    const testApplication = screen.getByTestId(
+      "RecruitmentApplicationsPage-header-test-application",
+    );
+    expect(testApplication).toHaveTextContent("Test Application");
+    expect(testApplication).toHaveAttribute(
+      "href",
+      "/admin/recruitments/2/test-application",
+    );
+    // At the top: in the same row as the heading, before the recruitment's row and the table.
+    expect(header).toContainElement(screen.getByRole("heading", { level: 1 }));
+    expect(
+      header.compareDocumentPosition(
+        screen.getByTestId("RecruitmentApplicationsPage-count"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   test("names the recruitment in the heading and repeats its row, read only", async () => {
     renderPage(1);
 
