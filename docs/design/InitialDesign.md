@@ -312,8 +312,8 @@ The recruitments table gains a **CSV** button per recruitment (column "Download"
 every application to that recruitment as a CSV file, `applications-<id>.csv`, served by
 `GET /api/admin/applications/csv?recruitmentId=` (admins only).
 
-* One row per application, a header row, every cell quoted. Test applications are included and
-  flagged in the `testApplication` column.
+* One row per application, a header row, every cell quoted. Test and fake applications are
+  included and flagged in the `origin` column (`APPLICANT`, `ADMIN_TEST` or `DEVELOPER_MODE`).
 * The columns follow the recruitment's type: a TA file carries `classLevel`, `residencyStatus`,
   `languageExam` and `languageExamDatePassed`; a ULA file carries `previousServiceAsUla`,
   `videoLink` and, last, `interests`.

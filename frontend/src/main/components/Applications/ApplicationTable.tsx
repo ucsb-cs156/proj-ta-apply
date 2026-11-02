@@ -11,14 +11,19 @@ import type { Recruitment } from "main/components/Recruitments/RecruitmentTable"
 import type { Cell } from "@tanstack/react-table";
 import type { PriorCourse } from "main/utils/priorCoursework";
 
+export type ApplicationOrigin = "APPLICANT" | "ADMIN_TEST" | "DEVELOPER_MODE";
+
 export type Application = {
   id: number;
   recruitmentId: number;
   email: string;
   status: "PENDING" | "HIRED" | "NOT_HIRED" | "CANCELLED";
   postApplicationComments: string | null;
-  /** True when an admin entered it to preview the form; see TestApplicationPage. */
-  testApplication: boolean;
+  /**
+   * Where it came from: an applicant, an admin previewing the form (TestApplicationPage), or Developer
+   * Mode's generator (issue #219).
+   */
+  origin: ApplicationOrigin;
   firstName: string | null;
   middleName: string | null;
   lastName: string | null;
@@ -79,7 +84,7 @@ type ApplicationTableProps = {
   /** Every recruitment the user could have applied to, so each row can name its quarter. */
   recruitments: Recruitment[];
   /**
-   * Whether to show the Test column. Only an admin's own list can hold a test application, so an
+   * Whether to show the Origin column. Only an admin's own list can hold a test application, so an
    * ordinary applicant is not shown the column (issue #98).
    */
   showTestColumn?: boolean;
@@ -123,12 +128,9 @@ export default function ApplicationTable({
     ...(showTestColumn
       ? [
           {
-            header: "Test",
-            accessorKey: "testApplication",
+            header: "Origin",
+            accessorKey: "origin",
             meta: shrinkToContent,
-            // Shown as the words true/false: a boolean renders as nothing at all.
-            cell: ({ cell }: { cell: Cell<Application, unknown> }) =>
-              String(Boolean(cell.row.original.testApplication)),
           },
         ]
       : []),

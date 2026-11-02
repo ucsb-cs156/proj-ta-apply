@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -26,6 +27,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 public class CourseTargetsServiceTests {
 
   @Autowired CourseTargetsService service;
+  @MockitoBean DeveloperModeService developerModeService;
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean CandidateRankingRepository candidateRankingRepository;
 
@@ -74,7 +76,7 @@ public class CourseTargetsServiceTests {
     notInterested.getCourseInterests().put(C156, CourseInterest.NOT_INTERESTED);
     // Excluded altogether: a test application and a cancelled one, both "interested".
     Application test = applicant(7L, C156, null);
-    test.setTestApplication(true);
+    test.setOrigin(ApplicationOrigin.ADMIN_TEST);
     Application cancelled = applicant(8L, C156, null);
     cancelled.setStatus(ApplicationReviewStatus.CANCELLED);
     when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L))

@@ -696,9 +696,9 @@ public class ApplicationsWebIT extends WebTestCase {
     recruitmentRepository.save(recruitment);
 
     setupAdminUser();
-    // Issue #233 removed the Test Application button from the card. Issue #234 gives it a new home
-    // on the Applications page and will restore the click path; until then, go to the page itself.
-    goTo("/admin/recruitments/" + recruitment.getId() + "/test-application");
+    // Issue #234: the Test Application button is at the top of the Applications page.
+    goTo("/admin/recruitments/" + recruitment.getId() + "/applications");
+    page.getByTestId("RecruitmentApplicationsPage-header-test-application").click();
 
     // The warning sits above the form, and the form is the TA one.
     assertThat(page.getByTestId("TestOnlyBanner")).containsText("This is a test only");

@@ -23,6 +23,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
@@ -1325,9 +1326,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
             .andReturn();
 
     Application expected = expectedFrom(null, 3L, ADMIN_EMAIL, null);
-    expected.setTestApplication(true);
+    expected.setOrigin(ApplicationOrigin.ADMIN_TEST);
     assertEquals(expected, saved());
-    assertTrue(saved().isTestApplication());
+    assertEquals(ApplicationOrigin.ADMIN_TEST, saved().getOrigin());
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
   }
 
@@ -1338,7 +1339,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_second_test_application_overwrites_the_first() throws Exception {
     Application earlier = application(7L, 2L, ADMIN_EMAIL);
-    earlier.setTestApplication(true);
+    earlier.setOrigin(ApplicationOrigin.ADMIN_TEST);
     earlier.setPostApplicationComments("kept");
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
     when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 2L))
@@ -1354,7 +1355,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     // Same row (same id), still a test application, with the new answers.
     Application expected = expectedFrom(7L, 2L, ADMIN_EMAIL, "kept");
-    expected.setTestApplication(true);
+    expected.setOrigin(ApplicationOrigin.ADMIN_TEST);
     expected.setNoticeVersionId(41L);
     // A ULA recruitment, so the interest levels are kept too.
     expected.setInterests(new TreeMap<>(Map.of("Grading", 1, "Tutoring", 5)));
@@ -1385,7 +1386,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertEquals(
         "You already have a real application for this recruitment",
         responseToJson(response).get("message"));
-    assertFalse(real.isTestApplication());
+    assertEquals(ApplicationOrigin.APPLICANT, real.getOrigin());
     verify(applicationRepository, never()).save(any());
   }
 
@@ -3130,7 +3131,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_test_application_s_response_has_no_admin_comments_either() throws Exception {
     Application existing = withAdminComments(application(8L, 1L, ADMIN_EMAIL));
-    existing.setTestApplication(true);
+    existing.setOrigin(ApplicationOrigin.ADMIN_TEST);
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
     when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 1L))
         .thenReturn(Optional.of(existing));

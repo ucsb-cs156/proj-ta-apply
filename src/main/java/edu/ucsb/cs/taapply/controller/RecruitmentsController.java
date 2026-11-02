@@ -11,7 +11,9 @@ import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
 import edu.ucsb.cs.taapply.services.AllocationVisibilityService;
+import edu.ucsb.cs.taapply.services.ApplicationVisibility;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
+import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.HiringDecisions;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs156.jobs.services.JobService;
@@ -59,6 +61,7 @@ public class RecruitmentsController extends ApiController {
   @Autowired AllocationService allocationService;
   @Autowired AllocationVisibilityService allocationVisibilityService;
   @Autowired AssignmentsService assignmentsService;
+  @Autowired DeveloperModeService developerModeService;
 
   @Operation(
       summary = "Create a recruitment",
@@ -354,10 +357,13 @@ public class RecruitmentsController extends ApiController {
   @GetMapping("/applicationCounts")
   public Map<Long, Long> applicationCounts() {
     Map<Long, Long> counts = new TreeMap<>();
+    boolean developerModeOn = developerModeService.isOn();
     for (Recruitment recruitment : recruitmentRepository.findAll()) {
       counts.put(
           recruitment.getId(),
-          applicationRepository.countByRecruitmentIdAndTestApplicationFalse(recruitment.getId()));
+          applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId()).stream()
+              .filter(application -> ApplicationVisibility.isReal(application, developerModeOn))
+              .count());
     }
     return counts;
   }

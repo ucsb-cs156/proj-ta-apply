@@ -1,0 +1,42 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "042-replace-test-application-with-origin",
+        "author": "pc",
+        "comment": "Where an application came from: a real applicant, an admin's test, or Developer Mode's fake data. Replaces the test_application flag (issue #219).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "columnExists": { "tableName": "applications", "columnName": "origin" } } }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [
+                {
+                  "column": {
+                    "name": "origin",
+                    "type": "VARCHAR(32)",
+                    "defaultValue": "APPLICANT",
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "update": {
+              "tableName": "applications",
+              "columns": [{ "column": { "name": "origin", "value": "ADMIN_TEST" } }],
+              "where": "test_application = true"
+            }
+          },
+          {
+            "dropColumn": { "tableName": "applications", "columnName": "test_application" }
+          }
+        ]
+      }
+    }
+  ]
+}

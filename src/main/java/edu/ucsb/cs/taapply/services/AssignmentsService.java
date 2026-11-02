@@ -4,7 +4,6 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
-import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -30,6 +29,7 @@ public class AssignmentsService {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired CandidateRankingRepository candidateRankingRepository;
+  @Autowired DeveloperModeService developerModeService;
 
   /** One column identifying an applicant: its header and how to read it off an application. */
   public record IdentityColumn(String header, Function<Application, Object> value) {}
@@ -184,11 +184,14 @@ public class AssignmentsService {
       List<AssignmentRow> rows) {}
 
   /**
-   * The applications that take part in assignments: every application to the recruitment that is
-   * neither a test application nor cancelled by the applicant, in the order they were created.
+   * The applications that take part in assignments: every application to the recruitment that
+   * counts (see {@link ApplicationVisibility}) and was not cancelled by the applicant, in the order
+   * they were created.
    */
   public List<Application> realApplications(Long recruitmentId) {
-    return real(applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));
+    return real(
+        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId),
+        developerModeService.isOn());
   }
 
   /** Whether any real application of the recruitment has been tentatively assigned (issue #237). */
@@ -197,24 +200,24 @@ public class AssignmentsService {
         .anyMatch(a -> a.getTentativeAssignmentId() != null);
   }
 
-  /** The given applications without test applications and without cancelled ones. */
-  public static List<Application> real(List<Application> applications) {
-    return applications.stream()
-        .filter(a -> !a.isTestApplication())
-        .filter(a -> a.getStatus() != ApplicationReviewStatus.CANCELLED)
-        .toList();
+  /**
+   * The given applications that count and were not cancelled; see {@link ApplicationVisibility}.
+   */
+  public static List<Application> real(List<Application> applications, boolean developerModeOn) {
+    return ApplicationVisibility.real(applications, developerModeOn);
   }
 
   /** The applications to a recruitment that the applicant cancelled, oldest first. */
   public List<CancelledApplication> cancelledApplications(Long recruitmentId) {
-    return cancelled(applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));
+    return cancelled(
+        applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId),
+        developerModeService.isOn());
   }
 
-  /** The cancelled ones among the given applications, test applications left out. */
-  public static List<CancelledApplication> cancelled(List<Application> applications) {
-    return applications.stream()
-        .filter(a -> !a.isTestApplication())
-        .filter(a -> a.getStatus() == ApplicationReviewStatus.CANCELLED)
+  /** The cancelled ones among the given applications that count. */
+  public static List<CancelledApplication> cancelled(
+      List<Application> applications, boolean developerModeOn) {
+    return ApplicationVisibility.cancelled(applications, developerModeOn).stream()
         .map(
             a ->
                 new CancelledApplication(

@@ -22,6 +22,7 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
+import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.model.CurrentUser;
@@ -32,6 +33,7 @@ import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.CourseTargetsService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import edu.ucsb.cs.taapply.services.CurrentUserService;
+import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +53,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @Import(edu.ucsb.cs.taapply.testconfig.TestConfig.class)
 public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
 
+  @MockitoBean DeveloperModeService developerModeService;
   @MockitoBean InstructorRepository instructorRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
@@ -457,7 +460,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   @Test
   public void a_ranked_test_application_does_not_force_the_tier() throws Exception {
     edu.ucsb.cs.taapply.entity.Application test = applicant(32L, "CMPSC     8");
-    test.setTestApplication(true);
+    test.setOrigin(ApplicationOrigin.ADMIN_TEST);
     assertFalse(
         hasRankedNotInterested(
             List.of(applicant(31L, "CMPSC   156"), test), List.of(ranking(32L, 1))));
