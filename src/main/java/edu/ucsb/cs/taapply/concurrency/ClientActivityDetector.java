@@ -11,7 +11,7 @@ import java.util.List;
  * client made for itself, and the application says who that client is, as a {@link ClientIdentity}.
  * The detector remembers which clients it saw on each <b>resource key</b> (any string, such as
  * {@code "draft:42"}) within the <b>window</b>, and answers who, other than the caller, was among
- * them. It is advice, not a lock.
+ * them, and whether the caller arrived after all of them. It is advice, not a lock.
  *
  * <p><b>Authorization is the caller's job.</b> The detector answers anyone who asks, and tells them
  * names. The application must check that the caller may use the resource <em>before</em> it records
@@ -35,14 +35,31 @@ public interface ClientActivityDetector {
    */
   List<OtherClient> othersActive(String resourceKey, String clientId);
 
-  /** How long a client counts as active after it was last seen. */
-  Duration window();
+  /**
+   * Notes that this client has gone (issue #284): its tab or window was closed or left. It stops
+   * counting at once, instead of when the window has passed. Delivery of such a goodbye is not
+   * guaranteed, so the window stays as the fallback. A client that was not recorded is no change.
+   */
+  void leave(String resourceKey, String clientId);
 
   /**
-   * How often a client should send a heartbeat: three a window, so that one lost one is harmless.
+   * When this client arrived, as against the others active on the resource: see {@link Arrival}. A
+   * caller who has not been recorded is told it did not arrive last, and at time zero.
    */
+  Arrival arrival(String resourceKey, String clientId);
+
+  /**
+   * How long a client counts as active after it was last seen: the heartbeat interval times the
+   * number of heartbeats that may be missed.
+   */
+  Duration window();
+
+  /** How often an open client should send a heartbeat. */
+  Duration heartbeatInterval();
+
+  /** The heartbeat interval in whole seconds, rounded up and never less than one. */
   default long suggestedHeartbeatSeconds() {
-    return Math.max(1, window().toSeconds() / 3);
+    return Math.max(1, (heartbeatInterval().toMillis() + 999) / 1000);
   }
 
   /**
@@ -56,14 +73,20 @@ public interface ClientActivityDetector {
   }
 
   /**
-   * The answer to a heartbeat: records the client, then says who else is active and how often to
-   * beat. A client that did not name itself usably is not recorded and is told of no one.
+   * The answer to a heartbeat: records the client, then says who else is active, how often to beat,
+   * and whether it arrived last (issue #284). A client that did not name itself usably is not
+   * recorded and is told of no one.
    */
   default Presence heartbeat(String resourceKey, String clientId, ClientIdentity identity) {
     if (!ConcurrencyHeaders.usable(clientId)) {
-      return new Presence(List.of(), suggestedHeartbeatSeconds());
+      return new Presence(List.of(), suggestedHeartbeatSeconds(), false, 0);
     }
     record(resourceKey, clientId, identity);
-    return new Presence(othersActive(resourceKey, clientId), suggestedHeartbeatSeconds());
+    Arrival arrival = arrival(resourceKey, clientId);
+    return new Presence(
+        othersActive(resourceKey, clientId),
+        suggestedHeartbeatSeconds(),
+        arrival.newest(),
+        arrival.arrivedAtMillis());
   }
 }

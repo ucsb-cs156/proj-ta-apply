@@ -78,7 +78,7 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
     private volatile ClientActivityDetector delegate = fresh();
 
     private static ClientActivityDetector fresh() {
-      return new edu.ucsb.cs.taapply.config.ConcurrencyConfig().clientActivityDetector(60);
+      return new edu.ucsb.cs.taapply.config.ConcurrencyConfig().clientActivityDetector("5", "3");
     }
 
     void reset() {
@@ -96,8 +96,23 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
     }
 
     @Override
+    public void leave(String resourceKey, String clientId) {
+      delegate.leave(resourceKey, clientId);
+    }
+
+    @Override
+    public edu.ucsb.cs.taapply.concurrency.Arrival arrival(String resourceKey, String clientId) {
+      return delegate.arrival(resourceKey, clientId);
+    }
+
+    @Override
     public java.time.Duration window() {
       return delegate.window();
+    }
+
+    @Override
+    public java.time.Duration heartbeatInterval() {
+      return delegate.heartbeatInterval();
     }
   }
 
@@ -822,7 +837,10 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
 
     heartbeatAs(101L, "only-tab")
         .andExpect(status().isOk())
-        .andExpect(content().json("{\"others\":[],\"heartbeatSeconds\":20}", true));
+        .andExpect(jsonPath("$.others.length()").value(0))
+        .andExpect(jsonPath("$.heartbeatSeconds").value(5))
+        .andExpect(jsonPath("$.newest").value(true))
+        .andExpect(jsonPath("$.arrivedAtMillis").isNumber());
   }
 
   @WithMockUser(
@@ -918,6 +936,95 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
         .andExpect(jsonPath("$.others[1].samePerson").value(true));
   }
 
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void the_second_tab_is_told_it_arrived_last_and_the_first_is_not() throws Exception {
+    when(draftApplicationRepository.findById(118L)).thenReturn(Optional.of(draft(118L, EMAIL)));
+
+    heartbeatAs(118L, "first-tab").andExpect(jsonPath("$.newest").value(true));
+    heartbeatAs(118L, "second-tab").andExpect(jsonPath("$.newest").value(true));
+    heartbeatAs(118L, "first-tab")
+        .andExpect(jsonPath("$.newest").value(false))
+        .andExpect(jsonPath("$.arrivedAtMillis").isNumber());
+  }
+
+  private org.springframework.test.web.servlet.ResultActions leaveAs(long id, String clientId)
+      throws Exception {
+    var request = post("/api/draftApplications/leave?id=" + id).with(csrf());
+    return mockMvc.perform(clientId == null ? request : request.header(CLIENT_ID, clientId));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_tab_that_leaves_is_forgotten_at_once_by_the_other() throws Exception {
+    when(draftApplicationRepository.findById(119L)).thenReturn(Optional.of(draft(119L, EMAIL)));
+    heartbeatAs(119L, "staying-tab");
+    heartbeatAs(119L, "leaving-tab").andExpect(jsonPath("$.others.length()").value(1));
+
+    leaveAs(119L, "leaving-tab").andExpect(status().isNoContent());
+
+    heartbeatAs(119L, "staying-tab")
+        .andExpect(jsonPath("$.others.length()").value(0))
+        .andExpect(jsonPath("$.newest").value(true));
+    verify(draftApplicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void leaving_without_naming_a_client_is_harmless() throws Exception {
+    when(draftApplicationRepository.findById(120L)).thenReturn(Optional.of(draft(120L, EMAIL)));
+    heartbeatAs(120L, "a-tab");
+
+    leaveAs(120L, null).andExpect(status().isNoContent());
+
+    assertEquals(1, detector.othersActive("draft:120", "observer").size());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void leaving_someone_elses_draft_is_forbidden_and_removes_nobody() throws Exception {
+    when(draftApplicationRepository.findById(121L))
+        .thenReturn(Optional.of(draft(121L, "someone.else@example.org")));
+    detector.record(
+        "draft:121",
+        "owners-tab",
+        new ClientIdentity("someone.else@example.org", "someone.else@example.org (The Owner)"));
+
+    // Even naming the owner's own tab, which the intruder might have guessed.
+    leaveAs(121L, "owners-tab").andExpect(status().isForbidden());
+
+    assertEquals(
+        List.of(new OtherClient("someone.else@example.org (The Owner)", false)),
+        detector.othersActive("draft:121", "observer"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void leaving_a_draft_that_does_not_exist_is_not_found() throws Exception {
+    when(draftApplicationRepository.findById(122L)).thenReturn(Optional.empty());
+
+    leaveAs(122L, "lost-tab").andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void leaving_needs_a_signed_in_user_and_removes_nobody() throws Exception {
+    detector.record("draft:123", "a-tab", new ClientIdentity(EMAIL, EMAIL));
+
+    leaveAs(123L, "a-tab").andExpect(status().is4xxClientError());
+
+    assertEquals(1, detector.othersActive("draft:123", "observer").size());
+  }
+
   /** A signed-in user whose account has the given name, or none. */
   private static org.springframework.test.web.servlet.request.RequestPostProcessor signedInAs(
       String email, String name) {
@@ -1011,7 +1118,11 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
 
     heartbeatAs(110L, null)
         .andExpect(status().isOk())
-        .andExpect(content().json("{\"others\":[],\"heartbeatSeconds\":20}", true));
+        .andExpect(
+            content()
+                .json(
+                    "{\"others\":[],\"heartbeatSeconds\":5,\"newest\":false,\"arrivedAtMillis\":0}",
+                    true));
     heartbeatAs(110L, "   ").andExpect(jsonPath("$.others.length()").value(0));
     // Neither left a mark.
     assertEquals(List.of(), detector.othersActive("draft:110", "observer"));

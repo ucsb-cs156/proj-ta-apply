@@ -10,6 +10,7 @@ import { useClientActivity } from "main/concurrency";
 
 const OPEN_URL = "/api/draftApplications/open";
 const HEARTBEAT_URL = "/api/draftApplications/heartbeat";
+const LEAVE_URL = "/api/draftApplications/leave";
 
 /** Whether a failed request was the server refusing a stale save (409 Conflict). */
 export const isConflict = (error: unknown): boolean =>
@@ -51,7 +52,8 @@ type DraftSavingOptions = {
  *
  * The page also learns early, before any save is refused, whether the draft is open in another tab
  * or window (issue #273), and who has it open: see {@link useClientActivity}, which this uses for
- * it. Every save names this tab, and a heartbeat does too, so the server knows it is there.
+ * it. Every save names this tab, and a heartbeat does too, so the server knows it is there. A tab
+ * that leaves says goodbye, and the one that came last is asked what to do (issue #284).
  */
 export function useDraftSaving({
   recruitmentId,
@@ -83,6 +85,7 @@ export function useDraftSaving({
   // Tells the server this tab is working on the draft, and learns whether another one is.
   const activity = useClientActivity({
     heartbeatUrl: draft ? `${HEARTBEAT_URL}?id=${draft.id}` : null,
+    leaveUrl: draft ? `${LEAVE_URL}?id=${draft.id}` : null,
   });
 
   const saves = useRef<SaveState>({
@@ -151,6 +154,12 @@ export function useDraftSaving({
     conflicted: conflictFor !== null && conflictFor === draft,
     /** The other people with the draft open too (the user's own other tabs included), as the server last said. */
     others: activity.others,
+    /** This tab arrived after every other one with the draft open, so it is the one asked to step aside (issue #284). */
+    newest: activity.newest,
+    /** When the server counts this tab as having arrived; a choice made in the modal lasts as long as this does. */
+    arrivedAt: activity.arrivedAt,
+    /** Tells the server this tab has left the draft; for just before taking the user away. */
+    leave: activity.leave,
     /** The quiet save while the form is filled in. */
     autosave: (payload: ApplicationPayload) => {
       void save(payload);

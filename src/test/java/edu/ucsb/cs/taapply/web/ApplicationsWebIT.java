@@ -407,6 +407,8 @@ public class ApplicationsWebIT extends WebTestCase {
                 .setStorageState(page.context().storageState()));
     com.microsoft.playwright.Page otherPage = other.newPage();
     otherPage.navigate(page.url());
+    // The newer window is asked what to do (issue #284); this one carries on.
+    otherPage.getByTestId("ApplyPage-multiple-tabs-modal-continue").click();
     otherPage.getByTestId("ApplyPage-comments").fill("From the second window");
     otherPage.getByTestId("ApplyPage-saveDraft").click();
     assertThat(otherPage.getByTestId("HomePageLoggedIn-student")).isVisible();
@@ -474,6 +476,9 @@ public class ApplicationsWebIT extends WebTestCase {
         .containsText(
             "You are also editing this application in another tab or window."
                 + " Please know that this is risky; we recommend closing all but one of these.");
+    // Issue #284: only the newer window is asked what to do; the older one has the banner alone.
+    assertThat(otherPage.getByTestId("ApplyPage-multiple-tabs-modal-leave")).isVisible();
+    assertThat(page.getByTestId("ApplyPage-multiple-tabs-modal-leave")).not().isVisible();
     // The form is still there to use, and the draft is still the one.
     assertThat(page.getByTestId("ApplyPage-submit")).isVisible();
     assertEquals(1, draftApplicationRepository.count());
@@ -483,6 +488,129 @@ public class ApplicationsWebIT extends WebTestCase {
     var gone =
         new com.microsoft.playwright.assertions.LocatorAssertions.IsHiddenOptions()
             .setTimeout(30000);
+    assertThat(page.getByTestId("ApplyPage-multiple-tabs")).isHidden(gone);
+    assertEquals(1, draftApplicationRepository.count());
+  }
+
+  /** A second window of the same person on the same draft; the newer of the two. */
+  private com.microsoft.playwright.Page openSecondWindow() {
+    com.microsoft.playwright.BrowserContext other =
+        browser.newContext(
+            new com.microsoft.playwright.Browser.NewContextOptions()
+                .setStorageState(page.context().storageState()));
+    com.microsoft.playwright.Page otherPage = other.newPage();
+    otherPage.navigate(page.url());
+    return otherPage;
+  }
+
+  private static final String MODAL = "ApplyPage-multiple-tabs-modal";
+
+  /**
+   * Issue #284: Continue anyway closes the question, leaves the banner, and lets the newer window
+   * be used.
+   */
+  @Test
+  public void the_newer_window_can_continue_anyway() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    assertThat(page.getByTestId("ApplyPage-saveDraft")).isVisible();
+
+    com.microsoft.playwright.Page otherPage = openSecondWindow();
+    otherPage.getByTestId(MODAL + "-continue").click();
+
+    assertThat(otherPage.getByTestId(MODAL + "-continue")).not().isVisible();
+    assertThat(otherPage.getByTestId("ApplyPage-multiple-tabs")).isVisible();
+    otherPage.getByTestId("ApplyPage-comments").fill("Typed after continuing");
+    assertThat(otherPage.getByTestId("ApplyPage-comments")).hasValue("Typed after continuing");
+    // It does not come back at the next heartbeats (two seconds apart here).
+    otherPage.waitForTimeout(5000);
+    assertThat(otherPage.getByTestId(MODAL + "-continue")).not().isVisible();
+  }
+
+  /**
+   * Issue #284: Leave this page says goodbye and goes home, so the other window's warning goes in a
+   * few seconds, well inside the six seconds that silence alone would take.
+   */
+  @Test
+  public void leaving_from_the_newer_window_clears_the_warning_in_the_other_quickly()
+      throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    assertThat(page.getByTestId("ApplyPage-saveDraft")).isVisible();
+    var wait =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsVisibleOptions()
+            .setTimeout(20000);
+
+    com.microsoft.playwright.Page otherPage = openSecondWindow();
+    assertThat(page.getByTestId("ApplyPage-multiple-tabs")).isVisible(wait);
+
+    otherPage.getByTestId(MODAL + "-leave").click();
+
+    assertThat(otherPage.getByTestId("HomePageLoggedIn-student")).isVisible();
+    var soon =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsHiddenOptions()
+            .setTimeout(4500);
+    assertThat(page.getByTestId("ApplyPage-multiple-tabs")).isHidden(soon);
+    assertEquals(1, draftApplicationRepository.count());
+  }
+
+  /**
+   * Issue #284: choosing to wait keeps the newer window covered, and it resumes by itself once the
+   * other window has gone. Moving the older window to the home page is how it goes.
+   */
+  @Test
+  public void the_newer_window_can_wait_for_the_other_to_go_and_then_resume() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    assertThat(page.getByTestId("ApplyPage-saveDraft")).isVisible();
+
+    com.microsoft.playwright.Page otherPage = openSecondWindow();
+    otherPage.getByTestId(MODAL + "-wait").click();
+    assertThat(otherPage.getByTestId(MODAL + "-waiting")).isVisible();
+    // The older window is not covered, and is not asked anything.
+    assertThat(page.getByTestId(MODAL + "-wait")).not().isVisible();
+    page.getByTestId("ApplyPage-comments").fill("Still typing in the first window");
+
+    goTo("/");
+
+    var gone =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsHiddenOptions()
+            .setTimeout(15000);
+    assertThat(otherPage.getByTestId(MODAL + "-waiting")).isHidden(gone);
+    assertThat(otherPage.getByTestId("ApplyPage-multiple-tabs")).not().isVisible();
+    otherPage.getByTestId("ApplyPage-comments").fill("Resumed here");
+    assertThat(otherPage.getByTestId("ApplyPage-comments")).hasValue("Resumed here");
+  }
+
+  /**
+   * Issue #284: closing one of two windows lets the other's warning go, by the goodbye if it is
+   * delivered and by the heartbeats stopping if it is not.
+   */
+  @Test
+  public void closing_one_of_two_windows_clears_the_warning_in_the_other() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    assertThat(page.getByTestId("ApplyPage-saveDraft")).isVisible();
+    var wait =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsVisibleOptions()
+            .setTimeout(20000);
+
+    com.microsoft.playwright.Page otherPage = openSecondWindow();
+    assertThat(page.getByTestId("ApplyPage-multiple-tabs")).isVisible(wait);
+
+    otherPage.close();
+
+    var gone =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsHiddenOptions()
+            .setTimeout(15000);
     assertThat(page.getByTestId("ApplyPage-multiple-tabs")).isHidden(gone);
     assertEquals(1, draftApplicationRepository.count());
   }

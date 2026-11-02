@@ -18,7 +18,7 @@ import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { NoticeVersion } from "main/utils/notices";
 import { draftWasSaved } from "main/utils/draftApplications";
 import { useDraftSaving } from "main/utils/useDraftSaving";
-import { MultipleTabsBanner } from "main/concurrency";
+import { MultipleTabsBanner, MultipleTabsModal } from "main/concurrency";
 
 /**
  * Creating an application against one open recruitment: /apply/:recruitmentId.
@@ -108,6 +108,9 @@ export default function ApplyPage(): React.JSX.Element {
     failed: draftFailed,
     conflicted,
     others,
+    newest,
+    arrivedAt,
+    leave,
     autosave,
     saveAndLeave,
     reload,
@@ -177,6 +180,18 @@ export default function ApplyPage(): React.JSX.Element {
           others={others}
           noun="application"
           testId="ApplyPage-multiple-tabs"
+        />
+        {/* Only the newest tab is asked; the older ones keep the banner alone. */}
+        <MultipleTabsModal
+          others={others}
+          newest={newest}
+          arrivedAt={arrivedAt}
+          noun="application"
+          onLeave={() => {
+            leave();
+            navigate("/");
+          }}
+          testId="ApplyPage-multiple-tabs-modal"
         />
         {conflicted && (
           <Alert variant="danger" data-testid="ApplyPage-conflict">

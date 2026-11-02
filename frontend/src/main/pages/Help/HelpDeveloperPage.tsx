@@ -159,9 +159,29 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <code>X-Client-Id</code> header of every save, and of a{" "}
           <strong>heartbeat</strong>:{" "}
           <code>POST /api/draftApplications/heartbeat?id=</code>, sent as soon
-          as the draft is open and then as often as the server asks. A heartbeat
-          changes nothing, not even the draft&apos;s version. It exists so that
-          a tab that is open but idle is seen too.
+          as the draft is open and then as often as the server asks (every 5
+          seconds by default). A heartbeat changes nothing, not even the
+          draft&apos;s version. It exists so that a tab that is open but idle is
+          seen too.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-goodbye">
+          <strong>The goodbye.</strong> A tab that leaves says so, with{" "}
+          <code>POST /api/draftApplications/leave?id=</code> and the same{" "}
+          <code>X-Client-Id</code>, so that the server forgets it at once and
+          the other tab&apos;s warning goes within a heartbeat instead of after
+          the timeout. It is sent on the <code>pagehide</code> event (not{" "}
+          <code>beforeunload</code> or <code>unload</code>, which are not
+          reliably delivered and defeat the back/forward cache) and when the
+          hook unmounts, which is how moving to another page of the app looks,
+          since that fires no <code>pagehide</code>. It uses <code>fetch</code>{" "}
+          with <code>keepalive: true</code>, not <code>sendBeacon</code>, so
+          that the <code>X-Client-Id</code> and CSRF headers can be sent. After{" "}
+          <code>pagehide</code> the tab stops its heartbeats; if the browser
+          restores the page from its cache (<code>pageshow</code> with{" "}
+          <code>persisted</code>), it announces itself again at once. A goodbye
+          is authorized exactly like a heartbeat. Delivery is not guaranteed (a
+          crash, a killed mobile tab, a lost network), so the timeout below
+          stays as the fallback.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-detector">
           <strong>The detector and its identity.</strong> A{" "}
@@ -174,7 +194,7 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <code>email (Full Name)</code>, or just the email), and the detector
           treats the key and the label as opaque. It answers the heartbeat with
           a JSON body,{" "}
-          <code>{`{"others": [{"label", "samePerson"}], "heartbeatSeconds"}`}</code>
+          <code>{`{"others": [{"label", "samePerson"}], "heartbeatSeconds", "newest", "arrivedAtMillis"}`}</code>
           : one entry for each other <em>person</em>, however many tabs they
           have open, with <code>samePerson</code> true for the user&apos;s own
           other tabs. Names are in the body and not in headers because they are
@@ -185,28 +205,101 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           application.&quot;, and so on, three people named and the rest
           counted) and the banner shows it as text, never as markup.
         </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-modal">
+          <strong>The modal and how the newer tab is chosen.</strong> A client
+          is the <em>newest</em> when it arrived after every other active client
+          (the user&apos;s own tabs and other people alike). Its arrival is the
+          time it was first seen in its present stay, kept while it keeps
+          beating and renewed if it said goodbye or was forgotten and came back;
+          clients that arrive at the same instant are ordered by their
+          identifiers, so there is always exactly one newest. The answer says{" "}
+          <code>newest</code> and <code>arrivedAtMillis</code>. Only the newest
+          tab shows a modal that must be answered, with three choices:{" "}
+          <em>Leave this page</em> (says goodbye, then goes to the home page; it
+          does not rely on <code>window.close()</code>),{" "}
+          <em>Wait for the other tabs or windows to close, then resume here</em>{" "}
+          (the page stays covered, and the modal closes by itself when a
+          heartbeat shows no one else), and <em>Continue anyway</em> (the modal
+          closes, the banner stays). The older tabs keep only the banner, so the
+          first editor is never interrupted mid-typing, and two tabs cannot both
+          choose to wait for the other and be stuck: the oldest tab is never
+          asked to wait. A waiting tab that stops being the newest is released.
+          No button takes the focus, Enter is ignored for the first second, and
+          Escape and clicks outside do nothing. A choice to continue lasts until
+          the tab arrives afresh, so the modal does not return at every
+          heartbeat.
+        </p>
         <p data-testid="HelpDeveloperPage-simultaneous-authorization">
           <strong>Authorization.</strong> The detector tells names to anyone who
           asks, so the app must check that the caller may use the resource{" "}
           <em>before</em> it records the caller or asks who else is there.
           Otherwise anyone could probe resource keys to learn who is working
-          where. For a draft only its owner may heartbeat or save, and anyone
-          else gets <code>403</code> with nothing recorded and no names in the
-          answer. Every future use must make the same check first.
+          where. For a draft only its owner may heartbeat, say goodbye or save,
+          and anyone else gets <code>403</code> with nothing recorded or removed
+          and no names in the answer. Every future use must make the same check
+          first.
         </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-timing">
+          <strong>Timing.</strong> Two environment variables, read by the
+          server, set how fast a closed tab is noticed. A value that is missing,
+          blank, not a whole number or less than 1 is replaced by the default. A
+          tab is forgotten after the heartbeat interval times the missed
+          heartbeats, 15 seconds by default, and the other tab learns at its
+          next heartbeat: a closed tab with no goodbye is noticed in about 15 to
+          20 seconds, and one that says goodbye in about one heartbeat, 5
+          seconds. The server tells clients the interval in each heartbeat
+          answer. The integration tests use an interval of 2 and 3 missed
+          heartbeats, a 6 second window.
+        </p>
+        <Table
+          striped
+          bordered
+          size="sm"
+          data-testid="HelpDeveloperPage-simultaneous-timing-table"
+        >
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Default</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-testid="HelpDeveloperPage-simultaneous-timing-interval">
+              <td>
+                <code>CLIENT_HEARTBEAT_INTERVAL_SEC</code>
+              </td>
+              <td>
+                <code>5</code>
+              </td>
+              <td>How often an open tab sends a heartbeat.</td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-timing-missed">
+              <td>
+                <code>CLIENT_TIMEOUT_MISSED_HEARTBEATS</code>
+              </td>
+              <td>
+                <code>3</code>
+              </td>
+              <td>
+                A tab is considered gone after this many heartbeat intervals
+                with no word from it.
+              </td>
+            </tr>
+          </tbody>
+        </Table>
         <p data-testid="HelpDeveloperPage-simultaneous-limits">
-          <strong>Limits and timing.</strong> The detector keeps its state in
-          memory, so it works for one server process only; with several, each
-          would see only its own requests, and the state would have to move to
-          the database behind the same interface. A restart forgets who was
-          open, so the warning is absent for up to one window. A client counts
-          as active for a <strong>window</strong> after it was last seen: 60
-          seconds by default (<code>CONCURRENCY_WINDOW_SECONDS</code>). The
-          heartbeat is a third of that, 20 seconds, and the server tells the
-          client so in each answer; the integration tests use a 6 second window
-          and so a 2 second heartbeat. The warning clears by itself once the
-          other copies have been closed for a window. It is advice and never a
-          lock; the version check still protects the data.
+          <strong>Limits.</strong> The detector keeps its state in memory, so it
+          works for one server process only; with several, each would see only
+          its own requests, and the state would have to move to the database
+          behind the same interface. A restart forgets who was open, so the
+          warning is absent for up to one window. Browsers slow the timers of
+          hidden tabs, so a tab in the background can heartbeat later than the
+          timeout. The server then forgets it, the warning in the visible tab
+          goes for a while, and when the background tab beats again it arrives
+          afresh as the newest and the warning returns. That is accepted:
+          raising the two variables makes it rarer. The warning is advice and
+          never a lock; the version check still protects the data.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-refresh">
           <strong>Other pages.</strong> Not every page will get a warning.
@@ -252,6 +345,14 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #283
+                </a>
+                {", "}
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/285"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #285
                 </a>
               </td>
             </tr>

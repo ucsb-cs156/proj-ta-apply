@@ -76,10 +76,36 @@ function expectSimultaneousEditingSection(page) {
     "What to do. Close all the other tabs or windows, and keep just one.",
   );
   expect(todo).toHaveTextContent("If the form asks you to reload, reload it");
+  // Issue #284: the question put to the newer tab, and its three choices.
+  const modal = screen.getByTestId(`${page}-simultaneous-editing-modal`);
+  expect(modal).toHaveTextContent(
+    "The tab or window you opened last also asks what you want to do",
+  );
+  expect(modal).toHaveTextContent(
+    "The one you opened first only shows the warning",
+  );
+  const choices = screen.getByTestId(`${page}-simultaneous-editing-choices`);
+  expect(
+    [...choices.querySelectorAll("li > strong")].map((b) => b.textContent),
+  ).toEqual([
+    "Leave this page",
+    "Wait for the other tabs or windows to close, then resume here",
+    "Continue anyway",
+  ]);
+  expect(choices).toHaveTextContent(
+    "takes this tab or window to the home page",
+  );
+  expect(choices).toHaveTextContent("closes by itself within a few seconds");
+  expect(choices).toHaveTextContent("The box does not come back");
+  expect(todo).toHaveTextContent(
+    "within a few seconds after the other copies are closed",
+  );
   // In order, and last on the page.
   expect(heading.nextElementSibling.nextElementSibling).toBe(example);
   expect(example.nextElementSibling).toBe(meaning);
-  expect(meaning.nextElementSibling).toBe(todo);
+  expect(meaning.nextElementSibling).toBe(modal);
+  expect(modal.nextElementSibling).toBe(choices);
+  expect(choices.nextElementSibling).toBe(todo);
   expect(root.lastElementChild).toBe(todo);
   // The tip that used to carry this warning is gone.
   expect(screen.queryByTestId(`${page}-one-window`)).toBeNull();
@@ -502,14 +528,51 @@ describe("Help pages (issue #140)", () => {
     expect(text("authorization")).toMatch(
       /Every future use must make the same check first/,
     );
-    // Limits and timing.
-    expect(text("limits")).toMatch(/one server process only/);
-    expect(text("limits")).toMatch(/60 seconds/);
-    expect(text("limits")).toMatch(/CONCURRENCY_WINDOW_SECONDS/);
-    expect(text("limits")).toMatch(/20 seconds/);
-    expect(text("limits")).toMatch(
-      /6 second window and so a 2 second heartbeat/,
+    // The goodbye (issue #284).
+    expect(text("goodbye")).toMatch(
+      /POST \/api\/draftApplications\/leave\?id=/,
     );
+    expect(text("goodbye")).toMatch(/pagehide/);
+    expect(text("goodbye")).toMatch(/unmounts/);
+    expect(text("goodbye")).toMatch(/keepalive: true/);
+    expect(text("goodbye")).toMatch(/sendBeacon/);
+    expect(text("goodbye")).toMatch(/pageshow/);
+    expect(text("goodbye")).toMatch(/Delivery is not guaranteed/);
+    // The modal and how the newer tab is chosen.
+    expect(text("detector")).toMatch(/newest/);
+    expect(text("detector")).toMatch(/arrivedAtMillis/);
+    expect(text("modal")).toMatch(/arrived after every other active client/);
+    expect(text("modal")).toMatch(/ordered by their identifiers/);
+    expect(text("modal")).toMatch(/Leave this page/);
+    expect(text("modal")).toMatch(
+      /Wait for the other tabs or windows to close, then resume here/,
+    );
+    expect(text("modal")).toMatch(/Continue anyway/);
+    expect(text("modal")).toMatch(/older tabs keep only the banner/);
+    expect(text("modal")).toMatch(/Enter is ignored for the first second/);
+    // Timing, and its two environment variables.
+    expect(text("timing")).toMatch(/15 seconds by default/);
+    expect(text("timing")).toMatch(/about 15 to 20 seconds/);
+    const timingRows = [
+      ...screen
+        .getByTestId("HelpDeveloperPage-simultaneous-timing-table")
+        .querySelectorAll("tbody tr"),
+    ].map((tr) => [...tr.querySelectorAll("td")].map((td) => td.textContent));
+    expect(timingRows).toEqual([
+      [
+        "CLIENT_HEARTBEAT_INTERVAL_SEC",
+        "5",
+        "How often an open tab sends a heartbeat.",
+      ],
+      [
+        "CLIENT_TIMEOUT_MISSED_HEARTBEATS",
+        "3",
+        "A tab is considered gone after this many heartbeat intervals with no word from it.",
+      ],
+    ]);
+    expect(text("limits")).toMatch(/one server process only/);
+    expect(text("limits")).toMatch(/hidden tabs/);
+    expect(text("limits")).not.toMatch(/CONCURRENCY_WINDOW_SECONDS/);
     // The refresh that other pages will use, and that it is not built yet.
     for (const setting of [
       "ADMIN_REFRESH_SEC=5",
@@ -535,11 +598,15 @@ describe("Help pages (issue #140)", () => {
       "Application form draft",
       "One applicant's draft for one recruitment",
       "draft:<draftId>",
-      "#283",
+      "#283, #285",
     ]);
     expect(rows[0].querySelector("a")).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/283",
+    );
+    expect(rows[0].querySelectorAll("a")[1]).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/285",
     );
   });
 
