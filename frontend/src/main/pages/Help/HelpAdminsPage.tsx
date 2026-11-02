@@ -731,6 +731,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>Faculty see their own courses</strong>, recorded in the change
           history like any other visibility change.
         </p>
+        <p data-testid="HelpAdminsPage-fake-rankings">
+          While developer mode is on, the footer of a recruitment&apos;s Courses
+          page also has a <strong>Create Fake Rankings</strong> button, enabled
+          only while faculty ranking is open. It launches a job that ranks
+          candidates as the faculty would, for every course that has no rankings
+          yet or for a random part of them. Each course gets as many interested
+          candidates as its ranking target asks for, and a checkbox also ranks
+          one or two applicants who did not express interest. Courses that
+          already have rankings are never changed.
+        </p>
       </div>
     </BasicLayout>
   );
