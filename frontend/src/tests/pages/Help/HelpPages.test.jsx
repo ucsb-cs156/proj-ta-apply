@@ -336,6 +336,23 @@ describe("Help pages (issue #140)", () => {
       autoCreate.compareDocumentPosition(fake) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    // Issue #220: the Create Fake Rankings button.
+    const rankings = screen.getByTestId("HelpAdminsPage-fake-rankings");
+    expect(rankings).toHaveTextContent(
+      "While developer mode is on, the footer of a recruitment's Courses page also has a Create Fake Rankings button, enabled only while faculty ranking is open.",
+    );
+    expect(rankings).toHaveTextContent(
+      "for every course that has no rankings yet or for a random part of them.",
+    );
+    expect(rankings).toHaveTextContent(
+      "a checkbox also ranks one or two applicants who did not express interest.",
+    );
+    expect(rankings).toHaveTextContent(
+      "Courses that already have rankings are never changed.",
+    );
+    expect(
+      fake.compareDocumentPosition(rankings) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(
       document
         .getElementById("developer-info")
