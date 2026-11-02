@@ -45,7 +45,7 @@ public class InMemoryClientActivityDetectorTests {
 
   private final MovableClock clock = new MovableClock();
   private final InMemoryClientActivityDetector detector =
-      new InMemoryClientActivityDetector(clock, Duration.ofSeconds(60));
+      new InMemoryClientActivityDetector(clock, Duration.ofSeconds(20), 3);
 
   @Test
   public void nobody_is_active_before_anyone_is_seen() {
@@ -230,47 +230,63 @@ public class InMemoryClientActivityDetectorTests {
   }
 
   @Test
-  public void the_window_is_reported() {
+  public void the_window_is_the_interval_times_the_missed_heartbeats() {
     assertEquals(Duration.ofSeconds(60), detector.window());
+    assertEquals(Duration.ofSeconds(20), detector.heartbeatInterval());
+    assertEquals(
+        Duration.ofSeconds(15),
+        new InMemoryClientActivityDetector(clock, Duration.ofSeconds(5), 3).window());
   }
 
   @Test
-  public void a_window_of_zero_or_less_is_refused() {
+  public void an_interval_of_zero_or_less_or_no_missed_heartbeats_is_refused() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new InMemoryClientActivityDetector(clock, Duration.ZERO));
+        () -> new InMemoryClientActivityDetector(clock, Duration.ZERO, 3));
     assertThrows(
         IllegalArgumentException.class,
-        () -> new InMemoryClientActivityDetector(clock, Duration.ofSeconds(-1)));
+        () -> new InMemoryClientActivityDetector(clock, Duration.ofSeconds(-1), 3));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new InMemoryClientActivityDetector(clock, Duration.ofSeconds(5), 0));
+    // One missed heartbeat is the least that is allowed.
+    assertEquals(
+        Duration.ofSeconds(5),
+        new InMemoryClientActivityDetector(clock, Duration.ofSeconds(5), 1).window());
+  }
+
+  private static long suggested(Duration interval) {
+    return new InMemoryClientActivityDetector(new MovableClock(), interval, 3)
+        .suggestedHeartbeatSeconds();
   }
 
   @Test
-  public void the_heartbeat_is_three_a_window_and_never_less_than_a_second() {
+  public void the_suggested_heartbeat_is_the_interval_in_seconds_rounded_up_and_at_least_one() {
     assertEquals(20, detector.suggestedHeartbeatSeconds());
-    assertEquals(
-        2,
-        new InMemoryClientActivityDetector(clock, Duration.ofSeconds(6))
-            .suggestedHeartbeatSeconds());
-    assertEquals(
-        1,
-        new InMemoryClientActivityDetector(clock, Duration.ofSeconds(2))
-            .suggestedHeartbeatSeconds());
-    assertEquals(
-        1,
-        new InMemoryClientActivityDetector(clock, Duration.ofMillis(300))
-            .suggestedHeartbeatSeconds());
+    assertEquals(5, suggested(Duration.ofSeconds(5)));
+    assertEquals(2, suggested(Duration.ofMillis(2000)));
+    assertEquals(3, suggested(Duration.ofMillis(2001)));
+    assertEquals(2, suggested(Duration.ofMillis(1001)));
+    assertEquals(1, suggested(Duration.ofMillis(1000)));
+    assertEquals(1, suggested(Duration.ofMillis(300)));
   }
+
+  private static final long START = Instant.parse("2026-11-02T12:00:00Z").toEpochMilli();
 
   @Test
   public void a_heartbeat_records_the_client_and_answers_with_the_others_and_the_interval() {
     Presence first = detector.heartbeat("draft:1", "a", ADA);
-    assertEquals(new Presence(List.of(), 20), first);
+    assertEquals(new Presence(List.of(), 20, true, START), first);
 
+    clock.advance(Duration.ofSeconds(1));
     Presence second = detector.heartbeat("draft:1", "b", BEN);
-    assertEquals(new Presence(List.of(new OtherClient("Ada (Ada L)", false)), 20), second);
-    // It really did record: a now sees b without having been recorded since.
     assertEquals(
-        List.of(new OtherClient("Ben (Ben B)", false)), detector.othersActive("draft:1", "a"));
+        new Presence(List.of(new OtherClient("Ada (Ada L)", false)), 20, true, START + 1000),
+        second);
+    // It really did record: a now sees b without having been recorded since, and is not the newest.
+    assertEquals(
+        new Presence(List.of(new OtherClient("Ben (Ben B)", false)), 20, false, START),
+        detector.heartbeat("draft:1", "a", ADA));
   }
 
   @Test
@@ -279,10 +295,180 @@ public class InMemoryClientActivityDetectorTests {
 
     for (String bad :
         new String[] {null, "", "   ", "x".repeat(ConcurrencyHeaders.MAX_CLIENT_ID_LENGTH + 1)}) {
-      assertEquals(new Presence(List.of(), 20), detector.heartbeat("draft:1", bad, BEN));
+      assertEquals(new Presence(List.of(), 20, false, 0), detector.heartbeat("draft:1", bad, BEN));
     }
     // Nobody was recorded by those: a sees no one.
     assertEquals(List.of(), detector.othersActive("draft:1", "a"));
+  }
+
+  @Test
+  public void leaving_stops_a_client_counting_at_once() {
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:1", "b", BEN);
+    assertEquals(1, detector.othersActive("draft:1", "a").size());
+
+    detector.leave("draft:1", "b");
+
+    assertEquals(List.of(), detector.othersActive("draft:1", "a"));
+    assertEquals(1, detector.resourcesRemembered());
+  }
+
+  @Test
+  public void leaving_takes_only_that_client_and_only_from_that_resource() {
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:1", "b", BEN);
+    detector.record("draft:1", "c", CAL);
+    detector.record("draft:2", "b", BEN);
+
+    detector.leave("draft:1", "b");
+
+    assertEquals(
+        List.of(new OtherClient("cal@example.org", false)), detector.othersActive("draft:1", "a"));
+    assertEquals(
+        List.of(new OtherClient("Ben (Ben B)", false)), detector.othersActive("draft:2", "a"));
+  }
+
+  @Test
+  public void the_last_client_to_leave_lets_the_resource_be_forgotten() {
+    detector.record("draft:1", "a", ADA);
+    detector.leave("draft:1", "a");
+    assertEquals(0, detector.resourcesRemembered());
+  }
+
+  @Test
+  public void leaving_when_not_known_changes_nothing() {
+    detector.leave("draft:1", "nobody");
+    assertEquals(0, detector.resourcesRemembered());
+
+    detector.record("draft:1", "a", ADA);
+    detector.leave("draft:1", "nobody");
+    detector.leave("draft:9", "a");
+    assertEquals(1, detector.resourcesRemembered());
+    assertEquals(
+        List.of(new OtherClient("Ada (Ada L)", false)), detector.othersActive("draft:1", "x"));
+  }
+
+  @Test
+  public void a_client_alone_is_the_newest_and_arrived_when_first_seen() {
+    detector.record("draft:1", "a", ADA);
+    assertEquals(new Arrival(true, START), detector.arrival("draft:1", "a"));
+  }
+
+  @Test
+  public void a_client_never_recorded_has_not_arrived() {
+    detector.record("draft:1", "a", ADA);
+    assertEquals(new Arrival(false, 0), detector.arrival("draft:1", "never"));
+    assertEquals(new Arrival(false, 0), detector.arrival("draft:2", "a"));
+  }
+
+  @Test
+  public void only_the_client_that_arrived_after_all_the_others_is_the_newest() {
+    detector.record("draft:1", "a", ADA);
+    clock.advance(Duration.ofSeconds(1));
+    detector.record("draft:1", "b", BEN);
+    clock.advance(Duration.ofSeconds(1));
+    detector.record("draft:1", "c", CAL);
+
+    assertEquals(new Arrival(false, START), detector.arrival("draft:1", "a"));
+    assertEquals(new Arrival(false, START + 1000), detector.arrival("draft:1", "b"));
+    assertEquals(new Arrival(true, START + 2000), detector.arrival("draft:1", "c"));
+  }
+
+  @Test
+  public void a_second_tab_of_the_same_person_arrives_after_the_first() {
+    detector.record("draft:1", "tab-1", ADA);
+    clock.advance(Duration.ofSeconds(1));
+    detector.record("draft:1", "tab-2", ADA);
+
+    assertEquals(false, detector.arrival("draft:1", "tab-1").newest());
+    assertEquals(true, detector.arrival("draft:1", "tab-2").newest());
+  }
+
+  @Test
+  public void clients_that_arrive_together_are_put_in_order_by_identifier() {
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:1", "b", BEN);
+
+    // Exactly one of them is the newest, however the clock stands.
+    assertEquals(false, detector.arrival("draft:1", "a").newest());
+    assertEquals(true, detector.arrival("draft:1", "b").newest());
+  }
+
+  @Test
+  public void being_seen_again_keeps_the_arrival() {
+    detector.record("draft:1", "a", ADA);
+    clock.advance(Duration.ofSeconds(1));
+    detector.record("draft:1", "b", BEN);
+    clock.advance(Duration.ofSeconds(19));
+    detector.record("draft:1", "a", ADA);
+    clock.advance(Duration.ofSeconds(19));
+    detector.record("draft:1", "a", ADA);
+
+    // a keeps beating, but it was here first.
+    assertEquals(new Arrival(false, START), detector.arrival("draft:1", "a"));
+    assertEquals(true, detector.arrival("draft:1", "b").newest());
+  }
+
+  @Test
+  public void a_client_that_had_gone_quiet_arrives_afresh_when_it_is_seen_again() {
+    detector.record("draft:1", "a", ADA);
+    detector.record("draft:1", "b", BEN);
+    clock.advance(Duration.ofSeconds(30));
+    detector.record("draft:1", "b", BEN);
+    // Exactly one window since a was seen: a had gone.
+    clock.advance(Duration.ofSeconds(30));
+    detector.record("draft:1", "a", ADA);
+
+    assertEquals(new Arrival(true, START + 60_000), detector.arrival("draft:1", "a"));
+    assertEquals(new Arrival(false, START), detector.arrival("draft:1", "b"));
+  }
+
+  @Test
+  public void a_client_just_inside_the_window_keeps_its_arrival() {
+    detector.record("draft:1", "a", ADA);
+    clock.advance(Duration.ofSeconds(59));
+    detector.record("draft:1", "a", ADA);
+    assertEquals(new Arrival(true, START), detector.arrival("draft:1", "a"));
+  }
+
+  @Test
+  public void a_client_that_left_and_comes_back_arrives_afresh() {
+    detector.record("draft:1", "a", ADA);
+    clock.advance(Duration.ofSeconds(1));
+    detector.record("draft:1", "b", BEN);
+    detector.leave("draft:1", "a");
+    clock.advance(Duration.ofSeconds(1));
+    detector.record("draft:1", "a", ADA);
+
+    assertEquals(new Arrival(true, START + 2000), detector.arrival("draft:1", "a"));
+    assertEquals(false, detector.arrival("draft:1", "b").newest());
+  }
+
+  @Test
+  public void a_newer_client_that_has_gone_quiet_does_not_stop_this_one_being_the_newest() {
+    detector.record("draft:1", "a", ADA);
+    clock.advance(Duration.ofSeconds(10));
+    detector.record("draft:1", "b", BEN);
+    clock.advance(Duration.ofSeconds(30));
+    detector.record("draft:1", "a", ADA);
+    // b was last seen 59 seconds ago: still here.
+    clock.advance(Duration.ofSeconds(29));
+    assertEquals(false, detector.arrival("draft:1", "a").newest());
+    // Now b was last seen exactly a window ago, and has gone.
+    clock.advance(Duration.ofSeconds(1));
+    assertEquals(new Arrival(true, START), detector.arrival("draft:1", "a"));
+  }
+
+  @Test
+  public void a_client_that_left_no_longer_decides_who_is_the_newest() {
+    detector.record("draft:1", "a", ADA);
+    clock.advance(Duration.ofSeconds(1));
+    detector.record("draft:1", "b", BEN);
+    assertEquals(false, detector.arrival("draft:1", "a").newest());
+
+    detector.leave("draft:1", "b");
+
+    assertEquals(true, detector.arrival("draft:1", "a").newest());
   }
 
   @Test

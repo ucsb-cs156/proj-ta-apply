@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -210,6 +211,25 @@ public class DraftApplicationsController extends ApiController {
     // neither recorded nor told who is working here.
     mine(id);
     return clientActivityDetector.heartbeat(resourceKey(id), clientId, identity());
+  }
+
+  @Operation(
+      summary = "Say that this tab or window has left the draft",
+      description =
+          "Sent when a tab or window is closed or moves away from the draft, so that the others"
+              + " stop being warned about it at once instead of when its heartbeats stop. It is"
+              + " allowed to someone exactly when a heartbeat is: only the draft's owner, and for"
+              + " anyone else nothing is recorded. The answer is 204 whether or not the client was"
+              + " known.")
+  @PreAuthorize("hasRole('ROLE_USER')")
+  @PostMapping("/leave")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void leave(
+      @Parameter(name = "id") @RequestParam Long id,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    // The owner check comes first, as for the heartbeat.
+    mine(id);
+    clientActivityDetector.leave(resourceKey(id), clientId);
   }
 
   /** Name-to-level answers as sent, without the null entries and in a stable order. */

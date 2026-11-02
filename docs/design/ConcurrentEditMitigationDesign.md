@@ -63,9 +63,11 @@ it with the version in each successful response. On a `409` it:
 The user's unsaved typing in the stale copy is lost when they reload. That is the price of choosing
 one version, and it is why the warning below matters: it makes the conflict rarer.
 
-### Mitigation 2. The multi-tab warning (#273)
+### Mitigation 2. The multi-tab warning (#273, #284)
 
-The version check says "no" after the fact. The warning says "careful" before it, and says who.
+The version check says "no" after the fact. The warning says "careful" before it, and says who. Issue
+#284 made it faster (a tab that leaves says goodbye, and the timing is configurable) and gave the
+newer of several tabs a modal with choices, so that the subtle banner is not the only signal.
 
 **Client.** When a screen that autosaves opens, it makes a random identifier for this copy,
 `crypto.randomUUID()`, and keeps it in memory only, never in `localStorage` or `sessionStorage`. A
@@ -74,9 +76,10 @@ identifier, as the request header `X-Client-Id`, with:
 
 * every save, and
 * a lightweight **heartbeat** while the screen is open, one as soon as it opens and then as often
-  as the server asks (every 20 seconds by default). The heartbeat exists to let the server see
+  as the server asks (every 5 seconds by default). The heartbeat exists to let the server see
   copies that are open but idle, and to bring back who else is there. It changes nothing: not the
-  saved thing, and not its version.
+  saved thing, and not its version, and
+* a **goodbye** when the copy leaves (see "Goodbye" below).
 
 **Identity.** The detector must be able to name people, but it must not know what a person is. So
 the application hands it an opaque **identity** with every client it records:
@@ -94,23 +97,25 @@ The detector treats both as opaque text. The application builds the identity fro
 resource now?
 
 * It is a map from a **resource key** (a string such as `draft:42`) to a map from client id to the
-  time that client was last seen and the identity it gave.
-* `record(resourceKey, clientId, identity)` stores "now" and the identity for that client. It also
-  drops entries older than the window, for every resource and not only this one, so the map does
-  not grow without bound.
+  time that client arrived, the time it was last seen, and the identity it gave.
+* `record(resourceKey, clientId, identity)` stores "now" as the time last seen, and the identity for
+  that client. If the client was already here (seen within the window) its time of arrival is kept;
+  otherwise it arrives now. It also drops entries older than the window, for every resource and not
+  only this one, so the map does not grow without bound.
+* `leave(resourceKey, clientId)` forgets that client at once (see "Goodbye").
+* `arrival(resourceKey, clientId)` says whether the client is the **newest** and when it arrived (see
+  "Arrival order").
 * `othersActive(resourceKey, clientId)` returns the other people active within the **window**, as a
   list of `{label, samePerson}`, **one entry for each person** however many tabs they have open,
   sorted by label. An entry has `samePerson` true if it is the same person as the caller (the
   caller's own other tab or window); the caller's own client is never in the list. The caller is
   compared by the identity recorded for its client id; a caller that was not recorded is nobody's
   same person.
-* The default window is 60 seconds (`app.concurrency.window-seconds`, or the environment variable
-  `CONCURRENCY_WINDOW_SECONDS`). The heartbeat is a third of the window and at least a second, so
-  one lost heartbeat does not make a copy disappear. The server tells the client how often to beat
-  in each heartbeat answer, so the two are tuned together: the integration tests use a six-second
-  window and so a two-second heartbeat, which lets a warning be watched appearing and clearing.
-* The clock and the window length are constructor arguments, so tests run in zero time with a fake
-  clock.
+* The timing is two settings, read by the server from environment variables (see "Timing"). The
+  window is the heartbeat interval times the number of heartbeats that may be missed. The server
+  tells the client how often to beat in each heartbeat answer, so the two are always in step.
+* The clock, the heartbeat interval and the number of missed heartbeats are constructor arguments,
+  so tests run in zero time with a fake clock.
 * Two helpers keep the controllers short. `note(resourceKey, clientId, identity)` records the client
   if it named itself usably (present, not blank, at most 100 characters) and otherwise does
   nothing; saves call it. `heartbeat(resourceKey, clientId, identity)` records the client and
@@ -127,14 +132,20 @@ body of the **heartbeat's** answer:
     { "label": "phtcon@ucsb.edu (Phill Conrad)", "samePerson": false },
     { "label": "me@example.org (Me)", "samePerson": true }
   ],
-  "heartbeatSeconds": 20
+  "heartbeatSeconds": 5,
+  "newest": true,
+  "arrivedAtMillis": 1793620800000
 }
 ```
 
+`newest` and `arrivedAtMillis` are explained under "Arrival order". The goodbye is a `POST` with no
+body, answered `204`.
+
 A save is answered exactly as it was before the warning existed; it only counts the client as
 present. The banner therefore learns of the others, and their names, at the next heartbeat: within
-one heartbeat of someone arriving, and within one window plus one heartbeat of them leaving. This
-was chosen as the simplest correct design: one source of names, one body to parse, no header
+one heartbeat of someone arriving; within one heartbeat of them saying goodbye; and, if the goodbye
+never arrives, within one window plus one heartbeat of them leaving (15 s plus 5 s, about 20 s with
+the defaults). This was chosen as the simplest correct design: one source of names, one body to parse, no header
 encoding, and nothing to keep in step between a header cue on saves and the list from the
 heartbeat.
 
@@ -146,15 +157,16 @@ is ignored and tried again at the next time, so the banner shows what the server
 that the caller **may use the resource before** it records the caller or asks who else is there.
 Otherwise anyone could try resource keys and learn who is working where. For a draft application
 only its owner may use it, so the controller loads the draft and answers `403` for anyone else
-(`404` if there is none) before the detector is touched, for a heartbeat and for a save alike. The
-refused caller is not recorded, is told no names, and the response does not contain any.
+(`404` if there is none) before the detector is touched, for a heartbeat, a goodbye and a save alike.
+The refused caller is not recorded, is told no names, and the response does not contain any.
 
-> **The rule for every future resource.** A heartbeat endpoint checks, with the same check the
+> **The rule for every future resource.** A heartbeat endpoint, and the goodbye endpoint beside it,
+> checks, with the same check the
 > resource's own edits use, that the caller may access the resource; only then does it record the
 > caller and answer with the others. A resource that several people may use (the budget, the
 > assignments) will show the names of the other people allowed to use it, and a person who may not
-> use it learns nothing. A new resource's tests must include the refusal and that nothing was
-> recorded by it.
+> use it learns nothing, and cannot remove anyone from the list by saying goodbye in their name. A new
+> resource's tests must include the refusal and that nothing was recorded or removed by it.
 
 **The banner.** The client turns the list into a sentence with a pure function (`describeOthers`)
 and shows it, then the sentence *Please know that this is risky; we recommend closing all but one
@@ -172,8 +184,94 @@ markup. A long name wraps instead of widening the page.
 | the user and two or three | You, A and B are also editing this page in other windows or tabs. |
 | more than three other people | A, B, C and 2 others are also editing this page. (three named, the rest counted; "1 other" for one) |
 
-The warning clears by itself. Once the extra copies are closed, they stop heartbeating, they age out
-of the window, and the next heartbeat of the remaining copy lists no one, so the banner goes.
+The warning clears by itself. When an extra copy is closed it says goodbye, and the next heartbeat
+of the remaining copy lists no one, so the banner goes within a heartbeat. If the goodbye is lost,
+the extra copy stops heartbeating, ages out of the window, and the banner goes then.
+
+**Goodbye.** The banner used to clear only when a closed copy had been silent for a whole window,
+which felt slow. A copy that leaves now says so, and the server forgets it at once.
+
+* The client sends `POST .../leave?id=` with `X-Client-Id`, on the `pagehide` event and when the hook
+  goes away. Not `beforeunload` or `unload`: `pagehide` is the event that is reliably delivered when a
+  page is closed, navigated away from or put into the back/forward cache, and the other two are
+  unreliable on mobile and break that cache. Moving between pages inside the app fires no `pagehide`,
+  because the browser page stays; the component using the hook unmounts instead, so unmounting says
+  goodbye too.
+* It is sent with `fetch(..., { keepalive: true })`, which lets the request outlive the page. It is
+  not `navigator.sendBeacon`, which cannot set the `X-Client-Id` header or send the CSRF token
+  as a header.
+* On `pagehide` the tab also stops its heartbeats, so a heartbeat still on its way cannot put it
+  back on the list. If the browser restores the page from the cache (`pageshow` with
+  `persisted`), the tab announces itself again at once and resumes.
+* The goodbye is authorized exactly like the heartbeat (see below): a caller who may not use the
+  resource gets `403` and nothing is removed. It always answers `204` otherwise, whether or not
+  the client was known.
+* **Delivery is not guaranteed.** A crash, a killed mobile tab or a lost network sends no goodbye.
+  The heartbeat window stays as the fallback, so a lost goodbye costs only the old delay.
+
+**Timing.** Two environment variables, read by the server, with safe fallbacks (a value that is
+missing, blank, not a whole number or less than 1 is replaced by the default, so a typo cannot stop
+the app starting):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `CLIENT_HEARTBEAT_INTERVAL_SEC` | `5` | How often an open tab sends a heartbeat |
+| `CLIENT_TIMEOUT_MISSED_HEARTBEATS` | `3` | A tab is considered gone after this many intervals with no word from it |
+
+The window is the interval times the missed heartbeats: 15 seconds by default. A closed tab with no
+goodbye is forgotten after 15 seconds, and the other tab learns at its next heartbeat, within 5
+seconds more: about 15 to 20 seconds. With the goodbye it is about one heartbeat, 5 seconds. They
+replace the old `app.concurrency.window-seconds` (a 60 second window and a 20 second heartbeat). The
+properties are `app.concurrency.heartbeat-interval-sec` and `app.concurrency.timeout-missed-heartbeats`;
+the integration tests use 2 and 3 (a 6 second window) so that a warning can be seen to clear.
+
+*Hidden tabs.* Browsers slow the timers of tabs in the background, sometimes to one a minute. A
+background tab's heartbeat can then come later than the window, so the server forgets it and the
+warning in the visible tab goes for a while. When the background tab does beat it arrives afresh, as
+the newest, and the warning returns (and the modal, if it has become the newest tab). This was
+judged acceptable: the warning is advice, the version check still guards every save, and a tab
+nobody is looking at is one nobody is typing in. Shortening the heartbeat does not help a throttled
+timer, and asking the tab to beat when it becomes visible again was left out as more machinery than
+the benefit justifies.
+
+**Arrival order.** Each heartbeat answer says whether the tab is the **newest** and when it
+arrived (`arrivedAtMillis`). A client's arrival is the time it was first seen in its present stay: it
+is kept while the client keeps being seen within the window, and renewed if the client said goodbye or
+went quiet for a window and came back. The newest client is the one that arrived after every other
+active client (the user's own tabs and other people alike). Clients that arrive at the same instant
+are put in order by their identifiers, so there is always exactly one newest client and never a tie.
+
+**The modal for the newer tab.** Only the newest tab is asked what to do, with a modal that must be
+answered. The older tabs keep only the non-blocking banner, so the first editor is never interrupted
+in the middle of typing.
+
+| Choice | What it does |
+|---|---|
+| **Leave this page** | Sends the goodbye, then navigates to the home page. It does not rely on `window.close()`, which browsers ignore for a tab the script did not open |
+| **Wait for the other tabs or windows to close, then resume here** | The page stays covered, with a note that it is waiting. The modal closes by itself when a heartbeat shows no one else |
+| **Continue anyway** | Closes the modal. The banner stays, and the version check still guards saves |
+
+Why the older tab is never asked: if both tabs were asked, both could choose to wait for the other and
+neither would ever resume. Asking only the newest means the oldest tab is never waiting for anyone,
+so a waiting tab always waits for something that will not itself be blocked. The same reasoning
+covers a third tab arriving: a tab that was waiting but is no longer the newest is released at once
+(its modal closes, the banner remains), and it is asked again only if it becomes the newest again.
+
+Other behavior:
+
+* *Typing safety.* No button takes the focus when the modal opens, so a key meant for the form cannot
+  press one. Enter is ignored for the first second after the modal appears (and again each time it
+  reappears). Escape does nothing, and so does a click outside it: the question must be answered,
+  and Escape is too easily pressed in passing. Focus stays inside it, it is labelled by its title,
+  and it is announced as a dialog.
+* *It does not nag.* After **Continue anyway** the modal does not come back at each heartbeat. The
+  choice is remembered for as long as the tab's `arrivedAtMillis` stays the same. A person or tab that
+  joins afterwards arrives after this one, so this tab is no longer the newest and has no modal to
+  show; if that other tab leaves, this one is the newest again but its choice stands. The modal
+  returns only if this tab itself arrives afresh, for example after being forgotten while in the
+  background.
+* The modal reuses the sentence the banner composes (names, wording rules and the banner text are
+  unchanged by #284).
 
 **What the warning is not.** It is advice, not a lock. A user who ignores it is still protected by
 the version check.
@@ -190,8 +288,11 @@ the version check.
 * **A server restart** forgets who was open. The warning is absent for up to one window. The version
   check, which lives in the database, is unaffected.
 * **Idle copies without a heartbeat** are invisible, which is why the heartbeat exists. A copy in a
-  background tab may have its timers throttled by the browser. The 60-second window is chosen to
-  ride that out in most browsers.
+  background tab may have its timers throttled by the browser, and then be forgotten for a while: see
+  "Hidden tabs" above. The short window (15 seconds by default) makes this more likely than the old
+  60 seconds did; both numbers can be raised with the environment variables.
+* **A goodbye that does not arrive** (a crash, a killed mobile tab, a lost network) is covered by the
+  window.
 * **One copy only** never sees either mechanism. This is as intended.
 * **Different people editing the same thing** are named in the warning, and told apart from the
   user's own other tabs (*You*). Both are conflicts and both are handled the same way by the
@@ -209,22 +310,24 @@ The pieces are written so that they could later be lifted out as libraries witho
 | | Where | Depends on |
 |---|---|---|
 | Server | A package of its own, `edu.ucsb.cs.taapply.concurrency` | The JDK only. No entity, repository or service from the app, and not even Spring |
-| Client | A folder of its own, `frontend/src/main/concurrency/` | React and `axios`. No import from `main/components`, `main/pages` or `main/utils`, and the banner uses plain Bootstrap class names rather than a component library |
+| Client | A folder of its own, `frontend/src/main/concurrency/` | React, `axios` and `react-bootstrap` (for the modal's focus trap and dialog markup). No import from `main/components`, `main/pages` or `main/utils`, and the banner uses plain Bootstrap class names |
 | Tests | `src/test/.../concurrency/` and `frontend/src/tests/concurrency/` | The same, plus a fake clock |
 
 The server package holds the detector interface (`ClientActivityDetector`, with the `note` and
-`heartbeat` helpers), its in-memory implementation (`InMemoryClientActivityDetector`), the identity
-the app supplies (`ClientIdentity`), the entries it answers with (`OtherClient`), the heartbeat's
-answer (`Presence`), and the name of the header and the one rule about what a client id may be
+`heartbeat` helpers, and `leave` and `arrival`), its in-memory implementation
+(`InMemoryClientActivityDetector`), the identity the app supplies (`ClientIdentity`), the entries it
+answers with (`OtherClient`), the arrival order (`Arrival`), the heartbeat's answer (`Presence`), and
+the name of the header and the one rule about what a client id may be
 (`ConcurrencyHeaders`). The one place that knows about Spring is outside the package:
-`config/ConcurrencyConfig` makes the detector bean with the real clock and the window setting. The
+`config/ConcurrencyConfig` makes the detector bean with the real clock and the two timing settings. The
 `409` is built by the application's own controller, since what a refused save says is the
 application's business. So is who the user is: the controller builds the identity from the current
 user.
 
-The client folder holds the hook that makes the identifier, sends the heartbeat and reads the
-answers (`useClientActivity`), the header name (`headers`), the pure functions that read the answer
-and compose the sentence (`others`), and the banner (`MultipleTabsBanner`). The conflict message
+The client folder holds the hook that makes the identifier, sends the heartbeat and the goodbye and
+reads the answers (`useClientActivity`), the goodbye request (`goodbye`), the header name
+(`headers`), the pure functions that read the answer and compose the sentence (`others`), the banner
+(`MultipleTabsBanner`) and the modal (`MultipleTabsModal`). The conflict message
 with its Reload button is not in it: what Reload does depends on the screen, so it stays in the
 application. Each piece takes what it needs by parameter, such as the heartbeat URL, the noun in the
 banner, or the function that reloads, and never reaches into the app. An import of `main/...` from

@@ -8,4 +8,9 @@ export {
   type Presence,
 } from "./others";
 export { DEFAULT_HEARTBEAT_MS, useClientActivity } from "./useClientActivity";
+export { sendGoodbye } from "./goodbye";
 export { default as MultipleTabsBanner } from "./MultipleTabsBanner";
+export {
+  ENTER_IGNORED_MS,
+  default as MultipleTabsModal,
+} from "./MultipleTabsModal";

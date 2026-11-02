@@ -70,7 +70,7 @@ describe("useClientActivity", () => {
     expect(axiosMock.history.post.length).toBe(0);
   });
 
-  test("sends a heartbeat at once, naming itself, and then every 20 seconds", async () => {
+  test("sends a heartbeat at once, naming itself, and then every 5 seconds", async () => {
     axiosMock.onPost(URL).reply(200, { others: [] });
     const { result } = renderHook(() =>
       useClientActivity({ heartbeatUrl: URL }),
@@ -88,8 +88,8 @@ describe("useClientActivity", () => {
     expect(beats().length).toBe(3);
   });
 
-  test("the default time between heartbeats is twenty seconds", () => {
-    expect(DEFAULT_HEARTBEAT_MS).toBe(20_000);
+  test("the default time between heartbeats is five seconds", () => {
+    expect(DEFAULT_HEARTBEAT_MS).toBe(5_000);
   });
 
   test("the time between heartbeats can be given", async () => {

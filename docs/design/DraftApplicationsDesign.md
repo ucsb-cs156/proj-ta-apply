@@ -112,10 +112,12 @@ device, and says who.
 * The form makes a random identifier for itself when it opens (in memory only) and sends it, as the
   `X-Client-Id` header, with every save and with a **heartbeat**:
   `POST /api/draftApplications/heartbeat?id=`, sent as soon as the draft is open and then as often as
-  the server asks (every 20 seconds by default). A heartbeat changes nothing about the draft, not
-  even its version.
-* The server remembers which clients it has seen for `draft:<draftId>` in the last minute, and who
-  each is. The controller supplies the identity from the current user: the email address is the
+  the server asks (every 5 seconds by default). A heartbeat changes nothing about the draft, not
+  even its version. A tab that closes or leaves the page says goodbye
+  (`POST /api/draftApplications/leave?id=`), so the others hear of it within a heartbeat (#284).
+* The server remembers which clients it has seen for `draft:<draftId>` within the window, 15 seconds
+  by default (the heartbeat interval times three missed heartbeats; both are environment variables),
+  and who each is. The controller supplies the identity from the current user: the email address is the
   person, and the label is `email (Full Name)`, or just the email if there is no name.
 * **Only the draft's owner may save or heartbeat.** The controller checks the owner first and
   answers `403` to anyone else before anything is recorded or any name is returned. Since a draft has
@@ -127,8 +129,10 @@ device, and says who.
 * While the list is not empty, the apply page shows a warning above the form. Since a draft has one
   owner, it reads:
   *You are also editing this application in another tab or window. Please know that this is risky; we
-  recommend closing all but one of these.* It goes by itself once the other copy has been closed for a
-  minute. It is advice and nothing is disabled; the version check still protects the draft. The
+  recommend closing all but one of these.* It goes by itself within a few seconds of the other copy
+  being closed (about 20 seconds if the copy could not say goodbye). The newer of the tabs also gets
+  a modal asking whether to leave, wait or continue anyway; the older keeps the banner alone (#284).
+  It is advice and nothing is disabled; the version check still protects the draft. The
   applicant Help pages end with a *Simultaneous Editing* section that shows the warning and says what
   to do.
 * The detector and the client hook are in packages of their own with no knowledge of drafts, so that

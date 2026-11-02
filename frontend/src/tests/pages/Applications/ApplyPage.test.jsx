@@ -1113,4 +1113,119 @@ describe("ApplyPage tests", () => {
     expect(await screen.findByTestId("ApplyPage-conflict")).toBeInTheDocument();
     expect(screen.getByTestId("ApplyPage-multiple-tabs")).toBeInTheDocument();
   });
+
+  // ---- the modal for the newest tab, and the goodbye (issue #284) ----
+
+  const MODAL = "ApplyPage-multiple-tabs-modal";
+
+  test("the newest tab is asked what to do, and the banner is there too", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [phill],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1000,
+    });
+    renderPage();
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByTestId(`${MODAL}-message`)).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) is also editing this application. ${RISK}`,
+    );
+    expect(screen.getByTestId("ApplyPage-multiple-tabs")).toBeInTheDocument();
+  });
+
+  test("an older tab has the banner alone, and is not interrupted", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [phill],
+      heartbeatSeconds: 20,
+      newest: false,
+      arrivedAtMillis: 1000,
+    });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("ApplyPage-multiple-tabs"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  test("Continue anyway closes the modal, keeps the banner and lets the form be used", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [phill],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1000,
+    });
+    renderPage();
+    await screen.findByRole("dialog");
+
+    fireEvent.click(screen.getByTestId(`${MODAL}-continue`));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByTestId("ApplyPage-multiple-tabs")).toBeInTheDocument();
+    expect(screen.getByTestId("ApplyPage-comments")).toBeInTheDocument();
+  });
+
+  test("Leave this page says goodbye for this draft, naming this tab, and goes home", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [phill],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1000,
+    });
+    renderPage();
+    await screen.findByRole("dialog");
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+
+    fireEvent.click(screen.getByTestId(`${MODAL}-leave`));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/draftApplications/leave?id=21");
+    expect(init.keepalive).toBe(true);
+    expect(init.headers["X-Client-Id"]).toBe(
+      heartbeats()[0].headers["X-Client-Id"],
+    );
+    expect(mockNavigate).toHaveBeenCalledWith("/");
+    vi.unstubAllGlobals();
+  });
+
+  test("Wait covers the form until a later heartbeat says the others have gone", async () => {
+    let beats = 0;
+    axiosMock.onPost(HEARTBEAT).reply(() => {
+      beats += 1;
+      return [
+        200,
+        {
+          others: beats <= 2 ? [phill] : [],
+          heartbeatSeconds: 0.05,
+          newest: true,
+          arrivedAtMillis: 1000,
+        },
+      ];
+    });
+    renderPage();
+    fireEvent.click(await screen.findByTestId(`${MODAL}-wait`));
+    expect(screen.getByRole("status")).toBeInTheDocument();
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.queryByTestId("ApplyPage-multiple-tabs")).toBeNull();
+  });
+
+  test("leaving the page says goodbye even though no pagehide happened", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
+    const { unmount } = renderPage();
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+
+    unmount();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/draftApplications/leave?id=21",
+      expect.objectContaining({ method: "POST", keepalive: true }),
+    );
+    vi.unstubAllGlobals();
+  });
 });

@@ -69,11 +69,24 @@ export type Presence = {
   others: OtherClient[];
   /** How long to wait before the next heartbeat, if the answer said. */
   intervalMs?: number;
+  /** This tab arrived after every other one, so it is the one asked to step aside (issue #284). */
+  newest: boolean;
+  /**
+   * When this tab arrived, in milliseconds since the epoch, as the server counts it; 0 if unknown.
+   * It changes when the tab arrives afresh, such as after being quiet for longer than the server
+   * waits.
+   */
+  arrivedAt: number;
 };
 
 /** Reads the JSON body of a heartbeat's answer. */
 export function readPresence(data: unknown): Presence {
-  const body = (data ?? {}) as { others?: unknown; heartbeatSeconds?: unknown };
+  const body = (data ?? {}) as {
+    others?: unknown;
+    heartbeatSeconds?: unknown;
+    newest?: unknown;
+    arrivedAtMillis?: unknown;
+  };
   const others = Array.isArray(body.others)
     ? body.others.filter(
         (other): other is OtherClient =>
@@ -86,5 +99,11 @@ export function readPresence(data: unknown): Presence {
   const seconds = body.heartbeatSeconds as number;
   const intervalMs =
     Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : undefined;
-  return { others, intervalMs };
+  const arrivedAtMillis = body.arrivedAtMillis as number;
+  return {
+    others,
+    intervalMs,
+    newest: body.newest === true,
+    arrivedAt: Number.isFinite(arrivedAtMillis) ? arrivedAtMillis : 0,
+  };
 }

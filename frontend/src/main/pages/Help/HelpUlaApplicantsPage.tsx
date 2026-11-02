@@ -165,11 +165,39 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           a copy that is out of date and ask you to reload, and what you typed
           in the old copy since then is lost.
         </p>
+        <p data-testid="HelpUlaApplicantsPage-simultaneous-editing-modal">
+          <strong>The question.</strong> The tab or window you opened{" "}
+          <em>last</em> also asks what you want to do, in a box that covers the
+          form until you answer. The one you opened first only shows the
+          warning, so that it never interrupts you while you are typing. The box
+          offers three choices:
+        </p>
+        <ul data-testid="HelpUlaApplicantsPage-simultaneous-editing-choices">
+          <li>
+            <strong>Leave this page</strong> takes this tab or window to the
+            home page. Your draft is safe in the other one.
+          </li>
+          <li>
+            <strong>
+              Wait for the other tabs or windows to close, then resume here
+            </strong>{" "}
+            keeps the form covered. When you close the other tabs or windows,
+            the box closes by itself within a few seconds and you can carry on
+            here.
+          </li>
+          <li>
+            <strong>Continue anyway</strong> closes the box and keeps the
+            warning on the page. Use it only if you are sure you will not type
+            in the other copy as well. The box does not come back.
+          </li>
+        </ul>
         <p data-testid="HelpUlaApplicantsPage-simultaneous-editing-todo">
           <strong>What to do.</strong> Close all the other tabs or windows, and
           keep just one. If the form asks you to reload, reload it to see the
-          latest version of your draft. The warning goes away on its own a short
-          while after the other copies are closed.
+          latest version of your draft. The warning goes away on its own within
+          a few seconds after the other copies are closed, or in up to about
+          twenty seconds if the other copy could not say that it was leaving,
+          such as when a computer lost its network connection.
         </p>
       </div>
     </BasicLayout>

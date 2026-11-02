@@ -174,24 +174,56 @@ describe("readPresence", () => {
     ).toEqual({
       others: [{ label: PHILL, samePerson: false }],
       intervalMs: 20000,
+      newest: false,
+      arrivedAt: 0,
     });
+  });
+
+  test("reads whether this tab arrived last, and when", () => {
+    expect(
+      readPresence({
+        others: [],
+        newest: true,
+        arrivedAtMillis: 1793620800000,
+      }),
+    ).toEqual({
+      others: [],
+      intervalMs: undefined,
+      newest: true,
+      arrivedAt: 1793620800000,
+    });
+  });
+
+  test("only a true newest counts, and only a number is a time of arrival", () => {
+    for (const newest of ["true", 1, null, "yes", {}]) {
+      expect(readPresence({ newest }).newest).toBe(false);
+    }
+    for (const arrivedAtMillis of ["1000", null, "soon", {}, NaN]) {
+      expect(readPresence({ arrivedAtMillis }).arrivedAt).toBe(0);
+    }
+    expect(readPresence({ newest: false }).newest).toBe(false);
   });
 
   test("an answer with no one else and no interval", () => {
     expect(readPresence({ others: [] })).toEqual({
       others: [],
       intervalMs: undefined,
+      newest: false,
+      arrivedAt: 0,
     });
   });
 
   test("nothing at all is no one", () => {
-    expect(readPresence(undefined)).toEqual({
+    const nobody = {
       others: [],
       intervalMs: undefined,
-    });
-    expect(readPresence(null)).toEqual({ others: [], intervalMs: undefined });
-    expect(readPresence("")).toEqual({ others: [], intervalMs: undefined });
-    expect(readPresence({})).toEqual({ others: [], intervalMs: undefined });
+      newest: false,
+      arrivedAt: 0,
+    };
+    expect(readPresence(undefined)).toEqual(nobody);
+    expect(readPresence(null)).toEqual(nobody);
+    expect(readPresence("")).toEqual(nobody);
+    expect(readPresence({})).toEqual(nobody);
   });
 
   test("others that is not a list is no one", () => {
