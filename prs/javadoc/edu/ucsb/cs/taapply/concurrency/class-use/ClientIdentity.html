@@ -76,8 +76,8 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId,
  <a href="../ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a>&nbsp;identity)</code></div>
 <div class="col-last even-row-color">
-<div class="block">The answer to a heartbeat: records the client, then says who else is active and how often to
-beat.</div>
+<div class="block">The answer to a heartbeat: records the client, then says who else is active, how often to beat,
+and whether it arrived last (issue #284).</div>
 </div>
 <div class="col-first odd-row-color"><code>default void</code></div>
 <div class="col-second odd-row-color"><span class="type-name-label">ClientActivityDetector.</span><code><a href="../ClientActivityDetector.html#note(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">note</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,

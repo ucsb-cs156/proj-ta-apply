@@ -72,26 +72,30 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><a href="class-use/ClientActivityDetector.html#edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></div>
+<div class="col-first even-row-color"><a href="class-use/Arrival.html#edu.ucsb.cs.taapply.concurrency">Arrival</a></div>
 <div class="col-last even-row-color">
+<div class="block">When a client arrived on a resource, as against the others active there (issue #284).</div>
+</div>
+<div class="col-first odd-row-color"><a href="class-use/ClientActivityDetector.html#edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></div>
+<div class="col-last odd-row-color">
 <div class="block">Notices when more than one client (a tab, a window, a device) is working on the same thing at
 once, and who they are (issue #273).</div>
 </div>
-<div class="col-first odd-row-color"><a href="class-use/ClientIdentity.html#edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><a href="class-use/ClientIdentity.html#edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></div>
+<div class="col-last even-row-color">
 <div class="block">Who a client is, as the application tells the detector (issue #273): an opaque, stable key for
 the person, and the label to show other people.</div>
 </div>
-<div class="col-first even-row-color"><a href="class-use/OtherClient.html#edu.ucsb.cs.taapply.concurrency">OtherClient</a></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><a href="class-use/OtherClient.html#edu.ucsb.cs.taapply.concurrency">OtherClient</a></div>
+<div class="col-last odd-row-color">
 <div class="block">One other person who is active on the same resource (issue #273): the label to show, and whether
 they are the same person as the one asking, which means another tab, window or device of their
 own.</div>
 </div>
-<div class="col-first odd-row-color"><a href="class-use/Presence.html#edu.ucsb.cs.taapply.concurrency">Presence</a></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><a href="class-use/Presence.html#edu.ucsb.cs.taapply.concurrency">Presence</a></div>
+<div class="col-last even-row-color">
 <div class="block">What a heartbeat is answered with (issue #273): who else is active on the resource, and how often
-to send the next heartbeat.</div>
+to send the next heartbeat, and whether this client arrived after every other one (see <a href="Arrival.html" title="class in edu.ucsb.cs.taapply.concurrency"><code>Arrival</code></a>).</div>
 </div>
 </div>
 </section>
@@ -119,7 +123,7 @@ once, and who they are (issue #273).</div>
 <div class="col-first even-row-color"><a href="class-use/Presence.html#edu.ucsb.cs.taapply.controller">Presence</a></div>
 <div class="col-last even-row-color">
 <div class="block">What a heartbeat is answered with (issue #273): who else is active on the resource, and how often
-to send the next heartbeat.</div>
+to send the next heartbeat, and whether this client arrived after every other one (see <a href="Arrival.html" title="class in edu.ucsb.cs.taapply.concurrency"><code>Arrival</code></a>).</div>
 </div>
 </div>
 </section>

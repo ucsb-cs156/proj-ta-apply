@@ -77,7 +77,7 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color"><code><a href="../InMemoryClientActivityDetector.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">InMemoryClientActivityDetector</a></code></div>
 <div class="col-last even-row-color">
 <div class="block">A <a href="../ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> that keeps what it has seen in memory: for each resource key and
-client, when it was last seen and who it is.</div>
+client, when it arrived, when it was last seen and who it is.</div>
 </div>
 </div>
 </section>
@@ -91,7 +91,8 @@ client, when it was last seen and who it is.</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code><a href="../ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ConcurrencyConfig.</span><code><a href="../../config/ConcurrencyConfig.html#clientActivityDetector(long)" class="member-name-link">clientActivityDetector</a><wbr>(long&nbsp;windowSeconds)</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ConcurrencyConfig.</span><code><a href="../../config/ConcurrencyConfig.html#clientActivityDetector(java.lang.String,java.lang.String)" class="member-name-link">clientActivityDetector</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;heartbeatIntervalSec,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;missedHeartbeats)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>

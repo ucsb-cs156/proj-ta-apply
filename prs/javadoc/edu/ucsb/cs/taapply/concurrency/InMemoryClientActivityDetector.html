@@ -58,13 +58,16 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(java.time.Clock,java.time.Duration)" tabindex="0">InMemoryClientActivityDetector(Clock, Duration)</a></li>
+<li><a href="#%3Cinit%3E(java.time.Clock,java.time.Duration,int)" tabindex="0">InMemoryClientActivityDetector(Clock, Duration, int)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#window()" tabindex="0">window()</a></li>
+<li><a href="#heartbeatInterval()" tabindex="0">heartbeatInterval()</a></li>
 <li><a href="#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" tabindex="0">record(String, String, ClientIdentity)</a></li>
+<li><a href="#leave(java.lang.String,java.lang.String)" tabindex="0">leave(String, String)</a></li>
+<li><a href="#arrival(java.lang.String,java.lang.String)" tabindex="0">arrival(String, String)</a></li>
 <li><a href="#othersActive(java.lang.String,java.lang.String)" tabindex="0">othersActive(String, String)</a></li>
 </ol>
 </li>
@@ -89,7 +92,7 @@ loadScripts(document, 'script');</script>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></span></div>
 <div class="block">A <a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> that keeps what it has seen in memory: for each resource key and
-client, when it was last seen and who it is.
+client, when it arrived, when it was last seen and who it is.
 
 <p>The clock and the window are given to the constructor, so that tests run in no time with a
 clock they control. Every <a href="#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)"><code>record(String, String, ClientIdentity)</code></a> also forgets everything older than the window, on every
@@ -110,9 +113,13 @@ state moves to the database behind this same interface.</div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.time.Clock,java.time.Duration)" class="member-name-link">InMemoryClientActivityDetector</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Clock.html" title="class or interface in java.time" class="external-link">Clock</a>&nbsp;clock,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;window)</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.time.Clock,java.time.Duration,int)" class="member-name-link">InMemoryClientActivityDetector</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Clock.html" title="class or interface in java.time" class="external-link">Clock</a>&nbsp;clock,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;heartbeatInterval,
+ int&nbsp;missedHeartbeats)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The window is the heartbeat interval times the number of heartbeats that may be missed before a
+client is considered gone (issue #284).</div>
+</div>
 </div>
 </section>
 </li>
@@ -127,24 +134,42 @@ state moves to the database behind this same interface.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#othersActive(java.lang.String,java.lang.String)" class="member-name-link">othersActive</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="Arrival.html" title="class in edu.ucsb.cs.taapply.concurrency">Arrival</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#arrival(java.lang.String,java.lang.String)" class="member-name-link">arrival</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">When this client arrived, as against the others active on the resource: see <a href="Arrival.html" title="class in edu.ucsb.cs.taapply.concurrency"><code>Arrival</code></a>.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#heartbeatInterval()" class="member-name-link">heartbeatInterval</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">How often an open client should send a heartbeat.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#leave(java.lang.String,java.lang.String)" class="member-name-link">leave</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Notes that this client has gone (issue #284): its tab or window was closed or left.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#othersActive(java.lang.String,java.lang.String)" class="member-name-link">othersActive</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The other people active on the resource within the window, one for each person, in order of
 label.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">record</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">record</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId,
  <a href="ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a>&nbsp;identity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Notes that this client, who is this person, has just been seen on the resource.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#window()" class="member-name-link">window</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">How long a client counts as active after it was last seen.</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#window()" class="member-name-link">window</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">How long a client counts as active after it was last seen: the heartbeat interval times the
+number of heartbeats that may be missed.</div>
 </div>
 </div>
 </div>
@@ -167,11 +192,14 @@ label.</div>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.time.Clock,java.time.Duration)">
+<section class="detail" id="&lt;init&gt;(java.time.Clock,java.time.Duration,int)">
 <h3>InMemoryClientActivityDetector</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">InMemoryClientActivityDetector</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Clock.html" title="class or interface in java.time" class="external-link">Clock</a>&nbsp;clock,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;window)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;heartbeatInterval,
+ int&nbsp;missedHeartbeats)</span></div>
+<div class="block">The window is the heartbeat interval times the number of heartbeats that may be missed before a
+client is considered gone (issue #284).</div>
 </div>
 </section>
 </li>
@@ -189,10 +217,25 @@ label.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">window</span>()</div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ClientActivityDetector.html#window()">ClientActivityDetector</a></code></span></div>
-<div class="block">How long a client counts as active after it was last seen.</div>
+<div class="block">How long a client counts as active after it was last seen: the heartbeat interval times the
+number of heartbeats that may be missed.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="ClientActivityDetector.html#window()">window</a></code>&nbsp;in interface&nbsp;<code><a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="heartbeatInterval()">
+<h3>heartbeatInterval</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">heartbeatInterval</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ClientActivityDetector.html#heartbeatInterval()">ClientActivityDetector</a></code></span></div>
+<div class="block">How often an open client should send a heartbeat.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="ClientActivityDetector.html#heartbeatInterval()">heartbeatInterval</a></code>&nbsp;in interface&nbsp;<code><a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></code></dd>
 </dl>
 </div>
 </section>
@@ -209,6 +252,39 @@ label.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="ClientActivityDetector.html#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)">record</a></code>&nbsp;in interface&nbsp;<code><a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="leave(java.lang.String,java.lang.String)">
+<h3>leave</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">leave</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ClientActivityDetector.html#leave(java.lang.String,java.lang.String)">ClientActivityDetector</a></code></span></div>
+<div class="block">Notes that this client has gone (issue #284): its tab or window was closed or left. It stops
+counting at once, instead of when the window has passed. Delivery of such a goodbye is not
+guaranteed, so the window stays as the fallback. A client that was not recorded is no change.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="ClientActivityDetector.html#leave(java.lang.String,java.lang.String)">leave</a></code>&nbsp;in interface&nbsp;<code><a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="arrival(java.lang.String,java.lang.String)">
+<h3>arrival</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="Arrival.html" title="class in edu.ucsb.cs.taapply.concurrency">Arrival</a></span>&nbsp;<span class="element-name">arrival</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;resourceKey,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ClientActivityDetector.html#arrival(java.lang.String,java.lang.String)">ClientActivityDetector</a></code></span></div>
+<div class="block">When this client arrived, as against the others active on the resource: see <a href="Arrival.html" title="class in edu.ucsb.cs.taapply.concurrency"><code>Arrival</code></a>. A
+caller who has not been recorded is told it did not arrive last, and at time zero.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="ClientActivityDetector.html#arrival(java.lang.String,java.lang.String)">arrival</a></code>&nbsp;in interface&nbsp;<code><a href="ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></code></dd>
 </dl>
 </div>
 </section>

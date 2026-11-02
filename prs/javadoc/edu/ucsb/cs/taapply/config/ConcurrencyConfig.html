@@ -54,8 +54,15 @@ loadScripts(document, 'script');</script>
 <div class="toc-header">Contents&nbsp;<input type="text" class="filter-input" disabled placeholder="Filter contents (type .)" aria-label="Filter table of contents" autocomplete="off" spellcheck="false"><input type="reset" class="reset-filter" disabled tabindex="-1" value="Reset"></div>
 <ol class="toc-list" tabindex="-1">
 <li><a href="#" tabindex="0">Description</a></li>
+<li><a href="#field-summary" tabindex="0">Field Summary</a></li>
 <li><a href="#constructor-summary" tabindex="0">Constructor Summary</a></li>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
+<li><a href="#field-detail" tabindex="0">Field Details</a>
+<ol class="toc-list">
+<li><a href="#DEFAULT_HEARTBEAT_INTERVAL_SEC" tabindex="0">DEFAULT_HEARTBEAT_INTERVAL_SEC</a></li>
+<li><a href="#DEFAULT_TIMEOUT_MISSED_HEARTBEATS" tabindex="0">DEFAULT_TIMEOUT_MISSED_HEARTBEATS</a></li>
+</ol>
+</li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E()" tabindex="0">ConcurrencyConfig()</a></li>
@@ -63,7 +70,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
-<li><a href="#clientActivityDetector(long)" tabindex="0">clientActivityDetector(long)</a></li>
+<li><a href="#clientActivityDetector(java.lang.String,java.lang.String)" tabindex="0">clientActivityDetector(String, String)</a></li>
 </ol>
 </li>
 </ol>
@@ -82,13 +89,34 @@ loadScripts(document, 'script');</script>
 <div class="type-signature"><span class="annotations">@Configuration
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">ConcurrencyConfig</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
-<div class="block">Makes the one <a href="../concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> the application uses (issue #273). The window is the
-only setting: 60 seconds, unless <code>app.concurrency.window-seconds</code> says otherwise, which the
-integration tests do so that a warning can be seen to clear in seconds.</div>
+<div class="block">Makes the one <a href="../concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency"><code>ClientActivityDetector</code></a> the application uses (issues #273, #284). Two
+settings, both from the environment: <code>CLIENT_HEARTBEAT_INTERVAL_SEC</code>, how often an open tab
+sends a heartbeat (5), and <code>CLIENT_TIMEOUT_MISSED_HEARTBEATS</code>, how many intervals of
+silence make a tab count as gone (3). A tab is forgotten after the interval times the missed
+heartbeats, 15 seconds by default. A value that is not a whole number of at least 1 is replaced
+by the default, so a typo cannot stop the application from starting.</div>
 </div>
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- =========== FIELD SUMMARY =========== -->
+<li>
+<section class="field-summary" id="field-summary">
+<h2>Field Summary</h2>
+<div class="caption"><span>Fields</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Field</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static final int</code></div>
+<div class="col-second even-row-color"><code><a href="#DEFAULT_HEARTBEAT_INTERVAL_SEC" class="member-name-link">DEFAULT_HEARTBEAT_INTERVAL_SEC</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static final int</code></div>
+<div class="col-second odd-row-color"><code><a href="#DEFAULT_TIMEOUT_MISSED_HEARTBEATS" class="member-name-link">DEFAULT_TIMEOUT_MISSED_HEARTBEATS</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+</div>
+</section>
+</li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 <li>
 <section class="constructor-summary" id="constructor-summary">
@@ -114,7 +142,8 @@ integration tests do so that a warning can be seen to clear in seconds.</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#clientActivityDetector(long)" class="member-name-link">clientActivityDetector</a><wbr>(long&nbsp;windowSeconds)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#clientActivityDetector(java.lang.String,java.lang.String)" class="member-name-link">clientActivityDetector</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;heartbeatIntervalSec,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;missedHeartbeats)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
@@ -128,6 +157,46 @@ integration tests do so that a warning can be seen to clear in seconds.</div>
 </section>
 <section class="details">
 <ul class="details-list">
+<!-- ============ FIELD DETAIL =========== -->
+<li>
+<section class="field-details" id="field-detail">
+<h2>Field Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="DEFAULT_HEARTBEAT_INTERVAL_SEC">
+<h3>DEFAULT_HEARTBEAT_INTERVAL_SEC</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">DEFAULT_HEARTBEAT_INTERVAL_SEC</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.config.ConcurrencyConfig.DEFAULT_HEARTBEAT_INTERVAL_SEC">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="DEFAULT_TIMEOUT_MISSED_HEARTBEATS">
+<h3>DEFAULT_TIMEOUT_MISSED_HEARTBEATS</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">DEFAULT_TIMEOUT_MISSED_HEARTBEATS</span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.config.ConcurrencyConfig.DEFAULT_TIMEOUT_MISSED_HEARTBEATS">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+</ul>
+</section>
+</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
@@ -150,12 +219,14 @@ integration tests do so that a warning can be seen to clear in seconds.</div>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="clientActivityDetector(long)">
+<section class="detail" id="clientActivityDetector(java.lang.String,java.lang.String)">
 <h3>clientActivityDetector</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Bean
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></span>&nbsp;<span class="element-name">clientActivityDetector</span><wbr><span class="parameters">(@Value("${app.concurrency.window-seconds:60}")
- long&nbsp;windowSeconds)</span></div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></span>&nbsp;<span class="element-name">clientActivityDetector</span><wbr><span class="parameters">(@Value("${app.concurrency.heartbeat-interval-sec:5}")
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;heartbeatIntervalSec,
+ @Value("${app.concurrency.timeout-missed-heartbeats:3}")
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;missedHeartbeats)</span></div>
 </div>
 </section>
 </li>
