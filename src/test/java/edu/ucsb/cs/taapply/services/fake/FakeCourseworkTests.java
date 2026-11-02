@@ -7,18 +7,32 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import java.io.UncheckedIOException;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 public class FakeCourseworkTests {
 
   private final FakeCoursework coursework = new FakeCoursework();
+
+  /** Quarter W26: the latest term on the transcripts below. */
+  private static final int LATEST = 20261;
+
+  private static final JsonNode PREREQS =
+      FakeCoursework.read(new ObjectMapper(), "data/cmpsc_prereqs.json").get("courses");
+
+  private static long seed(int i) {
+    // Consecutive seeds give correlated first draws, so spread them.
+    return i * 1_000_003L + 17;
+  }
 
   @Test
   public void a_missing_data_file_is_reported_by_name() {
@@ -30,30 +44,20 @@ public class FakeCourseworkTests {
     assertEquals("Cannot read data/no_such_file.json", e.getMessage());
   }
 
-  @Test
-  public void the_path_from_cmpsc_8_starts_there_and_lists_each_course_once() {
-    List<String> path = coursework.reachableFrom("8");
-
-    assertEquals("8", path.get(0));
-    assertTrue(path.indexOf("9") > 0, "CMPSC 9 lists CMPSC 8 as a prerequisite");
-    assertEquals(path.size(), new HashSet<>(path).size());
-    assertFalse(path.contains("5A"), "CMPSC 5A is not downstream of CMPSC 8");
-  }
+  // ---- the quarter of a date ----
 
   @Test
-  public void a_course_with_nothing_after_it_is_a_path_of_one() {
-    assertEquals(List.of("1"), coursework.reachableFrom("1"));
-  }
-
-  @Test
-  public void graduate_courses_are_the_two_hundreds_and_up() {
-    List<String> graduate = coursework.graduateCourses();
-
-    assertTrue(graduate.contains("209"));
-    assertTrue(graduate.contains("211A"));
-    assertFalse(graduate.contains("8"));
-    assertFalse(graduate.contains("190"));
-    assertFalse(graduate.contains("199"));
+  public void the_latest_quarter_follows_the_months_of_the_year() {
+    assertEquals(20261, FakeCoursework.latestQuarter(LocalDate.of(2026, 1, 1)));
+    assertEquals(20261, FakeCoursework.latestQuarter(LocalDate.of(2026, 3, 31)));
+    assertEquals(20262, FakeCoursework.latestQuarter(LocalDate.of(2026, 4, 1)));
+    assertEquals(20262, FakeCoursework.latestQuarter(LocalDate.of(2026, 6, 30)));
+    // Summer has no CMPSC courses, so July and August count as spring.
+    assertEquals(20262, FakeCoursework.latestQuarter(LocalDate.of(2026, 7, 1)));
+    assertEquals(20262, FakeCoursework.latestQuarter(LocalDate.of(2026, 8, 31)));
+    assertEquals(20264, FakeCoursework.latestQuarter(LocalDate.of(2026, 9, 1)));
+    assertEquals(20264, FakeCoursework.latestQuarter(LocalDate.of(2026, 12, 31)));
+    assertEquals(19994, FakeCoursework.latestQuarter(LocalDate.of(1999, 10, 31)));
   }
 
   @Test
@@ -78,14 +82,73 @@ public class FakeCourseworkTests {
   }
 
   @Test
-  public void ucsb_courses_run_in_order_and_end_the_quarter_before_the_reference() {
-    List<PriorCoursework> rows = coursework.ucsb(new Random(1), 3, 20261);
+  public void graduate_courses_are_the_two_hundreds_and_up() {
+    List<String> graduate = coursework.graduateCourses();
 
-    assertEquals(3, rows.size());
-    // Three quarters back from W26, skipping summer: W25, S25, F25.
+    assertTrue(graduate.contains("209"));
+    assertTrue(graduate.contains("211A"));
+    assertFalse(graduate.contains("8"));
+    assertFalse(graduate.contains("190"));
+    assertFalse(graduate.contains("199"));
+  }
+
+  // ---- UCSB courses ----
+
+  private static List<String> numbers(List<PriorCoursework> rows) {
+    return rows.stream().map(r -> r.getCourseNumber().substring("CMPSC ".length())).toList();
+  }
+
+  @Test
+  public void ucsb_courses_start_at_8_or_16_and_each_follows_one_already_taken() {
+    Set<String> starts = new HashSet<>();
+    for (int i = 0; i < 100; i++) {
+      List<String> taken = numbers(coursework.ucsb(new Random(seed(i)), 20, LATEST));
+
+      assertEquals(20, taken.size());
+      assertEquals(20, new HashSet<>(taken).size());
+      starts.add(taken.get(0));
+      for (int k = 1; k < taken.size(); k++) {
+        List<String> before = taken.subList(0, k);
+        boolean follows = false;
+        for (JsonNode prereq : PREREQS.get(taken.get(k)).get("prereqs")) {
+          follows |= before.contains(prereq.asText());
+        }
+        assertTrue(follows, taken.get(k) + " taken before any course it follows: " + taken);
+      }
+    }
+    assertEquals(Set.of("8", "16"), starts);
+  }
+
+  @Test
+  public void the_course_after_each_is_chosen_at_random_from_the_frontier() {
+    Set<List<String>> paths = new HashSet<>();
+    for (int i = 0; i < 100; i++) {
+      paths.add(numbers(coursework.ucsb(new Random(seed(i)), 6, LATEST)));
+    }
+    assertTrue(paths.size() > 30, "only " + paths.size() + " distinct walks");
+  }
+
+  @Test
+  public void ucsb_terms_step_forward_one_quarter_each_and_end_at_the_latest() {
+    List<PriorCoursework> rows = coursework.ucsb(new Random(seed(1)), 4, LATEST);
+
+    // Summer is skipped: the quarter before W26 is F25, then S25, then W25.
     assertEquals(
-        List.of("W25", "S25", "F25"), rows.stream().map(PriorCoursework::getTerm).toList());
-    for (PriorCoursework row : rows) {
+        List.of("W25", "S25", "F25", "W26"), rows.stream().map(PriorCoursework::getTerm).toList());
+  }
+
+  @Test
+  public void a_single_course_takes_the_latest_term() {
+    assertEquals(
+        List.of("W26"),
+        coursework.ucsb(new Random(seed(2)), 1, LATEST).stream()
+            .map(PriorCoursework::getTerm)
+            .toList());
+  }
+
+  @Test
+  public void ucsb_rows_are_ucsb_courses_with_a_grade_and_no_other_school() {
+    for (PriorCoursework row : coursework.ucsb(new Random(seed(3)), 10, LATEST)) {
       assertTrue(row.isUcsbCourse());
       assertNull(row.getOtherSchool());
       assertTrue(row.getCourseNumber().startsWith("CMPSC "));
@@ -94,53 +157,48 @@ public class FakeCourseworkTests {
   }
 
   @Test
-  public void the_terms_of_ucsb_courses_step_forward_one_quarter_each() {
-    List<PriorCoursework> rows = coursework.ucsb(new Random(2), 4, 20261);
-
-    assertEquals(
-        List.of("F24", "W25", "S25", "F25"), rows.stream().map(PriorCoursework::getTerm).toList());
-  }
-
-  @Test
-  public void asking_for_more_courses_than_are_reachable_returns_all_of_them() {
-    int fromEight = coursework.reachableFrom("8").size();
-    int fromSixteen = coursework.reachableFrom("16").size();
-
+  public void asking_for_more_courses_than_the_graph_has_returns_all_of_them() {
     Set<Integer> sizes = new HashSet<>();
-    Set<String> starts = new HashSet<>();
-    for (int seed = 0; seed < 200; seed++) {
-      List<PriorCoursework> rows = coursework.ucsb(new Random(seed * 1_000_003L), 1000, 20261);
+    for (int i = 0; i < 100; i++) {
+      List<PriorCoursework> rows = coursework.ucsb(new Random(seed(i)), 1000, LATEST);
       sizes.add(rows.size());
-      starts.add(rows.get(0).getCourseNumber());
+      assertTrue(rows.size() < 1000);
     }
-
-    assertEquals(Set.of(fromEight, fromSixteen), sizes);
-    assertEquals(Set.of("CMPSC 8", "CMPSC 16"), starts);
+    assertEquals(Set.of(62, 64), sizes);
   }
 
   @Test
-  public void graduate_courses_are_distinct_ucsb_courses() {
-    List<PriorCoursework> rows = coursework.ucsbGraduate(new Random(3), 5, 20261);
+  public void no_courses_wanted_gives_none() {
+    assertTrue(coursework.ucsb(new Random(seed(4)), 0, LATEST).isEmpty());
+  }
+
+  // ---- graduate courses ----
+
+  @Test
+  public void graduate_courses_are_distinct_ucsb_courses_ending_at_the_latest_term() {
+    List<PriorCoursework> rows = coursework.ucsbGraduate(new Random(seed(5)), 5, LATEST);
 
     assertEquals(5, rows.size());
-    assertEquals(5, rows.stream().map(PriorCoursework::getCourseNumber).distinct().count());
+    assertEquals(5, numbers(rows).stream().distinct().count());
+    assertTrue(coursework.graduateCourses().containsAll(numbers(rows)));
     for (PriorCoursework row : rows) {
       assertTrue(row.isUcsbCourse());
-      assertTrue(
-          coursework
-              .graduateCourses()
-              .contains(row.getCourseNumber().substring("CMPSC ".length())));
+      assertNull(row.getOtherSchool());
     }
-    assertEquals("F25", rows.get(4).getTerm());
+    assertEquals(
+        List.of("F24", "W25", "S25", "F25", "W26"),
+        rows.stream().map(PriorCoursework::getTerm).toList());
   }
 
+  // ---- other schools ----
+
   @Test
-  public void other_school_courses_name_their_school_and_never_repeat() {
-    List<PriorCoursework> rows = coursework.other(new Random(4), 10, false, 20261);
+  public void other_courses_all_come_from_one_school() {
+    List<PriorCoursework> rows = coursework.other(new Random(seed(6)), 10, false, LATEST);
 
     assertEquals(10, rows.size());
-    assertEquals(
-        10, rows.stream().map(r -> r.getOtherSchool() + r.getCourseNumber()).distinct().count());
+    assertEquals(1, rows.stream().map(PriorCoursework::getOtherSchool).distinct().count());
+    assertEquals(10, rows.stream().map(PriorCoursework::getCourseNumber).distinct().count());
     for (PriorCoursework row : rows) {
       assertFalse(row.isUcsbCourse());
       assertNotNull(row.getOtherSchool());
@@ -148,30 +206,34 @@ public class FakeCourseworkTests {
       assertFalse(row.getCourseNumber().isBlank());
       assertTrue(FakeCoursework.GRADES.contains(row.getGrade()));
     }
-    assertEquals("F25", rows.get(9).getTerm());
+    assertEquals(
+        List.of("W23", "S23", "F23", "W24", "S24", "F24", "W25", "S25", "F25", "W26"),
+        rows.stream().map(PriorCoursework::getTerm).toList());
   }
 
   @Test
-  public void international_students_get_international_schools_and_domestic_ones_do_not() {
+  public void each_school_is_chosen_sometimes_and_domestic_never_mixes_with_international() {
     Set<String> domestic = new HashSet<>();
     Set<String> international = new HashSet<>();
-    for (int seed = 0; seed < 5; seed++) {
-      coursework
-          .other(new Random(seed), 30, false, 20261)
-          .forEach(r -> domestic.add(r.getOtherSchool()));
-      coursework
-          .other(new Random(seed), 30, true, 20261)
-          .forEach(r -> international.add(r.getOtherSchool()));
+    for (int i = 0; i < 100; i++) {
+      domestic.add(
+          coursework.other(new Random(seed(i)), 10, false, LATEST).get(0).getOtherSchool());
+      international.add(
+          coursework.other(new Random(seed(i)), 10, true, LATEST).get(0).getOtherSchool());
     }
 
     assertEquals(5, domestic.size());
     assertEquals(5, international.size());
-    domestic.retainAll(international);
-    assertTrue(domestic.isEmpty());
+    Set<String> both = new HashSet<>(domestic);
+    both.retainAll(international);
+    assertTrue(both.isEmpty());
   }
 
   @Test
-  public void asking_for_more_other_courses_than_exist_returns_what_there_is() {
-    assertTrue(coursework.other(new Random(5), 100000, false, 20261).size() < 100000);
+  public void a_school_with_fewer_courses_than_asked_gives_what_it_has() {
+    List<PriorCoursework> rows = coursework.other(new Random(seed(7)), 100000, true, LATEST);
+    assertTrue(rows.size() < 100000);
+    assertEquals(
+        1, rows.stream().map(PriorCoursework::getOtherSchool).collect(Collectors.toSet()).size());
   }
 }

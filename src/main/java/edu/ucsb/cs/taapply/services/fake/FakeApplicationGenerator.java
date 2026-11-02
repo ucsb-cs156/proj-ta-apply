@@ -10,7 +10,6 @@ import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
 import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
-import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.LanguageExamStatus;
 import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
@@ -22,6 +21,7 @@ import edu.ucsb.cs.taapply.repository.TaTopicRepository;
 import edu.ucsb.cs.taapply.repository.UlaInterestRepository;
 import edu.ucsb.cs.taapply.repository.UlaMajorRepository;
 import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,8 +39,8 @@ import org.springframework.stereotype.Service;
  * comes from the {@link Random} passed in, so a seeded generator gives the same applications every
  * time.
  *
- * <p>The reference point for dates is the recruitment's own quarter: coursework ends the quarter
- * before it, and graduation is counted from its year.
+ * <p>Coursework terms run back from the quarter {@code today} falls in, the latest course taking
+ * that quarter. Graduation is counted from the recruitment's own year.
  */
 @Service
 public class FakeApplicationGenerator {
@@ -75,6 +75,7 @@ public class FakeApplicationGenerator {
    * takenEmails}, which gains the new ones.
    *
    * @param courseIds the distinct course ids on offer, exactly as an applicant would choose them
+   * @param today the date the applications are made, which fixes the terms of their coursework
    */
   public List<Application> generate(
       Recruitment recruitment,
@@ -82,7 +83,8 @@ public class FakeApplicationGenerator {
       int count,
       FakeCoverage coverage,
       Random random,
-      Set<String> takenEmails) {
+      Set<String> takenEmails,
+      LocalDate today) {
     List<String> topics = topicNames(recruitment.getType());
     List<String> majors = majorNames(recruitment.getType());
     List<String> interests = new ArrayList<>();
@@ -90,18 +92,18 @@ public class FakeApplicationGenerator {
       ulaInterestRepository.findAll().forEach((UlaInterest i) -> interests.add(i.getName()));
       Collections.sort(interests);
     }
-    List<String> covered = coveredCourses(courseIds, coverage, random);
+    int latest = FakeCoursework.latestQuarter(today);
 
     List<Application> applications = new ArrayList<>();
     for (int i = 0; i < count; i++) {
       Application application =
           recruitment.getType() == RecruitmentType.ULA
-              ? ula(recruitment, random, topics, majors, interests)
-              : ta(recruitment, random, topics, majors);
+              ? ula(recruitment, random, topics, majors, interests, latest)
+              : ta(recruitment, random, topics, majors, latest);
       identity(application, recruitment, random, takenEmails);
-      choices(application, courseIds, covered, coverage, i, random);
       applications.add(application);
     }
+    FakeCourseChoices.assign(applications, courseIds, coverage, random);
     return applications;
   }
 
@@ -127,17 +129,6 @@ public class FakeApplicationGenerator {
     return names.isEmpty() ? List.of("Computer Science") : names;
   }
 
-  /** Every course for ALL; for SPARSE, a random two-fifths (at least two) that attract interest. */
-  static List<String> coveredCourses(List<String> courseIds, FakeCoverage coverage, Random random) {
-    if (coverage == FakeCoverage.ALL) {
-      return courseIds;
-    }
-    List<String> shuffled = new ArrayList<>(courseIds);
-    Collections.shuffle(shuffled, random);
-    int keep = Math.min(courseIds.size(), Math.max(2, courseIds.size() * 2 / 5));
-    return new ArrayList<>(shuffled.subList(0, keep));
-  }
-
   // ---- identity ----
 
   private static void identity(
@@ -156,49 +147,6 @@ public class FakeApplicationGenerator {
     application.setFirstName(first);
     application.setMiddleName(FakeNames.MIDDLE);
     application.setLastName(last);
-  }
-
-  // ---- course choices and interests ----
-
-  /**
-   * First and second choice and the other interests. With ALL coverage the first choice runs round
-   * the course list in turn and the second is some other course, so every course is somebody's
-   * first choice. With SPARSE both come from the few covered courses. Every other covered course is
-   * enthusiastic 20 percent of the time, would-consider 40 percent, and not interesting (so not
-   * stored) 40 percent.
-   */
-  private static void choices(
-      Application application,
-      List<String> courseIds,
-      List<String> covered,
-      FakeCoverage coverage,
-      int index,
-      Random random) {
-    if (courseIds.isEmpty()) {
-      return;
-    }
-    String first =
-        coverage == FakeCoverage.ALL
-            ? courseIds.get(index % courseIds.size())
-            : covered.get(random.nextInt(covered.size()));
-    List<String> others = new ArrayList<>(covered);
-    others.remove(first);
-    String second = others.isEmpty() ? null : others.get(random.nextInt(others.size()));
-    application.setFirstChoiceCourse(first);
-    application.setSecondChoiceCourse(second);
-    Map<String, CourseInterest> interests = new HashMap<>();
-    for (String course : covered) {
-      if (course.equals(first) || course.equals(second)) {
-        continue;
-      }
-      int roll = random.nextInt(10);
-      if (roll < 2) {
-        interests.put(course, CourseInterest.ENTHUSIASTIC);
-      } else if (roll < 6) {
-        interests.put(course, CourseInterest.WOULD_CONSIDER);
-      }
-    }
-    application.setCourseInterests(interests);
   }
 
   // ---- shared pieces ----
@@ -238,8 +186,11 @@ public class FakeApplicationGenerator {
   // ---- TA ----
 
   private Application ta(
-      Recruitment recruitment, Random random, List<String> topics, List<String> majors) {
-    int reference = Integer.parseInt(recruitment.getQuarter());
+      Recruitment recruitment,
+      Random random,
+      List<String> topics,
+      List<String> majors,
+      int latest) {
     ClassLevel level = random.nextBoolean() ? ClassLevel.PHD : ClassLevel.MS;
     int year = random.nextInt(1, level == ClassLevel.PHD ? 6 : 3);
     ResidencyStatus residency =
@@ -259,14 +210,16 @@ public class FakeApplicationGenerator {
           default -> LanguageExamStatus.PASSED_F1_OR_J1_VISA;
         };
 
-    // Undergraduate preparation: either at UCSB or at one other school, then graduate courses.
+    // Undergraduate preparation. A US citizen or resident flips a coin between UCSB, where the
+    // courses are those of a fourth-year ULA, and one other school; a visa holder always comes from
+    // one international school. Then five graduate courses at UCSB.
     List<PriorCoursework> prior = new ArrayList<>();
-    if (random.nextBoolean()) {
-      prior.addAll(coursework.ucsb(random, random.nextInt(8, 15), reference));
+    if (!international && random.nextBoolean()) {
+      prior.addAll(coursework.ucsb(random, 6 * 3 + random.nextInt(1, 7), latest));
     } else {
-      prior.addAll(coursework.other(random, 10, international, reference));
+      prior.addAll(coursework.other(random, 10, international, latest));
     }
-    prior.addAll(coursework.ucsbGraduate(random, 5, reference));
+    prior.addAll(coursework.ucsbGraduate(random, 5, latest));
 
     Application application = Application.builder().build();
     application.setClassLevel(level);
@@ -299,12 +252,12 @@ public class FakeApplicationGenerator {
       Random random,
       List<String> topics,
       List<String> majors,
-      List<String> interests) {
-    int reference = Integer.parseInt(recruitment.getQuarter());
+      List<String> interests,
+      int latest) {
     int year = random.nextInt(1, 5);
     // Six courses a year, so a later-year student has a longer path behind them.
     int wanted = 6 * (year - 1) + random.nextInt(1, 7);
-    List<PriorCoursework> prior = coursework.ucsb(random, wanted, reference);
+    List<PriorCoursework> prior = coursework.ucsb(random, wanted, latest);
 
     int previousService = year == 1 ? 0 : random.nextInt(0, Math.min(6, 3 * (year - 1)) + 1);
     boolean employed = random.nextInt(4) == 0;
