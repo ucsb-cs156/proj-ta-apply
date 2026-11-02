@@ -8,11 +8,17 @@ import { quarterRange } from "main/utils/quarterUtilities";
 
 const quarters = quarterRange("20211", "20214");
 
-function renderForm(submitAction = vi.fn(), qs = quarters, onCancel = vi.fn()) {
+function renderForm(
+  submitAction = vi.fn(),
+  qs = quarters,
+  onCancel = vi.fn(),
+  defaultQuarter = undefined,
+) {
   render(
     <MemoryRouter>
       <RecruitmentForm
         quarters={qs}
+        defaultQuarter={defaultQuarter}
         submitAction={submitAction}
         onCancel={onCancel}
       />
@@ -129,9 +135,58 @@ describe("RecruitmentForm tests", () => {
     expect(submitAction).not.toHaveBeenCalled();
   });
 
+  test("preselects the default quarter, and submits it untouched", async () => {
+    const submitAction = renderForm(vi.fn(), quarters, vi.fn(), "20213");
+    expect(screen.getByTestId("RecruitmentForm.Quarter")).toHaveValue("20213");
+
+    await userEvent.type(
+      screen.getByTestId("RecruitmentForm-tentativeOpeningDate"),
+      "2026-01-05",
+    );
+    await userEvent.type(
+      screen.getByTestId("RecruitmentForm-primaryConsiderationDate"),
+      "2026-01-20",
+    );
+    await userEvent.click(screen.getByTestId("RecruitmentForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].quarter).toBe("20213");
+  });
+
+  test("a default quarter that is not listed falls back to the first one", async () => {
+    const submitAction = renderForm(vi.fn(), quarters, vi.fn(), "20301");
+    expect(screen.getByTestId("RecruitmentForm.Quarter")).toHaveValue("20211");
+
+    await userEvent.type(
+      screen.getByTestId("RecruitmentForm-tentativeOpeningDate"),
+      "2026-01-05",
+    );
+    await userEvent.type(
+      screen.getByTestId("RecruitmentForm-primaryConsiderationDate"),
+      "2026-01-20",
+    );
+    await userEvent.click(screen.getByTestId("RecruitmentForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].quarter).toBe("20211");
+  });
+
   /** No configured quarters is degenerate, but it must not crash the page. */
-  test("renders without a quarter when the range is empty", () => {
-    renderForm(vi.fn(), []);
+  test("renders without a quarter when the range is empty", async () => {
+    const submitAction = renderForm(vi.fn(), []);
     expect(screen.getByTestId("RecruitmentForm-submit")).toBeInTheDocument();
+
+    await userEvent.type(
+      screen.getByTestId("RecruitmentForm-tentativeOpeningDate"),
+      "2026-01-05",
+    );
+    await userEvent.type(
+      screen.getByTestId("RecruitmentForm-primaryConsiderationDate"),
+      "2026-01-20",
+    );
+    await userEvent.click(screen.getByTestId("RecruitmentForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(submitAction.mock.calls[0][0].quarter).toBe("");
   });
 });

@@ -17,6 +17,8 @@ type Quarter = { yyyyq: string; qyy: string };
 
 type RecruitmentFormProps = {
   quarters: Quarter[];
+  /** YYYYQ preselected in the Quarter dropdown; the first quarter listed when absent or not listed. */
+  defaultQuarter?: string;
   submitAction: (data: RecruitmentFormFields) => void;
   /** The Cancel button; the form lives in a modal (issue #108), so there is always one. */
   onCancel: () => void;
@@ -28,6 +30,7 @@ type RecruitmentFormProps = {
  */
 export default function RecruitmentForm({
   quarters,
+  defaultQuarter,
   submitAction,
   onCancel,
 }: RecruitmentFormProps): React.JSX.Element {
@@ -40,7 +43,11 @@ export default function RecruitmentForm({
   // Stryker restore all
 
   // The quarter dropdown keeps its own state, so mirror it here for submission.
-  const [quarter, setQuarter] = useState(quarters[0]?.yyyyq ?? "");
+  const [quarter, setQuarter] = useState(
+    quarters.some((q) => q.yyyyq === defaultQuarter)
+      ? (defaultQuarter as string)
+      : (quarters[0]?.yyyyq ?? ""),
+  );
 
   const testIdPrefix = "RecruitmentForm";
 
