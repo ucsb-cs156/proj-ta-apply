@@ -1,0 +1,51 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "051-create-ranking-list-versions-table",
+        "author": "pc",
+        "comment": "The version of each recruitment course's whole ranking list (issue #279): bumped by every rank edit, so that an edit made from a stale copy of the list is refused. No row means version 0.",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "tableExists": {
+                "tableName": "ranking_list_versions"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "ranking_list_versions",
+              "columns": [
+                {
+                  "column": {
+                    "name": "recruitment_course_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false,
+                      "primaryKey": true
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "INT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

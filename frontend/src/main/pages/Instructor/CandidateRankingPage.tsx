@@ -17,12 +17,17 @@ import { apiErrorMessage } from "main/utils/apiError";
 import { useBackend } from "main/utils/useBackend";
 import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import CandidateTable, {
   type Candidate,
 } from "main/components/Instructor/CandidateTable";
 import { rankingAllocationNotice } from "main/utils/allocations";
 import { targetsColumns, type CourseTargets } from "main/utils/courseTargets";
+import {
+  MultipleTabsBanner,
+  MultipleTabsModal,
+  useClientActivity,
+} from "main/concurrency";
 
 type CourseDetails = {
   id: number;
@@ -82,6 +87,7 @@ export type CandidateRankingPageData = {
 /** The course-scoped instructor ranking workspace. */
 export default function CandidateRankingPage(): React.JSX.Element {
   const { recruitmentId, recruitmentCourseId } = useParams();
+  const navigate = useNavigate();
   const validIds =
     recruitmentId !== undefined &&
     recruitmentCourseId !== undefined &&
@@ -134,6 +140,15 @@ export default function CandidateRankingPage(): React.JSX.Element {
     { enabled: validIds },
   );
 
+  // Issue #279: whoever may rank the course tells the server that this tab is on it, and learns
+  // whether another tab, or another instructor of the course, is too. A page that only reads the
+  // rankings has nothing to lose and never warns.
+  const ranking = validIds && data?.canRank === true;
+  const { headers, others, newest, arrivedAt, leave } = useClientActivity({
+    heartbeatUrl: ranking ? `${url}/heartbeat` : null,
+    leaveUrl: ranking ? `${url}/leave` : null,
+  });
+
   const notInterestedBox = (
     <Form.Check
       type="checkbox"
@@ -162,6 +177,23 @@ export default function CandidateRankingPage(): React.JSX.Element {
           <p role="alert">No candidate-ranking details were returned.</p>
         ) : (
           <>
+            <MultipleTabsBanner
+              others={others}
+              noun="ranking"
+              testId="CandidateRankingPage-multiple-tabs"
+            />
+            {/* Only the newest tab is asked; the older ones keep the banner alone. */}
+            <MultipleTabsModal
+              others={others}
+              newest={newest}
+              arrivedAt={arrivedAt}
+              noun="ranking"
+              onLeave={() => {
+                leave();
+                navigate("/");
+              }}
+              testId="CandidateRankingPage-multiple-tabs-modal"
+            />
             {data.targets != null && (
               <DetailsTable
                 testIdPrefix="CandidateRankingPage-targets"
@@ -294,7 +326,9 @@ export default function CandidateRankingPage(): React.JSX.Element {
               </section>
             )}
 
-            {candidates.isError ? (
+            {/* A candidate list that could not be read again keeps showing the one it has, so that
+                an edit that was refused is not lost with it (issue #279). */}
+            {candidates.isError && candidates.data == null ? (
               <p role="alert">
                 Unable to load candidates: {apiErrorMessage(candidates.error)}
               </p>
@@ -314,6 +348,10 @@ export default function CandidateRankingPage(): React.JSX.Element {
                   apiUrl={candidatesUrl}
                   applicationUrl={`/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/applications`}
                   onSaved={() => void refetch()}
+                  headers={headers}
+                  onConflict={async () =>
+                    (await candidates.refetch()).data ?? null
+                  }
                 />
               </>
             )}

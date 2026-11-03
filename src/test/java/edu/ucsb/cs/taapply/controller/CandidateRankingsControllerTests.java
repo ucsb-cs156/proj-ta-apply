@@ -55,6 +55,12 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
   CurrentUserService currentUserService;
 
   @org.springframework.test.context.bean.override.mockito.MockitoBean
+  edu.ucsb.cs.taapply.services.RankingVersionService rankingVersionService;
+
+  @org.springframework.test.context.bean.override.mockito.MockitoBean
+  edu.ucsb.cs.taapply.concurrency.ClientActivityDetector clientActivityDetector;
+
+  @org.springframework.test.context.bean.override.mockito.MockitoBean
   edu.ucsb.cs.taapply.services.DeveloperModeService developerModeService;
 
   private static final String BASE = "/api/instructor/recruitments/10/courses/20/candidates";
@@ -101,6 +107,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
             .status(ApplicationReviewStatus.HIRED)
             .submittedAt(LocalDateTime.of(2026, 1, 2, 3, 4))
             .build();
+    when(rankingVersionService.advance(anyLong(), anyInt())).thenReturn(true);
     when(recruitmentRepository.findById(10L)).thenReturn(Optional.of(recruitment));
     when(recruitmentCourseRepository.findById(20L)).thenReturn(Optional.of(course));
     when(instructorRepository.findByEmail("faculty@ucsb.edu"))
@@ -130,7 +137,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
         .andExpect(status().isForbidden());
     mockMvc
         .perform(
-            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/30/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
     verifyNoInteractions(applicationRepository, candidateRankingRepository);
   }
@@ -145,7 +154,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
         .andExpect(status().isForbidden());
     mockMvc
         .perform(
-            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/30/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
     verifyNoInteractions(applicationRepository, candidateRankingRepository);
   }
@@ -205,7 +216,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
         {"applicationId":30,"rank":1,"preference":"1st Choice","firstName":"Ada","lastName":"Lovelace",
         "email":"student@ucsb.edu","major":"Computer Science","classLevel":"PHD","yearInProgram":"2",
         "graduationDate":"Spring 2028","gpaMajor":3.8,"gpaOverall":3.7,"previousServiceAsUla":2,
-        "videoLink":"https://example.edu/video","firstQuarter":false}
+        "videoLink":"https://example.edu/video","firstQuarter":false,"rankingVersion":0}
         """;
     var expected = mapper.createArrayNode();
     expected.add(mapper.readTree(expectedRow));
@@ -287,14 +298,14 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     String first =
         mockMvc
             .perform(
-                put(BASE + "/30/rank")
+                put(BASE + "/30/rank?version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"rank\":2}"))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
             .getContentAsString();
-    assertJson("{\"rank\":2}", first);
+    assertJson("{\"rank\":2,\"version\":1}", first);
     ArgumentCaptor<CandidateRanking> captured = ArgumentCaptor.forClass(CandidateRanking.class);
     verify(candidateRankingRepository).save(captured.capture());
     CandidateRanking saved = captured.getValue();
@@ -307,18 +318,22 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
         .thenReturn(Optional.of(saved));
     mockMvc
         .perform(
-            put(BASE + "/31/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":2}"))
+            put(BASE + "/31/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":2}"))
         .andExpect(status().isOk());
     mockMvc
         .perform(
-            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/30/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isOk());
     assertEquals(1, saved.getRank());
     assertJson(
-        "{\"rank\":null}",
+        "{\"rank\":null,\"version\":1}",
         mockMvc
             .perform(
-                put(BASE + "/30/rank")
+                put(BASE + "/30/rank?version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"rank\":null}"))
             .andExpect(status().isOk())
@@ -336,7 +351,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
   void rejects_invalid_ranks(String value) throws Exception {
     mockMvc
         .perform(
-            put(BASE + "/30/rank")
+            put(BASE + "/30/rank?version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"rank\":" + value + "}"))
         .andExpect(status().isBadRequest());
@@ -347,18 +362,21 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"INSTRUCTOR"})
   void rejects_missing_rank_and_ineligible_or_other_recruitment_applications() throws Exception {
     mockMvc
-        .perform(put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        .perform(
+            put(BASE + "/30/rank?version=0").contentType(MediaType.APPLICATION_JSON).content("{}"))
         .andExpect(status().isBadRequest());
     mockMvc
         .perform(
-            put(BASE + "/999/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/999/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
     mockMvc.perform(get(BASE + "/999")).andExpect(status().isForbidden());
     application.setOrigin(ApplicationOrigin.ADMIN_TEST);
     mockMvc.perform(get(BASE + "/30")).andExpect(status().isForbidden());
     mockMvc
         .perform(
-            put(BASE + "/30/rank")
+            put(BASE + "/30/rank?version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"rank\":null}"))
         .andExpect(status().isForbidden());
@@ -372,7 +390,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     recruitment.setReviewStatus(reviewStatus);
     mockMvc
         .perform(
-            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/30/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
     verify(candidateRankingRepository, never()).save(any());
   }
@@ -396,7 +416,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/30/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isOk());
     verify(candidateRankingRepository).save(any());
 
@@ -404,7 +426,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     recruitment.setReviewStatus("Closed");
     mockMvc
         .perform(
-            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/30/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
     mockMvc.perform(get(BASE)).andExpect(status().isOk());
   }
@@ -428,7 +452,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     recruitment.setReviewStatus("Open");
     mockMvc
         .perform(
-            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/30/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
     verify(candidateRankingRepository, never()).save(any());
   }
@@ -607,7 +633,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     mockMvc.perform(get(BASE + "/30")).andExpect(status().isOk());
     mockMvc
         .perform(
-            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/30/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
     verify(candidateRankingRepository, never()).save(any());
   }
@@ -620,7 +648,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     mockMvc.perform(get(BASE + "/30")).andExpect(status().isForbidden());
     mockMvc
         .perform(
-            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/30/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
     course.setInstructor("CONRAD P");
     course.setRecruitmentId(11L);
@@ -628,7 +658,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     mockMvc.perform(get(BASE + "/30")).andExpect(status().isBadRequest());
     mockMvc
         .perform(
-            put(BASE + "/30/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/30/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isBadRequest());
     verifyNoInteractions(applicationRepository, candidateRankingRepository);
   }
@@ -703,7 +735,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     assertEquals(30, secondResponse.get(0).get("applicationId").longValue());
     mockMvc
         .perform(
-            put(otherBase + "/30/rank")
+            put(otherBase + "/30/rank?version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"rank\":1}"))
         .andExpect(status().isOk());
@@ -914,18 +946,24 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     // Two rankable applicants (30 and 32), so 2 is in range and 3 is not.
     mockMvc
         .perform(
-            put(BASE + "/32/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":2}"))
+            put(BASE + "/32/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":2}"))
         .andExpect(status().isOk());
     verify(candidateRankingRepository).save(any());
     mockMvc
         .perform(
-            put(BASE + "/32/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":3}"))
+            put(BASE + "/32/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":3}"))
         .andExpect(status().isBadRequest());
     mockMvc.perform(get(BASE + "/32")).andExpect(status().isOk());
 
     mockMvc
         .perform(
-            put(BASE + "/31/rank").contentType(MediaType.APPLICATION_JSON).content("{\"rank\":1}"))
+            put(BASE + "/31/rank?version=0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"rank\":1}"))
         .andExpect(status().isForbidden());
     mockMvc.perform(get(BASE + "/31")).andExpect(status().isForbidden());
     mockMvc.perform(get(BASE + "/33")).andExpect(status().isForbidden());

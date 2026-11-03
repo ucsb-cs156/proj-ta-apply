@@ -36,6 +36,88 @@ const renderPage = (page, initialEntries = ["/"]) =>
   );
 
 /**
+ * The last section of the instructor and admin pages (issue #279): "Simultaneous Editing" for the
+ * faculty rankings, with the warning as it appears (names included), what it means, the question
+ * put to the newer tab, and what to do.
+ */
+function expectRankingSimultaneousEditingSection(page, intro) {
+  const root = screen.getByTestId(page);
+  const heading = screen.getByRole("heading", {
+    level: 2,
+    name: "Simultaneous Editing",
+  });
+  expect(heading).toHaveAttribute("id", "simultaneous-editing");
+  // It ends the page: no other section follows it.
+  const headings = [...root.querySelectorAll("h2")];
+  expect(headings[headings.length - 1]).toBe(heading);
+  const lead = screen.getByTestId(`${page}-simultaneous-editing-ranking`);
+  expect(lead).toHaveTextContent(intro);
+
+  // A faithful picture of the warning, with a name: the shared banner for a ranking.
+  const example = screen.getByTestId(`${page}-simultaneous-editing-example`);
+  expect(example).toHaveTextContent(
+    "phtcon@ucsb.edu (Phill Conrad) is also editing this ranking. Please know that this is risky; we recommend closing all but one of these.",
+  );
+  expect(example).toHaveClass("alert", "alert-warning");
+  // It is a picture and not a warning about anything, so it is not announced.
+  expect(screen.queryByRole("alert")).toBeNull();
+
+  const meaning = screen.getByTestId(`${page}-simultaneous-editing-meaning`);
+  expect(meaning).toHaveTextContent(
+    "What it means. The rankings of the same course are open somewhere else",
+  );
+  expect(meaning).toHaveTextContent(
+    "This applies to the Candidate Ranking page",
+  );
+  expect(meaning).toHaveTextContent(
+    "Rankings for this course changed while you were editing; your change has not been saved.",
+  );
+  expect(meaning).toHaveTextContent("press Save again");
+  expect(meaning).toHaveTextContent(
+    "from a copy of the list that is out of date, and say Rankings for this course changed",
+  );
+  expect(meaning).toHaveTextContent(
+    "your change has not been saved. The table is then read again",
+  );
+  expect(meaning).toHaveTextContent(
+    "Rankings of a different course never cause a warning",
+  );
+  const modal = screen.getByTestId(`${page}-simultaneous-editing-modal`);
+  expect(modal).toHaveTextContent(
+    "The tab or window you opened last also asks what you want to do",
+  );
+  expect(modal).toHaveTextContent(
+    "The one you opened first only shows the warning",
+  );
+  const choices = screen.getByTestId(`${page}-simultaneous-editing-choices`);
+  expect(
+    [...choices.querySelectorAll("li > strong")].map((b) => b.textContent),
+  ).toEqual([
+    "Leave this page",
+    "Wait for the other tabs or windows to close, then resume here",
+    "Continue anyway",
+  ]);
+  expect(choices).toHaveTextContent("Your rankings are safe in the other one");
+  expect(choices).toHaveTextContent("then resume here keeps the page covered");
+  expect(choices).toHaveTextContent("closes by itself within a few seconds");
+  expect(choices).toHaveTextContent("The box does not come back");
+  const todo = screen.getByTestId(`${page}-simultaneous-editing-ranking-todo`);
+  expect(todo).toHaveTextContent(
+    "What to do. Close all the other tabs or windows that have this course's rankings open",
+  );
+  expect(todo).toHaveTextContent("about twenty seconds");
+  expect(lead.nextElementSibling).toBe(example);
+  expect(example.nextElementSibling).toBe(meaning);
+  expect(meaning.nextElementSibling).toBe(modal);
+  expect(modal.nextElementSibling).toBe(choices);
+  expect(choices.nextElementSibling).toBe(todo);
+  // The refresh section from #281 follows it, and still ends the page.
+  expect(todo.nextElementSibling).toBe(
+    screen.getByTestId(`${page}-simultaneous-editing-todo`),
+  );
+}
+
+/**
  * The last section of each applicant page (issue #273): "Simultaneous Editing", a picture of the
  * warning, what it means and what to do.
  */
@@ -232,6 +314,26 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByText(/notices, terms and conditions for ULA applications/),
     ).toBeInTheDocument();
+  });
+
+  test("the instructors page ends with Simultaneous Editing for the rankings (issue #279)", async () => {
+    renderPage(<HelpInstructorsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Instructors" });
+
+    expectRankingSimultaneousEditingSection(
+      "HelpInstructorsPage",
+      "If you, or another instructor of the same course, or an admin who teaches it, is ranking the same course at the same time, you may get a warning that looks like this:",
+    );
+  });
+
+  test("the admins page ends with Simultaneous Editing for the rankings (issue #279)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    expectRankingSimultaneousEditingSection(
+      "HelpAdminsPage",
+      "If you, or another admin, or an instructor, is ranking the same course at the same time, you may get a warning that looks like this:",
+    );
   });
 
   test("the instructors page explains the Instructor section and the catalog name", async () => {
@@ -685,7 +787,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(3);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -715,6 +817,33 @@ describe("Help pages (issue #140)", () => {
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/286",
     );
+    // Issue #279: faculty rankings.
+    expect(
+      [...rows[2].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Faculty rankings",
+      "One recruitment course's ranking list",
+      "ranking:<recruitmentCourseId>",
+      "#287",
+    ]);
+    expect(rows[2].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/287",
+    );
+    for (const phrase of [
+      "bumped by every rank edit and by the Developer Mode fake rankings job",
+      "no row means version 0",
+      "a rank save names it as ?version=",
+      "single compare-and-set statement",
+      "only one is accepted",
+      "409 Conflict with the current version",
+      "keeps what the instructor typed in its box and offers Save again",
+      "never wrongly accepted",
+      "an instructor of another course, or an admin who does not teach the course, gets 403 and is neither recorded nor told who is there",
+      "ranking:<recruitmentCourseId>",
+    ]) {
+      expect(text("ranking")).toContain(phrase);
+    }
   });
 
   /** Issue #281: the last section of the admin and instructor pages. */

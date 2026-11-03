@@ -4,6 +4,7 @@ import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.RankingVersionService;
 import edu.ucsb.cs.taapply.services.fake.FakeRankingScope;
 import edu.ucsb.cs.taapply.services.fake.FakeRankingsGenerator;
 import java.util.Random;
@@ -19,6 +20,7 @@ public class CreateFakeRankingsJobFactory {
   @Autowired private RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired private ApplicationRepository applicationRepository;
   @Autowired private CandidateRankingRepository candidateRankingRepository;
+  @Autowired private RankingVersionService rankingVersionService;
 
   /** A job with a fresh, unseeded random source. */
   public CreateFakeRankingsJob create(
@@ -39,6 +41,7 @@ public class CreateFakeRankingsJobFactory {
         .recruitmentCourseRepository(recruitmentCourseRepository)
         .applicationRepository(applicationRepository)
         .candidateRankingRepository(candidateRankingRepository)
+        .rankingVersionService(rankingVersionService)
         .build();
   }
 }

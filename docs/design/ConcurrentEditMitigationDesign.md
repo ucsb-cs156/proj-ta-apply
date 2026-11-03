@@ -519,6 +519,38 @@ frequent, so conflict handling that irritates will be noticed. Rankings are only
 faculty review is Open, which limits the exposure. The Developer Mode job that creates fake rankings
 (#220) writes these rows too and must bump the same version.
 
+**As built (#279).** The version is in a table of its own, `ranking_list_versions`
+(`recruitment_course_id`, `version`), not a column of `recruitment_courses`, for the reason given for
+the allocations: that row is rewritten whole by other saves, and a stale copy of it would put an old
+version back. No row means version 0. `RankingVersionService` moves it only with compare-and-set
+statements (`advance(courseId, expected)` for a rank edit; `bump(courseId)` for the Developer Mode
+fake rankings job, once for each course it ranks), so of several edits made from one version exactly
+one is accepted. The candidates list carries the version it was read at in every row
+(`rankingVersion`), read before the ranks so that a change in between can only make a save refused,
+never wrongly accepted. A rank save names it (`?version=`) and is answered with the rank and the new
+version; a stale one is answered `409` with the message above and the current version, and nothing is
+changed.
+
+Because the version belongs to the whole list, `CandidateTable` sends its saves one at a time, in the
+order they were made, each with the version the last one produced. On a `409` it stops sending the
+saves queued behind (they were made against the old list), has the page read the candidates again,
+adopts that list's version, shows the new ranks in every box that holds no unsaved edit, keeps the
+instructor's typed values in the rest, and puts the message on each of those rows with a **Save
+again** button. A candidate list that cannot be read again keeps the table on screen, so nothing typed
+is lost.
+
+The warning uses the shared hook, banner and modal with the noun `ranking` and the key
+`ranking:<recruitmentCourseId>`: `POST .../courses/{id}/ranking/heartbeat` and `.../ranking/leave`,
+and the `X-Client-Id` on every rank save. The newest tab is asked (Leave this page, Wait, Continue
+anyway) and older tabs get the banner alone, as for drafts (#285). Authorization comes first: the
+heartbeat, the goodbye and the save are allowed only to someone who may rank the course, the
+instructor of record while reviews are Open (an admin who also teaches it included). An instructor
+of another course, and an admin who does not teach the course, get `403` and are neither recorded nor
+told who is there. A page that is read-only sends no heartbeat, so it never warns and is never named.
+Two instructors of a co-taught course (two emails with the same catalog name) and an admin who
+teaches the course see each other by name; a different course never warns, and neither does the same
+person on two courses.
+
 ### (d) The assignments (#280)
 
 Resource key `assignments:<recruitmentId>`. The unit is **the whole assignments page for a

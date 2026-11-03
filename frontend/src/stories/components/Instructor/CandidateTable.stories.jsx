@@ -17,7 +17,8 @@ export default {
       handlers: [
         http.put(
           "/api/instructor/recruitments/1/courses/2/candidates/:id/rank",
-          async ({ request }) => HttpResponse.json(await request.json()),
+          async ({ request }) =>
+            HttpResponse.json({ ...(await request.json()), version: 4 }),
         ),
       ],
     },

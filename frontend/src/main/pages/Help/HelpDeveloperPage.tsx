@@ -159,9 +159,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <strong>multi-tab warning</strong> is the courtesy: it tells the user,
           before anything is refused, that another copy is open, and who. The
           full design, including where else it is planned, is{" "}
-          <code>docs/design/ConcurrentEditMitigationDesign.md</code>. Only the
-          draft application form uses either so far; recruitment state is kept
-          fresh by a refresh instead (see below).
+          <code>docs/design/ConcurrentEditMitigationDesign.md</code>. So far the
+          draft application form and the faculty rankings use them; recruitment
+          state is kept fresh by a refresh instead (see below).
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-version">
           <strong>The version check.</strong> A saved thing carries an integer{" "}
@@ -477,6 +477,25 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           turns off Submit and Save Draft, and stops trying to save (draft saves
           are refused once applications close, issue #276).
         </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-ranking">
+          <strong>The version check on rankings.</strong> A course&apos;s whole
+          ranking list has one version, in its own table, bumped by every rank
+          edit and by the Developer Mode fake rankings job; no row means version
+          0. The candidates are sent with the version they were read at, a rank
+          save names it as <code>?version=</code>, and the server moves the
+          version on with a single compare-and-set statement before it changes
+          the ranking, so of several saves made from one version only one is
+          accepted. The others get <code>409 Conflict</code> with the current
+          version; the page reads the candidates again, keeps what the
+          instructor typed in its box and offers <em>Save again</em>. The
+          candidates are read after the version, so a change in between can only
+          make a save refused, never wrongly accepted. Only someone who may rank
+          the course (its instructor while reviews are Open) may heartbeat or
+          say goodbye for <code>ranking:&lt;recruitmentCourseId&gt;</code>: an
+          instructor of another course, or an admin who does not teach the
+          course, gets <code>403</code> and is neither recorded nor told who is
+          there.
+        </p>
         <p>Where the version check and the warning are used so far:</p>
         <Table
           striped
@@ -533,6 +552,22 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #286
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-ranking">
+              <td>Faculty rankings</td>
+              <td>One recruitment course&apos;s ranking list</td>
+              <td>
+                <code>ranking:&lt;recruitmentCourseId&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/287"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #287
                 </a>
               </td>
             </tr>
