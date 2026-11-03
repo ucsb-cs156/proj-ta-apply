@@ -3,7 +3,7 @@ import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import axios from "axios";
 import { apiErrorMessage } from "main/utils/apiError";
 import InterestMark from "main/components/Common/InterestMark";
-import { gpaText } from "main/utils/applicationFields";
+import { FIRST_QUARTER_TEXT } from "main/utils/applicationFields";
 import {
   ENTHUSIASTIC,
   FIRST_CHOICE,
@@ -394,9 +394,10 @@ export default function CandidateTable({
                         ) : (
                           candidate.classLevel
                         )
-                      ) : column.key === "gpaMajor" ||
-                        column.key === "gpaOverall" ? (
-                        gpaText(candidate, candidate[column.key])
+                      ) : candidate.firstQuarter &&
+                        (column.key === "gpaMajor" ||
+                          column.key === "gpaOverall") ? (
+                        FIRST_QUARTER_TEXT
                       ) : (
                         candidate[column.key]
                       )}

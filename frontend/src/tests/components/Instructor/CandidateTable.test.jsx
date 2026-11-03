@@ -274,6 +274,8 @@ describe("CandidateTable", () => {
       table({ type: "ULA", candidates: firstQuarterCandidates() });
 
       expect(gpaCells("Ada")).toEqual(["First quarter", "First quarter"]);
+      // Only the GPA cells: the rest of the row is unchanged.
+      expect(screen.getAllByText("First quarter")).toHaveLength(2);
       expect(gpaCells("Grace")).not.toContain("First quarter");
       expect(gpaCells("Grace")[0]).toMatch(/^\d\.\d+$/);
     });
