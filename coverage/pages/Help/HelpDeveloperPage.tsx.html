@@ -691,7 +691,32 @@
 <a name='L626'></a><a href='#L626'>626</a>
 <a name='L627'></a><a href='#L627'>627</a>
 <a name='L628'></a><a href='#L628'>628</a>
-<a name='L629'></a><a href='#L629'>629</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L629'></a><a href='#L629'>629</a>
+<a name='L630'></a><a href='#L630'>630</a>
+<a name='L631'></a><a href='#L631'>631</a>
+<a name='L632'></a><a href='#L632'>632</a>
+<a name='L633'></a><a href='#L633'>633</a>
+<a name='L634'></a><a href='#L634'>634</a>
+<a name='L635'></a><a href='#L635'>635</a>
+<a name='L636'></a><a href='#L636'>636</a>
+<a name='L637'></a><a href='#L637'>637</a>
+<a name='L638'></a><a href='#L638'>638</a>
+<a name='L639'></a><a href='#L639'>639</a>
+<a name='L640'></a><a href='#L640'>640</a>
+<a name='L641'></a><a href='#L641'>641</a>
+<a name='L642'></a><a href='#L642'>642</a>
+<a name='L643'></a><a href='#L643'>643</a>
+<a name='L644'></a><a href='#L644'>644</a>
+<a name='L645'></a><a href='#L645'>645</a>
+<a name='L646'></a><a href='#L646'>646</a>
+<a name='L647'></a><a href='#L647'>647</a>
+<a name='L648'></a><a href='#L648'>648</a>
+<a name='L649'></a><a href='#L649'>649</a>
+<a name='L650'></a><a href='#L650'>650</a>
+<a name='L651'></a><a href='#L651'>651</a>
+<a name='L652'></a><a href='#L652'>652</a>
+<a name='L653'></a><a href='#L653'>653</a>
+<a name='L654'></a><a href='#L654'>654</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -724,6 +749,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1481,9 +1531,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           before anything is refused, that another copy is open, and who. The
           full design, including where else it is planned, is{" "}
           &lt;code&gt;docs/design/ConcurrentEditMitigationDesign.md&lt;/code&gt;. So far the
-          draft application form, the faculty rankings and the editing of a
-          submitted application use them; recruitment state is kept fresh by a
-          refresh instead (see below).
+          draft application form, the faculty rankings, the editing of a
+          submitted application and the assignments page use them; recruitment
+          state is kept fresh by a refresh instead (see below).
         &lt;/p&gt;
         &lt;p data-testid="HelpDeveloperPage-simultaneous-version"&gt;
           &lt;strong&gt;The version check.&lt;/strong&gt; A saved thing carries an integer{" "}
@@ -1492,7 +1542,16 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           version, in one atomic step (JPA optimistic locking), and answers with
           it. If not, nothing is changed and the answer is{" "}
           &lt;code&gt;409 Conflict&lt;/code&gt; with the draft as it now stands. The form
-          then stops saving, says so, and offers &lt;em&gt;Reload&lt;/em&gt;.
+          then stops saving, says so, and offers &lt;em&gt;Reload&lt;/em&gt;. Where the
+          saved thing is a whole page of numbers that several admins might
+          touch, a simpler form is used: the Assignments page of a recruitment
+          has a recruitment-level &lt;code&gt;assignmentsVersion&lt;/code&gt;, counted up by
+          one atomic update (
+          &lt;code&gt;WHERE id = ? AND assignments_version = ?&lt;/code&gt;) on every
+          tentative assignment, on publishing or taking back, and on an
+          applicant cancelling. A stale tentative assignment is answered{" "}
+          &lt;code&gt;409&lt;/code&gt; with the current assignments, and the page shows them
+          and a message, without repeating the click.
         &lt;/p&gt;
         &lt;p data-testid="HelpDeveloperPage-simultaneous-heartbeat"&gt;
           &lt;strong&gt;The client id and the heartbeat.&lt;/strong&gt; Each tab makes a
@@ -1941,6 +2000,22 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                 &lt;/a&gt;
               &lt;/td&gt;
             &lt;/tr&gt;
+            &lt;tr data-testid="HelpDeveloperPage-simultaneous-row-assignments"&gt;
+              &lt;td&gt;Assignments (admin)&lt;/td&gt;
+              &lt;td&gt;The whole assignments page for one recruitment&lt;/td&gt;
+              &lt;td&gt;
+                &lt;code&gt;assignments:&amp;lt;recruitmentId&amp;gt;&lt;/code&gt;
+              &lt;/td&gt;
+              &lt;td&gt;
+                &lt;a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/289"
+                  target="_blank"
+                  rel="noreferrer"
+                &gt;
+                  #289
+                &lt;/a&gt;
+              &lt;/td&gt;
+            &lt;/tr&gt;
           &lt;/tbody&gt;
         &lt;/Table&gt;
       &lt;/div&gt;
@@ -1954,7 +2029,7 @@ export default function HelpDeveloperPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-03T18:54:57.055Z
+                at 2026-11-03T22:07:54.769Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
