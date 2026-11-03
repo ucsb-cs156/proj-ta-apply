@@ -8,12 +8,21 @@ const courses = (id) => `/admin/recruitments/${id}/courses`;
 
 /**
  * The lines under the boxes (issue #249): the counts and links the backend adds to each step. A
- * recruitment has four courses; it has twelve applications once step 2 is done.
+ * recruitment has four courses; it has twelve applications and three drafts once step 2 is done.
  */
 const withUnderBoxLines = (id, steps) => {
   const applications = steps.find((s) => s.number === 2).done
     ? "12 applications"
     : "0 applications";
+  const drafts = steps.find((s) => s.number === 2).done
+    ? "3 draft applications"
+    : "0 draft applications";
+  const seeDrafts = [
+    {
+      text: "(see draft applications)",
+      href: `/admin/recruitments/${id}/draft-applications`,
+    },
+  ];
   const seeApplications = [
     {
       text: "(see applications)",
@@ -23,7 +32,7 @@ const withUnderBoxLines = (id, steps) => {
   const seeCourses = (text) => [{ text, href: courses(id) }];
   const underBox = {
     1: { detail: "4 courses", links: seeCourses("(see courses)") },
-    2: { detail: applications, links: seeApplications },
+    2: { detail: drafts, links: seeDrafts },
     4: { detail: applications, links: seeApplications },
     5: { links: seeCourses("(see allocations)") },
     6: { links: seeCourses("(see rankings)") },

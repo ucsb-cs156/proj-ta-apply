@@ -419,12 +419,31 @@ describe("RecruitmentStepsDiagram tests", () => {
       );
     });
 
-    test("steps 2 and 4 have their application count, then the (see applications) link", async () => {
+    test("step 2 has its draft count, then the (see draft applications) link", async () => {
+      const { onNavigate } = renderLive(
+        recruitmentStepsFixtures.applicationsOpen,
+      );
+      expect(screen.getByTestId("D-step-2-detail")).toHaveTextContent(
+        "3 draft applications",
+      );
+      const link = screen.getByTestId("D-step-2-link-0");
+      expect(link).toHaveTextContent("(see draft applications)");
+      expect(link).toHaveAttribute(
+        "href",
+        "/admin/recruitments/1/draft-applications",
+      );
+      await userEvent.click(link);
+      expect(onNavigate).toHaveBeenLastCalledWith(
+        "/admin/recruitments/1/draft-applications",
+      );
+    });
+
+    test("step 4 has its application count, then the (see applications) link", async () => {
       const { onNavigate } = renderLive(
         recruitmentStepsFixtures.applicationsOpen,
       );
 
-      for (const n of [2, 4]) {
+      for (const n of [4]) {
         expect(screen.getByTestId(`D-step-${n}-detail`)).toHaveTextContent(
           "12 applications",
         );
