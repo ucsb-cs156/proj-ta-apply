@@ -868,8 +868,7 @@ describe("CandidateRankingPage", () => {
     canRank: true,
     reviewStatus: "Open",
   };
-  const RISK =
-    "Please know that this is risky; we recommend closing all but one of these.";
+  const ADMIN = "We recommend that only one admin edits this page at a time.";
   const fay = { label: "fay@ucsb.edu (Fay Faculty)", samePerson: false };
 
   test("someone who can rank tells the server this tab is on the course, naming the tab", async () => {
@@ -918,7 +917,7 @@ describe("CandidateRankingPage", () => {
     expect(
       await screen.findByTestId("CandidateRankingPage-multiple-tabs"),
     ).toHaveTextContent(
-      `fay@ucsb.edu (Fay Faculty) is also editing this ranking. ${RISK}`,
+      `fay@ucsb.edu (Fay Faculty) is also editing this ranking. ${ADMIN}`,
     );
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(
@@ -942,7 +941,7 @@ describe("CandidateRankingPage", () => {
     expect(
       screen.getByTestId("CandidateRankingPage-multiple-tabs-modal-message"),
     ).toHaveTextContent(
-      `fay@ucsb.edu (Fay Faculty) already has this ranking open for editing. ${RISK}`,
+      `fay@ucsb.edu (Fay Faculty) already has this ranking open for editing. ${ADMIN}`,
     );
     fireEvent.click(
       screen.getByTestId("CandidateRankingPage-multiple-tabs-modal-leave"),

@@ -3,8 +3,7 @@ import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
 
 const RISK =
   "Please know that this is risky; we recommend closing all but one of these.";
-const ADMIN =
-  "We recommend that only one Admin have this page open for edits at a time.";
+const ADMIN = "We recommend that only one admin edits this page at a time.";
 const you = { label: "me@example.org (Me)", samePerson: true };
 const phill = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
 
@@ -29,7 +28,7 @@ describe("MultipleTabsBanner", () => {
     render(<MultipleTabsBanner others={[phill]} noun="page" />);
 
     expect(screen.getByTestId("MultipleTabsBanner")).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) is also editing this page. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) is also editing this page. ${ADMIN}`,
     );
   });
 
@@ -37,7 +36,7 @@ describe("MultipleTabsBanner", () => {
     render(<MultipleTabsBanner others={[you, phill]} noun="page" />);
 
     expect(screen.getByTestId("MultipleTabsBanner")).toHaveTextContent(
-      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs. ${RISK}`,
+      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs. ${ADMIN}`,
     );
   });
 
@@ -49,7 +48,7 @@ describe("MultipleTabsBanner", () => {
     render(<MultipleTabsBanner others={crowd} noun="budget" />);
 
     expect(screen.getByTestId("MultipleTabsBanner")).toHaveTextContent(
-      `A, B, C and 2 others are also editing this budget. ${RISK}`,
+      `A, B, C and 2 others are also editing this budget. ${ADMIN}`,
     );
   });
 
@@ -59,7 +58,7 @@ describe("MultipleTabsBanner", () => {
     );
 
     expect(screen.getByTestId("MultipleTabsBanner").textContent).toBe(
-      `phtcon@ucsb.edu (Phill Conrad) is also editing this page. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) is also editing this page. ${ADMIN}`,
     );
   });
 
@@ -67,7 +66,7 @@ describe("MultipleTabsBanner", () => {
     render(<MultipleTabsBanner others={[phill]} noun="ranking" newest />);
 
     expect(screen.getByTestId("MultipleTabsBanner").textContent).toBe(
-      `phtcon@ucsb.edu (Phill Conrad) already has this ranking open for editing. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) already has this ranking open for editing. ${ADMIN}`,
     );
   });
 
@@ -84,7 +83,7 @@ describe("MultipleTabsBanner", () => {
       <MultipleTabsBanner others={[you, phill]} noun="ranking" newest />,
     );
     expect(text()).toBe(
-      `You and phtcon@ucsb.edu (Phill Conrad) already have this ranking open for editing in other windows or tabs. ${RISK}`,
+      `You and phtcon@ucsb.edu (Phill Conrad) already have this ranking open for editing in other windows or tabs. ${ADMIN}`,
     );
   });
 
@@ -170,6 +169,16 @@ describe("MultipleTabsBanner", () => {
       );
       expect(text()).toBe(
         `A, B, C and 2 others already have this page open for editing. ${ADMIN}`,
+      );
+    });
+
+    test("the user's own other tab alone gets the admin sentence too, not the risk sentence", () => {
+      render(
+        <MultipleTabsBanner others={[you]} noun="page" audience="admin" />,
+      );
+
+      expect(text()).toBe(
+        `You are also editing this page in another tab or window. ${ADMIN}`,
       );
     });
 

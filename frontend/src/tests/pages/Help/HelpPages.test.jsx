@@ -56,7 +56,7 @@ function expectRankingSimultaneousEditingSection(page, intro) {
   // A faithful picture of the warning, with a name: the shared banner for a ranking.
   const example = screen.getByTestId(`${page}-simultaneous-editing-example`);
   expect(example).toHaveTextContent(
-    "phtcon@ucsb.edu (Phill Conrad) is also editing this ranking. Please know that this is risky; we recommend closing all but one of these.",
+    "phtcon@ucsb.edu (Phill Conrad) is also editing this ranking. We recommend that only one admin edits this page at a time.",
   );
   expect(example).toHaveClass("alert", "alert-warning");
   // It is a picture and not a warning about anything, so it is not announced.
@@ -661,7 +661,7 @@ describe("Help pages (issue #140)", () => {
     expect(text("detector")).toMatch(/A and B already have this page open/);
     expect(text("detector")).toMatch(/audience/);
     expect(text("detector")).toMatch(
-      /only one Admin have this page open for edits at a time/,
+      /only one admin edits this page at a time/,
     );
     // Authorization.
     expect(text("authorization")).toMatch(/before it records the caller/);

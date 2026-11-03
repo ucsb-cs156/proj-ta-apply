@@ -999,6 +999,7 @@ describe("ApplyPage tests", () => {
       r.url.startsWith("/api/draftApplications/heartbeat"),
     );
   const HEARTBEAT = /\/api\/draftApplications\/heartbeat/;
+  const ADMIN = "We recommend that only one admin edits this page at a time.";
   const RISK =
     "Please know that this is risky; we recommend closing all but one of these.";
   const phill = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
@@ -1068,7 +1069,7 @@ describe("ApplyPage tests", () => {
     expect(
       await screen.findByTestId("ApplyPage-multiple-tabs"),
     ).toHaveTextContent(
-      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this application in other windows or tabs. ${RISK}`,
+      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this application in other windows or tabs. ${ADMIN}`,
     );
   });
 
@@ -1129,11 +1130,11 @@ describe("ApplyPage tests", () => {
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByTestId(`${MODAL}-message`)).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) already has this application open for editing. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) already has this application open for editing. ${ADMIN}`,
     );
     // The banner of the tab that arrived later says "already" too.
     expect(screen.getByTestId("ApplyPage-multiple-tabs")).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) already has this application open for editing. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) already has this application open for editing. ${ADMIN}`,
     );
   });
 

@@ -216,48 +216,63 @@ describe("describeOthers, for the tab that arrived later ('already')", () => {
 });
 
 describe("closingSentence and warningMessage", () => {
+  const alice = person("a@example.com (Alice)");
+  const bob = person("b@example.com (Bob)");
+
   test("the admin sentence is the agreed one", () => {
     expect(ADMIN_SENTENCE).toBe(
-      "We recommend that only one Admin have this page open for edits at a time.",
+      "We recommend that only one admin edits this page at a time.",
     );
   });
 
-  test("the default audience, and no audience, use the risk sentence", () => {
-    expect(closingSentence()).toBe(RISK_SENTENCE);
-    expect(closingSentence("default")).toBe(RISK_SENTENCE);
-    expect(closingSentence("admin")).toBe(ADMIN_SENTENCE);
+  test("the risk sentence only when every other copy is the user's own", () => {
+    expect(closingSentence([you])).toBe(RISK_SENTENCE);
+    expect(closingSentence([you], "default")).toBe(RISK_SENTENCE);
+    expect(closingSentence([you, { ...you }])).toBe(RISK_SENTENCE);
+  });
+
+  test("the admin sentence when any other person is involved", () => {
+    expect(closingSentence([alice])).toBe(ADMIN_SENTENCE);
+    expect(closingSentence([you, alice])).toBe(ADMIN_SENTENCE);
+    expect(closingSentence([alice, bob], "default")).toBe(ADMIN_SENTENCE);
+  });
+
+  test("the admin sentence on an admin page, even with only the user's own copies", () => {
+    expect(closingSentence([you], "admin")).toBe(ADMIN_SENTENCE);
+    expect(closingSentence([alice], "admin")).toBe(ADMIN_SENTENCE);
   });
 
   test("is empty when no one else is there, whatever the audience", () => {
     expect(warningMessage([], "page")).toBe("");
     expect(warningMessage([], "page", "admin", true)).toBe("");
-    expect(warningMessage([you], "page")).toBe(
-      `You are also editing this page in another tab or window. ${RISK_SENTENCE}`,
+  });
+
+  test("own copies only: the risk sentence, the 'You' wording, no names", () => {
+    expect(warningMessage([you], "application")).toBe(
+      `You are also editing this application in another tab or window. ${RISK_SENTENCE}`,
+    );
+    expect(warningMessage([you], "ranking", "default", true)).toBe(
+      `You already have this ranking open for editing in another tab or window. ${RISK_SENTENCE}`,
     );
     expect(warningMessage([you], "page", "admin", true)).toBe(
       `You already have this page open for editing in another tab or window. ${ADMIN_SENTENCE}`,
     );
   });
 
-  test("joins who and the closing sentence", () => {
-    const alice = person("a@example.com (Alice)");
-    expect(warningMessage([alice], "page")).toBe(
-      `a@example.com (Alice) is also editing this page. ${RISK_SENTENCE}`,
+  test("another person: the names, then the admin sentence, whatever the noun", () => {
+    expect(warningMessage([alice], "ranking")).toBe(
+      `a@example.com (Alice) is also editing this ranking. ${ADMIN_SENTENCE}`,
     );
     expect(warningMessage([alice], "page", "admin")).toBe(
       `a@example.com (Alice) is also editing this page. ${ADMIN_SENTENCE}`,
     );
-    expect(warningMessage([alice], "page", "default", true)).toBe(
-      `a@example.com (Alice) already has this page open for editing. ${RISK_SENTENCE}`,
+    expect(warningMessage([alice], "ranking", "default", true)).toBe(
+      `a@example.com (Alice) already has this ranking open for editing. ${ADMIN_SENTENCE}`,
     );
-    expect(
-      warningMessage(
-        [alice, person("b@example.com (Bob)")],
-        "page",
-        "admin",
-        true,
-      ),
-    ).toBe(
+    expect(warningMessage([you, alice], "page", "default", true)).toBe(
+      `You and a@example.com (Alice) already have this page open for editing in other windows or tabs. ${ADMIN_SENTENCE}`,
+    );
+    expect(warningMessage([alice, bob], "page", "admin", true)).toBe(
       `a@example.com (Alice) and b@example.com (Bob) already have this page open for editing. ${ADMIN_SENTENCE}`,
     );
   });

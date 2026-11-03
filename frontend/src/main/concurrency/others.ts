@@ -15,19 +15,33 @@ export type OtherClient = {
 export const RISK_SENTENCE =
   "Please know that this is risky; we recommend closing all but one of these.";
 
-/** The sentence that follows the names, on an admin page (issue #298). */
+/**
+ * The sentence that follows the names whenever another person is involved, and on admin pages
+ * (issue #298). The viewer cannot make another person's window close, so it advises rather than
+ * asks.
+ */
 export const ADMIN_SENTENCE =
-  "We recommend that only one Admin have this page open for edits at a time.";
+  "We recommend that only one admin edits this page at a time.";
 
 /**
- * Who is reading the warning, which decides its closing sentence: "default" for an application or a
- * faculty member's ranking, "admin" for the admin pages (issue #298).
+ * Which page the warning is on: "default" for an application or a faculty member's ranking, "admin"
+ * for the admin pages (issue #298). It matters only when every other copy is the user's own: the
+ * default pages then ask the user to close the extra copies, and the admin pages give the admin
+ * sentence.
  */
 export type Audience = "default" | "admin";
 
-/** The closing sentence for the audience. */
-export function closingSentence(audience?: Audience): string {
-  return audience === "admin" ? ADMIN_SENTENCE : RISK_SENTENCE;
+/**
+ * The closing sentence. The risk sentence asks the user to close the extra copies, so it is used
+ * only when every other copy is the user's own, on a default page. Otherwise (another person is
+ * involved, or it is an admin page) it is the admin sentence.
+ */
+export function closingSentence(
+  others: OtherClient[],
+  audience?: Audience,
+): string {
+  const onlyYou = others.every((other) => other.samePerson);
+  return audience === "admin" || !onlyYou ? ADMIN_SENTENCE : RISK_SENTENCE;
 }
 
 /** The most other people who are named; any more are counted. */
@@ -107,7 +121,7 @@ export function warningMessage(
   already = false,
 ): string {
   const who = describeOthers(others, noun, already);
-  return who === "" ? "" : `${who} ${closingSentence(audience)}`;
+  return who === "" ? "" : `${who} ${closingSentence(others, audience)}`;
 }
 
 /** What the heartbeat's answer said, read defensively: anything unexpected is left out. */
