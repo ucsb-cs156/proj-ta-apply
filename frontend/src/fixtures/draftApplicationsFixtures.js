@@ -14,6 +14,7 @@ const emptyUlaDraft = {
   major: null,
   gpaMajor: null,
   gpaOverall: null,
+  firstQuarter: false,
   yearInProgram: null,
   graduationDate: null,
   prevExperience: null,

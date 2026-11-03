@@ -40,7 +40,9 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
           <li>
             Your major, whether you are a PhD or MS student, your year in the
             program, your GPA (in your major and overall), and your expected
-            graduation date. All of these are required.
+            graduation date. All of these are required, except that if you are a
+            first quarter grad student and do not yet have a grad GPA, you can
+            check the box under the two GPA fields instead of entering them.
           </li>
           <li>
             Your residency status and your TA language exam status, both

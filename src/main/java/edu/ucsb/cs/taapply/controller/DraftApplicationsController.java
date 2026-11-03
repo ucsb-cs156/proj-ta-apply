@@ -273,6 +273,7 @@ public class DraftApplicationsController extends ApiController {
     draft.setMajor(fields.major());
     draft.setGpaMajor(fields.gpaMajor());
     draft.setGpaOverall(fields.gpaOverall());
+    draft.setFirstQuarter(fields.firstQuarter());
     draft.setYearInProgram(fields.yearInProgram());
     draft.setGraduationDate(fields.graduationDate());
     draft.setPriorCoursework(coursework(fields.priorCoursework()));

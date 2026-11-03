@@ -2,6 +2,8 @@ package edu.ucsb.cs.taapply.web;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
@@ -188,12 +190,23 @@ public class ApplicationsWebIT extends WebTestCase {
   }
 
   private void fillAndSubmit() {
+    fillAndSubmit(false);
+  }
+
+  /**
+   * Fills the TA form and submits it. With {@code firstQuarter}, the GPAs are typed first and the
+   * first quarter box (issue #292) ticked afterwards, so the typed values have to be dropped.
+   */
+  private void fillAndSubmit(boolean firstQuarter) {
     page.getByTestId("ApplyPage-firstName").fill("Chris");
     page.getByTestId("ApplyPage-lastName").fill("Gaucho");
     page.getByTestId("ApplyPage-major").selectOption("Computer Science");
     // The TA answers required since issue #214.
     page.getByTestId("ApplyPage-gpaMajor").fill("3.9");
     page.getByTestId("ApplyPage-gpaOverall").fill("3.8");
+    if (firstQuarter) {
+      page.getByTestId("ApplyPage-firstQuarter").check();
+    }
     page.getByTestId("ApplyPage-yearInProgram").fill("2nd");
     page.getByTestId("ApplyPage-graduationDate").fill("S27");
     page.getByTestId("ApplyPage-classLevel").selectOption("PHD");
@@ -294,6 +307,67 @@ public class ApplicationsWebIT extends WebTestCase {
 
     page.reload();
     assertThat(page.getByTestId("ApplicationPage-lastName")).hasValue("Gaucho-Smith");
+  }
+
+  /**
+   * Issue #292: a first quarter grad student ticks the box under the GPA fields, which then need no
+   * values; the application is stored without GPAs, and shows the box ticked when reopened.
+   */
+  @Test
+  public void a_first_quarter_applicant_applies_without_gpas() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+
+    assertThat(page.getByTestId("ApplyPage-firstQuarter")).not().isChecked();
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).isEnabled();
+    page.getByTestId("ApplyPage-firstQuarter").check();
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).isDisabled();
+    assertThat(page.getByTestId("ApplyPage-gpaOverall")).isDisabled();
+    page.getByTestId("ApplyPage-firstQuarter").uncheck();
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).isEnabled();
+
+    fillAndSubmit(true);
+
+    // Stored with the flag and without GPAs, though some were typed before the box was ticked.
+    assertThat(
+            page.getByTestId(
+                "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-applied"))
+        .containsText("Application on File");
+    Application stored = applicationRepository.findAll().iterator().next();
+    assertTrue(stored.isFirstQuarter());
+    assertNull(stored.getGpaMajor());
+    assertNull(stored.getGpaOverall());
+
+    // Reopened, the box is ticked and the GPA fields are disabled.
+    page.getByTestId("HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-view")
+        .click();
+    assertThat(page.getByTestId("ApplicationPage-firstQuarter")).isChecked();
+    assertThat(page.getByTestId("ApplicationPage-gpaMajor")).isDisabled();
+  }
+
+  /**
+   * Issue #292: the box is part of the draft, so a draft saved with it ticked comes back ticked.
+   */
+  @Test
+  public void the_first_quarter_box_is_kept_in_the_draft() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    page.getByTestId("ApplyPage-firstQuarter").check();
+    page.getByTestId("ApplyPage-saveDraft").click();
+
+    String card = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    assertThat(page.getByTestId(card + "draft")).containsText("Continue editing draft application");
+    assertEquals(
+        Boolean.TRUE, draftApplicationRepository.findAll().iterator().next().getFirstQuarter());
+    page.getByTestId(card + "draft").click();
+    assertThat(page.getByTestId("ApplyPage-firstQuarter")).isChecked();
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).isDisabled();
   }
 
   /**

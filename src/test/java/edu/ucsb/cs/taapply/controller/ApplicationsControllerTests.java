@@ -182,7 +182,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.trainingCommitment(),
         FULL_FIELDS.trainingCommitmentExplanation(),
         FULL_FIELDS.changingMajor(),
-        noticeVersionId);
+        noticeVersionId,
+        null);
   }
 
   private static Recruitment recruitment(
@@ -255,7 +256,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           TrainingCommitment.AGREE,
           null,
           false,
-          NOTICE_ID);
+          NOTICE_ID,
+          null);
 
   /** The same application with every availability answer turned off. */
   private static final ApplicationFields NO_AVAILABILITY =
@@ -299,7 +301,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           FULL_FIELDS.trainingCommitment(),
           FULL_FIELDS.trainingCommitmentExplanation(),
           FULL_FIELDS.changingMajor(),
-          FULL_FIELDS.noticeVersionId());
+          FULL_FIELDS.noticeVersionId(),
+          null);
 
   /** The full application with a different set of course interest answers. */
   private static ApplicationFields withInterests(Map<String, CourseInterest> interests) {
@@ -343,7 +346,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.trainingCommitment(),
         FULL_FIELDS.trainingCommitmentExplanation(),
         FULL_FIELDS.changingMajor(),
-        FULL_FIELDS.noticeVersionId());
+        FULL_FIELDS.noticeVersionId(),
+        null);
   }
 
   /** The full application with a different set of topic ratings. */
@@ -388,7 +392,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.trainingCommitment(),
         FULL_FIELDS.trainingCommitmentExplanation(),
         FULL_FIELDS.changingMajor(),
-        FULL_FIELDS.noticeVersionId());
+        FULL_FIELDS.noticeVersionId(),
+        null);
   }
 
   /** The full application with a different prior coursework list. */
@@ -1808,7 +1813,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   /** The full ULA application (agreeing to the ULA notice) with the given interest levels. */
@@ -2035,7 +2041,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   /** A TA application needs three courses; two is refused before anything is saved. */
@@ -2353,7 +2360,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   /** FULL_FIELDS' TA answers, each argument defaulting to the fixture's value when null. */
@@ -2505,7 +2513,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
             ula.trainingCommitment(),
             ula.trainingCommitmentExplanation(),
             ula.changingMajor(),
-            ula.noticeVersionId());
+            ula.noticeVersionId(),
+            null);
     postUla(noTaAnswers, 200);
   }
 
@@ -2608,7 +2617,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         trainingCommitment,
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   private MvcResult postUla(ApplicationFields fields, int status) throws Exception {
@@ -2747,7 +2757,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   /** Issue #213: a first-time applicant (previous service 0) must give a video link. */
@@ -2842,7 +2853,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
             f.trainingCommitment(),
             f.trainingCommitmentExplanation(),
             f.changingMajor(),
-            NOTICE_ID);
+            NOTICE_ID,
+            null);
 
     mockMvc
         .perform(
@@ -2934,7 +2946,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         explanation,
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   @WithMockUser(
@@ -3029,7 +3042,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   @WithMockUser(
@@ -3269,5 +3283,114 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertEquals(true, saved.isAvailableForDiscussionSecondChoice());
     assertEquals("Free T R afternoons", saved.getAvailabilityCommentsFirstChoice());
     assertEquals("Any section but Friday", saved.getAvailabilityCommentsSecondChoice());
+  }
+
+  // ---- the first quarter box (issue #292) ----
+
+  /** The fields with the GPAs and the first quarter box replaced, by way of their JSON. */
+  private ApplicationFields withFirstQuarter(
+      ApplicationFields f, Double gpaMajor, Double gpaOverall, Boolean firstQuarter)
+      throws Exception {
+    com.fasterxml.jackson.databind.node.ObjectNode node = mapper.valueToTree(f);
+    node.put("gpaMajor", gpaMajor);
+    node.put("gpaOverall", gpaOverall);
+    node.put("firstQuarter", firstQuarter);
+    return mapper.treeToValue(node, ApplicationFields.class);
+  }
+
+  @Test
+  public void a_missing_first_quarter_answer_is_not_ticked() throws Exception {
+    assertFalse(withFirstQuarter(FULL_FIELDS, 3.0, 3.0, null).firstQuarterTicked());
+    assertFalse(withFirstQuarter(FULL_FIELDS, 3.0, 3.0, false).firstQuarterTicked());
+    assertTrue(withFirstQuarter(FULL_FIELDS, 3.0, 3.0, true).firstQuarterTicked());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_applicant_in_a_first_quarter_needs_no_gpas() throws Exception {
+    postTa(withFirstQuarter(FULL_FIELDS, null, null, true), 200);
+
+    Application saved = saved();
+    assertTrue(saved.isFirstQuarter());
+    assertNull(saved.getGpaMajor());
+    assertNull(saved.getGpaOverall());
+  }
+
+  /** GPAs typed before the box was ticked are dropped, not kept beside a flag that says none. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_first_quarter_application_drops_any_gpas_that_came_with_it() throws Exception {
+    postTa(withFirstQuarter(FULL_FIELDS, 3.9, 3.8, true), 200);
+
+    Application saved = saved();
+    assertTrue(saved.isFirstQuarter());
+    assertNull(saved.getGpaMajor());
+    assertNull(saved.getGpaOverall());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_application_not_in_a_first_quarter_still_needs_both_gpas() throws Exception {
+    for (Boolean unticked : java.util.Arrays.asList(null, false)) {
+      MvcResult response = postTa(withFirstQuarter(FULL_FIELDS, null, 3.8, unticked), 400);
+      assertEquals(
+          "A TA application needs your GPA in major", responseToJson(response).get("message"));
+      response = postTa(withFirstQuarter(FULL_FIELDS, 3.9, null, unticked), 400);
+      assertEquals(
+          "A TA application needs your overall GPA", responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_application_not_in_a_first_quarter_keeps_its_gpas() throws Exception {
+    postTa(withFirstQuarter(FULL_FIELDS, 3.9, 3.8, false), 200);
+
+    Application saved = saved();
+    assertFalse(saved.isFirstQuarter());
+    assertEquals(3.9, saved.getGpaMajor());
+    assertEquals(3.8, saved.getGpaOverall());
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_applicant_in_a_first_quarter_needs_no_gpas() throws Exception {
+    ApplicationFields ok = withUla("1234567", true, OtherCampusJob.NO, true, 2, null);
+
+    postUla(withFirstQuarter(ok, 3.9, 3.8, true), 200);
+
+    Application saved = saved();
+    assertTrue(saved.isFirstQuarter());
+    assertNull(saved.getGpaMajor());
+    assertNull(saved.getGpaOverall());
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_application_not_in_a_first_quarter_still_needs_both_gpas() throws Exception {
+    ApplicationFields ok = withUla("1234567", true, OtherCampusJob.NO, true, 2, null);
+
+    for (Boolean unticked : java.util.Arrays.asList(null, false)) {
+      MvcResult response = postUla(withFirstQuarter(ok, null, 3.8, unticked), 400);
+      assertEquals(
+          "A ULA application needs your GPA in major", responseToJson(response).get("message"));
+      response = postUla(withFirstQuarter(ok, 3.9, null, unticked), 400);
+      assertEquals(
+          "A ULA application needs your overall GPA", responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
   }
 }
