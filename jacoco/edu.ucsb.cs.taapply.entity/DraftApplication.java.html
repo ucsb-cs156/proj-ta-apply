@@ -77,6 +77,10 @@ public class DraftApplication {
   private String major;
   private Double gpaMajor;
   private Double gpaOverall;
+
+  /** See {@link Application#isFirstQuarter()}. */
+  private Boolean firstQuarter;
+
   private String yearInProgram;
   private String graduationDate;
 
@@ -173,22 +177,22 @@ public class DraftApplication {
   public static class CourseInterestsConverter
       extends JsonColumnConverter&lt;Map&lt;String, CourseInterest&gt;&gt; {
     public CourseInterestsConverter() {
-<span class="fc" id="L176">      super(new TypeReference&lt;&gt;() {}, HashMap::new);</span>
-<span class="fc" id="L177">    }</span>
+<span class="fc" id="L180">      super(new TypeReference&lt;&gt;() {}, HashMap::new);</span>
+<span class="fc" id="L181">    }</span>
   }
 
   /** Name-to-level maps (topic ratings, ULA interests) as JSON. */
   public static class LevelsConverter extends JsonColumnConverter&lt;Map&lt;String, Integer&gt;&gt; {
     public LevelsConverter() {
-<span class="fc" id="L183">      super(new TypeReference&lt;&gt;() {}, HashMap::new);</span>
-<span class="fc" id="L184">    }</span>
+<span class="fc" id="L187">      super(new TypeReference&lt;&gt;() {}, HashMap::new);</span>
+<span class="fc" id="L188">    }</span>
   }
 
   /** The prior coursework rows as JSON. */
   public static class PriorCourseworkConverter extends JsonColumnConverter&lt;List&lt;PriorCoursework&gt;&gt; {
     public PriorCourseworkConverter() {
-<span class="fc" id="L190">      super(new TypeReference&lt;&gt;() {}, ArrayList::new);</span>
-<span class="fc" id="L191">    }</span>
+<span class="fc" id="L194">      super(new TypeReference&lt;&gt;() {}, ArrayList::new);</span>
+<span class="fc" id="L195">    }</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
