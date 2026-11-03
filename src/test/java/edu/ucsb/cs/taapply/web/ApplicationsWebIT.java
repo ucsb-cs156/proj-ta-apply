@@ -431,6 +431,89 @@ public class ApplicationsWebIT extends WebTestCase {
   }
 
   /**
+   * Issue #296: an admin sees the applications students have started, counted at the top of the
+   * Draft Applications page, with no way to edit them, and leaves a comment on one. When the
+   * student submits, the draft leaves the page and the comment is on the application.
+   */
+  @Test
+  public void an_admin_sees_a_draft_comments_on_it_and_the_comment_moves_to_the_application()
+      throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    // The student starts an application and saves it unfinished.
+    setupRegularUser();
+    goTo("/");
+    String card = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    page.getByTestId(card + "apply").click();
+    page.getByTestId("ApplyPage-firstName").fill("Dana");
+    page.getByTestId("ApplyPage-lastName").fill("Draft");
+    page.getByTestId("ApplyPage-saveDraft").click();
+    assertThat(page.getByTestId(card + "draft")).isVisible();
+    assertEquals(1, draftApplicationRepository.count());
+
+    // The admin finds it from the recruitment's card, counted, in the Applications table's columns
+    // but with no Edit column.
+    browser.close();
+    setupAdminUser();
+    goTo("/");
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-draft-applications-button"))
+        .containsText("Draft Applications");
+    page.getByTestId("HomePageLoggedIn-admin-card-0-draft-applications-button").click();
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-count"))
+        .containsText("1 Draft Application");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-name"))
+        .containsText("Dana Draft");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-email"))
+        .containsText("cgaucho@ucsb.edu");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-header-submittedAt"))
+        .containsText("Last saved");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-header-edit")).hasCount(0);
+
+    // Opening it shows what the student has so far, read only, with a box for comments.
+    page.getByTestId("RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-id-link").click();
+    assertThat(page.getByTestId("AdminApplicationPage-summary-Name")).containsText("Dana Draft");
+    assertThat(page.getByTestId("AdminApplicationPage-about")).containsText("has not submitted it");
+    assertThat(page.getByTestId("AdminApplicationPage-edit")).hasCount(0);
+    page.getByTestId("AdminApplicationPage-adminComments").fill("Strong; ask about CMPSC 156");
+    page.getByTestId("AdminApplicationPage-save").click();
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-count"))
+        .containsText("1 Draft Application");
+    page.getByTestId("RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-id-link").click();
+    assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
+        .hasValue("Strong; ask about CMPSC 156");
+    // The comment did not touch the draft, so the student's autosave is not disturbed.
+    assertEquals(1, draftApplicationRepository.count());
+    assertEquals(0, applicationRepository.count());
+
+    // The student carries on and submits; their draft never showed the comment.
+    browser.close();
+    loginAs("cgaucho@ucsb.edu");
+    goTo("/");
+    page.getByTestId(card + "draft").click();
+    assertThat(page.getByTestId("ApplyPage-firstName")).hasValue("Dana");
+    fillAndSubmit();
+    assertThat(page.getByTestId(card + "view")).containsText("View submitted application");
+    assertEquals(0, draftApplicationRepository.count());
+    assertEquals(1, applicationRepository.count());
+    assertEquals(
+        "Strong; ask about CMPSC 156",
+        applicationRepository.findAll().iterator().next().getAdminComments());
+
+    // The draft has left the admin's page, and the comment is on the application.
+    browser.close();
+    loginAs("admin@ucsb.edu");
+    goTo("/admin/recruitments/" + recruitment.getId() + "/draft-applications");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-count"))
+        .containsText("0 Draft Applications");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-none")).isVisible();
+    goTo("/admin/recruitments/" + recruitment.getId() + "/applications");
+    page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
+    assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
+        .hasValue("Strong; ask about CMPSC 156");
+  }
+
+  /**
    * Issue #270: without pressing anything, what is typed reaches the draft within a few seconds.
    */
   @Test

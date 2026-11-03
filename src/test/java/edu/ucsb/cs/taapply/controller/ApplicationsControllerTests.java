@@ -20,6 +20,7 @@ import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFields;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.DraftAdminComment;
 import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
@@ -36,6 +37,7 @@ import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.DraftAdminCommentRepository;
 import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -67,6 +69,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean DraftApplicationRepository draftApplicationRepository;
+  @MockitoBean DraftAdminCommentRepository draftAdminCommentRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean NoticeVersionRepository noticeVersionRepository;
   @MockitoBean UserRepository userRepository;
@@ -721,6 +724,47 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     verify(applicationRepository, times(1)).save(any(Application.class));
     verify(draftApplicationRepository, times(1)).delete(draft);
+    verify(draftAdminCommentRepository, times(1)).deleteById(5L);
+    // No admin wrote anything about it, so there is nothing to carry over.
+    assertEquals(null, saved().getAdminComments());
+  }
+
+  /** Issue #296: what an admin wrote on the draft is on the application, and no longer on file. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void submitting_copies_the_admins_comments_on_the_draft_to_the_application()
+      throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    DraftApplication draft =
+        DraftApplication.builder().id(5L).recruitmentId(1L).email(GRAD_EMAIL).build();
+    when(draftApplicationRepository.findByEmailAndRecruitmentId(GRAD_EMAIL, 1L))
+        .thenReturn(Optional.of(draft));
+    when(draftAdminCommentRepository.findById(5L))
+        .thenReturn(Optional.of(new DraftAdminComment(5L, "Strong; ask about CMPSC 130A")));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body())
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals("Strong; ask about CMPSC 130A", saved().getAdminComments());
+    // Never in what the applicant is sent back.
+    assertEquals(
+        null,
+        mapper
+            .readTree(response.getResponse().getContentAsString())
+            .get("adminComments")
+            .textValue());
+    verify(draftAdminCommentRepository, times(1)).deleteById(5L);
+    verify(draftApplicationRepository, times(1)).delete(draft);
   }
 
   @WithMockUser(
@@ -742,6 +786,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .andExpect(status().isOk());
 
     verify(draftApplicationRepository, never()).delete(any(DraftApplication.class));
+    verify(draftAdminCommentRepository, never()).deleteById(any());
   }
 
   @WithMockUser(

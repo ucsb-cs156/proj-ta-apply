@@ -116,7 +116,8 @@ The card becomes much wider to hold the diagram. From top to bottom:
    collapsed form is a one-line summary such as "Step 6 of 9: Open Faculty Ranking". The most
    recent TA recruitment and the most recent ULA recruitment are expanded by default; every
    other recruitment's panel starts collapsed.
-4. **A compressed set of buttons**: **Courses** and **Applications** (renamed from "Review
+4. **A compressed set of buttons**: **Courses**, **Draft Applications** (added by issue #296; see
+   `DraftApplicationsDesign.md`) and **Applications** (renamed from "Review
    Applications"). Everything else the card offered moves:
    - **Test Application** moves to the Applications page.
    - **Download CSV** moves to near the top of the Applications page and is renamed

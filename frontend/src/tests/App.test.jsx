@@ -7,6 +7,7 @@ import App from "App";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import recruitmentStepsFixtures from "fixtures/recruitmentStepsFixtures";
 import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import { defaultHiddenColumns } from "main/utils/applicationColumns";
 import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
@@ -131,5 +132,56 @@ describe("App", () => {
         auto.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING,
       ),
     ).toBe(true);
+  });
+
+  test("/admin/recruitments/:id/draft-applications is the drafts list, for admins only (issue #296)", async () => {
+    window.history.pushState(
+      {},
+      "",
+      "/admin/recruitments/1/draft-applications",
+    );
+    axiosMock
+      .onGet("/api/admin/draftApplications/all")
+      .reply(200, [draftApplicationsFixtures.adminSavedTaDraft]);
+    renderApp();
+    expect(await screen.findByText("1 Draft Application")).toBeInTheDocument();
+    cleanup();
+
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.userOnly);
+    renderApp();
+    expect(
+      await screen.findByText("You do not have access to this page."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("1 Draft Application")).toBeNull();
+  });
+
+  test("/admin/draft-applications/:id is the draft's page, for admins only (issue #296)", async () => {
+    window.history.pushState({}, "", "/admin/draft-applications/21");
+    axiosMock
+      .onGet("/api/admin/draftApplications")
+      .reply(200, draftApplicationsFixtures.adminSavedUlaDraft);
+    axiosMock.onGet("/api/notices").reply(200, null);
+    renderApp();
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: /^Draft application 21/,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("AdminApplicationPage-save"),
+    ).toBeInTheDocument();
+    cleanup();
+
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.userOnly);
+    renderApp();
+    expect(
+      await screen.findByText("You do not have access to this page."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Draft application 21/)).toBeNull();
   });
 });

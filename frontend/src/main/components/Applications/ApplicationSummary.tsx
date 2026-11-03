@@ -1,4 +1,5 @@
 import type { Application } from "main/components/Applications/ApplicationTable";
+import type { DraftApplication } from "main/utils/draftApplications";
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import PriorCourseworkTable from "main/components/PriorCoursework/PriorCourseworkTable";
 import { submittedText } from "main/utils/adminApplications";
@@ -30,7 +31,14 @@ export type ApplicationSummaryData = Omit<
   Partial<Pick<Application, "status" | "cancelledAt" | "cancellationReason">>;
 
 type ApplicationSummaryProps = {
-  application: ApplicationSummaryData;
+  /** A submitted application or, with `draft`, a draft (issue #296). */
+  application: ApplicationSummaryData | DraftApplication;
+  /**
+   * Whether this is a draft, which the applicant has not finished. The same summary serves both so
+   * that a question added to or removed from it shows for both. A draft differs in one way: a
+   * yes/no question the applicant has not answered reads as blank rather than as "No".
+   */
+  draft?: boolean;
   /** TA and ULA ask different questions, so only the relevant ones are shown back. */
   type: "TA" | "ULA";
   /** The notice version the applicant agreed to, if the caller has it; shown back ticked. */
@@ -44,14 +52,17 @@ type ApplicationSummaryProps = {
 const show = (value: unknown): string =>
   value === null || value === undefined || value === "" ? "" : String(value);
 
-const yesNo = (value: boolean): string => (value ? "Yes" : "No");
+const yesNo = (value: boolean | null | undefined, draft: boolean): string =>
+  draft ? yesNoLabel(value) : value ? "Yes" : "No";
 
 /**
  * One line per course, padded course id first so they line up, in course order. The map holds
  * only courses the applicant marked, so an empty map reads as blank, like any other unanswered
  * question.
  */
-const otherCourses = (interests: Record<string, string> | null): string => {
+const otherCourses = (
+  interests: Record<string, string> | null | undefined,
+): string => {
   const marked = interests ?? {};
   return Object.keys(marked)
     .sort()
@@ -61,7 +72,7 @@ const otherCourses = (interests: Record<string, string> | null): string => {
 
 /** One line per answered name, in name order, each "name: level / top"; an empty map is blank. */
 const levelLines = (
-  levels: Record<string, number> | null,
+  levels: Record<string, number> | null | undefined,
   top: number,
 ): string => {
   const answered = levels ?? {};
@@ -75,6 +86,7 @@ const levelLines = (
 export default function ApplicationSummary({
   application,
   type,
+  draft = false,
   notice = null,
   noticeFillIn = null,
   testIdPrefix = "ApplicationSummary",
@@ -206,6 +218,7 @@ export default function ApplicationSummary({
               choice === "First"
                 ? application.availableForLecturesFirstChoice
                 : application.availableForLecturesSecondChoice,
+              draft,
             ),
           },
           {
@@ -214,6 +227,7 @@ export default function ApplicationSummary({
               choice === "First"
                 ? application.availableForDiscussionFirstChoice
                 : application.availableForDiscussionSecondChoice,
+              draft,
             ),
           },
           {
@@ -250,6 +264,8 @@ export default function ApplicationSummary({
     { label: "Anything Else", value: show(application.comments) },
   );
 
+  const coursework = application.priorCoursework ?? [];
+
   return (
     <>
       {/* First, as on the form itself (issue #77). */}
@@ -280,7 +296,7 @@ export default function ApplicationSummary({
         ))}
       </dl>
       <h3 className="h6 mt-3">Prior Coursework</h3>
-      {(application.priorCoursework ?? []).length === 0 ? (
+      {coursework.length === 0 ? (
         <p
           className="text-muted small"
           data-testid={`${testIdPrefix}-coursework-none`}
@@ -289,7 +305,7 @@ export default function ApplicationSummary({
         </p>
       ) : (
         <PriorCourseworkTable
-          courses={application.priorCoursework}
+          courses={coursework}
           onEdit={() => {}}
           onDelete={() => {}}
           readOnly

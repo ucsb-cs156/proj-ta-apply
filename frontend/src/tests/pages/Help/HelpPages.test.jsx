@@ -1023,7 +1023,7 @@ describe("Help pages (issue #140)", () => {
       screen
         .getByTestId("HelpAdminsPage-recruitment-buttons")
         .querySelectorAll("li"),
-    ).toHaveLength(9);
+    ).toHaveLength(10);
     expect(
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
@@ -1165,6 +1165,29 @@ describe("Help pages (issue #140)", () => {
     expect(applicationColumns.closest("li")).toHaveTextContent(
       "Applications. The list of applications",
     );
+    // Issue #296: the Draft Applications button and page.
+    const draftApplications = screen.getByTestId(
+      "HelpAdminsPage-draft-applications",
+    );
+    expect(draftApplications.id).toBe("draft-applications");
+    expect(draftApplications).toHaveTextContent(
+      "Draft Applications. The applications students have started but not yet submitted, which are not considered until they are.",
+    );
+    expect(draftApplications).toHaveTextContent(
+      "except that there is no Edit column, since an admin may not change what a student has written, and Submitted is replaced by Last saved.",
+    );
+    expect(draftApplications).toHaveTextContent(
+      "When the student submits, the draft leaves this page and your comments are copied to the new application's Admin Comments.",
+    );
+    expect(draftApplications).toHaveTextContent(
+      "There is no CSV download of drafts",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-recruitment-buttons"),
+    ).toHaveTextContent("Draft Applications. The applications students");
+    expect(applicationColumns.closest("li").previousElementSibling).toBe(
+      draftApplications,
+    );
     // Issue #174: the hiring target and per-course allocations, in the Courses section.
     const hiring = screen.getByTestId("HelpAdminsPage-hiring-target");
     expect(hiring.id).toBe("hiring-target");
@@ -1271,14 +1294,17 @@ describe("Help pages (issue #140)", () => {
     );
     expect(buttons[2]).toMatch(/from the schedule\. Populate re-runs the job/);
     expect(buttons[2]).toMatch(/finds it again\. Remove takes a lecture out/);
-    expect(buttons[5]).toMatch(/Each has a View page \(everything/);
-    expect(buttons[6]).toMatch(
+    expect(buttons[5]).toMatch(
+      /^Draft Applications\. The applications students have started but not yet submitted/,
+    );
+    expect(buttons[6]).toMatch(/Each has a View page \(everything/);
+    expect(buttons[7]).toMatch(
       /^Assignments\. The faculty rankings of every real applicant side by side, one column per lecture, with a Tentative Assignment dropdown on each row/,
     );
-    expect(buttons[7]).toMatch(
+    expect(buttons[8]).toMatch(
       /^Published Assignments\. Shown once Publish Assignments has been clicked at the bottom of the Courses page: the read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\./,
     );
-    expect(buttons[8]).toMatch(/^Delete\. Removes the recruitment/);
+    expect(buttons[9]).toMatch(/^Delete\. Removes the recruitment/);
     expect(
       document.getElementById("ta-app-settings").nextElementSibling.textContent,
     ).toMatch(/the Majors list and the Topics list \(the areas/);

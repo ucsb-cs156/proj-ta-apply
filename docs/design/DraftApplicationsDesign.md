@@ -152,6 +152,52 @@ The card for an open recruitment shows, in the footer:
 A recruitment that is not open keeps its greyed-out Apply button; a draft for it offers nothing to
 continue, since it can no longer be saved.
 
+## What an admin sees of drafts (issue #296)
+
+The **Admin card for a recruitment** has a **Draft Applications** button between **Courses** and
+**Applications**. It opens `/admin/recruitments/:id/draft-applications`: the count of drafts at the
+top ("3 Draft Applications"), then the same table as the Applications page. Opening a draft
+(`/admin/draft-applications/:id`) shows it read-only in the same summary an application has, with a
+box for the admin's comments.
+
+**One implementation for both, so they cannot drift.** The components are parameterized by whether
+the row is a draft, and nothing is copied:
+
+| Shared piece | How a draft differs |
+|---|---|
+| `AdminApplicationTable` (`draft` prop) | no Edit column; links lead to the draft's page; no origin badge |
+| `applicationColumns(type, draft)` (the column catalogue) | one column differs: **Submitted** is **Last saved**; the ids and order are the same, so a column added to the catalogue is in both tables |
+| `ApplicationSummary` (`draft` prop) | a yes/no question not yet answered is blank, not "No" |
+| `AdminApplicationPage` (`draft` prop) | reads from and saves comments to the drafts endpoints; no Edit button, no audit trail |
+| `useHiddenApplicationColumns` | none: the same stored choice of hidden columns serves both tables |
+
+Only the list page (`RecruitmentDraftApplicationsPage`) is its own, since the Applications page has
+things that make no sense for drafts: the CSV download, Test Application, fake data and the
+recruitment's change history.
+
+**Admin comments.** An admin may comment on a draft but never edit it, and there is no endpoint
+that edits one. The comments are kept in their own table, `draft_admin_comments`, one row per draft
+(changeset `055`), not on the draft, for two reasons: the draft is returned to the applicant, who
+must never see them, and the draft carries a version that every save increments, so an admin
+commenting would make the applicant's next autosave fail as a conflict. When the application is
+submitted, the comments are copied to `applications.admin_comments` and the row is deleted along
+with the draft. The row also goes (by `ON DELETE CASCADE`) whenever its draft does for any other
+reason, including the recruitment being deleted.
+
+**API** (all admin-only; 403 for anyone else, 404 for an unknown recruitment or draft):
+
+* `GET /api/admin/draftApplications/all?recruitmentId=` lists that recruitment's drafts, oldest
+  first, each with `adminComments`.
+* `GET /api/admin/draftApplications/count?recruitmentId=` returns how many, as a bare number. The
+  page counts the list it already has; the endpoint is for places that want only the number (the
+  steps card, issue #297).
+* `GET /api/admin/draftApplications?id=` returns one draft; `PUT .../adminComments?id=&adminComments=`
+  replaces its comments.
+
+A draft appears in the list as soon as the applicant opens the form, even if empty, and leaves it
+when submitted. There is no CSV of drafts: they may be empty or half finished, and the CSV writer is
+built for submitted applications of one form type.
+
 ## Not done
 
 * A draft is not deleted when a student never comes back. Drafts for a closed recruitment stay

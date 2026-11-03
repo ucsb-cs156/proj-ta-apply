@@ -40,6 +40,7 @@ import TestApplicationPage from "main/pages/Admin/TestApplicationPage";
 import RecruitmentApplicationsPage from "main/pages/Admin/RecruitmentApplicationsPage";
 import AdminAssignmentsPage from "main/pages/Admin/AdminAssignmentsPage";
 import AdminApplicationPage from "main/pages/Admin/AdminApplicationPage";
+import RecruitmentDraftApplicationsPage from "main/pages/Admin/RecruitmentDraftApplicationsPage";
 import AdminApplicationEditPage from "main/pages/Admin/AdminApplicationEditPage";
 import TaAppSettingsPage from "main/pages/Admin/TaAppSettingsPage";
 import UlaAppSettingsPage from "main/pages/Admin/UlaAppSettingsPage";
@@ -298,6 +299,26 @@ export default function App() {
             element={
               <ProtectedPage
                 component={<RecruitmentApplicationsPage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/recruitments/:recruitmentId/draft-applications"
+            element={
+              <ProtectedPage
+                component={<RecruitmentDraftApplicationsPage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/draft-applications/:id"
+            element={
+              <ProtectedPage
+                component={<AdminApplicationPage draft />}
                 enforceRole={"ROLE_ADMIN"}
                 currentUser={currentUser}
               />
