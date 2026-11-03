@@ -60,6 +60,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#findByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" tabindex="0">findByQuarterAndType(String, RecruitmentType)</a></li>
 <li><a href="#existsByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" tabindex="0">existsByQuarterAndType(String, RecruitmentType)</a></li>
 <li><a href="#findAllByOrderByQuarterDescTypeAsc()" tabindex="0">findAllByOrderByQuarterDescTypeAsc()</a></li>
+<li><a href="#bumpAssignmentsVersionIf(java.lang.Long,java.lang.Integer)" tabindex="0">bumpAssignmentsVersionIf(Long, Integer)</a></li>
+<li><a href="#bumpAssignmentsVersion(java.lang.Long)" tabindex="0">bumpAssignmentsVersion(Long)</a></li>
 </ol>
 </li>
 </ol>
@@ -94,6 +96,18 @@ extends org.springframework.data.repository.CrudRepository&lt;<a href="../entity
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#bumpAssignmentsVersion(java.lang.Long)" class="member-name-link">bumpAssignmentsVersion</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Counts the recruitment's assignments version up by one, whatever it is (issue #280).</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>int</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#bumpAssignmentsVersionIf(java.lang.Long,java.lang.Integer)" class="member-name-link">bumpAssignmentsVersionIf</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;expected)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Counts the recruitment's assignments version up by one, but only if it is still <code>
+expected</code> (issue #280).</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#existsByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">existsByQuarterAndType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
@@ -148,6 +162,38 @@ extends org.springframework.data.repository.CrudRepository&lt;<a href="../entity
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&gt;</span>&nbsp;<span class="element-name">findAllByOrderByQuarterDescTypeAsc</span>()</div>
 <div class="block">Most recent quarter first, as the admin listing shows them.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="bumpAssignmentsVersionIf(java.lang.Long,java.lang.Integer)">
+<h3>bumpAssignmentsVersionIf</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@Transactional
+@Modifying(clearAutomatically=true,
+           flushAutomatically=true)
+@Query("update recruitments r set r.assignmentsVersion = r.assignmentsVersion + 1 where r.id = :id and r.assignmentsVersion = :expected")
+</span><span class="return-type">int</span>&nbsp;<span class="element-name">bumpAssignmentsVersionIf</span><wbr><span class="parameters">(@Param("id")
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ @Param("expected")
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;expected)</span></div>
+<div class="block">Counts the recruitment's assignments version up by one, but only if it is still <code>
+expected</code> (issue #280). The comparison and the increment are one statement, so two saves cannot
+both pass. Returns 1 if it did, 0 if the version had moved (or there is no such recruitment).</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="bumpAssignmentsVersion(java.lang.Long)">
+<h3>bumpAssignmentsVersion</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@Transactional
+@Modifying(clearAutomatically=true,
+           flushAutomatically=true)
+@Query("update recruitments r set r.assignmentsVersion = r.assignmentsVersion + 1 where r.id = :id")
+</span><span class="return-type">int</span>&nbsp;<span class="element-name">bumpAssignmentsVersion</span><wbr><span class="parameters">(@Param("id")
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id)</span></div>
+<div class="block">Counts the recruitment's assignments version up by one, whatever it is (issue #280).</div>
 </div>
 </section>
 </li>

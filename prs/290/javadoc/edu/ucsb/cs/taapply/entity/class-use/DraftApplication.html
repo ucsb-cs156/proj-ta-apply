@@ -74,8 +74,13 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code><a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
-<div class="col-second even-row-color"><span class="type-name-label">DraftApplicationsController.</span><code><a href="../../controller/DraftApplicationsController.html#openDraft(java.lang.Long)" class="member-name-link">openDraft</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-second even-row-color"><span class="type-name-label">AdminDraftApplicationsController.AdminDraftView.</span><code><a href="../../controller/AdminDraftApplicationsController.AdminDraftView.html#draft()" class="member-name-link">draft</a>()</code></div>
+<div class="col-last even-row-color">
+<div class="block">Returns the value of the <code>draft</code> record component.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">DraftApplicationsController.</span><code><a href="../../controller/DraftApplicationsController.html#openDraft(java.lang.Long)" class="member-name-link">openDraft</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <div class="caption"><span>Methods in <a href="../../controller/package-summary.html">edu.ucsb.cs.taapply.controller</a> that return types with arguments of type <a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></span></div>
 <div class="summary-table three-column-summary">
@@ -85,6 +90,18 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a>&gt;</code></div>
 <div class="col-second even-row-color"><span class="type-name-label">DraftApplicationsController.</span><code><a href="../../controller/DraftApplicationsController.html#myDrafts()" class="member-name-link">myDrafts</a>()</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+</div>
+<div class="caption"><span>Constructors in <a href="../../controller/package-summary.html">edu.ucsb.cs.taapply.controller</a> with parameters of type <a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier</div>
+<div class="table-header col-second">Constructor</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="../../controller/AdminDraftApplicationsController.AdminDraftView.html#%3Cinit%3E(edu.ucsb.cs.taapply.entity.DraftApplication,java.lang.String)" class="member-name-link">AdminDraftView</a><wbr>(<a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a>&nbsp;draft,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;adminComments)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Creates an instance of a <code>AdminDraftView</code> record class.</div>
+</div>
 </div>
 </section>
 </li>
@@ -113,6 +130,11 @@ loadScripts(document, 'script');</script>
 <div class="col-second odd-row-color"><span class="type-name-label">DraftApplicationRepository.</span><code><a href="../../repository/DraftApplicationRepository.html#findByEmailOrderByIdDesc(java.lang.String)" class="member-name-link">findByEmailOrderByIdDesc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</code></div>
 <div class="col-last odd-row-color">
 <div class="block">Every draft belonging to one person, newest first.</div>
+</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../DraftApplication.html" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">DraftApplicationRepository.</span><code><a href="../../repository/DraftApplicationRepository.html#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByRecruitmentIdOrderByIdAsc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Every draft for one recruitment, oldest first (issue #296).</div>
 </div>
 </div>
 </section>
