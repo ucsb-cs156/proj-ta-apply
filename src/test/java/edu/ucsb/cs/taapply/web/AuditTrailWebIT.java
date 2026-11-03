@@ -54,8 +54,9 @@ public class AuditTrailWebIT extends WebTestCase {
     setupAdminUser();
     goTo("/admin/audittrail");
 
-    String shownAt =
-        "(" + Pattern.quote(hour.format(before)) + "|" + Pattern.quote(hour.format(after)) + ")";
+    // Playwright runs this as a JavaScript regex, so no \\Q...\\E quoting; the text has no special
+    // characters.
+    String shownAt = "(" + hour.format(before) + "|" + hour.format(after) + ")";
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-0-col-editedAt"))
         .hasText(Pattern.compile("^" + shownAt + "\\d\\d:\\d\\d [AP]M$"));
   }
