@@ -170,7 +170,7 @@ function expectSimultaneousEditingSection(page) {
     "The one you opened first only shows the warning",
   );
   expect(modal).toHaveTextContent(
-    "You already have this application open in another tab or window.",
+    "You already have this application open for editing in another tab or window.",
   );
   const choices = screen.getByTestId(`${page}-simultaneous-editing-choices`);
   expect(

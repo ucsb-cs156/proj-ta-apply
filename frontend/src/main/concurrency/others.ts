@@ -55,8 +55,7 @@ function joinNames(names: string[], leftOver: number): string {
  * - others and the user: "You and A (Name) are also editing this page in other windows or tabs."
  *
  * For the tab that arrived later (`already` true), who is "already" there:
- * - "You already have this page open in another tab or window." (for the admin audience, "open
- *   for editing in another tab or window.")
+ * - "You already have this page open for editing in another tab or window."
  * - "A (Name) already has this page open for editing." (singular verb)
  * - "You and A (Name) already have this page open for editing in other windows or tabs."
  *
@@ -70,7 +69,6 @@ export function describeOthers(
   others: OtherClient[],
   noun: string,
   already = false,
-  audience?: Audience,
 ): string {
   const you = others.some((other) => other.samePerson);
   const people = others
@@ -81,10 +79,8 @@ export function describeOthers(
     if (!you) {
       return "";
     }
-    // The application and ranking wording leaves out "for editing" here; the admin wording keeps it.
-    const open = audience === "admin" ? "open for editing" : "open";
     return already
-      ? `You already have this ${noun} ${open} in another tab or window.`
+      ? `You already have this ${noun} open for editing in another tab or window.`
       : `You are also editing this ${noun} in another tab or window.`;
   }
 
@@ -110,7 +106,7 @@ export function warningMessage(
   audience?: Audience,
   already = false,
 ): string {
-  const who = describeOthers(others, noun, already, audience);
+  const who = describeOthers(others, noun, already);
   return who === "" ? "" : `${who} ${closingSentence(audience)}`;
 }
 

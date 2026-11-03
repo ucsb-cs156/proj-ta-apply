@@ -227,16 +227,16 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           counted) and the banner shows it as text, never as markup. The tab
           that arrived later (the modal, and the banner of the newest tab) says
           who is <em>already</em> there instead (&quot;You already have this
-          application open in another tab or window.&quot;, &quot;A already has
-          this page open for editing.&quot;, &quot;A and B already have this
-          page open for editing.&quot;), with the singular verb for one person.
-          The closing sentence depends on an <code>audience</code> option of the
-          banner and the modal: the default audience (the application form and
-          the faculty ranking page) says &quot;Please know that this is risky;
-          we recommend closing all but one of these.&quot;, and the{" "}
-          <code>admin</code> audience, for the admin pages, says &quot;We
-          recommend that only one Admin have this page open for edits at a
-          time.&quot; The noun is still a parameter.
+          application open for editing in another tab or window.&quot;, &quot;A
+          already has this page open for editing.&quot;, &quot;A and B already
+          have this page open for editing.&quot;), with the singular verb for
+          one person. The closing sentence depends on an <code>audience</code>{" "}
+          option of the banner and the modal: the default audience (the
+          application form and the faculty ranking page) says &quot;Please know
+          that this is risky; we recommend closing all but one of these.&quot;,
+          and the <code>admin</code> audience, for the admin pages, says
+          &quot;We recommend that only one Admin have this page open for edits
+          at a time.&quot; The noun is still a parameter.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-modal">
           <strong>The modal and how the newer tab is chosen.</strong> A client

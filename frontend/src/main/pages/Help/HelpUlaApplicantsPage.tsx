@@ -178,8 +178,8 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           form until you answer. The one you opened first only shows the
           warning, so that it never interrupts you while you are typing. The box
           says who already has the application open, such as &ldquo;You already
-          have this application open in another tab or window.&rdquo; It offers
-          three choices:
+          have this application open for editing in another tab or
+          window.&rdquo; It offers three choices:
         </p>
         <ul data-testid="HelpUlaApplicantsPage-simultaneous-editing-choices">
           <li>

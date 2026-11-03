@@ -169,10 +169,7 @@ describe("describeOthers, for the tab that arrived later ('already')", () => {
 
   test("only the user's own other tabs", () => {
     expect(later([you], "application")).toBe(
-      "You already have this application open in another tab or window.",
-    );
-    expect(describeOthers([you], "page", true, "admin")).toBe(
-      "You already have this page open for editing in another tab or window.",
+      "You already have this application open for editing in another tab or window.",
     );
   });
 

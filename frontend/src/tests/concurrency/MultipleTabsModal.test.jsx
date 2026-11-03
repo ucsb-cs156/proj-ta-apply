@@ -82,7 +82,7 @@ describe("MultipleTabsModal", () => {
   test("says 'already', for the user's own other tabs", () => {
     render(modal({ others: [you] }));
     expect(screen.getByTestId("MultipleTabsModal-message")).toHaveTextContent(
-      `You already have this application open in another tab or window. ${RISK}`,
+      `You already have this application open for editing in another tab or window. ${RISK}`,
     );
   });
 

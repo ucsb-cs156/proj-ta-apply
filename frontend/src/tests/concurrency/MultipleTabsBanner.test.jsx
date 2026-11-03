@@ -77,7 +77,7 @@ describe("MultipleTabsBanner", () => {
     );
     const text = () => screen.getByTestId("MultipleTabsBanner").textContent;
     expect(text()).toBe(
-      `You already have this application open in another tab or window. ${RISK}`,
+      `You already have this application open for editing in another tab or window. ${RISK}`,
     );
 
     rerender(

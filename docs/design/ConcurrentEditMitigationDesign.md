@@ -186,7 +186,7 @@ audience. With one person the verb is singular ("has"), with the user and anyone
 | Who else is active | Tab already open (noun "page") | Tab that arrived later |
 |---|---|---|
 | no one | nothing is shown | nothing is shown |
-| only the user's own other tabs | You are also editing this page in another tab or window. | You already have this page open in another tab or window. (admin audience: ...open for editing in another tab or window.) |
+| only the user's own other tabs | You are also editing this page in another tab or window. | You already have this page open for editing in another tab or window. |
 | one other person | phtcon@ucsb.edu (Phill Conrad) is also editing this page. | phtcon@ucsb.edu (Phill Conrad) already has this page open for editing. |
 | the user and one other person | You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs. | You and phtcon@ucsb.edu (Phill Conrad) already have this page open for editing in other windows or tabs. |
 | two or three other people | A and B are also editing this page. / A, B and C are also editing this page. | A and B already have this page open for editing. / A, B and C already have this page open for editing. |
