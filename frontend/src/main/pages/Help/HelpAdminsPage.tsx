@@ -663,7 +663,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           after. It is paged and can be sorted by any column; a long value is
           cut short with a <em>[See value]</em> link that shows the whole thing.
           The trail for one application is also shown on that application&apos;s
-          View page.
+          View page. Its times, like every date and time on this site, are
+          Pacific Time.
         </p>
 
         <h2

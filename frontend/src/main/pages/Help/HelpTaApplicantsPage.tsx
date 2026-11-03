@@ -82,6 +82,11 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
           terms and conditions for TA applications and asked to agree to them.
         </p>
 
+        <p data-testid="HelpTaApplicantsPage-time-zone">
+          Every date and time on this site is in Pacific Time (Santa Barbara
+          time), wherever you are.
+        </p>
+
         <h2 className="my-3 h4">Tips</h2>
         <ul>
           <li>

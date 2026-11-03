@@ -2,10 +2,10 @@ import { describe, expect, test } from "vitest";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
 
 describe("lastRefreshedText", () => {
-  test("names the time of the last refresh in the local locale", () => {
+  test("names the time of the last refresh, as the Pacific time it is stored in", () => {
     const iso = "2026-02-01T03:00:00";
     expect(lastRefreshedText(iso)).toBe(
-      `Last refreshed from the UCSB schedule: ${new Date(iso).toLocaleString()}.`,
+      `Last refreshed from the UCSB schedule: 2/1/2026, 3:00:00 AM.`,
     );
   });
 

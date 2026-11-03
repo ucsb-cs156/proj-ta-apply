@@ -3,7 +3,7 @@ package edu.ucsb.cs.taapply.services;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
-import java.time.LocalDateTime;
+import edu.ucsb.cs.taapply.time.AppTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +35,7 @@ public class AllocationVisibilityService {
     recruitment.setAllocationVisibility(visibility);
     if (visibility != AllocationVisibility.ADMINS_ONLY
         && recruitment.getAllocationsReleasedAt() == null) {
-      recruitment.setAllocationsReleasedAt(LocalDateTime.now());
+      recruitment.setAllocationsReleasedAt(AppTime.now());
     }
     recruitmentRepository.save(recruitment);
     recruitmentAuditService.recordChanges(before, recruitment);

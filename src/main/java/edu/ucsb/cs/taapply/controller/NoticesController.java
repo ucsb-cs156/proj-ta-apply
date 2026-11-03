@@ -4,10 +4,10 @@ import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
+import edu.ucsb.cs.taapply.time.AppTime;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.time.LocalDateTime;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,7 +79,7 @@ public class NoticesController extends ApiController {
       throw new IllegalArgumentException("The notice text cannot be blank");
     }
     NoticeVersion version =
-        NoticeVersion.builder().type(type).content(content).createdAt(LocalDateTime.now()).build();
+        NoticeVersion.builder().type(type).content(content).createdAt(AppTime.now()).build();
     return noticeVersionRepository.save(version);
   }
 }

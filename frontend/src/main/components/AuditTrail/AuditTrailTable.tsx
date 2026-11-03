@@ -1,3 +1,4 @@
+import { formatPacificDateTime } from "main/utils/pacificTime";
 import { useState } from "react";
 import { Button, Modal } from "react-bootstrap";
 import { Link } from "react-router";
@@ -87,9 +88,7 @@ export default function AuditTrailTable({
       accessorKey: "editedAt",
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<AuditTrailRow, unknown> }) =>
-        cell.row.original.editedAt
-          ? new Date(cell.row.original.editedAt).toLocaleString()
-          : "",
+        formatPacificDateTime(cell.row.original.editedAt),
     },
     {
       // The TA and ULA ids as one column: "TA 7" or "ULA 9", linking to that application.

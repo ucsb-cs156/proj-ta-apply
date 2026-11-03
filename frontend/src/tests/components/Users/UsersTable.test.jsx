@@ -69,17 +69,15 @@ describe("UserTable tests", () => {
   });
 
   /** Issue #61: when each user last used the app, as proj-happycows shows it. */
-  test("Last Online is shown in the viewer's locale, and blank when never recorded", () => {
+  test("Last Online is shown in Pacific time whatever the viewer is in, and blank when never recorded", () => {
     render(<UsersTable users={usersFixtures.threeUsers} />);
 
     const shown = screen.getByTestId("UsersTable-cell-row-0-col-lastOnline");
     expect(shown).toHaveTextContent(formatTime("2026-04-01T17:30:00Z"));
-    expect(shown.textContent).toBe(
-      new Date("2026-04-01T17:30:00Z").toLocaleString(),
-    );
+    expect(shown.textContent).toBe("4/1/2026, 10:30:00 AM");
     expect(
       screen.getByTestId("UsersTable-cell-row-1-col-lastOnline").textContent,
-    ).toBe(new Date("2026-03-28T09:05:12.345Z").toLocaleString());
+    ).toBe("3/28/2026, 2:05:12 AM");
     expect(
       screen.getByTestId("UsersTable-cell-row-2-col-lastOnline").textContent,
     ).toBe("");

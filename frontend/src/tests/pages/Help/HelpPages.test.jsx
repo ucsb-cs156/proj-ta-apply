@@ -1329,4 +1329,28 @@ describe("Help pages (issue #140)", () => {
       within(paragraph).getByRole("link", { name: "Recruitment Steps" }),
     ).toHaveAttribute("href", "/help/recruitment-steps");
   });
+
+  test("the pages say that every time is Pacific Time (issue #293)", async () => {
+    renderPage(<HelpTaApplicantsPage />);
+    expect(
+      screen.getByTestId("HelpTaApplicantsPage-time-zone"),
+    ).toHaveTextContent("Every date and time on this site is in Pacific Time");
+    cleanup();
+    renderPage(<HelpUlaApplicantsPage />);
+    expect(
+      screen.getByTestId("HelpUlaApplicantsPage-time-zone"),
+    ).toHaveTextContent("Every date and time on this site is in Pacific Time");
+    cleanup();
+    renderPage(<HelpDeveloperPage />);
+    expect(
+      screen.getByTestId("HelpDeveloperPage-dates-and-times"),
+    ).toHaveTextContent("Every date and time the app shows or accepts");
+    cleanup();
+    renderPage(<HelpAdminsPage />);
+    expect(
+      document.getElementById("audit-trail").nextElementSibling,
+    ).toHaveTextContent(
+      "like every date and time on this site, are Pacific Time",
+    );
+  });
 });

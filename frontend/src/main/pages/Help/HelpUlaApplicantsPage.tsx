@@ -120,6 +120,11 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           terms and conditions for ULA applications and asked to agree to them.
         </p>
 
+        <p data-testid="HelpUlaApplicantsPage-time-zone">
+          Every date and time on this site is in Pacific Time (Santa Barbara
+          time), wherever you are.
+        </p>
+
         <h2 className="my-3 h4">Tips</h2>
         <ul>
           <li>

@@ -636,9 +636,7 @@ describe("ApplicationSummary tests", () => {
 
     const row = screen.getByTestId("ApplicationSummary-Cancelled");
     expect(row).toHaveTextContent("Found other employment");
-    expect(row).toHaveTextContent(
-      new Date("2026-02-03T04:05:00").toLocaleString(),
-    );
+    expect(row).toHaveTextContent("2/3/2026, 4:05:00 AM");
     // It comes before everything else.
     expect(
       row.compareDocumentPosition(
