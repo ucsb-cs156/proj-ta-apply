@@ -179,6 +179,7 @@ export default function CandidateRankingPage(): React.JSX.Element {
           <>
             <MultipleTabsBanner
               others={others}
+              newest={newest}
               noun="ranking"
               testId="CandidateRankingPage-multiple-tabs"
             />

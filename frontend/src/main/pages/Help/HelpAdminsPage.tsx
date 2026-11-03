@@ -737,7 +737,9 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <em>last</em> also asks what you want to do, in a box that covers the
           page until you answer. The one you opened first only shows the
           warning, so that it never interrupts you while you are typing. The box
-          offers three choices:
+          says who already has the ranking open, such as &ldquo;You and
+          fay@ucsb.edu (Fay Faculty) already have this ranking open for editing
+          in other windows or tabs.&rdquo; It offers three choices:
         </p>
         <ul data-testid="HelpAdminsPage-simultaneous-editing-choices">
           <li>

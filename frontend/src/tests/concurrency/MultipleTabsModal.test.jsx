@@ -6,6 +6,7 @@ import MultipleTabsModal, {
 
 const RISK =
   "Please know that this is risky; we recommend closing all but one of these.";
+const ADMIN = "We recommend that only one admin edits this page at a time.";
 const you = { label: "me@example.org (Me)", samePerson: true };
 const phill = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
 
@@ -63,11 +64,64 @@ describe("MultipleTabsModal", () => {
     });
     expect(box).toBeInTheDocument();
     expect(screen.getByTestId("MultipleTabsModal-message")).toHaveTextContent(
-      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this application in other windows or tabs. ${RISK}`,
+      `You and phtcon@ucsb.edu (Phill Conrad) already have this application open for editing in other windows or tabs. ${ADMIN}`,
     );
     expect(leaveButton()).toBeInTheDocument();
     expect(waitButton()).toBeInTheDocument();
     expect(continueButton()).toBeInTheDocument();
+  });
+
+  test("says 'already', with the singular verb for one person", () => {
+    render(modal({ noun: "ranking" }));
+    expect(screen.getByTestId("MultipleTabsModal-message")).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) already has this ranking open for editing. ${ADMIN}`,
+    );
+  });
+
+  test("says 'already', for the user's own other tabs", () => {
+    render(modal({ others: [you] }));
+    expect(screen.getByTestId("MultipleTabsModal-message")).toHaveTextContent(
+      `You already have this application open for editing in another tab or window. ${RISK}`,
+    );
+  });
+
+  test("the admin audience says 'already', then asks for one Admin at a time", () => {
+    const bob = { label: "b@example.com (Bob)", samePerson: false };
+    const alice = { label: "a@example.com (Alice)", samePerson: false };
+    const { rerender } = render(
+      modal({ others: [alice, bob], noun: "page", audience: "admin" }),
+    );
+    const message = () => screen.getByTestId("MultipleTabsModal-message");
+    expect(message().textContent).toBe(
+      `a@example.com (Alice) and b@example.com (Bob) already have this page open for editing. ${ADMIN}`,
+    );
+
+    rerender(modal({ others: [alice], noun: "page", audience: "admin" }));
+    expect(message().textContent).toBe(
+      `a@example.com (Alice) already has this page open for editing. ${ADMIN}`,
+    );
+
+    rerender(modal({ others: [you], noun: "page", audience: "admin" }));
+    expect(message().textContent).toBe(
+      `You already have this page open for editing in another tab or window. ${ADMIN}`,
+    );
+
+    rerender(modal({ others: [you, alice], noun: "page", audience: "admin" }));
+    expect(message().textContent).toBe(
+      `You and a@example.com (Alice) already have this page open for editing in other windows or tabs. ${ADMIN}`,
+    );
+    expect(message().textContent).not.toContain("risky");
+  });
+
+  test("the default audience asks to close the extra copies only when they are all the user's own", () => {
+    const { rerender } = render(modal({ audience: "default", others: [you] }));
+    const text = () =>
+      screen.getByTestId("MultipleTabsModal-message").textContent;
+    expect(text()).toMatch(/closing all but one of these\.$/);
+
+    rerender(modal({ audience: "default" }));
+    expect(text()).toMatch(/only one admin edits this page at a time\.$/);
+    expect(text()).not.toContain("risky");
   });
 
   test("names what is open twice", () => {

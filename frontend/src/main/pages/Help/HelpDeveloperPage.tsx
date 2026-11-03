@@ -224,7 +224,22 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           editing this application in another tab or window.&quot;,
           &quot;phtcon@ucsb.edu (Phill Conrad) is also editing this
           application.&quot;, and so on, three people named and the rest
-          counted) and the banner shows it as text, never as markup.
+          counted) and the banner shows it as text, never as markup. The tab
+          that arrived later (the modal, and the banner of the newest tab) says
+          who is <em>already</em> there instead (&quot;You already have this
+          application open for editing in another tab or window.&quot;, &quot;A
+          already has this page open for editing.&quot;, &quot;A and B already
+          have this page open for editing.&quot;), with the singular verb for
+          one person. The closing sentence depends on who is involved. When
+          every other copy is the user&apos;s own, on the application form and
+          the faculty ranking page, it asks the user to close the extra ones
+          (&quot;Please know that this is risky; we recommend closing all but
+          one of these.&quot;). When another person is involved, whose window
+          the user cannot close, and on admin pages (the <code>admin</code>{" "}
+          option of <code>audience</code> on the banner and the modal), it is
+          &quot;We recommend that only one admin edits this page at a
+          time.&quot; The noun is still a parameter of the first sentence, but
+          this one always says &quot;page&quot;.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-modal">
           <strong>The modal and how the newer tab is chosen.</strong> A client
