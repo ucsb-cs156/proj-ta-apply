@@ -153,7 +153,12 @@
 <a name='L88'></a><a href='#L88'>88</a>
 <a name='L89'></a><a href='#L89'>89</a>
 <a name='L90'></a><a href='#L90'>90</a>
-<a name='L91'></a><a href='#L91'>91</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -168,41 +173,46 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">170x</span>
-<span class="cline-any cline-yes">170x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">173x</span>
+<span class="cline-any cline-yes">173x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">708x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">720x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">177x</span>
-<span class="cline-any cline-yes">177x</span>
-<span class="cline-any cline-yes">177x</span>
-<span class="cline-any cline-yes">708x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">177x</span>
-<span class="cline-any cline-yes">177x</span>
-<span class="cline-any cline-yes">187x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">177x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">180x</span>
+<span class="cline-any cline-yes">180x</span>
+<span class="cline-any cline-yes">180x</span>
+<span class="cline-any cline-yes">720x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">180x</span>
+<span class="cline-any cline-yes">180x</span>
+<span class="cline-any cline-yes">190x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">180x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">62x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -224,7 +234,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -243,7 +253,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { pacificWallClock } from "main/utils/pacificTime";
+import {
   nextQuarter,
   quarterOfDate,
   toNumericYYYYQ,
@@ -264,7 +275,9 @@ export const WEEK_IN_DAYS = 7;
  * The quarter after the one today falls in, skipping Summer: Winter goes to Spring, Spring and
  * Summer to Fall, and Fall to Winter of the next year. As YYYYQ.
  */
-export const nextNonSummerQuarter = (today: Date = new Date()): string =&gt; {
+export const nextNonSummerQuarter = (
+  today: Date = pacificWallClock(),
+): string =&gt; {
   const next = nextQuarter(toNumericYYYYQ(quarterOfDate(today)));
   return String(next % 10 === 3 ? nextQuarter(next) : next);
 };
@@ -278,7 +291,9 @@ const previousQuarter = (yyyyq: number): number =&gt;
  * so there are courses to work with) through the one after it, or the two after it in Spring, when
  * both the Summer and Fall schedules are available. As YYYYQ strings, oldest first.
  */
-export const selectableQuarters = (today: Date = new Date()): string[] =&gt; {
+export const selectableQuarters = (
+  today: Date = pacificWallClock(),
+): string[] =&gt; {
   const current = toNumericYYYYQ(quarterOfDate(today));
   const quarters: number[] = [current];
   for (let i = 0; i &lt; 4; i++) {
@@ -317,7 +332,7 @@ export type AutoCreatePlan = {
 export const planAutoCreate = (
   recruitments: Pick&lt;Recruitment, "quarter" | "type"&gt;[],
   quarter: string,
-  today: Date = new Date(),
+  today: Date = pacificWallClock(),
 ): AutoCreatePlan =&gt; {
   const exists = (type: "TA" | "ULA") =&gt;
     recruitments.some((r) =&gt; r.quarter === quarter &amp;&amp; r.type === type);
@@ -340,7 +355,7 @@ export const planAutoCreate = (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-03T02:01:11.969Z
+                at 2026-11-03T03:11:48.829Z
             </div>
         <script src="../prettify.js"></script>
         <script>
