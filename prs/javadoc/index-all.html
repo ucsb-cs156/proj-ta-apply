@@ -186,6 +186,14 @@ logged in: until then both names are null.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UsersPageDTO.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UsersPageDTO</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RankingVersionService.html#advance(java.lang.Long,int)" class="member-name-link">advance(Long, int)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RankingVersionService.html" title="class in edu.ucsb.cs.taapply.services">RankingVersionService</a></dt>
+<dd>
+<div class="block">Moves the course from version <code>expected</code> to the next one, and says whether it did.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/RankingListVersionRepository.html#advance(java.lang.Long,java.lang.Integer)" class="member-name-link">advance(Long, Integer)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RankingListVersionRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RankingListVersionRepository</a></dt>
+<dd>
+<div class="block">Adds one to the course's version if, and only if, it is still <code>expected</code>.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/TrainingCommitment.html#AGREE" class="member-name-link">AGREE</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/TrainingCommitment.html" title="enum class in edu.ucsb.cs.taapply.enums">TrainingCommitment</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html#all(java.lang.String)" class="member-name-link">all(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AppSettingsController.html" title="class in edu.ucsb.cs.taapply.controller">AppSettingsController</a></dt>
@@ -661,6 +669,10 @@ enrollment totals, and the anticipated expenses, funds and bottom line.</div>
 <dd>
 <div class="block">Everything the page shows for one quarter.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RankingVersionService.html#bump(java.lang.Long)" class="member-name-link">bump(Long)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RankingVersionService.html" title="class in edu.ucsb.cs.taapply.services">RankingVersionService</a></dt>
+<dd>
+<div class="block">Moves the course to the next version whatever it is: for changes nobody was editing against.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#BY_COURSE_SECTION_ENROLL" class="member-name-link">BY_COURSE_SECTION_ENROLL</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
 <dd>
 <div class="block">Course id, then section, then enrollment code, a null reading as "" in each.</div>
@@ -702,7 +714,7 @@ enrollment totals, and the anticipated expenses, funds and bottom line.</div>
 <dd>
 <div class="block">The applications to a recruitment that the applicant cancelled, oldest first.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html#%3Cinit%3E(java.lang.Long,java.lang.Integer,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.Double,java.lang.Double,java.lang.Integer,java.lang.String,boolean)" class="member-name-link">Candidate(Long, Integer, String, String, String, String, String, String, String, String, Double, Double, Integer, String, boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html#%3Cinit%3E(java.lang.Long,java.lang.Integer,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.Double,java.lang.Double,java.lang.Integer,java.lang.String,boolean,java.lang.Integer)" class="member-name-link">Candidate(Long, Integer, String, String, String, String, String, String, String, String, Double, Double, Integer, String, boolean, Integer)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>Candidate</code> record class.</div>
 </dd>
@@ -968,6 +980,10 @@ how many they have ranked, and how many are still needed.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJobFactory.html#create(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">create(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/PopulateRecruitmentCoursesJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">PopulateRecruitmentCoursesJobFactory</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/RankingListVersionRepository.html#create(java.lang.Long)" class="member-name-link">create(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RankingListVersionRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RankingListVersionRepository</a></dt>
+<dd>
+<div class="block">Starts the course's version at 1; fails if there is a row already.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DeveloperFakeApplicationsController.html#create(java.lang.Long,int,edu.ucsb.cs.taapply.services.fake.FakeCoverage)" class="member-name-link">create(Long, int, FakeCoverage)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DeveloperFakeApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DeveloperFakeApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html#create(java.lang.Long,int,edu.ucsb.cs.taapply.services.fake.FakeCoverage)" class="member-name-link">create(Long, int, FakeCoverage)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/CreateFakeApplicationsJobFactory.html" title="class in edu.ucsb.cs.taapply.jobs">CreateFakeApplicationsJobFactory</a></dt>
@@ -1028,6 +1044,10 @@ recruitment's courses, as the faculty would.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/NoticesController.html#current(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">current(RecruitmentType)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RankingVersionService.html#current(java.lang.Long)" class="member-name-link">current(Long)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RankingVersionService.html" title="class in edu.ucsb.cs.taapply.services">RankingVersionService</a></dt>
+<dd>
+<div class="block">The course's version; 0 if its rankings have never been edited.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html#CURRENT_QUARTER_ENDPOINT" class="member-name-link">CURRENT_QUARTER_ENDPOINT</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/model/CurrentUser.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.model">CurrentUser</a> - Class in <a href="edu/ucsb/cs/taapply/model/package-summary.html">edu.ucsb.cs.taapply.model</a></dt>
@@ -2128,6 +2148,8 @@ same course and section.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/HealthController.html#%3Cinit%3E()" class="member-name-link">HealthController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HealthController.html" title="class in edu.ucsb.cs.taapply.controller">HealthController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#heartbeat(java.lang.Long,java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#heartbeat(java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#heartbeat(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">heartbeat(String, String, ClientIdentity)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
@@ -2247,6 +2269,10 @@ program and graduation date, then GPAs and previous ULA service for ULAs.</div>
 <dd>
 <div class="block">Advance to the next quarter, rolling e.g. 20244 to 20251.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/RankingListVersionRepository.html#increment(java.lang.Long)" class="member-name-link">increment(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RankingListVersionRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RankingListVersionRepository</a></dt>
+<dd>
+<div class="block">Adds one to the course's version, whatever it is.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/FrontendController.html#index()" class="member-name-link">index()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/FrontendController.html" title="class in edu.ucsb.cs.taapply.controller">FrontendController</a></dt>
 <dd>
 <div class="block">Forward all non-file, non-API requests to the React app's index.html so that client-side
@@ -2354,7 +2380,9 @@ they teach, each with its list of their courses.</div>
 <div class="block">A recruitment as the admin's and student's cards know it, plus the instructor's courses.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.RankEdit.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.RankEdit</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">A saved rank, and the version of the course's ranking list that the save produced.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/InstructorRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">InstructorRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html#instructors()" class="member-name-link">instructors()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html" title="class in edu.ucsb.cs.taapply.models">CourseSections.Meeting</a></dt>
@@ -2544,6 +2572,8 @@ the same month rule as the front end (January to March is 1, April to June 2, Ju
 <dt><a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html#LAYOUT_COURSE" class="member-name-link">LAYOUT_COURSE</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">PublishedAssignmentsService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html#LAYOUT_STUDENT" class="member-name-link">LAYOUT_STUDENT</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">PublishedAssignmentsService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#leave(java.lang.Long,java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#leave(java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
@@ -3164,13 +3194,13 @@ like) from it.</div>
 <dd>
 <div class="block">Returns the value of the <code>rank</code> record component.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#rank(java.lang.Long,java.lang.Long,java.lang.Long,com.fasterxml.jackson.databind.JsonNode)" class="member-name-link">rank(Long, Long, Long, JsonNode)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#rank(java.lang.Long,java.lang.Long,java.lang.Long,java.lang.Integer,java.lang.String,com.fasterxml.jackson.databind.JsonNode)" class="member-name-link">rank(Long, Long, Long, Integer, String, JsonNode)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/CourseTargetsService.CourseTargets.html#rankedCount()" class="member-name-link">rankedCount()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./edu/ucsb/cs/taapply/services/CourseTargetsService.CourseTargets.html#param-rankedCount"><code>rankedCount</code></a> record component.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.RankEdit.html#%3Cinit%3E(java.lang.Integer)" class="member-name-link">RankEdit(Integer)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.RankEdit.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.RankEdit</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.RankEdit.html#%3Cinit%3E(java.lang.Integer,java.lang.Integer)" class="member-name-link">RankEdit(Integer, Integer)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.RankEdit.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.RankEdit</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>RankEdit</code> record class.</div>
 </dd>
@@ -3178,6 +3208,15 @@ like) from it.</div>
 <dd>
 <div class="block">Returns the value of the <code>rankingCount</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/RankingListVersion.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">RankingListVersion</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">The version of one recruitment course's whole ranking list (issue #279), bumped by every rank
+edit and by the Developer Mode fake rankings job.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/RankingListVersion.html#%3Cinit%3E()" class="member-name-link">RankingListVersion()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/RankingListVersion.html" title="class in edu.ucsb.cs.taapply.entity">RankingListVersion</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/RankingListVersionRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">RankingListVersionRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.AssignmentRow.html#rankings()" class="member-name-link">rankings()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.AssignmentRow.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.AssignmentRow</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>rankings</code> record component.</div>
@@ -3192,6 +3231,17 @@ like) from it.</div>
 <dd>
 <div class="block">Returns the value of the <a href="./edu/ucsb/cs/taapply/services/CourseTargetsService.CourseTargets.html#param-rankingTarget"><code>rankingTarget</code></a> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html#rankingVersion()" class="member-name-link">rankingVersion()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.Candidate.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.Candidate</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>rankingVersion</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RankingVersionService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">RankingVersionService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">The version of a recruitment course's ranking list (issue #279), the basis of the version check
+on a rank edit.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RankingVersionService.html#%3Cinit%3E()" class="member-name-link">RankingVersionService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RankingVersionService.html" title="class in edu.ucsb.cs.taapply.services">RankingVersionService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#ranksFor(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">ranksFor(RecruitmentCourse)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
 <dd>
 <div class="block">The ranks one section gave, keyed by application id.</div>
@@ -4543,6 +4593,10 @@ the order they are declared.</div>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.RankEdit.html#version()" class="member-name-link">version()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.RankEdit.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.RankEdit</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>version</code> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#videoLink()" class="member-name-link">videoLink()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
