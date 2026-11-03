@@ -716,7 +716,40 @@
 <a name='L651'></a><a href='#L651'>651</a>
 <a name='L652'></a><a href='#L652'>652</a>
 <a name='L653'></a><a href='#L653'>653</a>
-<a name='L654'></a><a href='#L654'>654</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L654'></a><a href='#L654'>654</a>
+<a name='L655'></a><a href='#L655'>655</a>
+<a name='L656'></a><a href='#L656'>656</a>
+<a name='L657'></a><a href='#L657'>657</a>
+<a name='L658'></a><a href='#L658'>658</a>
+<a name='L659'></a><a href='#L659'>659</a>
+<a name='L660'></a><a href='#L660'>660</a>
+<a name='L661'></a><a href='#L661'>661</a>
+<a name='L662'></a><a href='#L662'>662</a>
+<a name='L663'></a><a href='#L663'>663</a>
+<a name='L664'></a><a href='#L664'>664</a>
+<a name='L665'></a><a href='#L665'>665</a>
+<a name='L666'></a><a href='#L666'>666</a>
+<a name='L667'></a><a href='#L667'>667</a>
+<a name='L668'></a><a href='#L668'>668</a>
+<a name='L669'></a><a href='#L669'>669</a>
+<a name='L670'></a><a href='#L670'>670</a>
+<a name='L671'></a><a href='#L671'>671</a>
+<a name='L672'></a><a href='#L672'>672</a>
+<a name='L673'></a><a href='#L673'>673</a>
+<a name='L674'></a><a href='#L674'>674</a>
+<a name='L675'></a><a href='#L675'>675</a>
+<a name='L676'></a><a href='#L676'>676</a>
+<a name='L677'></a><a href='#L677'>677</a>
+<a name='L678'></a><a href='#L678'>678</a>
+<a name='L679'></a><a href='#L679'>679</a>
+<a name='L680'></a><a href='#L680'>680</a>
+<a name='L681'></a><a href='#L681'>681</a>
+<a name='L682'></a><a href='#L682'>682</a>
+<a name='L683'></a><a href='#L683'>683</a>
+<a name='L684'></a><a href='#L684'>684</a>
+<a name='L685'></a><a href='#L685'>685</a>
+<a name='L686'></a><a href='#L686'>686</a>
+<a name='L687'></a><a href='#L687'>687</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -749,6 +782,39 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1532,8 +1598,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           full design, including where else it is planned, is{" "}
           &lt;code&gt;docs/design/ConcurrentEditMitigationDesign.md&lt;/code&gt;. So far the
           draft application form, the faculty rankings, the editing of a
-          submitted application and the assignments page use them; recruitment
-          state is kept fresh by a refresh instead (see below).
+          submitted application and the assignments page and the Budget page use
+          them; recruitment state is kept fresh by a refresh instead (see
+          below).
         &lt;/p&gt;
         &lt;p data-testid="HelpDeveloperPage-simultaneous-version"&gt;
           &lt;strong&gt;The version check.&lt;/strong&gt; A saved thing carries an integer{" "}
@@ -1552,6 +1619,18 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           applicant cancelling. A stale tentative assignment is answered{" "}
           &lt;code&gt;409&lt;/code&gt; with the current assignments, and the page shows them
           and a message, without repeating the click.
+        &lt;/p&gt;
+        &lt;p data-testid="HelpDeveloperPage-simultaneous-compare"&gt;
+          &lt;strong&gt;Compare-and-set.&lt;/strong&gt; Where a version column would be
+          heavy, a save carries the value the page last saw (
+          &lt;code&gt;expected&lt;/code&gt;) and the server applies it only if that is still
+          the stored value; otherwise nothing changes and the answer is{" "}
+          &lt;code&gt;409 Conflict&lt;/code&gt; with the current value. The Budget page uses
+          a version for the budget&amp;apos;s three lines and compare-and-set for a
+          recruitment&amp;apos;s average cost and hiring target, which the
+          recruitment&amp;apos;s row shares with many other pages. The page keeps
+          what the user typed, says what is stored now, and offers{" "}
+          &lt;em&gt;Use theirs&lt;/em&gt; and &lt;em&gt;Overwrite&lt;/em&gt;.
         &lt;/p&gt;
         &lt;p data-testid="HelpDeveloperPage-simultaneous-heartbeat"&gt;
           &lt;strong&gt;The client id and the heartbeat.&lt;/strong&gt; Each tab makes a
@@ -2016,6 +2095,26 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                 &lt;/a&gt;
               &lt;/td&gt;
             &lt;/tr&gt;
+            &lt;tr data-testid="HelpDeveloperPage-simultaneous-row-budget"&gt;
+              &lt;td&gt;Budget&lt;/td&gt;
+              &lt;td&gt;
+                One quarter&amp;apos;s budget (compare-and-set for a
+                recruitment&amp;apos;s average cost and hiring target, keyed{" "}
+                &lt;code&gt;recruitment:&amp;lt;id&amp;gt;&lt;/code&gt;)
+              &lt;/td&gt;
+              &lt;td&gt;
+                &lt;code&gt;budget:&amp;lt;quarter&amp;gt;&lt;/code&gt;
+              &lt;/td&gt;
+              &lt;td&gt;
+                &lt;a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/290"
+                  target="_blank"
+                  rel="noreferrer"
+                &gt;
+                  #290
+                &lt;/a&gt;
+              &lt;/td&gt;
+            &lt;/tr&gt;
           &lt;/tbody&gt;
         &lt;/Table&gt;
       &lt;/div&gt;
@@ -2029,7 +2128,7 @@ export default function HelpDeveloperPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-03T22:07:54.769Z
+                at 2026-11-03T22:43:08.781Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
