@@ -866,11 +866,11 @@ describe("Help pages (issue #140)", () => {
       "Student apply page when editing a submitted application, and the Admin application edit page",
       "One application, edited by its applicant or by an admin",
       "application:<applicationId>",
-      "#305",
+      "#308",
     ]);
     expect(rows[3].querySelector("a")).toHaveAttribute(
       "href",
-      "https://github.com/ucsb-cs156/proj-ta-apply/pull/305",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/308",
     );
     for (const phrase of [
       "bumped by every rank edit and by the Developer Mode fake rankings job",

@@ -839,7 +839,7 @@ is a day or less, M a few days, L about a week.
    the allocations and estimates (which stay with #278). No version check, detector or banner. A
    survey first, which updates section (f) of this document.
 
-8. **An admin edits a student's application. (M, #302, PR #305.)** A version on the `applications`
+8. **An admin edits a student's application. (M, #302, PR #308.)** A version on the `applications`
    table and a `409` on both edit endpoints, the key `application:<applicationId>` shared by the
    applicant's page and the admin's edit page, the admin flag on the wire, and the two messages.
    Section (g).
