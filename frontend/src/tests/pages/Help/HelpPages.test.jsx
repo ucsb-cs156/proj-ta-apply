@@ -123,7 +123,11 @@ function expectRankingSimultaneousEditingSection(page, intro) {
   const assignmentsDetail = screen.queryByTestId(
     `${page}-simultaneous-editing-assignments-detail`,
   );
-  const after = assignmentsDetail ?? application ?? todo;
+  // Issue #277: then the Budget page, a paragraph, its picture, a paragraph and a paragraph.
+  const budgetConflict = screen.queryByTestId(
+    `${page}-simultaneous-editing-budget-conflict`,
+  );
+  const after = budgetConflict ?? assignmentsDetail ?? application ?? todo;
   if (application !== null) {
     expect(todo.nextElementSibling).toBe(application);
     expect(application.nextElementSibling).toBe(
@@ -830,7 +834,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(5);
+    expect(rows).toHaveLength(6);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -839,6 +843,16 @@ describe("Help pages (issue #140)", () => {
       "draft:<draftId>",
       "#283, #285",
     ]);
+    expect(text("editing")).toMatch(
+      /the assignments page and the Budget page use them/,
+    );
+    expect(text("compare")).toMatch(/expected/);
+    expect(text("compare")).toMatch(/409 Conflict/);
+    expect(text("compare")).toMatch(/Use theirs and Overwrite/);
+    expect(text("compare")).toMatch(
+      /otherwise nothing changes and the answer is 409 Conflict with the current value/,
+    );
+    expect(text("compare")).toMatch(/and offers Use theirs and Overwrite/);
     expect(rows[0].querySelector("a")).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/283",
@@ -898,6 +912,19 @@ describe("Help pages (issue #140)", () => {
     expect(rows[4].querySelector("a")).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/289",
+    );
+    // Issue #277: the Budget page.
+    expect(
+      [...rows[5].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Budget",
+      "One quarter's budget (compare-and-set for a recruitment's average cost and hiring target, keyed recruitment:<id>)",
+      "budget:<quarter>",
+      "#290",
+    ]);
+    expect(rows[5].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/290",
     );
     for (const phrase of [
       "bumped by every rank edit and by the Developer Mode fake rankings job",
@@ -1043,7 +1070,62 @@ describe("Help pages (issue #140)", () => {
     expect(intro.nextElementSibling).toBe(example);
     expect(example.nextElementSibling).toBe(detail);
     expect(detail.nextElementSibling).toBe(
-      screen.getByTestId("HelpAdminsPage-simultaneous-editing-todo"),
+      screen.getByTestId("HelpAdminsPage-simultaneous-editing-budget"),
+    );
+  });
+
+  test("the admin section describes the Budget page's warning with the shared admin wording, and its refused saves (issue #277)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const page = "HelpAdminsPage-simultaneous-editing";
+    const intro = await screen.findByTestId(`${page}-budget`);
+    expect(intro).toHaveTextContent(
+      "The Budget for Quarter page. One quarter's budget counts as one thing.",
+    );
+    const example = screen.getByTestId(`${page}-budget-example`);
+    expect(example).toHaveTextContent(
+      "phtcon@ucsb.edu (Phill Conrad) is also editing this budget page. We recommend that only one admin edits this page at a time.",
+    );
+    expect(example).toHaveClass("alert", "alert-warning");
+    expect(screen.queryByRole("alert")).toBeNull();
+    const names = screen.getByTestId(`${page}-budget-names`);
+    expect(names).toHaveTextContent('up to three and then "and 2 others"');
+    expect(names).toHaveTextContent(
+      "You are also editing this budget page in another tab or window.",
+    );
+    expect(names).toHaveTextContent(
+      "You and phtcon@ucsb.edu (Phill Conrad) are also editing this budget page in other windows or tabs.",
+    );
+    expect(names).toHaveTextContent(
+      "Two admins on different quarters never see it.",
+    );
+    expect(names).toHaveTextContent(
+      "The tab or window opened last also asks the same question as for rankings (Leave this page, wait, or Continue anyway)",
+    );
+    expect(names).toHaveTextContent(
+      'says "already has" instead of "is also editing"',
+    );
+    const conflict = screen.getByTestId(`${page}-budget-conflict`);
+    expect(conflict).toHaveTextContent(
+      "The TAs-only budget was changed in another tab or window. It is now $45,000.00; you entered $40,000.00.",
+    );
+    expect(conflict).toHaveTextContent(
+      "Choose Use theirs to keep what is stored",
+    );
+    expect(conflict).toHaveTextContent(
+      "or Overwrite to save what you typed over it",
+    );
+    // Still one section, which still ends the page.
+    expect(
+      screen.getAllByRole("heading", {
+        level: 2,
+        name: "Simultaneous Editing",
+      }),
+    ).toHaveLength(1);
+    expect(intro.nextElementSibling).toBe(example);
+    expect(example.nextElementSibling).toBe(names);
+    expect(names.nextElementSibling).toBe(conflict);
+    expect(conflict.nextElementSibling).toBe(
+      screen.getByTestId(`${page}-todo`),
     );
   });
 

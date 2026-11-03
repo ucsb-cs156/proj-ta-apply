@@ -1414,4 +1414,100 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(false, r.getAssignmentsPublished());
     verify(assignmentsService, never()).anyAssigned(any());
   }
+
+  // ---- compare-and-set on the two budget figures (issue #277) ----
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_hiring_target_save_that_expects_the_stored_value_is_applied() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setTotalHiringTarget(7);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=9&expected=7")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(9, r.getTotalHiringTarget());
+    verify(recruitmentRepository).save(r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_hiring_target_save_that_expects_a_stale_value_is_a_409_and_changes_nothing()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setTotalHiringTarget(8);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=9&expected=7")
+                    .with(csrf()))
+            .andExpect(status().isConflict())
+            .andReturn();
+
+    assertEquals(
+        "The hiring target was changed in another tab or window.",
+        responseToJson(response).get("message"));
+    assertEquals(8, r.getTotalHiringTarget());
+    verify(recruitmentRepository, never()).save(any());
+    verify(allocationService, never()).recompute(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_cost_save_that_expects_the_stored_value_to_the_cent_is_applied() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAvgCostPerPosition(new BigDecimal("100.50"));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=200&expected=100.5")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(new BigDecimal("200.00"), r.getAvgCostPerPosition());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_cost_save_that_expects_a_stale_value_is_a_409_and_changes_nothing()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAvgCostPerPosition(new BigDecimal("150.00"));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=200&expected=100")
+                    .with(csrf()))
+            .andExpect(status().isConflict())
+            .andReturn();
+
+    assertEquals(
+        "The average cost per position was changed in another tab or window.",
+        responseToJson(response).get("message"));
+    assertEquals(new BigDecimal("150.00"), r.getAvgCostPerPosition());
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_cost_save_that_expects_a_value_when_none_is_stored_is_a_409() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=200&expected=100")
+                .with(csrf()))
+        .andExpect(status().isConflict());
+    verify(recruitmentRepository, never()).save(any());
+  }
 }

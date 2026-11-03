@@ -1,0 +1,32 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "058-add-version-to-budgets",
+        "author": "pc",
+        "comment": "A version on each budget, so that a save made from a stale copy of the Budget page is refused instead of overwriting another admin's change (issue #277).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "columnExists": { "tableName": "budgets", "columnName": "version" } } }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "budgets",
+              "columns": [
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "INT",
+                    "defaultValueNumeric": 0,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

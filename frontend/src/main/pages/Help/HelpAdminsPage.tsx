@@ -835,6 +835,44 @@ export default function HelpAdminsPage(): React.JSX.Element {
           again if the move still makes sense. Your click is not repeated for
           you.
         </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-budget">
+          <strong>The Budget for Quarter page.</strong> One quarter&apos;s
+          budget counts as one thing. If another admin has the same
+          quarter&apos;s budget open, or you have it open in a second tab or
+          window, you get a warning that looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="budget page"
+          audience="admin"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-budget-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-budget-names">
+          It names the other people who have it open, up to three and then
+          &quot;and 2 others&quot;. If the other copy is your own, in another
+          tab or window, it says &quot;You are also editing this budget page in
+          another tab or window.&quot;, and if both are open it says &quot;You
+          and phtcon@ucsb.edu (Phill Conrad) are also editing this budget page
+          in other windows or tabs.&quot; Two admins on different quarters never
+          see it. Every box saves as it is typed, so without the warning the
+          last save would win and the earlier one would be lost without anyone
+          noticing. The tab or window opened <em>last</em> also asks the same
+          question as for rankings (<strong>Leave this page</strong>, wait, or{" "}
+          <strong>Continue anyway</strong>), and says &quot;already has&quot;
+          instead of &quot;is also editing&quot;.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-budget-conflict">
+          <strong>If a save is refused.</strong> When a figure was changed by
+          someone else after your page last showed it, your save is not made.
+          The page keeps what you typed and says, for example, &quot;The
+          TAs-only budget was changed in another tab or window. It is now
+          $45,000.00; you entered $40,000.00.&quot; The page then shows what is
+          stored. Choose <strong>Use theirs</strong> to keep what is stored and
+          drop what you typed, or <strong>Overwrite</strong> to save what you
+          typed over it. This applies to the three budget lines, the average
+          cost per TA and per ULA, and the two hiring targets.
+        </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
           <strong>What to do.</strong> If a page looks out of date (for example
           the computer was asleep, or the tab was in the background, where

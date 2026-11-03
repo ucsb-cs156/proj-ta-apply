@@ -161,8 +161,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           full design, including where else it is planned, is{" "}
           <code>docs/design/ConcurrentEditMitigationDesign.md</code>. So far the
           draft application form, the faculty rankings, the editing of a
-          submitted application and the assignments page use them; recruitment
-          state is kept fresh by a refresh instead (see below).
+          submitted application and the assignments page and the Budget page use
+          them; recruitment state is kept fresh by a refresh instead (see
+          below).
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-version">
           <strong>The version check.</strong> A saved thing carries an integer{" "}
@@ -181,6 +182,18 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           applicant cancelling. A stale tentative assignment is answered{" "}
           <code>409</code> with the current assignments, and the page shows them
           and a message, without repeating the click.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-compare">
+          <strong>Compare-and-set.</strong> Where a version column would be
+          heavy, a save carries the value the page last saw (
+          <code>expected</code>) and the server applies it only if that is still
+          the stored value; otherwise nothing changes and the answer is{" "}
+          <code>409 Conflict</code> with the current value. The Budget page uses
+          a version for the budget&apos;s three lines and compare-and-set for a
+          recruitment&apos;s average cost and hiring target, which the
+          recruitment&apos;s row shares with many other pages. The page keeps
+          what the user typed, says what is stored now, and offers{" "}
+          <em>Use theirs</em> and <em>Overwrite</em>.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-heartbeat">
           <strong>The client id and the heartbeat.</strong> Each tab makes a
@@ -642,6 +655,26 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #289
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-budget">
+              <td>Budget</td>
+              <td>
+                One quarter&apos;s budget (compare-and-set for a
+                recruitment&apos;s average cost and hiring target, keyed{" "}
+                <code>recruitment:&lt;id&gt;</code>)
+              </td>
+              <td>
+                <code>budget:&lt;quarter&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/290"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #290
                 </a>
               </td>
             </tr>

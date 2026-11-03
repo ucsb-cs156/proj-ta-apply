@@ -211,8 +211,8 @@ already have this page open for editing. We recommend that only one admin edits 
 time.* (later tab); *You already have this page open for editing in another tab or window. We
 recommend that only one admin edits this page at a time.* (later tab, admin page, own windows only).
 The banner takes `audience` (default, `"admin"`, and for #302 `"applicant"` and `"applicationAdmin"`, see (g)) and `newest`; the modal takes `audience` and is
-always the later tab. The Assignments page (#280) uses the admin audience; the other admin warnings
-(the budget and course editing) will.
+always the later tab. The Assignments page (#280) and the Budget page (#277) use the admin audience; the other admin warnings
+(course editing) will.
 
 The warning clears by itself. When an extra copy is closed it says goodbye, and the next heartbeat
 of the remaining copy lists no one, so the banner goes within a heartbeat. If the goodbye is lost,
@@ -451,6 +451,43 @@ choice.
 budget is now 45,000.00; you entered 40,000.00") and offers **Use theirs** and **Overwrite**.
 Overwrite re-sends with the current version. Letting the user force the issue is reasonable here:
 one field, one number, and the user can see both.
+
+**As built (#277).** `budgets` has a `version` column (JPA `@Version`, migration 058).
+`PUT /api/admin/budget` takes the `version` the page last saw and answers `409` with the quarter's
+summary as it now stands and its version; without a `version` the save is unconditional. The page
+sends each save one after another, with the version from the previous answer, and takes the version
+from a refused save, so a refusal updates the whole page to what is stored. Average cost and hiring
+target use compare-and-set: `PUT /api/admin/recruitments/avgCostPerPosition` and `/totalHiringTarget`
+take an optional `expected`, and answer `409` with the recruitment when the stored value is no
+longer that (a missing `expected` saves unconditionally, which is how a cost not yet entered is
+first set). The read, compare and write are one step within the server process (a lock), which is
+enough for a single instance; the key `recruitment:<id>` names the thing compared, though nothing
+is recorded under it. Per figure, a refusal leaves a notice with **Use theirs** and **Overwrite**;
+typing more in that box is kept for Overwrite and is not sent.
+
+The multi-tab warning is the mechanism of Part 1, used as the draft form uses it, with the noun
+"budget page" and key `budget:<quarter>`: `POST /api/admin/budget/heartbeat?quarter=` and
+`POST /api/admin/budget/leave?quarter=`, banner for every tab (with `audience="admin"`, and `newest`
+passed to the banner too, so that the later tab says "already has") and modal for the newest. The
+authorization is the admin role, checked by Spring before the controller runs, so a caller who is
+not an admin gets `403` and is neither recorded nor told any name nor able to remove anyone. A save
+(`X-Client-Id`) also counts the tab as present. Timing is the same two environment variables as for
+drafts. Different quarters never warn each other; the recruitment saves are not recorded under any
+key, since the heartbeat of the page already covers them.
+
+The wording is the shared one (#298), with nothing local to the page:
+
+| Who else has the page | Tab already open | Tab that arrived later |
+|---|---|---|
+| another admin | *phtcon@ucsb.edu (Phill Conrad) is also editing this budget page. We recommend that only one admin edits this page at a time.* | *phtcon@ucsb.edu (Phill Conrad) already has this budget page open for editing. We recommend that only one admin edits this page at a time.* |
+| only the admin's own tabs | *You are also editing this budget page in another tab or window. We recommend that only one admin edits this page at a time.* | *You already have this budget page open for editing in another tab or window. We recommend that only one admin edits this page at a time.* |
+
+Only admins can open the page, so the identity it records is marked `admin` by the shared
+`ApplicationsController.identityOf` (as the Assignments and Edit Application pages do, #302), and the
+heartbeat's entries are `{label, samePerson, admin}`; the page does not act on the flag. The
+`version` of an application (`056-add-version-to-applications`) is not touched by a budget save: the
+budget saves write the `budgets` row and two columns of a `recruitments` row, never an application.
+This change adds no dates or times, so the Pacific-time rules do not apply to it.
 
 **Risks.** Low. The budget is a planning figure and "changes are not audited" (see the `Budget`
 class comment), so there is no history to reconcile. The hiring target is shared with the
