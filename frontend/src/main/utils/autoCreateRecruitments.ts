@@ -1,3 +1,4 @@
+import { pacificWallClock } from "main/utils/pacificTime";
 import {
   nextQuarter,
   quarterOfDate,
@@ -19,7 +20,9 @@ export const WEEK_IN_DAYS = 7;
  * The quarter after the one today falls in, skipping Summer: Winter goes to Spring, Spring and
  * Summer to Fall, and Fall to Winter of the next year. As YYYYQ.
  */
-export const nextNonSummerQuarter = (today: Date = new Date()): string => {
+export const nextNonSummerQuarter = (
+  today: Date = pacificWallClock(),
+): string => {
   const next = nextQuarter(toNumericYYYYQ(quarterOfDate(today)));
   return String(next % 10 === 3 ? nextQuarter(next) : next);
 };
@@ -33,7 +36,9 @@ const previousQuarter = (yyyyq: number): number =>
  * so there are courses to work with) through the one after it, or the two after it in Spring, when
  * both the Summer and Fall schedules are available. As YYYYQ strings, oldest first.
  */
-export const selectableQuarters = (today: Date = new Date()): string[] => {
+export const selectableQuarters = (
+  today: Date = pacificWallClock(),
+): string[] => {
   const current = toNumericYYYYQ(quarterOfDate(today));
   const quarters: number[] = [current];
   for (let i = 0; i < 4; i++) {
@@ -72,7 +77,7 @@ export type AutoCreatePlan = {
 export const planAutoCreate = (
   recruitments: Pick<Recruitment, "quarter" | "type">[],
   quarter: string,
-  today: Date = new Date(),
+  today: Date = pacificWallClock(),
 ): AutoCreatePlan => {
   const exists = (type: "TA" | "ULA") =>
     recruitments.some((r) => r.quarter === quarter && r.type === type);

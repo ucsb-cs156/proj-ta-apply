@@ -2,17 +2,17 @@
   "databaseChangeLog": [
     {
       "changeSet": {
-        "id": "044-add-version-to-budgets",
+        "id": "056-add-version-to-applications",
         "author": "pc",
-        "comment": "A version on each budget, so that a save made from a stale copy of the Budget page is refused instead of overwriting another admin's change (issue #277).",
+        "comment": "A version on each application, so that an edit made from a stale copy (by the applicant or by an admin) is refused instead of overwriting the other's change (issue #302).",
         "preConditions": [
           { "onFail": "MARK_RAN" },
-          { "not": { "columnExists": { "tableName": "budgets", "columnName": "version" } } }
+          { "not": { "columnExists": { "tableName": "applications", "columnName": "version" } } }
         ],
         "changes": [
           {
             "addColumn": {
-              "tableName": "budgets",
+              "tableName": "applications",
               "columns": [
                 {
                   "column": {

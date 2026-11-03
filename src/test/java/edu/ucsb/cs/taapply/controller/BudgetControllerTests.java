@@ -550,7 +550,7 @@ public class BudgetControllerTests extends ControllerTestCase {
     assertEquals(
         List.of(
             new edu.ucsb.cs.taapply.concurrency.OtherClient(
-                "named@example.org (Nora Named)", false)),
+                "named@example.org (Nora Named)", false, true)),
         detector.othersActive("budget:20311", "observer"));
   }
 
@@ -575,8 +575,8 @@ public class BudgetControllerTests extends ControllerTestCase {
 
     assertEquals(
         List.of(
-            new edu.ucsb.cs.taapply.concurrency.OtherClient("blank@example.org", false),
-            new edu.ucsb.cs.taapply.concurrency.OtherClient("nameless@example.org", false)),
+            new edu.ucsb.cs.taapply.concurrency.OtherClient("blank@example.org", false, true),
+            new edu.ucsb.cs.taapply.concurrency.OtherClient("nameless@example.org", false, true)),
         detector.othersActive("budget:20312", "observer"));
   }
 }

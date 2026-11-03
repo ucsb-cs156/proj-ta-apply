@@ -4,6 +4,7 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.time.AppTime;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
 import edu.ucsb.cs156.jobs.services.JobService;
 import java.time.LocalDate;
@@ -49,7 +50,7 @@ public class RecruitmentCoursesRefreshScheduler {
       cron = "${app.recruitmentCourses.refreshCron:0 0 3 * * *}",
       zone = "America/Los_Angeles")
   public void refresh() {
-    refresh(LocalDate.now());
+    refresh(AppTime.today());
   }
 
   /** Launches one Populate job per recruitment eligible on the given day, pausing between them. */

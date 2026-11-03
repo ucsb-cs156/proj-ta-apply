@@ -3,6 +3,7 @@ import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import axios from "axios";
 import { apiErrorMessage } from "main/utils/apiError";
 import InterestMark from "main/components/Common/InterestMark";
+import { gpaText } from "main/utils/applicationFields";
 import {
   ENTHUSIASTIC,
   FIRST_CHOICE,
@@ -25,8 +26,15 @@ export type Candidate = {
   graduationDate: string | null;
   gpaMajor: number | null;
   gpaOverall: number | null;
+  /** Issue #292: no GPAs yet; the table says "First quarter" in their place. */
+  firstQuarter: boolean;
   previousServiceAsUla: number | null;
   videoLink: string | null;
+  /**
+   * The version of the course's whole ranking list that this row was read at (issue #279): the
+   * same on every row of one reading. A save names it, and is refused if the list has changed.
+   */
+  rankingVersion: number;
 };
 
 type Props = {
@@ -37,7 +45,23 @@ type Props = {
   applicationUrl: string;
   /** Called after each ranking is saved, so the page can re-read what depends on the rankings. */
   onSaved?: () => void;
+  /** Sent with every save, so that the server knows which tab is ranking (issue #279). */
+  headers?: Record<string, string>;
+  /**
+   * Called when a save is refused because the course's rankings changed (issue #279): reads the
+   * candidates again and resolves to them, or to null if they could not be read.
+   */
+  onConflict?: () => Promise<Candidate[] | null>;
 };
+
+/** Whether a failed request was the server refusing a stale save (409 Conflict). */
+const isConflict = (error: unknown): boolean =>
+  (error as { response?: { status?: number } } | null)?.response?.status ===
+  409;
+
+/** What a row says when its save was refused because the list changed under it (issue #279). */
+export const CONFLICT_MESSAGE =
+  "Rankings for this course changed while you were editing; your change has not been saved.";
 
 // Strongest interest first; "Not Interested" candidates appear only when the instructor asks.
 const preferences = [
@@ -78,6 +102,8 @@ export default function CandidateTable({
   apiUrl,
   onSaved,
   applicationUrl,
+  headers,
+  onConflict,
 }: Props): React.JSX.Element {
   const [ranks, setRanks] = useState<Record<number, string>>(() =>
     Object.fromEntries(
@@ -94,7 +120,14 @@ export default function CandidateTable({
   // The default sort reads the rankings as they were when it was applied, so that typing a
   // ranking does not move the row out from under the cursor. Default Sort applies it again.
   const [defaultRanks, setDefaultRanks] = useState(ranks);
-  const queues = useRef<Record<number, Promise<void>>>({});
+  // Every save carries the version of the whole list and moves it on, so the saves go one at a
+  // time, in the order they were made; a refused one makes the ones queued behind it stale too.
+  const queue = useRef<Promise<void> | null>(null);
+  const version = useRef(candidates[0]?.rankingVersion ?? 0);
+  const generation = useRef(0);
+  // The rows whose typed ranking the server has not accepted: they keep what was typed when the
+  // list is read again.
+  const unsaved = useRef<Set<number>>(new Set());
   const revisions = useRef<Record<number, number>>({});
   const active = useRef(true);
   useEffect(() => {
@@ -133,18 +166,53 @@ export default function CandidateTable({
       return;
     }
     setStates((previous) => ({ ...previous, [id]: "Saving..." }));
-    // Serialize writes for each candidate. Other candidates can save independently.
+    unsaved.current.add(id);
+    const attempt = generation.current;
+    const current = () => active.current && revisions.current[id] === revision;
+    const refuse = () => {
+      if (current()) {
+        setStates((previous) => ({ ...previous, [id]: CONFLICT_MESSAGE }));
+      }
+    };
     const write = async () => {
+      if (attempt !== generation.current) {
+        // Made against a list that has since been found out of date, so not sent.
+        refuse();
+        return;
+      }
       try {
-        await axios.put(`${apiUrl}/${id}/rank`, {
-          rank: value === "" ? null : Number(value),
-        });
+        const response = await axios.put(
+          `${apiUrl}/${id}/rank`,
+          { rank: value === "" ? null : Number(value) },
+          { params: { version: version.current }, headers },
+        );
+        version.current = response.data.version;
         onSaved?.();
-        if (active.current && revisions.current[id] === revision) {
+        if (current()) {
+          unsaved.current.delete(id);
           setStates((previous) => ({ ...previous, [id]: "Saved" }));
         }
       } catch (error) {
-        if (active.current && revisions.current[id] === revision) {
+        if (isConflict(error)) {
+          // Stryker disable next-line AssignmentOperator : any change makes the queued attempts stale
+          generation.current += 1;
+          refuse();
+          const fresh = (await onConflict?.()) ?? null;
+          if (fresh !== null) {
+            version.current = fresh[0]?.rankingVersion ?? version.current;
+            const read = Object.fromEntries(
+              fresh.map((c) => [c.applicationId, c.rank?.toString() ?? ""]),
+            );
+            // What the server now has, except in the boxes that hold an edit it has not accepted.
+            setRanks((previous) => ({
+              ...read,
+              ...Object.fromEntries(
+                [...unsaved.current].map((id) => [id, previous[id]]),
+              ),
+            }));
+            setDefaultRanks(read);
+          }
+        } else if (current()) {
           setStates((previous) => ({
             ...previous,
             [id]: `Save failed: ${apiErrorMessage(error)}`,
@@ -152,11 +220,11 @@ export default function CandidateTable({
         }
       }
     };
-    const pending = queues.current[id];
+    const pending = queue.current;
     const request = pending ? pending.then(write) : write();
-    queues.current[id] = request;
+    queue.current = request;
     void request.then(() => {
-      if (queues.current[id] === request) delete queues.current[id];
+      if (queue.current === request) queue.current = null;
     });
   }
 
@@ -344,9 +412,11 @@ export default function CandidateTable({
                               {states[candidate.applicationId]}
                             </span>
                           )}
-                          {states[candidate.applicationId]?.startsWith(
+                          {(states[candidate.applicationId]?.startsWith(
                             "Save failed:",
-                          ) && (
+                          ) ||
+                            states[candidate.applicationId] ===
+                              CONFLICT_MESSAGE) && (
                             <button
                               onClick={() =>
                                 save(
@@ -355,7 +425,10 @@ export default function CandidateTable({
                                 )
                               }
                             >
-                              Retry
+                              {states[candidate.applicationId] ===
+                              CONFLICT_MESSAGE
+                                ? "Save again"
+                                : "Retry"}
                             </button>
                           )}
                         </>
@@ -391,6 +464,9 @@ export default function CandidateTable({
                         ) : (
                           candidate.classLevel
                         )
+                      ) : column.key === "gpaMajor" ||
+                        column.key === "gpaOverall" ? (
+                        gpaText(candidate, candidate[column.key])
                       ) : (
                         candidate[column.key]
                       )}

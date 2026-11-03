@@ -17,7 +17,8 @@ export default {
       handlers: [
         http.put(
           "/api/instructor/recruitments/1/courses/2/candidates/:id/rank",
-          async ({ request }) => HttpResponse.json(await request.json()),
+          async ({ request }) =>
+            HttpResponse.json({ ...(await request.json()), version: 4 }),
         ),
       ],
     },
@@ -34,5 +35,17 @@ export const Tied = {
       ...candidate,
       rank: 1,
     })),
+  },
+};
+
+/** Issue #292: a first quarter applicant has no GPAs yet, so the cells say so. */
+export const FirstQuarterCandidate = {
+  args: {
+    type: "ULA",
+    candidates: candidatesFixtures.map((candidate, i) =>
+      i === 0
+        ? { ...candidate, firstQuarter: true, gpaMajor: null, gpaOverall: null }
+        : candidate,
+    ),
   },
 };

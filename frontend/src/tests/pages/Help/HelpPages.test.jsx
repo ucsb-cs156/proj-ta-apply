@@ -36,6 +36,110 @@ const renderPage = (page, initialEntries = ["/"]) =>
   );
 
 /**
+ * The last section of the instructor and admin pages (issue #279): "Simultaneous Editing" for the
+ * faculty rankings, with the warning as it appears (names included), what it means, the question
+ * put to the newer tab, and what to do.
+ */
+function expectRankingSimultaneousEditingSection(page, intro) {
+  const root = screen.getByTestId(page);
+  const heading = screen.getByRole("heading", {
+    level: 2,
+    name: "Simultaneous Editing",
+  });
+  expect(heading).toHaveAttribute("id", "simultaneous-editing");
+  // It ends the page: no other section follows it.
+  const headings = [...root.querySelectorAll("h2")];
+  expect(headings[headings.length - 1]).toBe(heading);
+  const lead = screen.getByTestId(`${page}-simultaneous-editing-ranking`);
+  expect(lead).toHaveTextContent(intro);
+
+  // A faithful picture of the warning, with a name: the shared banner for a ranking.
+  const example = screen.getByTestId(`${page}-simultaneous-editing-example`);
+  expect(example).toHaveTextContent(
+    "phtcon@ucsb.edu (Phill Conrad) is also editing this ranking. We recommend that only one admin edits this page at a time.",
+  );
+  expect(example).toHaveClass("alert", "alert-warning");
+  // It is a picture and not a warning about anything, so it is not announced.
+  expect(screen.queryByRole("alert")).toBeNull();
+
+  const meaning = screen.getByTestId(`${page}-simultaneous-editing-meaning`);
+  expect(meaning).toHaveTextContent(
+    "What it means. The rankings of the same course are open somewhere else",
+  );
+  expect(meaning).toHaveTextContent(
+    "This applies to the Candidate Ranking page",
+  );
+  expect(meaning).toHaveTextContent(
+    "Rankings for this course changed while you were editing; your change has not been saved.",
+  );
+  expect(meaning).toHaveTextContent("press Save again");
+  expect(meaning).toHaveTextContent(
+    "from a copy of the list that is out of date, and say Rankings for this course changed",
+  );
+  expect(meaning).toHaveTextContent(
+    "your change has not been saved. The table is then read again",
+  );
+  expect(meaning).toHaveTextContent(
+    "Rankings of a different course never cause a warning",
+  );
+  const modal = screen.getByTestId(`${page}-simultaneous-editing-modal`);
+  expect(modal).toHaveTextContent(
+    "The tab or window you opened last also asks what you want to do",
+  );
+  expect(modal).toHaveTextContent(
+    "The one you opened first only shows the warning",
+  );
+  expect(modal).toHaveTextContent(
+    "already have this ranking open for editing in other windows or tabs.",
+  );
+  const choices = screen.getByTestId(`${page}-simultaneous-editing-choices`);
+  expect(
+    [...choices.querySelectorAll("li > strong")].map((b) => b.textContent),
+  ).toEqual([
+    "Leave this page",
+    "Wait for the other tabs or windows to close, then resume here",
+    "Continue anyway",
+  ]);
+  expect(choices).toHaveTextContent("Your rankings are safe in the other one");
+  expect(choices).toHaveTextContent("then resume here keeps the page covered");
+  expect(choices).toHaveTextContent("closes by itself within a few seconds");
+  expect(choices).toHaveTextContent("The box does not come back");
+  const todo = screen.getByTestId(`${page}-simultaneous-editing-ranking-todo`);
+  expect(todo).toHaveTextContent(
+    "What to do. Close all the other tabs or windows that have this course's rankings open",
+  );
+  expect(todo).toHaveTextContent("about twenty seconds");
+  expect(lead.nextElementSibling).toBe(example);
+  expect(example.nextElementSibling).toBe(meaning);
+  expect(meaning.nextElementSibling).toBe(modal);
+  expect(modal.nextElementSibling).toBe(choices);
+  expect(choices.nextElementSibling).toBe(todo);
+  // Issue #302: on the admin page, editing a student's application follows it. Then comes the
+  // refresh section from #281, which still ends the page.
+  const application = screen.queryByTestId(
+    `${page}-simultaneous-editing-application`,
+  );
+  // Issue #280: then the Assignments page, a paragraph, its picture of the warning and a paragraph.
+  const assignmentsDetail = screen.queryByTestId(
+    `${page}-simultaneous-editing-assignments-detail`,
+  );
+  // Issue #277: then the Budget page, a paragraph, its picture, a paragraph and a paragraph.
+  const budgetConflict = screen.queryByTestId(
+    `${page}-simultaneous-editing-budget-conflict`,
+  );
+  const after = budgetConflict ?? assignmentsDetail ?? application ?? todo;
+  if (application !== null) {
+    expect(todo.nextElementSibling).toBe(application);
+    expect(application.nextElementSibling).toBe(
+      screen.getByTestId(`${page}-simultaneous-editing-assignments`),
+    );
+  }
+  expect(after.nextElementSibling).toBe(
+    screen.getByTestId(`${page}-simultaneous-editing-todo`),
+  );
+}
+
+/**
  * The last section of each applicant page (issue #273): "Simultaneous Editing", a picture of the
  * warning, what it means and what to do.
  */
@@ -84,6 +188,9 @@ function expectSimultaneousEditingSection(page) {
   expect(modal).toHaveTextContent(
     "The one you opened first only shows the warning",
   );
+  expect(modal).toHaveTextContent(
+    "You already have this application open for editing in another tab or window.",
+  );
   const choices = screen.getByTestId(`${page}-simultaneous-editing-choices`);
   expect(
     [...choices.querySelectorAll("li > strong")].map((b) => b.textContent),
@@ -107,89 +214,32 @@ function expectSimultaneousEditingSection(page) {
   expect(meaning.nextElementSibling).toBe(modal);
   expect(modal.nextElementSibling).toBe(choices);
   expect(choices.nextElementSibling).toBe(todo);
-  expect(root.lastElementChild).toBe(todo);
+  // Issue #281: the refresh that keeps applications open or closed current ends the section.
+  const refresh = screen.getByTestId(`${page}-simultaneous-editing-refresh`);
+  // Issue #302: what the applicant sees when an admin has the application open comes first.
+  const admin = screen.getByTestId(`${page}-simultaneous-editing-admin`);
+  expect(todo.nextElementSibling).toBe(admin);
+  expect(admin.nextElementSibling).toBe(refresh);
+  expect(admin).toHaveTextContent(
+    "Admin jane@ucsb.edu (Jane Doe) has this application open for editing. We recommend that you close this window and try again in a few minutes. If this message persists, please reach out to jane@ucsb.edu",
+  );
+  expect(admin).toHaveTextContent("refuses your save");
+  expect(root.lastElementChild).toBe(refresh);
+  expect(refresh).toHaveTextContent(
+    "Applications opening and closing. The home page and the application form refresh by themselves, without reloading, about every 15 seconds (somewhere between 10 and 20)",
+  );
+  expect(refresh).toHaveTextContent("There is no warning for that.");
+  expect(refresh).toHaveTextContent(
+    "your draft is kept, as of its last automatic save, but it can no longer be submitted",
+  );
+  expect(refresh).toHaveTextContent(
+    "If a page looks out of date, switch back to it, or reload it.",
+  );
   // The tip that used to carry this warning is gone.
   expect(screen.queryByTestId(`${page}-one-window`)).toBeNull();
 }
 
 describe("Help pages (issue #140)", () => {
-  test("admin help ends with Simultaneous Editing, in admin terms, with the budget warning and its names (issue #277)", async () => {
-    renderPage(<HelpAdminsPage />);
-    await screen.findByRole("heading", { level: 1 });
-    const root = screen.getByTestId("HelpAdminsPage");
-    const heading = screen.getByRole("heading", {
-      level: 2,
-      name: "Simultaneous Editing",
-    });
-    const headings = [...root.querySelectorAll("h2")];
-    expect(headings[headings.length - 1]).toBe(heading);
-
-    const page = "HelpAdminsPage-simultaneous-editing";
-    const intro = screen.getByTestId(`${page}-intro`);
-    expect(intro).toHaveTextContent(
-      "If you, or another admin, is editing the same thing at the same time, you may get a warning.",
-    );
-    expect(intro).toHaveTextContent(
-      "If another admin has the same quarter's budget open, the warning looks like this:",
-    );
-    expect(intro).toHaveTextContent(
-      "So far this is the Budget for Quarter page",
-    );
-    const example = screen.getByTestId(`${page}-example`);
-    expect(example).toHaveTextContent(
-      "phtcon@ucsb.edu (Phill Conrad) is also editing this budget. Please know that this is risky; we recommend closing all but one of these.",
-    );
-    expect(example).toHaveClass("alert", "alert-warning");
-    expect(screen.queryByRole("alert")).toBeNull();
-    const names = screen.getByTestId(`${page}-names`);
-    expect(names).toHaveTextContent('up to three and then "and 2 others"');
-    expect(names).toHaveTextContent(
-      "You are also editing this budget in another tab or window.",
-    );
-    expect(names).toHaveTextContent(
-      "You and phtcon@ucsb.edu (Phill Conrad) are also editing this budget in other windows or tabs.",
-    );
-    expect(names).toHaveTextContent(
-      "Two admins on different quarters never see it.",
-    );
-    expect(screen.getByTestId(`${page}-meaning`)).toHaveTextContent(
-      "What it means. The same quarter's budget is open somewhere else, in another tab or window of this browser, on another device, or by another admin.",
-    );
-    expect(screen.getByTestId(`${page}-modal`)).toHaveTextContent(
-      "The tab or window opened last also asks what you want to do",
-    );
-    const choices = screen.getByTestId(`${page}-choices`);
-    expect(
-      [...choices.querySelectorAll("li > strong")].map((b) => b.textContent),
-    ).toEqual([
-      "Leave this page",
-      "Wait for the other tabs or windows to close, then resume here",
-      "Continue anyway",
-    ]);
-    expect(choices).toHaveTextContent("The box does not come back");
-    expect(choices).toHaveTextContent(
-      "then resume here keeps the page covered",
-    );
-    const conflict = screen.getByTestId(`${page}-conflict`);
-    expect(conflict).toHaveTextContent(
-      "The TAs-only budget was changed in another tab or window. It is now $45,000.00; you entered $40,000.00.",
-    );
-    expect(conflict).toHaveTextContent(
-      "Choose Use theirs to keep what is stored",
-    );
-    expect(conflict).toHaveTextContent(
-      "or Overwrite to save what you typed over it",
-    );
-    const todo = screen.getByTestId(`${page}-todo`);
-    expect(todo).toHaveTextContent(
-      "What to do. Close all the other tabs or windows",
-    );
-    expect(todo).toHaveTextContent(
-      "within a few seconds after the other copies are closed",
-    );
-    expect(root.lastElementChild).toBe(todo);
-  });
-
   test("admin help distinguishes rankings CSV and explains historical export policy", async () => {
     renderPage(<HelpAdminsPage />);
     expect(
@@ -210,6 +260,9 @@ describe("Help pages (issue #140)", () => {
     );
     expect(screen.getByText(/TA columns are/)).toHaveTextContent(
       /TA columns are first name, last name, email, major, class level, year in program and expected graduation/,
+    );
+    expect(screen.getByText(/TA columns are/)).toHaveTextContent(
+      /ticked the first quarter box has no GPAs, and both columns read .First quarter./,
     );
     expect(screen.getByText(/TA columns are/)).toHaveTextContent(
       /ULA columns are first name, last name, email, major, year in program, expected graduation, GPA in major, overall GPA and quarters of previous ULA service/,
@@ -236,6 +289,10 @@ describe("Help pages (issue #140)", () => {
     expect(items).toHaveLength(9);
     expect(items[1]).toMatch(
       /major, whether you are a PhD or MS student, your year in the program, your GPA/,
+    );
+    // Issue #292: the box that stands in for the GPAs of a first quarter grad student.
+    expect(items[1]).toMatch(
+      /first quarter grad student.*check the box under the two GPA fields/,
     );
     expect(items[2]).toMatch(/residency status.*language exam/);
     expect(items[3]).toMatch(/courses you have taken, at UCSB or elsewhere/);
@@ -268,6 +325,10 @@ describe("Help pages (issue #140)", () => {
     ].map((li) => li.textContent);
     expect(items).toHaveLength(13);
     expect(items[0]).toMatch(/perm number/);
+    // Issue #292: the box that stands in for the GPAs of a first quarter student.
+    expect(items[1]).toMatch(
+      /first quarter at UCSB.*check the box under the two GPA fields/,
+    );
     expect(items[2]).toMatch(/served as a ULA before/);
     expect(items[3]).toMatch(/video with a teaching demonstration/);
     expect(items[5]).toMatch(/employee ID.*I-9/);
@@ -285,6 +346,26 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByText(/notices, terms and conditions for ULA applications/),
     ).toBeInTheDocument();
+  });
+
+  test("the instructors page ends with Simultaneous Editing for the rankings (issue #279)", async () => {
+    renderPage(<HelpInstructorsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Instructors" });
+
+    expectRankingSimultaneousEditingSection(
+      "HelpInstructorsPage",
+      "If you, or another instructor of the same course, or an admin who teaches it, is ranking the same course at the same time, you may get a warning that looks like this:",
+    );
+  });
+
+  test("the admins page ends with Simultaneous Editing for the rankings (issue #279)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    expectRankingSimultaneousEditingSection(
+      "HelpAdminsPage",
+      "If you, or another admin, or an instructor, is ranking the same course at the same time, you may get a warning that looks like this:",
+    );
   });
 
   test("the instructors page explains the Instructor section and the catalog name", async () => {
@@ -580,6 +661,13 @@ describe("Help pages (issue #140)", () => {
     // The version check.
     expect(text("version")).toMatch(/409 Conflict/);
     expect(text("version")).toMatch(/optimistic locking/);
+    // Issue #280: the recruitment-level version of the assignments.
+    expect(text("version")).toMatch(/assignmentsVersion/);
+    expect(text("version")).toMatch(/assignments_version =/);
+    expect(text("version")).toMatch(
+      /on every tentative assignment, on publishing or taking back, and on an applicant cancelling/,
+    );
+    expect(text("version")).toMatch(/without repeating the click/);
     // The client id and the heartbeat.
     expect(text("heartbeat")).toMatch(/crypto\.randomUUID\(\)/);
     expect(text("heartbeat")).toMatch(/X-Client-Id/);
@@ -600,6 +688,14 @@ describe("Help pages (issue #140)", () => {
     );
     expect(text("detector")).toMatch(/200 characters/);
     expect(text("detector")).toMatch(/never as markup/);
+    // The "already" form and the admin audience (issue #298).
+    expect(text("detector")).toMatch(/who is already there/);
+    expect(text("detector")).toMatch(/A already has this page open/);
+    expect(text("detector")).toMatch(/A and B already have this page open/);
+    expect(text("detector")).toMatch(/audience/);
+    expect(text("detector")).toMatch(
+      /only one admin edits this page at a time/,
+    );
     // Authorization.
     expect(text("authorization")).toMatch(/before it records the caller/);
     expect(text("authorization")).toMatch(/403/);
@@ -668,17 +764,69 @@ describe("Help pages (issue #140)", () => {
     expect(text("limits")).toMatch(/one server process only/);
     expect(text("limits")).toMatch(/hidden tabs/);
     expect(text("limits")).not.toMatch(/CONCURRENCY_WINDOW_SECONDS/);
-    // The refresh that other pages will use, and that it is not built yet.
-    for (const setting of [
-      "ADMIN_REFRESH_SEC=5",
-      "ADMIN_REFRESH_JITTER=3",
-      "NON_ADMIN_REFRESH=15",
-      "NON_ADMIN_JITTER=5",
-    ]) {
-      expect(text("refresh")).toContain(setting);
-    }
-    expect(text("refresh")).toMatch(/issues #281 and #282/);
-    expect(text("refresh")).toMatch(/This is not implemented yet\./);
+    // Issue #281: the refresh that keeps recruitment state fresh, in place of a warning.
+    expect(text("refresh")).toMatch(
+      /no version check, no detector and no banner/,
+    );
+    expect(text("refresh")).toMatch(/without a page reload/);
+    expect(text("refresh")).toMatch(/a repeated Close does not stamp/);
+    expect(text("refresh-how")).toMatch(/useRefreshingBackend/);
+    expect(text("refresh-how")).toMatch(/refetchInterval/);
+    expect(text("refresh-how")).toMatch(/freshly drawn random time/);
+    expect(text("refresh-how")).toMatch(/uniform between base minus jitter/);
+    expect(text("refresh-how")).toMatch(/synchronized waves of requests/);
+    expect(text("refresh-how")).toMatch(/nextRefreshMs\(timing, random\)/);
+    expect(text("refresh-how")).toMatch(/even one who is also an instructor/);
+    expect(text("refresh-how")).toMatch(/hidden tab does not refresh/);
+    const refreshTable = screen.getByTestId(
+      "HelpDeveloperPage-simultaneous-refresh-table",
+    );
+    expect(
+      [...refreshTable.querySelectorAll("tbody tr")].map((tr) =>
+        [...tr.querySelectorAll("td")].map((td) => td.textContent),
+      ),
+    ).toEqual([
+      ["ADMIN_REFRESH_SEC", "5", "Mean seconds between refreshes for admins."],
+      [
+        "ADMIN_REFRESH_JITTER",
+        "3",
+        "Admins wait uniformly between 5 - 3 and 5 + 3 seconds (2 to 8).",
+      ],
+      [
+        "NON_ADMIN_REFRESH",
+        "15",
+        "Mean seconds between refreshes for instructors and students.",
+      ],
+      [
+        "NON_ADMIN_JITTER",
+        "5",
+        "Instructors and students wait uniformly between 15 - 5 and 15 + 5 seconds (10 to 20).",
+      ],
+    ]);
+    expect(text("refresh-rules")).toMatch(
+      /below 1 second is replaced by its default/,
+    );
+    expect(text("refresh-rules")).toMatch(/larger than its mean/);
+    expect(text("refresh-rules")).toMatch(
+      /no wait is ever shorter than 1 second/,
+    );
+    expect(text("refresh-deploy")).toMatch(/build-time variables only/);
+    expect(text("refresh-deploy")).toMatch(/\/api\/systemInfo/);
+    expect(text("refresh-deploy")).toMatch(
+      /restart the server: no rebuild is needed/,
+    );
+    expect(text("refresh-pages")).toMatch(/HOME_PAGE_QUERY_KEYS/);
+    expect(text("refresh-pages")).toMatch(
+      /\/api\/admin\/recruitments\/\{id\}\/steps/,
+    );
+    expect(text("refresh-pages")).toMatch(
+      /faculty ranking page's header state/,
+    );
+    expect(text("refresh-pages")).toMatch(/never asks an admin endpoint/);
+    expect(text("refresh-input")).toMatch(
+      /never replaces what a person is typing/,
+    );
+    expect(text("refresh-input")).toMatch(/no longer be submitted/);
 
     // Only what has landed is in the table.
     const table = screen.getByTestId("HelpDeveloperPage-simultaneous-table");
@@ -686,7 +834,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(6);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -695,21 +843,8 @@ describe("Help pages (issue #140)", () => {
       "draft:<draftId>",
       "#283, #285",
     ]);
-    // Issue #277: the Budget page.
-    expect(
-      [...rows[1].querySelectorAll("td")].map((td) => td.textContent),
-    ).toEqual([
-      "Budget",
-      "One quarter's budget (compare-and-set for a recruitment's average cost and hiring target, keyed recruitment:<id>)",
-      "budget:<quarter>",
-      "#290",
-    ]);
-    expect(rows[1].querySelector("a")).toHaveAttribute(
-      "href",
-      "https://github.com/ucsb-cs156/proj-ta-apply/pull/290",
-    );
     expect(text("editing")).toMatch(
-      /draft application form and the Budget page use them so far/,
+      /the assignments page and the Budget page use them/,
     );
     expect(text("compare")).toMatch(/expected/);
     expect(text("compare")).toMatch(/409 Conflict/);
@@ -725,6 +860,272 @@ describe("Help pages (issue #140)", () => {
     expect(rows[0].querySelectorAll("a")[1]).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/285",
+    );
+    // Issue #281: a refresh, so no key.
+    expect(
+      [...rows[1].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Recruitment settings and steps, for admins, instructors and students",
+      "Background refresh; no warning, no version check, no detector",
+      "None (refresh, not a key)",
+      "#286",
+    ]);
+    expect(rows[1].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/286",
+    );
+    // Issue #279: faculty rankings.
+    expect(
+      [...rows[2].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Faculty rankings",
+      "One recruitment course's ranking list",
+      "ranking:<recruitmentCourseId>",
+      "#287",
+    ]);
+    expect(rows[2].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/287",
+    );
+    // Issue #302: a submitted application, edited by its applicant or by an admin.
+    expect(
+      [...rows[3].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Student apply page when editing a submitted application, and the Admin application edit page",
+      "One application, edited by its applicant or by an admin",
+      "application:<applicationId>",
+      "#308",
+    ]);
+    expect(rows[3].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/308",
+    );
+    // Issue #280: the whole assignments page.
+    expect(
+      [...rows[4].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Assignments (admin)",
+      "The whole assignments page for one recruitment",
+      "assignments:<recruitmentId>",
+      "#289",
+    ]);
+    expect(rows[4].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/289",
+    );
+    // Issue #277: the Budget page.
+    expect(
+      [...rows[5].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Budget",
+      "One quarter's budget (compare-and-set for a recruitment's average cost and hiring target, keyed recruitment:<id>)",
+      "budget:<quarter>",
+      "#290",
+    ]);
+    expect(rows[5].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/290",
+    );
+    for (const phrase of [
+      "bumped by every rank edit and by the Developer Mode fake rankings job",
+      "no row means version 0",
+      "a rank save names it as ?version=",
+      "single compare-and-set statement",
+      "only one is accepted",
+      "409 Conflict with the current version",
+      "keeps what the instructor typed in its box and offers Save again",
+      "never wrongly accepted",
+      "an instructor of another course, or an admin who does not teach the course, gets 403 and is neither recorded nor told who is there",
+      "ranking:<recruitmentCourseId>",
+    ]) {
+      expect(text("ranking")).toContain(phrase);
+    }
+  });
+
+  /** Issue #281: the last section of the admin and instructor pages. */
+  test.each([
+    [
+      "HelpAdminsPage",
+      HelpAdminsPage,
+      "If you, or another admin, is editing the same thing at the same time, you may get a warning on some pages",
+      "about every 5 seconds (somewhere between 2 and 8, chosen at random each time)",
+    ],
+    [
+      "HelpInstructorsPage",
+      HelpInstructorsPage,
+      "Where a recruitment is in the process",
+      "about every 15 seconds (somewhere between 10 and 20, chosen at random each time)",
+    ],
+  ])(
+    "%s ends with a Simultaneous Editing section about the refresh",
+    async (page, Page, opening, interval) => {
+      renderPage(<Page />);
+      const heading = await screen.findByRole("heading", {
+        level: 2,
+        name: "Simultaneous Editing",
+      });
+      const root = screen.getByTestId(page);
+      const headings = [...root.querySelectorAll("h2")];
+      expect(headings[headings.length - 1]).toBe(heading);
+      expect(heading).toHaveAttribute("id", "simultaneous-editing");
+
+      const refresh = screen.getByTestId(
+        `${page}-simultaneous-editing-refresh`,
+      );
+      expect(refresh).toHaveTextContent(opening);
+      expect(refresh.textContent).toMatch(
+        /refreshes by itself|refresh by themselves/,
+      );
+      expect(refresh).toHaveTextContent(interval);
+      expect(refresh).toHaveTextContent("no warning");
+      const todo = screen.getByTestId(`${page}-simultaneous-editing-todo`);
+      expect(todo).toHaveTextContent("What to do. If a page looks out of date");
+      expect(todo).toHaveTextContent(
+        "switch back to it and it updates at once",
+      );
+      expect(todo).toHaveTextContent("reload the page");
+      expect(heading.nextElementSibling).toBe(refresh);
+      expect(root.lastElementChild).toBe(todo);
+    },
+  );
+
+  test("the admin section says what is safe and when about 15 seconds applies", async () => {
+    renderPage(<HelpAdminsPage />);
+    const safe = await screen.findByTestId(
+      "HelpAdminsPage-simultaneous-editing-safe",
+    );
+    expect(safe).toHaveTextContent(
+      "closing applications that are already closed changes nothing",
+    );
+    expect(safe).toHaveTextContent(
+      "a step whose prerequisites are not met is refused",
+    );
+    expect(safe).toHaveTextContent("it closes itself and tells you");
+    expect(safe).toHaveTextContent(
+      "A date you are typing is never replaced by a refresh.",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-simultaneous-editing-refresh"),
+    ).toHaveTextContent(
+      "and so do instructors and students, about every 15 seconds",
+    );
+  });
+
+  test("the admin section describes editing a student's application (issue #302)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const note = await screen.findByTestId(
+      "HelpAdminsPage-simultaneous-editing-application",
+    );
+    expect(note).toHaveTextContent(
+      "chris@ucsb.edu (Chris Student) already has this application open for editing. We recommend that you wait a few minutes or ask them to close it.",
+    );
+    expect(note).toHaveTextContent(
+      "We recommend that only one admin edits this page at a time.",
+    );
+    expect(note).toHaveTextContent(
+      "Applications of different students never cause a warning.",
+    );
+    expect(note.nextElementSibling).toBe(
+      screen.getByTestId("HelpAdminsPage-simultaneous-editing-assignments"),
+    );
+  });
+
+  test("the admin section describes the Assignments page's warning, with the shared admin wording, and its version check (issue #280)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const intro = await screen.findByTestId(
+      "HelpAdminsPage-simultaneous-editing-assignments",
+    );
+    expect(intro).toHaveTextContent(
+      "The Assignments page. The whole Assignments page of one recruitment counts as one thing",
+    );
+    expect(intro).toHaveTextContent(
+      "Only one tab or window, and one admin, should have it open at a time.",
+    );
+    const example = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-assignments-example",
+    );
+    expect(example).toHaveTextContent(
+      "phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page. We recommend that only one admin edits this page at a time.",
+    );
+    expect(example).toHaveClass("alert", "alert-warning");
+    // A picture of the warning, not a warning about anything, so it is not announced.
+    expect(screen.queryByRole("alert")).toBeNull();
+    const detail = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-assignments-detail",
+    );
+    expect(detail).toHaveTextContent(
+      "the warning only appears for the Assignments page of the same recruitment",
+    );
+    expect(detail).toHaveTextContent(
+      "Assignments changed while you were working. The page has been refreshed; please check the placement and try again.",
+    );
+    expect(detail).toHaveTextContent("Your click is not repeated for you.");
+    // It sits inside the one Simultaneous Editing section, which still ends the page.
+    expect(
+      screen.getAllByRole("heading", {
+        level: 2,
+        name: "Simultaneous Editing",
+      }),
+    ).toHaveLength(1);
+    expect(intro.nextElementSibling).toBe(example);
+    expect(example.nextElementSibling).toBe(detail);
+    expect(detail.nextElementSibling).toBe(
+      screen.getByTestId("HelpAdminsPage-simultaneous-editing-budget"),
+    );
+  });
+
+  test("the admin section describes the Budget page's warning with the shared admin wording, and its refused saves (issue #277)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const page = "HelpAdminsPage-simultaneous-editing";
+    const intro = await screen.findByTestId(`${page}-budget`);
+    expect(intro).toHaveTextContent(
+      "The Budget for Quarter page. One quarter's budget counts as one thing.",
+    );
+    const example = screen.getByTestId(`${page}-budget-example`);
+    expect(example).toHaveTextContent(
+      "phtcon@ucsb.edu (Phill Conrad) is also editing this budget page. We recommend that only one admin edits this page at a time.",
+    );
+    expect(example).toHaveClass("alert", "alert-warning");
+    expect(screen.queryByRole("alert")).toBeNull();
+    const names = screen.getByTestId(`${page}-budget-names`);
+    expect(names).toHaveTextContent('up to three and then "and 2 others"');
+    expect(names).toHaveTextContent(
+      "You are also editing this budget page in another tab or window.",
+    );
+    expect(names).toHaveTextContent(
+      "You and phtcon@ucsb.edu (Phill Conrad) are also editing this budget page in other windows or tabs.",
+    );
+    expect(names).toHaveTextContent(
+      "Two admins on different quarters never see it.",
+    );
+    expect(names).toHaveTextContent(
+      "The tab or window opened last also asks the same question as for rankings (Leave this page, wait, or Continue anyway)",
+    );
+    expect(names).toHaveTextContent(
+      'says "already has" instead of "is also editing"',
+    );
+    const conflict = screen.getByTestId(`${page}-budget-conflict`);
+    expect(conflict).toHaveTextContent(
+      "The TAs-only budget was changed in another tab or window. It is now $45,000.00; you entered $40,000.00.",
+    );
+    expect(conflict).toHaveTextContent(
+      "Choose Use theirs to keep what is stored",
+    );
+    expect(conflict).toHaveTextContent(
+      "or Overwrite to save what you typed over it",
+    );
+    // Still one section, which still ends the page.
+    expect(
+      screen.getAllByRole("heading", {
+        level: 2,
+        name: "Simultaneous Editing",
+      }),
+    ).toHaveLength(1);
+    expect(intro.nextElementSibling).toBe(example);
+    expect(example.nextElementSibling).toBe(names);
+    expect(names.nextElementSibling).toBe(conflict);
+    expect(conflict.nextElementSibling).toBe(
+      screen.getByTestId(`${page}-todo`),
     );
   });
 
@@ -822,7 +1223,7 @@ describe("Help pages (issue #140)", () => {
       screen
         .getByTestId("HelpAdminsPage-recruitment-buttons")
         .querySelectorAll("li"),
-    ).toHaveLength(9);
+    ).toHaveLength(10);
     expect(
       screen.getByText(/first open stamps the actual opening date/),
     ).toBeInTheDocument();
@@ -964,6 +1365,29 @@ describe("Help pages (issue #140)", () => {
     expect(applicationColumns.closest("li")).toHaveTextContent(
       "Applications. The list of applications",
     );
+    // Issue #296: the Draft Applications button and page.
+    const draftApplications = screen.getByTestId(
+      "HelpAdminsPage-draft-applications",
+    );
+    expect(draftApplications.id).toBe("draft-applications");
+    expect(draftApplications).toHaveTextContent(
+      "Draft Applications. The applications students have started but not yet submitted, which are not considered until they are.",
+    );
+    expect(draftApplications).toHaveTextContent(
+      "except that there is no Edit column, since an admin may not change what a student has written, and Submitted is replaced by Last saved.",
+    );
+    expect(draftApplications).toHaveTextContent(
+      "When the student submits, the draft leaves this page and your comments are copied to the new application's Admin Comments.",
+    );
+    expect(draftApplications).toHaveTextContent(
+      "There is no CSV download of drafts",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-recruitment-buttons"),
+    ).toHaveTextContent("Draft Applications. The applications students");
+    expect(applicationColumns.closest("li").previousElementSibling).toBe(
+      draftApplications,
+    );
     // Issue #174: the hiring target and per-course allocations, in the Courses section.
     const hiring = screen.getByTestId("HelpAdminsPage-hiring-target");
     expect(hiring.id).toBe("hiring-target");
@@ -1070,14 +1494,17 @@ describe("Help pages (issue #140)", () => {
     );
     expect(buttons[2]).toMatch(/from the schedule\. Populate re-runs the job/);
     expect(buttons[2]).toMatch(/finds it again\. Remove takes a lecture out/);
-    expect(buttons[5]).toMatch(/Each has a View page \(everything/);
-    expect(buttons[6]).toMatch(
+    expect(buttons[5]).toMatch(
+      /^Draft Applications\. The applications students have started but not yet submitted/,
+    );
+    expect(buttons[6]).toMatch(/Each has a View page \(everything/);
+    expect(buttons[7]).toMatch(
       /^Assignments\. The faculty rankings of every real applicant side by side, one column per lecture, with a Tentative Assignment dropdown on each row/,
     );
-    expect(buttons[7]).toMatch(
+    expect(buttons[8]).toMatch(
       /^Published Assignments\. Shown once Publish Assignments has been clicked at the bottom of the Courses page: the read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\./,
     );
-    expect(buttons[8]).toMatch(/^Delete\. Removes the recruitment/);
+    expect(buttons[9]).toMatch(/^Delete\. Removes the recruitment/);
     expect(
       document.getElementById("ta-app-settings").nextElementSibling.textContent,
     ).toMatch(/the Majors list and the Topics list \(the areas/);
@@ -1270,5 +1697,29 @@ describe("Help pages (issue #140)", () => {
     expect(
       within(paragraph).getByRole("link", { name: "Recruitment Steps" }),
     ).toHaveAttribute("href", "/help/recruitment-steps");
+  });
+
+  test("the pages say that every time is Pacific Time (issue #293)", async () => {
+    renderPage(<HelpTaApplicantsPage />);
+    expect(
+      screen.getByTestId("HelpTaApplicantsPage-time-zone"),
+    ).toHaveTextContent("Every date and time on this site is in Pacific Time");
+    cleanup();
+    renderPage(<HelpUlaApplicantsPage />);
+    expect(
+      screen.getByTestId("HelpUlaApplicantsPage-time-zone"),
+    ).toHaveTextContent("Every date and time on this site is in Pacific Time");
+    cleanup();
+    renderPage(<HelpDeveloperPage />);
+    expect(
+      screen.getByTestId("HelpDeveloperPage-dates-and-times"),
+    ).toHaveTextContent("Every date and time the app shows or accepts");
+    cleanup();
+    renderPage(<HelpAdminsPage />);
+    expect(
+      document.getElementById("audit-trail").nextElementSibling,
+    ).toHaveTextContent(
+      "like every date and time on this site, are Pacific Time",
+    );
   });
 });

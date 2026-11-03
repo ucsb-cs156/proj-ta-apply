@@ -92,4 +92,49 @@ public class SystemInfoServiceImplTests {
     assertEquals("20211", systemInfo.getStartQtrYYYYQ());
     assertEquals("20252", systemInfo.getEndQtrYYYYQ());
   }
+
+  private static SystemInfoServiceImpl serviceWithRefresh(
+      String adminSec, String adminJitter, String nonAdminSec, String nonAdminJitter) {
+    SystemInfoServiceImpl service = new SystemInfoServiceImpl();
+    ReflectionTestUtils.setField(service, "gitProperties", null);
+    ReflectionTestUtils.setField(service, "ucsbQuarterService", stubQuarterService("20244"));
+    ReflectionTestUtils.setField(service, "adminRefreshSec", adminSec);
+    ReflectionTestUtils.setField(service, "adminRefreshJitter", adminJitter);
+    ReflectionTestUtils.setField(service, "nonAdminRefreshSec", nonAdminSec);
+    ReflectionTestUtils.setField(service, "nonAdminRefreshJitter", nonAdminJitter);
+    return service;
+  }
+
+  /** Issue #281: the defaults reach the payload when nothing is configured. */
+  @Test
+  public void testGetSystemInfo_refreshSettingsDefaultWhenUnset() {
+    SystemInfo systemInfo = serviceWithRefresh(null, null, null, null).getSystemInfo();
+
+    assertEquals(5.0, systemInfo.getAdminRefreshSec());
+    assertEquals(3.0, systemInfo.getAdminRefreshJitter());
+    assertEquals(15.0, systemInfo.getNonAdminRefresh());
+    assertEquals(5.0, systemInfo.getNonAdminJitter());
+  }
+
+  /** Issue #281: each of the four settings reaches the payload from its own field. */
+  @Test
+  public void testGetSystemInfo_refreshSettingsComeFromTheirOwnProperties() {
+    SystemInfo systemInfo = serviceWithRefresh("10", "2", "30", "7").getSystemInfo();
+
+    assertEquals(10.0, systemInfo.getAdminRefreshSec());
+    assertEquals(2.0, systemInfo.getAdminRefreshJitter());
+    assertEquals(30.0, systemInfo.getNonAdminRefresh());
+    assertEquals(7.0, systemInfo.getNonAdminJitter());
+  }
+
+  /** A bad base or jitter falls back to the default, and a jitter is kept within its base. */
+  @Test
+  public void testGetSystemInfo_badRefreshSettingsFallBack() {
+    SystemInfo systemInfo = serviceWithRefresh("abc", "99", "2", "-1").getSystemInfo();
+
+    assertEquals(5.0, systemInfo.getAdminRefreshSec());
+    assertEquals(3.0, systemInfo.getAdminRefreshJitter());
+    assertEquals(2.0, systemInfo.getNonAdminRefresh());
+    assertEquals(2.0, systemInfo.getNonAdminJitter());
+  }
 }

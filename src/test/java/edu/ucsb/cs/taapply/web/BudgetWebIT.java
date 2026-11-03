@@ -63,7 +63,8 @@ public class BudgetWebIT extends WebTestCase {
     assertThat(otherPage.getByTestId(BANNER)).isVisible(wait);
     assertThat(page.getByTestId(BANNER)).isVisible(wait);
     assertThat(page.getByTestId(BANNER))
-        .containsText("You are also editing this budget in another tab or window.");
+        .containsText(
+            "You are also editing this budget page in another tab or window. We recommend that only one admin");
     // Only the newer window is asked what to do.
     assertThat(otherPage.getByTestId(BANNER + "-modal-leave")).isVisible();
     assertThat(page.getByTestId(BANNER + "-modal-leave")).not().isVisible();

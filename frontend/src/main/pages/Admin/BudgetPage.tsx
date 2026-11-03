@@ -226,7 +226,9 @@ function BudgetForQuarter({
         {header}
         <MultipleTabsBanner
           others={activity.others}
-          noun="budget"
+          noun="budget page"
+          audience="admin"
+          newest={activity.newest}
           testId="BudgetPage-multiple-tabs"
         />
         {/* Only the newest tab is asked; the older ones keep the banner alone. */}
@@ -234,7 +236,8 @@ function BudgetForQuarter({
           others={activity.others}
           newest={activity.newest}
           arrivedAt={activity.arrivedAt}
-          noun="budget"
+          noun="budget page"
+          audience="admin"
           onLeave={() => {
             activity.leave();
             navigate("/");

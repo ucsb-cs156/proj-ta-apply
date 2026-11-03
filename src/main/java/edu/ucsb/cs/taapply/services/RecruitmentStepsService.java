@@ -7,6 +7,7 @@ import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +30,7 @@ public class RecruitmentStepsService {
 
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired AssignmentsService assignmentsService;
+  @Autowired DraftApplicationRepository draftApplicationRepository;
 
   /** A link the diagram draws: a word of a title, or a "(see rankings)" line. */
   public record Link(String text, String href) {}
@@ -40,8 +42,8 @@ public class RecruitmentStepsService {
    *     applications" under steps 2 and 4 (issue #249)
    * @param action the card modal the title opens, instead of {@code href}
    * @param titleLinks step 3 only: the words "Budget" and "Allocations", each its own link
-   * @param links the links under the box: "(see courses)", "(see applications)", "(see
-   *     allocations)", "(see rankings)" and "(see assignments)", one per line
+   * @param links the links under the box: "(see courses)", "(see draft applications)", "(see
+   *     applications)", "(see allocations)", "(see rankings)" and "(see assignments)", one per line
    * @param tentative step 9 only: hiring decisions are released but applications or faculty ranking
    *     have been reopened
    * @param blockedReason step 9 only, while not released: the message naming the first prerequisite
@@ -94,6 +96,12 @@ public class RecruitmentStepsService {
     String applications = "/admin/recruitments/" + id + "/applications";
     String coursesCount = count(activeCourses.size(), "course");
     String applicationsCount = count(realApplications.size(), "application");
+    String draftsCount =
+        count(draftApplicationRepository.countByRecruitmentId(id), "draft application");
+    List<Link> seeDrafts =
+        List.of(
+            new Link(
+                "(see draft applications)", "/admin/recruitments/" + id + "/draft-applications"));
     List<Link> seeApplications = List.of(new Link("(see applications)", applications));
     List<Link> seeRankings = List.of(new Link("(see rankings)", courses));
     List<Link> seeAssignments = List.of(new Link("(see assignments)", courses));
@@ -121,11 +129,11 @@ public class RecruitmentStepsService {
                 opened
                     ? "Opened: " + recruitment.getActualOpeningDate()
                     : "Tentative: " + orNotSet(recruitment.getTentativeOpeningDate()),
-                applicationsCount,
+                draftsCount,
                 null,
                 applicationsAction,
                 null,
-                seeApplications,
+                seeDrafts,
                 null,
                 null),
             new Step(
@@ -224,7 +232,7 @@ public class RecruitmentStepsService {
   }
 
   /** "1 course" or "7 courses". */
-  private static String count(int n, String noun) {
+  private static String count(long n, String noun) {
     return n + " " + noun + (n == 1 ? "" : "s");
   }
 

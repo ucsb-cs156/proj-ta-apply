@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import ApplicationSummary from "main/components/Applications/ApplicationSummary";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import noticesFixtures from "fixtures/noticesFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 
 describe("ApplicationSummary tests", () => {
   test("shows the common answers", () => {
@@ -25,6 +26,27 @@ describe("ApplicationSummary tests", () => {
     expect(
       screen.getByTestId("ApplicationSummary-Expected Graduation"),
     ).toHaveTextContent("S27");
+  });
+
+  test("says First quarter in place of the GPAs of a first quarter applicant (issue #292)", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneTaApplication,
+          firstQuarter: true,
+          gpaMajor: null,
+          gpaOverall: null,
+        }}
+        type="TA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("ApplicationSummary-GPA in Major"),
+    ).toHaveTextContent("First quarter");
+    expect(
+      screen.getByTestId("ApplicationSummary-Overall GPA"),
+    ).toHaveTextContent("First quarter");
   });
 
   test("shows the notice version agreed to, ticked and read-only", () => {
@@ -615,9 +637,7 @@ describe("ApplicationSummary tests", () => {
 
     const row = screen.getByTestId("ApplicationSummary-Cancelled");
     expect(row).toHaveTextContent("Found other employment");
-    expect(row).toHaveTextContent(
-      new Date("2026-02-03T04:05:00").toLocaleString(),
-    );
+    expect(row).toHaveTextContent("2/3/2026, 4:05:00 AM");
     // It comes before everything else.
     expect(
       row.compareDocumentPosition(
@@ -634,5 +654,100 @@ describe("ApplicationSummary tests", () => {
       />,
     );
     expect(screen.queryByTestId("ApplicationSummary-Cancelled")).toBeNull();
+  });
+
+  // ---- issue #296: the same summary shows a draft ----
+
+  const yesNoLabels = [
+    "Available for a First Choice Lecture",
+    "Available for a First Choice Discussion",
+    "Available for a Second Choice Lecture",
+    "Available for a Second Choice Discussion",
+  ];
+
+  test("a draft's yes/no questions the applicant has not answered read as blank, not No", () => {
+    render(
+      <ApplicationSummary
+        application={draftApplicationsFixtures.emptyUlaDraft}
+        type="ULA"
+        draft
+      />,
+    );
+
+    yesNoLabels.forEach((label) =>
+      expect(
+        screen.getByTestId(`ApplicationSummary-${label}`).textContent,
+      ).toBe(""),
+    );
+    expect(
+      screen.getByTestId("ApplicationSummary-Perm Number").textContent,
+    ).toBe("");
+  });
+
+  test("a draft's answered yes/no questions read Yes or No", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...draftApplicationsFixtures.savedUlaDraft,
+          availableForLecturesFirstChoice: true,
+        }}
+        type="ULA"
+        draft
+      />,
+    );
+
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-Available for a First Choice Lecture",
+      ).textContent,
+    ).toBe("Yes");
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-Available for a Second Choice Lecture",
+      ).textContent,
+    ).toBe("No");
+    expect(screen.getByTestId("ApplicationSummary-Name")).toHaveTextContent(
+      "Dana Draft",
+    );
+  });
+
+  test("a submitted application with an unanswered yes/no question still reads No", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneUlaApplication,
+          availableForLecturesFirstChoice: null,
+        }}
+        type="ULA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId(
+        "ApplicationSummary-Available for a First Choice Lecture",
+      ).textContent,
+    ).toBe("No");
+  });
+
+  test("a draft shows the same rows as an application, in the same order", () => {
+    const labels = () =>
+      [...document.querySelectorAll("dt")].map((dt) => dt.textContent);
+    const { unmount } = render(
+      <ApplicationSummary
+        application={draftApplicationsFixtures.savedUlaDraft}
+        type="ULA"
+        draft
+      />,
+    );
+    const forDraft = labels();
+    unmount();
+    render(
+      <ApplicationSummary
+        application={applicationsFixtures.oneUlaApplication}
+        type="ULA"
+      />,
+    );
+
+    expect(forDraft).toEqual(labels());
   });
 });

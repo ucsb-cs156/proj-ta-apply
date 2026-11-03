@@ -5,7 +5,6 @@ import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
 import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
 import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.entity.Budget;
-import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.services.BudgetService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -154,17 +153,10 @@ public class BudgetController extends ApiController {
   }
 
   /**
-   * Who the current user is to the detector: the email address is the person, and the label other
-   * people see is the email address followed by the full name in parentheses, if there is one.
+   * Who the current user is to the detector: the shared identity, marked as an admin (issue #302).
    */
   private ClientIdentity identity() {
-    User user = getCurrentUser().getUser();
-    String name = user.getFullName();
-    String label =
-        name == null || name.isBlank()
-            ? user.getEmail()
-            : user.getEmail() + " (" + name.trim() + ")";
-    return new ClientIdentity(user.getEmail(), label);
+    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);
   }
 
   /** What a refused save tells the page: why, and the quarter as it now stands. */

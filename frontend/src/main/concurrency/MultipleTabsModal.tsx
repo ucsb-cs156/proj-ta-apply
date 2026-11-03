@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Modal from "react-bootstrap/Modal";
-import { RISK_SENTENCE, describeOthers, type OtherClient } from "./others";
+import { warningMessage, type Audience, type OtherClient } from "./others";
 
 /** How long Enter is ignored after the modal appears, so a keystroke meant for the form is safe. */
 export const ENTER_IGNORED_MS = 1000;
@@ -19,6 +19,8 @@ type MultipleTabsModalProps = {
   arrivedAt: number;
   /** What is open twice, as it should read in the sentence: "application", "budget". */
   noun: string;
+  /** Who is reading it, which decides the closing sentence; "default" if not said. */
+  audience?: Audience;
   /** Called when the user chooses to leave. It should say goodbye and take the user away. */
   onLeave: () => void;
   testId?: string;
@@ -50,6 +52,7 @@ export default function MultipleTabsModal({
   newest,
   arrivedAt,
   noun,
+  audience,
   onLeave,
   testId = "MultipleTabsModal",
 }: MultipleTabsModalProps): React.JSX.Element | null {
@@ -100,7 +103,7 @@ export default function MultipleTabsModal({
       </Modal.Header>
       <Modal.Body style={{ overflowWrap: "anywhere" }}>
         <p data-testid={`${testId}-message`}>
-          {describeOthers(others, noun)} {RISK_SENTENCE}
+          {warningMessage(others, noun, audience, true)}
         </p>
         {choice === "wait" && (
           <p role="status" data-testid={`${testId}-waiting`}>

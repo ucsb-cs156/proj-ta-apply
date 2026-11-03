@@ -256,6 +256,44 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(LocalDate.now(), captor.getValue().getActualClosingDate());
   }
 
+  /** Issue #281: a Close from a page that is a few seconds stale must not stamp the date again. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void closing_an_already_closed_recruitment_changes_and_records_nothing() throws Exception {
+    LocalDate original = LocalDate.of(2026, 1, 1);
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setActualClosingDate(original);
+    r.setApplicationStatus(ApplicationStatus.CLOSED);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/admin/recruitments/status?id=1&status=CLOSED").with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(original, r.getActualClosingDate());
+    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).snapshot(any());
+    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void opening_an_already_open_recruitment_changes_and_records_nothing() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setApplicationStatus(ApplicationStatus.OPEN);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    mockMvc
+        .perform(put("/api/admin/recruitments/status?id=1&status=OPEN").with(csrf()))
+        .andExpect(status().isOk());
+
+    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+  }
+
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void changing_status_on_an_unknown_recruitment_is_a_404() throws Exception {
@@ -266,6 +304,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(put("/api/admin/recruitments/status?id=99&status=OPEN").with(csrf()))
         .andExpect(status().isNotFound());
     verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentRepository, never()).bumpAssignmentsVersion(any());
     verify(recruitmentAuditService, never()).snapshot(any());
     verify(recruitmentAuditService, never()).recordChanges(any(), any());
   }
@@ -874,6 +913,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
     inOrder.verify(recruitmentAuditService).snapshot(r);
     inOrder.verify(recruitmentRepository).save(r);
+    // Issue #280: a page that has not seen this is out of date.
+    inOrder.verify(recruitmentRepository).bumpAssignmentsVersion(1L);
     inOrder.verify(recruitmentAuditService).recordChanges(before, r);
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
   }
@@ -895,6 +936,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
 
     assertEquals(false, r.getAssignmentsPublished());
     verify(recruitmentRepository).save(r);
+    verify(recruitmentRepository).bumpAssignmentsVersion(1L);
     verify(recruitmentAuditService).recordChanges(before, r);
   }
 

@@ -1033,9 +1033,13 @@ describe("BudgetPage tests", () => {
     axiosMock.history.post.filter((r) =>
       r.url.startsWith("/api/admin/budget/heartbeat"),
     );
-  const RISK =
-    "Please know that this is risky; we recommend closing all but one of these.";
-  const phill = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
+  // The shared wording of an admin page (issue #298).
+  const ADMIN = "We recommend that only one admin edits this page at a time.";
+  const phill = {
+    label: "phtcon@ucsb.edu (Phill Conrad)",
+    samePerson: false,
+    admin: true,
+  };
   const me = { label: "me@example.org (Me)", samePerson: true };
   const MODAL = "BudgetPage-multiple-tabs-modal";
 
@@ -1083,7 +1087,7 @@ describe("BudgetPage tests", () => {
     expect(
       await screen.findByTestId("BudgetPage-multiple-tabs"),
     ).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) is also editing this budget. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) is also editing this budget page. ${ADMIN}`,
     );
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByTestId("BudgetPage-tasOnlyBudget")).toBeInTheDocument();
@@ -1098,7 +1102,20 @@ describe("BudgetPage tests", () => {
     expect(
       await screen.findByTestId("BudgetPage-multiple-tabs"),
     ).toHaveTextContent(
-      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this budget in other windows or tabs. ${RISK}`,
+      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this budget page in other windows or tabs. ${ADMIN}`,
+    );
+  });
+
+  test("only the user's own other tab: the admin sentence, not the risk sentence", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [me], heartbeatSeconds: 20, newest: false });
+    renderPage("F26");
+
+    expect(
+      await screen.findByTestId("BudgetPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `You are also editing this budget page in another tab or window. ${ADMIN}`,
     );
   });
 
@@ -1112,10 +1129,13 @@ describe("BudgetPage tests", () => {
     renderPage("F26");
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    // The later tab says who "already" has it, in the modal and in the banner.
     expect(screen.getByTestId(`${MODAL}-message`)).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) is also editing this budget. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) already has this budget page open for editing. ${ADMIN}`,
     );
-    expect(screen.getByTestId("BudgetPage-multiple-tabs")).toBeInTheDocument();
+    expect(screen.getByTestId("BudgetPage-multiple-tabs")).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) already has this budget page open for editing. ${ADMIN}`,
+    );
 
     fireEvent.click(screen.getByTestId(`${MODAL}-continue`));
     expect(screen.queryByRole("dialog")).toBeNull();

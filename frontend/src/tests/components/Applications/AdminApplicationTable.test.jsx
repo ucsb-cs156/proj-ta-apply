@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 
 import AdminApplicationTable from "main/components/Applications/AdminApplicationTable";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import { submittedText } from "main/utils/adminApplications";
 import {
   applicationColumns,
@@ -440,5 +441,127 @@ describe("AdminApplicationTable tests", () => {
       screen.getByTestId("AdminApplicationTable-header-id-sort-header"),
     );
     expect(firstLink()).toBe(String(ta.id));
+  });
+
+  // ---- issue #296: the same table shows drafts ----
+
+  const taDraft = draftApplicationsFixtures.adminSavedTaDraft;
+  const ulaDraft = draftApplicationsFixtures.adminSavedUlaDraft;
+
+  test("a table of drafts has the columns of the table of applications but for Edit, and Last saved for Submitted", () => {
+    renderTable({ applications: [taDraft], draft: true });
+    const headerIds = () =>
+      screen
+        .getAllByRole("columnheader")
+        .map((th) =>
+          th
+            .getAttribute("data-testid")
+            .replace("AdminApplicationTable-header-", ""),
+        );
+    const draftIds = headerIds();
+    expect(
+      screen.queryByTestId("AdminApplicationTable-cell-row-0-col-edit-button"),
+    ).toBeNull();
+    cleanup();
+    renderTable();
+
+    expect(headerIds().filter((id) => id !== "edit")).toEqual(draftIds);
+    expect(draftIds).not.toContain("edit");
+    expect(draftIds.slice(0, 4)).toEqual(["id", "view", "name", "submittedAt"]);
+  });
+
+  test("a draft's Submitted column is headed Last saved and shows when it was saved", () => {
+    renderTable({ applications: [taDraft], draft: true });
+
+    expect(
+      screen.getByTestId("AdminApplicationTable-header-submittedAt"),
+    ).toHaveTextContent("Last saved");
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-0-col-submittedAt"),
+    ).toHaveTextContent("1/12/2026, 8:15:00 AM");
+  });
+
+  test("the id and View lead to the draft's own page, and a draft has no origin badge", () => {
+    renderTable({ applications: [taDraft], draft: true });
+
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-0-col-id-link"),
+    ).toHaveAttribute("href", `/admin/draft-applications/${taDraft.id}`);
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-0-col-view-button"),
+    ).toHaveAttribute("href", `/admin/draft-applications/${taDraft.id}`);
+    expect(
+      screen.queryByTestId("AdminApplicationTable-cell-row-0-col-id-test"),
+    ).toBeNull();
+  });
+
+  test("a draft's answers show as they do for an application, and what is not answered is blank", () => {
+    renderTable({ applications: [taDraft], draft: true });
+    const cell = (id) =>
+      screen.getByTestId(`AdminApplicationTable-cell-row-0-col-${id}`)
+        .textContent;
+
+    expect(cell("name")).toBe("Tess A Ative");
+    expect(cell("email")).toBe("ta@ucsb.edu");
+    expect(cell("major")).toBe("Statistics");
+    expect(cell("classLevel")).toBe("MS");
+    expect(cell("gpaMajor")).toBe("First quarter");
+    expect(cell("firstChoiceCourse")).toBe("CMPSC   156");
+    expect(cell("status")).toBe("");
+    expect(cell("graduationDate")).toBe("");
+    expect(cell("postApplicationComments")).toBe("");
+    expect(cell("adminComments")).toBe("");
+  });
+
+  test("the admin's comments on a draft show in the Admin Comments column", () => {
+    renderTable({ applications: [ulaDraft], type: "ULA", draft: true });
+
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-0-col-adminComments")
+        .textContent,
+    ).toBe("Ask about the video link");
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-0-col-name")
+        .textContent,
+    ).toBe("Dana Draft");
+  });
+
+  test("a draft nothing has been saved to is a row of blanks, not nulls", () => {
+    renderTable({
+      applications: [draftApplicationsFixtures.adminEmptyUlaDraft],
+      type: "ULA",
+      draft: true,
+    });
+
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-0-col-name")
+        .textContent,
+    ).toBe("");
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-0-col-email")
+        .textContent,
+    ).toBe("ula@ucsb.edu");
+    expect(
+      screen.getByTestId("AdminApplicationTable-cell-row-0-col-videoLink")
+        .textContent,
+    ).toBe("");
+    expect(screen.getByTestId("AdminApplicationTable")).not.toHaveTextContent(
+      "null",
+    );
+  });
+
+  test("hidden columns are left out of a table of drafts too", () => {
+    renderTable({
+      applications: [taDraft],
+      draft: true,
+      hiddenColumns: ["major", "_defaultsApplied"],
+    });
+
+    expect(
+      screen.queryByTestId("AdminApplicationTable-header-major"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("AdminApplicationTable-header-email"),
+    ).toBeInTheDocument();
   });
 });

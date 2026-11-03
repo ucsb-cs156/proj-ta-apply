@@ -64,7 +64,11 @@ NotAQuarter.parameters = {
   msw: { handlers: handlers(budgetFixtures.bothTypes) },
 };
 
-const phill = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
+const phill = {
+  label: "phtcon@ucsb.edu (Phill Conrad)",
+  samePerson: false,
+  admin: true,
+};
 
 /** An older tab: another admin has the same quarter open, and only the banner shows. */
 export const AnotherAdminIsEditing = Template.bind({});

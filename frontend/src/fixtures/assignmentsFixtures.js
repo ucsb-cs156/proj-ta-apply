@@ -114,6 +114,7 @@ const assignmentsFixtures = {
     identityHeaders: taIdentityHeaders,
     courses: taCourses,
     rows: taRows,
+    version: 3,
   },
   /** The same page after Ada is moved from CMPSC 8 to CMPSC 24. */
   taPageAfterMove: {
@@ -126,6 +127,7 @@ const assignmentsFixtures = {
       { ...taCourses[2], assigned: 1, left: -1 },
     ],
     rows: [{ ...taRows[0], tentativeAssignment: 30 }, ...taRows.slice(1)],
+    version: 4,
   },
   ulaPage: {
     recruitmentId: 2,
@@ -172,6 +174,7 @@ const assignmentsFixtures = {
         preferences: { 40: "Would Consider" },
       },
     ],
+    version: 1,
   },
   empty: {
     recruitmentId: 7,
@@ -179,6 +182,7 @@ const assignmentsFixtures = {
     identityHeaders: taIdentityHeaders,
     courses: [],
     rows: [],
+    version: 1,
   },
 };
 
