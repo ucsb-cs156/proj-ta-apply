@@ -122,6 +122,14 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/config/WebConfig.html#addInterceptors(org.springframework.web.servlet.config.annotation.InterceptorRegistry)" class="member-name-link">addInterceptors(InterceptorRegistry)</a> - Method in class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/WebConfig.html" title="class in edu.ucsb.cs.taapply.config">WebConfig</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#admin()" class="member-name-link">admin()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>admin</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#admin()" class="member-name-link">admin()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>admin</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html#admin()" class="member-name-link">admin()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.UserDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.UserDTO</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>admin</code> record component.</div>
@@ -837,6 +845,10 @@ the person, and the label to show other people.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#%3Cinit%3E(java.lang.String,java.lang.String)" class="member-name-link">ClientIdentity(String, String)</a> - Constructor for record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
 <dd>
+<div class="block">Someone who is not an admin.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#%3Cinit%3E(java.lang.String,java.lang.String,boolean)" class="member-name-link">ClientIdentity(String, String, boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
+<dd>
 <div class="block">Creates an instance of a <code>ClientIdentity</code> record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/HiringDecisions.html#CLOSE_APPLICATIONS_FIRST" class="member-name-link">CLOSE_APPLICATIONS_FIRST</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/HiringDecisions.html" title="class in edu.ucsb.cs.taapply.services">HiringDecisions</a></dt>
@@ -1228,7 +1240,7 @@ saved as they type so that nothing they have written is ever lost.</div>
 <div class="block">Whether the whole application may still be edited: for as long as the admin keeps applications
 open (issue #98).</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#editApplication(java.lang.Long,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">editApplication(Long, ApplicationsController.ApplicationFields)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#editApplication(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">editApplication(Long, Integer, String, ApplicationsController.ApplicationFields)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/package-summary.html">edu.ucsb.cs.taapply</a> - package edu.ucsb.cs.taapply</dt>
 <dd>&nbsp;</dd>
@@ -2210,6 +2222,8 @@ same course and section.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#heartbeat(java.lang.Long,java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#heartbeat(java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#heartbeat(java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#heartbeat(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">heartbeat(String, String, ClientIdentity)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
@@ -2635,6 +2649,8 @@ the same month rule as the front end (January to March is 1, April to June 2, Ju
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#leave(java.lang.Long,java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#leave(java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#leave(java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#leave(java.lang.String,java.lang.String)" class="member-name-link">leave(String, String)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
@@ -2981,11 +2997,15 @@ paperwork can be planned, never used to decide the application.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a> - Record Class in <a href="edu/ucsb/cs/taapply/concurrency/package-summary.html">edu.ucsb.cs.taapply.concurrency</a></dt>
 <dd>
-<div class="block">One other person who is active on the same resource (issue #273): the label to show, and whether
-they are the same person as the one asking, which means another tab, window or device of their
-own.</div>
+<div class="block">One other person who is active on the same resource (issue #273): the label to show, whether they
+are the same person as the one asking, which means another tab, window or device of their own,
+and whether they are an admin (issue #302), so that the client can choose its message.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#%3Cinit%3E(java.lang.String,boolean)" class="member-name-link">OtherClient(String, boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
+<dd>
+<div class="block">Someone who is not an admin.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html#%3Cinit%3E(java.lang.String,boolean,boolean)" class="member-name-link">OtherClient(String, boolean, boolean)</a> - Constructor for record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/OtherClient.html" title="class in edu.ucsb.cs.taapply.concurrency">OtherClient</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>OtherClient</code> record class.</div>
 </dd>
@@ -4415,7 +4435,7 @@ candidate has been assigned.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#updateAllocationVisibility(java.lang.Long,edu.ucsb.cs.taapply.enums.AllocationVisibility)" class="member-name-link">updateAllocationVisibility(Long, AllocationVisibility)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#updateApplication(java.lang.Long,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">updateApplication(Long, ApplicationsController.ApplicationFields)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#updateApplication(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">updateApplication(Long, Integer, String, ApplicationsController.ApplicationFields)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#updateAssignmentsPublished(java.lang.Long,boolean)" class="member-name-link">updateAssignmentsPublished(Long, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
