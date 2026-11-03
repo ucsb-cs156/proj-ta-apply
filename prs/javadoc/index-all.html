@@ -148,6 +148,10 @@ assignment of each applicant to a section.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html#%3Cinit%3E()" class="member-name-link">AdminAssignmentsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminAssignmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html#adminComments()" class="member-name-link">adminComments()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController.AdminDraftView</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>adminComments</code> record component.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#adminCourseRankingSummaries(java.lang.Long,boolean)" class="member-name-link">adminCourseRankingSummaries(Long, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
 <dd>
 <div class="block">Ranking counts and catalog-name email mappings for the rows visible on one recruitment's
@@ -156,6 +160,22 @@ Courses page.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.AdminCourseRankingSummary.html#%3Cinit%3E(java.lang.Long,long,java.lang.String)" class="member-name-link">AdminCourseRankingSummary(Long, long, String)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.AdminCourseRankingSummary.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.AdminCourseRankingSummary</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>AdminCourseRankingSummary</code> record class.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">An admin's view of the drafts of a recruitment (issue #296): the list, one draft in full, how
+many there are, and the admin's own comments on each.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html#%3Cinit%3E()" class="member-name-link">AdminDraftApplicationsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController.AdminDraftView</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
+<dd>
+<div class="block">A draft as an admin sees it: every field of the draft at the top level of the JSON, as for the
+applicant, plus the admin's comments under the name an application's use.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html#%3Cinit%3E(edu.ucsb.cs.taapply.entity.DraftApplication,java.lang.String)" class="member-name-link">AdminDraftView(DraftApplication, String)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController.AdminDraftView</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>AdminDraftView</code> record class.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#%3Cinit%3E(edu.ucsb.cs.taapply.entity.Admin,java.util.List,java.util.Optional)" class="member-name-link">AdminDTO(Admin, List, Optional)</a> - Constructor for record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
 <dd>&nbsp;</dd>
@@ -215,6 +235,8 @@ logged in: until then both names are null.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/CoursesController.html#allCourses()" class="member-name-link">allCourses()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/CoursesController.html" title="class in edu.ucsb.cs.taapply.controller">CoursesController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#allForRecruitment(java.lang.Long)" class="member-name-link">allForRecruitment(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html#allForRecruitment(java.lang.Long)" class="member-name-link">allForRecruitment(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#allForRecruitment(java.lang.Long,boolean)" class="member-name-link">allForRecruitment(Long, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
@@ -869,6 +891,12 @@ send in it.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/CorsConfig.html#%3Cinit%3E()" class="member-name-link">CorsConfig()</a> - Constructor for class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/CorsConfig.html" title="class in edu.ucsb.cs.taapply.config">CorsConfig</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html#count(java.lang.Long)" class="member-name-link">count(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html#countByRecruitmentId(java.lang.Long)" class="member-name-link">countByRecruitmentId(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">DraftApplicationRepository</a></dt>
+<dd>
+<div class="block">How many drafts one recruitment has (issue #296).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CandidateRankingPage.html#course()" class="member-name-link">course()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CandidateRankingPage.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateRankingPage</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>course</code> record component.</div>
@@ -1151,6 +1179,20 @@ makes it available.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html#downloadInstructorsCSV()" class="member-name-link">downloadInstructorsCSV()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsCSVController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsCSVController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html#draft()" class="member-name-link">draft()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController.AdminDraftView</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>draft</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/DraftAdminComment.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">DraftAdminComment</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">An admin's free-text notes on a draft application (issue #296), one row per draft.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/DraftAdminComment.html#%3Cinit%3E()" class="member-name-link">DraftAdminComment()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/DraftAdminComment.html" title="class in edu.ucsb.cs.taapply.entity">DraftAdminComment</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/DraftAdminCommentRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">DraftAdminCommentRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
+<dd>
+<div class="block">Keyed by the draft's id.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/DraftApplication.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">DraftApplication</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
 <dd>
 <div class="block">An application as it is being filled in (issue #270): what the applicant has entered so far,
@@ -1312,6 +1354,10 @@ both Summer and Fall are reachable.</div>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/Presence.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController.AdminDraftView</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -1623,6 +1669,10 @@ science courses of a few other universities.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/CourseRepository.html#findByCourseId(java.lang.String)" class="member-name-link">findByCourseId(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/CourseRepository.html" title="interface in edu.ucsb.cs.taapply.repository">CourseRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/DraftAdminCommentRepository.html#findByDraftIdIn(java.util.Collection)" class="member-name-link">findByDraftIdIn(Collection)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/DraftAdminCommentRepository.html" title="interface in edu.ucsb.cs.taapply.repository">DraftAdminCommentRepository</a></dt>
+<dd>
+<div class="block">The comments on any of the given drafts, for listing a recruitment's drafts in one query.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/AdminRepository.html#findByEmail(java.lang.String)" class="member-name-link">findByEmail(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/AdminRepository.html" title="interface in edu.ucsb.cs.taapply.repository">AdminRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/InstructorRepository.html#findByEmail(java.lang.String)" class="member-name-link">findByEmail(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/InstructorRepository.html" title="interface in edu.ucsb.cs.taapply.repository">InstructorRepository</a></dt>
@@ -1667,6 +1717,10 @@ science courses of a few other universities.</div>
 <dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByRecruitmentIdOrderByIdAsc(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
 <dd>
 <div class="block">Every application to one recruitment, in the order they were created.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html#findByRecruitmentIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByRecruitmentIdOrderByIdAsc(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">DraftApplicationRepository</a></dt>
+<dd>
+<div class="block">Every draft for one recruitment, oldest first (issue #296).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/AuditTrailRepository.html#findByTaApplicationIdOrderByIdAsc(java.lang.Long)" class="member-name-link">findByTaApplicationIdOrderByIdAsc(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/AuditTrailRepository.html" title="interface in edu.ucsb.cs.taapply.repository">AuditTrailRepository</a></dt>
 <dd>
@@ -1793,6 +1847,8 @@ short page is returned.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/JobUserProviderImpl.html#getCurrentUserEmail()" class="member-name-link">getCurrentUserEmail()</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/JobUserProviderImpl.html" title="class in edu.ucsb.cs.taapply.services">JobUserProviderImpl</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/JobUserProviderImpl.html#getCurrentUserId()" class="member-name-link">getCurrentUserId()</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/JobUserProviderImpl.html" title="class in edu.ucsb.cs.taapply.services">JobUserProviderImpl</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html#getDraft(java.lang.Long)" class="member-name-link">getDraft(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html#getEndQtrYYYYQ()" class="member-name-link">getEndQtrYYYYQ()</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></dt>
 <dd>
@@ -1936,6 +1992,10 @@ applicant, and anyone in the admin or instructor tables whatever their address.<
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/Presence.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/Presence.html" title="class in edu.ucsb.cs.taapply.concurrency">Presence</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController.AdminDraftView</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -3932,6 +3992,10 @@ for; ULA positions are funded for undergraduates only.</div>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.AdminDraftView.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController.AdminDraftView</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#toString()" class="member-name-link">toString()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
@@ -4346,6 +4410,8 @@ candidate has been assigned.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/BudgetController.html#update(java.lang.String,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal)" class="member-name-link">update(String, BigDecimal, BigDecimal, BigDecimal)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/BudgetController.html" title="class in edu.ucsb.cs.taapply.controller">BudgetController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#updateAdminComments(java.lang.Long,java.lang.String)" class="member-name-link">updateAdminComments(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html#updateAdminComments(java.lang.Long,java.lang.String)" class="member-name-link">updateAdminComments(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#updateAllocationVisibility(java.lang.Long,edu.ucsb.cs.taapply.enums.AllocationVisibility)" class="member-name-link">updateAllocationVisibility(Long, AllocationVisibility)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
