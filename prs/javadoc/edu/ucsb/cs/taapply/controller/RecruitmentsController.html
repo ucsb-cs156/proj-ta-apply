@@ -66,8 +66,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#postRecruitment(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType,java.time.LocalDate,java.time.LocalDate)" tabindex="0">postRecruitment(String, RecruitmentType, LocalDate, LocalDate)</a></li>
 <li><a href="#updateReviewStatus(java.lang.Long,java.lang.String,java.time.LocalDate)" tabindex="0">updateReviewStatus(Long, String, LocalDate)</a></li>
 <li><a href="#updateFacultyRankingDeadline(java.lang.Long,java.time.LocalDate)" tabindex="0">updateFacultyRankingDeadline(Long, LocalDate)</a></li>
-<li><a href="#updateTotalHiringTarget(java.lang.Long,java.lang.Integer)" tabindex="0">updateTotalHiringTarget(Long, Integer)</a></li>
-<li><a href="#updateAvgCostPerPosition(java.lang.Long,java.math.BigDecimal)" tabindex="0">updateAvgCostPerPosition(Long, BigDecimal)</a></li>
+<li><a href="#updateTotalHiringTarget(java.lang.Long,java.lang.Integer,java.lang.Integer)" tabindex="0">updateTotalHiringTarget(Long, Integer, Integer)</a></li>
+<li><a href="#updateAvgCostPerPosition(java.lang.Long,java.math.BigDecimal,java.math.BigDecimal)" tabindex="0">updateAvgCostPerPosition(Long, BigDecimal, BigDecimal)</a></li>
 <li><a href="#updateAllocationVisibility(java.lang.Long,edu.ucsb.cs.taapply.enums.AllocationVisibility)" tabindex="0">updateAllocationVisibility(Long, AllocationVisibility)</a></li>
 <li><a href="#updateAssignmentsPublished(java.lang.Long,boolean)" tabindex="0">updateAssignmentsPublished(Long, boolean)</a></li>
 <li><a href="#allRecruitments()" tabindex="0">allRecruitments()</a></li>
@@ -148,9 +148,10 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAssignmentsPublished(java.lang.Long,boolean)" class="member-name-link">updateAssignmentsPublished</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  boolean&nbsp;published)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAvgCostPerPosition(java.lang.Long,java.math.BigDecimal)" class="member-name-link">updateAvgCostPerPosition</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;avgCostPerPosition)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAvgCostPerPosition(java.lang.Long,java.math.BigDecimal,java.math.BigDecimal)" class="member-name-link">updateAvgCostPerPosition</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;avgCostPerPosition,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;expected)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateFacultyRankingDeadline(java.lang.Long,java.time.LocalDate)" class="member-name-link">updateFacultyRankingDeadline</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
@@ -165,9 +166,10 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateStatus(java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationStatus)" class="member-name-link">updateStatus</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  <a href="../enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a>&nbsp;status)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateTotalHiringTarget(java.lang.Long,java.lang.Integer)" class="member-name-link">updateTotalHiringTarget</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;totalHiringTarget)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateTotalHiringTarget(java.lang.Long,java.lang.Integer,java.lang.Integer)" class="member-name-link">updateTotalHiringTarget</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;totalHiringTarget,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;expected)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
@@ -253,28 +255,32 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
 </section>
 </li>
 <li>
-<section class="detail" id="updateTotalHiringTarget(java.lang.Long,java.lang.Integer)">
+<section class="detail" id="updateTotalHiringTarget(java.lang.Long,java.lang.Integer,java.lang.Integer)">
 <h3>updateTotalHiringTarget</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
 @PutMapping("/totalHiringTarget")
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">updateTotalHiringTarget</span><wbr><span class="parameters">(@RequestParam
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">org.springframework.http.ResponseEntity&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">updateTotalHiringTarget</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  @RequestParam
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;totalHiringTarget)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;totalHiringTarget,
+ @RequestParam(required=false)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;expected)</span></div>
 </div>
 </section>
 </li>
 <li>
-<section class="detail" id="updateAvgCostPerPosition(java.lang.Long,java.math.BigDecimal)">
+<section class="detail" id="updateAvgCostPerPosition(java.lang.Long,java.math.BigDecimal,java.math.BigDecimal)">
 <h3>updateAvgCostPerPosition</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
 @PutMapping("/avgCostPerPosition")
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">updateAvgCostPerPosition</span><wbr><span class="parameters">(@RequestParam
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">org.springframework.http.ResponseEntity&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">updateAvgCostPerPosition</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  @RequestParam
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;avgCostPerPosition)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;avgCostPerPosition,
+ @RequestParam(required=false)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;expected)</span></div>
 </div>
 </section>
 </li>
