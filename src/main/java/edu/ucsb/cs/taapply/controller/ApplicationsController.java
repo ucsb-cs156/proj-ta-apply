@@ -113,7 +113,18 @@ public class ApplicationsController extends ApiController {
       String trainingCommitmentExplanation,
       Boolean changingMajor,
       /** The notice version the applicant ticked the agreement box for; see requireAgreement. */
-      Long noticeVersionId) {}
+      Long noticeVersionId,
+      /**
+       * Issue #292: the applicant has no GPAs yet (a first quarter grad student on a TA form, a
+       * first quarter at UCSB on a ULA one). The GPAs are then not required and are stored empty.
+       */
+      Boolean firstQuarter) {
+
+    /** Whether the applicant ticked the first quarter box; no answer is not ticked. */
+    public boolean firstQuarterTicked() {
+      return Boolean.TRUE.equals(firstQuarter);
+    }
+  }
 
   /** One row of the prior coursework table. Ids are not accepted: rows are rebuilt on each save. */
   public static record PriorCourseworkFields(
@@ -556,10 +567,10 @@ public class ApplicationsController extends ApiController {
     if (fields.priorUcsbEmployment() == null) {
       throw new IllegalArgumentException("Please say whether you have been employed at UCSB");
     }
-    if (fields.gpaMajor() == null) {
+    if (!fields.firstQuarterTicked() && fields.gpaMajor() == null) {
       throw new IllegalArgumentException("A ULA application needs your GPA in major");
     }
-    if (fields.gpaOverall() == null) {
+    if (!fields.firstQuarterTicked() && fields.gpaOverall() == null) {
       throw new IllegalArgumentException("A ULA application needs your overall GPA");
     }
     if (blankToNull(fields.yearInProgram()) == null) {
@@ -605,10 +616,10 @@ public class ApplicationsController extends ApiController {
     if (fields.residencyStatus() == null) {
       throw new IllegalArgumentException("A TA application needs your residency status");
     }
-    if (fields.gpaMajor() == null) {
+    if (!fields.firstQuarterTicked() && fields.gpaMajor() == null) {
       throw new IllegalArgumentException("A TA application needs your GPA in major");
     }
-    if (fields.gpaOverall() == null) {
+    if (!fields.firstQuarterTicked() && fields.gpaOverall() == null) {
       throw new IllegalArgumentException("A TA application needs your overall GPA");
     }
     if (blankToNull(fields.yearInProgram()) == null) {
@@ -659,8 +670,11 @@ public class ApplicationsController extends ApiController {
     application.setMiddleName(fields.middleName());
     application.setLastName(fields.lastName());
     application.setMajor(fields.major());
-    application.setGpaMajor(fields.gpaMajor());
-    application.setGpaOverall(fields.gpaOverall());
+    // Issue #292: a first quarter applicant has no GPAs, so any typed before the box was ticked
+    // are dropped rather than kept beside a flag that says there are none.
+    application.setFirstQuarter(fields.firstQuarterTicked());
+    application.setGpaMajor(fields.firstQuarterTicked() ? null : fields.gpaMajor());
+    application.setGpaOverall(fields.firstQuarterTicked() ? null : fields.gpaOverall());
     application.setYearInProgram(fields.yearInProgram());
     application.setGraduationDate(fields.graduationDate());
     application.getPriorCoursework().clear();

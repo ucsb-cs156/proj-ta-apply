@@ -5,7 +5,7 @@ import {
   LANGUAGE_EXAM_LABELS,
   RESIDENCY_LABELS,
 } from "main/utils/applicationLabels";
-import { courseInterestLabel } from "main/utils/applicationFields";
+import { courseInterestLabel, gpaText } from "main/utils/applicationFields";
 import {
   OTHER_CAMPUS_JOB_OPTIONS,
   STUDENT_STATUS_OPTIONS,
@@ -119,10 +119,10 @@ export const ALL_APPLICATION_COLUMNS: ApplicationColumn[] = [
     { stacked: ["Expected", "Graduation"] },
   ),
   column("status", "Status", true, (a) => show(a.status)),
-  column("gpaMajor", "GPA in Major", true, (a) => show(a.gpaMajor), {
+  column("gpaMajor", "GPA in Major", true, (a) => gpaText(a, a.gpaMajor), {
     stacked: ["GPA in", "Major"],
   }),
-  column("gpaOverall", "Overall GPA", true, (a) => show(a.gpaOverall), {
+  column("gpaOverall", "Overall GPA", true, (a) => gpaText(a, a.gpaOverall), {
     stacked: ["Overall", "GPA"],
   }),
   column(

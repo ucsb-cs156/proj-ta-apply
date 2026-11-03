@@ -43,6 +43,7 @@ public class ApplicationCsvService {
           new Column("major", Application::getMajor),
           new Column("gpaMajor", Application::getGpaMajor),
           new Column("gpaOverall", Application::getGpaOverall),
+          new Column("firstQuarter", Application::isFirstQuarter),
           new Column("yearInProgram", Application::getYearInProgram),
           new Column("graduationDate", Application::getGraduationDate));
 

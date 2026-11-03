@@ -77,6 +77,10 @@ public class DraftApplication {
   private String major;
   private Double gpaMajor;
   private Double gpaOverall;
+
+  /** See {@link Application#isFirstQuarter()}. */
+  private Boolean firstQuarter;
+
   private String yearInProgram;
   private String graduationDate;
 

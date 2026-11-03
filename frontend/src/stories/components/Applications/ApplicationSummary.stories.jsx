@@ -20,3 +20,15 @@ UlaApplication.args = {
   application: applicationsFixtures.oneUlaApplication,
   type: "ULA",
 };
+
+/** Issue #292: a first quarter applicant has no GPAs yet, so the summary says so. */
+export const TaFirstQuarter = Template.bind({});
+TaFirstQuarter.args = {
+  application: {
+    ...applicationsFixtures.oneTaApplication,
+    firstQuarter: true,
+    gpaMajor: null,
+    gpaOverall: null,
+  },
+  type: "TA",
+};

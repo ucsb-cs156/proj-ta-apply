@@ -489,7 +489,9 @@ public class InstructorRecruitmentsController extends ApiController {
       Double gpaMajor,
       Double gpaOverall,
       Integer previousServiceAsUla,
-      String videoLink) {}
+      String videoLink,
+      /** Issue #292: no GPAs yet, so the table says "First quarter" instead of a blank. */
+      boolean firstQuarter) {}
 
   public static record RankEdit(Integer rank) {}
 
@@ -554,7 +556,8 @@ public class InstructorRecruitmentsController extends ApiController {
                     application.getGpaMajor(),
                     application.getGpaOverall(),
                     application.getPreviousServiceAsUla(),
-                    application.getVideoLink()))
+                    application.getVideoLink(),
+                    application.isFirstQuarter()))
         .toList();
   }
 
@@ -700,6 +703,7 @@ public class InstructorRecruitmentsController extends ApiController {
             a.getTrainingCommitment(),
             a.getTrainingCommitmentExplanation(),
             a.getChangingMajor(),
-            a.getNoticeVersionId()));
+            a.getNoticeVersionId(),
+            a.isFirstQuarter()));
   }
 }

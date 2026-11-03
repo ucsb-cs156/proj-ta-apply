@@ -27,6 +27,27 @@ describe("ApplicationSummary tests", () => {
     ).toHaveTextContent("S27");
   });
 
+  test("says First quarter in place of the GPAs of a first quarter applicant (issue #292)", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneTaApplication,
+          firstQuarter: true,
+          gpaMajor: null,
+          gpaOverall: null,
+        }}
+        type="TA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("ApplicationSummary-GPA in Major"),
+    ).toHaveTextContent("First quarter");
+    expect(
+      screen.getByTestId("ApplicationSummary-Overall GPA"),
+    ).toHaveTextContent("First quarter");
+  });
+
   test("shows the notice version agreed to, ticked and read-only", () => {
     render(
       <ApplicationSummary

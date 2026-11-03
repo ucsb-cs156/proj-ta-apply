@@ -13,6 +13,9 @@ import {
   proficiencyInstruction,
   proficiencyLevels,
   courseInterestLabel,
+  FIRST_QUARTER_LABELS,
+  FIRST_QUARTER_TEXT,
+  gpaText,
   toPayload,
   type ApplicationFormFields,
 } from "main/utils/applicationFields";
@@ -26,6 +29,7 @@ const fields = (
   major: "Computer Science",
   gpaMajor: "3.9",
   gpaOverall: "3.8",
+  firstQuarter: false,
   yearInProgram: "2nd",
   graduationDate: "S27",
   priorCoursework: [],
@@ -82,6 +86,23 @@ describe("toPayload", () => {
     expect(payload.gpaMajor).toBeNull();
     expect(payload.gpaOverall).toBeNull();
     expect(payload.previousServiceAsUla).toBeNull();
+  });
+
+  /** Issue #292: a first quarter applicant has no GPAs, whatever was typed before the box. */
+  test("the first quarter box sends no GPAs and says so", () => {
+    const payload = toPayload(fields({ firstQuarter: true }));
+
+    expect(payload.firstQuarter).toBe(true);
+    expect(payload.gpaMajor).toBeNull();
+    expect(payload.gpaOverall).toBeNull();
+  });
+
+  test("without the box the GPAs go as typed", () => {
+    const payload = toPayload(fields({ firstQuarter: false }));
+
+    expect(payload.firstQuarter).toBe(false);
+    expect(payload.gpaMajor).toBe(3.9);
+    expect(payload.gpaOverall).toBe(3.8);
   });
 
   test("a genuine zero survives", () => {
@@ -279,5 +300,27 @@ describe("toPayload", () => {
     expect(blank.otherCampusJob).toBeNull();
     expect(blank.trainingCommitment).toBeNull();
     expect(blank.changingMajor).toBeNull();
+  });
+});
+
+describe("the first quarter box (issue #292)", () => {
+  test("each form has its own wording", () => {
+    expect(FIRST_QUARTER_LABELS.TA).toBe(
+      "Check here if you are a first quarter grad student, and do not yet have a GPA in Major and Overall GPA as a grad student.",
+    );
+    expect(FIRST_QUARTER_LABELS.ULA).toBe(
+      "Check here if you are applying during your first quarter at UCSB, and do not yet have a GPA in Major and Overall GPA.",
+    );
+  });
+
+  test("gpaText is the marker for a first quarter applicant, else the number or blank", () => {
+    expect(FIRST_QUARTER_TEXT).toBe("First quarter");
+    expect(gpaText({ firstQuarter: true }, null)).toBe("First quarter");
+    expect(gpaText({ firstQuarter: true }, 3.5)).toBe("First quarter");
+    expect(gpaText({ firstQuarter: false }, 3.5)).toBe("3.5");
+    expect(gpaText({ firstQuarter: false }, 0)).toBe("0");
+    expect(gpaText({ firstQuarter: false }, null)).toBe("");
+    expect(gpaText({ firstQuarter: null }, undefined)).toBe("");
+    expect(gpaText({}, 4)).toBe("4");
   });
 });

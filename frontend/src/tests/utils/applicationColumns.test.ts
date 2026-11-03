@@ -305,3 +305,32 @@ describe("applicationColumns", () => {
     expect(value("changingMajor", { changingMajor: null })).toBe("");
   });
 });
+
+describe("the GPA columns for a first quarter applicant (issue #292)", () => {
+  const column = (id: string) =>
+    ALL_APPLICATION_COLUMNS.find((c) => c.id === id)!;
+
+  test("say First quarter instead of a blank", () => {
+    const first = {
+      ...ta,
+      firstQuarter: true,
+      gpaMajor: null,
+      gpaOverall: null,
+    };
+
+    expect(column("gpaMajor").value(first)).toBe("First quarter");
+    expect(column("gpaOverall").value(first)).toBe("First quarter");
+  });
+
+  test("show the numbers for everyone else", () => {
+    const other = {
+      ...ta,
+      firstQuarter: false,
+      gpaMajor: 3.9,
+      gpaOverall: 3.8,
+    };
+
+    expect(column("gpaMajor").value(other)).toBe("3.9");
+    expect(column("gpaOverall").value(other)).toBe("3.8");
+  });
+});

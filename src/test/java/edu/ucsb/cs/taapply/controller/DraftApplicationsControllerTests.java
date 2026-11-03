@@ -195,7 +195,8 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
           TrainingCommitment.AGREE,
           "Because",
           false,
-          7L);
+          7L,
+          null);
 
   /** What a form with almost nothing filled in yet sends: a name, blank text, nulls and false. */
   private static final ApplicationFields NEARLY_EMPTY =
@@ -478,6 +479,45 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
     verify(draftApplicationRepository, times(1)).save(saved.capture());
     assertEquals(expected, saved.getValue());
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+  }
+
+  /** Issue #292: the first quarter box is saved with the draft, so it is there after a reload. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void the_first_quarter_box_is_saved_with_the_draft_and_cleared_when_unanswered()
+      throws Exception {
+    List<Boolean> seen = new java.util.ArrayList<>();
+    when(draftApplicationRepository.findById(5L)).thenReturn(Optional.of(draft(5L, EMAIL)));
+    when(recruitmentRepository.findById(1L))
+        .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
+    when(draftApplicationRepository.save(any(DraftApplication.class)))
+        .thenAnswer(
+            invocation -> {
+              DraftApplication draft = invocation.getArgument(0);
+              seen.add(draft.getFirstQuarter());
+              return draft;
+            });
+    com.fasterxml.jackson.databind.node.ObjectNode ticked = mapper.valueToTree(NEARLY_EMPTY);
+    ticked.put("firstQuarter", true);
+
+    mockMvc
+        .perform(
+            put("/api/draftApplications?id=5&version=3")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(ticked))
+                .with(csrf()))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(
+            put("/api/draftApplications?id=5&version=3")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(NEARLY_EMPTY))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(java.util.Arrays.asList(Boolean.TRUE, null), seen);
   }
 
   @WithMockUser(

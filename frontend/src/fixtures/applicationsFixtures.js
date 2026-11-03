@@ -12,6 +12,7 @@ const applicationsFixtures = {
     major: "Computer Science",
     gpaMajor: 3.9,
     gpaOverall: 3.8,
+    firstQuarter: false,
     yearInProgram: "2nd",
     graduationDate: "S27",
     priorCoursework: [
@@ -96,6 +97,7 @@ const applicationsFixtures = {
     major: "Computer Science",
     gpaMajor: 3.5,
     gpaOverall: 3.4,
+    firstQuarter: false,
     yearInProgram: "3rd",
     graduationDate: "S27",
     priorCoursework: [

@@ -36,3 +36,15 @@ export const Tied = {
     })),
   },
 };
+
+/** Issue #292: a first quarter applicant has no GPAs yet, so the cells say so. */
+export const FirstQuarterCandidate = {
+  args: {
+    type: "ULA",
+    candidates: candidatesFixtures.map((candidate, i) =>
+      i === 0
+        ? { ...candidate, firstQuarter: true, gpaMajor: null, gpaOverall: null }
+        : candidate,
+    ),
+  },
+};
