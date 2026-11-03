@@ -370,6 +370,8 @@ export default function RecruitmentCoursesPage({
             <MultipleTabsBanner
               others={activity.others}
               noun="page"
+              audience="admin"
+              newest={activity.newest}
               testId="RecruitmentCoursesPage-multiple-tabs"
             />
             {/* Only the newest tab is asked; the older ones keep the banner alone. */}
@@ -378,6 +380,7 @@ export default function RecruitmentCoursesPage({
               newest={activity.newest}
               arrivedAt={activity.arrivedAt}
               noun="page"
+              audience="admin"
               onLeave={() => {
                 // Stryker disable next-line all : moving away unmounts the page, which says goodbye too
                 activity.leave();

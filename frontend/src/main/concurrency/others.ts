@@ -9,11 +9,69 @@ export type OtherClient = {
   label: string;
   /** They are the same person as the one asking: another tab or window of their own. */
   samePerson: boolean;
+  /**
+   * They are an admin (issue #302), which lets an applicant be told that an admin has their
+   * application open. Absent means not an admin.
+   */
+  admin?: boolean;
 };
 
 /** The sentence that follows the names, whoever they are. */
 export const RISK_SENTENCE =
   "Please know that this is risky; we recommend closing all but one of these.";
+
+/**
+ * The sentence that follows the names whenever another person is involved, and on admin pages
+ * (issue #298). The viewer cannot make another person's window close, so it advises rather than
+ * asks.
+ */
+export const ADMIN_SENTENCE =
+  "We recommend that only one admin edits this page at a time.";
+
+/**
+ * The sentence an admin is given when an applicant has the same application open (issue #302,
+ * wording confirmed by the maintainer). The admin cannot close the applicant's window, so it
+ * advises waiting or asking.
+ */
+export const APPLICANT_SENTENCE =
+  "We recommend that you wait a few minutes or ask them to close it.";
+
+/**
+ * Which page the warning is on: "default" for an application or a faculty member's ranking, "admin"
+ * for the admin pages (issue #298), "applicant" for the page where an applicant edits a submitted
+ * application, and "applicationAdmin" for the admin page that edits that same application (issue
+ * #302). It matters only when every other copy is the user's own: the default
+ * pages then ask the user to close the extra copies, and the admin pages give the admin sentence.
+ * It also decides what is said when an admin and an applicant have the same application open: the
+ * applicant is told that an admin has it, and the admin ("applicationAdmin", otherwise as "admin")
+ * that the applicant does.
+ */
+export type Audience = "default" | "admin" | "applicant" | "applicationAdmin";
+
+/**
+ * The closing sentence. The risk sentence asks the user to close the extra copies, so it is used
+ * only when every other copy is the user's own, on a default page. Otherwise (another person is
+ * involved, or it is an admin page) it is the admin sentence.
+ */
+export function closingSentence(
+  others: OtherClient[],
+  audience?: Audience,
+): string {
+  const onlyYou = others.every((other) => other.samePerson);
+  if (audience === "applicationAdmin") {
+    // An applicant among the others is someone the admin cannot ask to do anything but wait; when
+    // other admins are there too, the admin sentence follows.
+    const applicants = others.some((o) => !o.samePerson && !o.admin);
+    const admins = others.some((o) => !o.samePerson && o.admin);
+    if (applicants) {
+      return admins
+        ? `${APPLICANT_SENTENCE} ${ADMIN_SENTENCE}`
+        : APPLICANT_SENTENCE;
+    }
+    return ADMIN_SENTENCE;
+  }
+  return audience === "admin" || !onlyYou ? ADMIN_SENTENCE : RISK_SENTENCE;
+}
 
 /** The most other people who are named; any more are counted. */
 export const MAX_NAMED = 3;
@@ -34,25 +92,39 @@ function joinNames(names: string[], leftOver: number): string {
  * The sentence that says who else is editing the `noun` ("page", "application", "budget"), or the
  * empty string if no one is.
  *
+ * For the tab that was already open (`already` false):
  * - only the user's own other tabs: "You are also editing this page in another tab or window."
  * - one other person: "A (Name) is also editing this page."
  * - others and the user: "You and A (Name) are also editing this page in other windows or tabs."
- * - two or three people are joined with commas and "and"; more than three people are named three,
- *   then counted: "A, B, C and 2 others".
+ *
+ * For the tab that arrived later (`already` true), who is "already" there:
+ * - "You already have this page open for editing in another tab or window."
+ * - "A (Name) already has this page open for editing." (singular verb)
+ * - "You and A (Name) already have this page open for editing in other windows or tabs."
+ *
+ * Two or three people are joined with commas and "and"; more than three people are named three,
+ * then counted: "A, B, C and 2 others".
  *
  * The labels are put in as they are. They are text, never markup; whatever shows this sentence must
  * show it as text.
  */
-export function describeOthers(others: OtherClient[], noun: string): string {
+export function describeOthers(
+  others: OtherClient[],
+  noun: string,
+  already = false,
+): string {
   const you = others.some((other) => other.samePerson);
   const people = others
     .filter((other) => !other.samePerson)
     .map((other) => other.label);
 
   if (people.length === 0) {
-    return you
-      ? `You are also editing this ${noun} in another tab or window.`
-      : "";
+    if (!you) {
+      return "";
+    }
+    return already
+      ? `You already have this ${noun} open for editing in another tab or window.`
+      : `You are also editing this ${noun} in another tab or window.`;
   }
 
   const named = people.slice(0, MAX_NAMED);
@@ -61,7 +133,48 @@ export function describeOthers(others: OtherClient[], noun: string): string {
   // Anyone left over means three were named, so this already covers them.
   const many = names.length > 1;
   const where = you ? " in other windows or tabs" : "";
-  return `${joinNames(names, leftOver)} ${many ? "are" : "is"} also editing this ${noun}${where}.`;
+  const who = joinNames(names, leftOver);
+  return already
+    ? `${who} already ${many ? "have" : "has"} this ${noun} open for editing${where}.`
+    : `${who} ${many ? "are" : "is"} also editing this ${noun}${where}.`;
+}
+
+/**
+ * What an applicant is told when an admin has the application open (issue #302, the maintainer's
+ * wording): the admins are named (the shared way: "A and B", "and N others"), and the request names
+ * the first admin's email address, taken from the start of the label ("email (Name)").
+ */
+function adminHasItMessage(admins: OtherClient[], noun: string): string {
+  const named = admins.slice(0, MAX_NAMED).map((admin) => admin.label);
+  const leftOver = admins.length - named.length;
+  const who = joinNames(named, leftOver);
+  const verb = admins.length > 1 ? "have" : "has";
+  const email = admins[0].label.split(" (")[0];
+  return (
+    `Admin ${who} ${verb} this ${noun} open for editing. We recommend that you close this window ` +
+    `and try again in a few minutes. If this message persists, please reach out to ${email}`
+  );
+}
+
+/**
+ * The whole warning: who, then the audience's closing sentence; the empty string if no one else is
+ * there. `already` is true for the tab that arrived later. For an applicant (audience "applicant")
+ * with an admin among the others, the message is about the admins alone.
+ */
+export function warningMessage(
+  others: OtherClient[],
+  noun: string,
+  audience?: Audience,
+  already = false,
+): string {
+  if (audience === "applicant") {
+    const admins = others.filter((other) => !other.samePerson && other.admin);
+    if (admins.length > 0) {
+      return adminHasItMessage(admins, noun);
+    }
+  }
+  const who = describeOthers(others, noun, already);
+  return who === "" ? "" : `${who} ${closingSentence(others, audience)}`;
 }
 
 /** What the heartbeat's answer said, read defensively: anything unexpected is left out. */
@@ -88,12 +201,19 @@ export function readPresence(data: unknown): Presence {
     arrivedAtMillis?: unknown;
   };
   const others = Array.isArray(body.others)
-    ? body.others.filter(
-        (other): other is OtherClient =>
-          typeof other?.label === "string" &&
-          other.label !== "" &&
-          typeof other.samePerson === "boolean",
-      )
+    ? body.others
+        .filter(
+          (other): other is OtherClient =>
+            typeof other?.label === "string" &&
+            other.label !== "" &&
+            typeof other.samePerson === "boolean",
+        )
+        .map((other) => ({
+          label: other.label,
+          samePerson: other.samePerson,
+          // Only an admin carries the flag; everyone else is as they were before it existed.
+          ...(other.admin === true ? { admin: true } : {}),
+        }))
     : [];
   // Number.isFinite is false for anything that is not a number, a string such as "20" included.
   const seconds = body.heartbeatSeconds as number;

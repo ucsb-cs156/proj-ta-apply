@@ -29,6 +29,7 @@ function renderDraftForm({
   initialContents = undefined,
   notice = undefined,
   withHandlers = true,
+  submitDisabled = undefined,
 } = {}) {
   const view = render(
     <QueryClientProvider client={new QueryClient()}>
@@ -44,6 +45,7 @@ function renderDraftForm({
           submitAction={submitAction}
           onDraftChange={withHandlers ? onDraftChange : undefined}
           onSaveDraft={withHandlers ? onSaveDraft : undefined}
+          submitDisabled={submitDisabled}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -102,6 +104,26 @@ describe("ApplicationForm drafts", () => {
     expect(submitAction).not.toHaveBeenCalled();
     // None of the required-answer warnings appear: nothing is being submitted.
     expect(screen.queryByTestId("ApplicationForm-missing")).toBeNull();
+  });
+
+  test("the first quarter box goes into the draft, and a ticked draft comes back ticked (issue #292)", () => {
+    const { onSaveDraft } = renderDraftForm();
+    type("gpaMajor", "3.5");
+
+    fireEvent.click(screen.getByTestId("ApplicationForm-firstQuarter"));
+    fireEvent.click(screen.getByTestId("ApplicationForm-saveDraft"));
+
+    const sent = onSaveDraft.mock.calls[0][0];
+    expect(sent.firstQuarter).toBe(true);
+    expect(sent.gpaMajor).toBeNull();
+    expect(sent.gpaOverall).toBeNull();
+  });
+
+  test("a draft that has the box ticked restores it ticked (issue #292)", () => {
+    renderDraftForm({ initialContents: { firstQuarter: true } });
+
+    expect(screen.getByTestId("ApplicationForm-firstQuarter")).toBeChecked();
+    expect(screen.getByTestId("ApplicationForm-gpaMajor")).toBeDisabled();
   });
 
   test("Save Draft sends everything entered so far, complete or not", () => {
@@ -352,5 +374,27 @@ describe("ApplicationForm drafts", () => {
       await screen.findByTestId("ApplicationForm-missing"),
     ).toBeInTheDocument();
     expect(submitAction).not.toHaveBeenCalled();
+  });
+  /** Issue #281: the form stays on screen after its recruitment closed, but cannot be sent. */
+  test("the buttons are on unless the form is told its recruitment has closed", () => {
+    renderDraftForm();
+    expect(screen.getByTestId("ApplicationForm-submit")).toBeEnabled();
+    expect(screen.getByTestId("ApplicationForm-saveDraft")).toBeEnabled();
+  });
+
+  test("a form told its recruitment has closed turns off submit and Save Draft but keeps the answers", () => {
+    const { submitAction, onSaveDraft } = renderDraftForm({
+      submitDisabled: true,
+    });
+    type("comments", "Kept as typed");
+
+    expect(screen.getByTestId("ApplicationForm-submit")).toBeDisabled();
+    expect(screen.getByTestId("ApplicationForm-saveDraft")).toBeDisabled();
+    fireEvent.click(screen.getByTestId("ApplicationForm-saveDraft"));
+    expect(onSaveDraft).not.toHaveBeenCalled();
+    expect(submitAction).not.toHaveBeenCalled();
+    expect(screen.getByTestId("ApplicationForm-comments")).toHaveValue(
+      "Kept as typed",
+    );
   });
 });

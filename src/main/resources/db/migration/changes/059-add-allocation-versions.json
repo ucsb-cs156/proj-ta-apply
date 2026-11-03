@@ -2,7 +2,7 @@
   "databaseChangeLog": [
     {
       "changeSet": {
-        "id": "044-add-allocation-versions",
+        "id": "059-add-allocation-versions",
         "author": "pc",
         "comment": "Version counters behind the multi-tab warning on the Courses edit page (issue #278): one per course row for its allocation, and one per recruitment for changes that overwrite every allocation.",
         "preConditions": [

@@ -7,7 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import edu.ucsb.cs.taapply.entity.Application;
@@ -44,6 +47,7 @@ public class CreateFakeRankingsJobTests {
   @Mock private RecruitmentCourseRepository recruitmentCourseRepository;
   @Mock private ApplicationRepository applicationRepository;
   @Mock private CandidateRankingRepository candidateRankingRepository;
+  @Mock private edu.ucsb.cs.taapply.services.RankingVersionService rankingVersionService;
 
   private final Random random = new Random(1);
   private Job jobStarted;
@@ -66,6 +70,7 @@ public class CreateFakeRankingsJobTests {
         .recruitmentCourseRepository(recruitmentCourseRepository)
         .applicationRepository(applicationRepository)
         .candidateRankingRepository(candidateRankingRepository)
+        .rankingVersionService(rankingVersionService)
         .build();
   }
 
@@ -89,7 +94,10 @@ public class CreateFakeRankingsJobTests {
         Application.builder().id(2L).origin(ApplicationOrigin.ADMIN_TEST).build();
     when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L))
         .thenReturn(List.of(fake, adminTest));
-    List<CandidateRanking> made = List.of(CandidateRanking.builder().rank(1).build());
+    List<CandidateRanking> made =
+        List.of(
+            CandidateRanking.builder().recruitmentCourseId(12L).rank(1).build(),
+            CandidateRanking.builder().recruitmentCourseId(12L).rank(2).build());
     when(generator.generate(any(), any(), any(), any(), eq(true), any())).thenReturn(made);
 
     job(FakeRankingScope.SOME, true).accept(ctx);
@@ -107,13 +115,16 @@ public class CreateFakeRankingsJobTests {
     assertEquals(Set.of(11L), alreadyRanked.getValue());
     assertTrue(apps.getValue().contains(fake));
     verify(candidateRankingRepository).saveAll(made);
+    // Issue #279: every course whose rankings changed has a new version, once however many rows.
+    verify(rankingVersionService, times(1)).bump(12L);
+    verifyNoMoreInteractions(rankingVersionService);
     assertTrue(
         jobStarted
             .getLog()
             .contains(
                 "Creating fake rankings for SOME courses of TA 20261 (with some not-interested)"),
         jobStarted.getLog());
-    assertTrue(jobStarted.getLog().contains("Created 1 fake ranking(s)."), jobStarted.getLog());
+    assertTrue(jobStarted.getLog().contains("Created 2 fake ranking(s)."), jobStarted.getLog());
   }
 
   @Test
@@ -133,6 +144,7 @@ public class CreateFakeRankingsJobTests {
             .contains("Creating fake rankings for ALL courses of ULA 20262 (interested only)"),
         jobStarted.getLog());
     assertTrue(jobStarted.getLog().contains("Created 0 fake ranking(s)."), jobStarted.getLog());
+    verifyNoInteractions(rankingVersionService);
   }
 
   @Test

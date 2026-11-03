@@ -5,6 +5,8 @@ export type BudgetRow = {
   unrestrictedBudget: number;
   tasOnlyBudget: number;
   ulasOnlyBudget: number;
+  /** How many times the budget has been saved; a save carries it so a stale one is refused. */
+  version: number;
 };
 
 /** One recruitment's side of the budget; null in the summary when the quarter has none. */

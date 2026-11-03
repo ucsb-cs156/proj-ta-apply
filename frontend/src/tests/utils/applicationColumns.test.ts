@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import {
   ALL_APPLICATION_COLUMNS,
   APPLICATIONS_TABLE_KEY,
@@ -303,5 +304,101 @@ describe("applicationColumns", () => {
     expect(value("classLevel", {})).toBe("PhD");
     expect(value("otherCampusJob", { otherCampusJob: "BOGUS" })).toBe("");
     expect(value("changingMajor", { changingMajor: null })).toBe("");
+  });
+});
+
+describe("the GPA columns for a first quarter applicant (issue #292)", () => {
+  const column = (id: string) =>
+    ALL_APPLICATION_COLUMNS.find((c) => c.id === id)!;
+
+  test("say First quarter instead of a blank", () => {
+    const first = {
+      ...ta,
+      firstQuarter: true,
+      gpaMajor: null,
+      gpaOverall: null,
+    };
+
+    expect(column("gpaMajor").value(first)).toBe("First quarter");
+    expect(column("gpaOverall").value(first)).toBe("First quarter");
+  });
+
+  test("show the numbers for everyone else", () => {
+    const other = {
+      ...ta,
+      firstQuarter: false,
+      gpaMajor: 3.9,
+      gpaOverall: 3.8,
+    };
+
+    expect(column("gpaMajor").value(other)).toBe("3.9");
+    expect(column("gpaOverall").value(other)).toBe("3.8");
+  });
+});
+
+describe("the columns of a table of drafts (issue #296)", () => {
+  test("are the same columns, with the same ids and order, as for submitted applications", () => {
+    for (const type of ["TA", "ULA"] as const) {
+      expect(applicationColumns(type, true).map((c) => c.id)).toEqual(
+        applicationColumns(type).map((c) => c.id),
+      );
+      expect(applicationColumnChoices(type, true).map((c) => c.id)).toEqual(
+        applicationColumnChoices(type).map((c) => c.id),
+      );
+    }
+  });
+
+  test("differ only in Submitted, which becomes Last saved", () => {
+    const submitted = applicationColumns("TA");
+    const drafts = applicationColumns("TA", true);
+
+    expect(
+      drafts.filter((c, i) => c.label !== submitted[i].label).map((c) => c.id),
+    ).toEqual(["submittedAt"]);
+    expect(drafts.find((c) => c.id === "submittedAt")!.label).toBe(
+      "Last saved",
+    );
+    expect(
+      applicationColumnChoices("ULA", true).find((c) => c.id === "submittedAt")!
+        .label,
+    ).toBe("Last saved");
+    expect(
+      applicationColumnChoices("ULA").find((c) => c.id === "submittedAt")!
+        .label,
+    ).toBe("Submitted");
+    expect(applicationColumns("TA")[0].label).toBe("Submitted");
+  });
+
+  test("Last saved shows when the draft was saved, in Pacific time", () => {
+    const column = applicationColumns("TA", true)[0];
+
+    expect(
+      column.value(draftApplicationsFixtures.adminSavedTaDraft as never),
+    ).toBe("1/12/2026, 8:15:00 AM");
+    expect(
+      column.value({
+        ...draftApplicationsFixtures.adminSavedTaDraft,
+        updatedAt: null,
+      } as never),
+    ).toBe("");
+  });
+
+  test("the answers read the same from a draft, and an unanswered one is blank", () => {
+    const draft =
+      draftApplicationsFixtures.adminSavedTaDraft as never as object;
+    const value = (id: string, row: object = draft) =>
+      ALL_APPLICATION_COLUMNS.find((c) => c.id === id)!.value(row as never);
+
+    expect(value("major")).toBe("Statistics");
+    expect(value("gpaMajor")).toBe("First quarter");
+    expect(value("classLevel")).toBe("MS");
+    expect(value("status")).toBe("");
+    expect(value("cancelled")).toBe("");
+    expect(value("postApplicationComments")).toBe("");
+    expect(value("adminComments")).toBe("");
+    expect(
+      value("adminComments", { ...draft, adminComments: "Call her" }),
+    ).toBe("Call her");
+    expect(value("submittedAt")).toBe("");
   });
 });

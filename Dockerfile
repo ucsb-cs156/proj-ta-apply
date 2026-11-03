@@ -2,6 +2,8 @@ FROM ubuntu:22.04
 
 # Set environment variables to avoid interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive
+# Pacific time is the app's time zone (issue #293); startup.sh also passes -Duser.timezone to the JVM
+ENV TZ=America/Los_Angeles
 
 RUN apt-get update 
 RUN apt-get install -y openjdk-25-jdk  

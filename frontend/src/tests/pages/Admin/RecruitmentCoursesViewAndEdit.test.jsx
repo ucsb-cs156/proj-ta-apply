@@ -24,9 +24,13 @@ const notRemoved = recruitmentCoursesFixtures.fourCourses.filter(
 );
 const HEARTBEAT = "/api/recruitmentcourses/heartbeat";
 const HEARTBEAT_URL = /\/api\/recruitmentcourses\/heartbeat/;
-const RISK =
-  "Please know that this is risky; we recommend closing all but one of these.";
-const phill = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
+const ADMIN_SENTENCE =
+  "We recommend that only one admin edits this page at a time.";
+const phill = {
+  label: "phtcon@ucsb.edu (Phill Conrad)",
+  samePerson: false,
+  admin: true,
+};
 
 function renderAt(path) {
   return render(
@@ -281,10 +285,26 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     expect(
       await screen.findByTestId("RecruitmentCoursesPage-multiple-tabs"),
     ).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) is also editing this page. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) is also editing this page. ${ADMIN_SENTENCE}`,
     );
     // An older tab is not asked.
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  test("the later edit page says the others already have it open, with the admin sentence", async () => {
+    axiosMock.onPost(HEARTBEAT_URL).reply(200, {
+      others: [phill],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1000,
+    });
+    renderAt("/admin/recruitments/7/courses/edit");
+
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) already has this page open for editing. ${ADMIN_SENTENCE}`,
+    );
   });
 
   test("the newest edit page is asked what to do", async () => {
@@ -300,7 +320,7 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     expect(
       screen.getByTestId("RecruitmentCoursesPage-multiple-tabs-modal-message"),
     ).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) is also editing this page. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) already has this page open for editing. ${ADMIN_SENTENCE}`,
     );
   });
 

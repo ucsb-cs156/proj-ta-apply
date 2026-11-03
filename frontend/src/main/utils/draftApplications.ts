@@ -23,6 +23,14 @@ export type DraftApplication = ApplicationAnswers & {
   version: number;
 };
 
+/**
+ * A draft as an admin sees it (issue #296): the draft itself, with the admin's comments on it
+ * under the name an application's use, so that one table and one page can show either.
+ */
+export type AdminDraftApplication = DraftApplication & {
+  adminComments: string | null;
+};
+
 /** The warning under "Continue editing draft application" on the home page. */
 export const DRAFT_WARNING =
   "Your application is not yet complete; incomplete applications are not considered.";
@@ -42,3 +50,7 @@ export const draftFor = (
  */
 export const draftWasSaved = (draft: DraftApplication): boolean =>
   draft.firstName !== null && draft.firstName !== undefined;
+
+/** Said above a form that is still open after its recruitment closed (issues #276, #281). */
+export const APPLICATIONS_CLOSED_MESSAGE =
+  "Applications for this recruitment have closed. Your draft is kept as of its last automatic save, but it can no longer be submitted.";

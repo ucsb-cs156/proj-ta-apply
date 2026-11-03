@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -12,9 +18,14 @@ import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
 const mockToast = vi.fn();
+const mockNavigate = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
   ...(await importOriginal()),
   toast: (x) => mockToast(x),
+}));
+vi.mock("react-router", async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => mockNavigate,
 }));
 
 const axiosMock = new AxiosMockAdapter(axios);
@@ -42,6 +53,7 @@ const puts = (url) => axiosMock.history.put.filter((r) => r.url === url);
 describe("BudgetPage tests", () => {
   beforeEach(() => {
     mockToast.mockClear();
+    mockNavigate.mockClear();
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock
@@ -415,12 +427,12 @@ describe("BudgetPage tests", () => {
     expect(
       puts("/api/admin/recruitments/avgCostPerPosition").map((r) => r.params),
     ).toEqual([
-      { id: 5, avgCostPerPosition: "1" },
-      { id: 5, avgCostPerPosition: "13" },
-      { id: 5, avgCostPerPosition: "130" },
-      { id: 5, avgCostPerPosition: "1300" },
-      { id: 5, avgCostPerPosition: "13000" },
-      { id: 5, avgCostPerPosition: "13000.5" },
+      { id: 5, avgCostPerPosition: "1", expected: "12000" },
+      { id: 5, avgCostPerPosition: "13", expected: "1" },
+      { id: 5, avgCostPerPosition: "130", expected: "13" },
+      { id: 5, avgCostPerPosition: "1300", expected: "130" },
+      { id: 5, avgCostPerPosition: "13000", expected: "1300" },
+      { id: 5, avgCostPerPosition: "13000.5", expected: "13000" },
     ]);
     await waitFor(() =>
       expect(budgetGets().length).toBeGreaterThan(getsBefore),
@@ -445,6 +457,7 @@ describe("BudgetPage tests", () => {
     ).toEqual({
       id: 6,
       avgCostPerPosition: "9",
+      expected: "2500.5",
     });
   });
 
@@ -458,9 +471,9 @@ describe("BudgetPage tests", () => {
 
     await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(3));
     expect(puts("/api/admin/budget").map((r) => r.params)).toEqual([
-      { quarter: "20264", tasOnlyBudget: "7" },
-      { quarter: "20264", tasOnlyBudget: "7.2" },
-      { quarter: "20264", tasOnlyBudget: "7.25" },
+      { quarter: "20264", tasOnlyBudget: "7", version: 3 },
+      { quarter: "20264", tasOnlyBudget: "7.2", version: 3 },
+      { quarter: "20264", tasOnlyBudget: "7.25", version: 3 },
     ]);
     await waitFor(() =>
       expect(budgetGets().length).toBeGreaterThan(getsBefore),
@@ -487,6 +500,7 @@ describe("BudgetPage tests", () => {
     expect(puts("/api/admin/budget")[3].params).toEqual({
       quarter: "20264",
       unrestrictedBudget: "1",
+      version: 3,
     });
 
     await userEvent.clear(screen.getByTestId("BudgetPage-ulasOnlyBudget"));
@@ -495,6 +509,7 @@ describe("BudgetPage tests", () => {
     expect(puts("/api/admin/budget")[4].params).toEqual({
       quarter: "20264",
       ulasOnlyBudget: "0",
+      version: 3,
     });
   });
 
@@ -512,8 +527,8 @@ describe("BudgetPage tests", () => {
     expect(
       puts("/api/admin/recruitments/totalHiringTarget").map((r) => r.params),
     ).toEqual([
-      { id: 6, totalHiringTarget: 1 },
-      { id: 6, totalHiringTarget: 12 },
+      { id: 6, totalHiringTarget: 1, expected: "10" },
+      { id: 6, totalHiringTarget: 12, expected: "1" },
     ]);
     await waitFor(() =>
       expect(budgetGets().length).toBeGreaterThan(getsBefore),
@@ -528,6 +543,7 @@ describe("BudgetPage tests", () => {
       {
         id: 5,
         totalHiringTarget: 3,
+        expected: "8",
       },
     );
   });
@@ -581,5 +597,589 @@ describe("BudgetPage tests", () => {
       /Error communicating with backend via GET on \/api\/admin\/budget/,
     );
     expect(screen.getByTestId("BudgetPage-loading")).toBeInTheDocument();
+  });
+
+  // ---- the version check and compare-and-set (issue #277) ----
+
+  const COST = "/api/admin/recruitments/avgCostPerPosition";
+  const TARGET = "/api/admin/recruitments/totalHiringTarget";
+
+  /** The summary as another admin left it: a TAs-only budget of 45,000, at version 4. */
+  const theirs = {
+    ...budgetFixtures.bothTypes,
+    budget: {
+      ...budgetFixtures.bothTypes.budget,
+      tasOnlyBudget: 45000,
+      version: 4,
+    },
+    totalFunds: 170000,
+  };
+
+  /** Refuses the first budget save as stale and takes every later one. */
+  function refuseFirstBudgetSave() {
+    let saves = 0;
+    axiosMock.onPut("/api/admin/budget").reply(() => {
+      saves += 1;
+      return saves === 1
+        ? [409, { message: "stale", version: 4, summary: theirs }]
+        : [200, theirs];
+    });
+  }
+
+  test("a stale budget line is refused: the page shows what is stored and offers both choices", async () => {
+    refuseFirstBudgetSave();
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+
+    const alert = await screen.findByTestId(
+      "BudgetPage-conflict-tasOnlyBudget",
+    );
+    expect(
+      screen.getByTestId("BudgetPage-conflict-tasOnlyBudget-message"),
+    ).toHaveTextContent(
+      "The TAs-only budget was changed in another tab or window. It is now $45,000.00; you entered $4.00.",
+    );
+    expect(alert).toHaveClass("alert-warning");
+    expect(
+      screen.getByRole("button", { name: "Use theirs" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Overwrite" }),
+    ).toBeInTheDocument();
+    // The page now shows what is stored, everywhere.
+    expect(screen.getByTestId("BudgetPage-funds-tasOnly")).toHaveTextContent(
+      "TAs only budget$45,000.00",
+    );
+    expect(screen.getByTestId("BudgetPage-funds-total")).toHaveTextContent(
+      "$170,000.00",
+    );
+    expect(puts("/api/admin/budget")).toHaveLength(1);
+  });
+
+  test("Use theirs drops what was typed and sends nothing", async () => {
+    refuseFirstBudgetSave();
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+    await screen.findByTestId("BudgetPage-conflict-tasOnlyBudget");
+
+    await userEvent.click(
+      screen.getByTestId("BudgetPage-conflict-tasOnlyBudget-theirs"),
+    );
+
+    expect(
+      screen.queryByTestId("BudgetPage-conflict-tasOnlyBudget"),
+    ).not.toBeInTheDocument();
+    expect(puts("/api/admin/budget")).toHaveLength(1);
+  });
+
+  test("Overwrite saves what was typed again, against the version that is stored now", async () => {
+    refuseFirstBudgetSave();
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+    await screen.findByTestId("BudgetPage-conflict-tasOnlyBudget");
+
+    await userEvent.click(
+      screen.getByTestId("BudgetPage-conflict-tasOnlyBudget-overwrite"),
+    );
+
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(2));
+    expect(puts("/api/admin/budget")[1].params).toEqual({
+      quarter: "20264",
+      tasOnlyBudget: "4",
+      version: 4,
+    });
+    expect(
+      screen.queryByTestId("BudgetPage-conflict-tasOnlyBudget"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("typing more while a figure is in conflict updates what Overwrite would save, and sends nothing", async () => {
+    refuseFirstBudgetSave();
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+    await screen.findByTestId("BudgetPage-conflict-tasOnlyBudget");
+
+    await userEvent.type(box, "5");
+
+    expect(
+      screen.getByTestId("BudgetPage-conflict-tasOnlyBudget-message"),
+    ).toHaveTextContent("you entered $45.00.");
+    expect(puts("/api/admin/budget")).toHaveLength(1);
+    await userEvent.click(
+      screen.getByTestId("BudgetPage-conflict-tasOnlyBudget-overwrite"),
+    );
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(2));
+    expect(puts("/api/admin/budget")[1].params.tasOnlyBudget).toBe("45");
+  });
+
+  test("a save after a good one carries the version the good one answered with", async () => {
+    axiosMock.onPut("/api/admin/budget").reply(200, theirs);
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "12");
+
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(2));
+    expect(puts("/api/admin/budget").map((r) => r.params.version)).toEqual([
+      3, 4,
+    ]);
+  });
+
+  test("a refused average cost shows what is stored, and Overwrite expects it", async () => {
+    let saves = 0;
+    axiosMock.onPut(COST).reply(() => {
+      saves += 1;
+      return saves === 1
+        ? [
+            409,
+            { message: "stale", recruitment: { avgCostPerPosition: 15000 } },
+          ]
+        : [200, {}];
+    });
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-avgCost-ta");
+    await userEvent.clear(box);
+    await userEvent.type(box, "1");
+
+    expect(
+      await screen.findByTestId("BudgetPage-conflict-cost-ta-message"),
+    ).toHaveTextContent(
+      "The average cost per TA was changed in another tab or window. It is now $15,000.00; you entered $1.00.",
+    );
+
+    await userEvent.click(
+      screen.getByTestId("BudgetPage-conflict-cost-ta-overwrite"),
+    );
+
+    await waitFor(() => expect(puts(COST)).toHaveLength(2));
+    expect(puts(COST)[1].params).toEqual({
+      id: 5,
+      avgCostPerPosition: "1",
+      expected: "15000",
+    });
+    expect(screen.queryByTestId("BudgetPage-conflict-cost-ta")).toBeNull();
+  });
+
+  test("a refused hiring target says so in plain numbers, and Use theirs expects the stored value next", async () => {
+    let saves = 0;
+    axiosMock.onPut(TARGET).reply(() => {
+      saves += 1;
+      return saves === 1
+        ? [409, { message: "stale", recruitment: { totalHiringTarget: 9 } }]
+        : [200, {}];
+    });
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-target-ula-input");
+    await userEvent.clear(box);
+    await userEvent.type(box, "1");
+
+    expect(
+      await screen.findByTestId("BudgetPage-conflict-target-ula-message"),
+    ).toHaveTextContent(
+      "The ULA hiring target was changed in another tab or window. It is now 9; you entered 1.",
+    );
+    await userEvent.click(
+      screen.getByTestId("BudgetPage-conflict-target-ula-theirs"),
+    );
+    expect(screen.queryByTestId("BudgetPage-conflict-target-ula")).toBeNull();
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "7");
+    await waitFor(() => expect(puts(TARGET)).toHaveLength(2));
+    expect(puts(TARGET)[1].params).toEqual({
+      id: 6,
+      totalHiringTarget: 7,
+      expected: "9",
+    });
+  });
+
+  test("a figure that has no stored value yet is saved without an expected value", async () => {
+    renderPage("S26");
+    const box = await screen.findByTestId("BudgetPage-avgCost-ula");
+
+    await userEvent.type(box, "5");
+
+    await waitFor(() => expect(puts(COST)).toHaveLength(1));
+    expect(puts(COST)[0].params.expected).toBeUndefined();
+  });
+
+  test("a refusal with a missing answer is shown as zero rather than breaking the page", async () => {
+    axiosMock.onPut(COST).reply(409, {});
+    axiosMock.onPut(TARGET).reply(409, {});
+    renderPage("F26");
+    const cost = await screen.findByTestId("BudgetPage-avgCost-ta");
+    await userEvent.clear(cost);
+    await userEvent.type(cost, "1");
+    const target = screen.getByTestId("BudgetPage-target-ta-input");
+    await userEvent.clear(target);
+    await userEvent.type(target, "1");
+
+    expect(
+      await screen.findByTestId("BudgetPage-conflict-cost-ta-message"),
+    ).toHaveTextContent("It is now $0.00;");
+    expect(
+      await screen.findByTestId("BudgetPage-conflict-target-ta-message"),
+    ).toHaveTextContent("It is now 0;");
+  });
+
+  test("a save that never reached the server is logged, not toasted", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    axiosMock.onPut(TARGET).networkError();
+    renderPage("F26");
+    await userEvent.type(
+      await screen.findByTestId("BudgetPage-target-ta-input"),
+      "1",
+    );
+
+    await waitFor(() =>
+      expect(log).toHaveBeenCalledWith(
+        "Backend request failed",
+        expect.anything(),
+      ),
+    );
+    expect(mockToast).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
+
+  const userGets = () =>
+    axiosMock.history.get.filter((r) => r.url === "/api/currentUser");
+
+  /** Answers the first read of F26 as usual and later ones as `later`; or never, if null. */
+  function laterReadsAre(later) {
+    let reads = 0;
+    axiosMock
+      .onGet("/api/admin/budget", { params: { quarter: "20264" } })
+      .reply(() => {
+        reads += 1;
+        if (reads === 1) return [200, budgetFixtures.bothTypes];
+        return later === null ? new Promise(() => {}) : [200, later];
+      });
+  }
+
+  test("no notice is shown until a save is refused", async () => {
+    renderPage("F26");
+    await screen.findByTestId("BudgetPage-bottom-line");
+    expect(
+      document.querySelectorAll('[data-testid^="BudgetPage-conflict-"]'),
+    ).toHaveLength(0);
+  });
+
+  test("a saved budget line shows the answer to the save, before any re-read", async () => {
+    laterReadsAre(null);
+    axiosMock.onPut("/api/admin/budget").reply(200, theirs);
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+
+    await waitFor(() =>
+      expect(screen.getByTestId("BudgetPage-funds-tasOnly")).toHaveTextContent(
+        "TAs only budget$45,000.00",
+      ),
+    );
+  });
+
+  test("a refused budget line shows the answer to the save, before any re-read", async () => {
+    laterReadsAre(null);
+    refuseFirstBudgetSave();
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+
+    await waitFor(() =>
+      expect(screen.getByTestId("BudgetPage-funds-tasOnly")).toHaveTextContent(
+        "TAs only budget$45,000.00",
+      ),
+    );
+  });
+
+  test("a save re-reads the budget and nothing else", async () => {
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-avgCost-ta");
+    const before = budgetGets().length;
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "1");
+
+    await waitFor(() => expect(budgetGets().length).toBeGreaterThan(before));
+    expect(userGets()).toHaveLength(1);
+  });
+
+  test("a refused figure re-reads the budget and nothing else", async () => {
+    axiosMock
+      .onPut(COST)
+      .reply(409, { recruitment: { avgCostPerPosition: 15000 } });
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-avgCost-ta");
+    const before = budgetGets().length;
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "1");
+
+    await screen.findByTestId("BudgetPage-conflict-cost-ta");
+    await waitFor(() => expect(budgetGets().length).toBeGreaterThan(before));
+    expect(userGets()).toHaveLength(1);
+  });
+
+  test("a figure changed by a re-read is still compared with the value first seen", async () => {
+    laterReadsAre({
+      ...budgetFixtures.bothTypes,
+      ta: {
+        ...budgetFixtures.bothTypes.ta,
+        avgCostPerPosition: 77,
+        totalHiringTarget: 5,
+      },
+      ula: {
+        ...budgetFixtures.bothTypes.ula,
+        avgCostPerPosition: 1,
+        totalHiringTarget: 11,
+      },
+    });
+    renderPage("F26");
+    const cost = await screen.findByTestId("BudgetPage-avgCost-ta");
+    await userEvent.clear(cost);
+    await userEvent.type(cost, "1");
+    await waitFor(() =>
+      expect(screen.getByTestId("BudgetPage-target-ta-input")).toHaveValue("5"),
+    );
+
+    const taTarget = screen.getByTestId("BudgetPage-target-ta-input");
+    await userEvent.clear(taTarget);
+    await userEvent.type(taTarget, "9");
+    const ulaTarget = screen.getByTestId("BudgetPage-target-ula-input");
+    await userEvent.clear(ulaTarget);
+    await userEvent.type(ulaTarget, "4");
+    const ulaCost = screen.getByTestId("BudgetPage-avgCost-ula");
+    await userEvent.clear(ulaCost);
+    await userEvent.type(ulaCost, "3");
+    await userEvent.clear(cost);
+    await userEvent.type(cost, "6");
+
+    await waitFor(() => expect(puts(TARGET)).toHaveLength(2));
+    await waitFor(() => expect(puts(COST)).toHaveLength(3));
+    expect(puts(TARGET).map((r) => [r.params.id, r.params.expected])).toEqual([
+      [5, "8"],
+      [6, "10"],
+    ]);
+    // The first save of the first figure expected what was first seen; the next, what that save set.
+    expect(puts(COST).map((r) => [r.params.id, r.params.expected])).toEqual([
+      [5, "12000"],
+      [6, "2500.5"],
+      [5, "1"],
+    ]);
+  });
+
+  test("a refused budget line with no figures in the answer is shown as zero", async () => {
+    axiosMock.onPut("/api/admin/budget").reply(409, {});
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+
+    expect(
+      await screen.findByTestId("BudgetPage-conflict-tasOnlyBudget-message"),
+    ).toHaveTextContent("It is now $0.00; you entered $4.00.");
+  });
+
+  test("a refusal with no answer at all is still shown, as zero, naming the figure", async () => {
+    axiosMock.onPut("/api/admin/budget").reply(409);
+    axiosMock.onPut(COST).reply(409);
+    axiosMock.onPut(TARGET).reply(409);
+    renderPage("F26");
+    for (const [id, field, name] of [
+      [
+        "BudgetPage-unrestrictedBudget",
+        "unrestrictedBudget",
+        "unrestricted budget",
+      ],
+      ["BudgetPage-tasOnlyBudget", "tasOnlyBudget", "TAs-only budget"],
+      ["BudgetPage-ulasOnlyBudget", "ulasOnlyBudget", "ULAs-only budget"],
+      ["BudgetPage-avgCost-ta", "cost-ta", "average cost per TA"],
+      ["BudgetPage-avgCost-ula", "cost-ula", "average cost per ULA"],
+      ["BudgetPage-target-ta-input", "target-ta", "TA hiring target"],
+      ["BudgetPage-target-ula-input", "target-ula", "ULA hiring target"],
+    ]) {
+      const box = await screen.findByTestId(id);
+      await userEvent.clear(box);
+      await userEvent.type(box, "4");
+      const message = await screen.findByTestId(
+        `BudgetPage-conflict-${field}-message`,
+      );
+      expect(message.textContent).toMatch(
+        new RegExp(
+          `^The ${name} was changed in another tab or window\\. It is now \\$?0(\\.00)?; you entered`,
+        ),
+      );
+    }
+  });
+
+  // ---- the multi-tab warning (issue #277) ----
+
+  const HEARTBEAT = "/api/admin/budget/heartbeat?quarter=20264";
+  const heartbeats = () =>
+    axiosMock.history.post.filter((r) =>
+      r.url.startsWith("/api/admin/budget/heartbeat"),
+    );
+  // The shared wording of an admin page (issue #298).
+  const ADMIN = "We recommend that only one admin edits this page at a time.";
+  const phill = {
+    label: "phtcon@ucsb.edu (Phill Conrad)",
+    samePerson: false,
+    admin: true,
+  };
+  const me = { label: "me@example.org (Me)", samePerson: true };
+  const MODAL = "BudgetPage-multiple-tabs-modal";
+
+  test("this quarter's tab heartbeats for this quarter once the budget is there, and its saves name the same tab", async () => {
+    renderPage("F26");
+    expect(heartbeats()).toHaveLength(0);
+
+    await waitFor(() => expect(heartbeats()).toHaveLength(1));
+    expect(heartbeats()[0].url).toBe(HEARTBEAT);
+    const id = heartbeats()[0].headers["X-Client-Id"];
+    expect(id).toMatch(/^[0-9a-f-]{36}$/);
+
+    const line = screen.getByTestId("BudgetPage-tasOnlyBudget");
+    await userEvent.clear(line);
+    await userEvent.type(line, "1");
+    await waitFor(() =>
+      expect(puts("/api/admin/budget").length).toBeGreaterThan(0),
+    );
+    expect(puts("/api/admin/budget")[0].headers["X-Client-Id"]).toBe(id);
+  });
+
+  test("there is no heartbeat for something that is not a quarter", async () => {
+    renderPage("F2");
+    await screen.findByTestId("BudgetPage-bad-quarter");
+    expect(heartbeats()).toHaveLength(0);
+  });
+
+  test("nobody else: no banner and no modal", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [], heartbeatSeconds: 20 });
+    renderPage("F26");
+    await waitFor(() => expect(heartbeats()).toHaveLength(1));
+
+    expect(screen.queryByTestId("BudgetPage-multiple-tabs")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  test("another admin is named in the banner, and the budget is still there to use", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [phill], heartbeatSeconds: 20, newest: false });
+    renderPage("F26");
+
+    expect(
+      await screen.findByTestId("BudgetPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) is also editing this budget page. ${ADMIN}`,
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByTestId("BudgetPage-tasOnlyBudget")).toBeInTheDocument();
+  });
+
+  test("the user's own other tab, and another admin, are told apart", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [me, phill], heartbeatSeconds: 20 });
+    renderPage("F26");
+
+    expect(
+      await screen.findByTestId("BudgetPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this budget page in other windows or tabs. ${ADMIN}`,
+    );
+  });
+
+  test("only the user's own other tab: the admin sentence, not the risk sentence", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [me], heartbeatSeconds: 20, newest: false });
+    renderPage("F26");
+
+    expect(
+      await screen.findByTestId("BudgetPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `You are also editing this budget page in another tab or window. ${ADMIN}`,
+    );
+  });
+
+  test("the newest tab is asked what to do", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [phill],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1000,
+    });
+    renderPage("F26");
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    // The later tab says who "already" has it, in the modal and in the banner.
+    expect(screen.getByTestId(`${MODAL}-message`)).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) already has this budget page open for editing. ${ADMIN}`,
+    );
+    expect(screen.getByTestId("BudgetPage-multiple-tabs")).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) already has this budget page open for editing. ${ADMIN}`,
+    );
+
+    fireEvent.click(screen.getByTestId(`${MODAL}-continue`));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByTestId("BudgetPage-multiple-tabs")).toBeInTheDocument();
+  });
+
+  test("Leave this page says goodbye for this quarter, naming this tab, and goes home", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [phill],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1000,
+    });
+    renderPage("F26");
+    await screen.findByRole("dialog");
+    await waitFor(() => expect(heartbeats()).toHaveLength(1));
+
+    fireEvent.click(screen.getByTestId(`${MODAL}-leave`));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/admin/budget/leave?quarter=20264");
+    expect(init.keepalive).toBe(true);
+    expect(init.headers["X-Client-Id"]).toBe(
+      heartbeats()[0].headers["X-Client-Id"],
+    );
+    expect(mockNavigate).toHaveBeenCalledWith("/");
+    vi.unstubAllGlobals();
+  });
+
+  test("leaving the page says goodbye even though no pagehide happened", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
+    const { unmount } = renderPage("F26");
+    await waitFor(() => expect(heartbeats()).toHaveLength(1));
+
+    unmount();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/admin/budget/leave?quarter=20264",
+      expect.objectContaining({ method: "POST", keepalive: true }),
+    );
+    vi.unstubAllGlobals();
   });
 });

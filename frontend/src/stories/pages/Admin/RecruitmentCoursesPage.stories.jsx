@@ -134,10 +134,42 @@ EditingWithAnotherAdmin.parameters = {
       http.post("/api/recruitmentcourses/heartbeat", () =>
         HttpResponse.json({
           others: [
-            { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false },
+            {
+              label: "phtcon@ucsb.edu (Phill Conrad)",
+              samePerson: false,
+              admin: true,
+            },
           ],
           heartbeatSeconds: 5,
           newest: false,
+          arrivedAtMillis: 1000,
+        }),
+      ),
+    ],
+  },
+};
+
+/**
+ * Another admin had the edit page open first, so this is the later tab: the banner says they
+ * "already have" it open and the question covers the page.
+ */
+export const EditingAsTheLaterTab = EditTemplate.bind({});
+EditingAsTheLaterTab.parameters = {
+  reactRouter: { initialEntries: ["/admin/recruitments/7/courses/edit"] },
+  msw: {
+    handlers: [
+      ...(Default.parameters?.msw?.handlers ?? []),
+      http.post("/api/recruitmentcourses/heartbeat", () =>
+        HttpResponse.json({
+          others: [
+            {
+              label: "phtcon@ucsb.edu (Phill Conrad)",
+              samePerson: false,
+              admin: true,
+            },
+          ],
+          heartbeatSeconds: 5,
+          newest: true,
           arrivedAtMillis: 1000,
         }),
       ),

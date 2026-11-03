@@ -619,11 +619,11 @@ public class LegacyUlaApplicationCsvService {
         .orElse(label);
   }
 
-  /** Where the row came from, for admins only. */
+  /** Where the row came from, for admins only; the form's own clock is Pacific (issue #293). */
   static String adminComments(String timestamp) {
     String when = blankToNull(timestamp);
     return "Imported from the ULA application form"
-        + (when == null ? "" : "; submitted " + when)
+        + (when == null ? "" : "; submitted " + when + " Pacific time")
         + ".";
   }
 }

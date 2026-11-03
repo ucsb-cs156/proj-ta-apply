@@ -105,7 +105,7 @@ public class RecruitmentCoursesConcurrencyTests extends ControllerTestCase {
 
     assertFalse(body.contains("Other Admin"));
     assertEquals(
-        List.of(new OtherClient("other@example.org (Other Admin)", false)),
+        List.of(new OtherClient("other@example.org (Other Admin)", false, false)),
         detector.othersActive(KEY, "observer"));
   }
 
@@ -132,11 +132,13 @@ public class RecruitmentCoursesConcurrencyTests extends ControllerTestCase {
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void a_second_tab_of_the_same_admin_is_the_same_person() throws Exception {
+  public void a_second_tab_of_the_same_admin_is_the_same_person_and_is_marked_as_an_admin()
+      throws Exception {
     heartbeat(7L, "first").andExpect(status().isOk());
     heartbeat(7L, "second")
         .andExpect(jsonPath("$.others.length()").value(1))
-        .andExpect(jsonPath("$.others[0].samePerson").value(true));
+        .andExpect(jsonPath("$.others[0].samePerson").value(true))
+        .andExpect(jsonPath("$.others[0].admin").value(true));
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -373,9 +375,9 @@ public class RecruitmentCoursesConcurrencyTests extends ControllerTestCase {
 
     assertEquals(
         List.of(
-            new OtherClient("blank@example.org", false),
-            new OtherClient("named@example.org (Nora Named)", false),
-            new OtherClient("nameless@example.org", false)),
+            new OtherClient("blank@example.org", false, true),
+            new OtherClient("named@example.org (Nora Named)", false, true),
+            new OtherClient("nameless@example.org", false, true)),
         detector.othersActive(KEY, "observer"));
   }
 }

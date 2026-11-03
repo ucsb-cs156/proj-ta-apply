@@ -6,7 +6,6 @@ import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
 import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
-import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJob;
@@ -53,18 +52,10 @@ public class RecruitmentCoursesController extends ApiController {
   @Autowired ClientActivityDetector clientActivityDetector;
 
   /**
-   * Who the current user is to the detector (issue #278): the email address is the person, and the
-   * label other people see is the email address followed by the full name in parentheses, or the
-   * email address alone if there is no name.
+   * Who the current user is to the detector: the shared identity, marked as an admin (issue #302).
    */
   private ClientIdentity identity() {
-    User user = getCurrentUser().getUser();
-    String name = user.getFullName();
-    String label =
-        name == null || name.isBlank()
-            ? user.getEmail()
-            : user.getEmail() + " (" + name.trim() + ")";
-    return new ClientIdentity(user.getEmail(), label);
+    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);
   }
 
   /** The detector's name for one recruitment's Courses edit page. */

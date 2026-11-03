@@ -1,3 +1,4 @@
+import { pacificWallClock } from "main/utils/pacificTime";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
@@ -65,7 +66,8 @@ describe("UpcomingRecruitmentsTable tests", () => {
     // relative to the real today, so the labels are known: 1 day, 30 days, any day now.
     vi.useRealTimers();
     const isoDaysFromNow = (days) => {
-      const date = new Date();
+      // today is the Pacific one, as the table counts it
+      const date = pacificWallClock();
       date.setDate(date.getDate() + days);
       const pad = (n) => String(n).padStart(2, "0");
       return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;

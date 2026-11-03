@@ -132,7 +132,7 @@ describe("RecruitmentCoursesPage tests", () => {
       expect(
         screen.getByTestId("RecruitmentCoursesPage-last-refreshed"),
       ).toHaveTextContent(
-        `Last refreshed from the UCSB schedule: ${new Date("2026-02-01T03:00:00").toLocaleString()}. Open, upcoming and recently closed recruitments are also refreshed automatically every night.`,
+        `Last refreshed from the UCSB schedule: 2/1/2026, 3:00:00 AM. Open, upcoming and recently closed recruitments are also refreshed automatically every night.`,
       ),
     );
   });

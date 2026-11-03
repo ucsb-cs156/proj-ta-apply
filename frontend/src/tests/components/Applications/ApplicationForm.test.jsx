@@ -3571,4 +3571,204 @@ describe("ApplicationForm tests", () => {
     expect(warning.style.width).toBe("1%");
     expect(warning.style.whiteSpace).toBe("nowrap");
   });
+
+  // ---- the first quarter box under the GPA fields (issue #292) ----
+
+  describe("the first quarter box", () => {
+    const TA_WORDING =
+      "Check here if you are a first quarter grad student, and do not yet have a GPA in Major and Overall GPA as a grad student.";
+    const ULA_WORDING =
+      "Check here if you are applying during your first quarter at UCSB, and do not yet have a GPA in Major and Overall GPA.";
+    const box = () => screen.getByTestId("ApplicationForm-firstQuarter");
+
+    beforeEach(() => {
+      Element.prototype.scrollIntoView = vi.fn();
+    });
+
+    test("a TA form has the box, unchecked, with the TA wording", () => {
+      renderForm({ type: "TA" });
+
+      expect(box()).not.toBeChecked();
+      expect(screen.getByLabelText(TA_WORDING)).toBe(box());
+    });
+
+    test("a ULA form has the box, unchecked, with the ULA wording", () => {
+      renderForm({ type: "ULA" });
+
+      expect(box()).not.toBeChecked();
+      expect(screen.getByLabelText(ULA_WORDING)).toBe(box());
+    });
+
+    test("the box sits in the row after the GPA fields, under them and aligned with them", () => {
+      renderForm({ type: "TA" });
+
+      const gpaRow = screen
+        .getByTestId("ApplicationForm-gpaMajor")
+        .closest(".row");
+      const boxRow = screen.getByTestId("ApplicationForm-first-quarter-row");
+      expect(gpaRow.nextElementSibling).toBe(boxRow);
+      // The Major column is four of twelve wide, and the two GPA columns follow it.
+      expect(boxRow.firstElementChild).toHaveClass("col-md-4", "offset-md-4");
+      expect(boxRow).toContainElement(box());
+    });
+
+    test("ticking it disables the GPA fields and drops their asterisks", async () => {
+      renderForm({ type: "TA" });
+      expect(labelNamed("GPA in Major").textContent).toMatch(/\*\s*$/);
+      expect(labelNamed("Overall GPA").textContent).toMatch(/\*\s*$/);
+      expect(screen.getByTestId("ApplicationForm-gpaMajor")).toBeEnabled();
+      expect(screen.getByTestId("ApplicationForm-gpaOverall")).toBeEnabled();
+
+      await userEvent.click(box());
+
+      expect(box()).toBeChecked();
+      expect(screen.getByTestId("ApplicationForm-gpaMajor")).toBeDisabled();
+      expect(screen.getByTestId("ApplicationForm-gpaOverall")).toBeDisabled();
+      expect(labelNamed("GPA in Major").textContent).not.toMatch(/\*/);
+      expect(labelNamed("Overall GPA").textContent).not.toMatch(/\*/);
+
+      await userEvent.click(box());
+
+      expect(screen.getByTestId("ApplicationForm-gpaMajor")).toBeEnabled();
+      expect(labelNamed("GPA in Major").textContent).toMatch(/\*\s*$/);
+    });
+
+    test("a TA applicant with the box ticked submits with no GPAs", async () => {
+      const submitAction = renderForm({
+        type: "TA",
+        initialContents: {
+          priorCoursework: [
+            priorCourseworkFixtures.ucsbCourse,
+            {
+              ...priorCourseworkFixtures.ucsbCourse,
+              courseNumber: "CMPSC 130B",
+            },
+            {
+              ...priorCourseworkFixtures.ucsbCourse,
+              courseNumber: "CMPSC 138",
+            },
+          ],
+        },
+      });
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-firstName"),
+        "Ada",
+      );
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-lastName"),
+        "Lovelace",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-major"),
+        "Statistics",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+        "CMPSC   156",
+      );
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-yearInProgram"),
+        "1st",
+      );
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-graduationDate"),
+        "S28",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-classLevel"),
+        "PHD",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-residencyStatus"),
+        "US_CITIZEN",
+      );
+      await userEvent.selectOptions(
+        screen.getByTestId("ApplicationForm-languageExam"),
+        "EXEMPT_US_CITIZEN",
+      );
+
+      // Without the box the empty GPAs refuse the submission...
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      expect(
+        await screen.findByText("Your GPA in major is required."),
+      ).toBeInTheDocument();
+      expect(listedMissing()).toEqual(["GPA in Major", "Overall GPA"]);
+      expect(submitAction).not.toHaveBeenCalled();
+
+      // ...and ticking it clears the complaint, the list and the requirement.
+      await userEvent.click(box());
+      expect(screen.queryByText("Your GPA in major is required.")).toBeNull();
+      expect(screen.queryByText("Your overall GPA is required.")).toBeNull();
+      expect(screen.getByTestId("ApplicationForm-gpaMajor")).not.toHaveClass(
+        "is-invalid",
+      );
+      expect(screen.getByTestId("ApplicationForm-gpaOverall")).not.toHaveClass(
+        "is-invalid",
+      );
+      expect(screen.queryByTestId("ApplicationForm-missing")).toBeNull();
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+      const payload = submitAction.mock.calls[0][0];
+      expect(payload.firstQuarter).toBe(true);
+      expect(payload.gpaMajor).toBeNull();
+      expect(payload.gpaOverall).toBeNull();
+    });
+
+    test("GPAs typed before the box was ticked are not sent, and come back if it is cleared", async () => {
+      const submitAction = renderForm({
+        type: "ULA",
+        initialContents: {
+          priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+        },
+      });
+      await fillRequired();
+      expect(screen.getByTestId("ApplicationForm-gpaMajor")).toHaveValue(3.9);
+
+      await userEvent.click(box());
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+      expect(submitAction.mock.calls[0][0].firstQuarter).toBe(true);
+      expect(submitAction.mock.calls[0][0].gpaMajor).toBeNull();
+      expect(submitAction.mock.calls[0][0].gpaOverall).toBeNull();
+
+      await userEvent.click(box());
+      expect(screen.getByTestId("ApplicationForm-gpaMajor")).toHaveValue(3.9);
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+      await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(2));
+      expect(submitAction.mock.calls[1][0].firstQuarter).toBe(false);
+      expect(submitAction.mock.calls[1][0].gpaMajor).toBe(3.9);
+      expect(submitAction.mock.calls[1][0].gpaOverall).toBe(3.8);
+    });
+
+    test("a ULA applicant with the box ticked is not asked for GPAs", async () => {
+      renderForm({
+        type: "ULA",
+        initialContents: {
+          priorCoursework: [priorCourseworkFixtures.ucsbCourse],
+        },
+      });
+      await userEvent.click(box());
+      await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+      await screen.findByTestId("ApplicationForm-missing");
+      expect(listedMissing()).not.toContain("GPA in Major");
+      expect(listedMissing()).not.toContain("Overall GPA");
+      expect(listedMissing()).toContain("Year in Program");
+    });
+
+    test("an application or draft that has the box ticked comes back ticked, with the GPAs disabled", () => {
+      renderForm({ type: "TA", initialContents: { firstQuarter: true } });
+
+      expect(box()).toBeChecked();
+      expect(screen.getByTestId("ApplicationForm-gpaMajor")).toBeDisabled();
+      expect(screen.getByTestId("ApplicationForm-gpaOverall")).toBeDisabled();
+    });
+
+    const listedMissing = () =>
+      within(screen.getByTestId("ApplicationForm-missing"))
+        .getAllByRole("button")
+        .map((button) => button.textContent);
+  });
 });

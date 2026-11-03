@@ -35,7 +35,8 @@ const handlers = [
   ),
   http.put(
     "/api/instructor/recruitments/1/courses/2/candidates/:id/rank",
-    async ({ request }) => HttpResponse.json(await request.json()),
+    async ({ request }) =>
+      HttpResponse.json({ ...(await request.json()), version: 4 }),
   ),
 ];
 
@@ -93,6 +94,38 @@ Rankable.parameters = {
           reviewStatus: "Open",
           canRank: true,
         }),
+      ),
+      ...handlers,
+    ],
+  },
+};
+
+/**
+ * Another instructor of the course is ranking it too (issue #279): the warning names them, and as
+ * this is the newest tab the question is put as well.
+ */
+export const AnotherInstructorRanking = Template.bind({});
+AnotherInstructorRanking.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/instructor/recruitments/1/courses/2/ranking", () =>
+        HttpResponse.json({
+          ...instructorRecruitmentsFixtures.candidateRankingPage,
+          reviewStatus: "Open",
+          canRank: true,
+        }),
+      ),
+      http.post(
+        "/api/instructor/recruitments/1/courses/2/ranking/heartbeat",
+        () =>
+          HttpResponse.json({
+            others: [
+              { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false },
+            ],
+            heartbeatSeconds: 5,
+            newest: false,
+            arrivedAtMillis: 1000,
+          }),
       ),
       ...handlers,
     ],

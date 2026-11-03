@@ -38,7 +38,7 @@ describe("NoticeAgreement tests", () => {
     expect(content.querySelector("strong")).toHaveTextContent("whole");
     expect(content.querySelectorAll("li")).toHaveLength(2);
     expect(screen.getByTestId("N-version")).toHaveTextContent(
-      `Version 2, saved ${new Date("2026-02-03T04:05:06").toLocaleString()}`,
+      `Version 2, saved 2/3/2026, 4:05:06 AM`,
     );
 
     const box = screen.getByTestId("N-agree");

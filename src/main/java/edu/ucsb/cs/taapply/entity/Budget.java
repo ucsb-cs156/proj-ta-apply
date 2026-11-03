@@ -36,4 +36,11 @@ public class Budget {
   @Column(name = "ulas_only_budget", nullable = false, precision = 12, scale = 2)
   @Builder.Default
   private BigDecimal ulasOnlyBudget = BigDecimal.ZERO;
+
+  /**
+   * How many times this budget has been saved (issue #277). JPA checks it and adds one on every
+   * save (optimistic locking), and a save that carries an older count than the budget now has is
+   * refused, so two tabs or admins cannot silently overwrite each other's change.
+   */
+  @Version private Integer version;
 }

@@ -249,6 +249,14 @@ public class RecruitmentsWebIT extends WebTestCase {
             .setTimeout(20000);
     assertThat(otherPage.getByTestId("RecruitmentCoursesPage-multiple-tabs")).isVisible(wait);
     assertThat(page.getByTestId("RecruitmentCoursesPage-multiple-tabs")).isVisible(wait);
+    // The shared admin wording (#298). Both windows are the same admin, so the later one says "You
+    // already have" and the earlier "You are also editing", and both end with the admin sentence.
+    assertThat(otherPage.getByTestId("RecruitmentCoursesPage-multiple-tabs"))
+        .containsText("You already have this page open for editing in another tab or window.");
+    assertThat(page.getByTestId("RecruitmentCoursesPage-multiple-tabs"))
+        .containsText("You are also editing this page in another tab or window.");
+    assertThat(page.getByTestId("RecruitmentCoursesPage-multiple-tabs"))
+        .containsText("We recommend that only one admin edits this page at a time.");
     assertThat(otherPage.getByTestId("RecruitmentCoursesPage-multiple-tabs-modal-leave"))
         .isVisible();
 

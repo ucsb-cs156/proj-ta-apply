@@ -119,6 +119,18 @@ public class Recruitment {
   private Boolean assignmentsPublished = false;
 
   /**
+   * The version of the recruitment's assignments (issue #280): starts at 1 and is counted up by
+   * every tentative assignment, by publishing or taking back, and by an applicant cancelling. A
+   * tentative assignment carries the version its page last saw and is refused if it has moved.
+   * Never written by saving the entity ({@code updatable = false}), so that a stale copy of the
+   * recruitment cannot move it back; only {@link
+   * edu.ucsb.cs.taapply.repository.RecruitmentRepository} changes it, in one atomic statement.
+   */
+  @Column(name = "assignments_version", nullable = false, updatable = false)
+  @Builder.Default
+  private Integer assignmentsVersion = 1;
+
+  /**
    * When the recruitment was created (issue #231); null for rows older than the column whose
    * creation is not in the audit trail.
    */

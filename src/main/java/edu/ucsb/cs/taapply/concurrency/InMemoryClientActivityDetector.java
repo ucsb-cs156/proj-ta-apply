@@ -130,7 +130,8 @@ public class InMemoryClientActivityDetector implements ClientActivityDetector {
           if (!id.equals(clientId) && active(client.at(), now)) {
             ClientIdentity who = client.identity();
             people.putIfAbsent(
-                who.personKey(), new OtherClient(who.label(), who.personKey().equals(callerKey)));
+                who.personKey(),
+                new OtherClient(who.label(), who.personKey().equals(callerKey), who.admin()));
           }
         });
     return people.values().stream().sorted(BY_LABEL).toList();

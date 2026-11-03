@@ -8,7 +8,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
@@ -32,8 +34,28 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(controllers = BudgetController.class)
-@Import(edu.ucsb.cs.taapply.testconfig.TestConfig.class)
+@Import({
+  edu.ucsb.cs.taapply.testconfig.TestConfig.class,
+  BudgetControllerTests.DetectorConfig.class
+})
 public class BudgetControllerTests extends ControllerTestCase {
+
+  /** The application's own detector, but one that can be emptied between tests and mutations. */
+  @org.springframework.boot.test.context.TestConfiguration
+  static class DetectorConfig {
+    @org.springframework.context.annotation.Bean
+    DraftApplicationsControllerTests.ResettableDetector clientActivityDetector() {
+      return new DraftApplicationsControllerTests.ResettableDetector();
+    }
+  }
+
+  @org.springframework.beans.factory.annotation.Autowired
+  DraftApplicationsControllerTests.ResettableDetector detector;
+
+  @org.junit.jupiter.api.BeforeEach
+  public void forgetWhoWasThere() {
+    detector.reset();
+  }
 
   @MockitoBean BudgetService budgetService;
   @MockitoBean BudgetRepository budgetRepository;
@@ -269,5 +291,292 @@ public class BudgetControllerTests extends ControllerTestCase {
 
     assertEquals("No recruitment for quarter 20111", responseToJson(response).get("message"));
     verify(budgetRepository, never()).save(any());
+  }
+
+  // ---- the version check (issue #277) ----
+
+  private static Budget versioned(int version) {
+    Budget budget = budget("1.00", "2.00", "3.00");
+    budget.setVersion(version);
+    return budget;
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_save_with_the_current_version_is_applied() throws Exception {
+    Budget budget = versioned(4);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&version=4&tasOnlyBudget=7").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(new BigDecimal("7.00"), budget.getTasOnlyBudget());
+    verify(budgetRepository).save(budget);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_save_with_a_stale_version_changes_nothing_and_is_a_409_with_the_current_summary()
+      throws Exception {
+    Budget budget = versioned(5);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    Summary summary = summary(budget);
+    when(budgetService.summary(Q)).thenReturn(summary);
+
+    MvcResult response =
+        mockMvc
+            .perform(put("/api/admin/budget?quarter=20264&version=4&tasOnlyBudget=7").with(csrf()))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.version").value(5))
+            .andExpect(jsonPath("$.summary.quarter").value(Q))
+            .andReturn();
+
+    assertEquals(
+        "This budget was changed in another tab or window. Use theirs, or overwrite with yours.",
+        responseToJson(response).get("message"));
+    assertEquals(new BigDecimal("2.00"), budget.getTasOnlyBudget());
+    verify(budgetRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_save_that_loses_the_race_to_another_is_a_409_too() throws Exception {
+    Budget budget = versioned(5);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+    when(budgetRepository.save(budget))
+        .thenThrow(
+            new org.springframework.orm.ObjectOptimisticLockingFailureException(Budget.class, Q));
+
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&version=5&tasOnlyBudget=7").with(csrf()))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.version").value(5));
+  }
+
+  // ---- the multi-tab warning (issue #277) ----
+
+  private org.springframework.test.web.servlet.ResultActions heartbeat(
+      String quarter, String clientId) throws Exception {
+    return mockMvc.perform(
+        post("/api/admin/budget/heartbeat?quarter=" + quarter)
+            .header("X-Client-Id", clientId)
+            .with(csrf()));
+  }
+
+  private void quarterExists(String quarter) {
+    when(budgetService.budgetFor(quarter)).thenReturn(budget("0", "0", "0"));
+  }
+
+  @WithMockUser(
+      username = "admin1",
+      roles = {"ADMIN"})
+  @Test
+  public void a_heartbeat_from_the_only_tab_finds_no_one_else() throws Exception {
+    quarterExists("20301");
+    heartbeat("20301", "only-tab")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.others.length()").value(0))
+        .andExpect(jsonPath("$.heartbeatSeconds").value(5))
+        .andExpect(jsonPath("$.newest").value(true));
+  }
+
+  @WithMockUser(
+      username = "admin1",
+      roles = {"ADMIN"})
+  @Test
+  public void an_admin_sees_the_names_of_the_other_admins_on_the_same_quarter() throws Exception {
+    quarterExists("20302");
+    detector.record(
+        "budget:20302",
+        "their-tab",
+        new edu.ucsb.cs.taapply.concurrency.ClientIdentity(
+            "phtcon@ucsb.edu", "phtcon@ucsb.edu (Phill Conrad)"));
+
+    heartbeat("20302", "my-tab")
+        .andExpect(jsonPath("$.others.length()").value(1))
+        .andExpect(jsonPath("$.others[0].label").value("phtcon@ucsb.edu (Phill Conrad)"))
+        .andExpect(jsonPath("$.others[0].samePerson").value(false));
+  }
+
+  @WithMockUser(
+      username = "admin1",
+      roles = {"ADMIN"})
+  @Test
+  public void my_own_other_tab_is_marked_as_the_same_person() throws Exception {
+    quarterExists("20303");
+    heartbeat("20303", "first-tab");
+    heartbeat("20303", "second-tab")
+        .andExpect(jsonPath("$.others.length()").value(1))
+        .andExpect(jsonPath("$.others[0].samePerson").value(true));
+  }
+
+  @WithMockUser(
+      username = "admin1",
+      roles = {"ADMIN"})
+  @Test
+  public void another_quarter_never_warns() throws Exception {
+    quarterExists("20304");
+    quarterExists("20305");
+    heartbeat("20304", "tab-a");
+    heartbeat("20305", "tab-b").andExpect(jsonPath("$.others.length()").value(0));
+  }
+
+  @WithMockUser(
+      username = "admin1",
+      roles = {"ADMIN"})
+  @Test
+  public void a_save_counts_as_being_there_for_the_others_heartbeats() throws Exception {
+    Budget budget = budget("0", "0", "0");
+    when(budgetService.budgetFor("20306")).thenReturn(budget);
+    when(budgetService.summary("20306")).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(
+            put("/api/admin/budget?quarter=20306&tasOnlyBudget=1")
+                .header("X-Client-Id", "saving-tab")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    heartbeat("20306", "idle-tab").andExpect(jsonPath("$.others.length()").value(1));
+  }
+
+  @WithMockUser(
+      username = "admin1",
+      roles = {"ADMIN"})
+  @Test
+  public void a_tab_that_leaves_is_forgotten_at_once() throws Exception {
+    quarterExists("20307");
+    heartbeat("20307", "staying-tab");
+    heartbeat("20307", "leaving-tab");
+
+    mockMvc
+        .perform(
+            post("/api/admin/budget/leave?quarter=20307")
+                .header("X-Client-Id", "leaving-tab")
+                .with(csrf()))
+        .andExpect(status().isNoContent());
+
+    heartbeat("20307", "staying-tab").andExpect(jsonPath("$.others.length()").value(0));
+  }
+
+  @WithMockUser(
+      username = "admin1",
+      roles = {"ADMIN"})
+  @Test
+  public void a_quarter_with_no_recruitment_has_no_heartbeat() throws Exception {
+    when(budgetService.budgetFor("20111"))
+        .thenThrow(new EntityNotFoundException("No recruitment for quarter 20111"));
+    heartbeat("20111", "a-tab").andExpect(status().isNotFound());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_caller_who_may_not_open_the_budget_gets_403_and_nothing_is_recorded()
+      throws Exception {
+    quarterExists("20308");
+    heartbeat("20308", "probing-tab").andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            put("/api/admin/budget?quarter=20308&tasOnlyBudget=1")
+                .header("X-Client-Id", "probing-tab")
+                .with(csrf()))
+        .andExpect(status().isForbidden());
+
+    assertEquals(
+        0, detector.othersActive("budget:20308", "someone-else").size(), "nothing was recorded");
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void a_caller_who_may_not_open_the_budget_cannot_remove_anyone_by_saying_goodbye()
+      throws Exception {
+    detector.record(
+        "budget:20309",
+        "admin-tab",
+        new edu.ucsb.cs.taapply.concurrency.ClientIdentity("a@ucsb.edu", "a@ucsb.edu"));
+
+    mockMvc
+        .perform(
+            post("/api/admin/budget/leave?quarter=20309")
+                .header("X-Client-Id", "admin-tab")
+                .with(csrf()))
+        .andExpect(status().isForbidden());
+
+    assertEquals(1, detector.othersActive("budget:20309", "someone-else").size());
+  }
+
+  @Test
+  public void logged_out_users_cannot_heartbeat_or_leave() throws Exception {
+    mockMvc
+        .perform(post("/api/admin/budget/heartbeat?quarter=20310").with(csrf()))
+        .andExpect(status().is(403));
+    mockMvc
+        .perform(post("/api/admin/budget/leave?quarter=20310").with(csrf()))
+        .andExpect(status().is(403));
+  }
+
+  /** A signed-in admin whose account has the given name, or none. */
+  private static org.springframework.test.web.servlet.request.RequestPostProcessor adminNamed(
+      String email, String name) {
+    return org.springframework.security.test.web.servlet.request
+        .SecurityMockMvcRequestPostProcessors.oauth2Login()
+        .authorities(
+            new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"))
+        .attributes(
+            attributes -> {
+              attributes.put("sub", "sub-" + email);
+              attributes.put("email", email);
+              if (name != null) {
+                attributes.put("name", name);
+              }
+            });
+  }
+
+  @Test
+  public void an_admin_with_a_name_is_labelled_by_the_email_and_the_trimmed_name()
+      throws Exception {
+    quarterExists("20311");
+    mockMvc
+        .perform(
+            post("/api/admin/budget/heartbeat?quarter=20311")
+                .header("X-Client-Id", "named-tab")
+                .with(adminNamed("named@example.org", "  Nora Named  "))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(
+        List.of(
+            new edu.ucsb.cs.taapply.concurrency.OtherClient(
+                "named@example.org (Nora Named)", false, true)),
+        detector.othersActive("budget:20311", "observer"));
+  }
+
+  @Test
+  public void an_admin_with_no_name_or_a_blank_one_is_labelled_by_the_email_alone()
+      throws Exception {
+    quarterExists("20312");
+    mockMvc
+        .perform(
+            post("/api/admin/budget/heartbeat?quarter=20312")
+                .header("X-Client-Id", "nameless-tab")
+                .with(adminNamed("nameless@example.org", null))
+                .with(csrf()))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(
+            post("/api/admin/budget/heartbeat?quarter=20312")
+                .header("X-Client-Id", "blank-tab")
+                .with(adminNamed("blank@example.org", "   "))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(
+        List.of(
+            new edu.ucsb.cs.taapply.concurrency.OtherClient("blank@example.org", false, true),
+            new edu.ucsb.cs.taapply.concurrency.OtherClient("nameless@example.org", false, true)),
+        detector.othersActive("budget:20312", "observer"));
   }
 }

@@ -12,27 +12,44 @@ import type { NoticeVersion } from "main/utils/notices";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import {
   adminApplicationEditPath,
+  adminApplicationUrls,
   applicationsListPath,
   originLabel,
   submittedText,
 } from "main/utils/adminApplications";
+import type { AdminDraftApplication } from "main/utils/draftApplications";
 import CollapsibleCard from "main/components/Common/CollapsibleCard";
 import AuditTrailTable, {
   type AuditTrailRow,
 } from "main/components/AuditTrail/AuditTrailTable";
 
+type AdminApplicationPageProps = {
+  /**
+   * Whether this shows a draft (issue #296) rather than a submitted application. One page serves
+   * both, so that what an admin sees of the two cannot drift apart. A draft differs only in where
+   * it is read from and its comments saved to, in having no Edit button (an admin comments on a
+   * draft but never edits it), no audit trail (nothing has been edited), and no status.
+   */
+  draft?: boolean;
+};
+
 /**
- * One application as an admin sees it: /admin/applications/:id. Everything the applicant wrote is
- * read-only; the only thing to edit is the admin's own comments, and Save or Cancel both lead back
- * to the recruitment's list of applications.
+ * One application as an admin sees it: /admin/applications/:id, or one draft:
+ * /admin/draft-applications/:id. Everything the applicant wrote is read-only; the only thing to
+ * edit is the admin's own comments, and Save or Cancel both lead back to the recruitment's list.
  */
-export default function AdminApplicationPage(): React.JSX.Element {
+export default function AdminApplicationPage({
+  draft = false,
+}: AdminApplicationPageProps): React.JSX.Element {
   const { id } = useParams();
   const navigate = useNavigate();
+  const urls = adminApplicationUrls(draft);
 
-  const { data: application } = useBackend<Application | null>(
-    ["/api/admin/applications", id],
-    { method: "GET", url: "/api/admin/applications", params: { id } },
+  const { data: application } = useBackend<
+    Application | AdminDraftApplication | null
+  >(
+    [urls.one, id],
+    { method: "GET", url: urls.one, params: { id } },
     // Stryker disable next-line all : don't test default value of null
     null,
   );
@@ -65,7 +82,10 @@ export default function AdminApplicationPage(): React.JSX.Element {
   const [comments, setComments] = useState<string | null>(null);
   const commentsText = comments ?? application?.adminComments ?? "";
 
-  const listPath = applicationsListPath(application?.recruitmentId ?? "");
+  const listPath = applicationsListPath(
+    application?.recruitmentId ?? "",
+    draft,
+  );
 
   // Every change an admin has made to this application, oldest first; which id column the rows
   // sit in depends on the recruitment's type, so this waits for the recruitment.
@@ -80,7 +100,7 @@ export default function AdminApplicationPage(): React.JSX.Element {
     [],
     false,
     // Stryker disable next-line all : the guard only avoids a pointless request
-    { enabled: Boolean(recruitment) },
+    { enabled: Boolean(recruitment) && !draft },
   );
 
   // Stryker disable next-line all : the query already supplies an empty list, so this is only for types
@@ -88,7 +108,7 @@ export default function AdminApplicationPage(): React.JSX.Element {
 
   const saveMutation = useBackendMutation<string, Application>(
     (adminComments) => ({
-      url: "/api/admin/applications/adminComments",
+      url: urls.comments,
       method: "PUT",
       params: { id, adminComments },
     }),
@@ -98,41 +118,45 @@ export default function AdminApplicationPage(): React.JSX.Element {
         navigate(listPath);
       },
     },
-    ["/api/admin/applications", "/api/admin/applications/all"],
+    [urls.one, urls.all],
   );
 
   return (
     <BasicLayout>
       <div className="pt-2">
         <h1>
-          Application {id}
+          {draft ? "Draft application" : "Application"} {id}
           {recruitment &&
             `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`}
         </h1>
 
         {application && (
           <>
-            <Link
-              className="btn btn-primary mb-3"
-              to={adminApplicationEditPath(id ?? "")}
-              data-testid="AdminApplicationPage-edit"
-            >
-              Edit
-            </Link>
-            <p data-testid="AdminApplicationPage-about">
-              {originLabel(application.origin) || "Application"} from{" "}
-              {application.email}, submitted{" "}
-              {submittedText(application.submittedAt)}. Status:{" "}
-              {application.status}.
-            </p>
-            {application.postApplicationComments && (
-              <p data-testid="AdminApplicationPage-post-comments">
-                Post application comments: {application.postApplicationComments}
-              </p>
+            {!draft && (
+              <Link
+                className="btn btn-primary mb-3"
+                to={adminApplicationEditPath(id ?? "")}
+                data-testid="AdminApplicationPage-edit"
+              >
+                Edit
+              </Link>
             )}
+            <p data-testid="AdminApplicationPage-about">
+              {"updatedAt" in application
+                ? `Draft application from ${application.email}, last saved ${submittedText(application.updatedAt)}. The applicant has not submitted it.`
+                : `${originLabel(application.origin) || "Application"} from ${application.email}, submitted ${submittedText(application.submittedAt)}. Status: ${application.status}.`}
+            </p>
+            {"postApplicationComments" in application &&
+              application.postApplicationComments && (
+                <p data-testid="AdminApplicationPage-post-comments">
+                  Post application comments:{" "}
+                  {application.postApplicationComments}
+                </p>
+              )}
 
             <ApplicationSummary
               application={application}
+              draft={draft}
               type={recruitment?.type ?? "TA"}
               notice={notice}
               noticeFillIn={noticeFillIn}
@@ -177,25 +201,27 @@ export default function AdminApplicationPage(): React.JSX.Element {
               </Button>
             </Form>
 
-            <CollapsibleCard
-              title="Audit Trail"
-              storageKey="AdminApplicationPage-auditTrail"
-              testIdPrefix="AdminApplicationPage-auditCard"
-            >
-              {auditRows.length === 0 ? (
-                <p
-                  className="text-muted mb-0"
-                  data-testid="AdminApplicationPage-audit-none"
-                >
-                  No admin has changed this application.
-                </p>
-              ) : (
-                <AuditTrailTable
-                  rows={auditRows}
-                  testIdPrefix="AdminApplicationPage-audit"
-                />
-              )}
-            </CollapsibleCard>
+            {!draft && (
+              <CollapsibleCard
+                title="Audit Trail"
+                storageKey="AdminApplicationPage-auditTrail"
+                testIdPrefix="AdminApplicationPage-auditCard"
+              >
+                {auditRows.length === 0 ? (
+                  <p
+                    className="text-muted mb-0"
+                    data-testid="AdminApplicationPage-audit-none"
+                  >
+                    No admin has changed this application.
+                  </p>
+                ) : (
+                  <AuditTrailTable
+                    rows={auditRows}
+                    testIdPrefix="AdminApplicationPage-audit"
+                  />
+                )}
+              </CollapsibleCard>
+            )}
           </>
         )}
       </div>

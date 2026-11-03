@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Alert, Button } from "react-bootstrap";
 import type { CourseInstructors } from "main/utils/courseLabels";
 import { Navigate, useNavigate, useParams } from "react-router";
@@ -12,11 +13,15 @@ import {
 import type { Application } from "main/components/Applications/ApplicationTable";
 import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { useNoticeFillIn } from "main/utils/useNoticeFillIn";
 import { useCurrentUser } from "main/utils/currentUser";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { NoticeVersion } from "main/utils/notices";
-import { draftWasSaved } from "main/utils/draftApplications";
+import {
+  APPLICATIONS_CLOSED_MESSAGE,
+  draftWasSaved,
+} from "main/utils/draftApplications";
 import { useDraftSaving } from "main/utils/useDraftSaving";
 import { MultipleTabsBanner, MultipleTabsModal } from "main/concurrency";
 
@@ -33,7 +38,7 @@ export default function ApplyPage(): React.JSX.Element {
   const navigate = useNavigate();
   const currentUser = useCurrentUser();
 
-  const { data: applicable } = useBackend<StudentRecruitment[]>(
+  const { data: applicable } = useRefreshingBackend<StudentRecruitment[]>(
     ["/api/recruitments/applicable"],
     { method: "GET", url: "/api/recruitments/applicable" },
     // Stryker disable next-line all : don't test default value of empty list
@@ -94,9 +99,18 @@ export default function ApplyPage(): React.JSX.Element {
     [],
   );
 
-  const recruitment = (applicable ?? []).find(
+  const found = (applicable ?? []).find(
     (r) => String(r.id) === String(recruitmentId),
   );
+  // Issue #281: the list refreshes by itself, and a recruitment can close, or leave the list, while
+  // the form is open. The form stays on screen with what was typed (it is not replaced by an error
+  // page); the last recruitment seen is kept for that, and the page says what happened.
+  const [lastSeen, setLastSeen] = useState<StudentRecruitment | undefined>();
+  if (found !== undefined && found !== lastSeen) setLastSeen(found);
+  const recruitment = found ?? lastSeen;
+  const closed =
+    recruitment !== undefined &&
+    (found === undefined || recruitment.applicationStatus !== "OPEN");
   const noticeFillIn = useNoticeFillIn(recruitment);
   const existing = (mine ?? []).find(
     (a) => String(a.recruitmentId) === String(recruitmentId),
@@ -178,6 +192,7 @@ export default function ApplyPage(): React.JSX.Element {
             whose submission would be refused, and for the draft it saves into. */}
         <MultipleTabsBanner
           others={others}
+          newest={newest}
           noun="application"
           testId="ApplyPage-multiple-tabs"
         />
@@ -193,6 +208,11 @@ export default function ApplyPage(): React.JSX.Element {
           }}
           testId="ApplyPage-multiple-tabs-modal"
         />
+        {closed && (
+          <Alert variant="warning" data-testid="ApplyPage-closed">
+            {APPLICATIONS_CLOSED_MESSAGE}
+          </Alert>
+        )}
         {conflicted && (
           <Alert variant="danger" data-testid="ApplyPage-conflict">
             <span data-testid="ApplyPage-conflict-message">
@@ -236,7 +256,9 @@ export default function ApplyPage(): React.JSX.Element {
                 lastName: currentUser.root?.user?.familyName,
               }}
               submitAction={(payload) => mutation.mutate(payload)}
-              onDraftChange={autosave}
+              // Draft saves are refused once applications close (#276), so none are tried.
+              onDraftChange={closed ? undefined : autosave}
+              submitDisabled={closed}
               onSaveDraft={saveAndLeave}
               buttonLabel="Submit Application"
               testIdPrefix="ApplyPage"

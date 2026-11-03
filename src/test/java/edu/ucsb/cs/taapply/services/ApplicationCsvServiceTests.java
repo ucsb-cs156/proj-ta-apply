@@ -40,6 +40,7 @@ public class ApplicationCsvServiceTests {
           "major",
           "gpaMajor",
           "gpaOverall",
+          "firstQuarter",
           "yearInProgram",
           "graduationDate");
 
@@ -204,6 +205,7 @@ public class ApplicationCsvServiceTests {
             "Computer Science",
             "3.9",
             "3.8",
+            "false", // firstQuarter (issue #292)
             "2nd",
             "S27",
             "PHD",
@@ -240,8 +242,8 @@ public class ApplicationCsvServiceTests {
     assertEquals(expectedHeaders, List.of(rows.get(0)));
 
     String[] row = rows.get(1);
-    assertEquals("2", row[13]);
-    assertEquals("https://example.org/video", row[14]);
+    assertEquals("2", row[14]);
+    assertEquals("https://example.org/video", row[15]);
     // The Google Form's questions, in the order the form asked them
     assertEquals(
         List.of(
@@ -256,7 +258,7 @@ public class ApplicationCsvServiceTests {
             "AGREE",
             "",
             "false"),
-        List.of(row).subList(15, 26));
+        List.of(row).subList(16, 27));
     assertEquals("Grading:1,Tutoring:5", row[row.length - 1]);
     // And none of the TA-only answers leak in.
     assertEquals(-1, List.of(rows.get(0)).indexOf("classLevel"));
@@ -303,6 +305,7 @@ public class ApplicationCsvServiceTests {
     // The four availability answers are primitive booleans, so they read false rather than blank.
     List<String> primitiveBooleans =
         List.of(
+            "firstQuarter",
             "availableForLecturesFirstChoice",
             "availableForDiscussionFirstChoice",
             "availableForLecturesSecondChoice",

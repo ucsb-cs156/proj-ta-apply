@@ -14,6 +14,7 @@ import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 import { submittedText } from "main/utils/adminApplications";
 import auditTrailFixtures from "fixtures/auditTrailFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 
 const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
@@ -391,5 +392,155 @@ describe("AdminApplicationPage tests", () => {
     expect(
       screen.queryByTestId("AdminApplicationPage-adminComments"),
     ).toBeNull();
+  });
+});
+
+/** Issue #296: the same page, for a draft. */
+describe("AdminApplicationPage for a draft", () => {
+  const draft = draftApplicationsFixtures.adminSavedUlaDraft;
+
+  function renderDraftPage(id = draft.id) {
+    return render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={[`/admin/draft-applications/${id}`]}>
+          <Routes>
+            <Route
+              path="/admin/draft-applications/:id"
+              element={<AdminApplicationPage draft />}
+            />
+            <Route
+              path="/admin/recruitments/:recruitmentId/draft-applications"
+              element={<p data-testid="drafts-page">the drafts</p>}
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    mockToast.mockClear();
+    localStorage.clear();
+    axiosMock.reset();
+    axiosMock.resetHistory();
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.adminUser);
+    axiosMock
+      .onGet("/api/systemInfo")
+      .reply(200, systemInfoFixtures.showingNeither);
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, recruitmentsFixtures.threeRecruitments);
+    axiosMock
+      .onGet("/api/admin/draftApplications", {
+        params: { id: String(draft.id) },
+      })
+      .reply(200, draft);
+    axiosMock.onGet("/api/notices").reply(200, noticesFixtures.ulaV1);
+    axiosMock
+      .onPut("/api/admin/draftApplications/adminComments")
+      .reply(200, { ...draft, adminComments: "Interview Tuesday" });
+  });
+
+  test("reads the draft from the drafts endpoint and says it is a draft that has not been submitted", async () => {
+    renderDraftPage();
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: `Draft application ${draft.id}: ULA positions, W26`,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("AdminApplicationPage-about"),
+    ).toHaveTextContent(
+      `Draft application from ${draft.email}, last saved ${submittedText(draft.updatedAt)}. The applicant has not submitted it.`,
+    );
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/admin/draftApplications",
+      )[0].params,
+    ).toEqual({ id: String(draft.id) });
+    expect(
+      axiosMock.history.get.filter((r) => r.url === "/api/admin/applications"),
+    ).toHaveLength(0);
+  });
+
+  test("shows the draft in the same summary, with unanswered yes/no questions blank", async () => {
+    renderDraftPage();
+
+    expect(
+      await screen.findByTestId("AdminApplicationPage-summary-Name"),
+    ).toHaveTextContent("Dana Draft");
+    expect(
+      screen.getByTestId("AdminApplicationPage-summary-Changing Major")
+        .textContent,
+    ).toBe("");
+  });
+
+  test("has no Edit button, no audit trail and no request for one", async () => {
+    renderDraftPage();
+    await screen.findByTestId("AdminApplicationPage-summary-Name");
+
+    expect(screen.queryByTestId("AdminApplicationPage-edit")).toBeNull();
+    expect(
+      screen.queryByTestId("AdminApplicationPage-auditCard-toggle"),
+    ).toBeNull();
+    expect(screen.queryByText("Audit Trail")).toBeNull();
+    expect(
+      axiosMock.history.get.filter(
+        (r) => r.url === "/api/admin/audittrail/application",
+      ),
+    ).toHaveLength(0);
+  });
+
+  test("the comments start as the stored text and Save sends them to the draft, then returns to the drafts list", async () => {
+    renderDraftPage();
+
+    const box = await screen.findByTestId("AdminApplicationPage-adminComments");
+    expect(box).toHaveValue(draft.adminComments);
+    await userEvent.clear(box);
+    await userEvent.type(box, "Interview Tuesday");
+    await userEvent.click(screen.getByTestId("AdminApplicationPage-save"));
+
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    expect(axiosMock.history.put[0].url).toBe(
+      "/api/admin/draftApplications/adminComments",
+    );
+    expect(axiosMock.history.put[0].params).toEqual({
+      id: String(draft.id),
+      adminComments: "Interview Tuesday",
+    });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("Admin comments saved."),
+    );
+    expect(await screen.findByTestId("drafts-page")).toBeInTheDocument();
+  });
+
+  test("Cancel returns to the drafts list without saving", async () => {
+    renderDraftPage();
+
+    await userEvent.type(
+      await screen.findByTestId("AdminApplicationPage-adminComments"),
+      " more",
+    );
+    await userEvent.click(screen.getByTestId("AdminApplicationPage-cancel"));
+
+    expect(await screen.findByTestId("drafts-page")).toBeInTheDocument();
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("a draft with no comments yet starts with an empty box", async () => {
+    axiosMock
+      .onGet("/api/admin/draftApplications", {
+        params: { id: String(draft.id) },
+      })
+      .reply(200, { ...draft, adminComments: null });
+    renderDraftPage();
+
+    expect(
+      await screen.findByTestId("AdminApplicationPage-adminComments"),
+    ).toHaveValue("");
   });
 });
