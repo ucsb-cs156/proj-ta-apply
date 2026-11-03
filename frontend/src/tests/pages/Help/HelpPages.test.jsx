@@ -640,6 +640,9 @@ describe("Help pages (issue #140)", () => {
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/288",
     );
     const courses = text("courses");
+    expect(courses.replace(/\s+/g, " ")).toBe(
+      `The Courses pages. A recruitment's Courses page is split in two. The view-only page (/admin/recruitments/:id/courses) is the default, edits nothing, and neither heartbeats nor warns. The edit page (/admin/recruitments/:id/courses/edit) heartbeats POST /api/recruitmentcourses/heartbeat?recruitmentId=, says goodbye at /leave, names itself in the X-Client-Id header of the allocation, estimate and Auto Allocate saves, and shows the banner and the modal with the noun "page"; Leave this page goes to the view-only page. Only an admin may heartbeat, and the recruitment must exist, before anything is recorded. The version check is not a JPA version, since the course refresh and the estimates also write the row: a separate allocation_version column on recruitment_courses is counted by each allocation edit, and allocation_bulk_version on recruitments is counted by Auto Allocate. An allocation edit sends both as expectedVersion and expectedBulkVersion and gets 409 when either moved; after a bulk conflict the page reads everything again.`,
+    );
     expect(courses).toMatch(/view-only page/);
     expect(courses).toMatch(/\/admin\/recruitments\/:id\/courses\/edit/);
     expect(courses).toMatch(
@@ -727,6 +730,9 @@ describe("Help pages (issue #140)", () => {
     ]);
     expect(choices).toHaveTextContent(
       "takes this tab or window to the view-only Courses page",
+    );
+    expect(choices).toHaveTextContent(
+      "then resume here keeps the page covered. When the others close",
     );
     const todo = screen.getByTestId("HelpAdminsPage-simultaneous-editing-todo");
     expect(todo).toHaveTextContent(

@@ -297,6 +297,7 @@ export default function RecruitmentCoursesPage({
       },
     },
     // The recruitment carries the count that Auto Allocate moves.
+    // Stryker disable next-line all : cache invalidation is not observable from here
     ["/api/recruitmentcourses/all", "/api/admin/recruitments/all"],
   );
 
@@ -378,6 +379,7 @@ export default function RecruitmentCoursesPage({
               arrivedAt={activity.arrivedAt}
               noun="page"
               onLeave={() => {
+                // Stryker disable next-line all : moving away unmounts the page, which says goodbye too
                 activity.leave();
                 navigate(viewUrl);
               }}

@@ -149,7 +149,11 @@ describe("RecruitmentCourseTable: the edit page's safety net (issue #278)", () =
         .find((c) => c.id === 1),
     ).toEqual(current);
     const keys = invalidate.mock.calls.map((c) => c[0].queryKey[0]);
-    expect(keys).toContain("/api/recruitmentcourses/all");
+    // The mutation itself invalidates the courses once; the conflict adds one more, and the
+    // recruitment.
+    expect(
+      keys.filter((k) => k === "/api/recruitmentcourses/all"),
+    ).toHaveLength(2);
     expect(keys).toContain("/api/admin/recruitments/all");
     // The box shows the stored value again, not what was typed.
     expect(box(0)).toHaveValue(rows[0].allocation);
@@ -270,5 +274,53 @@ describe("RecruitmentCourseTable: the edit page's safety net (issue #278)", () =
     expect(
       screen.getByTestId("T-cell-row-0-enrollmentEstimate").textContent,
     ).toBe("");
+  });
+
+  test("a refused edit with no body at all still says something and reads again", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(["/api/recruitmentcourses/all", false], rows);
+    axiosMock.onPut("/api/recruitmentcourses/allocation").reply(409);
+    renderTable({}, queryClient);
+
+    fireEvent.change(box(0), { target: { value: "7" } });
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Error: Request failed with status code 409",
+      ),
+    );
+    // The lists are as they were; nothing was put into them.
+    expect(
+      queryClient.getQueryData(["/api/recruitmentcourses/all", false]),
+    ).toEqual(rows);
+  });
+
+  test("a refused edit whose answer has no row leaves the lists alone", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(["/api/recruitmentcourses/all", false], rows);
+    axiosMock
+      .onPut("/api/recruitmentcourses/allocation")
+      .reply(409, { message: "Changed elsewhere." });
+    renderTable({}, queryClient);
+
+    fireEvent.change(box(0), { target: { value: "7" } });
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("Changed elsewhere."),
+    );
+    expect(
+      queryClient.getQueryData(["/api/recruitmentcourses/all", false]),
+    ).toEqual(rows);
+  });
+
+  test("a failure with no answer at all is a plain toast", async () => {
+    axiosMock.onPut("/api/recruitmentcourses/allocation").networkError();
+    renderTable();
+
+    fireEvent.change(box(0), { target: { value: "7" } });
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("Error: Network Error"),
+    );
   });
 });

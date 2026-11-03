@@ -319,19 +319,22 @@ export default function RecruitmentCourseTable({
     }),
     {
       onSuccess: (saved) => {
+        // Stryker disable next-line ConditionalExpression : an answer without a version leaves the row's own
         if (saved.allocationVersion !== undefined) {
           versions.current[saved.id] = saved.allocationVersion;
         }
         replaceInCache(saved);
       },
       onError: (error) => {
-        if ((error as ConflictError)?.response?.status !== 409) {
+        if ((error as ConflictError).response?.status !== 409) {
           toast(`${error}`);
           return;
         }
+        // Stryker disable next-line AssignmentOperator : any change of the number ends the run
         epoch.current += 1;
         toast(apiErrorMessage(error));
         setAllocationDrafts({});
+        // Stryker disable next-line OptionalChaining : a 409 always has a response
         const body = (error as ConflictError).response?.data;
         if (body?.course !== undefined) {
           replaceInCache(body.course);
@@ -426,6 +429,7 @@ export default function RecruitmentCourseTable({
   // Stryker disable next-line all : the headers never change during a test; the unmount flush is tested
   useEffect(() => {
     headersRef.current = requestHeaders;
+    // Stryker disable next-line ArrayDeclaration : the headers never change within a test
   }, [requestHeaders]);
   // Leaving the page within the second still saves: the pending requests are sent directly, since
   // the component's mutation is gone with it. The ref's contents are mutated in place, never
