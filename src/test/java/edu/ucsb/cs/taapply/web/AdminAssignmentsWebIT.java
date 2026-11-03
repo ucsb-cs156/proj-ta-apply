@@ -114,7 +114,12 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId(BANNER))
         .containsText(
             "You are also editing this assignments page in another tab or window."
-                + " Please know that this is risky; we recommend closing all but one of these.");
+                + " We recommend that only one admin edits this page at a time.");
+    // The newer window says who is "already" there, with the same closing sentence.
+    assertThat(otherPage.getByTestId(BANNER))
+        .containsText(
+            "You already have this assignments page open for editing in another tab or window."
+                + " We recommend that only one admin edits this page at a time.");
     // Only the newer window is asked what to do; the older one has the banner alone.
     assertThat(otherPage.getByTestId(BANNER + "-modal-leave")).isVisible();
     assertThat(page.getByTestId(BANNER + "-modal-leave")).not().isVisible();
@@ -192,10 +197,10 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     goTo("/help/admins");
     assertThat(page.getByTestId("HelpAdminsPage-simultaneous-editing"))
         .containsText("Simultaneous Editing");
-    assertThat(page.getByTestId("HelpAdminsPage-simultaneous-editing-example"))
+    assertThat(page.getByTestId("HelpAdminsPage-simultaneous-editing-assignments-example"))
         .containsText(
             "phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page."
-                + " Please know that this is risky; we recommend closing all but one of these.");
+                + " We recommend that only one admin edits this page at a time.");
 
     goTo("/help/developer");
     assertThat(page.getByTestId("HelpDeveloperPage-simultaneous-row-assignments"))
