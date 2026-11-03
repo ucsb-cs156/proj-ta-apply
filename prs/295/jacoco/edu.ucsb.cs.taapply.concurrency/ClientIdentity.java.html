@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ClientIdentity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.concurrency</a> &gt; <span class="el_source">ClientIdentity.java</span></div><h1>ClientIdentity.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.concurrency;
+
+/**
+ * Who a client is, as the application tells the detector (issue #273): an opaque, stable key for
+ * the person, and the label to show other people.
+ *
+ * &lt;p&gt;The detector never looks inside either. It treats two clients with the same {@link #personKey}
+ * as the same person, and hands {@link #label} back as it is. The application decides what they
+ * are; for the people of this application the key is the email address and the label is the email
+ * address followed by the full name in parentheses, or the email address alone if there is no name.
+ *
+ * &lt;p&gt;A label that is blank becomes the key. A label longer than {@value #MAX_LABEL_LENGTH}
+ * characters is cut short with an ellipsis, so that no one's name can swell a response.
+ */
+public record ClientIdentity(String personKey, String label) {
+
+  /** The longest label that is kept, in characters (code points, so no character is split). */
+  public static final int MAX_LABEL_LENGTH = 200;
+
+<span class="fc" id="L20">  public ClientIdentity {</span>
+<span class="fc bfc" id="L21" title="All 4 branches covered.">    if (personKey == null || personKey.isBlank()) {</span>
+<span class="fc" id="L22">      throw new IllegalArgumentException(&quot;A person key is required&quot;);</span>
+    }
+<span class="fc bfc" id="L24" title="All 4 branches covered.">    if (label == null || label.isBlank()) {</span>
+<span class="fc" id="L25">      label = personKey;</span>
+<span class="fc bfc" id="L26" title="All 2 branches covered.">    } else if (label.codePointCount(0, label.length()) &gt; MAX_LABEL_LENGTH) {</span>
+<span class="fc" id="L27">      label = label.substring(0, label.offsetByCodePoints(0, MAX_LABEL_LENGTH - 1)) + &quot;…&quot;;</span>
+    }
+<span class="fc" id="L29">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecruitmentStepsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">RecruitmentStepsController.java</span></div><h1>RecruitmentStepsController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.RecruitmentStepsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/** The Recruitment Steps diagram's data for one recruitment (issue #231). */
+@Tag(name = &quot;Recruitment steps&quot;)
+@RequestMapping(&quot;/api/admin/recruitments&quot;)
+@RestController
+<span class="fc" id="L20">public class RecruitmentStepsController extends ApiController {</span>
+
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired RecruitmentStepsService recruitmentStepsService;
+
+  @Operation(
+      summary = &quot;Where a recruitment stands in the nine Recruitment Steps&quot;,
+      description =
+          &quot;For each step: whether it is done, the label for the bottom of its box, and the page or&quot;
+              + &quot; card modal its title opens. 404 for an unknown recruitment.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/{id}/steps&quot;)
+  public RecruitmentStepsService.Steps steps(@PathVariable Long id) {
+<span class="fc" id="L33">    Recruitment recruitment =</span>
+        recruitmentRepository
+<span class="fc" id="L35">            .findById(id)</span>
+<span class="fc" id="L36">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc" id="L37">    return recruitmentStepsService.stepsFor(recruitment);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
