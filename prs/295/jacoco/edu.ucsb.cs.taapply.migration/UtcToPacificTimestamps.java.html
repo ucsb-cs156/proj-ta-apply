@@ -178,37 +178,46 @@ import liquibase.resource.ResourceAccessor;
    */
   private static String actualName(Connection connection, String name, String table)
       throws SQLException {
-<span class="fc" id="L181">    DatabaseMetaData meta = connection.getMetaData();</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">    String label = table == null ? &quot;TABLE_NAME&quot; : &quot;COLUMN_NAME&quot;;</span>
 <span class="fc bfc" id="L182" title="All 2 branches covered.">    for (String candidate : List.of(name, name.toUpperCase(), name.toLowerCase())) {</span>
-      try (ResultSet found =
-<span class="fc bfc" id="L184" title="All 2 branches covered.">          table == null</span>
-<span class="fc" id="L185">              ? meta.getTables(null, connection.getSchema(), candidate, null)</span>
-<span class="fc" id="L186">              : meta.getColumns(null, connection.getSchema(), table, candidate)) {</span>
-<span class="fc bfc" id="L187" title="All 2 branches covered.">        while (found.next()) {</span>
-<span class="fc bfc" id="L188" title="All 2 branches covered.">          String actual = found.getString(table == null ? &quot;TABLE_NAME&quot; : &quot;COLUMN_NAME&quot;);</span>
-<span class="fc bfc" id="L189" title="All 2 branches covered.">          if (actual.equalsIgnoreCase(name)) {</span>
-<span class="fc" id="L190">            return actual;</span>
-          }
-<span class="fc" id="L192">        }</span>
-<span class="pc bpc" id="L193" title="1 of 2 branches missed.">      }</span>
+<span class="fc" id="L183">      List&lt;String&gt; found = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L184">      try (ResultSet rows = lookup(connection, candidate, table)) {</span>
+<span class="fc bfc" id="L185" title="All 2 branches covered.">        while (rows.next()) {</span>
+<span class="fc" id="L186">          found.add(rows.getString(label));</span>
+        }
+      }
+<span class="fc bfc" id="L189" title="All 2 branches covered.">      for (String actual : found) {</span>
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        if (actual.equalsIgnoreCase(name)) {</span>
+<span class="fc" id="L191">          return actual;</span>
+        }
+<span class="fc" id="L193">      }</span>
 <span class="fc" id="L194">    }</span>
 <span class="fc" id="L195">    return null;</span>
   }
 
-  @Override
-  public String getConfirmationMessage() {
-<span class="fc" id="L200">    return &quot;Converted the stored date-times between UTC and Pacific time&quot;;</span>
+  /** The metadata rows for a table (when {@code table} is null) or for a column of that table. */
+  private static ResultSet lookup(Connection connection, String candidate, String table)
+      throws SQLException {
+<span class="fc" id="L201">    DatabaseMetaData meta = connection.getMetaData();</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">    return table == null</span>
+<span class="fc" id="L203">        ? meta.getTables(null, connection.getSchema(), candidate, null)</span>
+<span class="fc" id="L204">        : meta.getColumns(null, connection.getSchema(), table, candidate);</span>
   }
 
   @Override
-<span class="fc" id="L204">  public void setUp() throws SetupException {}</span>
+  public String getConfirmationMessage() {
+<span class="fc" id="L209">    return &quot;Converted the stored date-times between UTC and Pacific time&quot;;</span>
+  }
 
   @Override
-<span class="fc" id="L207">  public void setFileOpener(ResourceAccessor resourceAccessor) {}</span>
+<span class="fc" id="L213">  public void setUp() throws SetupException {}</span>
+
+  @Override
+<span class="fc" id="L216">  public void setFileOpener(ResourceAccessor resourceAccessor) {}</span>
 
   @Override
   public ValidationErrors validate(Database database) {
-<span class="fc" id="L211">    return new ValidationErrors();</span>
+<span class="fc" id="L220">    return new ValidationErrors();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
