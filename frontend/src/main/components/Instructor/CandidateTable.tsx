@@ -3,6 +3,7 @@ import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import axios from "axios";
 import { apiErrorMessage } from "main/utils/apiError";
 import InterestMark from "main/components/Common/InterestMark";
+import { gpaText } from "main/utils/applicationFields";
 import {
   ENTHUSIASTIC,
   FIRST_CHOICE,
@@ -25,6 +26,8 @@ export type Candidate = {
   graduationDate: string | null;
   gpaMajor: number | null;
   gpaOverall: number | null;
+  /** Issue #292: no GPAs yet; the table says "First quarter" in their place. */
+  firstQuarter: boolean;
   previousServiceAsUla: number | null;
   videoLink: string | null;
   /**
@@ -461,6 +464,9 @@ export default function CandidateTable({
                         ) : (
                           candidate.classLevel
                         )
+                      ) : column.key === "gpaMajor" ||
+                        column.key === "gpaOverall" ? (
+                        gpaText(candidate, candidate[column.key])
                       ) : (
                         candidate[column.key]
                       )}

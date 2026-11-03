@@ -10,6 +10,7 @@ import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
+import edu.ucsb.cs.taapply.time.AppTime;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 /**
  * One person's application to one recruitment.
@@ -62,9 +62,8 @@ public class Application {
 
   /**
    * When the row was first saved: the moment the applicant (or an admin testing the form) first
-   * submitted. Stamped by Hibernate on insert and never changed by an edit.
+   * submitted. Stamped on insert, in Pacific time, and never changed by an edit.
    */
-  @CreationTimestamp
   @Column(name = "submitted_at", updatable = false)
   private LocalDateTime submittedAt;
 
@@ -98,6 +97,14 @@ public class Application {
   private String major;
   private Double gpaMajor;
   private Double gpaOverall;
+
+  /**
+   * Issue #292: the applicant says it is their first quarter (a first quarter grad student on a TA
+   * form, a first quarter at UCSB on a ULA one), so they have no GPAs yet. The GPAs are then not
+   * required, and are stored empty whatever was typed.
+   */
+  @Builder.Default private boolean firstQuarter = false;
+
   private String yearInProgram;
   private String graduationDate;
 
@@ -269,4 +276,10 @@ public class Application {
   @JsonIgnore
   @Column(name = "tentative_assignment_id")
   private Long tentativeAssignmentId;
+
+  /** Stamps the Pacific time at which the row is first saved (issue #293). */
+  @PrePersist
+  void stampSubmitted() {
+    submittedAt = AppTime.now();
+  }
 }

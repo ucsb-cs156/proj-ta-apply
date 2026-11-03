@@ -40,7 +40,9 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
           <li>
             Your major, whether you are a PhD or MS student, your year in the
             program, your GPA (in your major and overall), and your expected
-            graduation date. All of these are required.
+            graduation date. All of these are required, except that if you are a
+            first quarter grad student and do not yet have a grad GPA, you can
+            check the box under the two GPA fields instead of entering them.
           </li>
           <li>
             Your residency status and your TA language exam status, both
@@ -78,6 +80,11 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
         <p>
           Before you submit, you will be shown the department&apos;s notices,
           terms and conditions for TA applications and asked to agree to them.
+        </p>
+
+        <p data-testid="HelpTaApplicantsPage-time-zone">
+          Every date and time on this site is in Pacific Time (Santa Barbara
+          time), wherever you are.
         </p>
 
         <h2 className="my-3 h4">Tips</h2>
@@ -160,6 +167,17 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
           a few seconds after the other copies are closed, or in up to about
           twenty seconds if the other copy could not say that it was leaving,
           such as when a computer lost its network connection.
+        </p>
+        <p data-testid="HelpTaApplicantsPage-simultaneous-editing-refresh">
+          <strong>Applications opening and closing.</strong> The home page and
+          the application form <strong>refresh by themselves</strong>, without
+          reloading, about every 15 seconds (somewhere between 10 and 20), so
+          when an admin opens or closes applications you see it on its own.
+          There is no warning for that. If applications close while you are
+          filling in the form, the form stays as you left it and says so: your
+          draft is kept, as of its last automatic save, but it can no longer be
+          submitted. If a page looks out of date, switch back to it, or reload
+          it.
         </p>
       </div>
     </BasicLayout>

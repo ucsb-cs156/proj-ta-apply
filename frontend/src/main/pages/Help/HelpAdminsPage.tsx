@@ -51,14 +51,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           TA columns are first name, last name, email, major, class level, year
           in program and expected graduation. ULA columns are first name, last
           name, email, major, year in program, expected graduation, GPA in
-          major, overall GPA and quarters of previous ULA service. No video
-          links or admin comments are exported. Course columns follow in course
-          ID and section order, each headed by the bare course number (16, 5A);
-          the section is added only when the recruitment has more than one
-          section of that course (16 (section 0100), 16 (section 0200)), so
-          independent faculty rankings stay distinct. Removed, stale and
-          cancelled sections remain in this historical export so saved rankings
-          are not lost when offerings change.
+          major, overall GPA and quarters of previous ULA service; an applicant
+          who ticked the first quarter box has no GPAs, and both columns read
+          &ldquo;First quarter&rdquo;. No video links or admin comments are
+          exported. Course columns follow in course ID and section order, each
+          headed by the bare course number (16, 5A); the section is added only
+          when the recruitment has more than one section of that course (16
+          (section 0100), 16 (section 0200)), so independent faculty rankings
+          stay distinct. Removed, stale and cancelled sections remain in this
+          historical export so saved rankings are not lost when offerings
+          change.
         </p>
         <p data-testid="HelpAdminsPage-rankings-csv-planning">
           The file also carries the planning from the Assignments page: a{" "}
@@ -668,8 +670,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
           after. It is paged and can be sorted by any column; a long value is
           cut short with a <em>[See value]</em> link that shows the whole thing.
           The trail for one application is also shown on that application&apos;s
-          View page.
+          View page. Its times, like every date and time on this site, are
+          Pacific Time.
         </p>
+
         <h2
           className="my-3 h4"
           id="simultaneous-editing"
@@ -677,7 +681,29 @@ export default function HelpAdminsPage(): React.JSX.Element {
         >
           Simultaneous Editing
         </h2>
-        <p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-refresh">
+          If you, or another admin, is editing the same thing at the same time,
+          you may get a warning on some pages, such as the draft application
+          form. For a recruitment&apos;s settings and its Recruitment Steps
+          (whether applications are open or closed, the faculty review dates,
+          allocation visibility, whether assignments are published, and which
+          boxes have a green check) there is <strong>no warning</strong>.
+          Instead the page <strong>refreshes by itself</strong>, without
+          reloading, about every 5 seconds (somewhere between 2 and 8, chosen at
+          random each time). When another admin opens or closes something, you
+          see it on its own within a few seconds, and so do instructors and
+          students, about every 15 seconds.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-safe">
+          <strong>What is safe.</strong> A click made in the few seconds before
+          a refresh still reaches the server, which judges it: closing
+          applications that are already closed changes nothing, and a step whose
+          prerequisites are not met is refused. If a confirmation window is open
+          for something that has just been done by someone else, it closes
+          itself and tells you, and nothing is changed. A date you are typing is
+          never replaced by a refresh.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-ranking">
           If you, or another admin, or an instructor, is ranking the same course
           at the same time, you may get a warning that looks like this:
         </p>
@@ -732,13 +758,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
             will not be used to rank as well. The box does not come back.
           </li>
         </ul>
-        <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
+        <p data-testid="HelpAdminsPage-simultaneous-editing-ranking-todo">
           <strong>What to do.</strong> Close all the other tabs or windows that
           have this course&apos;s rankings open, and keep just one, or agree
           with the other person on who ranks this course. The warning goes away
           on its own within a few seconds after the others are closed, or in up
           to about twenty seconds if one of them could not say that it was
           leaving, such as when a computer lost its network connection.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
+          <strong>What to do.</strong> If a page looks out of date (for example
+          the computer was asleep, or the tab was in the background, where
+          nothing is refreshed), switch back to it and it updates at once, or
+          reload the page.
         </p>
       </div>
     </BasicLayout>

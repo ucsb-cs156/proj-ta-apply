@@ -265,7 +265,7 @@ public class LegacyUlaApplicationCsvServiceTests {
     assertEquals(
         "Second choice on the form: CMPSC 24 (not offered in this recruitment)", a.getComments());
     assertEquals(
-        "Imported from the ULA application form; submitted 5/9/2026 13:45:12.",
+        "Imported from the ULA application form; submitted 5/9/2026 13:45:12 Pacific time.",
         a.getAdminComments());
     assertNull(a.getI9Appointment());
     assertNull(a.getYearInProgram());
@@ -563,7 +563,7 @@ public class LegacyUlaApplicationCsvServiceTests {
   @Test
   public void the_admin_comment_records_the_source_and_the_time() {
     assertEquals(
-        "Imported from the ULA application form; submitted 5/9/2026 13:45:12.",
+        "Imported from the ULA application form; submitted 5/9/2026 13:45:12 Pacific time.",
         LegacyUlaApplicationCsvService.adminComments("5/9/2026 13:45:12"));
     assertEquals(
         "Imported from the ULA application form.",

@@ -27,6 +27,27 @@ describe("ApplicationSummary tests", () => {
     ).toHaveTextContent("S27");
   });
 
+  test("says First quarter in place of the GPAs of a first quarter applicant (issue #292)", () => {
+    render(
+      <ApplicationSummary
+        application={{
+          ...applicationsFixtures.oneTaApplication,
+          firstQuarter: true,
+          gpaMajor: null,
+          gpaOverall: null,
+        }}
+        type="TA"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("ApplicationSummary-GPA in Major"),
+    ).toHaveTextContent("First quarter");
+    expect(
+      screen.getByTestId("ApplicationSummary-Overall GPA"),
+    ).toHaveTextContent("First quarter");
+  });
+
   test("shows the notice version agreed to, ticked and read-only", () => {
     render(
       <ApplicationSummary
@@ -615,9 +636,7 @@ describe("ApplicationSummary tests", () => {
 
     const row = screen.getByTestId("ApplicationSummary-Cancelled");
     expect(row).toHaveTextContent("Found other employment");
-    expect(row).toHaveTextContent(
-      new Date("2026-02-03T04:05:00").toLocaleString(),
-    );
+    expect(row).toHaveTextContent("2/3/2026, 4:05:00 AM");
     // It comes before everything else.
     expect(
       row.compareDocumentPosition(

@@ -1,3 +1,4 @@
+import { formatPacificDateTime } from "main/utils/pacificTime";
 import type { Cell } from "@tanstack/react-table";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
@@ -54,9 +55,7 @@ export default function RecruitmentAuditTrailTable({
       accessorKey: "changedAt",
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<RecruitmentAuditTrailRow, unknown> }) =>
-        cell.row.original.changedAt
-          ? new Date(cell.row.original.changedAt).toLocaleString()
-          : "",
+        formatPacificDateTime(cell.row.original.changedAt),
     },
     {
       header: "What Changed",

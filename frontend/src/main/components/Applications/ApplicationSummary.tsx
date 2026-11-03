@@ -2,7 +2,7 @@ import type { Application } from "main/components/Applications/ApplicationTable"
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import PriorCourseworkTable from "main/components/PriorCoursework/PriorCourseworkTable";
 import { submittedText } from "main/utils/adminApplications";
-import { courseInterestLabel } from "main/utils/applicationFields";
+import { courseInterestLabel, gpaText } from "main/utils/applicationFields";
 import {
   CLASS_LEVEL_LABELS,
   LANGUAGE_EXAM_LABELS,
@@ -102,8 +102,14 @@ export default function ApplicationSummary({
         .join(" "),
     },
     { label: "Major", value: show(application.major) },
-    { label: "GPA in Major", value: show(application.gpaMajor) },
-    { label: "Overall GPA", value: show(application.gpaOverall) },
+    {
+      label: "GPA in Major",
+      value: gpaText(application, application.gpaMajor),
+    },
+    {
+      label: "Overall GPA",
+      value: gpaText(application, application.gpaOverall),
+    },
     { label: "Year in Program", value: show(application.yearInProgram) },
     { label: "Expected Graduation", value: show(application.graduationDate) },
   ];

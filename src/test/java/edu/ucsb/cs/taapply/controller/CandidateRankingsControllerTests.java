@@ -216,7 +216,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
         {"applicationId":30,"rank":1,"preference":"1st Choice","firstName":"Ada","lastName":"Lovelace",
         "email":"student@ucsb.edu","major":"Computer Science","classLevel":"PHD","yearInProgram":"2",
         "graduationDate":"Spring 2028","gpaMajor":3.8,"gpaOverall":3.7,"previousServiceAsUla":2,
-        "videoLink":"https://example.edu/video","rankingVersion":0}
+        "videoLink":"https://example.edu/video","firstQuarter":false,"rankingVersion":0}
         """;
     var expected = mapper.createArrayNode();
     expected.add(mapper.readTree(expectedRow));
@@ -230,6 +230,38 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
     }
     assertEquals(expected, mapper.readTree(actual));
     verify(candidateRankingRepository).findByRecruitmentCourseId(20L);
+  }
+
+  /** Issue #292: a first quarter applicant has no GPAs, and the page is told so. */
+  @Test
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  void a_first_quarter_candidate_has_no_gpas_and_says_so() throws Exception {
+    application.setFirstQuarter(true);
+    application.setGpaMajor(null);
+    application.setGpaOverall(null);
+
+    var list =
+        mapper.readTree(
+            mockMvc
+                .perform(get(BASE))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+    assertTrue(list.get(0).get("firstQuarter").asBoolean());
+    assertTrue(list.get(0).get("gpaMajor").isNull());
+    assertTrue(list.get(0).get("gpaOverall").isNull());
+
+    var answers =
+        mapper.readTree(
+            mockMvc
+                .perform(get(BASE + "/30"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+    assertTrue(answers.get("answers").get("firstQuarter").asBoolean());
+    assertTrue(answers.get("answers").get("gpaMajor").isNull());
   }
 
   @Test
@@ -814,7 +846,7 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
         "bsMsStudent":true,"studentStatusNextQuarter":"UNDERGRADUATE","wantsTaEligibility":true,
         "otherCampusJob":"NOT_SURE","priorUcsbEmployment":true,"employeeId":"EMP123","i9Appointment":false,
         "trainingCommitment":"AGREE","trainingCommitmentExplanation":"Training answer",
-        "changingMajor":false,"noticeVersionId":9}}
+        "changingMajor":false,"noticeVersionId":9,"firstQuarter":false}}
         """,
         actual);
     assertFalse(actual.contains("adminComments"));

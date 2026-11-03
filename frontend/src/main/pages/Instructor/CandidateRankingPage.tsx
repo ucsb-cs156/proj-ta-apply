@@ -15,6 +15,7 @@ import {
 } from "main/utils/interestDisplay";
 import { apiErrorMessage } from "main/utils/apiError";
 import { useBackend } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import { Link, useNavigate, useParams } from "react-router";
 import CandidateTable, {
@@ -96,7 +97,7 @@ export default function CandidateRankingPage(): React.JSX.Element {
   const candidatesUrl = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/candidates`;
   const cancelledUrl = `/api/instructor/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/cancelled`;
   const { data, isFetching, isError, error, refetch } =
-    useBackend<CandidateRankingPageData | null>(
+    useRefreshingBackend<CandidateRankingPageData | null>(
       // Stryker disable next-line all : the query key is only a cache name
       [url],
       // Stryker disable next-line all : GET is axios's default method

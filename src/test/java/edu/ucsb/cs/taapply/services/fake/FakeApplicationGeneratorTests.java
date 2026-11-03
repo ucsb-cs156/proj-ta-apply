@@ -191,14 +191,23 @@ public class FakeApplicationGeneratorTests {
     Set<ClassLevel> levels = new HashSet<>();
     int ucsbPaths = 0;
     int otherPaths = 0;
+    int firstQuarter = 0;
 
     for (Application a : generate(RecruitmentType.TA, 600, FakeCoverage.ALL)) {
       residencies.add(a.getResidencyStatus());
       levels.add(a.getClassLevel());
       assertTrue(Set.of("Applied Math", "Statistics").contains(a.getMajor()));
-      assertTrue(a.getGpaMajor() >= 3.0 && a.getGpaMajor() <= 4.0);
-      assertTrue(a.getGpaOverall() >= 3.0 && a.getGpaOverall() <= 4.0);
-      assertEquals(a.getGpaMajor(), Math.round(a.getGpaMajor() * 100) / 100.0);
+      if (a.isFirstQuarter()) {
+        // Issue #292: only a first-year grad student, who has no GPAs yet.
+        firstQuarter++;
+        assertNull(a.getGpaMajor());
+        assertNull(a.getGpaOverall());
+        assertEquals("1st", a.getYearInProgram());
+      } else {
+        assertTrue(a.getGpaMajor() >= 3.0 && a.getGpaMajor() <= 4.0);
+        assertTrue(a.getGpaOverall() >= 3.0 && a.getGpaOverall() <= 4.0);
+        assertEquals(a.getGpaMajor(), Math.round(a.getGpaMajor() * 100) / 100.0);
+      }
       assertTrue(a.getYearInProgram().matches("[1-5](st|nd|rd|th)"));
       assertNotNull(a.getPrevExperience());
       assertNotNull(a.getComments());
@@ -287,6 +296,7 @@ public class FakeApplicationGeneratorTests {
     // Half of the 600 are visa holders, who never take the UCSB path; of the other half, a coin
     // flip decides, so about 150 each.
     assertTrue(ucsbPaths > 100 && ucsbPaths < 200, "UCSB " + ucsbPaths);
+    assertTrue(firstQuarter > 10 && firstQuarter < 120, "first quarter " + firstQuarter);
     assertTrue(otherPaths > 400 && otherPaths < 500, "other " + otherPaths);
   }
 
@@ -334,14 +344,23 @@ public class FakeApplicationGeneratorTests {
     boolean sawLecture2 = false;
     boolean sawDiscussion1 = false;
     boolean sawDiscussion2 = false;
+    int firstQuarter = 0;
 
     for (Application a : generate(RecruitmentType.ULA, 1500, FakeCoverage.ALL)) {
       int year = Integer.parseInt(a.getYearInProgram().substring(0, 1));
       years.add(year);
       assertEquals("S" + String.format("%02d", 26 + 4 - year), a.getGraduationDate());
       assertTrue(Set.of("Physics", "Chemistry").contains(a.getMajor()));
-      assertTrue(a.getGpaMajor() >= 2.7 && a.getGpaMajor() <= 4.0);
-      assertTrue(a.getGpaOverall() >= 2.7 && a.getGpaOverall() <= 4.0);
+      if (a.isFirstQuarter()) {
+        // Issue #292: only a first-year student, who has no GPAs yet.
+        firstQuarter++;
+        assertNull(a.getGpaMajor());
+        assertNull(a.getGpaOverall());
+        assertEquals(1, year);
+      } else {
+        assertTrue(a.getGpaMajor() >= 2.7 && a.getGpaMajor() <= 4.0);
+        assertTrue(a.getGpaOverall() >= 2.7 && a.getGpaOverall() <= 4.0);
+      }
       assertTrue(a.getPermNumber().matches("[A-Z0-9]{7}"));
       assertEquals(Boolean.TRUE, a.getI9Appointment());
       assertNotNull(a.getBsMsStudent());
@@ -411,6 +430,7 @@ public class FakeApplicationGeneratorTests {
         commitments);
     assertTrue(sawBsMs && sawEmployed && sawChanging);
     assertTrue(sawLecture1 && sawLecture2 && sawDiscussion1 && sawDiscussion2);
+    assertTrue(firstQuarter > 20 && firstQuarter < 250, "first quarter " + firstQuarter);
   }
 
   @Test
@@ -531,7 +551,7 @@ public class FakeApplicationGeneratorTests {
     withSettings();
 
     assertEquals(
-        List.of(-411367110, 1308908462, -2014465447, 225062661),
+        List.of(620208449, -317658990, -2059884062, -815574086),
         List.of(
             fingerprint(RecruitmentType.TA, FakeCoverage.ALL),
             fingerprint(RecruitmentType.TA, FakeCoverage.SPARSE),

@@ -247,6 +247,50 @@ describe("CandidateTable", () => {
     },
   );
 
+  /** Issue #292: no GPAs yet, so the cells say so, and sorting by GPA does not trip over them. */
+  describe("a first quarter candidate", () => {
+    const firstQuarterCandidates = () =>
+      candidatesFixtures.map((candidate) =>
+        candidate.firstName === "Ada"
+          ? {
+              ...candidate,
+              firstQuarter: true,
+              gpaMajor: null,
+              gpaOverall: null,
+            }
+          : { ...candidate, firstQuarter: false },
+      );
+    const gpaCells = (name) => {
+      const row = screen
+        .getAllByRole("row")
+        .find((r) => within(r).queryAllByText(name).length > 0);
+      return within(row)
+        .getAllByRole("cell")
+        .map((cell) => cell.textContent)
+        .slice(8, 10);
+    };
+
+    test("has First quarter in both GPA cells, and the others their numbers", () => {
+      table({ type: "ULA", candidates: firstQuarterCandidates() });
+
+      expect(gpaCells("Ada")).toEqual(["First quarter", "First quarter"]);
+      expect(gpaCells("Grace")).not.toContain("First quarter");
+      expect(gpaCells("Grace")[0]).toMatch(/^\d\.\d+$/);
+    });
+
+    test.each(["GPA in Major", "Overall GPA"])(
+      "sorts by %s with the first quarter candidate after those with a GPA, and back again",
+      (label) => {
+        table({ type: "ULA", candidates: firstQuarterCandidates() });
+
+        fireEvent.click(screen.getByRole("button", { name: label }));
+        expect(names().at(-1)).toBe("Ada");
+        fireEvent.click(screen.getByRole("button", { name: label }));
+        expect(names()[0]).toBe("Ada");
+      },
+    );
+  });
+
   test("rank sorts numbers and puts blanks after ranks; equal blanks are stable", () => {
     table({
       candidates: candidatesFixtures.map((candidate, i) => ({

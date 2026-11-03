@@ -2,7 +2,7 @@
   "databaseChangeLog": [
     {
       "changeSet": {
-        "id": "044-create-ranking-list-versions-table",
+        "id": "051-create-ranking-list-versions-table",
         "author": "pc",
         "comment": "The version of each recruitment course's whole ranking list (issue #279): bumped by every rank edit, so that an edit made from a stale copy of the list is refused. No row means version 0.",
         "preConditions": [

@@ -6,6 +6,11 @@ import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.repository.AuditTrailRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
+import edu.ucsb.cs.taapply.time.AppTime;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -31,6 +36,29 @@ public class AuditTrailWebIT extends WebTestCase {
 
   private void goTo(String path) {
     page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1" + path));
+  }
+
+  /**
+   * The Edited column is Pacific time even though this browser is in Tokyo (issue #293): the time
+   * the page shows is the Pacific time of the moment the row was saved, to the hour.
+   */
+  @Test
+  public void the_edited_time_is_shown_in_pacific_time_whatever_the_browsers_zone()
+      throws Exception {
+    DateTimeFormatter hour = DateTimeFormatter.ofPattern("M/d/yyyy, h:", Locale.US);
+    LocalDateTime before = AppTime.now();
+    auditTrailRepository.save(
+        AuditTrail.builder().taApplicationId(7L).fieldName("major").newValue("CS").build());
+    LocalDateTime after = AppTime.now();
+
+    setupAdminUser();
+    goTo("/admin/audittrail");
+
+    // Playwright runs this as a JavaScript regex, so no \\Q...\\E quoting; the text has no special
+    // characters.
+    String shownAt = "(" + hour.format(before) + "|" + hour.format(after) + ")";
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-0-col-editedAt"))
+        .hasText(Pattern.compile("^" + shownAt + "\\d\\d:\\d\\d [AP]M$"));
   }
 
   @Test

@@ -1,11 +1,12 @@
+import { formatPacificDateTime } from "main/utils/pacificTime";
 import type {
   Application,
   ApplicationOrigin,
 } from "main/components/Applications/ApplicationTable";
 
-/** The submission time in the admin's own locale and time zone; blank when it was never stamped. */
+/** The submission time in Pacific time; blank when it was never stamped. */
 export const submittedText = (submittedAt: string | null): string =>
-  submittedAt ? new Date(submittedAt).toLocaleString() : "";
+  formatPacificDateTime(submittedAt);
 
 /**
  * "20 Applications Received", with the test applications an admin entered and the fake ones Developer

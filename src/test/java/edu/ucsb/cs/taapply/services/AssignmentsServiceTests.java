@@ -144,6 +144,31 @@ class AssignmentsServiceTests {
         values(columns, applicant(1, null)));
   }
 
+  /**
+   * Issue #292: a first quarter applicant has no GPAs, and the exports say so instead of a blank.
+   */
+  @Test
+  void a_first_quarter_applicant_has_the_marker_in_place_of_both_gpas() {
+    List<IdentityColumn> columns = AssignmentsService.identityColumns(RecruitmentType.ULA);
+    Application first = applicant(1, null);
+    first.setFirstQuarter(true);
+    first.setGpaMajor(null);
+    first.setGpaOverall(null);
+
+    assertEquals(
+        List.of(
+            "Ada",
+            "Lovelace",
+            "a1@ucsb.edu",
+            "Computer Science",
+            "2",
+            "Spring 2027",
+            "First quarter",
+            "First quarter",
+            2),
+        values(columns, first));
+  }
+
   @Test
   void identity_columns_are_a_fresh_list_each_time() {
     List<IdentityColumn> first = AssignmentsService.identityColumns(RecruitmentType.TA);

@@ -268,6 +268,12 @@ public class FakeApplicationGenerator {
     application.setMajor(FakeNames.pick(majors, random));
     application.setGpaMajor(gpa(random, 3.0));
     application.setGpaOverall(gpa(random, 3.0));
+    // Issue #292: now and then a first-year grad student is in their first quarter, with no GPAs.
+    if (year == 1 && random.nextInt(4) == 0) {
+      application.setFirstQuarter(true);
+      application.setGpaMajor(null);
+      application.setGpaOverall(null);
+    }
     application.setPriorCoursework(prior);
     application.setTopicProficiencies(ratings(topics, 5, random, 50));
     application.setPrevExperience(FakeNames.pick(FakeNames.EXPERIENCE, random));
@@ -299,6 +305,12 @@ public class FakeApplicationGenerator {
     application.setMajor(FakeNames.pick(majors, random));
     application.setGpaMajor(gpa(random, 2.7));
     application.setGpaOverall(gpa(random, 2.7));
+    // Issue #292: now and then a first-year student is in their first quarter, with no GPAs.
+    if (year == 1 && random.nextInt(4) == 0) {
+      application.setFirstQuarter(true);
+      application.setGpaMajor(null);
+      application.setGpaOverall(null);
+    }
     application.setPriorCoursework(prior);
     application.setTopicProficiencies(ratings(topics, 3, random, 50));
     application.setInterests(ratings(interests, 5, random, 60));

@@ -47,6 +47,7 @@ public class ApplicationAuditService {
     FIELDS.put("major", Application::getMajor);
     FIELDS.put("gpaMajor", Application::getGpaMajor);
     FIELDS.put("gpaOverall", Application::getGpaOverall);
+    FIELDS.put("firstQuarter", Application::isFirstQuarter);
     FIELDS.put("yearInProgram", Application::getYearInProgram);
     FIELDS.put("graduationDate", Application::getGraduationDate);
     FIELDS.put("prevExperience", Application::getPrevExperience);
