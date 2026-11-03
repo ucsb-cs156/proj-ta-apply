@@ -134,6 +134,11 @@ type ApplicationFormProps = {
    * so far, whether or not it is complete (issue #270).
    */
   onSaveDraft?: (payload: ApplicationPayload) => void;
+  /**
+   * Turns the submit and Save Draft buttons off, for a form that is still on screen after its
+   * recruitment closed (issue #281). What was typed stays where it is.
+   */
+  submitDisabled?: boolean;
   buttonLabel?: string;
   testIdPrefix?: string;
 };
@@ -228,6 +233,7 @@ export default function ApplicationForm({
   submitAction,
   onDraftChange,
   onSaveDraft,
+  submitDisabled = false,
   buttonLabel = "Submit",
   testIdPrefix = "ApplicationForm",
 }: ApplicationFormProps): React.JSX.Element {
@@ -1670,7 +1676,11 @@ export default function ApplicationForm({
       </Form.Group>
 
       <div className="d-flex align-items-start flex-wrap gap-3">
-        <Button type="submit" data-testid={id("submit")}>
+        <Button
+          type="submit"
+          disabled={submitDisabled}
+          data-testid={id("submit")}
+        >
           {buttonLabel}
         </Button>
         {onSaveDraft && (
@@ -1678,6 +1688,7 @@ export default function ApplicationForm({
             type="button"
             variant="outline-secondary"
             onClick={saveDraft}
+            disabled={submitDisabled}
             data-testid={id("saveDraft")}
           >
             Save Draft

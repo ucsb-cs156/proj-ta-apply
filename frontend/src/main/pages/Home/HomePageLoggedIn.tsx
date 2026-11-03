@@ -7,7 +7,7 @@ import StudentDashboard from "main/components/Student/StudentDashboard";
 import InstructorRecruitmentCards, {
   type InstructorRecruitment,
 } from "main/components/Instructor/InstructorRecruitmentCards";
-import { useBackend } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import type { DraftApplication } from "main/utils/draftApplications";
 
 /**
@@ -25,7 +25,9 @@ export default function HomePageLoggedIn(): React.JSX.Element {
   // The instructor's recruitments are looked up by email (issue #127); only an instructor asks.
   // Stryker disable next-line all : a logged-out user is never an instructor, so the fallback is dead
   const email = currentUser.loggedIn ? currentUser.root.user.email : "";
-  const { data: instructorRecruitments } = useBackend<InstructorRecruitment[]>(
+  const { data: instructorRecruitments } = useRefreshingBackend<
+    InstructorRecruitment[]
+  >(
     ["/api/instructor/recruitments", email],
     {
       method: "GET",
@@ -43,7 +45,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
   // loaded, so that a page shown to nobody asks the backend for nothing.
   // Stryker disable next-line all : the guard only avoids pointless requests
   const options = { enabled: currentUser.loggedIn };
-  const { data: recruitments } = useBackend<StudentRecruitment[]>(
+  const { data: recruitments } = useRefreshingBackend<StudentRecruitment[]>(
     ["/api/recruitments/applicable"],
     { method: "GET", url: "/api/recruitments/applicable" },
     // Stryker disable next-line all : don't test default value of empty list
@@ -51,7 +53,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
     false,
     options,
   );
-  const { data: applications } = useBackend<Application[]>(
+  const { data: applications } = useRefreshingBackend<Application[]>(
     ["/api/applications/mine"],
     { method: "GET", url: "/api/applications/mine" },
     // Stryker disable next-line all : don't test default value of empty list
@@ -61,7 +63,7 @@ export default function HomePageLoggedIn(): React.JSX.Element {
   );
 
   // Applications begun and not yet submitted (issue #270), so a card can offer to continue one.
-  const { data: drafts } = useBackend<DraftApplication[]>(
+  const { data: drafts } = useRefreshingBackend<DraftApplication[]>(
     // Stryker disable next-line all : the cache key is not observable from here
     ["/api/draftApplications/mine"],
     // Stryker disable next-line all : axios sends a GET whatever the method says

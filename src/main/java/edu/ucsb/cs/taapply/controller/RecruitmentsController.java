@@ -319,7 +319,9 @@ public class RecruitmentsController extends ApiController {
       summary = "Open or close applications for a recruitment",
       description =
           "The first open stamps actualOpeningDate and never overwrites it, so it keeps the date"
-              + " applicants were actually able to start. Each close stamps actualClosingDate.")
+              + " applicants were actually able to start. Each close stamps actualClosingDate. Setting the"
+              + " status the recruitment already has changes and records nothing, so a click from"
+              + " a page that is a few seconds out of date is harmless (issue #281).")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("/status")
   public Recruitment updateStatus(
@@ -330,6 +332,10 @@ public class RecruitmentsController extends ApiController {
         recruitmentRepository
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
+
+    if (recruitment.getApplicationStatus() == status) {
+      return recruitment;
+    }
 
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
     LocalDate today = LocalDate.now();

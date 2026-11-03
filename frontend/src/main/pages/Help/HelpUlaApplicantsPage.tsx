@@ -201,6 +201,17 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           twenty seconds if the other copy could not say that it was leaving,
           such as when a computer lost its network connection.
         </p>
+        <p data-testid="HelpUlaApplicantsPage-simultaneous-editing-refresh">
+          <strong>Applications opening and closing.</strong> The home page and
+          the application form <strong>refresh by themselves</strong>, without
+          reloading, about every 15 seconds (somewhere between 10 and 20), so
+          when an admin opens or closes applications you see it on its own.
+          There is no warning for that. If applications close while you are
+          filling in the form, the form stays as you left it and says so: your
+          draft is kept, as of its last automatic save, but it can no longer be
+          submitted. If a page looks out of date, switch back to it, or reload
+          it.
+        </p>
       </div>
     </BasicLayout>
   );

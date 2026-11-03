@@ -600,16 +600,56 @@ without a release. A value that is missing, not a number, zero or negative (for 
 that is negative or larger than its base is replaced by the safe default, so a typing mistake in the
 settings can never make a client refresh in a tight loop or never.
 
-**Means.** The app already reads this state through react-query, which supports all of the above:
-a refetch interval, no refetching while the tab is hidden, and refetching on focus. The work is in
-choosing the intervals, in the server making the step actions idempotent, and in making sure each
-refreshed page keeps what is being typed.
+**Means.** The app reads this state through react-query, which supports all of the above: a refetch
+interval, no refetching while the tab is hidden, and refetching on focus. Built in #281 as one shared
+mechanism, not intervals scattered through the pages:
+
+* `useRefreshingBackend` (`frontend/src/main/utils/useRefreshingBackend.ts`) is `useBackend` plus
+  a `refetchInterval` **function**. react-query asks the function again after every fetch, so each
+  wait is a new draw. `refetchIntervalInBackground` is false and `refetchOnWindowFocus` is true.
+  Options passed by the caller win. #282 uses the same hook.
+* `nextRefreshMs(timing, random)` (`main/utils/refreshInterval.ts`) makes the draw. The random source
+  is an argument so tests are deterministic. A wait is never under 1 second.
+* The four settings are read by the server (`application.properties`, `RefreshSetting`) and sent to
+  every page in the public `/api/systemInfo` answer, like `ENABLE_DEVELOPER_MODE`, so they change on
+  a deployed instance with a restart and no rebuild. The browser checks them again.
+* The role is the admin role: anyone with `ROLE_ADMIN` uses the admin pair even if also an
+  instructor.
+
+**Bad values.** A base that is missing, not a number or below 1 second is the default. A jitter that
+is missing, not a number, negative or larger than its base is the default jitter, and a jitter is
+never larger than its base. No wait is ever shorter than 1 second.
+
+**Survey (done for #281).** What feeds the recruitment state, how expensive it is, and what is
+refreshed:
+
+| Query | Who | Cost | Refreshed |
+|---|---|---|---|
+| `GET /api/admin/recruitments/all` | Admin cards | One table read | Yes |
+| `GET /api/admin/recruitments/{id}/steps` | Admin cards (Recruitment Steps panel) | Computes the step counts, per recruitment | Yes, for admins only (never students) |
+| `GET /api/admin/recruitments/applicationCounts` | Admin cards | Loads every application of every recruitment | **No**, refetched after saves only |
+| `GET /api/instructor/recruitments` | Instructor home section | Small | Yes |
+| `GET /api/recruitments/applicable` | Student home section, application form | Small | Yes |
+| `GET /api/applications/mine`, `GET /api/draftApplications/mine` | Student home section | Small | Yes |
+| `GET /api/instructor/recruitments/{id}/courses/{cid}/ranking` | Faculty ranking page header | Small | Yes |
+| Application page (`/applications/{id}`) list of recruitments | Student editing a submitted application | Small | **No**: a closed recruitment would swap the form for a read-only view and lose unsaved edits |
+
+Step actions on the server: `PUT /api/admin/recruitments/status` re-stamped `actualClosingDate` on
+every Close; it now returns the recruitment untouched, with nothing saved or recorded, if the status
+already is the one asked for. `PUT reviewStatus`, `facultyRankingDeadline`, `allocationVisibility`
+and `assignmentsPublished` already did nothing when the value was unchanged.
+
+**Input in progress.** A refresh changes what is displayed, not what is being typed. A deadline typed
+into the faculty review window lives in the page's own state, so a refresh leaves it alone. A
+confirmation whose action no longer applies (Close Applications after another admin closed them,
+Close Faculty Reviews when they are already closed, Open Faculty Reviews when they are already open,
+or a window for a recruitment that was deleted) closes itself and a toast says nothing was changed.
+A student whose recruitment closes while the application form is open keeps the form and everything
+typed, is told that the draft is kept as of its last automatic save but can no longer be submitted
+(draft saves are refused once applications close, #276), the Submit and Save Draft buttons are turned
+off and autosave stops.
 
 **Key.** None. This is a refresh, not a key, so it does not use the detector or the banner.
-
-**First step of the issue.** A survey, written into this section, before any code: which queries feed
-the recruitment state on the admin, instructor and student pages, how expensive each is, and which
-step actions are not yet idempotent. The survey updates this document.
 
 ### (f) The Instructors page and the other Courses page saves (#282)
 
@@ -674,7 +714,7 @@ is a day or less, M a few days, L about a week.
    2 to 8 seconds, instructors and students 10 to 20, set by environment variables), paused in hidden tabs and refetched on focus, cheap queries
    only, never overwriting input in progress, and a repeated Close made a no-op on the server. It
    needs no version check, detector or banner. A survey first, which updates section (e) of this
-   document.
+   document. Built: see section (e) for the shared `useRefreshingBackend` hook that #282 reuses.
 
 7. **Keep the Instructors page and Courses page saves fresh. (S to M, #282.)** Refresh instead of a
    warning, with the same background refresh as #281 and a refetch after each save, for adding,

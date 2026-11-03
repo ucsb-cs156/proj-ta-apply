@@ -117,6 +117,31 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           assignments after publishing, so check back if something looks wrong,
           or contact an admin.
         </p>
+
+        <h2
+          className="my-3 h4"
+          id="simultaneous-editing"
+          data-testid="HelpInstructorsPage-simultaneous-editing"
+        >
+          Simultaneous Editing
+        </h2>
+        <p data-testid="HelpInstructorsPage-simultaneous-editing-refresh">
+          Where a recruitment is in the process (whether applications are open
+          or closed, whether faculty ranking is open and its deadline, whether
+          the allocations are visible to you, and whether assignments are
+          published) is shown on the home page and on the ranking page. These
+          pages <strong>refresh by themselves</strong>, without reloading, about
+          every 15 seconds (somewhere between 10 and 20, chosen at random each
+          time), so when an admin opens or closes something you see it on its
+          own. There is <strong>no warning</strong> for this.
+        </p>
+        <p data-testid="HelpInstructorsPage-simultaneous-editing-todo">
+          <strong>What to do.</strong> If a page looks out of date (for example
+          the computer was asleep, or the tab was in the background, where
+          nothing is refreshed), switch back to it and it updates at once, or
+          reload the page. A ranking you are entering is never replaced by a
+          refresh.
+        </p>
       </div>
     </BasicLayout>
   );
