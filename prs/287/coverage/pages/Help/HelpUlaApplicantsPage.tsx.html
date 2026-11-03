@@ -268,7 +268,25 @@
 <a name='L203'></a><a href='#L203'>203</a>
 <a name='L204'></a><a href='#L204'>204</a>
 <a name='L205'></a><a href='#L205'>205</a>
-<a name='L206'></a><a href='#L206'>206</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -281,7 +299,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -520,7 +556,9 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             Your major (and whether you are changing it), your GPA (in your
             major and overall), your year in the program, and your expected
             graduation date. You must still be an undergraduate in the quarter
-            you are applying for.
+            you are applying for. If you are applying during your first quarter
+            at UCSB and do not yet have a GPA, you can check the box under the
+            two GPA fields instead of entering them.
           &lt;/li&gt;
           &lt;li&gt;Whether you have served as a ULA before, and how many times.&lt;/li&gt;
           &lt;li&gt;
@@ -591,6 +629,11 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
         &lt;p&gt;
           Before you submit, you will be shown the department&amp;apos;s notices,
           terms and conditions for ULA applications and asked to agree to them.
+        &lt;/p&gt;
+&nbsp;
+        &lt;p data-testid="HelpUlaApplicantsPage-time-zone"&gt;
+          Every date and time on this site is in Pacific Time (Santa Barbara
+          time), wherever you are.
         &lt;/p&gt;
 &nbsp;
         &lt;h2 className="my-3 h4"&gt;Tips&lt;/h2&gt;
@@ -674,6 +717,17 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           twenty seconds if the other copy could not say that it was leaving,
           such as when a computer lost its network connection.
         &lt;/p&gt;
+        &lt;p data-testid="HelpUlaApplicantsPage-simultaneous-editing-refresh"&gt;
+          &lt;strong&gt;Applications opening and closing.&lt;/strong&gt; The home page and
+          the application form &lt;strong&gt;refresh by themselves&lt;/strong&gt;, without
+          reloading, about every 15 seconds (somewhere between 10 and 20), so
+          when an admin opens or closes applications you see it on its own.
+          There is no warning for that. If applications close while you are
+          filling in the form, the form stays as you left it and says so: your
+          draft is kept, as of its last automatic save, but it can no longer be
+          submitted. If a page looks out of date, switch back to it, or reload
+          it.
+        &lt;/p&gt;
       &lt;/div&gt;
     &lt;/BasicLayout&gt;
   );
@@ -685,7 +739,7 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-02T23:58:52.643Z
+                at 2026-11-03T03:20:53.008Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

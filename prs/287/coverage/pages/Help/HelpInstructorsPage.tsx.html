@@ -264,7 +264,25 @@
 <a name='L199'></a><a href='#L199'>199</a>
 <a name='L200'></a><a href='#L200'>200</a>
 <a name='L201'></a><a href='#L201'>201</a>
-<a name='L202'></a><a href='#L202'>202</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -276,7 +294,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -591,6 +627,7 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           assignments after publishing, so check back if something looks wrong,
           or contact an admin.
         &lt;/p&gt;
+&nbsp;
         &lt;h2
           className="my-3 h4"
           id="simultaneous-editing"
@@ -598,7 +635,17 @@ export default function HelpInstructorsPage(): React.JSX.Element {
         &gt;
           Simultaneous Editing
         &lt;/h2&gt;
-        &lt;p&gt;
+        &lt;p data-testid="HelpInstructorsPage-simultaneous-editing-refresh"&gt;
+          Where a recruitment is in the process (whether applications are open
+          or closed, whether faculty ranking is open and its deadline, whether
+          the allocations are visible to you, and whether assignments are
+          published) is shown on the home page and on the ranking page. These
+          pages &lt;strong&gt;refresh by themselves&lt;/strong&gt;, without reloading, about
+          every 15 seconds (somewhere between 10 and 20, chosen at random each
+          time), so when an admin opens or closes something you see it on its
+          own. There is &lt;strong&gt;no warning&lt;/strong&gt; for this.
+        &lt;/p&gt;
+        &lt;p data-testid="HelpInstructorsPage-simultaneous-editing-ranking"&gt;
           If you, or another instructor of the same course, or an admin who
           teaches it, is ranking the same course at the same time, you may get a
           warning that looks like this:
@@ -654,13 +701,20 @@ export default function HelpInstructorsPage(): React.JSX.Element {
             will not be used to rank as well. The box does not come back.
           &lt;/li&gt;
         &lt;/ul&gt;
-        &lt;p data-testid="HelpInstructorsPage-simultaneous-editing-todo"&gt;
+        &lt;p data-testid="HelpInstructorsPage-simultaneous-editing-ranking-todo"&gt;
           &lt;strong&gt;What to do.&lt;/strong&gt; Close all the other tabs or windows that
           have this course&amp;apos;s rankings open, and keep just one, or agree
           with the other person on who ranks this course. The warning goes away
           on its own within a few seconds after the others are closed, or in up
           to about twenty seconds if one of them could not say that it was
           leaving, such as when a computer lost its network connection.
+        &lt;/p&gt;
+        &lt;p data-testid="HelpInstructorsPage-simultaneous-editing-todo"&gt;
+          &lt;strong&gt;What to do.&lt;/strong&gt; If a page looks out of date (for example
+          the computer was asleep, or the tab was in the background, where
+          nothing is refreshed), switch back to it and it updates at once, or
+          reload the page. A ranking you are entering is never replaced by a
+          refresh.
         &lt;/p&gt;
       &lt;/div&gt;
     &lt;/BasicLayout&gt;
@@ -673,7 +727,7 @@ export default function HelpInstructorsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-02T23:58:52.643Z
+                at 2026-11-03T03:20:53.008Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
