@@ -515,7 +515,7 @@ topics an applicant may pick from, and for ULAs the interest areas they rate.</d
 <dd>
 <div class="block">The sections and applicants of the Assignments page.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html#%3Cinit%3E(java.lang.Long,edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List,java.util.List,java.util.List)" class="member-name-link">Assignments(Long, RecruitmentType, List, List, List)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.Assignments</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html#%3Cinit%3E(java.lang.Long,edu.ucsb.cs.taapply.enums.RecruitmentType,java.util.List,java.util.List,java.util.List,java.lang.Integer)" class="member-name-link">Assignments(Long, RecruitmentType, List, List, List, Integer)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.Assignments</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>Assignments</code> record class.</div>
 </dd>
@@ -702,6 +702,15 @@ enrollment totals, and the anticipated expenses, funds and bottom line.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/RankingVersionService.html#bump(java.lang.Long)" class="member-name-link">bump(Long)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RankingVersionService.html" title="class in edu.ucsb.cs.taapply.services">RankingVersionService</a></dt>
 <dd>
 <div class="block">Moves the course to the next version whatever it is: for changes nobody was editing against.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html#bumpAssignmentsVersion(java.lang.Long)" class="member-name-link">bumpAssignmentsVersion(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentRepository</a></dt>
+<dd>
+<div class="block">Counts the recruitment's assignments version up by one, whatever it is (issue #280).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html#bumpAssignmentsVersionIf(java.lang.Long,java.lang.Integer)" class="member-name-link">bumpAssignmentsVersionIf(Long, Integer)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentRepository</a></dt>
+<dd>
+<div class="block">Counts the recruitment's assignments version up by one, but only if it is still <code>
+expected</code> (issue #280).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#BY_COURSE_SECTION_ENROLL" class="member-name-link">BY_COURSE_SECTION_ENROLL</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
 <dd>
@@ -2222,6 +2231,8 @@ same course and section.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#heartbeat(java.lang.Long,java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html#heartbeat(java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminAssignmentsController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#heartbeat(java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#heartbeat(java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
@@ -2648,6 +2659,8 @@ the same month rule as the front end (January to March is 1, April to June 2, Ju
 <dt><a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html#LAYOUT_STUDENT" class="member-name-link">LAYOUT_STUDENT</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/PublishedAssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">PublishedAssignmentsService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html#leave(java.lang.Long,java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html#leave(java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminAssignmentsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#leave(java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
@@ -3720,7 +3733,7 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setRemoved(java.lang.Long,boolean)" class="member-name-link">setRemoved(Long, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html#setTentative(java.lang.Long,java.lang.Long)" class="member-name-link">setTentative(Long, Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminAssignmentsController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html#setTentative(java.lang.Long,java.lang.Long,java.lang.Integer,java.lang.String)" class="member-name-link">setTentative(Long, Long, Integer, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminAssignmentsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminAssignmentsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html#SETTING_KEY" class="member-name-link">SETTING_KEY</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/DeveloperModeService.html" title="class in edu.ucsb.cs.taapply.services">DeveloperModeService</a></dt>
 <dd>
@@ -4681,6 +4694,10 @@ the order they are declared.</div>
 the order they are declared.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.RankEdit.html#version()" class="member-name-link">version()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.RankEdit.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.RankEdit</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>version</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html#version()" class="member-name-link">version()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.Assignments.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.Assignments</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>version</code> record component.</div>
 </dd>
