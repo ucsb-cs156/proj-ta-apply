@@ -1310,7 +1310,7 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplicationPage-multiple-tabs")).isVisible(wait);
     assertThat(page.getByTestId("ApplicationPage-multiple-tabs"))
         .containsText(
-            "Admin admin@ucsb.edu (Ada Admin) has this application open for editing. We recommend"
+            "Admin admin@ucsb.edu (Test User) has this application open for editing. We recommend"
                 + " that you close this window and try again in a few minutes. If this message"
                 + " persists, please reach out to admin@ucsb.edu");
     assertThat(page.getByTestId("ApplicationPage-multiple-tabs-modal-leave")).not().isVisible();
@@ -1319,7 +1319,7 @@ public class ApplicationsWebIT extends WebTestCase {
         .isVisible(wait);
     assertThat(adminPage.getByTestId("AdminApplicationEditPage-multiple-tabs-modal-message"))
         .containsText(
-            "cgaucho@ucsb.edu (Chris Gaucho) already has this application open for editing. We"
+            "cgaucho@ucsb.edu (Test User) already has this application open for editing. We"
                 + " recommend that you wait a few minutes or ask them to close it.");
 
     // Closing the admin's window lets the student's warning go.
