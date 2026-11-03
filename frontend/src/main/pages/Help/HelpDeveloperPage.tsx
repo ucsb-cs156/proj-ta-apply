@@ -143,8 +143,8 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           &quot;now&quot; and &quot;today&quot; from <code>AppTime</code> and
           the frontend formats and works out &quot;today&quot; only in{" "}
           <code>pacificTime.ts</code>; a test fails if anything else calls{" "}
-          <code>toLocaleString</code> or <code>new Date()</code>. The design is
-          in <code>docs/design/PacificTimeDesign.md</code>.
+          <code>toLocaleString</code> or reads the browser's clock. The design
+          is in <code>docs/design/PacificTimeDesign.md</code>.
         </p>
 
         <h2 className="my-3 h4" id="simultaneous-editing">
