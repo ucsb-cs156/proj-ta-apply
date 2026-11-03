@@ -545,11 +545,11 @@ export default function HelpDeveloperPage(): React.JSX.Element {
               <td>None (refresh, not a key)</td>
               <td>
                 <a
-                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/287"
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/291"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  #287
+                  #291
                 </a>
               </td>
             </tr>

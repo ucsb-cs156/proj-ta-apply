@@ -726,11 +726,11 @@ describe("Help pages (issue #140)", () => {
       "Instructors page and non-allocation Courses page saves",
       "Background refresh plus a refetch after each save; no warning, no version check, no detector",
       "None (refresh, not a key)",
-      "#287",
+      "#291",
     ]);
     expect(rows[2].querySelector("a")).toHaveAttribute(
       "href",
-      "https://github.com/ucsb-cs156/proj-ta-apply/pull/287",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/291",
     );
   });
 
