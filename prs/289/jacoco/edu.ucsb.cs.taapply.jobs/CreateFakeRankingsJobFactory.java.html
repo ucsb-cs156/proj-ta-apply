@@ -4,6 +4,7 @@ import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.CandidateRankingRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.RankingVersionService;
 import edu.ucsb.cs.taapply.services.fake.FakeRankingScope;
 import edu.ucsb.cs.taapply.services.fake.FakeRankingsGenerator;
 import java.util.Random;
@@ -12,34 +13,36 @@ import org.springframework.stereotype.Service;
 
 /** Wires collaborators into {@link CreateFakeRankingsJob}, as the other job factories do. */
 @Service
-<span class="fc" id="L15">public class CreateFakeRankingsJobFactory {</span>
+<span class="fc" id="L16">public class CreateFakeRankingsJobFactory {</span>
 
   @Autowired private FakeRankingsGenerator generator;
   @Autowired private RecruitmentRepository recruitmentRepository;
   @Autowired private RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired private ApplicationRepository applicationRepository;
   @Autowired private CandidateRankingRepository candidateRankingRepository;
+  @Autowired private RankingVersionService rankingVersionService;
 
   /** A job with a fresh, unseeded random source. */
   public CreateFakeRankingsJob create(
       Long recruitmentId, FakeRankingScope scope, boolean includeNotInterested) {
-<span class="fc" id="L26">    return create(recruitmentId, scope, includeNotInterested, new Random());</span>
+<span class="fc" id="L28">    return create(recruitmentId, scope, includeNotInterested, new Random());</span>
   }
 
   /** A job drawing from the given random source, so a test can fix the outcome. */
   public CreateFakeRankingsJob create(
       Long recruitmentId, FakeRankingScope scope, boolean includeNotInterested, Random random) {
-<span class="fc" id="L32">    return CreateFakeRankingsJob.builder()</span>
-<span class="fc" id="L33">        .recruitmentId(recruitmentId)</span>
-<span class="fc" id="L34">        .scope(scope)</span>
-<span class="fc" id="L35">        .includeNotInterested(includeNotInterested)</span>
-<span class="fc" id="L36">        .random(random)</span>
-<span class="fc" id="L37">        .generator(generator)</span>
-<span class="fc" id="L38">        .recruitmentRepository(recruitmentRepository)</span>
-<span class="fc" id="L39">        .recruitmentCourseRepository(recruitmentCourseRepository)</span>
-<span class="fc" id="L40">        .applicationRepository(applicationRepository)</span>
-<span class="fc" id="L41">        .candidateRankingRepository(candidateRankingRepository)</span>
-<span class="fc" id="L42">        .build();</span>
+<span class="fc" id="L34">    return CreateFakeRankingsJob.builder()</span>
+<span class="fc" id="L35">        .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L36">        .scope(scope)</span>
+<span class="fc" id="L37">        .includeNotInterested(includeNotInterested)</span>
+<span class="fc" id="L38">        .random(random)</span>
+<span class="fc" id="L39">        .generator(generator)</span>
+<span class="fc" id="L40">        .recruitmentRepository(recruitmentRepository)</span>
+<span class="fc" id="L41">        .recruitmentCourseRepository(recruitmentCourseRepository)</span>
+<span class="fc" id="L42">        .applicationRepository(applicationRepository)</span>
+<span class="fc" id="L43">        .candidateRankingRepository(candidateRankingRepository)</span>
+<span class="fc" id="L44">        .rankingVersionService(rankingVersionService)</span>
+<span class="fc" id="L45">        .build();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

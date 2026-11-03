@@ -34,6 +34,19 @@ import org.springframework.stereotype.Service;
   @Value(&quot;${app.startQtrYYYYQ:20211}&quot;)
   private String startQtrYYYYQ;
 
+  // Background refresh timing (issue #281); read as text so a typo falls back to the default.
+  @Value(&quot;${app.refresh.adminSec:5}&quot;)
+  private String adminRefreshSec;
+
+  @Value(&quot;${app.refresh.adminJitter:3}&quot;)
+  private String adminRefreshJitter;
+
+  @Value(&quot;${app.refresh.nonAdminSec:15}&quot;)
+  private String nonAdminRefreshSec;
+
+  @Value(&quot;${app.refresh.nonAdminJitter:5}&quot;)
+  private String nonAdminRefreshJitter;
+
   // The end of the range is derived from the quarter UCSB says it currently is, so it keeps
   // itself current as quarters roll over; only the start needs configuring.
   @Autowired private UcsbQuarterService ucsbQuarterService;
@@ -44,26 +57,33 @@ import org.springframework.stereotype.Service;
   @Override
   public SystemInfo getSystemInfo() {
     String commitMessage =
-<span class="fc bfc" id="L47" title="All 2 branches covered.">        this.gitProperties != null ? this.gitProperties.get(&quot;commit.message.short&quot;) : &quot;unknown&quot;;</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        this.gitProperties != null ? this.gitProperties.get(&quot;commit.message.short&quot;) : &quot;unknown&quot;;</span>
     String commitId =
-<span class="fc bfc" id="L49" title="All 2 branches covered.">        this.gitProperties != null ? this.gitProperties.getShortCommitId() : &quot;unknown&quot;;</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        this.gitProperties != null ? this.gitProperties.getShortCommitId() : &quot;unknown&quot;;</span>
+
+<span class="fc" id="L64">    double adminBase = RefreshSetting.base(adminRefreshSec, 5);</span>
+<span class="fc" id="L65">    double nonAdminBase = RefreshSetting.base(nonAdminRefreshSec, 15);</span>
 
     SystemInfo si =
-<span class="fc" id="L52">        SystemInfo.builder()</span>
-<span class="fc" id="L53">            .springH2ConsoleEnabled(this.springH2ConsoleEnabled)</span>
-<span class="fc" id="L54">            .showSwaggerUILink(this.showSwaggerUILink)</span>
-<span class="fc" id="L55">            .enableDeveloperMode(this.enableDeveloperMode)</span>
-<span class="fc" id="L56">            .oauthLogin(this.oauthLogin)</span>
-<span class="fc" id="L57">            .sourceRepo(this.sourceRepo)</span>
-<span class="fc" id="L58">            .commitMessage(commitMessage)</span>
-<span class="fc" id="L59">            .commitId(commitId)</span>
-<span class="fc" id="L60">            .githubUrl(this.sourceRepo + &quot;/commit/&quot; + commitId)</span>
-<span class="fc" id="L61">            .subjectArea(this.subjectArea)</span>
-<span class="fc" id="L62">            .startQtrYYYYQ(this.startQtrYYYYQ)</span>
-<span class="fc" id="L63">            .endQtrYYYYQ(ucsbQuarterService.getEndQtrYYYYQ())</span>
-<span class="fc" id="L64">            .build();</span>
-<span class="fc" id="L65">    log.info(&quot;getSystemInfo returns {}&quot;, si);</span>
-<span class="fc" id="L66">    return si;</span>
+<span class="fc" id="L68">        SystemInfo.builder()</span>
+<span class="fc" id="L69">            .springH2ConsoleEnabled(this.springH2ConsoleEnabled)</span>
+<span class="fc" id="L70">            .showSwaggerUILink(this.showSwaggerUILink)</span>
+<span class="fc" id="L71">            .enableDeveloperMode(this.enableDeveloperMode)</span>
+<span class="fc" id="L72">            .oauthLogin(this.oauthLogin)</span>
+<span class="fc" id="L73">            .sourceRepo(this.sourceRepo)</span>
+<span class="fc" id="L74">            .commitMessage(commitMessage)</span>
+<span class="fc" id="L75">            .commitId(commitId)</span>
+<span class="fc" id="L76">            .githubUrl(this.sourceRepo + &quot;/commit/&quot; + commitId)</span>
+<span class="fc" id="L77">            .subjectArea(this.subjectArea)</span>
+<span class="fc" id="L78">            .startQtrYYYYQ(this.startQtrYYYYQ)</span>
+<span class="fc" id="L79">            .endQtrYYYYQ(ucsbQuarterService.getEndQtrYYYYQ())</span>
+<span class="fc" id="L80">            .adminRefreshSec(adminBase)</span>
+<span class="fc" id="L81">            .adminRefreshJitter(RefreshSetting.jitter(adminRefreshJitter, 3, adminBase))</span>
+<span class="fc" id="L82">            .nonAdminRefresh(nonAdminBase)</span>
+<span class="fc" id="L83">            .nonAdminJitter(RefreshSetting.jitter(nonAdminRefreshJitter, 5, nonAdminBase))</span>
+<span class="fc" id="L84">            .build();</span>
+<span class="fc" id="L85">    log.info(&quot;getSystemInfo returns {}&quot;, si);</span>
+<span class="fc" id="L86">    return si;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

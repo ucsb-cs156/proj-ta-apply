@@ -268,11 +268,17 @@ public class FakeApplicationGenerator {
 <span class="fc" id="L268">    application.setMajor(FakeNames.pick(majors, random));</span>
 <span class="fc" id="L269">    application.setGpaMajor(gpa(random, 3.0));</span>
 <span class="fc" id="L270">    application.setGpaOverall(gpa(random, 3.0));</span>
-<span class="fc" id="L271">    application.setPriorCoursework(prior);</span>
-<span class="fc" id="L272">    application.setTopicProficiencies(ratings(topics, 5, random, 50));</span>
-<span class="fc" id="L273">    application.setPrevExperience(FakeNames.pick(FakeNames.EXPERIENCE, random));</span>
-<span class="fc" id="L274">    application.setComments(FakeNames.pick(FakeNames.COMMENTS, random));</span>
-<span class="fc" id="L275">    return application;</span>
+    // Issue #292: now and then a first-year grad student is in their first quarter, with no GPAs.
+<span class="fc bfc" id="L272" title="All 4 branches covered.">    if (year == 1 &amp;&amp; random.nextInt(4) == 0) {</span>
+<span class="fc" id="L273">      application.setFirstQuarter(true);</span>
+<span class="fc" id="L274">      application.setGpaMajor(null);</span>
+<span class="fc" id="L275">      application.setGpaOverall(null);</span>
+    }
+<span class="fc" id="L277">    application.setPriorCoursework(prior);</span>
+<span class="fc" id="L278">    application.setTopicProficiencies(ratings(topics, 5, random, 50));</span>
+<span class="fc" id="L279">    application.setPrevExperience(FakeNames.pick(FakeNames.EXPERIENCE, random));</span>
+<span class="fc" id="L280">    application.setComments(FakeNames.pick(FakeNames.COMMENTS, random));</span>
+<span class="fc" id="L281">    return application;</span>
   }
 
   // ---- ULA ----
@@ -284,70 +290,76 @@ public class FakeApplicationGenerator {
       List&lt;String&gt; majors,
       List&lt;String&gt; interests,
       int latest) {
-<span class="fc" id="L287">    int year = random.nextInt(1, 5);</span>
+<span class="fc" id="L293">    int year = random.nextInt(1, 5);</span>
     // Six courses a year, so a later-year student has a longer path behind them.
-<span class="fc" id="L289">    int wanted = 6 * (year - 1) + random.nextInt(1, 7);</span>
-<span class="fc" id="L290">    List&lt;PriorCoursework&gt; prior = coursework.ucsb(random, wanted, latest);</span>
+<span class="fc" id="L295">    int wanted = 6 * (year - 1) + random.nextInt(1, 7);</span>
+<span class="fc" id="L296">    List&lt;PriorCoursework&gt; prior = coursework.ucsb(random, wanted, latest);</span>
 
-<span class="fc bfc" id="L292" title="All 2 branches covered.">    int previousService = year == 1 ? 0 : random.nextInt(0, Math.min(6, 3 * (year - 1)) + 1);</span>
-<span class="fc bfc" id="L293" title="All 2 branches covered.">    boolean employed = random.nextInt(4) == 0;</span>
-<span class="fc bfc" id="L294" title="All 2 branches covered.">    boolean bsMs = random.nextInt(7) == 0;</span>
+<span class="fc bfc" id="L298" title="All 2 branches covered.">    int previousService = year == 1 ? 0 : random.nextInt(0, Math.min(6, 3 * (year - 1)) + 1);</span>
+<span class="fc bfc" id="L299" title="All 2 branches covered.">    boolean employed = random.nextInt(4) == 0;</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">    boolean bsMs = random.nextInt(7) == 0;</span>
 
-<span class="fc" id="L296">    Application application = Application.builder().build();</span>
-<span class="fc" id="L297">    application.setYearInProgram(ordinal(year));</span>
-<span class="fc" id="L298">    application.setGraduationDate(graduation(recruitmentYear(recruitment) + 4 - year));</span>
-<span class="fc" id="L299">    application.setMajor(FakeNames.pick(majors, random));</span>
-<span class="fc" id="L300">    application.setGpaMajor(gpa(random, 2.7));</span>
-<span class="fc" id="L301">    application.setGpaOverall(gpa(random, 2.7));</span>
-<span class="fc" id="L302">    application.setPriorCoursework(prior);</span>
-<span class="fc" id="L303">    application.setTopicProficiencies(ratings(topics, 3, random, 50));</span>
-<span class="fc" id="L304">    application.setInterests(ratings(interests, 5, random, 60));</span>
-<span class="fc" id="L305">    application.setPrevExperience(FakeNames.pick(FakeNames.EXPERIENCE, random));</span>
-<span class="fc" id="L306">    application.setComments(FakeNames.pick(FakeNames.COMMENTS, random));</span>
-<span class="fc" id="L307">    application.setAvailableForLecturesFirstChoice(random.nextBoolean());</span>
-<span class="fc" id="L308">    application.setAvailableForLecturesSecondChoice(random.nextBoolean());</span>
-<span class="fc" id="L309">    application.setAvailableForDiscussionFirstChoice(random.nextBoolean());</span>
-<span class="fc" id="L310">    application.setAvailableForDiscussionSecondChoice(random.nextBoolean());</span>
-<span class="fc" id="L311">    application.setAvailabilityCommentsFirstChoice(FakeNames.pick(FakeNames.AVAILABILITY, random));</span>
-<span class="fc" id="L312">    application.setPermNumber(permNumber(random));</span>
-<span class="fc" id="L313">    application.setBsMsStudent(bsMs);</span>
-<span class="fc bfc" id="L314" title="All 2 branches covered.">    if (bsMs) {</span>
-<span class="fc" id="L315">      application.setStudentStatusNextQuarter(</span>
-<span class="fc bfc" id="L316" title="All 2 branches covered.">          random.nextBoolean() ? StudentStatus.UNDERGRADUATE : StudentStatus.GRADUATE);</span>
-<span class="fc" id="L317">      application.setWantsTaEligibility(random.nextBoolean());</span>
+<span class="fc" id="L302">    Application application = Application.builder().build();</span>
+<span class="fc" id="L303">    application.setYearInProgram(ordinal(year));</span>
+<span class="fc" id="L304">    application.setGraduationDate(graduation(recruitmentYear(recruitment) + 4 - year));</span>
+<span class="fc" id="L305">    application.setMajor(FakeNames.pick(majors, random));</span>
+<span class="fc" id="L306">    application.setGpaMajor(gpa(random, 2.7));</span>
+<span class="fc" id="L307">    application.setGpaOverall(gpa(random, 2.7));</span>
+    // Issue #292: now and then a first-year student is in their first quarter, with no GPAs.
+<span class="fc bfc" id="L309" title="All 4 branches covered.">    if (year == 1 &amp;&amp; random.nextInt(4) == 0) {</span>
+<span class="fc" id="L310">      application.setFirstQuarter(true);</span>
+<span class="fc" id="L311">      application.setGpaMajor(null);</span>
+<span class="fc" id="L312">      application.setGpaOverall(null);</span>
     }
-<span class="fc" id="L319">    application.setOtherCampusJob(</span>
-<span class="fc" id="L320">        List.of(OtherCampusJob.YES, OtherCampusJob.NO, OtherCampusJob.NOT_SURE)</span>
-<span class="fc" id="L321">            .get(random.nextInt(3)));</span>
-<span class="fc" id="L322">    application.setPriorUcsbEmployment(employed);</span>
-<span class="fc bfc" id="L323" title="All 2 branches covered.">    if (employed) {</span>
-<span class="fc" id="L324">      application.setEmployeeId(String.format(&quot;%08d&quot;, random.nextInt(100_000_000)));</span>
+<span class="fc" id="L314">    application.setPriorCoursework(prior);</span>
+<span class="fc" id="L315">    application.setTopicProficiencies(ratings(topics, 3, random, 50));</span>
+<span class="fc" id="L316">    application.setInterests(ratings(interests, 5, random, 60));</span>
+<span class="fc" id="L317">    application.setPrevExperience(FakeNames.pick(FakeNames.EXPERIENCE, random));</span>
+<span class="fc" id="L318">    application.setComments(FakeNames.pick(FakeNames.COMMENTS, random));</span>
+<span class="fc" id="L319">    application.setAvailableForLecturesFirstChoice(random.nextBoolean());</span>
+<span class="fc" id="L320">    application.setAvailableForLecturesSecondChoice(random.nextBoolean());</span>
+<span class="fc" id="L321">    application.setAvailableForDiscussionFirstChoice(random.nextBoolean());</span>
+<span class="fc" id="L322">    application.setAvailableForDiscussionSecondChoice(random.nextBoolean());</span>
+<span class="fc" id="L323">    application.setAvailabilityCommentsFirstChoice(FakeNames.pick(FakeNames.AVAILABILITY, random));</span>
+<span class="fc" id="L324">    application.setPermNumber(permNumber(random));</span>
+<span class="fc" id="L325">    application.setBsMsStudent(bsMs);</span>
+<span class="fc bfc" id="L326" title="All 2 branches covered.">    if (bsMs) {</span>
+<span class="fc" id="L327">      application.setStudentStatusNextQuarter(</span>
+<span class="fc bfc" id="L328" title="All 2 branches covered.">          random.nextBoolean() ? StudentStatus.UNDERGRADUATE : StudentStatus.GRADUATE);</span>
+<span class="fc" id="L329">      application.setWantsTaEligibility(random.nextBoolean());</span>
     }
-<span class="fc" id="L326">    application.setI9Appointment(true);</span>
-<span class="fc" id="L327">    application.setPreviousServiceAsUla(previousService);</span>
-<span class="fc bfc" id="L328" title="All 2 branches covered.">    if (previousService == 0) {</span>
-<span class="fc bfc" id="L329" title="All 2 branches covered.">      boolean agrees = random.nextInt(5) != 0;</span>
-<span class="fc" id="L330">      application.setTrainingCommitment(</span>
-<span class="fc bfc" id="L331" title="All 2 branches covered.">          agrees</span>
-<span class="fc" id="L332">              ? TrainingCommitment.AGREE</span>
-<span class="fc bfc" id="L333" title="All 2 branches covered.">              : random.nextBoolean() ? TrainingCommitment.UNSURE : TrainingCommitment.CANNOT);</span>
-<span class="fc bfc" id="L334" title="All 2 branches covered.">      if (!agrees) {</span>
-<span class="fc" id="L335">        application.setTrainingCommitmentExplanation(</span>
-<span class="fc" id="L336">            FakeNames.pick(FakeNames.EXPLANATIONS, random));</span>
+<span class="fc" id="L331">    application.setOtherCampusJob(</span>
+<span class="fc" id="L332">        List.of(OtherCampusJob.YES, OtherCampusJob.NO, OtherCampusJob.NOT_SURE)</span>
+<span class="fc" id="L333">            .get(random.nextInt(3)));</span>
+<span class="fc" id="L334">    application.setPriorUcsbEmployment(employed);</span>
+<span class="fc bfc" id="L335" title="All 2 branches covered.">    if (employed) {</span>
+<span class="fc" id="L336">      application.setEmployeeId(String.format(&quot;%08d&quot;, random.nextInt(100_000_000)));</span>
+    }
+<span class="fc" id="L338">    application.setI9Appointment(true);</span>
+<span class="fc" id="L339">    application.setPreviousServiceAsUla(previousService);</span>
+<span class="fc bfc" id="L340" title="All 2 branches covered.">    if (previousService == 0) {</span>
+<span class="fc bfc" id="L341" title="All 2 branches covered.">      boolean agrees = random.nextInt(5) != 0;</span>
+<span class="fc" id="L342">      application.setTrainingCommitment(</span>
+<span class="fc bfc" id="L343" title="All 2 branches covered.">          agrees</span>
+<span class="fc" id="L344">              ? TrainingCommitment.AGREE</span>
+<span class="fc bfc" id="L345" title="All 2 branches covered.">              : random.nextBoolean() ? TrainingCommitment.UNSURE : TrainingCommitment.CANNOT);</span>
+<span class="fc bfc" id="L346" title="All 2 branches covered.">      if (!agrees) {</span>
+<span class="fc" id="L347">        application.setTrainingCommitmentExplanation(</span>
+<span class="fc" id="L348">            FakeNames.pick(FakeNames.EXPLANATIONS, random));</span>
       }
-<span class="fc" id="L338">      application.setVideoLink(&quot;https://example.com/fake-video/&quot; + random.nextInt(100_000));</span>
+<span class="fc" id="L350">      application.setVideoLink(&quot;https://example.com/fake-video/&quot; + random.nextInt(100_000));</span>
     }
-<span class="fc bfc" id="L340" title="All 2 branches covered.">    application.setChangingMajor(random.nextInt(6) == 0);</span>
-<span class="fc" id="L341">    return application;</span>
+<span class="fc bfc" id="L352" title="All 2 branches covered.">    application.setChangingMajor(random.nextInt(6) == 0);</span>
+<span class="fc" id="L353">    return application;</span>
   }
 
   private static String permNumber(Random random) {
-<span class="fc" id="L345">    String alphabet = &quot;ABCDEFGHJKLMNPQRSTUVWXYZ0123456789&quot;;</span>
-<span class="fc" id="L346">    StringBuilder perm = new StringBuilder();</span>
-<span class="fc bfc" id="L347" title="All 2 branches covered.">    for (int i = 0; i &lt; 7; i++) {</span>
-<span class="fc" id="L348">      perm.append(alphabet.charAt(random.nextInt(alphabet.length())));</span>
+<span class="fc" id="L357">    String alphabet = &quot;ABCDEFGHJKLMNPQRSTUVWXYZ0123456789&quot;;</span>
+<span class="fc" id="L358">    StringBuilder perm = new StringBuilder();</span>
+<span class="fc bfc" id="L359" title="All 2 branches covered.">    for (int i = 0; i &lt; 7; i++) {</span>
+<span class="fc" id="L360">      perm.append(alphabet.charAt(random.nextInt(alphabet.length())));</span>
     }
-<span class="fc" id="L350">    return perm.toString();</span>
+<span class="fc" id="L362">    return perm.toString();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -7,7 +7,6 @@ import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
-import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
@@ -22,6 +21,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -115,17 +115,28 @@ import org.springframework.web.bind.annotation.RestController;
 <span class="fc" id="L115">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
     // One atomic statement: it counts the version up only if it is still the one the page saw.
 <span class="fc bfc" id="L117" title="All 2 branches covered.">    if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {</span>
-<span class="fc" id="L118">      Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L119">      body.put(</span>
-          &quot;message&quot;,
-          &quot;Assignments changed while you were working. The page has been refreshed; please check&quot;
-              + &quot; the placement and try again.&quot;);
-<span class="fc" id="L123">      body.put(&quot;assignments&quot;, assignmentsService.assignments(recruitmentOf(recruitmentId)));</span>
-<span class="fc" id="L124">      return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
+<span class="fc" id="L118">      return conflict(recruitmentId);</span>
     }
-<span class="fc" id="L126">    application.setTentativeAssignmentId(recruitmentCourseId);</span>
-<span class="fc" id="L127">    applicationRepository.save(application);</span>
+<span class="fc" id="L120">    application.setTentativeAssignmentId(recruitmentCourseId);</span>
+    try {
+<span class="fc" id="L122">      applicationRepository.save(application);</span>
+<span class="fc" id="L123">    } catch (ObjectOptimisticLockingFailureException e) {</span>
+      // The application has a version of its own (issue #302): the applicant or another admin saved
+      // it between reading it and writing it. The placement is not made; the page is refreshed.
+<span class="fc" id="L126">      return conflict(recruitmentId);</span>
+<span class="fc" id="L127">    }</span>
 <span class="fc" id="L128">    return ResponseEntity.ok(assignmentsService.assignments(recruitmentOf(recruitmentId)));</span>
+  }
+
+  /** The 409 for a stale placement: why, and the assignments as they now stand. */
+  private ResponseEntity&lt;Object&gt; conflict(Long recruitmentId) {
+<span class="fc" id="L133">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L134">    body.put(</span>
+        &quot;message&quot;,
+        &quot;Assignments changed while you were working. The page has been refreshed; please check&quot;
+            + &quot; the placement and try again.&quot;);
+<span class="fc" id="L138">    body.put(&quot;assignments&quot;, assignmentsService.assignments(recruitmentOf(recruitmentId)));</span>
+<span class="fc" id="L139">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
   }
 
   @Operation(
@@ -143,8 +154,8 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
     // The role check (PreAuthorize) and the existence check come before the detector is touched.
-<span class="fc" id="L146">    recruitmentOf(recruitmentId);</span>
-<span class="fc" id="L147">    return clientActivityDetector.heartbeat(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc" id="L157">    recruitmentOf(recruitmentId);</span>
+<span class="fc" id="L158">    return clientActivityDetector.heartbeat(resourceKey(recruitmentId), clientId, identity());</span>
   }
 
   @Operation(
@@ -159,30 +170,26 @@ import org.springframework.web.bind.annotation.RestController;
   public void leave(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
-<span class="fc" id="L162">    recruitmentOf(recruitmentId);</span>
-<span class="fc" id="L163">    clientActivityDetector.leave(resourceKey(recruitmentId), clientId);</span>
-<span class="fc" id="L164">  }</span>
+<span class="fc" id="L173">    recruitmentOf(recruitmentId);</span>
+<span class="fc" id="L174">    clientActivityDetector.leave(resourceKey(recruitmentId), clientId);</span>
+<span class="fc" id="L175">  }</span>
 
   /** The detector's name for a recruitment's whole assignments page. */
   private static String resourceKey(Long recruitmentId) {
-<span class="fc" id="L168">    return &quot;assignments:&quot; + recruitmentId;</span>
+<span class="fc" id="L179">    return &quot;assignments:&quot; + recruitmentId;</span>
   }
 
-  /** Who the current user is to the detector: the email is the person, the label adds the name. */
+  /**
+   * Who the current user is to the detector: the shared identity, marked as an admin (issue #302).
+   */
   private ClientIdentity identity() {
-<span class="fc" id="L173">    User user = getCurrentUser().getUser();</span>
-<span class="fc" id="L174">    String name = user.getFullName();</span>
-    String label =
-<span class="fc bfc" id="L176" title="All 4 branches covered.">        name == null || name.isBlank()</span>
-<span class="fc" id="L177">            ? user.getEmail()</span>
-<span class="fc" id="L178">            : user.getEmail() + &quot; (&quot; + name.trim() + &quot;)&quot;;</span>
-<span class="fc" id="L179">    return new ClientIdentity(user.getEmail(), label);</span>
+<span class="fc" id="L186">    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);</span>
   }
 
   private Recruitment recruitmentOf(Long recruitmentId) {
-<span class="fc" id="L183">    return recruitmentRepository</span>
-<span class="fc" id="L184">        .findById(recruitmentId)</span>
-<span class="fc" id="L185">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L190">    return recruitmentRepository</span>
+<span class="fc" id="L191">        .findById(recruitmentId)</span>
+<span class="fc" id="L192">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -619,11 +619,11 @@ import org.springframework.web.server.ResponseStatusException;
 <span class="fc" id="L619">        .orElse(label);</span>
   }
 
-  /** Where the row came from, for admins only. */
+  /** Where the row came from, for admins only; the form's own clock is Pacific (issue #293). */
   static String adminComments(String timestamp) {
 <span class="fc" id="L624">    String when = blankToNull(timestamp);</span>
 <span class="fc" id="L625">    return &quot;Imported from the ULA application form&quot;</span>
-<span class="fc bfc" id="L626" title="All 2 branches covered.">        + (when == null ? &quot;&quot; : &quot;; submitted &quot; + when)</span>
+<span class="fc bfc" id="L626" title="All 2 branches covered.">        + (when == null ? &quot;&quot; : &quot;; submitted &quot; + when + &quot; Pacific time&quot;)</span>
         + &quot;.&quot;;
   }
 }
