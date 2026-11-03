@@ -112,8 +112,9 @@ A development H2 file (`target/db-development`) that was filled while running on
 machine already holds Pacific values, and the conversion would shift them a second time; delete it
 (`mvn clean`) rather than migrating it.
 
-Changeset numbers 044 to 046 are taken by open pull requests (#287 to #291, #294), so this one is
-050, which also leaves room.
+Numbering: main has changesets up to 046 (`first_quarter` on applications and drafts, issue #292,
+booleans only, no dates); the open pull requests #287 to #291 each add a 044. This one is 050, above
+all of them, and leaves room.
 
 ## Tests
 

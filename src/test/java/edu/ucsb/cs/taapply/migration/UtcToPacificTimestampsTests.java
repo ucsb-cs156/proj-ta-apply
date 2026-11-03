@@ -222,6 +222,20 @@ public class UtcToPacificTimestampsTests {
     assertEquals(t("2026-07-15T20:30:00"), read("notice_versions", "other", 1));
   }
 
+  /** In a metadata pattern an underscore matches any character; such a near miss is not a match. */
+  @Test
+  public void a_name_that_only_matches_the_metadata_pattern_is_not_the_table() throws Exception {
+    sql("CREATE TABLE jobXlogs (id BIGINT PRIMARY KEY, created_at TIMESTAMP)");
+    sql("INSERT INTO jobXlogs VALUES (1, TIMESTAMP '2026-07-15 20:30:00')");
+    sql("CREATE TABLE notice_versions (id BIGINT PRIMARY KEY, createdXat TIMESTAMP)");
+    sql("INSERT INTO notice_versions VALUES (1, TIMESTAMP '2026-07-15 20:30:00')");
+
+    assertEquals(0, UtcToPacificTimestamps.convert(connection, UTC, AppTime.ZONE));
+
+    assertEquals(t("2026-07-15T20:30:00"), read("jobXlogs", "created_at", 1));
+    assertEquals(t("2026-07-15T20:30:00"), read("notice_versions", "createdXat", 1));
+  }
+
   @Test
   public void an_empty_database_converts_nothing() throws Exception {
     assertEquals(0, UtcToPacificTimestamps.convert(connection, UTC, AppTime.ZONE));
