@@ -304,6 +304,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(put("/api/admin/recruitments/status?id=99&status=OPEN").with(csrf()))
         .andExpect(status().isNotFound());
     verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentRepository, never()).bumpAssignmentsVersion(any());
     verify(recruitmentAuditService, never()).snapshot(any());
     verify(recruitmentAuditService, never()).recordChanges(any(), any());
   }
@@ -912,6 +913,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
     inOrder.verify(recruitmentAuditService).snapshot(r);
     inOrder.verify(recruitmentRepository).save(r);
+    // Issue #280: a page that has not seen this is out of date.
+    inOrder.verify(recruitmentRepository).bumpAssignmentsVersion(1L);
     inOrder.verify(recruitmentAuditService).recordChanges(before, r);
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
   }
@@ -933,6 +936,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
 
     assertEquals(false, r.getAssignmentsPublished());
     verify(recruitmentRepository).save(r);
+    verify(recruitmentRepository).bumpAssignmentsVersion(1L);
     verify(recruitmentAuditService).recordChanges(before, r);
   }
 

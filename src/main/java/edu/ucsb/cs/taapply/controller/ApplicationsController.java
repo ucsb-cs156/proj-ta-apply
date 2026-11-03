@@ -522,6 +522,8 @@ public class ApplicationsController extends ApiController {
     application.setCancellationReason(why);
     application.setCancelledAt(AppTime.now());
     applicationRepository.save(application);
+    // The applicant leaves the assignments page, so a page that still shows them is out of date.
+    recruitmentRepository.bumpAssignmentsVersion(application.getRecruitmentId());
     return forApplicant(application);
   }
 

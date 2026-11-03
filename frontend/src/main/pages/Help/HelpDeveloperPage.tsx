@@ -160,9 +160,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           before anything is refused, that another copy is open, and who. The
           full design, including where else it is planned, is{" "}
           <code>docs/design/ConcurrentEditMitigationDesign.md</code>. So far the
-          draft application form, the faculty rankings and the editing of a
-          submitted application use them; recruitment state is kept fresh by a
-          refresh instead (see below).
+          draft application form, the faculty rankings, the editing of a
+          submitted application and the assignments page use them; recruitment
+          state is kept fresh by a refresh instead (see below).
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-version">
           <strong>The version check.</strong> A saved thing carries an integer{" "}
@@ -171,7 +171,16 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           version, in one atomic step (JPA optimistic locking), and answers with
           it. If not, nothing is changed and the answer is{" "}
           <code>409 Conflict</code> with the draft as it now stands. The form
-          then stops saving, says so, and offers <em>Reload</em>.
+          then stops saving, says so, and offers <em>Reload</em>. Where the
+          saved thing is a whole page of numbers that several admins might
+          touch, a simpler form is used: the Assignments page of a recruitment
+          has a recruitment-level <code>assignmentsVersion</code>, counted up by
+          one atomic update (
+          <code>WHERE id = ? AND assignments_version = ?</code>) on every
+          tentative assignment, on publishing or taking back, and on an
+          applicant cancelling. A stale tentative assignment is answered{" "}
+          <code>409</code> with the current assignments, and the page shows them
+          and a message, without repeating the click.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-heartbeat">
           <strong>The client id and the heartbeat.</strong> Each tab makes a
@@ -617,6 +626,22 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #308
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-assignments">
+              <td>Assignments (admin)</td>
+              <td>The whole assignments page for one recruitment</td>
+              <td>
+                <code>assignments:&lt;recruitmentId&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/289"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #289
                 </a>
               </td>
             </tr>

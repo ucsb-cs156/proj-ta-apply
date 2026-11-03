@@ -211,8 +211,8 @@ already have this page open for editing. We recommend that only one admin edits 
 time.* (later tab); *You already have this page open for editing in another tab or window. We
 recommend that only one admin edits this page at a time.* (later tab, admin page, own windows only).
 The banner takes `audience` (default, `"admin"`, and for #302 `"applicant"` and `"applicationAdmin"`, see (g)) and `newest`; the modal takes `audience` and is
-always the later tab. No page uses the admin audience yet; the admin warnings (the budget, course
-editing and assignments) will.
+always the later tab. The Assignments page (#280) uses the admin audience; the other admin warnings
+(the budget and course editing) will.
 
 The warning clears by itself. When an extra copy is closed it says goodbye, and the next heartbeat
 of the remaining copy lists no one, so the banner goes within a heartbeat. If the goodbye is lost,
@@ -614,6 +614,58 @@ changed: "Assignments changed while you were working. The page has been refreshe
 placement and try again." The admin's click is not replayed, because after a refresh it may no
 longer be the right move.
 
+**As built (#280).** `recruitments.assignments_version` (an integer starting at 1, in the changeset
+`057-add-assignments-version-to-recruitments`) is the recruitment-level version. It is counted up by
+`RecruitmentRepository.bumpAssignmentsVersionIf(id, expected)`, a single
+`UPDATE ... WHERE id = ? AND assignments_version = ?` whose row count (1 or 0) is the answer, so the
+comparison and the increment are one atomic step. The entity field is `updatable = false`, so saving
+a stale copy of the recruitment can never move it back. The version is bumped by:
+
+* every tentative assignment, which sends the `version` its page last saw (a required parameter) and
+  gets `409 Conflict` with `{message, assignments}` if it has moved, the message being the one above
+  and `assignments` the view as it now stands, so the client refreshes without another read;
+* publishing or taking back the assignments (`PUT /api/admin/recruitments/assignmentsPublished`),
+  unconditionally, and only when the published state really changes;
+* an applicant cancelling (`PUT /api/applications/cancel`), unconditionally.
+
+The `Assignments` view carries `version`, a successful move returns the view with the new version,
+and the Recruitment Steps panel counts read the same assignments, so they need no change of their
+own. On a `409` the page puts the returned view in its cache, shows the message and does not replay
+the click.
+
+The warning is keyed `assignments:<recruitmentId>`. `AdminAssignmentsController` has
+`POST /api/admin/assignments/heartbeat` and `/leave` (`recruitmentId` parameter), both admin-only and
+`404` for an unknown recruitment, and the tentative assignment records the caller as a save does. The
+role check (`403`) happens before the detector is touched, so a non-admin is not recorded, told
+anyone's name, or able to remove an admin's tab by saying goodbye in their name. The page uses the
+shared `useClientActivity`, `MultipleTabsBanner` and `MultipleTabsModal` (noun "assignments page",
+`audience="admin"`, and `newest` passed to the banner too, so that the later tab says "already has")
+exactly as the draft form does (#283, #285): the newest tab gets the modal (Leave this page, Wait,
+Continue anyway), older tabs only the banner, a goodbye is sent on `pagehide` and when the page
+unmounts, and the timing is the shared `CLIENT_HEARTBEAT_INTERVAL_SEC` and
+`CLIENT_TIMEOUT_MISSED_HEARTBEATS`. A rapid second move from the same page before the first answer
+arrives carries the old version and is refused like any stale move; the refresh then shows the
+first.
+
+The wording is the shared one (#298), with nothing local to the page:
+
+| Who else has the page | Tab already open | Tab that arrived later |
+|---|---|---|
+| another admin | *phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page. We recommend that only one admin edits this page at a time.* | *phtcon@ucsb.edu (Phill Conrad) already has this assignments page open for editing. We recommend that only one admin edits this page at a time.* |
+| only the admin's own tabs | *You are also editing this assignments page in another tab or window. We recommend that only one admin edits this page at a time.* | *You already have this assignments page open for editing in another tab or window. We recommend that only one admin edits this page at a time.* |
+
+Only admins can open the page, so the identity it records is marked `admin` (as the Edit
+Application page's is, #302) by the shared `ApplicationsController.identityOf`, and the heartbeat's
+entries are `{label, samePerson, admin}`. The page does not act on the flag. The `applications` table
+now has a version of its own (`056-add-version-to-applications`, #302), which a tentative assignment
+counts up like any other save of an application, so an Edit Application form opened before a
+placement is told to reload. The other way round is covered too: if the application is saved by its
+applicant or another admin between this endpoint reading it and writing it,
+`ObjectOptimisticLockingFailureException` is answered as the same `409` with the refreshed
+assignments (the placement is not made), never as a `500`. The recruitment version is a different,
+independent counter, so a stale Edit Application save never refuses a placement or the reverse
+except through that race. This change adds no dates or times (the Pacific-time rules do not apply to it).
+
 **Risks.** Medium. The version has to be bumped everywhere the assignments change: a tentative
 assignment, publish, and an applicant cancelling. It touches the publish path and the counts that
 feed the Recruitment Steps panel. A check this strict would be tiresome if parallel admins were
@@ -822,9 +874,10 @@ is a day or less, M a few days, L about a week.
 
 5. **Assignments: a recruitment-level version on the whole assignments page. (M, #280.)** A version
    bumped by every tentative assignment and by publish, a `409` on a stale assignment with a refresh
-   of the view, and the warning keyed on the recruitment. It is smaller than it first looked (it was
-   L), because one editor at a time is expected and no per-course narrowing is needed. Cover publish
-   and applicant cancellation.
+   of the view, and the warning keyed on the recruitment, with the banner, the modal for the newest
+   tab and the goodbye of #283 and #285. It is smaller than it first looked (it was L), because one
+   editor at a time is expected and no per-course narrowing is needed. Covers publish and applicant
+   cancellation. Built in #280; see section (d), "As built".
 
 6. **Keep recruitment state fresh for admins, instructors and students. (S to M, #281.)** Refresh
    instead of a warning: refetch after each save, a background refresh with random jitter (admins

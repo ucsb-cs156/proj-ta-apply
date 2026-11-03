@@ -447,8 +447,18 @@ class AssignmentsServiceTests {
                 "yearInProgram",
                 "graduationDate"),
             List.of(),
-            List.of()),
+            List.of(),
+            1),
         result);
+  }
+
+  @Test
+  void the_page_carries_the_recruitments_assignments_version() {
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of());
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(7L)).thenReturn(List.of());
+    Recruitment moved =
+        Recruitment.builder().id(7L).type(RecruitmentType.TA).assignmentsVersion(4).build();
+    assertEquals(4, service.assignments(moved).version());
   }
 
   @Test

@@ -119,9 +119,16 @@ function expectRankingSimultaneousEditingSection(page, intro) {
   const application = screen.queryByTestId(
     `${page}-simultaneous-editing-application`,
   );
-  const after = application ?? todo;
+  // Issue #280: then the Assignments page, a paragraph, its picture of the warning and a paragraph.
+  const assignmentsDetail = screen.queryByTestId(
+    `${page}-simultaneous-editing-assignments-detail`,
+  );
+  const after = assignmentsDetail ?? application ?? todo;
   if (application !== null) {
     expect(todo.nextElementSibling).toBe(application);
+    expect(application.nextElementSibling).toBe(
+      screen.getByTestId(`${page}-simultaneous-editing-assignments`),
+    );
   }
   expect(after.nextElementSibling).toBe(
     screen.getByTestId(`${page}-simultaneous-editing-todo`),
@@ -650,6 +657,13 @@ describe("Help pages (issue #140)", () => {
     // The version check.
     expect(text("version")).toMatch(/409 Conflict/);
     expect(text("version")).toMatch(/optimistic locking/);
+    // Issue #280: the recruitment-level version of the assignments.
+    expect(text("version")).toMatch(/assignmentsVersion/);
+    expect(text("version")).toMatch(/assignments_version =/);
+    expect(text("version")).toMatch(
+      /on every tentative assignment, on publishing or taking back, and on an applicant cancelling/,
+    );
+    expect(text("version")).toMatch(/without repeating the click/);
     // The client id and the heartbeat.
     expect(text("heartbeat")).toMatch(/crypto\.randomUUID\(\)/);
     expect(text("heartbeat")).toMatch(/X-Client-Id/);
@@ -816,7 +830,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(5);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -871,6 +885,19 @@ describe("Help pages (issue #140)", () => {
     expect(rows[3].querySelector("a")).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/308",
+    );
+    // Issue #280: the whole assignments page.
+    expect(
+      [...rows[4].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Assignments (admin)",
+      "The whole assignments page for one recruitment",
+      "assignments:<recruitmentId>",
+      "#289",
+    ]);
+    expect(rows[4].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/289",
     );
     for (const phrase of [
       "bumped by every rank edit and by the Developer Mode fake rankings job",
@@ -972,6 +999,50 @@ describe("Help pages (issue #140)", () => {
       "Applications of different students never cause a warning.",
     );
     expect(note.nextElementSibling).toBe(
+      screen.getByTestId("HelpAdminsPage-simultaneous-editing-assignments"),
+    );
+  });
+
+  test("the admin section describes the Assignments page's warning, with the shared admin wording, and its version check (issue #280)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const intro = await screen.findByTestId(
+      "HelpAdminsPage-simultaneous-editing-assignments",
+    );
+    expect(intro).toHaveTextContent(
+      "The Assignments page. The whole Assignments page of one recruitment counts as one thing",
+    );
+    expect(intro).toHaveTextContent(
+      "Only one tab or window, and one admin, should have it open at a time.",
+    );
+    const example = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-assignments-example",
+    );
+    expect(example).toHaveTextContent(
+      "phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page. We recommend that only one admin edits this page at a time.",
+    );
+    expect(example).toHaveClass("alert", "alert-warning");
+    // A picture of the warning, not a warning about anything, so it is not announced.
+    expect(screen.queryByRole("alert")).toBeNull();
+    const detail = screen.getByTestId(
+      "HelpAdminsPage-simultaneous-editing-assignments-detail",
+    );
+    expect(detail).toHaveTextContent(
+      "the warning only appears for the Assignments page of the same recruitment",
+    );
+    expect(detail).toHaveTextContent(
+      "Assignments changed while you were working. The page has been refreshed; please check the placement and try again.",
+    );
+    expect(detail).toHaveTextContent("Your click is not repeated for you.");
+    // It sits inside the one Simultaneous Editing section, which still ends the page.
+    expect(
+      screen.getAllByRole("heading", {
+        level: 2,
+        name: "Simultaneous Editing",
+      }),
+    ).toHaveLength(1);
+    expect(intro.nextElementSibling).toBe(example);
+    expect(example.nextElementSibling).toBe(detail);
+    expect(detail.nextElementSibling).toBe(
       screen.getByTestId("HelpAdminsPage-simultaneous-editing-todo"),
     );
   });

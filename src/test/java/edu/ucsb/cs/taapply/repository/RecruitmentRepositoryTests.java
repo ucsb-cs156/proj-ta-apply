@@ -272,4 +272,71 @@ public class RecruitmentRepositoryTests {
     assertEquals(1, taCourses.size());
     assertEquals("CMPSC   156", taCourses.get(0).getCourseId());
   }
+
+  // ---- the assignments version (issue #280) ----
+
+  private int assignmentsVersionOf(Long id) {
+    entityManager.flush();
+    entityManager.clear();
+    return recruitmentRepository.findById(id).orElseThrow().getAssignmentsVersion();
+  }
+
+  @Test
+  public void a_new_recruitment_starts_at_assignments_version_1() {
+    Recruitment saved = recruitmentRepository.save(recruitment("20261", RecruitmentType.TA));
+    assertEquals(1, assignmentsVersionOf(saved.getId()));
+  }
+
+  @Test
+  public void the_database_defaults_a_directly_inserted_row_to_assignments_version_1() {
+    jdbcTemplate.update(
+        "INSERT INTO recruitments (quarter, type, application_status) VALUES (?, ?, ?)",
+        "20262",
+        "TA",
+        "CLOSED");
+    Long id =
+        jdbcTemplate.queryForObject(
+            "SELECT id FROM recruitments WHERE quarter = ?", Long.class, "20262");
+    assertEquals(1, assignmentsVersionOf(id));
+  }
+
+  @Test
+  public void the_version_counts_up_only_if_it_is_still_the_one_expected() {
+    Long id = recruitmentRepository.save(recruitment("20261", RecruitmentType.TA)).getId();
+
+    assertEquals(1, recruitmentRepository.bumpAssignmentsVersionIf(id, 1));
+    assertEquals(2, assignmentsVersionOf(id));
+
+    // A stale expectation changes nothing.
+    assertEquals(0, recruitmentRepository.bumpAssignmentsVersionIf(id, 1));
+    assertEquals(2, assignmentsVersionOf(id));
+    assertEquals(1, recruitmentRepository.bumpAssignmentsVersionIf(id, 2));
+    assertEquals(3, assignmentsVersionOf(id));
+  }
+
+  @Test
+  public void the_version_counts_up_for_one_recruitment_only() {
+    Long id = recruitmentRepository.save(recruitment("20261", RecruitmentType.TA)).getId();
+    Long other = recruitmentRepository.save(recruitment("20261", RecruitmentType.ULA)).getId();
+
+    assertEquals(1, recruitmentRepository.bumpAssignmentsVersion(id));
+    assertEquals(1, recruitmentRepository.bumpAssignmentsVersion(id));
+
+    assertEquals(3, assignmentsVersionOf(id));
+    assertEquals(1, assignmentsVersionOf(other));
+    assertEquals(0, recruitmentRepository.bumpAssignmentsVersionIf(-5L, 1));
+    assertEquals(0, recruitmentRepository.bumpAssignmentsVersion(-5L));
+  }
+
+  @Test
+  public void saving_a_stale_copy_of_the_recruitment_does_not_move_the_version_back() {
+    Recruitment stale = recruitmentRepository.save(recruitment("20261", RecruitmentType.TA));
+    entityManager.flush();
+    recruitmentRepository.bumpAssignmentsVersion(stale.getId());
+
+    stale.setReviewStatus("Open");
+    recruitmentRepository.save(stale);
+
+    assertEquals(2, assignmentsVersionOf(stale.getId()));
+  }
 }

@@ -807,6 +807,34 @@ export default function HelpAdminsPage(): React.JSX.Element {
           system refuses your save, says so, and offers <em>Reload</em>.
           Applications of different students never cause a warning.
         </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-assignments">
+          <strong>The Assignments page.</strong> The whole Assignments page of
+          one recruitment counts as one thing, because the counts under each
+          lecture only mean something together. Only one tab or window, and one
+          admin, should have it open at a time. If you open it in a second tab
+          or window, or another admin has it open, you get a warning that looks
+          like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="assignments page"
+          audience="admin"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-assignments-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-assignments-detail">
+          The tab or window opened <em>last</em> also asks the same question as
+          for rankings (<strong>Leave this page</strong>, wait, or continue
+          anyway), and the warning only appears for the Assignments page of the{" "}
+          <em>same</em> recruitment. If something changes while you are working,
+          such as another admin&apos;s assignment, publishing the assignments or
+          an applicant cancelling, your next change is not made and you see
+          &ldquo;Assignments changed while you were working. The page has been
+          refreshed; please check the placement and try again.&rdquo; The page
+          already shows the up-to-date assignments, so check them and choose
+          again if the move still makes sense. Your click is not repeated for
+          you.
+        </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
           <strong>What to do.</strong> If a page looks out of date (for example
           the computer was asleep, or the tab was in the background, where
