@@ -8,6 +8,7 @@ import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
+import edu.ucsb.cs.taapply.time.AppTime;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.*;
-import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * An application as it is being filled in (issue #270): what the applicant has entered so far,
@@ -58,7 +58,7 @@ public class DraftApplication {
   private String email;
 
   /** When the draft was last saved, so the home page can say how stale it is. */
-  @UpdateTimestamp private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 
   /**
    * How many times the draft has been saved, starting at 0. Hibernate counts it (optimistic
@@ -77,6 +77,10 @@ public class DraftApplication {
   private String major;
   private Double gpaMajor;
   private Double gpaOverall;
+
+  /** See {@link Application#isFirstQuarter()}. */
+  private Boolean firstQuarter;
+
   private String yearInProgram;
   private String graduationDate;
 
@@ -173,22 +177,29 @@ public class DraftApplication {
   public static class CourseInterestsConverter
       extends JsonColumnConverter&lt;Map&lt;String, CourseInterest&gt;&gt; {
     public CourseInterestsConverter() {
-<span class="fc" id="L176">      super(new TypeReference&lt;&gt;() {}, HashMap::new);</span>
-<span class="fc" id="L177">    }</span>
+<span class="fc" id="L180">      super(new TypeReference&lt;&gt;() {}, HashMap::new);</span>
+<span class="fc" id="L181">    }</span>
   }
 
   /** Name-to-level maps (topic ratings, ULA interests) as JSON. */
   public static class LevelsConverter extends JsonColumnConverter&lt;Map&lt;String, Integer&gt;&gt; {
     public LevelsConverter() {
-<span class="fc" id="L183">      super(new TypeReference&lt;&gt;() {}, HashMap::new);</span>
-<span class="fc" id="L184">    }</span>
+<span class="fc" id="L187">      super(new TypeReference&lt;&gt;() {}, HashMap::new);</span>
+<span class="fc" id="L188">    }</span>
   }
+
+  /** Stamps the Pacific time of each save, the first one included (issue #293). */
+  @PrePersist
+  @PreUpdate
+  void stampUpdated() {
+<span class="fc" id="L195">    updatedAt = AppTime.now();</span>
+<span class="fc" id="L196">  }</span>
 
   /** The prior coursework rows as JSON. */
   public static class PriorCourseworkConverter extends JsonColumnConverter&lt;List&lt;PriorCoursework&gt;&gt; {
     public PriorCourseworkConverter() {
-<span class="fc" id="L190">      super(new TypeReference&lt;&gt;() {}, ArrayList::new);</span>
-<span class="fc" id="L191">    }</span>
+<span class="fc" id="L201">      super(new TypeReference&lt;&gt;() {}, ArrayList::new);</span>
+<span class="fc" id="L202">    }</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

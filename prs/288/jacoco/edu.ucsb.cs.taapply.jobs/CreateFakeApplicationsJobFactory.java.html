@@ -5,6 +5,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.fake.FakeApplicationGenerator;
 import edu.ucsb.cs.taapply.services.fake.FakeCoverage;
+import edu.ucsb.cs.taapply.time.AppTime;
 import java.time.LocalDate;
 import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 /** Wires collaborators into {@link CreateFakeApplicationsJob}, as the other job factories do. */
 @Service
-<span class="fc" id="L15">public class CreateFakeApplicationsJobFactory {</span>
+<span class="fc" id="L16">public class CreateFakeApplicationsJobFactory {</span>
 
   @Autowired private FakeApplicationGenerator generator;
   @Autowired private RecruitmentRepository recruitmentRepository;
@@ -21,23 +22,23 @@ import org.springframework.stereotype.Service;
 
   /** A job with a fresh, unseeded random source, for today. */
   public CreateFakeApplicationsJob create(Long recruitmentId, int count, FakeCoverage coverage) {
-<span class="fc" id="L24">    return create(recruitmentId, count, coverage, new Random(), LocalDate.now());</span>
+<span class="fc" id="L25">    return create(recruitmentId, count, coverage, new Random(), AppTime.today());</span>
   }
 
   /** A job drawing from the given random source and date, so a test can fix the outcome. */
   public CreateFakeApplicationsJob create(
       Long recruitmentId, int count, FakeCoverage coverage, Random random, LocalDate today) {
-<span class="fc" id="L30">    return CreateFakeApplicationsJob.builder()</span>
-<span class="fc" id="L31">        .recruitmentId(recruitmentId)</span>
-<span class="fc" id="L32">        .count(count)</span>
-<span class="fc" id="L33">        .coverage(coverage)</span>
-<span class="fc" id="L34">        .random(random)</span>
-<span class="fc" id="L35">        .today(today)</span>
-<span class="fc" id="L36">        .generator(generator)</span>
-<span class="fc" id="L37">        .recruitmentRepository(recruitmentRepository)</span>
-<span class="fc" id="L38">        .recruitmentCourseRepository(recruitmentCourseRepository)</span>
-<span class="fc" id="L39">        .applicationRepository(applicationRepository)</span>
-<span class="fc" id="L40">        .build();</span>
+<span class="fc" id="L31">    return CreateFakeApplicationsJob.builder()</span>
+<span class="fc" id="L32">        .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L33">        .count(count)</span>
+<span class="fc" id="L34">        .coverage(coverage)</span>
+<span class="fc" id="L35">        .random(random)</span>
+<span class="fc" id="L36">        .today(today)</span>
+<span class="fc" id="L37">        .generator(generator)</span>
+<span class="fc" id="L38">        .recruitmentRepository(recruitmentRepository)</span>
+<span class="fc" id="L39">        .recruitmentCourseRepository(recruitmentCourseRepository)</span>
+<span class="fc" id="L40">        .applicationRepository(applicationRepository)</span>
+<span class="fc" id="L41">        .build();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
