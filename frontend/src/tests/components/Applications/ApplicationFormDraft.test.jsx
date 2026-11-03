@@ -104,6 +104,26 @@ describe("ApplicationForm drafts", () => {
     expect(screen.queryByTestId("ApplicationForm-missing")).toBeNull();
   });
 
+  test("the first quarter box goes into the draft, and a ticked draft comes back ticked (issue #292)", () => {
+    const { onSaveDraft } = renderDraftForm();
+    type("gpaMajor", "3.5");
+
+    fireEvent.click(screen.getByTestId("ApplicationForm-firstQuarter"));
+    fireEvent.click(screen.getByTestId("ApplicationForm-saveDraft"));
+
+    const sent = onSaveDraft.mock.calls[0][0];
+    expect(sent.firstQuarter).toBe(true);
+    expect(sent.gpaMajor).toBeNull();
+    expect(sent.gpaOverall).toBeNull();
+  });
+
+  test("a draft that has the box ticked restores it ticked (issue #292)", () => {
+    renderDraftForm({ initialContents: { firstQuarter: true } });
+
+    expect(screen.getByTestId("ApplicationForm-firstQuarter")).toBeChecked();
+    expect(screen.getByTestId("ApplicationForm-gpaMajor")).toBeDisabled();
+  });
+
   test("Save Draft sends everything entered so far, complete or not", () => {
     const { onSaveDraft } = renderDraftForm();
     type("firstName", "Ada");

@@ -30,6 +30,8 @@ export type Application = {
   major: string | null;
   gpaMajor: number | null;
   gpaOverall: number | null;
+  /** Issue #292: the applicant has no GPAs yet, and the tables say "First quarter" instead. */
+  firstQuarter: boolean;
   yearInProgram: string | null;
   graduationDate: string | null;
   /** The courses listed as relevant background, with their ids. */

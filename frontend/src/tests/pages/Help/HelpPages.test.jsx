@@ -135,6 +135,9 @@ describe("Help pages (issue #140)", () => {
       /TA columns are first name, last name, email, major, class level, year in program and expected graduation/,
     );
     expect(screen.getByText(/TA columns are/)).toHaveTextContent(
+      /ticked the first quarter box has no GPAs, and both columns read .First quarter./,
+    );
+    expect(screen.getByText(/TA columns are/)).toHaveTextContent(
       /ULA columns are first name, last name, email, major, year in program, expected graduation, GPA in major, overall GPA and quarters of previous ULA service/,
     );
     expect(screen.getByText(/TA columns are/)).toHaveTextContent(
@@ -159,6 +162,10 @@ describe("Help pages (issue #140)", () => {
     expect(items).toHaveLength(9);
     expect(items[1]).toMatch(
       /major, whether you are a PhD or MS student, your year in the program, your GPA/,
+    );
+    // Issue #292: the box that stands in for the GPAs of a first quarter grad student.
+    expect(items[1]).toMatch(
+      /first quarter grad student.*check the box under the two GPA fields/,
     );
     expect(items[2]).toMatch(/residency status.*language exam/);
     expect(items[3]).toMatch(/courses you have taken, at UCSB or elsewhere/);
@@ -191,6 +198,10 @@ describe("Help pages (issue #140)", () => {
     ].map((li) => li.textContent);
     expect(items).toHaveLength(13);
     expect(items[0]).toMatch(/perm number/);
+    // Issue #292: the box that stands in for the GPAs of a first quarter student.
+    expect(items[1]).toMatch(
+      /first quarter at UCSB.*check the box under the two GPA fields/,
+    );
     expect(items[2]).toMatch(/served as a ULA before/);
     expect(items[3]).toMatch(/video with a teaching demonstration/);
     expect(items[5]).toMatch(/employee ID.*I-9/);

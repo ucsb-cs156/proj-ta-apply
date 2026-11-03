@@ -98,6 +98,14 @@ public class Application {
   private String major;
   private Double gpaMajor;
   private Double gpaOverall;
+
+  /**
+   * Issue #292: the applicant says it is their first quarter (a first quarter grad student on a TA
+   * form, a first quarter at UCSB on a ULA one), so they have no GPAs yet. The GPAs are then not
+   * required, and are stored empty whatever was typed.
+   */
+  @Builder.Default private boolean firstQuarter = false;
+
   private String yearInProgram;
   private String graduationDate;
 
