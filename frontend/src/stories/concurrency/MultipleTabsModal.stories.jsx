@@ -78,3 +78,24 @@ export const NotTheNewestTabShowsNothing = () => (
     onLeave={() => {}}
   />
 );
+
+// An applicant is told that an admin has the application open (issue #302).
+const admin = (label) => ({ label, samePerson: false, admin: true });
+
+export const ApplicantOneAdminHasItOpen = () =>
+  modal([admin("jane@ucsb.edu (Jane Doe)")], "application", "applicant");
+
+export const ApplicantSeveralAdminsHaveItOpen = () =>
+  modal(
+    [admin("jane@ucsb.edu (Jane Doe)"), admin("bob@ucsb.edu (Bob Roe)")],
+    "application",
+    "applicant",
+  );
+
+// An admin is told that the applicant has the application open (issue #302).
+export const AdminSeesTheApplicantAlreadyThere = () =>
+  modal(
+    [person("chris@ucsb.edu (Chris Student)")],
+    "application",
+    "applicationAdmin",
+  );

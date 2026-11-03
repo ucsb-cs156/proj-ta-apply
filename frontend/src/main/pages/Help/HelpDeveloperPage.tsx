@@ -160,8 +160,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           before anything is refused, that another copy is open, and who. The
           full design, including where else it is planned, is{" "}
           <code>docs/design/ConcurrentEditMitigationDesign.md</code>. So far the
-          draft application form and the faculty rankings use them; recruitment
-          state is kept fresh by a refresh instead (see below).
+          draft application form, the faculty rankings and the editing of a
+          submitted application use them; recruitment state is kept fresh by a
+          refresh instead (see below).
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-version">
           <strong>The version check.</strong> A saved thing carries an integer{" "}
@@ -215,31 +216,45 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <code>email (Full Name)</code>, or just the email), and the detector
           treats the key and the label as opaque. It answers the heartbeat with
           a JSON body,{" "}
-          <code>{`{"others": [{"label", "samePerson"}], "heartbeatSeconds", "newest", "arrivedAtMillis"}`}</code>
+          <code>{`{"others": [{"label", "samePerson", "admin"}], "heartbeatSeconds", "newest", "arrivedAtMillis"}`}</code>
           : one entry for each other <em>person</em>, however many tabs they
           have open, with <code>samePerson</code> true for the user&apos;s own
-          other tabs. Names are in the body and not in headers because they are
-          not always ASCII and can be long. A label is cut to 200 characters. In
-          the browser a pure function composes the sentence (&quot;You are also
-          editing this application in another tab or window.&quot;,
-          &quot;phtcon@ucsb.edu (Phill Conrad) is also editing this
-          application.&quot;, and so on, three people named and the rest
-          counted) and the banner shows it as text, never as markup. The tab
-          that arrived later (the modal, and the banner of the newest tab) says
-          who is <em>already</em> there instead (&quot;You already have this
-          application open for editing in another tab or window.&quot;, &quot;A
-          already has this page open for editing.&quot;, &quot;A and B already
-          have this page open for editing.&quot;), with the singular verb for
-          one person. The closing sentence depends on who is involved. When
-          every other copy is the user&apos;s own, on the application form and
-          the faculty ranking page, it asks the user to close the extra ones
-          (&quot;Please know that this is risky; we recommend closing all but
-          one of these.&quot;). When another person is involved, whose window
-          the user cannot close, and on admin pages (the <code>admin</code>{" "}
-          option of <code>audience</code> on the banner and the modal), it is
-          &quot;We recommend that only one admin edits this page at a
-          time.&quot; The noun is still a parameter of the first sentence, but
-          this one always says &quot;page&quot;.
+          other tabs and <code>admin</code> true for an admin (the app says so
+          in the identity, and the detector only passes it on). Names are in the
+          body and not in headers because they are not always ASCII and can be
+          long. A label is cut to 200 characters. In the browser a pure function
+          composes the sentence (&quot;You are also editing this application in
+          another tab or window.&quot;, &quot;phtcon@ucsb.edu (Phill Conrad) is
+          also editing this application.&quot;, and so on, three people named
+          and the rest counted) and the banner shows it as text, never as
+          markup. The tab that arrived later (the modal, and the banner of the
+          newest tab) says who is <em>already</em> there instead (&quot;You
+          already have this application open for editing in another tab or
+          window.&quot;, &quot;A already has this page open for editing.&quot;,
+          &quot;A and B already have this page open for editing.&quot;), with
+          the singular verb for one person. The closing sentence depends on who
+          is involved. When every other copy is the user&apos;s own, on the
+          application form and the faculty ranking page, it asks the user to
+          close the extra ones (&quot;Please know that this is risky; we
+          recommend closing all but one of these.&quot;). When another person is
+          involved, whose window the user cannot close, and on admin pages (the{" "}
+          <code>admin</code> option of <code>audience</code> on the banner and
+          the modal), it is &quot;We recommend that only one admin edits this
+          page at a time.&quot; The noun is still a parameter of the first
+          sentence, but this one always says &quot;page&quot;. A submitted
+          application is edited on two pages at once, the applicant&apos;s and
+          the admin&apos;s, and they say different things (issue #302): with{" "}
+          <code>audience=&quot;applicant&quot;</code>, an admin among the others
+          replaces the whole message with &quot;Admin A (Name) has this
+          application open for editing. We recommend that you close this window
+          and try again in a few minutes. If this message persists, please reach
+          out to A&quot; (the first admin&apos;s email, and &quot;have&quot;
+          with several, named as above); with{" "}
+          <code>audience=&quot;applicationAdmin&quot;</code>, an applicant among
+          the others gets the closing sentence &quot;We recommend that you wait
+          a few minutes or ask them to close it.&quot;, followed by the admin
+          sentence if other admins are there too. The wording was confirmed by
+          the maintainer.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-modal">
           <strong>The modal and how the newer tab is chosen.</strong> A client
@@ -272,8 +287,8 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           Otherwise anyone could probe resource keys to learn who is working
           where. For a draft only its owner may heartbeat, say goodbye or save,
           and anyone else gets <code>403</code> with nothing recorded or removed
-          and no names in the answer. Every future use must make the same check
-          first.
+          and no names in the answer. For a submitted application the owner or
+          any admin may. Every future use must make the same check first.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-timing">
           <strong>Timing.</strong> Two environment variables, read by the
@@ -583,6 +598,25 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #287
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-application">
+              <td>
+                Student apply page when editing a submitted application, and the
+                Admin application edit page
+              </td>
+              <td>One application, edited by its applicant or by an admin</td>
+              <td>
+                <code>application:&lt;applicationId&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/308"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #308
                 </a>
               </td>
             </tr>

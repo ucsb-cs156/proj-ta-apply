@@ -1,6 +1,7 @@
 export { CLIENT_ID_HEADER } from "./headers";
 export {
   ADMIN_SENTENCE,
+  APPLICANT_SENTENCE,
   MAX_NAMED,
   RISK_SENTENCE,
   closingSentence,

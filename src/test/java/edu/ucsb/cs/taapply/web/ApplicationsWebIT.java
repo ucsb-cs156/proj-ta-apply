@@ -1233,4 +1233,111 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("TestApplicationPage-summary-Name")).containsText("Ada Admin");
     assertThat(page.getByTestId("TestOnlyBanner")).isVisible();
   }
+
+  @Autowired edu.ucsb.cs.taapply.repository.UserRepository itUserRepository;
+  @Autowired edu.ucsb.cs.taapply.repository.AdminRepository itAdminRepository;
+
+  /** A submitted application of the given student, to the given recruitment. */
+  private Application seedApplication(Recruitment recruitment, String email, String firstName) {
+    return applicationRepository.save(
+        Application.builder()
+            .recruitmentId(recruitment.getId())
+            .email(email)
+            .status(edu.ucsb.cs.taapply.enums.ApplicationReviewStatus.PENDING)
+            .firstName(firstName)
+            .lastName("Gaucho")
+            .build());
+  }
+
+  /**
+   * Issue #302: an admin signs in, in a second browser context, as a different person from the
+   * student whose window is already open. The student's window is {@code page}.
+   */
+  private com.microsoft.playwright.Page openAsAdmin(String path) {
+    if (itUserRepository.findByEmail("admin@ucsb.edu").isEmpty()) {
+      itUserRepository.save(
+          edu.ucsb.cs.taapply.entity.User.builder()
+              .email("admin@ucsb.edu")
+              .familyName("Admin")
+              .givenName("Ada")
+              .fullName("Ada Admin")
+              .googleSub("987654321")
+              .pictureUrl("")
+              .build());
+      itAdminRepository.save(
+          edu.ucsb.cs.taapply.entity.Admin.builder().email("admin@ucsb.edu").build());
+    }
+    edu.ucsb.cs.taapply.services.wiremock.WiremockServiceImpl.setupOauthMocks(
+        wireMockServer, "admin@ucsb.edu");
+    String base = page.url().replaceAll("(http://localhost:\\d+).*", "$1");
+    com.microsoft.playwright.BrowserContext adminContext = browser.newContext();
+    com.microsoft.playwright.Page adminPage = adminContext.newPage();
+    adminPage.navigate(base + "/oauth2/authorization/my-oauth-provider");
+    adminPage.locator("#username").fill("admin@ucsb.edu");
+    adminPage.locator("#password").fill("password");
+    adminPage.locator("#submit").click();
+    adminPage.navigate(base + path);
+    return adminPage;
+  }
+
+  /**
+   * Issue #302: the student has a submitted application open for editing and an admin opens the
+   * admin edit page for the same application. Each is told of the other, in the maintainer's
+   * wording; the warning goes when the admin closes the window; and an admin on a different
+   * student's application warns no one.
+   */
+  @Test
+  public void an_admin_and_a_student_editing_the_same_application_warn_each_other()
+      throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+    Application mine = seedApplication(recruitment, "cgaucho@ucsb.edu", "Chris");
+    Application theirs = seedApplication(recruitment, "someone.else@ucsb.edu", "Sam");
+
+    setupRegularUser();
+    goTo("/applications/" + mine.getId());
+    assertThat(page.getByTestId("ApplicationPage-submit")).isVisible();
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs")).not().isVisible();
+
+    com.microsoft.playwright.Page adminPage =
+        openAsAdmin("/admin/applications/" + mine.getId() + "/edit");
+    assertThat(adminPage.getByTestId("AdminApplicationEditPage-submit")).isVisible();
+
+    var wait =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsVisibleOptions()
+            .setTimeout(20000);
+    // The student, whose window was open first, is told which admin has it.
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs")).isVisible(wait);
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs"))
+        .containsText(
+            "Admin admin@ucsb.edu (Test User) has this application open for editing. We recommend"
+                + " that you close this window and try again in a few minutes. If this message"
+                + " persists, please reach out to admin@ucsb.edu");
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs-modal-leave")).not().isVisible();
+    // The admin, who arrived last, is asked, with the student named.
+    assertThat(adminPage.getByTestId("AdminApplicationEditPage-multiple-tabs-modal-message"))
+        .isVisible(wait);
+    assertThat(adminPage.getByTestId("AdminApplicationEditPage-multiple-tabs-modal-message"))
+        .containsText(
+            "cgaucho@ucsb.edu (Test User) already has this application open for editing. We"
+                + " recommend that you wait a few minutes or ask them to close it.");
+
+    // Closing the admin's window lets the student's warning go.
+    adminPage.context().close();
+    var gone =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsHiddenOptions()
+            .setTimeout(30000);
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs")).isHidden(gone);
+
+    // An admin on another student's application warns no one: neither page shows a warning.
+    com.microsoft.playwright.Page elsewhere =
+        openAsAdmin("/admin/applications/" + theirs.getId() + "/edit");
+    assertThat(elsewhere.getByTestId("AdminApplicationEditPage-submit")).isVisible();
+    Thread.sleep(8000);
+    assertThat(elsewhere.getByTestId("AdminApplicationEditPage-multiple-tabs")).not().isVisible();
+    assertThat(elsewhere.getByTestId("AdminApplicationEditPage-multiple-tabs-modal-leave"))
+        .not()
+        .isVisible();
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs")).not().isVisible();
+  }
 }

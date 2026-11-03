@@ -792,6 +792,21 @@ export default function HelpAdminsPage(): React.JSX.Element {
           to about twenty seconds if one of them could not say that it was
           leaving, such as when a computer lost its network connection.
         </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-application">
+          <strong>Editing a student&apos;s application.</strong> If you, or
+          another admin, is editing a student&apos;s application on the Edit
+          Application page, and the student (or another admin) has the same
+          application open, you may get a warning. When the student has it open,
+          it says so, such as &ldquo;chris@ucsb.edu (Chris Student) already has
+          this application open for editing. We recommend that you wait a few
+          minutes or ask them to close it.&rdquo; When another admin has it
+          open, it says &ldquo;We recommend that only one admin edits this page
+          at a time.&rdquo; The student sees your name, and is asked to close
+          their window and try again in a few minutes. If you save after the
+          application has been saved by someone else since you opened it, the
+          system refuses your save, says so, and offers <em>Reload</em>.
+          Applications of different students never cause a warning.
+        </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
           <strong>What to do.</strong> If a page looks out of date (for example
           the computer was asleep, or the tab was in the background, where

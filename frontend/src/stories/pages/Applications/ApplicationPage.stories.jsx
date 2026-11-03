@@ -111,3 +111,33 @@ ClosedAndViewOnly.parameters = {
     ],
   },
 };
+
+/** Issue #302: an admin has the application open, so the applicant is asked to come back later. */
+export const AdminHasItOpen = Template.bind({});
+AdminHasItOpen.parameters = {
+  msw: {
+    handlers: [
+      ...common,
+      http.get("/api/applications", () =>
+        HttpResponse.json(applicationsFixtures.oneUlaApplication),
+      ),
+      http.get("/api/recruitments/applicable", () =>
+        HttpResponse.json([stillOpen]),
+      ),
+      http.post("/api/applications/heartbeat", () =>
+        HttpResponse.json({
+          others: [
+            {
+              label: "jane@ucsb.edu (Jane Doe)",
+              samePerson: false,
+              admin: true,
+            },
+          ],
+          heartbeatSeconds: 20,
+          newest: false,
+          arrivedAtMillis: 1,
+        }),
+      ),
+    ],
+  },
+};

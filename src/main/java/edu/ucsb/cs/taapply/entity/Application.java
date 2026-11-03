@@ -49,6 +49,14 @@ public class Application {
   @Column(name = "recruitment_id")
   private Long recruitmentId;
 
+  /**
+   * How many times the application has been saved, starting at 0 (issue #302). Hibernate counts it
+   * (optimistic locking), and an edit that carries an older count than the application now has is
+   * refused, so the applicant and an admin (or two tabs) cannot silently overwrite each other. Null
+   * only on an application that has not been saved yet.
+   */
+  @Version private Integer version;
+
   /** The applicant, taken from the current user rather than the request. */
   private String email;
 
