@@ -1,3 +1,4 @@
+import { pacificWallClock } from "main/utils/pacificTime";
 import { quarterRange, yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { PriorCourse } from "main/utils/priorCoursework";
 
@@ -45,7 +46,7 @@ export function quarterOf(date: Date): string {
 
 /** The terms on offer: the current quarter and every quarter of the ten years before it, newest first. */
 export function recentQuarters(
-  now: Date = new Date(),
+  now: Date = pacificWallClock(),
 ): { yyyyq: string; qyy: string }[] {
   const current = quarterOf(now);
   const earliest = `${now.getFullYear() - YEARS_BACK}${current.charAt(4)}`;

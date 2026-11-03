@@ -1,0 +1,18 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "050-convert-timestamps-from-utc-to-pacific",
+        "author": "pc",
+        "comment": "One-time conversion (issue #293): the zone-less TIMESTAMP columns the app filled in while the server ran in UTC hold UTC wall-clock time; rewrite each as the America/Los_Angeles wall-clock time of the same instant, which is what the app writes from now on. BACK UP THE DATABASE FIRST. Roll back with: liquibase rollback-count 1 (converts every value back to UTC; the repeated hour in November comes back an hour early). users.last_online (TIMESTAMP WITH TIME ZONE) and the UCSB quarter calendar (already Pacific) are not touched.",
+        "changes": [
+          {
+            "customChange": {
+              "class": "edu.ucsb.cs.taapply.migration.UtcToPacificTimestamps"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

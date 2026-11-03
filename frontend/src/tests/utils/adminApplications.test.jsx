@@ -8,10 +8,8 @@ import {
 import applicationsFixtures from "fixtures/applicationsFixtures";
 
 describe("adminApplications utils", () => {
-  test("submittedText shows the time in the local locale, or nothing when unstamped", () => {
-    expect(submittedText("2026-01-12T14:05:00")).toBe(
-      new Date("2026-01-12T14:05:00").toLocaleString(),
-    );
+  test("submittedText shows the time in Pacific time, or nothing when unstamped", () => {
+    expect(submittedText("2026-01-12T14:05:00")).toBe("1/12/2026, 2:05:00 PM");
     expect(submittedText("2026-01-12T14:05:00")).not.toBe("");
     expect(submittedText(null)).toBe("");
   });

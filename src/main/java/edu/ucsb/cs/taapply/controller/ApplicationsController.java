@@ -18,11 +18,10 @@ import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.time.AppTime;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -339,7 +338,7 @@ public class ApplicationsController extends ApiController {
 
     Application application = mine(id);
     requireNotCancelled(application);
-    if (!applicationAccessService.commentable(recruitmentFor(application), LocalDate.now())) {
+    if (!applicationAccessService.commentable(recruitmentFor(application), AppTime.today())) {
       throw new ForbiddenException("This recruitment closed more than six months ago");
     }
 
@@ -370,7 +369,7 @@ public class ApplicationsController extends ApiController {
 
     application.setStatus(ApplicationReviewStatus.CANCELLED);
     application.setCancellationReason(why);
-    application.setCancelledAt(LocalDateTime.now());
+    application.setCancelledAt(AppTime.now());
     applicationRepository.save(application);
     return forApplicant(application);
   }

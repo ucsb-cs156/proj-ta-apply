@@ -8,7 +8,7 @@ import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
 import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
-import java.time.LocalDateTime;
+import edu.ucsb.cs.taapply.time.AppTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +82,7 @@ public class RecruitmentCoursesRefreshService {
       refreshed++;
     }
 
-    recruitment.setLastPopulatedAt(LocalDateTime.now());
+    recruitment.setLastPopulatedAt(AppTime.now());
     recruitmentRepository.save(recruitment);
     return refreshed;
   }

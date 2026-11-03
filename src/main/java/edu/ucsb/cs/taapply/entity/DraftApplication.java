@@ -8,6 +8,7 @@ import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
+import edu.ucsb.cs.taapply.time.AppTime;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.*;
-import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * An application as it is being filled in (issue #270): what the applicant has entered so far,
@@ -58,7 +58,7 @@ public class DraftApplication {
   private String email;
 
   /** When the draft was last saved, so the home page can say how stale it is. */
-  @UpdateTimestamp private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 
   /**
    * How many times the draft has been saved, starting at 0. Hibernate counts it (optimistic
@@ -182,6 +182,13 @@ public class DraftApplication {
     public LevelsConverter() {
       super(new TypeReference<>() {}, HashMap::new);
     }
+  }
+
+  /** Stamps the Pacific time of each save, the first one included (issue #293). */
+  @PrePersist
+  @PreUpdate
+  void stampUpdated() {
+    updatedAt = AppTime.now();
   }
 
   /** The prior coursework rows as JSON. */

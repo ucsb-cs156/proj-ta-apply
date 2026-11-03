@@ -44,7 +44,7 @@ describe("AuditTrailTable tests", () => {
     ).toHaveTextContent("3");
     expect(
       screen.getByTestId("AuditTrailTable-cell-row-0-col-editedAt"),
-    ).toHaveTextContent(new Date(majorRow.editedAt).toLocaleString());
+    ).toHaveTextContent("4/2/2026, 4:20:00 PM");
     expect(
       screen.getByTestId("AuditTrailTable-cell-row-0-col-fieldName"),
     ).toHaveTextContent("major");

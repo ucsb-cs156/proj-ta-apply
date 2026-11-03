@@ -12,10 +12,10 @@ import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
+import edu.ucsb.cs.taapply.time.AppTime;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobContextConsumer;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -195,7 +195,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
 
   /** Records that the list is now as fresh as the API, so the admin page can say so (#124). */
   private void stampRefreshed() {
-    recruitment.setLastPopulatedAt(LocalDateTime.now());
+    recruitment.setLastPopulatedAt(AppTime.now());
     recruitmentRepository.save(recruitment);
   }
 

@@ -127,6 +127,26 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           already have rankings are never changed.
         </p>
 
+        <h2 className="my-3 h4" id="dates-and-times">
+          Dates and Times
+        </h2>
+        <p data-testid="HelpDeveloperPage-dates-and-times">
+          Every date and time the app shows or accepts is Pacific Time
+          (America/Los_Angeles), whatever zone the server or the browser is in
+          (issue #293). A <strong>calendar date</strong> (an opening date, a
+          deadline) has no zone and is shown as entered. A{" "}
+          <strong>date and time</strong> the app records (when an application
+          was submitted, when a change was made) is stored in the database as
+          Pacific wall-clock time, so it reads the same in the database as on
+          the screen; the one exact instant, when a user was last online, is
+          stored with its zone and converted for display. The backend takes
+          &quot;now&quot; and &quot;today&quot; from <code>AppTime</code> and
+          the frontend formats and works out &quot;today&quot; only in{" "}
+          <code>pacificTime.ts</code>; a test fails if anything else calls{" "}
+          <code>toLocaleString</code> or <code>new Date()</code>. The design is
+          in <code>docs/design/PacificTimeDesign.md</code>.
+        </p>
+
         <h2 className="my-3 h4" id="simultaneous-editing">
           Simultaneous Editing
         </h2>

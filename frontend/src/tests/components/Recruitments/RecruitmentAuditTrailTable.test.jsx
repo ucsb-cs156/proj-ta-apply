@@ -27,9 +27,7 @@ describe("RecruitmentAuditTrailTable tests", () => {
     expect(cell(1, "newValue")).toHaveTextContent("OPEN");
     expect(cell(2, "whatChanged")).toHaveTextContent("created");
     // The date is shown in the viewer's locale, from the server's local date-time.
-    expect(cell(0, "changedAt").textContent).toBe(
-      new Date("2026-01-06T09:30:00").toLocaleString(),
-    );
+    expect(cell(0, "changedAt").textContent).toBe("1/6/2026, 9:30:00 AM");
     expect(
       screen.queryByTestId("RecruitmentAuditTrailTable-cell-row-3-col-id"),
     ).toBeNull();

@@ -1,3 +1,4 @@
+import { pacificWallClock } from "main/utils/pacificTime";
 import { useMemo, useState } from "react";
 import { Button } from "react-bootstrap";
 import Modal from "react-bootstrap/Modal";
@@ -34,7 +35,7 @@ type RecruitmentsDashboardProps = {
  */
 export default function RecruitmentsDashboard({
   testIdPrefix = "RecruitmentsDashboard",
-  today = new Date(),
+  today = pacificWallClock(),
 }: RecruitmentsDashboardProps): React.JSX.Element {
   const { data: developerMode } = useDeveloperMode();
   // Stryker disable next-line all : the query's initial data is the "off" status, never undefined
