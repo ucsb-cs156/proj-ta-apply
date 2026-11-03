@@ -55,6 +55,8 @@ taapply,edu.ucsb.cs.taapply.services,JobUserProviderImpl,0,26,0,4,0,5,0,5,0,3
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.Assignments,0,18,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService,0,168,0,6,0,37,0,13,0,10
 taapply,edu.ucsb.cs.taapply.services,ApplicationAccessService,0,48,0,12,0,7,0,11,0,5
+taapply,edu.ucsb.cs.taapply.migration,UtcToPacificTimestamps,0,391,0,32,0,86,0,31,0,15
+taapply,edu.ucsb.cs.taapply.time,AppTime,0,26,0,0,0,8,0,6,0,6
 taapply,edu.ucsb.cs.taapply.startup,ScaffoldApplicationRunner,0,14,0,0,0,5,0,3,0,3
 taapply,edu.ucsb.cs.taapply.startup,WiremockApplicationRunner,0,17,0,0,0,6,0,3,0,3
 taapply,edu.ucsb.cs.taapply.startup,ScaffoldStartup,0,34,0,0,0,11,0,4,0,4
@@ -129,9 +131,13 @@ taapply,edu.ucsb.cs.taapply.entity,JsonColumnConverter,0,51,0,6,0,15,0,7,0,4
 taapply,edu.ucsb.cs.taapply.entity,DraftApplication.PriorCourseworkConverter.new TypeReference() {...},0,3,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.entity,DraftApplication.CourseInterestsConverter,0,7,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.entity,DraftApplication.PriorCourseworkConverter,0,7,0,0,0,2,0,1,0,1
+taapply,edu.ucsb.cs.taapply.entity,AuditTrail,0,4,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.entity,DraftApplication.CourseInterestsConverter.new TypeReference() {...},0,3,0,0,0,1,0,1,0,1
+taapply,edu.ucsb.cs.taapply.entity,Application,0,4,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.entity,DraftApplication.LevelsConverter,0,7,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.entity,RecruitmentCourse,0,15,0,6,0,1,0,4,0,1
+taapply,edu.ucsb.cs.taapply.entity,RecruitmentAuditTrail,0,4,0,0,0,2,0,1,0,1
+taapply,edu.ucsb.cs.taapply.entity,DraftApplication,0,4,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services.fake,FakeAllocationsService.Estimates,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services.fake,FakeCoursework,0,524,0,44,0,98,0,38,0,16
 taapply,edu.ucsb.cs.taapply.services.fake,FakeCourseChoices,0,292,0,48,0,53,0,28,0,4

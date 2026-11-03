@@ -16,6 +16,7 @@ import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.HiringDecisions;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
+import edu.ucsb.cs.taapply.time.AppTime;
 import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +24,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,7 +98,7 @@ import org.springframework.web.bind.annotation.RestController;
 <span class="fc" id="L98">                .applicationStatus(ApplicationStatus.CLOSED)</span>
 <span class="fc" id="L99">                .tentativeOpeningDate(tentativeOpeningDate)</span>
 <span class="fc" id="L100">                .primaryConsiderationDate(primaryConsiderationDate)</span>
-<span class="fc" id="L101">                .createdAt(LocalDateTime.now())</span>
+<span class="fc" id="L101">                .createdAt(AppTime.now())</span>
 <span class="fc" id="L102">                .build());</span>
 <span class="fc" id="L103">    recruitmentAuditService.recordCreated(recruitment);</span>
 
@@ -147,14 +147,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 <span class="fc" id="L148">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
 <span class="fc bfc" id="L149" title="All 4 branches covered.">    if (&quot;Open&quot;.equals(status) &amp;&amp; recruitment.getFacultyReviewOpeningDate() == null) {</span>
-<span class="fc" id="L150">      recruitment.setFacultyReviewOpeningDate(LocalDate.now());</span>
+<span class="fc" id="L150">      recruitment.setFacultyReviewOpeningDate(AppTime.today());</span>
     }
 <span class="fc" id="L152">    recruitment.setReviewStatus(status);</span>
 <span class="fc bfc" id="L153" title="All 2 branches covered.">    if (&quot;Open&quot;.equals(status)) {</span>
 <span class="fc" id="L154">      recruitment.setFacultyRankingDeadline(facultyRankingDeadline);</span>
     }
 <span class="fc bfc" id="L156" title="All 2 branches covered.">    if (&quot;Closed&quot;.equals(status)) {</span>
-<span class="fc" id="L157">      recruitment.setFacultyReviewClosedAt(LocalDateTime.now());</span>
+<span class="fc" id="L157">      recruitment.setFacultyReviewClosedAt(AppTime.now());</span>
     }
 
 <span class="fc" id="L160">    recruitmentRepository.save(recruitment);</span>
@@ -301,7 +301,7 @@ import org.springframework.web.bind.annotation.RestController;
 <span class="fc" id="L301">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
 <span class="fc" id="L302">    recruitment.setAssignmentsPublished(published);</span>
 <span class="fc bfc" id="L303" title="All 2 branches covered.">    if (published) {</span>
-<span class="fc" id="L304">      recruitment.setAssignmentsPublishedAt(LocalDateTime.now());</span>
+<span class="fc" id="L304">      recruitment.setAssignmentsPublishedAt(AppTime.now());</span>
     }
 <span class="fc" id="L306">    recruitmentRepository.save(recruitment);</span>
 <span class="fc" id="L307">    recruitmentAuditService.recordChanges(before, recruitment);</span>
@@ -338,7 +338,7 @@ import org.springframework.web.bind.annotation.RestController;
     }
 
 <span class="fc" id="L340">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
-<span class="fc" id="L341">    LocalDate today = LocalDate.now();</span>
+<span class="fc" id="L341">    LocalDate today = AppTime.today();</span>
 <span class="fc bfc" id="L342" title="All 2 branches covered.">    if (status == ApplicationStatus.OPEN) {</span>
 <span class="fc bfc" id="L343" title="All 2 branches covered.">      if (recruitment.getActualOpeningDate() == null) {</span>
 <span class="fc" id="L344">        recruitment.setActualOpeningDate(today);</span>

@@ -3,7 +3,7 @@
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
-import java.time.LocalDateTime;
+import edu.ucsb.cs.taapply.time.AppTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 <span class="fc" id="L35">    recruitment.setAllocationVisibility(visibility);</span>
 <span class="fc bfc" id="L36" title="All 2 branches covered.">    if (visibility != AllocationVisibility.ADMINS_ONLY</span>
 <span class="fc bfc" id="L37" title="All 2 branches covered.">        &amp;&amp; recruitment.getAllocationsReleasedAt() == null) {</span>
-<span class="fc" id="L38">      recruitment.setAllocationsReleasedAt(LocalDateTime.now());</span>
+<span class="fc" id="L38">      recruitment.setAllocationsReleasedAt(AppTime.now());</span>
     }
 <span class="fc" id="L40">    recruitmentRepository.save(recruitment);</span>
 <span class="fc" id="L41">    recruitmentAuditService.recordChanges(before, recruitment);</span>
