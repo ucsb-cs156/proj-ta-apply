@@ -590,6 +590,10 @@ the enrollment estimates, and returns the sections in page order.</div>
 </dl>
 <h2 class="title" id="I:B">B</h2>
 <dl class="index">
+<dt><a href="edu/ucsb/cs/taapply/services/RefreshSetting.html#base(java.lang.String,double)" class="member-name-link">base(String, double)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RefreshSetting.html" title="class in edu.ucsb.cs.taapply.services">RefreshSetting</a></dt>
+<dd>
+<div class="block">The mean wait in seconds: the setting if it is a number of at least 1, otherwise the default.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html#beginTime()" class="member-name-link">beginTime()</a> - Method in record class edu.ucsb.cs.taapply.models.<a href="edu/ucsb/cs/taapply/models/CourseSections.Meeting.html" title="class in edu.ucsb.cs.taapply.models">CourseSections.Meeting</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>beginTime</code> record component.</div>
@@ -2399,6 +2403,10 @@ or faculty ranking have been reopened since.</div>
 <dl class="index">
 <dt><a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html#J1_STUDENT_VISA" class="member-name-link">J1_STUDENT_VISA</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ResidencyStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ResidencyStatus</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RefreshSetting.html#jitter(java.lang.String,double,double)" class="member-name-link">jitter(String, double, double)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RefreshSetting.html" title="class in edu.ucsb.cs.taapply.services">RefreshSetting</a></dt>
+<dd>
+<div class="block">The jitter in seconds, for a base already resolved by <a href="edu/ucsb/cs/taapply/services/RefreshSetting.html#base(java.lang.String,double)"><code>RefreshSetting.base(String, double)</code></a>.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/JobsController.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">JobsController</a> - Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>
 <div class="block">App-level job endpoints.</div>
@@ -2633,6 +2641,8 @@ overwriting what is on file, and returns them oldest first (issue #151).</div>
 <dd>
 <div class="block">Returns the value of the <code>middleName</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RefreshSetting.html#MIN_BASE_SEC" class="member-name-link">MIN_BASE_SEC</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RefreshSetting.html" title="class in edu.ucsb.cs.taapply.services">RefreshSetting</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MIN_INTEREST" class="member-name-link">MIN_INTEREST</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>
 <div class="block">A ULA applicant rates each interest area 1 (not interested) to 5 (very interested).</div>
@@ -3372,6 +3382,11 @@ stamps the recruitment as refreshed, and returns how many rows it rewrote.</div>
 <dt><a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html#REFRESH_AFTER" class="member-name-link">REFRESH_AFTER</a> - Static variable in class edu.ucsb.cs.taapply.interceptors.<a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">LastOnlineInterceptor</a></dt>
 <dd>
 <div class="block">How stale a stamp must be before a request refreshes it.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RefreshSetting.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">RefreshSetting</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">Reads the background refresh settings (issue #281): <code>ADMIN_REFRESH_SEC</code>, <code>
+ADMIN_REFRESH_JITTER</code>, <code>NON_ADMIN_REFRESH</code> and <code>NON_ADMIN_JITTER</code>.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html#refreshThroughEnd()" class="member-name-link">refreshThroughEnd()</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService</a></dt>
 <dd>
