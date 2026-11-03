@@ -178,21 +178,30 @@ public class UtcToPacificTimestamps implements CustomTaskChange, CustomTaskRollb
    */
   private static String actualName(Connection connection, String name, String table)
       throws SQLException {
-    DatabaseMetaData meta = connection.getMetaData();
+    String label = table == null ? "TABLE_NAME" : "COLUMN_NAME";
     for (String candidate : List.of(name, name.toUpperCase(), name.toLowerCase())) {
-      try (ResultSet found =
-          table == null
-              ? meta.getTables(null, connection.getSchema(), candidate, null)
-              : meta.getColumns(null, connection.getSchema(), table, candidate)) {
-        while (found.next()) {
-          String actual = found.getString(table == null ? "TABLE_NAME" : "COLUMN_NAME");
-          if (actual.equalsIgnoreCase(name)) {
-            return actual;
-          }
+      List<String> found = new ArrayList<>();
+      try (ResultSet rows = lookup(connection, candidate, table)) {
+        while (rows.next()) {
+          found.add(rows.getString(label));
+        }
+      }
+      for (String actual : found) {
+        if (actual.equalsIgnoreCase(name)) {
+          return actual;
         }
       }
     }
     return null;
+  }
+
+  /** The metadata rows for a table (when {@code table} is null) or for a column of that table. */
+  private static ResultSet lookup(Connection connection, String candidate, String table)
+      throws SQLException {
+    DatabaseMetaData meta = connection.getMetaData();
+    return table == null
+        ? meta.getTables(null, connection.getSchema(), candidate, null)
+        : meta.getColumns(null, connection.getSchema(), table, candidate);
   }
 
   @Override
