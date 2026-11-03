@@ -1,11 +1,16 @@
 package edu.ucsb.cs.taapply.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
+import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
+import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.CandidateRanking;
 import edu.ucsb.cs.taapply.entity.Instructor;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
@@ -21,6 +26,7 @@ import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
+import edu.ucsb.cs.taapply.services.RankingVersionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +34,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,14 +42,19 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -66,6 +78,8 @@ public class InstructorRecruitmentsController extends ApiController {
   @Autowired CandidateRankingRepository candidateRankingRepository;
   @Autowired CourseTargetsService courseTargetsService;
   @Autowired DeveloperModeService developerModeService;
+  @Autowired RankingVersionService rankingVersionService;
+  @Autowired ClientActivityDetector clientActivityDetector;
 
   /**
    * A recruitment as the admin's and student's cards know it, plus the instructor's courses.
@@ -489,9 +503,13 @@ public class InstructorRecruitmentsController extends ApiController {
       Double gpaMajor,
       Double gpaOverall,
       Integer previousServiceAsUla,
-      String videoLink) {}
+      String videoLink,
+      /** Issue #292: no GPAs yet, so the table says "First quarter" instead of a blank. */
+      boolean firstQuarter,
+      Integer rankingVersion) {}
 
-  public static record RankEdit(Integer rank) {}
+  /** A saved rank, and the version of the course's ranking list that the save produced. */
+  public static record RankEdit(Integer rank, Integer version) {}
 
   static String preference(Application application, String courseId) {
     return AssignmentsService.preference(application, courseId);
@@ -533,6 +551,9 @@ public class InstructorRecruitmentsController extends ApiController {
       @Parameter(name = "includeNotInterested") @RequestParam(defaultValue = "false")
           boolean includeNotInterested) {
     RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, false);
+    // Read before the rankings, so that the version is never newer than the ranks it goes with: a
+    // change in between makes the next save refused, never accepted against a list not yet seen.
+    int rankingVersion = rankingVersionService.current(recruitmentCourseId);
     Map<Long, Integer> ranks = new HashMap<>();
     candidateRankingRepository
         .findByRecruitmentCourseId(recruitmentCourseId)
@@ -554,7 +575,9 @@ public class InstructorRecruitmentsController extends ApiController {
                     application.getGpaMajor(),
                     application.getGpaOverall(),
                     application.getPreviousServiceAsUla(),
-                    application.getVideoLink()))
+                    application.getVideoLink(),
+                    application.isFirstQuarter(),
+                    rankingVersion))
         .toList();
   }
 
@@ -582,14 +605,27 @@ public class InstructorRecruitmentsController extends ApiController {
         developerModeService.isOn());
   }
 
+  @Operation(
+      summary = "Rank a candidate for a course",
+      description =
+          "Sets, or with null clears, one candidate's rank. The version is the one the page last"
+              + " saw (from the candidates or from its last save): if the course's ranking list has"
+              + " changed since, by another tab, another instructor or Developer Mode, nothing is"
+              + " changed and the answer is 409 Conflict with the list's current version. A save"
+              + " that names its client (X-Client-Id) also tells the server this tab or window is"
+              + " ranking the course, for the multi-tab warning; see the heartbeat.")
   @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
   @PutMapping("/{recruitmentId}/courses/{recruitmentCourseId}/candidates/{applicationId}/rank")
-  public RankEdit rank(
+  public ResponseEntity<Object> rank(
       @PathVariable Long recruitmentId,
       @PathVariable Long recruitmentCourseId,
       @PathVariable Long applicationId,
+      @Parameter(name = "version") @RequestParam Integer version,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
       @RequestBody JsonNode body) {
     RankingScope scope = rankingScope(recruitmentId, recruitmentCourseId, true);
+    // Only someone who may rank this course is recorded as ranking it.
+    clientActivityDetector.note(resourceKey(recruitmentCourseId), clientId, identity());
     // Anyone the instructor can list, with or without the not-interested box ticked, can be ranked.
     List<Application> applications = eligible(scope, true);
     requireCandidate(applications, applicationId);
@@ -598,10 +634,21 @@ public class InstructorRecruitmentsController extends ApiController {
         || (!value.isNull() && (!value.isIntegralNumber() || !value.canConvertToInt()))) {
       throw new IllegalArgumentException("Rank must be an integer or null.");
     }
-    RankEdit edit = new RankEdit(value.isNull() ? null : value.intValue());
-    if (edit.rank() != null && (edit.rank() < 1 || edit.rank() > applications.size())) {
+    Integer rank = value.isNull() ? null : value.intValue();
+    if (rank != null && (rank < 1 || rank > applications.size())) {
       throw new IllegalArgumentException(
           "Rank must be an integer from 1 through " + applications.size() + ", or null.");
+    }
+    // The version moves first, and only one of several edits made from the same version can move
+    // it, so only one of them goes on to change a ranking.
+    if (!rankingVersionService.advance(recruitmentCourseId, version)) {
+      Map<String, Object> conflict = new LinkedHashMap<>();
+      conflict.put(
+          "message",
+          "Rankings for this course changed while you were editing; your change has not been"
+              + " saved.");
+      conflict.put("version", rankingVersionService.current(recruitmentCourseId));
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(conflict);
     }
     CandidateRanking ranking =
         candidateRankingRepository
@@ -612,9 +659,68 @@ public class InstructorRecruitmentsController extends ApiController {
                         .recruitmentCourseId(recruitmentCourseId)
                         .applicationId(applicationId)
                         .build());
-    ranking.setRank(edit.rank());
+    ranking.setRank(rank);
     candidateRankingRepository.save(ranking);
-    return edit;
+    return ResponseEntity.ok(new RankEdit(rank, version + 1));
+  }
+
+  /**
+   * Who the current user is to the detector (issue #279): the email address is the person, and the
+   * label other people see is the email address followed by the full name in parentheses, or the
+   * email address alone if there is no name.
+   */
+  private ClientIdentity identity() {
+    User user = getCurrentUser().getUser();
+    String name = user.getFullName();
+    String label =
+        name == null || name.isBlank()
+            ? user.getEmail()
+            : user.getEmail() + " (" + name.trim() + ")";
+    return new ClientIdentity(user.getEmail(), label);
+  }
+
+  /** The detector's name for a course's ranking list. */
+  private static String resourceKey(Long recruitmentCourseId) {
+    return "ranking:" + recruitmentCourseId;
+  }
+
+  @Operation(
+      summary = "Say that this tab or window still has the course's rankings open, and learn who",
+      description =
+          "Changes nothing about the rankings. Tells the server this client (X-Client-Id) is still"
+              + " here, and answers with the other people who are ranking the same course (a label"
+              + " for each, and whether it is the same person in another tab or window) and how"
+              + " often to send this. Only someone who may rank the course (its instructor, while"
+              + " reviews are Open) may ask; for anyone else the answer is 403 and nothing is"
+              + " recorded or told.")
+  @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
+  @PostMapping("/{recruitmentId}/courses/{recruitmentCourseId}/ranking/heartbeat")
+  public Presence heartbeat(
+      @PathVariable Long recruitmentId,
+      @PathVariable Long recruitmentCourseId,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    // The check comes first and throws, so that nothing below runs for anyone else: they are
+    // neither recorded nor told who is working here.
+    rankingScope(recruitmentId, recruitmentCourseId, true);
+    return clientActivityDetector.heartbeat(resourceKey(recruitmentCourseId), clientId, identity());
+  }
+
+  @Operation(
+      summary = "Say that this tab or window has left the course's rankings",
+      description =
+          "Sent when a tab or window is closed or moves away from the page, so that the others stop"
+              + " being warned about it at once instead of when its heartbeats stop. Allowed to"
+              + " someone exactly when a heartbeat is; for anyone else nothing is recorded. The"
+              + " answer is 204 whether or not the client was known.")
+  @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
+  @PostMapping("/{recruitmentId}/courses/{recruitmentCourseId}/ranking/leave")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void leave(
+      @PathVariable Long recruitmentId,
+      @PathVariable Long recruitmentCourseId,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    rankingScope(recruitmentId, recruitmentCourseId, true);
+    clientActivityDetector.leave(resourceKey(recruitmentCourseId), clientId);
   }
 
   private Application requireCandidate(List<Application> applications, Long applicationId) {
@@ -700,6 +806,7 @@ public class InstructorRecruitmentsController extends ApiController {
             a.getTrainingCommitment(),
             a.getTrainingCommitmentExplanation(),
             a.getChangingMajor(),
-            a.getNoticeVersionId()));
+            a.getNoticeVersionId(),
+            a.isFirstQuarter()));
   }
 }

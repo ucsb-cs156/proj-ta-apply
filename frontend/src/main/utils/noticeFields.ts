@@ -1,3 +1,4 @@
+import { formatLongDate, pacificWallClock } from "main/utils/pacificTime";
 import {
   fromFormat,
   nextQuarter,
@@ -72,14 +73,9 @@ export const quarterName = (yyyyq: string): string => {
   return `${season.charAt(0)}${season.slice(1).toLowerCase()} ${year}`;
 };
 
-/** "2026-01-20" as "January 20, 2026", read as a calendar date rather than a UTC instant. */
+/** "2026-01-20" as "January 20, 2026", read as a calendar date rather than an instant. */
 export const longDate = (iso: string): string => {
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return formatLongDate(iso);
 };
 
 /** The text with every field that has a value filled in; the rest untouched. */
@@ -149,8 +145,9 @@ export const findUnknownFields = (content: string): string[] => {
  * The quarter the editor's preview is filled in for by default (issue #192): the one after the
  * quarter today falls in, as YYYYQ, since the next notice is most likely for that quarter.
  */
-export const defaultPreviewQuarter = (today: Date = new Date()): string =>
-  String(nextQuarter(toNumericYYYYQ(quarterOfDate(today))));
+export const defaultPreviewQuarter = (
+  today: Date = pacificWallClock(),
+): string => String(nextQuarter(toNumericYYYYQ(quarterOfDate(today))));
 
 /** The title that marks a link as an unknown field in the preview, so it can be drawn in red. */
 export const UNKNOWN_FIELD_TITLE = "unknown-notice-field";

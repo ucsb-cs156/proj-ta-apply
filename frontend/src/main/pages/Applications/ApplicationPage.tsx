@@ -1,5 +1,6 @@
 import type { CourseInstructors } from "main/utils/courseLabels";
 import { useNavigate, useParams } from "react-router";
+import { Alert, Button } from "react-bootstrap";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import ApplicationForm from "main/components/Applications/ApplicationForm";
@@ -20,6 +21,17 @@ import { useCurrentUser } from "main/utils/currentUser";
 import { isEditable, phaseOf } from "main/utils/applicationAccess";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { NoticeVersion } from "main/utils/notices";
+import { isConflict } from "main/utils/useDraftSaving";
+import {
+  applicationHeartbeatUrl,
+  applicationLeaveUrl,
+  toastUnlessConflict,
+} from "main/utils/applicationEditing";
+import {
+  MultipleTabsBanner,
+  MultipleTabsModal,
+  useClientActivity,
+} from "main/concurrency";
 
 /** One of the applicant's own applications: /applications/:id */
 export default function ApplicationPage(): React.JSX.Element {
@@ -27,7 +39,7 @@ export default function ApplicationPage(): React.JSX.Element {
   const navigate = useNavigate();
   const currentUser = useCurrentUser();
 
-  const { data: application } = useBackend<Application | null>(
+  const { data: application, refetch } = useBackend<Application | null>(
     ["/api/applications", id],
     { method: "GET", url: "/api/applications", params: { id } },
     // Stryker disable next-line all : don't test default value of null
@@ -122,14 +134,31 @@ export default function ApplicationPage(): React.JSX.Element {
       ? (agreedNotice ?? null)
       : ((currentNotices ?? [])[0] ?? null);
 
+  // A cancelled application is final, whatever its recruitment is doing (issue #107).
+  const phase =
+    application?.status === "CANCELLED" ? "VIEW_ONLY" : phaseOf(recruitment);
+
+  // While the form is on offer, tells the server this tab has the application open and learns
+  // whether an admin (or another tab of the applicant's own) has it open too (issue #302).
+  const editing = Boolean(application) && isEditable(phase);
+  const activity = useClientActivity({
+    heartbeatUrl: editing ? applicationHeartbeatUrl(id) : null,
+    leaveUrl: editing ? applicationLeaveUrl(id) : null,
+  });
   const updateMutation = useBackendMutation<ApplicationPayload, Application>(
     (payload) => ({
       url: "/api/applications",
       method: "PUT",
-      params: { id },
+      // Stryker disable next-line OptionalChaining : a save can only be made once the application is there
+      params: { id, version: application?.version },
+      headers: activity.headers,
       data: payload,
     }),
-    { onSuccess: () => toast("Your application has been updated.") },
+    {
+      onSuccess: () => toast("Your application has been updated."),
+      // A save made from an old copy is shown on the page, not toasted (issue #302).
+      onError: toastUnlessConflict,
+    },
     ["/api/applications", "/api/applications/mine"],
   );
 
@@ -155,9 +184,7 @@ export default function ApplicationPage(): React.JSX.Element {
     ["/api/applications", "/api/applications/mine"],
   );
 
-  // A cancelled application is final, whatever its recruitment is doing (issue #107).
-  const phase =
-    application?.status === "CANCELLED" ? "VIEW_ONLY" : phaseOf(recruitment);
+  const conflicted = isConflict(updateMutation.error);
 
   return (
     <BasicLayout>
@@ -168,6 +195,47 @@ export default function ApplicationPage(): React.JSX.Element {
             `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`}
         </h1>
 
+        <MultipleTabsBanner
+          others={activity.others}
+          newest={activity.newest}
+          noun="application"
+          audience="applicant"
+          testId="ApplicationPage-multiple-tabs"
+        />
+        {/* Only the newest tab is asked; the older ones keep the banner alone. */}
+        <MultipleTabsModal
+          others={activity.others}
+          newest={activity.newest}
+          arrivedAt={activity.arrivedAt}
+          noun="application"
+          audience="applicant"
+          onLeave={() => {
+            activity.leave();
+            navigate("/");
+          }}
+          testId="ApplicationPage-multiple-tabs-modal"
+        />
+        {conflicted && (
+          <Alert variant="danger" data-testid="ApplicationPage-conflict">
+            <span data-testid="ApplicationPage-conflict-message">
+              This application was changed in another tab or window, or by an
+              admin. Reload to see the latest version.
+            </span>
+            <Button
+              className="ms-2"
+              size="sm"
+              variant="danger"
+              onClick={() => {
+                updateMutation.reset();
+                void refetch();
+              }}
+              data-testid="ApplicationPage-conflict-reload"
+            >
+              Reload
+            </Button>
+          </Alert>
+        )}
+
         {application && (
           <>
             <p data-testid="ApplicationPage-status">
@@ -176,6 +244,8 @@ export default function ApplicationPage(): React.JSX.Element {
 
             {isEditable(phase) && (
               <ApplicationForm
+                // A reloaded application is a new start: the form takes its answers afresh.
+                key={application.version}
                 type={recruitment?.type ?? "TA"}
                 courses={courses ?? []}
                 instructors={instructors ?? {}}

@@ -54,11 +54,18 @@ public class AssignmentsService {
     columns.add(new IdentityColumn("yearInProgram", Application::getYearInProgram));
     columns.add(new IdentityColumn("graduationDate", Application::getGraduationDate));
     if (type == RecruitmentType.ULA) {
-      columns.add(new IdentityColumn("gpaMajor", Application::getGpaMajor));
-      columns.add(new IdentityColumn("gpaOverall", Application::getGpaOverall));
+      columns.add(new IdentityColumn("gpaMajor", a -> gpa(a, a.getGpaMajor())));
+      columns.add(new IdentityColumn("gpaOverall", a -> gpa(a, a.getGpaOverall())));
       columns.add(new IdentityColumn("previousServiceAsUla", Application::getPreviousServiceAsUla));
     }
     return columns;
+  }
+
+  /** What a GPA column shows in the exports: the marker for a first quarter applicant (#292). */
+  public static final String FIRST_QUARTER = "First quarter";
+
+  private static Object gpa(Application application, Double value) {
+    return application.isFirstQuarter() ? FIRST_QUARTER : value;
   }
 
   /** Course id, then section, then enrollment code, a null reading as "" in each. */

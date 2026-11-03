@@ -1,3 +1,4 @@
+import { pacificTodayIso } from "main/utils/pacificTime";
 import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 
 /**
@@ -15,11 +16,9 @@ export type Phase = "EDITABLE" | "LATE" | "COMMENTS_ONLY" | "VIEW_ONLY";
 /** How long after closing a recruitment still counts as recent; the backend uses the same. */
 export const RECENT_MONTHS = 6;
 
-/** Today as YYYY-MM-DD in local time, comparable to the dates the API returns as strings. */
+/** Today as YYYY-MM-DD in Pacific time (issue #293), comparable to the dates the API returns as strings. */
 export function todayIso(): string {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return pacificTodayIso();
 }
 
 /**

@@ -100,7 +100,8 @@ public class FakeApplicationsRuleComplianceTests {
         a.getTrainingCommitment(),
         a.getTrainingCommitmentExplanation(),
         a.getChangingMajor(),
-        a.getNoticeVersionId());
+        a.getNoticeVersionId(),
+        a.isFirstQuarter());
   }
 
   private void check(RecruitmentType type) {

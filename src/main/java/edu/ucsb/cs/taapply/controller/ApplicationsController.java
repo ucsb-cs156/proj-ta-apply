@@ -1,9 +1,15 @@
 package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
+import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
+import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -14,18 +20,19 @@ import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.DraftAdminCommentRepository;
 import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.time.AppTime;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,13 +40,19 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -57,9 +70,11 @@ public class ApplicationsController extends ApiController {
 
   @Autowired ApplicationRepository applicationRepository;
   @Autowired DraftApplicationRepository draftApplicationRepository;
+  @Autowired DraftAdminCommentRepository draftAdminCommentRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired NoticeVersionRepository noticeVersionRepository;
   @Autowired ApplicationAccessService applicationAccessService;
+  @Autowired ClientActivityDetector clientActivityDetector;
 
   /**
    * The fields an applicant may set. Deliberately not the entity: status and email are not theirs.
@@ -114,7 +129,18 @@ public class ApplicationsController extends ApiController {
       String trainingCommitmentExplanation,
       Boolean changingMajor,
       /** The notice version the applicant ticked the agreement box for; see requireAgreement. */
-      Long noticeVersionId) {}
+      Long noticeVersionId,
+      /**
+       * Issue #292: the applicant has no GPAs yet (a first quarter grad student on a TA form, a
+       * first quarter at UCSB on a ULA one). The GPAs are then not required and are stored empty.
+       */
+      Boolean firstQuarter) {
+
+    /** Whether the applicant ticked the first quarter box; no answer is not ticked. */
+    public boolean firstQuarterTicked() {
+      return Boolean.TRUE.equals(firstQuarter);
+    }
+  }
 
   /** One row of the prior coursework table. Ids are not accepted: rows are rebuilt on each save. */
   public static record PriorCourseworkFields(
@@ -240,11 +266,20 @@ public class ApplicationsController extends ApiController {
             .status(ApplicationReviewStatus.PENDING)
             .build();
     apply(fields, application, recruitment.getType());
+    Optional<DraftApplication> draft =
+        draftApplicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);
+    // Whatever an admin wrote about the draft carries over to the application (issue #296).
+    draft
+        .flatMap(d -> draftAdminCommentRepository.findById(d.getId()))
+        .ifPresent(c -> application.setAdminComments(c.getComments()));
     applicationRepository.save(application);
-    // The application is complete now, so the draft it grew from has done its job (issue #270).
-    draftApplicationRepository
-        .findByEmailAndRecruitmentId(currentEmail(), recruitmentId)
-        .ifPresent(draftApplicationRepository::delete);
+    // The application is complete now, so the draft it grew from has done its job (issue #270);
+    // the admin's comments on it go with it, now that the application has them.
+    draft.ifPresent(
+        d -> {
+          draftAdminCommentRepository.deleteById(d.getId());
+          draftApplicationRepository.delete(d);
+        });
     return forApplicant(application);
   }
 
@@ -302,18 +337,30 @@ public class ApplicationsController extends ApiController {
       summary = "Edit an application",
       description =
           "Allowed for as long as the recruitment is open, whatever the primary consideration"
-              + " date; refused once applications are closed.")
+              + " date; refused once applications are closed. The version is the one the form last"
+              + " saw (from the application as fetched); if the application has been saved since, by"
+              + " an admin or another tab or window, nothing is changed and the answer is 409"
+              + " Conflict with the application as it now stands (issue #302). A save that names its"
+              + " client (X-Client-Id) also tells the server this tab or window is working on the"
+              + " application, for the multi-tab warning; see the heartbeat.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("")
-  public Application updateApplication(
-      @Parameter(name = "id") @RequestParam Long id, @RequestBody ApplicationFields fields) {
+  public ResponseEntity<Object> updateApplication(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "version") @RequestParam Integer version,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
+      @RequestBody ApplicationFields fields) {
 
     Application application = mine(id);
+    clientActivityDetector.note(resourceKey(id), clientId, identity());
     requireNotCancelled(application);
     Recruitment recruitment = recruitmentFor(application);
     if (!applicationAccessService.editable(recruitment)) {
       throw new ForbiddenException(
           "This application can no longer be edited; applications are closed");
+    }
+    if (!version.equals(application.getVersion())) {
+      return conflict(application, true);
     }
     requireAgreement(recruitment.getType(), fields);
     requireCoursework(recruitment.getType(), fields);
@@ -321,8 +368,111 @@ public class ApplicationsController extends ApiController {
     requireTaAnswers(recruitment.getType(), fields);
 
     apply(fields, application, recruitment.getType());
-    applicationRepository.save(application);
-    return forApplicant(application);
+    try {
+      return ResponseEntity.ok(forApplicant(applicationRepository.save(application)));
+    } catch (ObjectOptimisticLockingFailureException e) {
+      // Another save got in between reading the application and writing it.
+      return conflict(applicationRepository.findById(id).orElseThrow(() -> e), true);
+    }
+  }
+
+  /**
+   * What a refused edit tells the form: why, and the application as it now stands, without the
+   * admin's notes if the form is the applicant's (issue #302).
+   */
+  static ResponseEntity<Object> conflict(Application current, boolean forApplicant) {
+    Map<String, Object> body = new LinkedHashMap<>();
+    body.put(
+        "message",
+        "This application was changed in another tab or window, or by an admin. Reload to see"
+            + " the latest version.");
+    body.put("version", current.getVersion());
+    body.put("application", forApplicant ? forApplicant(current) : current);
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+  }
+
+  /** The detector's name for an application, shared by the applicant's and the admin's pages. */
+  static String resourceKey(Long id) {
+    return "application:" + id;
+  }
+
+  /**
+   * Who a user is to the detector (issue #302): the email address is the person, and the label
+   * other people see is the email address followed by the full name in parentheses, or the email
+   * address alone if there is no name. Whether they are an admin is passed on so that the other
+   * side's page can choose its message.
+   */
+  static ClientIdentity identityOf(User user, boolean admin) {
+    String name = user.getFullName();
+    String label =
+        name == null || name.isBlank()
+            ? user.getEmail()
+            : user.getEmail() + " (" + name.trim() + ")";
+    return new ClientIdentity(user.getEmail(), label, admin);
+  }
+
+  /** Whether the signed-in user holds the admin role. */
+  private boolean isAdmin() {
+    return getCurrentUser().getRoles().stream()
+        .map(GrantedAuthority::getAuthority)
+        .anyMatch("ROLE_ADMIN"::equals);
+  }
+
+  private ClientIdentity identity() {
+    return identityOf(getCurrentUser().getUser(), isAdmin());
+  }
+
+  /**
+   * Refuses anyone but the application's owner or an admin; nothing is recorded or told to anyone
+   * until this has returned.
+   */
+  private void requireOwnerOrAdmin(Long id) {
+    Application application =
+        applicationRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(Application.class, id));
+    if (!currentEmail().equals(application.getEmail()) && !isAdmin()) {
+      throw new ForbiddenException("That application belongs to someone else");
+    }
+  }
+
+  @Operation(
+      summary =
+          "Say that this tab or window still has the application open, and learn who else does",
+      description =
+          "Used by the applicant's page and by the admin's edit page alike (issue #302). Changes"
+              + " nothing about the application, not even its version. Tells the server this client"
+              + " (X-Client-Id) is still here, and answers with the other people who have the"
+              + " application open (a label for each, whether it is the same person in another tab"
+              + " or window, and whether they are an admin) and how often to send this. Only the"
+              + " application's owner or an admin may ask; for anyone else the answer is 403 and"
+              + " nothing is recorded or told.")
+  @PreAuthorize("hasRole('ROLE_USER')")
+  @PostMapping("/heartbeat")
+  public Presence heartbeat(
+      @Parameter(name = "id") @RequestParam Long id,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    // The check comes first and throws, so that nothing below runs for anyone else: they are
+    // neither recorded nor told who is working here.
+    requireOwnerOrAdmin(id);
+    return clientActivityDetector.heartbeat(resourceKey(id), clientId, identity());
+  }
+
+  @Operation(
+      summary = "Say that this tab or window has left the application",
+      description =
+          "Sent when a tab or window is closed or moves away from the application, so that the"
+              + " others stop being warned about it at once. Allowed to someone exactly when a"
+              + " heartbeat is: the application's owner or an admin, and for anyone else nothing is"
+              + " recorded. The answer is 204 whether or not the client was known.")
+  @PreAuthorize("hasRole('ROLE_USER')")
+  @PostMapping("/leave")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void leave(
+      @Parameter(name = "id") @RequestParam Long id,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    requireOwnerOrAdmin(id);
+    clientActivityDetector.leave(resourceKey(id), clientId);
   }
 
   @Operation(
@@ -339,7 +489,7 @@ public class ApplicationsController extends ApiController {
 
     Application application = mine(id);
     requireNotCancelled(application);
-    if (!applicationAccessService.commentable(recruitmentFor(application), LocalDate.now())) {
+    if (!applicationAccessService.commentable(recruitmentFor(application), AppTime.today())) {
       throw new ForbiddenException("This recruitment closed more than six months ago");
     }
 
@@ -370,7 +520,7 @@ public class ApplicationsController extends ApiController {
 
     application.setStatus(ApplicationReviewStatus.CANCELLED);
     application.setCancellationReason(why);
-    application.setCancelledAt(LocalDateTime.now());
+    application.setCancelledAt(AppTime.now());
     applicationRepository.save(application);
     // The applicant leaves the assignments page, so a page that still shows them is out of date.
     recruitmentRepository.bumpAssignmentsVersion(application.getRecruitmentId());
@@ -559,10 +709,10 @@ public class ApplicationsController extends ApiController {
     if (fields.priorUcsbEmployment() == null) {
       throw new IllegalArgumentException("Please say whether you have been employed at UCSB");
     }
-    if (fields.gpaMajor() == null) {
+    if (!fields.firstQuarterTicked() && fields.gpaMajor() == null) {
       throw new IllegalArgumentException("A ULA application needs your GPA in major");
     }
-    if (fields.gpaOverall() == null) {
+    if (!fields.firstQuarterTicked() && fields.gpaOverall() == null) {
       throw new IllegalArgumentException("A ULA application needs your overall GPA");
     }
     if (blankToNull(fields.yearInProgram()) == null) {
@@ -608,10 +758,10 @@ public class ApplicationsController extends ApiController {
     if (fields.residencyStatus() == null) {
       throw new IllegalArgumentException("A TA application needs your residency status");
     }
-    if (fields.gpaMajor() == null) {
+    if (!fields.firstQuarterTicked() && fields.gpaMajor() == null) {
       throw new IllegalArgumentException("A TA application needs your GPA in major");
     }
-    if (fields.gpaOverall() == null) {
+    if (!fields.firstQuarterTicked() && fields.gpaOverall() == null) {
       throw new IllegalArgumentException("A TA application needs your overall GPA");
     }
     if (blankToNull(fields.yearInProgram()) == null) {
@@ -662,8 +812,11 @@ public class ApplicationsController extends ApiController {
     application.setMiddleName(fields.middleName());
     application.setLastName(fields.lastName());
     application.setMajor(fields.major());
-    application.setGpaMajor(fields.gpaMajor());
-    application.setGpaOverall(fields.gpaOverall());
+    // Issue #292: a first quarter applicant has no GPAs, so any typed before the box was ticked
+    // are dropped rather than kept beside a flag that says there are none.
+    application.setFirstQuarter(fields.firstQuarterTicked());
+    application.setGpaMajor(fields.firstQuarterTicked() ? null : fields.gpaMajor());
+    application.setGpaOverall(fields.firstQuarterTicked() ? null : fields.gpaOverall());
     application.setYearInProgram(fields.yearInProgram());
     application.setGraduationDate(fields.graduationDate());
     application.getPriorCoursework().clear();

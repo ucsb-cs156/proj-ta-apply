@@ -15,6 +15,11 @@ export type ApplicationOrigin = "APPLICANT" | "ADMIN_TEST" | "DEVELOPER_MODE";
 
 export type Application = {
   id: number;
+  /**
+   * How many times the application has been saved. A save carries the one the form last saw, and
+   * is refused if the application has been saved since (issue #302).
+   */
+  version?: number;
   recruitmentId: number;
   email: string;
   status: "PENDING" | "HIRED" | "NOT_HIRED" | "CANCELLED";
@@ -30,6 +35,8 @@ export type Application = {
   major: string | null;
   gpaMajor: number | null;
   gpaOverall: number | null;
+  /** Issue #292: the applicant has no GPAs yet, and the tables say "First quarter" instead. */
+  firstQuarter: boolean;
   yearInProgram: string | null;
   graduationDate: string | null;
   /** The courses listed as relevant background, with their ids. */

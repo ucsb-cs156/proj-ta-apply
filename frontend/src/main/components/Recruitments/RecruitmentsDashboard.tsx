@@ -1,3 +1,4 @@
+import { pacificWallClock } from "main/utils/pacificTime";
 import { useMemo, useState } from "react";
 import { Button } from "react-bootstrap";
 import Modal from "react-bootstrap/Modal";
@@ -8,6 +9,7 @@ import RecruitmentForm, {
   type RecruitmentFormFields,
 } from "main/components/Recruitments/RecruitmentForm";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { HOME_PAGE_QUERY_KEYS } from "main/utils/recruitmentSteps";
 import AutoCreateRecruitmentsModal from "main/components/Recruitments/AutoCreateRecruitmentsModal";
 import { useDeveloperMode } from "main/utils/developerMode";
@@ -33,7 +35,7 @@ type RecruitmentsDashboardProps = {
  */
 export default function RecruitmentsDashboard({
   testIdPrefix = "RecruitmentsDashboard",
-  today = new Date(),
+  today = pacificWallClock(),
 }: RecruitmentsDashboardProps): React.JSX.Element {
   const { data: developerMode } = useDeveloperMode();
   // Stryker disable next-line all : the query's initial data is the "off" status, never undefined
@@ -48,7 +50,7 @@ export default function RecruitmentsDashboard({
   }));
   const defaultQuarter = nextNonSummerQuarter(today);
 
-  const { data: recruitments } = useBackend<Recruitment[]>(
+  const { data: recruitments } = useRefreshingBackend<Recruitment[]>(
     ["/api/admin/recruitments/all"],
     { method: "GET", url: "/api/admin/recruitments/all" },
     // Stryker disable next-line all : don't test default value of empty list
@@ -56,6 +58,7 @@ export default function RecruitmentsDashboard({
   );
 
   // How many applications each recruitment has on file, for the cards and the delete warning.
+  // Not refreshed in the background (issue #281): the server counts every application to answer.
   const { data: applicationCounts } = useBackend<Record<string, number>>(
     ["/api/admin/recruitments/applicationCounts"],
     { method: "GET", url: "/api/admin/recruitments/applicationCounts" },

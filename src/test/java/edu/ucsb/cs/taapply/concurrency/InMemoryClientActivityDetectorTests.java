@@ -483,4 +483,24 @@ public class InMemoryClientActivityDetectorTests {
         List.of(new OtherClient("Ada (Ada L)", false)),
         detector.othersActive("draft:1", "someone"));
   }
+
+  @Test
+  public void others_are_told_whether_a_person_is_an_admin() {
+    ClientIdentity admin = new ClientIdentity("dee@example.org", "Dee (Dee D)", true);
+    detector.record("application:1", "student", ADA);
+    detector.record("application:1", "admin", admin);
+
+    assertEquals(
+        List.of(new OtherClient("Dee (Dee D)", false, true)),
+        detector.othersActive("application:1", "student"));
+    assertEquals(
+        List.of(new OtherClient("Ada (Ada L)", false, false)),
+        detector.othersActive("application:1", "admin"));
+  }
+
+  @Test
+  public void an_other_client_without_a_flag_is_no_admin() {
+    assertEquals(false, new OtherClient("Ada", true).admin());
+    assertEquals(true, new OtherClient("Ada", true, true).admin());
+  }
 }

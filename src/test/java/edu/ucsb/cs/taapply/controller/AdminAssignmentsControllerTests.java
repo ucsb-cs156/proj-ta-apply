@@ -36,6 +36,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
@@ -333,6 +334,37 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
 
   @Test
   @WithMockUser(roles = {"ADMIN"})
+  void a_placement_that_loses_a_race_for_the_application_is_409_with_the_current_page()
+      throws Exception {
+    // The application has a version of its own (issue #302); an applicant's or another admin's save
+    // in between makes this one fail.
+    when(applicationRepository.findById(1L)).thenReturn(Optional.of(application(1L, 7L, null)));
+    when(recruitmentCourseRepository.findById(10L)).thenReturn(Optional.of(course(10L, 7L)));
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(assignmentsService.assignments(RECRUITMENT)).thenReturn(PAGE);
+    when(recruitmentRepository.bumpAssignmentsVersionIf(7L, 3)).thenReturn(1);
+    when(applicationRepository.save(any()))
+        .thenThrow(new ObjectOptimisticLockingFailureException(Application.class, 1L));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/assignments/tentative?applicationId=1&recruitmentCourseId=10&version=3")
+                    .with(csrf()))
+            .andExpect(status().isConflict())
+            .andReturn();
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals(
+        "Assignments changed while you were working. The page has been refreshed; please check the"
+            + " placement and try again.",
+        json.get("message"));
+    assertEquals(
+        mapper.readValue(mapper.writeValueAsString(PAGE), Map.class), json.get("assignments"));
+  }
+
+  @Test
+  @WithMockUser(roles = {"ADMIN"})
   void an_assignment_without_a_version_is_400() throws Exception {
     mockMvc
         .perform(
@@ -373,6 +405,7 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
         .andExpect(jsonPath("$.others.length()").value(1))
         .andExpect(jsonPath("$.others[0].label").value("phtcon@ucsb.edu (Phill Conrad)"))
         .andExpect(jsonPath("$.others[0].samePerson").value(false))
+        .andExpect(jsonPath("$.others[0].admin").value(false))
         .andExpect(jsonPath("$.heartbeatSeconds").value(5))
         .andExpect(jsonPath("$.newest").value(true));
   }
@@ -506,7 +539,8 @@ class AdminAssignmentsControllerTests extends ControllerTestCase {
                   .with(csrf()))
           .andExpect(status().isOk());
       assertEquals(
-          List.of(new OtherClient(admin[2], false)), detector.othersActive("assignments:7", "x"));
+          List.of(new OtherClient(admin[2], false, true)),
+          detector.othersActive("assignments:7", "x"));
     }
   }
 

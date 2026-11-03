@@ -1,3 +1,4 @@
+import { pacificWallClock } from "main/utils/pacificTime";
 import { useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,7 +38,7 @@ const planLine = (type: "TA" | "ULA", exists: boolean, qyy: string): string =>
 export default function AutoCreateRecruitmentsModal({
   recruitments,
   onHide,
-  today = new Date(),
+  today = pacificWallClock(),
   testIdPrefix = "AutoCreateRecruitmentsModal",
 }: AutoCreateRecruitmentsModalProps): React.JSX.Element {
   const [quarter, setQuarter] = useState(() => nextNonSummerQuarter(today));

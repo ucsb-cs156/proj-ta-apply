@@ -1,3 +1,5 @@
+import { formatPacificDateTime } from "main/utils/pacificTime";
+
 /** One saved version of the "Notices, Terms and Conditions" text, as the API returns it. */
 export type NoticeVersion = {
   id: number;
@@ -14,4 +16,4 @@ export const AGREEMENT_LABEL =
 
 /** "Version 3, saved 1/2/2026, 3:04:05 AM" for a card footer or a summary line. */
 export const describeVersion = (version: NoticeVersion): string =>
-  `Version ${version.id}, saved ${new Date(version.createdAt).toLocaleString()}`;
+  `Version ${version.id}, saved ${formatPacificDateTime(version.createdAt)}`;

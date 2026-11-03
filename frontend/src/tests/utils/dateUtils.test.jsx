@@ -2,13 +2,14 @@ import { formatTime } from "main/utils/dateUtils";
 
 describe("dateUtils tests", () => {
   describe("formatTime", () => {
-    test("formats a valid timestamp correctly", () => {
-      // Create a specific date for testing
-      const timestamp = "2023-01-01T12:30:45.000Z";
+    test("formats an instant as Pacific time", () => {
+      expect(formatTime("2023-01-01T12:30:45.000Z")).toBe(
+        "1/1/2023, 4:30:45 AM",
+      );
+    });
 
-      const result = formatTime(timestamp);
-
-      expect(result).toBe(new Date(timestamp).toLocaleString());
+    test("shows a zone-less stamp, which is already Pacific, as it reads", () => {
+      expect(formatTime("2023-01-01T10:05:00")).toBe("1/1/2023, 10:05:00 AM");
     });
 
     test("returns empty string for null timestamp", () => {

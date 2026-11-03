@@ -12,5 +12,11 @@ public interface DraftApplicationRepository extends CrudRepository<DraftApplicat
   /** Every draft belonging to one person, newest first. */
   List<DraftApplication> findByEmailOrderByIdDesc(String email);
 
+  /** Every draft for one recruitment, oldest first (issue #296). */
+  List<DraftApplication> findByRecruitmentIdOrderByIdAsc(Long recruitmentId);
+
+  /** How many drafts one recruitment has (issue #296). */
+  long countByRecruitmentId(Long recruitmentId);
+
   Optional<DraftApplication> findByEmailAndRecruitmentId(String email, Long recruitmentId);
 }

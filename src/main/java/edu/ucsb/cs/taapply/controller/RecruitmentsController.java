@@ -16,6 +16,7 @@ import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.HiringDecisions;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
+import edu.ucsb.cs.taapply.time.AppTime;
 import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +24,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,7 +98,7 @@ public class RecruitmentsController extends ApiController {
                 .applicationStatus(ApplicationStatus.CLOSED)
                 .tentativeOpeningDate(tentativeOpeningDate)
                 .primaryConsiderationDate(primaryConsiderationDate)
-                .createdAt(LocalDateTime.now())
+                .createdAt(AppTime.now())
                 .build());
     recruitmentAuditService.recordCreated(recruitment);
 
@@ -147,14 +147,14 @@ public class RecruitmentsController extends ApiController {
 
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
     if ("Open".equals(status) && recruitment.getFacultyReviewOpeningDate() == null) {
-      recruitment.setFacultyReviewOpeningDate(LocalDate.now());
+      recruitment.setFacultyReviewOpeningDate(AppTime.today());
     }
     recruitment.setReviewStatus(status);
     if ("Open".equals(status)) {
       recruitment.setFacultyRankingDeadline(facultyRankingDeadline);
     }
     if ("Closed".equals(status)) {
-      recruitment.setFacultyReviewClosedAt(LocalDateTime.now());
+      recruitment.setFacultyReviewClosedAt(AppTime.now());
     }
 
     recruitmentRepository.save(recruitment);
@@ -301,7 +301,7 @@ public class RecruitmentsController extends ApiController {
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
     recruitment.setAssignmentsPublished(published);
     if (published) {
-      recruitment.setAssignmentsPublishedAt(LocalDateTime.now());
+      recruitment.setAssignmentsPublishedAt(AppTime.now());
     }
     recruitmentRepository.save(recruitment);
     recruitmentRepository.bumpAssignmentsVersion(id);
@@ -320,7 +320,9 @@ public class RecruitmentsController extends ApiController {
       summary = "Open or close applications for a recruitment",
       description =
           "The first open stamps actualOpeningDate and never overwrites it, so it keeps the date"
-              + " applicants were actually able to start. Each close stamps actualClosingDate.")
+              + " applicants were actually able to start. Each close stamps actualClosingDate. Setting the"
+              + " status the recruitment already has changes and records nothing, so a click from"
+              + " a page that is a few seconds out of date is harmless (issue #281).")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("/status")
   public Recruitment updateStatus(
@@ -332,8 +334,12 @@ public class RecruitmentsController extends ApiController {
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
 
+    if (recruitment.getApplicationStatus() == status) {
+      return recruitment;
+    }
+
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
-    LocalDate today = LocalDate.now();
+    LocalDate today = AppTime.today();
     if (status == ApplicationStatus.OPEN) {
       if (recruitment.getActualOpeningDate() == null) {
         recruitment.setActualOpeningDate(today);

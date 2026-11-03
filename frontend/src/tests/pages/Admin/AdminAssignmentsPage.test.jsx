@@ -415,10 +415,15 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
 
   // ---- the multi-tab warning, whole page (issues #280 and #284) ----
 
-  const RISK =
-    "Please know that this is risky; we recommend closing all but one of these.";
-  const phill = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
-  const me = { label: "me@example.org (Me)", samePerson: true };
+  // The shared closing sentence of an admin page (issue #298), whoever the others are.
+  const ADMIN_SENTENCE =
+    "We recommend that only one admin edits this page at a time.";
+  const phill = {
+    label: "phtcon@ucsb.edu (Phill Conrad)",
+    samePerson: false,
+    admin: true,
+  };
+  const me = { label: "me@example.org (Me)", samePerson: true, admin: true };
   const MODAL = "AdminAssignmentsPage-multiple-tabs-modal";
 
   test("the page sends a heartbeat for its recruitment, and only that recruitment's", async () => {
@@ -453,7 +458,7 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(
       await screen.findByTestId("AdminAssignmentsPage-multiple-tabs"),
     ).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page. ${ADMIN_SENTENCE}`,
     );
     expect(screen.queryByRole("dialog")).toBeNull();
     // It is advice: the page is still there to use.
@@ -472,7 +477,22 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     expect(
       await screen.findByTestId("AdminAssignmentsPage-multiple-tabs"),
     ).toHaveTextContent(
-      `You are also editing this assignments page in another tab or window. ${RISK}`,
+      `You are also editing this assignments page in another tab or window. ${ADMIN_SENTENCE}`,
+    );
+  });
+
+  test("the newer tab of the admin's own says 'You already have...' with the admin sentence", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [me],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1000,
+    });
+    renderPage();
+    expect(
+      await screen.findByTestId("AdminAssignmentsPage-multiple-tabs"),
+    ).toHaveTextContent(
+      `You already have this assignments page open for editing in another tab or window. ${ADMIN_SENTENCE}`,
     );
   });
 
@@ -485,9 +505,12 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     });
     renderPage();
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByTestId(`${MODAL}-message`)).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page. ${RISK}`,
-    );
+    // The newer tab says who is "already" there.
+    const already = `phtcon@ucsb.edu (Phill Conrad) already has this assignments page open for editing. ${ADMIN_SENTENCE}`;
+    expect(screen.getByTestId(`${MODAL}-message`)).toHaveTextContent(already);
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-multiple-tabs"),
+    ).toHaveTextContent(already);
 
     fireEvent.click(screen.getByTestId(`${MODAL}-continue`));
 

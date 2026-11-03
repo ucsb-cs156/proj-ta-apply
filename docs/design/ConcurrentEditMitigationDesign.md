@@ -106,11 +106,14 @@ resource now?
 * `arrival(resourceKey, clientId)` says whether the client is the **newest** and when it arrived (see
   "Arrival order").
 * `othersActive(resourceKey, clientId)` returns the other people active within the **window**, as a
-  list of `{label, samePerson}`, **one entry for each person** however many tabs they have open,
+  list of `{label, samePerson, admin}`, **one entry for each person** however many tabs they have open,
   sorted by label. An entry has `samePerson` true if it is the same person as the caller (the
   caller's own other tab or window); the caller's own client is never in the list. The caller is
   compared by the identity recorded for its client id; a caller that was not recorded is nobody's
-  same person.
+  same person. `admin` (#302) says whether that person is an admin. The application puts it in the
+  identity it records for a client (`ClientIdentity.admin`) and the detector only hands it back,
+  never acting on it; it lets the client choose its message when an admin and an applicant have the
+  same application open.
 * The timing is two settings, read by the server from environment variables (see "Timing"). The
   window is the heartbeat interval times the number of heartbeats that may be missed. The server
   tells the client how often to beat in each heartbeat answer, so the two are always in step.
@@ -169,20 +172,47 @@ The refused caller is not recorded, is told no names, and the response does not 
 > resource's tests must include the refusal and that nothing was recorded or removed by it.
 
 **The banner.** The client turns the list into a sentence with a pure function (`describeOthers`)
-and shows it, then the sentence *Please know that this is risky; we recommend closing all but one
-of these.* The noun is a parameter: "application" for a draft application, and "page", "budget",
-"ranking" and so on for other screens. The names are rendered as text, which React escapes, never as
-markup. A long name wraps instead of widening the page.
+and shows it, then a closing sentence that depends on who is involved (issue #298). When every other
+copy is the user's own (a student with the same application open in two windows, a faculty member
+with the same ranking open in two windows), the sentence is *Please know that this is risky; we
+recommend closing all but one of these.*, because the user can close the extra copy. In every other
+case, when any other person is involved (including "You and A ..."), the viewer cannot make that
+person's window close, so the sentence is *We recommend that only one admin edits this page at a
+time.* It always says "page", whatever the noun. The banner and the modal also take an `audience`:
+`"admin"`, for the admin pages that several admins may edit, uses the admin sentence even when every
+other copy is the user's own. The noun is a parameter of the first sentence: "application" for a
+draft application, and "page", "budget", "ranking" and so on for other screens. The names are
+rendered as text, which React escapes, never as markup. A long name wraps instead of widening the
+page.
 
-| Who else is active | Sentence (noun "page") |
-|---|---|
-| no one | nothing is shown |
-| only the user's own other tabs | You are also editing this page in another tab or window. |
-| one other person | phtcon@ucsb.edu (Phill Conrad) is also editing this page. |
-| the user and one other person | You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs. |
-| two or three other people | A and B are also editing this page. / A, B and C are also editing this page. |
-| the user and two or three | You, A and B are also editing this page in other windows or tabs. |
-| more than three other people | A, B, C and 2 others are also editing this page. (three named, the rest counted; "1 other" for one) |
+Which sentence names the people depends on which tab is reading. The tab that was open first says
+who is "also editing"; the tab that arrived later (the modal, and the banner of the newest tab,
+including after "Continue anyway") says who "already" has the thing open. This applies to every
+audience. With one person the verb is singular ("has"), with the user and anyone else it is plural
+("have").
+
+| Who else is active | Tab already open (noun "page") | Tab that arrived later |
+|---|---|---|
+| no one | nothing is shown | nothing is shown |
+| only the user's own other tabs | You are also editing this page in another tab or window. | You already have this page open for editing in another tab or window. |
+| one other person | phtcon@ucsb.edu (Phill Conrad) is also editing this page. | phtcon@ucsb.edu (Phill Conrad) already has this page open for editing. |
+| the user and one other person | You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs. | You and phtcon@ucsb.edu (Phill Conrad) already have this page open for editing in other windows or tabs. |
+| two or three other people | A and B are also editing this page. / A, B and C are also editing this page. | A and B already have this page open for editing. / A, B and C already have this page open for editing. |
+| the user and two or three | You, A and B are also editing this page in other windows or tabs. | You, A and B already have this page open for editing in other windows or tabs. |
+| more than three other people | A, B, C and 2 others are also editing this page. (three named, the rest counted; "1 other" for one) | A, B, C and 2 others already have this page open for editing. |
+
+Each sentence is followed by the closing sentence. Examples: *You are also editing this application
+in another tab or window. Please know that this is risky; we recommend closing all but one of
+these.* (older tab, own windows only); *You already have this ranking open for editing in another tab
+or window. Please know that this is risky; we recommend closing all but one of these.* (later tab,
+own windows only); *a@example.com (Alice) is also editing this page. We recommend that only one
+admin edits this page at a time.* (older tab); *a@example.com (Alice) and b@example.com (Bob)
+already have this page open for editing. We recommend that only one admin edits this page at a
+time.* (later tab); *You already have this page open for editing in another tab or window. We
+recommend that only one admin edits this page at a time.* (later tab, admin page, own windows only).
+The banner takes `audience` (default, `"admin"`, and for #302 `"applicant"` and `"applicationAdmin"`, see (g)) and `newest`; the modal takes `audience` and is
+always the later tab. The Assignments page (#280) uses the admin audience; the other admin warnings
+(the budget and course editing) will.
 
 The warning clears by itself. When an extra copy is closed it says goodbye, and the next heartbeat
 of the remaining copy lists no one, so the banner goes within a heartbeat. If the goodbye is lost,
@@ -372,6 +402,7 @@ mean something together.
 | #280 | Assignments | The whole assignments page for one recruitment | `assignments:<recruitmentId>` | 5 |
 | #281 | Recruitment settings and workflow steps, for admins, instructors and students | No warning; background refresh plus refetch after each save | None (refresh, not a key) | extension |
 | #282 | Instructors page and non-allocation Courses page saves | No warning; same background refresh as #281 plus a refetch after each save | None (refresh, not a key) | extension |
+| #302 | Student apply page when editing a submitted application, and the Admin application edit page | One application, edited by its applicant or by an admin | `application:<applicationId>` | extension |
 
 ### Two facts that hold for the surveyed screens
 
@@ -519,6 +550,38 @@ frequent, so conflict handling that irritates will be noticed. Rankings are only
 faculty review is Open, which limits the exposure. The Developer Mode job that creates fake rankings
 (#220) writes these rows too and must bump the same version.
 
+**As built (#279).** The version is in a table of its own, `ranking_list_versions`
+(`recruitment_course_id`, `version`), not a column of `recruitment_courses`, for the reason given for
+the allocations: that row is rewritten whole by other saves, and a stale copy of it would put an old
+version back. No row means version 0. `RankingVersionService` moves it only with compare-and-set
+statements (`advance(courseId, expected)` for a rank edit; `bump(courseId)` for the Developer Mode
+fake rankings job, once for each course it ranks), so of several edits made from one version exactly
+one is accepted. The candidates list carries the version it was read at in every row
+(`rankingVersion`), read before the ranks so that a change in between can only make a save refused,
+never wrongly accepted. A rank save names it (`?version=`) and is answered with the rank and the new
+version; a stale one is answered `409` with the message above and the current version, and nothing is
+changed.
+
+Because the version belongs to the whole list, `CandidateTable` sends its saves one at a time, in the
+order they were made, each with the version the last one produced. On a `409` it stops sending the
+saves queued behind (they were made against the old list), has the page read the candidates again,
+adopts that list's version, shows the new ranks in every box that holds no unsaved edit, keeps the
+instructor's typed values in the rest, and puts the message on each of those rows with a **Save
+again** button. A candidate list that cannot be read again keeps the table on screen, so nothing typed
+is lost.
+
+The warning uses the shared hook, banner and modal with the noun `ranking` and the key
+`ranking:<recruitmentCourseId>`: `POST .../courses/{id}/ranking/heartbeat` and `.../ranking/leave`,
+and the `X-Client-Id` on every rank save. The newest tab is asked (Leave this page, Wait, Continue
+anyway) and older tabs get the banner alone, as for drafts (#285). Authorization comes first: the
+heartbeat, the goodbye and the save are allowed only to someone who may rank the course, the
+instructor of record while reviews are Open (an admin who also teaches it included). An instructor
+of another course, and an admin who does not teach the course, get `403` and are neither recorded nor
+told who is there. A page that is read-only sends no heartbeat, so it never warns and is never named.
+Two instructors of a co-taught course (two emails with the same catalog name) and an admin who
+teaches the course see each other by name; a different course never warns, and neither does the same
+person on two courses.
+
 ### (d) The assignments (#280)
 
 Resource key `assignments:<recruitmentId>`. The unit is **the whole assignments page for a
@@ -552,7 +615,7 @@ placement and try again." The admin's click is not replayed, because after a ref
 longer be the right move.
 
 **As built (#280).** `recruitments.assignments_version` (an integer starting at 1, in the changeset
-`044-add-assignments-version-to-recruitments`) is the recruitment-level version. It is counted up by
+`057-add-assignments-version-to-recruitments`) is the recruitment-level version. It is counted up by
 `RecruitmentRepository.bumpAssignmentsVersionIf(id, expected)`, a single
 `UPDATE ... WHERE id = ? AND assignments_version = ?` whose row count (1 or 0) is the answer, so the
 comparison and the increment are one atomic step. The entity field is `updatable = false`, so saving
@@ -575,13 +638,33 @@ The warning is keyed `assignments:<recruitmentId>`. `AdminAssignmentsController`
 `404` for an unknown recruitment, and the tentative assignment records the caller as a save does. The
 role check (`403`) happens before the detector is touched, so a non-admin is not recorded, told
 anyone's name, or able to remove an admin's tab by saying goodbye in their name. The page uses the
-shared `useClientActivity`, `MultipleTabsBanner` (noun "assignments page") and `MultipleTabsModal`
+shared `useClientActivity`, `MultipleTabsBanner` and `MultipleTabsModal` (noun "assignments page",
+`audience="admin"`, and `newest` passed to the banner too, so that the later tab says "already has")
 exactly as the draft form does (#283, #285): the newest tab gets the modal (Leave this page, Wait,
 Continue anyway), older tabs only the banner, a goodbye is sent on `pagehide` and when the page
 unmounts, and the timing is the shared `CLIENT_HEARTBEAT_INTERVAL_SEC` and
 `CLIENT_TIMEOUT_MISSED_HEARTBEATS`. A rapid second move from the same page before the first answer
 arrives carries the old version and is refused like any stale move; the refresh then shows the
 first.
+
+The wording is the shared one (#298), with nothing local to the page:
+
+| Who else has the page | Tab already open | Tab that arrived later |
+|---|---|---|
+| another admin | *phtcon@ucsb.edu (Phill Conrad) is also editing this assignments page. We recommend that only one admin edits this page at a time.* | *phtcon@ucsb.edu (Phill Conrad) already has this assignments page open for editing. We recommend that only one admin edits this page at a time.* |
+| only the admin's own tabs | *You are also editing this assignments page in another tab or window. We recommend that only one admin edits this page at a time.* | *You already have this assignments page open for editing in another tab or window. We recommend that only one admin edits this page at a time.* |
+
+Only admins can open the page, so the identity it records is marked `admin` (as the Edit
+Application page's is, #302) by the shared `ApplicationsController.identityOf`, and the heartbeat's
+entries are `{label, samePerson, admin}`. The page does not act on the flag. The `applications` table
+now has a version of its own (`056-add-version-to-applications`, #302), which a tentative assignment
+counts up like any other save of an application, so an Edit Application form opened before a
+placement is told to reload. The other way round is covered too: if the application is saved by its
+applicant or another admin between this endpoint reading it and writing it,
+`ObjectOptimisticLockingFailureException` is answered as the same `409` with the refreshed
+assignments (the placement is not made), never as a `500`. The recruitment version is a different,
+independent counter, so a stale Edit Application save never refuses a placement or the reverse
+except through that race. This change adds no dates or times (the Pacific-time rules do not apply to it).
 
 **Risks.** Medium. The version has to be bumped everywhere the assignments change: a tentative
 assignment, publish, and an applicant cancelling. It touches the publish path and the counts that
@@ -632,16 +715,56 @@ without a release. A value that is missing, not a number, zero or negative (for 
 that is negative or larger than its base is replaced by the safe default, so a typing mistake in the
 settings can never make a client refresh in a tight loop or never.
 
-**Means.** The app already reads this state through react-query, which supports all of the above:
-a refetch interval, no refetching while the tab is hidden, and refetching on focus. The work is in
-choosing the intervals, in the server making the step actions idempotent, and in making sure each
-refreshed page keeps what is being typed.
+**Means.** The app reads this state through react-query, which supports all of the above: a refetch
+interval, no refetching while the tab is hidden, and refetching on focus. Built in #281 as one shared
+mechanism, not intervals scattered through the pages:
+
+* `useRefreshingBackend` (`frontend/src/main/utils/useRefreshingBackend.ts`) is `useBackend` plus
+  a `refetchInterval` **function**. react-query asks the function again after every fetch, so each
+  wait is a new draw. `refetchIntervalInBackground` is false and `refetchOnWindowFocus` is true.
+  Options passed by the caller win. #282 uses the same hook.
+* `nextRefreshMs(timing, random)` (`main/utils/refreshInterval.ts`) makes the draw. The random source
+  is an argument so tests are deterministic. A wait is never under 1 second.
+* The four settings are read by the server (`application.properties`, `RefreshSetting`) and sent to
+  every page in the public `/api/systemInfo` answer, like `ENABLE_DEVELOPER_MODE`, so they change on
+  a deployed instance with a restart and no rebuild. The browser checks them again.
+* The role is the admin role: anyone with `ROLE_ADMIN` uses the admin pair even if also an
+  instructor.
+
+**Bad values.** A base that is missing, not a number or below 1 second is the default. A jitter that
+is missing, not a number, negative or larger than its base is the default jitter, and a jitter is
+never larger than its base. No wait is ever shorter than 1 second.
+
+**Survey (done for #281).** What feeds the recruitment state, how expensive it is, and what is
+refreshed:
+
+| Query | Who | Cost | Refreshed |
+|---|---|---|---|
+| `GET /api/admin/recruitments/all` | Admin cards | One table read | Yes |
+| `GET /api/admin/recruitments/{id}/steps` | Admin cards (Recruitment Steps panel) | Computes the step counts, per recruitment | Yes, for admins only (never students) |
+| `GET /api/admin/recruitments/applicationCounts` | Admin cards | Loads every application of every recruitment | **No**, refetched after saves only |
+| `GET /api/instructor/recruitments` | Instructor home section | Small | Yes |
+| `GET /api/recruitments/applicable` | Student home section, application form | Small | Yes |
+| `GET /api/applications/mine`, `GET /api/draftApplications/mine` | Student home section | Small | Yes |
+| `GET /api/instructor/recruitments/{id}/courses/{cid}/ranking` | Faculty ranking page header | Small | Yes |
+| Application page (`/applications/{id}`) list of recruitments | Student editing a submitted application | Small | **No**: a closed recruitment would swap the form for a read-only view and lose unsaved edits |
+
+Step actions on the server: `PUT /api/admin/recruitments/status` re-stamped `actualClosingDate` on
+every Close; it now returns the recruitment untouched, with nothing saved or recorded, if the status
+already is the one asked for. `PUT reviewStatus`, `facultyRankingDeadline`, `allocationVisibility`
+and `assignmentsPublished` already did nothing when the value was unchanged.
+
+**Input in progress.** A refresh changes what is displayed, not what is being typed. A deadline typed
+into the faculty review window lives in the page's own state, so a refresh leaves it alone. A
+confirmation whose action no longer applies (Close Applications after another admin closed them,
+Close Faculty Reviews when they are already closed, Open Faculty Reviews when they are already open,
+or a window for a recruitment that was deleted) closes itself and a toast says nothing was changed.
+A student whose recruitment closes while the application form is open keeps the form and everything
+typed, is told that the draft is kept as of its last automatic save but can no longer be submitted
+(draft saves are refused once applications close, #276), the Submit and Save Draft buttons are turned
+off and autosave stops.
 
 **Key.** None. This is a refresh, not a key, so it does not use the detector or the banner.
-
-**First step of the issue.** A survey, written into this section, before any code: which queries feed
-the recruitment state on the admin, instructor and student pages, how expensive each is, and which
-step actions are not yet idempotent. The survey updates this document.
 
 ### (f) The Instructors page and the other Courses page saves (#282)
 
@@ -664,6 +787,60 @@ banner. #282 covers the saves that are left.
 **First step of the issue.** A survey, written into this section, before any code: each save on the
 two pages, which are already safe to repeat, and which queries a page needs refreshed. The survey
 updates this document.
+
+### (g) An admin edits a student's application (#302)
+
+**Two pages, one key.** A submitted application is edited on two pages: the applicant's
+(`ApplicationPage`, `PUT /api/applications`) and the admin's (`AdminApplicationEditPage`,
+`PUT /api/admin/applications`). Both use the key `application:<applicationId>` and the same two
+endpoints, `POST /api/applications/heartbeat?id=` and `POST /api/applications/leave?id=`. Both pages
+send the heartbeat once the application is loaded (the applicant's only while the form is on offer,
+not when the application is view-only), say goodbye on `pagehide` and on unmount, and name the tab
+in `X-Client-Id` on every save. The timing is the `CLIENT_*` settings, as everywhere. The draft
+(`draft:<draftId>`) is a different key: a draft is never edited by an admin, and a draft that is
+submitted becomes an application with a new key.
+
+**Authorization.** The owner of the application or any admin. Anyone else gets `403` before the
+detector is touched, so nothing is recorded and no name is told; an application that does not exist
+is `404`. The applicant's controller checks it for the heartbeat and the goodbye. The save on each
+page is authorized as before (the owner on the applicant's page; `ROLE_ADMIN` on the admin's), and a
+refused save records no one.
+
+**The version check covers it, newly.** The `applications` table had no version (only drafts did), so
+the applicant and an admin could silently overwrite each other. It now has a `version` column
+(Liquibase changeset `056-add-version-to-applications`, an `INT NOT NULL DEFAULT 0`) and the entity a
+`@Version` field. Both `PUT`s take a required `version` parameter: if it is not the application's
+current version nothing is changed and the answer is `409 Conflict` with `{message, version,
+application}` (the applicant's copy leaves out the admin's comments, as every applicant-facing answer
+does); a save that loses a race (`ObjectOptimisticLockingFailureException`) answers the same. A
+successful save answers with the application and its new version. Any other save of the application
+(an admin's comments, the applicant's post-application comments, a cancellation, a tentative
+assignment) also counts a version, so a form opened before one of them is told to reload. Both pages
+show the same message (*This application was changed in another tab or window, or by an admin/the
+applicant. Reload to see the latest version.*) with a **Reload** button that fetches the application
+again and restarts the form from it, and no toast.
+
+**The admin flag on the wire.** The application records each tab's identity with `admin` set from the
+user's roles (the admin's save is always an admin). The heartbeat answer's entries are
+`{label, samePerson, admin}`.
+
+**The wording** (`audience` on the banner and the modal, with the three choices, the modal for the
+newest tab, and the goodbye as for drafts):
+
+| Viewer | Who else | Message |
+|---|---|---|
+| applicant (`audience="applicant"`) | one admin | *Admin jane@ucsb.edu (Jane Doe) has this application open for editing. We recommend that you close this window and try again in a few minutes. If this message persists, please reach out to jane@ucsb.edu* |
+| applicant | several admins | *Admin A, B and C have this application open for editing.* (named as the shared composer does, three then "and N others", "have"), and the request names the first admin's email |
+| applicant | only their own tabs | as any default page: *You are also editing this application in another tab or window. Please know that this is risky; we recommend closing all but one of these.* |
+| admin (`audience="applicationAdmin"`) | the applicant | *chris@ucsb.edu (Chris Student) already has this application open for editing. We recommend that you wait a few minutes or ask them to close it.* ("is also editing" in the tab that was open first) |
+| admin | the applicant and another admin | the shared names, then the sentence above and *We recommend that only one admin edits this page at a time.* |
+| admin | only other admins, or only their own tabs | as any admin page: *... We recommend that only one admin edits this page at a time.* |
+
+The admin-sees-applicant wording was proposed in the issue and confirmed by the maintainer. The
+email in the applicant's message is the part of the label before the first ` (`. With an admin among
+the others, the applicant's message is about the admins alone (the applicant's own other tabs are not
+named). An admin who is also the applicant, on the applicant's page, is only their own tab. The
+names are rendered as text.
 
 ## Iterations
 
@@ -707,13 +884,18 @@ is a day or less, M a few days, L about a week.
    2 to 8 seconds, instructors and students 10 to 20, set by environment variables), paused in hidden tabs and refetched on focus, cheap queries
    only, never overwriting input in progress, and a repeated Close made a no-op on the server. It
    needs no version check, detector or banner. A survey first, which updates section (e) of this
-   document.
+   document. Built: see section (e) for the shared `useRefreshingBackend` hook that #282 reuses.
 
 7. **Keep the Instructors page and Courses page saves fresh. (S to M, #282.)** Refresh instead of a
    warning, with the same background refresh as #281 and a refetch after each save, for adding,
    uploading and deleting instructors, setting a catalog name, and the Courses page saves other than
    the allocations and estimates (which stay with #278). No version check, detector or banner. A
    survey first, which updates section (f) of this document.
+
+8. **An admin edits a student's application. (M, #302, PR #308.)** A version on the `applications`
+   table and a `409` on both edit endpoints, the key `application:<applicationId>` shared by the
+   applicant's page and the admin's edit page, the admin flag on the wire, and the two messages.
+   Section (g).
 
 After iteration 2 it is worth stopping to look at what the second user of the package needed that the
 first did not, and to fix the package before three more screens depend on it. That is also the moment

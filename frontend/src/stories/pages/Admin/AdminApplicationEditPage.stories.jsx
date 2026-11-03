@@ -92,3 +92,28 @@ TaApplication.parameters = {
     ],
   },
 };
+
+/** Issue #302: the applicant has the application open, so the admin is told to wait or ask. */
+export const ApplicantHasItOpen = Template.bind({});
+ApplicantHasItOpen.parameters = {
+  reactRouter: routeTo(applicationsFixtures.oneUlaApplication.id),
+  msw: {
+    handlers: [
+      ...common,
+      http.get("/api/admin/applications", () =>
+        HttpResponse.json(applicationsFixtures.oneUlaApplication),
+      ),
+      http.get("/api/recruitments/options", () =>
+        HttpResponse.json(appSettingsFixtures.ulaOptions),
+      ),
+      http.post("/api/applications/heartbeat", () =>
+        HttpResponse.json({
+          others: [{ label: "ula@ucsb.edu (Chris)", samePerson: false }],
+          heartbeatSeconds: 20,
+          newest: false,
+          arrivedAtMillis: 1,
+        }),
+      ),
+    ],
+  },
+};

@@ -7,7 +7,6 @@ import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
-import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
@@ -22,6 +21,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -115,17 +115,28 @@ public class AdminAssignmentsController extends ApiController {
     clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());
     // One atomic statement: it counts the version up only if it is still the one the page saw.
     if (recruitmentRepository.bumpAssignmentsVersionIf(recruitmentId, version) == 0) {
-      Map<String, Object> body = new LinkedHashMap<>();
-      body.put(
-          "message",
-          "Assignments changed while you were working. The page has been refreshed; please check"
-              + " the placement and try again.");
-      body.put("assignments", assignmentsService.assignments(recruitmentOf(recruitmentId)));
-      return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+      return conflict(recruitmentId);
     }
     application.setTentativeAssignmentId(recruitmentCourseId);
-    applicationRepository.save(application);
+    try {
+      applicationRepository.save(application);
+    } catch (ObjectOptimisticLockingFailureException e) {
+      // The application has a version of its own (issue #302): the applicant or another admin saved
+      // it between reading it and writing it. The placement is not made; the page is refreshed.
+      return conflict(recruitmentId);
+    }
     return ResponseEntity.ok(assignmentsService.assignments(recruitmentOf(recruitmentId)));
+  }
+
+  /** The 409 for a stale placement: why, and the assignments as they now stand. */
+  private ResponseEntity<Object> conflict(Long recruitmentId) {
+    Map<String, Object> body = new LinkedHashMap<>();
+    body.put(
+        "message",
+        "Assignments changed while you were working. The page has been refreshed; please check"
+            + " the placement and try again.");
+    body.put("assignments", assignmentsService.assignments(recruitmentOf(recruitmentId)));
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
   }
 
   @Operation(
@@ -168,15 +179,11 @@ public class AdminAssignmentsController extends ApiController {
     return "assignments:" + recruitmentId;
   }
 
-  /** Who the current user is to the detector: the email is the person, the label adds the name. */
+  /**
+   * Who the current user is to the detector: the shared identity, marked as an admin (issue #302).
+   */
   private ClientIdentity identity() {
-    User user = getCurrentUser().getUser();
-    String name = user.getFullName();
-    String label =
-        name == null || name.isBlank()
-            ? user.getEmail()
-            : user.getEmail() + " (" + name.trim() + ")";
-    return new ClientIdentity(user.getEmail(), label);
+    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);
   }
 
   private Recruitment recruitmentOf(Long recruitmentId) {

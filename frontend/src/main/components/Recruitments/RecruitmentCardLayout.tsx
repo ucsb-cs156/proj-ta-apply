@@ -145,6 +145,13 @@ export default function RecruitmentCardLayout({
           Courses
         </Link>
         <Link
+          className="btn btn-outline-info"
+          to={`/admin/recruitments/${recruitment.id}/draft-applications`}
+          data-testid={id("draft-applications-button")}
+        >
+          Draft Applications
+        </Link>
+        <Link
           className="btn btn-info"
           to={`/admin/recruitments/${recruitment.id}/applications`}
           data-testid={id("applications-button")}

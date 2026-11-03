@@ -129,6 +129,8 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
         <MultipleTabsBanner
           others={activity.others}
           noun="assignments page"
+          audience="admin"
+          newest={activity.newest}
           testId="AdminAssignmentsPage-multiple-tabs"
         />
         {/* Only the newest tab is asked; the older ones keep the banner alone. */}
@@ -137,6 +139,7 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           newest={activity.newest}
           arrivedAt={activity.arrivedAt}
           noun="assignments page"
+          audience="admin"
           onLeave={() => {
             activity.leave();
             navigate("/");

@@ -27,4 +27,11 @@ public class SystemInfo {
   private String subjectArea; // the single subject area this app manages, e.g. CMPSC
   private String startQtrYYYYQ; // inclusive bounds for the admin Courses page quarter dropdowns
   private String endQtrYYYYQ;
+
+  // Background refresh timing in seconds (issue #281), already checked by RefreshSetting. A wait is
+  // uniform between base - jitter and base + jitter.
+  private Double adminRefreshSec;
+  private Double adminRefreshJitter;
+  private Double nonAdminRefresh;
+  private Double nonAdminJitter;
 }

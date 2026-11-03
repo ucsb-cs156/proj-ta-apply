@@ -1,3 +1,5 @@
+import { pacificWallClock } from "main/utils/pacificTime";
+
 /**
  * Working-day arithmetic for the faculty review deadline (issue #211): the default deadline when
  * reviews are opened is five working days (Monday to Friday) from today.
@@ -31,8 +33,9 @@ export const addWorkingDays = (from: Date, days: number): Date => {
 };
 
 /** The default deadline for reviews opened today. */
-export const defaultReviewDeadline = (today: Date = new Date()): string =>
-  toIsoDate(addWorkingDays(today, DEFAULT_DEADLINE_WORKING_DAYS));
+export const defaultReviewDeadline = (
+  today: Date = pacificWallClock(),
+): string => toIsoDate(addWorkingDays(today, DEFAULT_DEADLINE_WORKING_DAYS));
 
 /**
  * Whether closing reviews today would be before the stated deadline (issue #211): true when the
@@ -40,5 +43,5 @@ export const defaultReviewDeadline = (today: Date = new Date()): string =>
  */
 export const isBeforeDeadline = (
   deadline: string | null | undefined,
-  today: Date = new Date(),
+  today: Date = pacificWallClock(),
 ): boolean => deadline != null && deadline.localeCompare(toIsoDate(today)) > 0;

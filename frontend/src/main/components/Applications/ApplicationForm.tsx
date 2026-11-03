@@ -35,6 +35,7 @@ import {
   toPayload,
   type ApplicationFormFields,
   type ApplicationPayload,
+  FIRST_QUARTER_LABELS,
 } from "main/utils/applicationFields";
 import {
   BS_MS_QUESTION,
@@ -133,6 +134,11 @@ type ApplicationFormProps = {
    * so far, whether or not it is complete (issue #270).
    */
   onSaveDraft?: (payload: ApplicationPayload) => void;
+  /**
+   * Turns the submit and Save Draft buttons off, for a form that is still on screen after its
+   * recruitment closed (issue #281). What was typed stays where it is.
+   */
+  submitDisabled?: boolean;
   buttonLabel?: string;
   testIdPrefix?: string;
 };
@@ -227,6 +233,7 @@ export default function ApplicationForm({
   submitAction,
   onDraftChange,
   onSaveDraft,
+  submitDisabled = false,
   buttonLabel = "Submit",
   testIdPrefix = "ApplicationForm",
 }: ApplicationFormProps): React.JSX.Element {
@@ -255,6 +262,7 @@ export default function ApplicationForm({
     lastName: firstAnswered(initialContents?.lastName, defaultNames?.lastName),
     gpaMajor: asString(initialContents?.gpaMajor),
     gpaOverall: asString(initialContents?.gpaOverall),
+    firstQuarter: Boolean(initialContents?.firstQuarter),
     yearInProgram: asString(initialContents?.yearInProgram),
     graduationDate: asString(initialContents?.graduationDate),
     prevExperience: asString(initialContents?.prevExperience),
@@ -321,6 +329,7 @@ export default function ApplicationForm({
     "previousServiceAsUla",
     "trainingCommitment",
     "languageExam",
+    "firstQuarter",
   ]);
   // Every answer, for the draft: unlike the few above, which decide what is shown, it changes on any
   // keystroke. Only a form that saves a draft pays for it.
@@ -334,6 +343,7 @@ export default function ApplicationForm({
     previousService,
     trainingCommitment,
     languageExam,
+    firstQuarter,
   ] = watched;
   // Issue #214: the quarter and year the exam was passed is required once the answer says it was.
   const asksExamDate = isTa && examPassed(languageExam);
@@ -577,8 +587,8 @@ export default function ApplicationForm({
     ...(majorMissing
       ? [{ name: asksForOtherMajor ? "otherMajor" : "major", label: "Major" }]
       : []),
-    ...missingField("gpaMajor", "GPA in Major"),
-    ...missingField("gpaOverall", "Overall GPA"),
+    ...(firstQuarter ? [] : missingField("gpaMajor", "GPA in Major")),
+    ...(firstQuarter ? [] : missingField("gpaOverall", "Overall GPA")),
     ...missingField("yearInProgram", "Year in Program"),
     ...missingField("graduationDate", "Expected Graduation"),
     ...missingField("classLevel", "PhD or MS?"),
@@ -752,34 +762,40 @@ export default function ApplicationForm({
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
           <Form.Label htmlFor={id("gpaMajor")}>
-            GPA in Major <RequiredField />
+            GPA in Major {!firstQuarter && <RequiredField />}
           </Form.Label>
           <Form.Control
             id={id("gpaMajor")}
             data-testid={id("gpaMajor")}
             type="number"
             step="0.01"
-            isInvalid={Boolean(errors.gpaMajor)}
-            {...register("gpaMajor", { required: true })}
+            disabled={firstQuarter}
+            isInvalid={Boolean(errors.gpaMajor) && !firstQuarter}
+            {...register("gpaMajor", { required: !firstQuarter })}
           />
           <Form.Control.Feedback type="invalid">
-            {errors.gpaMajor && "Your GPA in major is required."}
+            {errors.gpaMajor &&
+              !firstQuarter &&
+              "Your GPA in major is required."}
           </Form.Control.Feedback>
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
           <Form.Label htmlFor={id("gpaOverall")}>
-            Overall GPA <RequiredField />
+            Overall GPA {!firstQuarter && <RequiredField />}
           </Form.Label>
           <Form.Control
             id={id("gpaOverall")}
             data-testid={id("gpaOverall")}
             type="number"
             step="0.01"
-            isInvalid={Boolean(errors.gpaOverall)}
-            {...register("gpaOverall", { required: true })}
+            disabled={firstQuarter}
+            isInvalid={Boolean(errors.gpaOverall) && !firstQuarter}
+            {...register("gpaOverall", { required: !firstQuarter })}
           />
           <Form.Control.Feedback type="invalid">
-            {errors.gpaOverall && "Your overall GPA is required."}
+            {errors.gpaOverall &&
+              !firstQuarter &&
+              "Your overall GPA is required."}
           </Form.Control.Feedback>
         </Form.Group>
         <Form.Group as={Col} md={2} className="mb-3">
@@ -798,6 +814,18 @@ export default function ApplicationForm({
         </Form.Group>
         {/* A TA form keeps it here; the ULA one gives it half a row below (issue #117). */}
         {isTa && graduationField(2)}
+      </Row>
+      {/* Issue #292: under the two GPA fields (the Major column is 4 wide), across both of them. */}
+      <Row data-testid={id("first-quarter-row")}>
+        <Col md={{ span: 4, offset: 4 }} className="mb-3">
+          <Form.Check
+            type="checkbox"
+            id={id("firstQuarter")}
+            data-testid={id("firstQuarter")}
+            label={FIRST_QUARTER_LABELS[type]}
+            {...register("firstQuarter")}
+          />
+        </Col>
       </Row>
       {!isTa && (
         <Row data-testid={id("graduation-row")}>
@@ -1648,7 +1676,11 @@ export default function ApplicationForm({
       </Form.Group>
 
       <div className="d-flex align-items-start flex-wrap gap-3">
-        <Button type="submit" data-testid={id("submit")}>
+        <Button
+          type="submit"
+          disabled={submitDisabled}
+          data-testid={id("submit")}
+        >
           {buttonLabel}
         </Button>
         {onSaveDraft && (
@@ -1656,6 +1688,7 @@ export default function ApplicationForm({
             type="button"
             variant="outline-secondary"
             onClick={saveDraft}
+            disabled={submitDisabled}
             data-testid={id("saveDraft")}
           >
             Save Draft

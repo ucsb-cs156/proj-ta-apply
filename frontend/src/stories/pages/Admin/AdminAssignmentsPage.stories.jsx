@@ -82,7 +82,13 @@ AnotherAdminHasItOpen.parameters = {
     handlers: handlers(
       assignmentsFixtures.taPage,
       assignmentsFixtures.taPageAfterMove,
-      [{ label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false }],
+      [
+        {
+          label: "phtcon@ucsb.edu (Phill Conrad)",
+          samePerson: false,
+          admin: true,
+        },
+      ],
     ),
   },
 };

@@ -88,3 +88,25 @@ PrefilledFromAPreviousApplication.args = {
   buttonLabel: "Update Application",
   submitAction: (payload) => console.log("submit", payload),
 };
+
+/** Issue #292: a first quarter grad student ticks the box under the GPA fields, which need no values. */
+export const TaFirstQuarter = Template.bind({});
+TaFirstQuarter.args = {
+  type: "TA",
+  courses,
+  majors: taMajors,
+  topics: taTopics,
+  initialContents: { firstQuarter: true },
+  submitAction: (payload) => console.log("submit", payload),
+};
+
+/** Issue #292: the same on the ULA form, with its own wording. */
+export const UlaFirstQuarter = Template.bind({});
+UlaFirstQuarter.args = {
+  type: "ULA",
+  courses,
+  majors: ulaMajors,
+  topics: ulaTopics,
+  initialContents: { firstQuarter: true },
+  submitAction: (payload) => console.log("submit", payload),
+};

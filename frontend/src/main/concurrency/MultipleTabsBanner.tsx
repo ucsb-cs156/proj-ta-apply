@@ -1,10 +1,17 @@
-import { RISK_SENTENCE, describeOthers, type OtherClient } from "./others";
+import { warningMessage, type Audience, type OtherClient } from "./others";
 
 type MultipleTabsBannerProps = {
   /** Who else is working on the same thing, as the server last said; nothing is shown if no one. */
   others: OtherClient[];
   /** What is open twice, as it should read in the sentence: "application", "budget". */
   noun: string;
+  /** Who is reading it, which decides the closing sentence; "default" if not said. */
+  audience?: Audience;
+  /**
+   * This tab arrived after every other one, so it says who is "already" there rather than who is
+   * "also" editing. The banner of the tab that was open first leaves this false.
+   */
+  newest?: boolean;
   testId?: string;
   /**
    * Whether assistive technology should announce it when it appears. True for the live warning;
@@ -22,6 +29,8 @@ type MultipleTabsBannerProps = {
 export default function MultipleTabsBanner({
   others,
   noun,
+  audience,
+  newest = false,
   testId = "MultipleTabsBanner",
   announce = true,
 }: MultipleTabsBannerProps): React.JSX.Element | null {
@@ -36,7 +45,7 @@ export default function MultipleTabsBanner({
       style={{ overflowWrap: "anywhere" }}
       data-testid={testId}
     >
-      {describeOthers(others, noun)} {RISK_SENTENCE}
+      {warningMessage(others, noun, audience, newest)}
     </div>
   );
 }

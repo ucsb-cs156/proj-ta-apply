@@ -62,6 +62,8 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   @MockitoBean edu.ucsb.cs.taapply.repository.ApplicationRepository applicationRepository;
   @MockitoBean edu.ucsb.cs.taapply.repository.CandidateRankingRepository candidateRankingRepository;
   @MockitoBean CourseTargetsService courseTargetsService;
+  @MockitoBean edu.ucsb.cs.taapply.services.RankingVersionService rankingVersionService;
+  @MockitoBean edu.ucsb.cs.taapply.concurrency.ClientActivityDetector clientActivityDetector;
 
   private static final String EMAIL = "pconrad@ucsb.edu";
   private static final String URL = "/api/instructor/recruitments?email=" + EMAIL;
