@@ -1129,9 +1129,12 @@ describe("ApplyPage tests", () => {
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByTestId(`${MODAL}-message`)).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) is also editing this application. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) already has this application open for editing. ${RISK}`,
     );
-    expect(screen.getByTestId("ApplyPage-multiple-tabs")).toBeInTheDocument();
+    // The banner of the tab that arrived later says "already" too.
+    expect(screen.getByTestId("ApplyPage-multiple-tabs")).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) already has this application open for editing. ${RISK}`,
+    );
   });
 
   test("an older tab has the banner alone, and is not interrupted", async () => {

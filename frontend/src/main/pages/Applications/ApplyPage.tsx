@@ -192,6 +192,7 @@ export default function ApplyPage(): React.JSX.Element {
             whose submission would be refused, and for the draft it saves into. */}
         <MultipleTabsBanner
           others={others}
+          newest={newest}
           noun="application"
           testId="ApplyPage-multiple-tabs"
         />

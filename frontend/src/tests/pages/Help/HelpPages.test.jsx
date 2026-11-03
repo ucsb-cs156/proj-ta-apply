@@ -89,6 +89,9 @@ function expectRankingSimultaneousEditingSection(page, intro) {
   expect(modal).toHaveTextContent(
     "The one you opened first only shows the warning",
   );
+  expect(modal).toHaveTextContent(
+    "already have this ranking open for editing in other windows or tabs.",
+  );
   const choices = screen.getByTestId(`${page}-simultaneous-editing-choices`);
   expect(
     [...choices.querySelectorAll("li > strong")].map((b) => b.textContent),
@@ -165,6 +168,9 @@ function expectSimultaneousEditingSection(page) {
   );
   expect(modal).toHaveTextContent(
     "The one you opened first only shows the warning",
+  );
+  expect(modal).toHaveTextContent(
+    "You already have this application open in another tab or window.",
   );
   const choices = screen.getByTestId(`${page}-simultaneous-editing-choices`);
   expect(
@@ -649,6 +655,14 @@ describe("Help pages (issue #140)", () => {
     );
     expect(text("detector")).toMatch(/200 characters/);
     expect(text("detector")).toMatch(/never as markup/);
+    // The "already" form and the admin audience (issue #298).
+    expect(text("detector")).toMatch(/who is already there/);
+    expect(text("detector")).toMatch(/A already has this page open/);
+    expect(text("detector")).toMatch(/A and B already have this page open/);
+    expect(text("detector")).toMatch(/audience/);
+    expect(text("detector")).toMatch(
+      /only one Admin have this page open for edits at a time/,
+    );
     // Authorization.
     expect(text("authorization")).toMatch(/before it records the caller/);
     expect(text("authorization")).toMatch(/403/);

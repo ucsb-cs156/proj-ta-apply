@@ -169,20 +169,38 @@ The refused caller is not recorded, is told no names, and the response does not 
 > resource's tests must include the refusal and that nothing was recorded or removed by it.
 
 **The banner.** The client turns the list into a sentence with a pure function (`describeOthers`)
-and shows it, then the sentence *Please know that this is risky; we recommend closing all but one
-of these.* The noun is a parameter: "application" for a draft application, and "page", "budget",
+and shows it, then a closing sentence that depends on the audience (issue #298). The default
+audience, the application form and the faculty ranking page, closes with *Please know that this is
+risky; we recommend closing all but one of these.* The admin audience, for the admin pages that
+several admins may edit, closes with *We recommend that only one Admin have this page open for edits
+at a time.* The noun is a parameter: "application" for a draft application, and "page", "budget",
 "ranking" and so on for other screens. The names are rendered as text, which React escapes, never as
 markup. A long name wraps instead of widening the page.
 
-| Who else is active | Sentence (noun "page") |
-|---|---|
-| no one | nothing is shown |
-| only the user's own other tabs | You are also editing this page in another tab or window. |
-| one other person | phtcon@ucsb.edu (Phill Conrad) is also editing this page. |
-| the user and one other person | You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs. |
-| two or three other people | A and B are also editing this page. / A, B and C are also editing this page. |
-| the user and two or three | You, A and B are also editing this page in other windows or tabs. |
-| more than three other people | A, B, C and 2 others are also editing this page. (three named, the rest counted; "1 other" for one) |
+Which sentence names the people depends on which tab is reading. The tab that was open first says
+who is "also editing"; the tab that arrived later (the modal, and the banner of the newest tab,
+including after "Continue anyway") says who "already" has the thing open. This applies to every
+audience. With one person the verb is singular ("has"), with the user and anyone else it is plural
+("have").
+
+| Who else is active | Tab already open (noun "page") | Tab that arrived later |
+|---|---|---|
+| no one | nothing is shown | nothing is shown |
+| only the user's own other tabs | You are also editing this page in another tab or window. | You already have this page open in another tab or window. (admin audience: ...open for editing in another tab or window.) |
+| one other person | phtcon@ucsb.edu (Phill Conrad) is also editing this page. | phtcon@ucsb.edu (Phill Conrad) already has this page open for editing. |
+| the user and one other person | You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs. | You and phtcon@ucsb.edu (Phill Conrad) already have this page open for editing in other windows or tabs. |
+| two or three other people | A and B are also editing this page. / A, B and C are also editing this page. | A and B already have this page open for editing. / A, B and C already have this page open for editing. |
+| the user and two or three | You, A and B are also editing this page in other windows or tabs. | You, A and B already have this page open for editing in other windows or tabs. |
+| more than three other people | A, B, C and 2 others are also editing this page. (three named, the rest counted; "1 other" for one) | A, B, C and 2 others already have this page open for editing. |
+
+Each sentence is followed by the closing sentence of the audience. For example, for the admin
+audience: *a@example.com (Alice) is also editing this page. We recommend that only one Admin have
+this page open for edits at a time.* in the tab already open, and *a@example.com (Alice) and
+b@example.com (Bob) already have this page open for editing. We recommend that only one Admin have
+this page open for edits at a time.* in the tab that arrived later. The banner takes `audience`
+(default `"default"`, or `"admin"`) and `newest`; the modal takes `audience` and is always the later
+tab. No page uses the admin audience yet; the admin warnings (the budget, course editing and
+assignments) will.
 
 The warning clears by itself. When an extra copy is closed it says goodbye, and the next heartbeat
 of the remaining copy lists no one, so the banner goes within a heartbeat. If the goodbye is lost,

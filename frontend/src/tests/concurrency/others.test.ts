@@ -1,8 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
+  ADMIN_SENTENCE,
   MAX_NAMED,
   RISK_SENTENCE,
+  closingSentence,
   describeOthers,
+  warningMessage,
   readPresence,
   type OtherClient,
 } from "main/concurrency/others";
@@ -153,6 +156,113 @@ describe("describeOthers", () => {
     expect(
       describeOthers([person("josé@example.org (José Álvarez 李)")], "page"),
     ).toBe("josé@example.org (José Álvarez 李) is also editing this page.");
+  });
+});
+
+describe("describeOthers, for the tab that arrived later ('already')", () => {
+  const later = (others: OtherClient[], noun = "page") =>
+    describeOthers(others, noun, true);
+
+  test("says nothing when no one else is editing", () => {
+    expect(later([])).toBe("");
+  });
+
+  test("only the user's own other tabs", () => {
+    expect(later([you], "application")).toBe(
+      "You already have this application open in another tab or window.",
+    );
+    expect(describeOthers([you], "page", true, "admin")).toBe(
+      "You already have this page open for editing in another tab or window.",
+    );
+  });
+
+  test("one other person takes the singular verb", () => {
+    expect(later([person(PHILL)], "ranking")).toBe(
+      `${PHILL} already has this ranking open for editing.`,
+    );
+  });
+
+  test("the user and one other person take the plural verb", () => {
+    expect(later([you, person("A")])).toBe(
+      "You and A already have this page open for editing in other windows or tabs.",
+    );
+  });
+
+  test("two or three people take the plural verb", () => {
+    expect(later([person("A"), person("B")])).toBe(
+      "A and B already have this page open for editing.",
+    );
+    expect(later([person("A"), person("B"), person("C")])).toBe(
+      "A, B and C already have this page open for editing.",
+    );
+  });
+
+  test("more than three are counted", () => {
+    const four = ["A", "B", "C", "D"].map(person);
+    expect(later(four)).toBe(
+      "A, B, C and 1 other already have this page open for editing.",
+    );
+    expect(later([...four, person("E")])).toBe(
+      "A, B, C and 2 others already have this page open for editing.",
+    );
+    expect(later([you, ...four, person("E")])).toBe(
+      "You, A, B, C and 2 others already have this page open for editing in other windows or tabs.",
+    );
+  });
+
+  test("a name is text, kept exactly, whatever its characters", () => {
+    const sneaky = "<b>bold</b> & josé 李";
+    expect(later([person(sneaky)])).toBe(
+      `${sneaky} already has this page open for editing.`,
+    );
+  });
+});
+
+describe("closingSentence and warningMessage", () => {
+  test("the admin sentence is the agreed one", () => {
+    expect(ADMIN_SENTENCE).toBe(
+      "We recommend that only one Admin have this page open for edits at a time.",
+    );
+  });
+
+  test("the default audience, and no audience, use the risk sentence", () => {
+    expect(closingSentence()).toBe(RISK_SENTENCE);
+    expect(closingSentence("default")).toBe(RISK_SENTENCE);
+    expect(closingSentence("admin")).toBe(ADMIN_SENTENCE);
+  });
+
+  test("is empty when no one else is there, whatever the audience", () => {
+    expect(warningMessage([], "page")).toBe("");
+    expect(warningMessage([], "page", "admin", true)).toBe("");
+    expect(warningMessage([you], "page")).toBe(
+      `You are also editing this page in another tab or window. ${RISK_SENTENCE}`,
+    );
+    expect(warningMessage([you], "page", "admin", true)).toBe(
+      `You already have this page open for editing in another tab or window. ${ADMIN_SENTENCE}`,
+    );
+  });
+
+  test("joins who and the closing sentence", () => {
+    const alice = person("a@example.com (Alice)");
+    expect(warningMessage([alice], "page")).toBe(
+      `a@example.com (Alice) is also editing this page. ${RISK_SENTENCE}`,
+    );
+    expect(warningMessage([alice], "page", "admin")).toBe(
+      `a@example.com (Alice) is also editing this page. ${ADMIN_SENTENCE}`,
+    );
+    expect(warningMessage([alice], "page", "default", true)).toBe(
+      `a@example.com (Alice) already has this page open for editing. ${RISK_SENTENCE}`,
+    );
+    expect(
+      warningMessage(
+        [alice, person("b@example.com (Bob)")],
+        "page",
+        "admin",
+        true,
+      ),
+    ).toBe(
+      `a@example.com (Alice) and b@example.com (Bob) already have this page open for editing. ${ADMIN_SENTENCE}`,
+    );
   });
 });
 

@@ -139,7 +139,9 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
           <em>last</em> also asks what you want to do, in a box that covers the
           form until you answer. The one you opened first only shows the
           warning, so that it never interrupts you while you are typing. The box
-          offers three choices:
+          says who already has the application open, such as &ldquo;You already
+          have this application open in another tab or window.&rdquo; It offers
+          three choices:
         </p>
         <ul data-testid="HelpTaApplicantsPage-simultaneous-editing-choices">
           <li>

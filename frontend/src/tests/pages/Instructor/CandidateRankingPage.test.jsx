@@ -942,7 +942,7 @@ describe("CandidateRankingPage", () => {
     expect(
       screen.getByTestId("CandidateRankingPage-multiple-tabs-modal-message"),
     ).toHaveTextContent(
-      `fay@ucsb.edu (Fay Faculty) is also editing this ranking. ${RISK}`,
+      `fay@ucsb.edu (Fay Faculty) already has this ranking open for editing. ${RISK}`,
     );
     fireEvent.click(
       screen.getByTestId("CandidateRankingPage-multiple-tabs-modal-leave"),

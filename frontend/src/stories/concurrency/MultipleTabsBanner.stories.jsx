@@ -57,3 +57,75 @@ export const ALongName = () => (
     noun="page"
   />
 );
+
+// The tab that arrived later says who is "already" there (issue #298).
+export const ArrivedLaterOneOtherPerson = () => (
+  <MultipleTabsBanner
+    others={[person("phtcon@ucsb.edu (Phill Conrad)")]}
+    noun="ranking"
+    newest
+  />
+);
+
+export const ArrivedLaterOnlyYourOwnOtherTab = () => (
+  <MultipleTabsBanner others={[you]} noun="application" newest />
+);
+
+export const ArrivedLaterYouAndAnotherPerson = () => (
+  <MultipleTabsBanner
+    others={[you, person("phtcon@ucsb.edu (Phill Conrad)")]}
+    noun="ranking"
+    newest
+  />
+);
+
+// The admin audience closes with its own sentence.
+export const AdminOneOtherPersonAlreadyOpen = () => (
+  <MultipleTabsBanner
+    others={[person("a@example.com (Alice)")]}
+    noun="page"
+    audience="admin"
+  />
+);
+
+export const AdminArrivedLaterOneOtherPerson = () => (
+  <MultipleTabsBanner
+    others={[person("a@example.com (Alice)")]}
+    noun="page"
+    audience="admin"
+    newest
+  />
+);
+
+export const AdminArrivedLaterTwoOtherPeople = () => (
+  <MultipleTabsBanner
+    others={[person("a@example.com (Alice)"), person("b@example.com (Bob)")]}
+    noun="page"
+    audience="admin"
+    newest
+  />
+);
+
+export const AdminArrivedLaterOnlyYourOwnOtherTab = () => (
+  <MultipleTabsBanner others={[you]} noun="page" audience="admin" newest />
+);
+
+export const AdminArrivedLaterYouAndAnotherPerson = () => (
+  <MultipleTabsBanner
+    others={[you, person("a@example.com (Alice)")]}
+    noun="page"
+    audience="admin"
+    newest
+  />
+);
+
+export const AdminArrivedLaterMoreThanThreeOtherPeople = () => (
+  <MultipleTabsBanner
+    others={["A", "B", "C", "D", "E"].map((who) =>
+      person(`${who.toLowerCase()}@ucsb.edu`),
+    )}
+    noun="page"
+    audience="admin"
+    newest
+  />
+);
