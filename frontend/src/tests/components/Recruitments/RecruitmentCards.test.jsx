@@ -17,6 +17,13 @@ import { DELETE_TOOLTIP } from "main/components/Recruitments/RecruitmentCardLayo
 import { applicationsText } from "main/utils/adminApplications";
 import { SORT_KEYS, sortRecruitments } from "main/utils/recruitmentSort";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
+import { STALE_CONFIRMATION_MESSAGE } from "main/utils/recruitmentActions";
+
+const mockToast = vi.fn();
+vi.mock("react-toastify", async (importOriginal) => ({
+  ...(await importOriginal()),
+  toast: (x) => mockToast(x),
+}));
 
 const axiosMock = new AxiosMockAdapter(axios);
 
@@ -210,6 +217,7 @@ const order = () =>
 
 describe("RecruitmentCards tests", () => {
   beforeEach(() => {
+    mockToast.mockClear();
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock.onGet(stepsUrl).reply((config) => {
@@ -1380,5 +1388,164 @@ describe("RecruitmentCards tests", () => {
     expect(screen.getByTestId("Cards-faculty-review-save")).toHaveTextContent(
       "Save Deadline",
     );
+  });
+});
+
+/**
+ * Issue #281: the list behind the cards refreshes by itself, so a confirmation can outlive the
+ * state it asked about. These tests give the cards a new list while a window is open.
+ */
+describe("RecruitmentCards confirmations when the list refreshes", () => {
+  const [s26Ta, w26Ula, w26Ta] = three;
+
+  beforeEach(() => {
+    mockToast.mockClear();
+    axiosMock.reset();
+    axiosMock.resetHistory();
+    axiosMock.onGet(stepsUrl).reply((config) => {
+      const id = Number(config.url.match(stepsUrl)[1]);
+      const recruitment = rendered.find((r) => r.id === id);
+      return recruitment === undefined
+        ? [404, {}]
+        : [200, stepsFor(recruitment)];
+    });
+    axiosMock.onPut(/.*/).reply(200, {});
+  });
+
+  function renderRefreshable() {
+    rendered = three;
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const ui = (recruitments) => (
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <RecruitmentCards recruitments={recruitments} testIdPrefix="Cards" />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const view = render(ui(three));
+    return {
+      /** What the page would show after a background refresh. */
+      refreshTo: (recruitments) => {
+        rendered = recruitments;
+        view.rerender(ui(recruitments));
+      },
+    };
+  }
+
+  test("Close Applications closes, and says why, when someone else already closed them", async () => {
+    const { refreshTo } = renderRefreshable();
+    // Card 2 is the open ULA recruitment (id 2).
+    await userEvent.click(await stepButton(2, 4));
+    expect(await screen.findByTestId("Cards-status-modal")).toBeVisible();
+    expect(mockToast).not.toHaveBeenCalled();
+
+    refreshTo([s26Ta, { ...w26Ula, applicationStatus: "CLOSED" }, w26Ta]);
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("Cards-status-modal-yes")).toBeNull(),
+    );
+    expect(mockToast).toHaveBeenCalledTimes(1);
+    expect(mockToast).toHaveBeenCalledWith(STALE_CONFIRMATION_MESSAGE);
+    expect(STALE_CONFIRMATION_MESSAGE).toMatch(/nothing was changed/);
+    // Nothing was sent.
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("Open Applications closes when someone else already opened them", async () => {
+    const { refreshTo } = renderRefreshable();
+    // Card 0 is the closed S26 TA recruitment (id 3).
+    await userEvent.click(await stepButton(0, 2));
+    expect(await screen.findByTestId("Cards-status-modal")).toBeVisible();
+
+    refreshTo([{ ...s26Ta, applicationStatus: "OPEN" }, w26Ula, w26Ta]);
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("Cards-status-modal-yes")).toBeNull(),
+    );
+    expect(mockToast).toHaveBeenCalledWith(STALE_CONFIRMATION_MESSAGE);
+  });
+
+  test("a confirmation stays open when the refresh changes nothing it is about", async () => {
+    const { refreshTo } = renderRefreshable();
+    await userEvent.click(await stepButton(2, 4));
+    expect(await screen.findByTestId("Cards-status-modal-yes")).toBeVisible();
+
+    // Another recruitment changes, and so does an unrelated field of this one.
+    refreshTo([
+      { ...s26Ta, applicationStatus: "OPEN" },
+      { ...w26Ula, totalHiringTarget: 7 },
+      w26Ta,
+    ]);
+
+    expect(screen.getByTestId("Cards-status-modal-yes")).toBeVisible();
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  test("Close Faculty Reviews closes when reviews were already closed", async () => {
+    const { refreshTo } = renderRefreshable();
+    await userEvent.click(await stepButton(2, 6));
+    expect(await screen.findByTestId("Cards-close-reviews-yes")).toBeVisible();
+
+    refreshTo([s26Ta, { ...w26Ula, reviewStatus: "Closed" }, w26Ta]);
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("Cards-close-reviews-yes")).toBeNull(),
+    );
+    expect(mockToast).toHaveBeenCalledWith(STALE_CONFIRMATION_MESSAGE);
+    expect(axiosMock.history.put).toHaveLength(0);
+  });
+
+  test("a deadline being typed is kept when the list refreshes, until reviews were opened elsewhere", async () => {
+    const { refreshTo } = renderRefreshable();
+    await userEvent.click(await stepButton(0, 6));
+    const input = await screen.findByTestId(
+      "Cards-faculty-ranking-deadline-input",
+    );
+    await userEvent.clear(input);
+    await userEvent.type(input, "2026-03-09");
+
+    // A refresh that does not concern this window leaves what was typed alone.
+    refreshTo([{ ...s26Ta, totalHiringTarget: 9 }, w26Ula, w26Ta]);
+    expect(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+    ).toHaveValue("2026-03-09");
+    expect(mockToast).not.toHaveBeenCalled();
+
+    // Another admin opens the reviews: this window no longer applies.
+    refreshTo([{ ...s26Ta, reviewStatus: "Open" }, w26Ula, w26Ta]);
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("Cards-faculty-ranking-deadline-input"),
+      ).toBeNull(),
+    );
+    expect(mockToast).toHaveBeenCalledWith(STALE_CONFIRMATION_MESSAGE);
+  });
+
+  test("the Change Deadline window survives a status change but not the recruitment going away", async () => {
+    const { refreshTo } = renderRefreshable();
+    await userEvent.click(
+      await screen.findByTestId("Cards-card-2-edit-faculty-ranking-deadline"),
+    );
+    const input = await screen.findByTestId(
+      "Cards-faculty-ranking-deadline-input",
+    );
+    await userEvent.clear(input);
+    await userEvent.type(input, "2026-04-01");
+
+    refreshTo([s26Ta, { ...w26Ula, reviewStatus: "Closed" }, w26Ta]);
+    expect(
+      screen.getByTestId("Cards-faculty-ranking-deadline-input"),
+    ).toHaveValue("2026-04-01");
+    expect(mockToast).not.toHaveBeenCalled();
+
+    refreshTo([s26Ta, w26Ta]);
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("Cards-faculty-ranking-deadline-input"),
+      ).toBeNull(),
+    );
+    expect(mockToast).toHaveBeenCalledTimes(1);
   });
 });

@@ -29,6 +29,7 @@ function renderDraftForm({
   initialContents = undefined,
   notice = undefined,
   withHandlers = true,
+  submitDisabled = undefined,
 } = {}) {
   const view = render(
     <QueryClientProvider client={new QueryClient()}>
@@ -44,6 +45,7 @@ function renderDraftForm({
           submitAction={submitAction}
           onDraftChange={withHandlers ? onDraftChange : undefined}
           onSaveDraft={withHandlers ? onSaveDraft : undefined}
+          submitDisabled={submitDisabled}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -352,5 +354,27 @@ describe("ApplicationForm drafts", () => {
       await screen.findByTestId("ApplicationForm-missing"),
     ).toBeInTheDocument();
     expect(submitAction).not.toHaveBeenCalled();
+  });
+  /** Issue #281: the form stays on screen after its recruitment closed, but cannot be sent. */
+  test("the buttons are on unless the form is told its recruitment has closed", () => {
+    renderDraftForm();
+    expect(screen.getByTestId("ApplicationForm-submit")).toBeEnabled();
+    expect(screen.getByTestId("ApplicationForm-saveDraft")).toBeEnabled();
+  });
+
+  test("a form told its recruitment has closed turns off submit and Save Draft but keeps the answers", () => {
+    const { submitAction, onSaveDraft } = renderDraftForm({
+      submitDisabled: true,
+    });
+    type("comments", "Kept as typed");
+
+    expect(screen.getByTestId("ApplicationForm-submit")).toBeDisabled();
+    expect(screen.getByTestId("ApplicationForm-saveDraft")).toBeDisabled();
+    fireEvent.click(screen.getByTestId("ApplicationForm-saveDraft"));
+    expect(onSaveDraft).not.toHaveBeenCalled();
+    expect(submitAction).not.toHaveBeenCalled();
+    expect(screen.getByTestId("ApplicationForm-comments")).toHaveValue(
+      "Kept as typed",
+    );
   });
 });

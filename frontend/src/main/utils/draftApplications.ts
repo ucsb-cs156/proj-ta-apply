@@ -42,3 +42,7 @@ export const draftFor = (
  */
 export const draftWasSaved = (draft: DraftApplication): boolean =>
   draft.firstName !== null && draft.firstName !== undefined;
+
+/** Said above a form that is still open after its recruitment closed (issues #276, #281). */
+export const APPLICATIONS_CLOSED_MESSAGE =
+  "Applications for this recruitment have closed. Your draft is kept as of its last automatic save, but it can no longer be submitted.";

@@ -843,4 +843,32 @@ describe("CandidateRankingPage", () => {
       ).toHaveTextContent("Not specified");
     });
   });
+  /** Issue #281: the header (dates and deadline) follows what an admin changes, by itself. */
+  test("the header refreshes by itself when an admin changes the deadline", async () => {
+    axiosMock.onGet("/api/systemInfo").reply(200, {
+      ...systemInfoFixtures.showingNeither,
+      nonAdminRefresh: 1,
+      nonAdminJitter: 0,
+    });
+    axiosMock
+      .onGet(rankingUrl)
+      .reply(200, instructorRecruitmentsFixtures.candidateRankingPage);
+    renderPage();
+    expect(
+      await screen.findByTestId("CandidateRankingPage-deadline"),
+    ).toHaveTextContent("2026-02-15");
+
+    axiosMock.onGet(rankingUrl).reply(200, {
+      ...instructorRecruitmentsFixtures.candidateRankingPage,
+      facultyRankingDeadline: "2026-03-20",
+    });
+
+    await waitFor(
+      () =>
+        expect(
+          screen.getByTestId("CandidateRankingPage-deadline"),
+        ).toHaveTextContent("2026-03-20"),
+      { timeout: 5000 },
+    );
+  }, 10000);
 });

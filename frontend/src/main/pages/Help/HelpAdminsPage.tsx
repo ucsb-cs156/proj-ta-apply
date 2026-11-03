@@ -663,6 +663,42 @@ export default function HelpAdminsPage(): React.JSX.Element {
           The trail for one application is also shown on that application&apos;s
           View page.
         </p>
+
+        <h2
+          className="my-3 h4"
+          id="simultaneous-editing"
+          data-testid="HelpAdminsPage-simultaneous-editing"
+        >
+          Simultaneous Editing
+        </h2>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-refresh">
+          If you, or another admin, is editing the same thing at the same time,
+          you may get a warning on some pages, such as the draft application
+          form. For a recruitment&apos;s settings and its Recruitment Steps
+          (whether applications are open or closed, the faculty review dates,
+          allocation visibility, whether assignments are published, and which
+          boxes have a green check) there is <strong>no warning</strong>.
+          Instead the page <strong>refreshes by itself</strong>, without
+          reloading, about every 5 seconds (somewhere between 2 and 8, chosen at
+          random each time). When another admin opens or closes something, you
+          see it on its own within a few seconds, and so do instructors and
+          students, about every 15 seconds.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-safe">
+          <strong>What is safe.</strong> A click made in the few seconds before
+          a refresh still reaches the server, which judges it: closing
+          applications that are already closed changes nothing, and a step whose
+          prerequisites are not met is refused. If a confirmation window is open
+          for something that has just been done by someone else, it closes
+          itself and tells you, and nothing is changed. A date you are typing is
+          never replaced by a refresh.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
+          <strong>What to do.</strong> If a page looks out of date (for example
+          the computer was asleep, or the tab was in the background, where
+          nothing is refreshed), switch back to it and it updates at once, or
+          reload the page.
+        </p>
       </div>
     </BasicLayout>
   );
