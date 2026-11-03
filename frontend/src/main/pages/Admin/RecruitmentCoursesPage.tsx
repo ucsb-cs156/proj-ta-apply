@@ -23,6 +23,7 @@ import { useDeveloperModeFooterControls } from "main/utils/developerModeFooter";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { apiErrorMessage } from "main/utils/apiError";
 import { autoAssignTooltip } from "main/utils/allocations";
 import { toast } from "react-toastify";
@@ -50,7 +51,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
   // The enroll code typed into the add-by-enroll-code box (issue #125).
   const [enrollCode, setEnrollCode] = useState("");
 
-  const { data: courses } = useBackend<RecruitmentCourse[]>(
+  const { data: courses } = useRefreshingBackend<RecruitmentCourse[]>(
     ["/api/recruitmentcourses/all", includeRemoved],
     {
       method: "GET",
@@ -62,7 +63,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
   );
 
   // For the last-refreshed line (issue #124); every Populate stamps the recruitment.
-  const { data: recruitments } = useBackend<Recruitment[]>(
+  const { data: recruitments } = useRefreshingBackend<Recruitment[]>(
     ["/api/admin/recruitments/all"],
     { method: "GET", url: "/api/admin/recruitments/all" },
     // Stryker disable next-line all : don't test default value of empty list

@@ -684,6 +684,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           see it on its own within a few seconds, and so do instructors and
           students, about every 15 seconds.
         </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-admin-pages">
+          The same is true of the <strong>Instructors</strong> page and the{" "}
+          <strong>course pages</strong>: they refresh by themselves every few
+          seconds, so an instructor added, removed or given a catalog name by
+          another admin, or a course removed, put back or given a new enrollment
+          estimate, appears on its own. There is no warning for this area. A
+          catalog name or an estimate you are in the middle of choosing or
+          typing is not replaced.
+        </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-safe">
           <strong>What is safe.</strong> A click made in the few seconds before
           a refresh still reaches the server, which judges it: closing

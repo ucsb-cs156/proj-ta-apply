@@ -190,6 +190,8 @@ describe("InstructorsIndexPage tests", () => {
       [`/api/admin/instructors/get`],
       { method: "GET", url: `/api/admin/instructors/get` },
       [],
+      false,
+      expect.objectContaining({ refetchOnWindowFocus: true }),
     );
   });
   /** Issue #172: the list can be downloaded as a CSV, in the shape the upload accepts. */
@@ -332,6 +334,8 @@ describe("InstructorsIndexPage tests", () => {
       ["/api/admin/instructors/catalogNames"],
       { method: "GET", url: "/api/admin/instructors/catalogNames" },
       [],
+      false,
+      expect.objectContaining({ refetchOnWindowFocus: true }),
     );
   });
 

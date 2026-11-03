@@ -1,4 +1,5 @@
-import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useBackendMutation } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import RoleEmailTable, {
   NAMES_NOTE,
@@ -20,14 +21,14 @@ export const CATALOG_NAME_NOTE =
   "Catalog Name is how the course schedule spells the instructor; choose it so their courses can be matched to them. The list is filled in by the Populate job on the Courses page.";
 
 export default function InstructorsIndexPage(): React.JSX.Element {
-  const { data: instructors } = useBackend<RoleEmail[]>(
+  const { data: instructors } = useRefreshingBackend<RoleEmail[]>(
     ["/api/admin/instructors/get"],
     { method: "GET", url: "/api/admin/instructors/get" },
     // Stryker disable next-line all : don't test default value of empty list
     [],
   );
 
-  const { data: catalogNames } = useBackend<string[]>(
+  const { data: catalogNames } = useRefreshingBackend<string[]>(
     ["/api/admin/instructors/catalogNames"],
     { method: "GET", url: "/api/admin/instructors/catalogNames" },
     // Stryker disable next-line all : don't test default value of empty list

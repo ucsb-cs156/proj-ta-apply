@@ -4,7 +4,8 @@ import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import CourseTable, { type Course } from "main/components/Courses/CourseTable";
 import SingleQuarterDropdown from "main/components/Quarters/SingleQuarterDropdown";
 import SingleLevelDropdown from "main/components/Levels/SingleLevelDropdown";
-import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useBackendMutation } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { useSystemInfo } from "main/utils/systemInfo";
 import { quarterRange, toNumericYYYYQ } from "main/utils/quarterUtilities";
 import { toast } from "react-toastify";
@@ -41,7 +42,7 @@ export default function CoursesIndexPage(): React.JSX.Element {
   );
   const [level, setLevel] = useState("U");
 
-  const { data: courses } = useBackend<Course[]>(
+  const { data: courses } = useRefreshingBackend<Course[]>(
     ["/api/courses/all"],
     { method: "GET", url: "/api/courses/all" },
     // Stryker disable next-line all : don't test default value of empty list

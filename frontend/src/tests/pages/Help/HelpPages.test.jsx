@@ -667,6 +667,21 @@ describe("Help pages (issue #140)", () => {
       /never replaces what a person is typing/,
     );
     expect(text("refresh-input")).toMatch(/no longer be submitted/);
+    // Issue #282: the Instructors and Courses pages.
+    expect(text("refresh-admin-pages")).toMatch(
+      /refresh instead of warning, with the same hook/,
+    );
+    expect(text("refresh-admin-pages")).toMatch(
+      /\/api\/admin\/instructors\/get/,
+    );
+    expect(text("refresh-admin-pages")).toMatch(/\/api\/courses\/all/);
+    expect(text("refresh-admin-pages")).toMatch(
+      /\/api\/recruitmentcourses\/all/,
+    );
+    expect(text("refresh-admin-pages")).toMatch(/guarded by a warning instead/);
+    expect(text("refresh-admin-pages")).toMatch(
+      /Catalog Name dropdown keeps showing what it showed/,
+    );
 
     // Only what has landed is in the table.
     const table = screen.getByTestId("HelpDeveloperPage-simultaneous-table");
@@ -674,7 +689,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(3);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -703,6 +718,19 @@ describe("Help pages (issue #140)", () => {
     expect(rows[1].querySelector("a")).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/286",
+    );
+    // Issue #282: also a refresh, so no key.
+    expect(
+      [...rows[2].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Instructors page and non-allocation Courses page saves",
+      "Background refresh plus a refetch after each save; no warning, no version check, no detector",
+      "None (refresh, not a key)",
+      "#287",
+    ]);
+    expect(rows[2].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/287",
     );
   });
 
@@ -752,6 +780,23 @@ describe("Help pages (issue #140)", () => {
       expect(root.lastElementChild).toBe(todo);
     },
   );
+
+  test("the admin section says the Instructors and course pages refresh (issue #282)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const pages = await screen.findByTestId(
+      "HelpAdminsPage-simultaneous-editing-admin-pages",
+    );
+    expect(pages).toHaveTextContent(
+      "the Instructors page and the course pages: they refresh by themselves every few seconds",
+    );
+    expect(pages).toHaveTextContent("appears on its own");
+    expect(pages).toHaveTextContent("There is no warning for this area.");
+    expect(pages).toHaveTextContent("is not replaced");
+    expect(
+      screen.getByTestId("HelpAdminsPage-simultaneous-editing-refresh")
+        .nextElementSibling,
+    ).toBe(pages);
+  });
 
   test("the admin section says what is safe and when about 15 seconds applies", async () => {
     renderPage(<HelpAdminsPage />);

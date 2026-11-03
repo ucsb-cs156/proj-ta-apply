@@ -27,10 +27,10 @@ lose the user's data.
 
 There are two separate things to do about it, and they work at different times:
 
-| | When it acts | What it does |
-|---|---|---|
-| **Version check** | At the moment of a conflicting save | Refuses the stale save so nothing is overwritten |
-| **Multi-tab warning** | Before any conflict | Tells the user that more than one copy is open, so they can close the extras |
+|                       | When it acts                        | What it does                                                                 |
+| --------------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
+| **Version check**     | At the moment of a conflicting save | Refuses the stale save so nothing is overwritten                             |
+| **Multi-tab warning** | Before any conflict                 | Tells the user that more than one copy is open, so they can close the extras |
 
 The version check is the safeguard. The warning is the courtesy: without it the first the user
 hears of the problem is a refused save.
@@ -39,11 +39,11 @@ hears of the problem is a refused save.
 
 **Server.** The saved thing carries an integer `version` that starts at 1.
 
-* Reading it returns the version.
-* A save sends back the version the client last saw.
-* If that equals the stored version, the server applies the save, increments the version and returns
+- Reading it returns the version.
+- A save sends back the version the client last saw.
+- If that equals the stored version, the server applies the save, increments the version and returns
   the new one.
-* If it does not, the save is stale. The server changes nothing and answers `409 Conflict`, with the
+- If it does not, the save is stale. The server changes nothing and answers `409 Conflict`, with the
   current stored value and version in the body so the client can recover.
 
 The comparison and the increment must be one atomic step, not a read followed by a write, or two
@@ -74,19 +74,19 @@ newer of several tabs a modal with choices, so that the subtle banner is not the
 copy that is duplicated or restored must not inherit another copy's identifier. The client sends the
 identifier, as the request header `X-Client-Id`, with:
 
-* every save, and
-* a lightweight **heartbeat** while the screen is open, one as soon as it opens and then as often
+- every save, and
+- a lightweight **heartbeat** while the screen is open, one as soon as it opens and then as often
   as the server asks (every 5 seconds by default). The heartbeat exists to let the server see
   copies that are open but idle, and to bring back who else is there. It changes nothing: not the
   saved thing, and not its version, and
-* a **goodbye** when the copy leaves (see "Goodbye" below).
+- a **goodbye** when the copy leaves (see "Goodbye" below).
 
 **Identity.** The detector must be able to name people, but it must not know what a person is. So
 the application hands it an opaque **identity** with every client it records:
 
-* a stable **person key**, which says whether two clients are the same person. For this app it is
+- a stable **person key**, which says whether two clients are the same person. For this app it is
   the user's email address;
-* a **label**, which is what other people are shown. For this app it is `email (Full Name)`, or
+- a **label**, which is what other people are shown. For this app it is `email (Full Name)`, or
   just the email if the user has no name. A label longer than 200 characters is cut short with an
   ellipsis (never in the middle of a character), so no one's name can swell an answer.
 
@@ -96,27 +96,27 @@ The detector treats both as opaque text. The application builds the identity fro
 **Server.** A small detector answers one question: who, other than the caller, is working on this
 resource now?
 
-* It is a map from a **resource key** (a string such as `draft:42`) to a map from client id to the
+- It is a map from a **resource key** (a string such as `draft:42`) to a map from client id to the
   time that client arrived, the time it was last seen, and the identity it gave.
-* `record(resourceKey, clientId, identity)` stores "now" as the time last seen, and the identity for
+- `record(resourceKey, clientId, identity)` stores "now" as the time last seen, and the identity for
   that client. If the client was already here (seen within the window) its time of arrival is kept;
   otherwise it arrives now. It also drops entries older than the window, for every resource and not
   only this one, so the map does not grow without bound.
-* `leave(resourceKey, clientId)` forgets that client at once (see "Goodbye").
-* `arrival(resourceKey, clientId)` says whether the client is the **newest** and when it arrived (see
+- `leave(resourceKey, clientId)` forgets that client at once (see "Goodbye").
+- `arrival(resourceKey, clientId)` says whether the client is the **newest** and when it arrived (see
   "Arrival order").
-* `othersActive(resourceKey, clientId)` returns the other people active within the **window**, as a
+- `othersActive(resourceKey, clientId)` returns the other people active within the **window**, as a
   list of `{label, samePerson}`, **one entry for each person** however many tabs they have open,
   sorted by label. An entry has `samePerson` true if it is the same person as the caller (the
   caller's own other tab or window); the caller's own client is never in the list. The caller is
   compared by the identity recorded for its client id; a caller that was not recorded is nobody's
   same person.
-* The timing is two settings, read by the server from environment variables (see "Timing"). The
+- The timing is two settings, read by the server from environment variables (see "Timing"). The
   window is the heartbeat interval times the number of heartbeats that may be missed. The server
   tells the client how often to beat in each heartbeat answer, so the two are always in step.
-* The clock, the heartbeat interval and the number of missed heartbeats are constructor arguments,
+- The clock, the heartbeat interval and the number of missed heartbeats are constructor arguments,
   so tests run in zero time with a fake clock.
-* Two helpers keep the controllers short. `note(resourceKey, clientId, identity)` records the client
+- Two helpers keep the controllers short. `note(resourceKey, clientId, identity)` records the client
   if it named itself usably (present, not blank, at most 100 characters) and otherwise does
   nothing; saves call it. `heartbeat(resourceKey, clientId, identity)` records the client and
   returns the answer; a client that did not name itself usably is not recorded and is told of no
@@ -169,20 +169,20 @@ The refused caller is not recorded, is told no names, and the response does not 
 > resource's tests must include the refusal and that nothing was recorded or removed by it.
 
 **The banner.** The client turns the list into a sentence with a pure function (`describeOthers`)
-and shows it, then the sentence *Please know that this is risky; we recommend closing all but one
-of these.* The noun is a parameter: "application" for a draft application, and "page", "budget",
+and shows it, then the sentence _Please know that this is risky; we recommend closing all but one
+of these._ The noun is a parameter: "application" for a draft application, and "page", "budget",
 "ranking" and so on for other screens. The names are rendered as text, which React escapes, never as
 markup. A long name wraps instead of widening the page.
 
-| Who else is active | Sentence (noun "page") |
-|---|---|
-| no one | nothing is shown |
-| only the user's own other tabs | You are also editing this page in another tab or window. |
-| one other person | phtcon@ucsb.edu (Phill Conrad) is also editing this page. |
-| the user and one other person | You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs. |
-| two or three other people | A and B are also editing this page. / A, B and C are also editing this page. |
-| the user and two or three | You, A and B are also editing this page in other windows or tabs. |
-| more than three other people | A, B, C and 2 others are also editing this page. (three named, the rest counted; "1 other" for one) |
+| Who else is active             | Sentence (noun "page")                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| no one                         | nothing is shown                                                                                    |
+| only the user's own other tabs | You are also editing this page in another tab or window.                                            |
+| one other person               | phtcon@ucsb.edu (Phill Conrad) is also editing this page.                                           |
+| the user and one other person  | You and phtcon@ucsb.edu (Phill Conrad) are also editing this page in other windows or tabs.         |
+| two or three other people      | A and B are also editing this page. / A, B and C are also editing this page.                        |
+| the user and two or three      | You, A and B are also editing this page in other windows or tabs.                                   |
+| more than three other people   | A, B, C and 2 others are also editing this page. (three named, the rest counted; "1 other" for one) |
 
 The warning clears by itself. When an extra copy is closed it says goodbye, and the next heartbeat
 of the remaining copy lists no one, so the banner goes within a heartbeat. If the goodbye is lost,
@@ -191,32 +191,32 @@ the extra copy stops heartbeating, ages out of the window, and the banner goes t
 **Goodbye.** The banner used to clear only when a closed copy had been silent for a whole window,
 which felt slow. A copy that leaves now says so, and the server forgets it at once.
 
-* The client sends `POST .../leave?id=` with `X-Client-Id`, on the `pagehide` event and when the hook
+- The client sends `POST .../leave?id=` with `X-Client-Id`, on the `pagehide` event and when the hook
   goes away. Not `beforeunload` or `unload`: `pagehide` is the event that is reliably delivered when a
   page is closed, navigated away from or put into the back/forward cache, and the other two are
   unreliable on mobile and break that cache. Moving between pages inside the app fires no `pagehide`,
   because the browser page stays; the component using the hook unmounts instead, so unmounting says
   goodbye too.
-* It is sent with `fetch(..., { keepalive: true })`, which lets the request outlive the page. It is
+- It is sent with `fetch(..., { keepalive: true })`, which lets the request outlive the page. It is
   not `navigator.sendBeacon`, which cannot set the `X-Client-Id` header or send the CSRF token
   as a header.
-* On `pagehide` the tab also stops its heartbeats, so a heartbeat still on its way cannot put it
+- On `pagehide` the tab also stops its heartbeats, so a heartbeat still on its way cannot put it
   back on the list. If the browser restores the page from the cache (`pageshow` with
   `persisted`), the tab announces itself again at once and resumes.
-* The goodbye is authorized exactly like the heartbeat (see below): a caller who may not use the
+- The goodbye is authorized exactly like the heartbeat (see below): a caller who may not use the
   resource gets `403` and nothing is removed. It always answers `204` otherwise, whether or not
   the client was known.
-* **Delivery is not guaranteed.** A crash, a killed mobile tab or a lost network sends no goodbye.
+- **Delivery is not guaranteed.** A crash, a killed mobile tab or a lost network sends no goodbye.
   The heartbeat window stays as the fallback, so a lost goodbye costs only the old delay.
 
 **Timing.** Two environment variables, read by the server, with safe fallbacks (a value that is
 missing, blank, not a whole number or less than 1 is replaced by the default, so a typo cannot stop
 the app starting):
 
-| Variable | Default | Meaning |
-|---|---|---|
-| `CLIENT_HEARTBEAT_INTERVAL_SEC` | `5` | How often an open tab sends a heartbeat |
-| `CLIENT_TIMEOUT_MISSED_HEARTBEATS` | `3` | A tab is considered gone after this many intervals with no word from it |
+| Variable                           | Default | Meaning                                                                 |
+| ---------------------------------- | ------- | ----------------------------------------------------------------------- |
+| `CLIENT_HEARTBEAT_INTERVAL_SEC`    | `5`     | How often an open tab sends a heartbeat                                 |
+| `CLIENT_TIMEOUT_MISSED_HEARTBEATS` | `3`     | A tab is considered gone after this many intervals with no word from it |
 
 The window is the interval times the missed heartbeats: 15 seconds by default. A closed tab with no
 goodbye is forgotten after 15 seconds, and the other tab learns at its next heartbeat, within 5
@@ -225,7 +225,7 @@ replace the old `app.concurrency.window-seconds` (a 60 second window and a 20 se
 properties are `app.concurrency.heartbeat-interval-sec` and `app.concurrency.timeout-missed-heartbeats`;
 the integration tests use 2 and 3 (a 6 second window) so that a warning can be seen to clear.
 
-*Hidden tabs.* Browsers slow the timers of tabs in the background, sometimes to one a minute. A
+_Hidden tabs._ Browsers slow the timers of tabs in the background, sometimes to one a minute. A
 background tab's heartbeat can then come later than the window, so the server forgets it and the
 warning in the visible tab goes for a while. When the background tab does beat it arrives afresh, as
 the newest, and the warning returns (and the modal, if it has become the newest tab). This was
@@ -245,11 +245,11 @@ are put in order by their identifiers, so there is always exactly one newest cli
 answered. The older tabs keep only the non-blocking banner, so the first editor is never interrupted
 in the middle of typing.
 
-| Choice | What it does |
-|---|---|
-| **Leave this page** | Sends the goodbye, then navigates to the home page. It does not rely on `window.close()`, which browsers ignore for a tab the script did not open |
-| **Wait for the other tabs or windows to close, then resume here** | The page stays covered, with a note that it is waiting. The modal closes by itself when a heartbeat shows no one else |
-| **Continue anyway** | Closes the modal. The banner stays, and the version check still guards saves |
+| Choice                                                            | What it does                                                                                                                                      |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Leave this page**                                               | Sends the goodbye, then navigates to the home page. It does not rely on `window.close()`, which browsers ignore for a tab the script did not open |
+| **Wait for the other tabs or windows to close, then resume here** | The page stays covered, with a note that it is waiting. The modal closes by itself when a heartbeat shows no one else                             |
+| **Continue anyway**                                               | Closes the modal. The banner stays, and the version check still guards saves                                                                      |
 
 Why the older tab is never asked: if both tabs were asked, both could choose to wait for the other and
 neither would ever resume. Asking only the newest means the oldest tab is never waiting for anyone,
@@ -259,18 +259,18 @@ covers a third tab arriving: a tab that was waiting but is no longer the newest 
 
 Other behavior:
 
-* *Typing safety.* No button takes the focus when the modal opens, so a key meant for the form cannot
+- _Typing safety._ No button takes the focus when the modal opens, so a key meant for the form cannot
   press one. Enter is ignored for the first second after the modal appears (and again each time it
   reappears). Escape does nothing, and so does a click outside it: the question must be answered,
   and Escape is too easily pressed in passing. Focus stays inside it, it is labelled by its title,
   and it is announced as a dialog.
-* *It does not nag.* After **Continue anyway** the modal does not come back at each heartbeat. The
+- _It does not nag._ After **Continue anyway** the modal does not come back at each heartbeat. The
   choice is remembered for as long as the tab's `arrivedAtMillis` stays the same. A person or tab that
   joins afterwards arrives after this one, so this tab is no longer the newest and has no modal to
   show; if that other tab leaves, this one is the newest again but its choice stands. The modal
   returns only if this tab itself arrives afresh, for example after being forgotten while in the
   background.
-* The modal reuses the sentence the banner composes (names, wording rules and the banner text are
+- The modal reuses the sentence the banner composes (names, wording rules and the banner text are
   unchanged by #284).
 
 **What the warning is not.** It is advice, not a lock. A user who ignores it is still protected by
@@ -278,40 +278,40 @@ the version check.
 
 ### Limits
 
-* **One server.** The detector's state is in memory. With two server processes behind a load
+- **One server.** The detector's state is in memory. With two server processes behind a load
   balancer, each sees only the requests it handled, so two copies talking to different processes
   would not see each other. The app runs as a single instance today. If that changes, the state
   moves to the database: a table of `(resource_key, client_id, last_seen)` rows, written on each
   save or heartbeat and read with a time cutoff, with old rows deleted by the same query. The
   interface stays the same and only the store changes, which is the reason for putting it behind an
   interface.
-* **A server restart** forgets who was open. The warning is absent for up to one window. The version
+- **A server restart** forgets who was open. The warning is absent for up to one window. The version
   check, which lives in the database, is unaffected.
-* **Idle copies without a heartbeat** are invisible, which is why the heartbeat exists. A copy in a
+- **Idle copies without a heartbeat** are invisible, which is why the heartbeat exists. A copy in a
   background tab may have its timers throttled by the browser, and then be forgotten for a while: see
   "Hidden tabs" above. The short window (15 seconds by default) makes this more likely than the old
   60 seconds did; both numbers can be raised with the environment variables.
-* **A goodbye that does not arrive** (a crash, a killed mobile tab, a lost network) is covered by the
+- **A goodbye that does not arrive** (a crash, a killed mobile tab, a lost network) is covered by the
   window.
-* **One copy only** never sees either mechanism. This is as intended.
-* **Different people editing the same thing** are named in the warning, and told apart from the
-  user's own other tabs (*You*). Both are conflicts and both are handled the same way by the
+- **One copy only** never sees either mechanism. This is as intended.
+- **Different people editing the same thing** are named in the warning, and told apart from the
+  user's own other tabs (_You_). Both are conflicts and both are handled the same way by the
   version check. A draft application has one owner, so its warning is only ever about the owner's
   own tabs; the names matter for resources that several people may use (Part 2).
-* **Names are shown to people who may use the resource, and to no one else.** That is the
+- **Names are shown to people who may use the resource, and to no one else.** That is the
   authorization rule above, and it is the application's job, not the detector's.
-* **No merging.** The mechanism detects and refuses. It does not combine two sets of edits. Where
+- **No merging.** The mechanism detects and refuses. It does not combine two sets of edits. Where
   the edits are to different fields of one record this is a real cost, which Part 2 returns to.
 
 ### Keeping it self-contained
 
 The pieces are written so that they could later be lifted out as libraries without edits.
 
-| | Where | Depends on |
-|---|---|---|
-| Server | A package of its own, `edu.ucsb.cs.taapply.concurrency` | The JDK only. No entity, repository or service from the app, and not even Spring |
-| Client | A folder of its own, `frontend/src/main/concurrency/` | React, `axios` and `react-bootstrap` (for the modal's focus trap and dialog markup). No import from `main/components`, `main/pages` or `main/utils`, and the banner uses plain Bootstrap class names |
-| Tests | `src/test/.../concurrency/` and `frontend/src/tests/concurrency/` | The same, plus a fake clock |
+|        | Where                                                             | Depends on                                                                                                                                                                                           |
+| ------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Server | A package of its own, `edu.ucsb.cs.taapply.concurrency`           | The JDK only. No entity, repository or service from the app, and not even Spring                                                                                                                     |
+| Client | A folder of its own, `frontend/src/main/concurrency/`             | React, `axios` and `react-bootstrap` (for the modal's focus trap and dialog markup). No import from `main/components`, `main/pages` or `main/utils`, and the banner uses plain Bootstrap class names |
+| Tests  | `src/test/.../concurrency/` and `frontend/src/tests/concurrency/` | The same, plus a fake clock                                                                                                                                                                          |
 
 The server package holds the detector interface (`ClientActivityDetector`, with the `note` and
 `heartbeat` helpers, and `leave` and `arrival`), its in-memory implementation
@@ -363,15 +363,15 @@ mean something together.
 
 ### Scope of each issue
 
-| Issue | Page | Scope | Resource key | Order |
-|---|---|---|---|---|
-| #273 | Application form draft | One applicant's draft for one recruitment | `draft:<draftId>` | first |
-| #277 | Budget | One quarter's budget (compare-and-set for a recruitment's average cost and hiring target) | `budget:<quarter>` | 2 |
-| #278 | Courses allocations and estimated enrollments | The whole edit page for one recruitment | `courses-edit:<recruitmentId>` | 3 |
-| #279 | Faculty rankings | One recruitment course's ranking list | `ranking:<recruitmentCourseId>` | 4 |
-| #280 | Assignments | The whole assignments page for one recruitment | `assignments:<recruitmentId>` | 5 |
-| #281 | Recruitment settings and workflow steps, for admins, instructors and students | No warning; background refresh plus refetch after each save | None (refresh, not a key) | extension |
-| #282 | Instructors page and non-allocation Courses page saves | No warning; same background refresh as #281 plus a refetch after each save | None (refresh, not a key) | extension |
+| Issue | Page                                                                          | Scope                                                                                     | Resource key                    | Order     |
+| ----- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------- | --------- |
+| #273  | Application form draft                                                        | One applicant's draft for one recruitment                                                 | `draft:<draftId>`               | first     |
+| #277  | Budget                                                                        | One quarter's budget (compare-and-set for a recruitment's average cost and hiring target) | `budget:<quarter>`              | 2         |
+| #278  | Courses allocations and estimated enrollments                                 | The whole edit page for one recruitment                                                   | `courses-edit:<recruitmentId>`  | 3         |
+| #279  | Faculty rankings                                                              | One recruitment course's ranking list                                                     | `ranking:<recruitmentCourseId>` | 4         |
+| #280  | Assignments                                                                   | The whole assignments page for one recruitment                                            | `assignments:<recruitmentId>`   | 5         |
+| #281  | Recruitment settings and workflow steps, for admins, instructors and students | No warning; background refresh plus refetch after each save                               | None (refresh, not a key)       | extension |
+| #282  | Instructors page and non-allocation Courses page saves                        | No warning; same background refresh as #281 plus a refetch after each save                | None (refresh, not a key)       | extension |
 
 ### Two facts that hold for the surveyed screens
 
@@ -439,8 +439,8 @@ the minimum-of-one rule from #257).
 
 **What goes wrong today.** Two cases.
 
-1. *Cell against cell.* As with the budget: the same course's allocation set to two values.
-2. *Cell against Auto Allocate.* An admin runs Auto Allocate in one tab while another tab has the
+1. _Cell against cell._ As with the budget: the same course's allocation set to two values.
+2. _Cell against Auto Allocate._ An admin runs Auto Allocate in one tab while another tab has the
    table open. The second tab still shows the old numbers, including a total that matched the hiring
    target. A single cell edit from there writes one number into a table whose other rows have all
    changed, and the total no longer equals the target. No error occurs.
@@ -451,14 +451,14 @@ copy that can edit them is a second copy that can break them.
 **Fit: split the page in two.** The Courses page for a recruitment becomes a **view-only page** and
 an **edit page**.
 
-* The **view-only page** is the default. Nothing on it is editable. It never heartbeats, never
+- The **view-only page** is the default. Nothing on it is editable. It never heartbeats, never
   warns, and any number of tabs can have it open.
-* The **edit page** is essentially today's page, with the cells editable. It sends the heartbeat and
+- The **edit page** is essentially today's page, with the cells editable. It sends the heartbeat and
   shows the banner, keyed `courses-edit:<recruitmentId>`.
-* The view-only page has an **Edit** button, with the text beside it "Edit estimated enrollments,
+- The view-only page has an **Edit** button, with the text beside it "Edit estimated enrollments,
   and TA/ULA allocations", so that an admin knows why they would press it. The button leads to the
   edit page.
-* Where a link from elsewhere in the app should land, on the view or the edit page, is left to
+- Where a link from elsewhere in the app should land, on the view or the edit page, is left to
   #278 to decide, one link at a time.
 
 This puts the scope principle to work: the warning is only ever about the screens that can change
@@ -492,12 +492,12 @@ endpoint is open to instructors and to admins.
 
 **What goes wrong today.**
 
-* The same instructor with two tabs sees ranks as they were when each loaded. A rank of 3 entered in
+- The same instructor with two tabs sees ranks as they were when each loaded. A rank of 3 entered in
   one tab can sit beside a 3 entered for a different candidate in the other: a tie the instructor did
   not mean. The table warns about ties only for the copy that holds both values.
-* If more than one person can rank for the same course (an instructor and an admin, or two
+- If more than one person can rank for the same course (an instructor and an admin, or two
   instructors on a co-taught course), they can undo each other's work without either learning of it.
-* The rankings feed the Candidates Ranked and Rankings Still Needed counts, so the admin's picture is
+- The rankings feed the Candidates Ranked and Rankings Still Needed counts, so the admin's picture is
   wrong until the next re-read.
 
 **Fit.** The whole list for the course is the thing, even though each save is one row, because a rank
@@ -531,11 +531,11 @@ Assignments are admin-only. Publishing them is a separate step (#243).
 
 **What goes wrong today.**
 
-* Two admins assign different applicants to the same course, each sure a place is left. The counts
+- Two admins assign different applicants to the same course, each sure a place is left. The counts
   that are right for the saver are stale for the other.
-* The same applicant is assigned to one course by one admin and to another by a second. The second
+- The same applicant is assigned to one course by one admin and to another by a second. The second
   save replaces the first, and the first admin's page still shows the applicant where they put them.
-* An admin working from a stale page after the other has published, or after an applicant has
+- An admin working from a stale page after the other has published, or after an applicant has
   cancelled, acts on a state that no longer exists.
 
 **Fit.** What matters (how many are assigned to each course, who is unassigned) are properties of the
@@ -568,32 +568,32 @@ who are only reading.
 
 **What it looks like.**
 
-* **Refetch after each save.** Whatever a page changes, it re-reads the state that depends on it, as
+- **Refetch after each save.** Whatever a page changes, it re-reads the state that depends on it, as
   the cards already do for their own saves.
-* **A background refresh every few seconds, without a full page reload.** The data is re-read in the
+- **A background refresh every few seconds, without a full page reload.** The data is re-read in the
   background and the page updates in place. See **Refresh timing** below.
-* **Paused in hidden tabs.** A tab that cannot be seen does not poll. When it is shown again, or the
+- **Paused in hidden tabs.** A tab that cannot be seen does not poll. When it is shown again, or the
   window gets focus, it refetches at once, so that coming back to a tab never shows the old state for
   longer than one request.
-* **Cheap queries only.** Only the light reads that feed the state are refreshed, such as the
+- **Cheap queries only.** Only the light reads that feed the state are refreshed, such as the
   recruitment steps and the recruitment list. The heavy tables (applications, rankings, assignments)
   are not polled by this mechanism.
-* **Never overwrite input in progress.** A refresh updates what is displayed. It does not replace a
+- **Never overwrite input in progress.** A refresh updates what is displayed. It does not replace a
   field the user is typing in, or an edit they have not saved.
-* **A repeated Close is a no-op on the server.** Closing a step that is already closed (or opening
+- **A repeated Close is a no-op on the server.** Closing a step that is already closed (or opening
   one that is already open) succeeds and changes nothing, so a click from a copy that is a few
   seconds stale is harmless instead of an error or a second state change.
 
 **Refresh timing.** After each refresh, a client waits a **freshly drawn random time**, uniform
-between *base - jitter* and *base + jitter* seconds, before the next one. The randomness is the
+between _base - jitter_ and _base + jitter_ seconds, before the next one. The randomness is the
 point: clients that all started together, such as a classroom of students opening the home page at
 the same moment, drift apart instead of asking the server at the same instant every time. Admins are
 few and need the freshest picture. Instructors and students are many, so they wait longer.
 
-| Who | Base | Jitter | Waits between | Environment variables |
-|---|---|---|---|---|
-| Admins | 5 s | 3 s | 2 to 8 s | `ADMIN_REFRESH_SEC=5`, `ADMIN_REFRESH_JITTER=3` |
-| Instructors and students | 15 s | 5 s | 10 to 20 s | `NON_ADMIN_REFRESH=15`, `NON_ADMIN_JITTER=5` |
+| Who                      | Base | Jitter | Waits between | Environment variables                           |
+| ------------------------ | ---- | ------ | ------------- | ----------------------------------------------- |
+| Admins                   | 5 s  | 3 s    | 2 to 8 s      | `ADMIN_REFRESH_SEC=5`, `ADMIN_REFRESH_JITTER=3` |
+| Instructors and students | 15 s | 5 s    | 10 to 20 s    | `NON_ADMIN_REFRESH=15`, `NON_ADMIN_JITTER=5`    |
 
 All four are environment variables, with the values above as the defaults, so the load can be tuned
 without a release. A value that is missing, not a number, zero or negative (for a base), or a jitter
@@ -604,16 +604,16 @@ settings can never make a client refresh in a tight loop or never.
 interval, no refetching while the tab is hidden, and refetching on focus. Built in #281 as one shared
 mechanism, not intervals scattered through the pages:
 
-* `useRefreshingBackend` (`frontend/src/main/utils/useRefreshingBackend.ts`) is `useBackend` plus
+- `useRefreshingBackend` (`frontend/src/main/utils/useRefreshingBackend.ts`) is `useBackend` plus
   a `refetchInterval` **function**. react-query asks the function again after every fetch, so each
   wait is a new draw. `refetchIntervalInBackground` is false and `refetchOnWindowFocus` is true.
   Options passed by the caller win. #282 uses the same hook.
-* `nextRefreshMs(timing, random)` (`main/utils/refreshInterval.ts`) makes the draw. The random source
+- `nextRefreshMs(timing, random)` (`main/utils/refreshInterval.ts`) makes the draw. The random source
   is an argument so tests are deterministic. A wait is never under 1 second.
-* The four settings are read by the server (`application.properties`, `RefreshSetting`) and sent to
+- The four settings are read by the server (`application.properties`, `RefreshSetting`) and sent to
   every page in the public `/api/systemInfo` answer, like `ENABLE_DEVELOPER_MODE`, so they change on
   a deployed instance with a restart and no rebuild. The browser checks them again.
-* The role is the admin role: anyone with `ROLE_ADMIN` uses the admin pair even if also an
+- The role is the admin role: anyone with `ROLE_ADMIN` uses the admin pair even if also an
   instructor.
 
 **Bad values.** A base that is missing, not a number or below 1 second is the default. A jitter that
@@ -623,16 +623,16 @@ never larger than its base. No wait is ever shorter than 1 second.
 **Survey (done for #281).** What feeds the recruitment state, how expensive it is, and what is
 refreshed:
 
-| Query | Who | Cost | Refreshed |
-|---|---|---|---|
-| `GET /api/admin/recruitments/all` | Admin cards | One table read | Yes |
-| `GET /api/admin/recruitments/{id}/steps` | Admin cards (Recruitment Steps panel) | Computes the step counts, per recruitment | Yes, for admins only (never students) |
-| `GET /api/admin/recruitments/applicationCounts` | Admin cards | Loads every application of every recruitment | **No**, refetched after saves only |
-| `GET /api/instructor/recruitments` | Instructor home section | Small | Yes |
-| `GET /api/recruitments/applicable` | Student home section, application form | Small | Yes |
-| `GET /api/applications/mine`, `GET /api/draftApplications/mine` | Student home section | Small | Yes |
-| `GET /api/instructor/recruitments/{id}/courses/{cid}/ranking` | Faculty ranking page header | Small | Yes |
-| Application page (`/applications/{id}`) list of recruitments | Student editing a submitted application | Small | **No**: a closed recruitment would swap the form for a read-only view and lose unsaved edits |
+| Query                                                           | Who                                     | Cost                                         | Refreshed                                                                                    |
+| --------------------------------------------------------------- | --------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `GET /api/admin/recruitments/all`                               | Admin cards                             | One table read                               | Yes                                                                                          |
+| `GET /api/admin/recruitments/{id}/steps`                        | Admin cards (Recruitment Steps panel)   | Computes the step counts, per recruitment    | Yes, for admins only (never students)                                                        |
+| `GET /api/admin/recruitments/applicationCounts`                 | Admin cards                             | Loads every application of every recruitment | **No**, refetched after saves only                                                           |
+| `GET /api/instructor/recruitments`                              | Instructor home section                 | Small                                        | Yes                                                                                          |
+| `GET /api/recruitments/applicable`                              | Student home section, application form  | Small                                        | Yes                                                                                          |
+| `GET /api/applications/mine`, `GET /api/draftApplications/mine` | Student home section                    | Small                                        | Yes                                                                                          |
+| `GET /api/instructor/recruitments/{id}/courses/{cid}/ranking`   | Faculty ranking page header             | Small                                        | Yes                                                                                          |
+| Application page (`/applications/{id}`) list of recruitments    | Student editing a submitted application | Small                                        | **No**: a closed recruitment would swap the form for a read-only view and lose unsaved edits |
 
 Step actions on the server: `PUT /api/admin/recruitments/status` re-stamped `actualClosingDate` on
 every Close; it now returns the recruitment untouched, with nothing saved or recorded, if the status
@@ -669,9 +669,37 @@ fresh picture and, on the server, saves that are safe to repeat.
 part of the Courses page split in (b), where the whole edit page is guarded with a heartbeat and a
 banner. #282 covers the saves that are left.
 
-**First step of the issue.** A survey, written into this section, before any code: each save on the
-two pages, which are already safe to repeat, and which queries a page needs refreshed. The survey
-updates this document.
+**As built (#282).** The pages call `useRefreshingBackend` from (e) in place of `useBackend` for
+their light reads, at the admin interval and jitter (`ADMIN_REFRESH_SEC`, `ADMIN_REFRESH_JITTER`;
+only admins use these pages). Every save already invalidated the list it changed, which is the
+refetch after each save, so no mutation changed. The queries that refresh:
+
+| Page                        | Queries refreshed                                                   |
+| --------------------------- | ------------------------------------------------------------------- |
+| Instructors                 | `/api/admin/instructors/get`, `/api/admin/instructors/catalogNames` |
+| Courses (catalog)           | `/api/courses/all`                                                  |
+| A recruitment's course list | `/api/recruitmentcourses/all`, `/api/admin/recruitments/all`        |
+
+Left alone on the course list page: the ranking summaries (heavier, and read only), the hidden
+columns, and the allocation and estimate saves, which stay with #278.
+
+**Input in progress.** Three kinds of input, three answers:
+
+- The Catalog Name dropdown keeps showing what it showed, or what was just chosen, while it has
+  focus, and follows the stored value again once it is left, so another admin's change appears
+  after the person is done. The cell is a module-level component with its settings in a context:
+  the table renders a `cell` function as a component, so one made anew on every render of the
+  table would be remounted on every render, which would drop the focus and the dropdown with it.
+- The enrollment estimate and allocation boxes already show their own draft while they have focus
+  (from the saves added in #174 and #175), so a refresh updates every other row and the stored
+  value, never the box being typed in.
+- A CSV being chosen lives in the upload form's own state, which a refresh does not touch.
+
+**Survey.** Each save is one value set to an absolute result and the server already treats a
+repeat as a no-op or the same write (deleting an instructor who is already gone, removing a course
+twice), so no server change was needed. A stale view only risks acting on something already
+changed; a refresh every few seconds, and a refetch on focus, bring that down to the same few
+seconds as in (e).
 
 ## Iterations
 
@@ -720,7 +748,7 @@ is a day or less, M a few days, L about a week.
    warning, with the same background refresh as #281 and a refetch after each save, for adding,
    uploading and deleting instructors, setting a catalog name, and the Courses page saves other than
    the allocations and estimates (which stay with #278). No version check, detector or banner. A
-   survey first, which updates section (f) of this document.
+   survey first, which updates section (f) of this document. Built: see section (f).
 
 After iteration 2 it is worth stopping to look at what the second user of the package needed that the
 first did not, and to fix the package before three more screens depend on it. That is also the moment
