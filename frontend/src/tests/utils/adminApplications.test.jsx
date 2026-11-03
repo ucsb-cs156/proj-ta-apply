@@ -1,5 +1,7 @@
 import {
   adminApplicationEditPath,
+  adminApplicationUrls,
+  draftsText,
   adminApplicationPath,
   applicationsListPath,
   receivedText,
@@ -66,5 +68,36 @@ describe("adminApplications utils", () => {
     expect(applicationsListPath("7")).toBe(
       "/admin/recruitments/7/applications",
     );
+  });
+
+  test("a draft is viewed on its own path, which the list and the comments page lead back from", () => {
+    expect(adminApplicationPath(5, true)).toBe("/admin/draft-applications/5");
+    expect(adminApplicationPath("5", true)).toBe("/admin/draft-applications/5");
+    expect(adminApplicationPath(5, false)).toBe("/admin/applications/5");
+    expect(applicationsListPath(7, true)).toBe(
+      "/admin/recruitments/7/draft-applications",
+    );
+    expect(applicationsListPath(7, false)).toBe(
+      "/admin/recruitments/7/applications",
+    );
+  });
+
+  test("the urls an application and a draft are read from and commented on differ only by their base", () => {
+    expect(adminApplicationUrls(false)).toEqual({
+      one: "/api/admin/applications",
+      all: "/api/admin/applications/all",
+      comments: "/api/admin/applications/adminComments",
+    });
+    expect(adminApplicationUrls(true)).toEqual({
+      one: "/api/admin/draftApplications",
+      all: "/api/admin/draftApplications/all",
+      comments: "/api/admin/draftApplications/adminComments",
+    });
+  });
+
+  test("draftsText counts, with the singular for one", () => {
+    expect(draftsText(0)).toBe("0 Draft Applications");
+    expect(draftsText(1)).toBe("1 Draft Application");
+    expect(draftsText(2)).toBe("2 Draft Applications");
   });
 });

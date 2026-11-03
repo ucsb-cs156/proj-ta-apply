@@ -200,11 +200,24 @@ describe("RecruitmentCardLayout tests", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("the footer has only Courses and Applications", () => {
+  test("the footer has only Courses, Draft Applications and Applications, in that order", () => {
     renderCard();
 
     const footer = screen.getByTestId("C-courses-button").parentElement;
-    expect(within(footer).getAllByRole("link")).toHaveLength(2);
+    expect(within(footer).getAllByRole("link")).toHaveLength(3);
+    expect(
+      within(footer)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Courses", "Draft Applications", "Applications"]);
+    expect(screen.getByTestId("C-draft-applications-button")).toHaveAttribute(
+      "href",
+      "/admin/recruitments/1/draft-applications",
+    );
+    expect(screen.getByTestId("C-draft-applications-button")).toHaveClass(
+      "btn",
+      "btn-outline-info",
+    );
     expect(screen.getByTestId("C-courses-button")).toHaveAttribute(
       "href",
       "/admin/recruitments/1/courses",

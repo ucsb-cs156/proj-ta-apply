@@ -483,7 +483,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <Link to="/help/recruitment-steps">Recruitment Steps</Link> diagram
           (collapsed to a one-line summary on older cards, expanded on the
           latest TA and ULA recruitments). Its boxes carry the lifecycle
-          actions, and the card has Courses and Applications buttons:
+          actions, and the card has Courses, Draft Applications and Applications
+          buttons:
         </p>
         <ul data-testid="HelpAdminsPage-recruitment-buttons">
           <li
@@ -542,6 +543,29 @@ export default function HelpAdminsPage(): React.JSX.Element {
             layout is on the CSV formats page). The button is at the top of the
             Applications page; the rankings download,{" "}
             <strong>Download Rankings CSV</strong>, is on the Courses page.
+          </li>
+          <li
+            id="draft-applications"
+            data-testid="HelpAdminsPage-draft-applications"
+          >
+            <strong>Draft Applications.</strong> The applications students have
+            started but not yet submitted, which are not considered until they
+            are. A student&apos;s draft appears as soon as they open the form,
+            even if they have typed nothing, and is saved as they type, so the
+            page always shows what they have so far; the count of drafts is at
+            the top. The table has the same columns as the Applications table
+            (and hiding or showing a column on one does the same on the other),
+            except that there is no <em>Edit</em> column, since an admin may not
+            change what a student has written, and <em>Submitted</em> is
+            replaced by <em>Last saved</em>. <em>View</em> opens the draft read
+            only, with a box for your own comments; the student never sees them.
+            When the student submits, the draft leaves this page and your
+            comments are copied to the new application&apos;s Admin Comments. A
+            draft that goes any other way (for example, its recruitment is
+            deleted) takes its comments with it. There is no CSV download of
+            drafts, since a draft may be empty or half finished. Drafts show the
+            same personal details as applications do, so the same care is asked
+            of you.
           </li>
           <li>
             <strong>Applications.</strong> The list of applications, with a

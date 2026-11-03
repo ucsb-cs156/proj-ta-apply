@@ -67,6 +67,37 @@ const savedUlaDraft = {
   availableForDiscussionSecondChoice: false,
 };
 
-const draftApplicationsFixtures = { emptyUlaDraft, savedUlaDraft };
+/** Issue #296: how an admin sees them, with their own comments (null until they write some). */
+const adminEmptyUlaDraft = { ...emptyUlaDraft, adminComments: null };
+const adminSavedUlaDraft = {
+  ...savedUlaDraft,
+  adminComments: "Ask about the video link",
+};
+
+/** A TA draft (recruitment 1 is the TA round), saved with a name, a first quarter marker and a level. */
+const adminSavedTaDraft = {
+  ...emptyUlaDraft,
+  id: 22,
+  recruitmentId: 1,
+  email: "ta@ucsb.edu",
+  updatedAt: "2026-01-12T08:15:00",
+  version: 2,
+  firstName: "Tess",
+  middleName: "A",
+  lastName: "Ative",
+  major: "Statistics",
+  firstQuarter: true,
+  classLevel: "MS",
+  firstChoiceCourse: "CMPSC   156",
+  adminComments: null,
+};
+
+const draftApplicationsFixtures = {
+  emptyUlaDraft,
+  savedUlaDraft,
+  adminEmptyUlaDraft,
+  adminSavedUlaDraft,
+  adminSavedTaDraft,
+};
 
 export default draftApplicationsFixtures;

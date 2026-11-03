@@ -1,5 +1,7 @@
 import type { Application } from "main/components/Applications/ApplicationTable";
 import { submittedText } from "main/utils/adminApplications";
+import type { AdminDraftApplication } from "main/utils/draftApplications";
+import { formatPacificDateTime } from "main/utils/pacificTime";
 import {
   CLASS_LEVEL_LABELS,
   LANGUAGE_EXAM_LABELS,
@@ -32,6 +34,12 @@ export const DEFAULTS_MARKER = "_defaultsApplied";
 
 export type ApplicationType = "TA" | "ULA";
 
+/**
+ * A row of the table: a submitted application or, on the drafts page (issue #296), a draft. The
+ * columns below read the answers by the same names from either, so the two tables cannot drift.
+ */
+export type ApplicationRow = Application | AdminDraftApplication;
+
 export type ApplicationColumn = {
   id: string;
   label: string;
@@ -43,7 +51,9 @@ export type ApplicationColumn = {
   defaultHidden: boolean;
   /** Narrow columns shrink to their content; the rest take their natural width. */
   shrink: boolean;
-  value: (application: Application) => string;
+  value: (application: ApplicationRow) => string;
+  /** What differs when the row is a draft; everything else about the column is the same. */
+  draft?: { label: string; value: (application: ApplicationRow) => string };
 };
 
 /** Blank rather than "null", like the summary. */
@@ -73,7 +83,7 @@ export const levelsText = (
 };
 
 /** "2/3/2026, 4:05:00 AM: Found other employment" for a cancelled application; blank otherwise. */
-export const cancelledText = (application: Application): string =>
+export const cancelledText = (application: ApplicationRow): string =>
   application.status === "CANCELLED"
     ? `${submittedText(application.cancelledAt)}: ${show(application.cancellationReason)}`
     : "";
@@ -82,7 +92,7 @@ const column = (
   id: string,
   label: string,
   defaultHidden: boolean,
-  value: (application: Application) => string,
+  value: (application: ApplicationRow) => string,
   extra: Partial<ApplicationColumn> = {},
 ): ApplicationColumn => ({
   id,
@@ -98,8 +108,20 @@ const ULA: ApplicationType[] = ["ULA"];
 
 /** Every hideable column, for both types, in table order. */
 export const ALL_APPLICATION_COLUMNS: ApplicationColumn[] = [
-  column("submittedAt", "Submitted", false, (a) =>
-    submittedText(a.submittedAt),
+  // A draft was never submitted; what it has instead is when the applicant last saved it.
+  column(
+    "submittedAt",
+    "Submitted",
+    false,
+    (a) => submittedText(a.submittedAt),
+    {
+      draft: {
+        label: "Last saved",
+        // Only ever asked of a draft, which is the one kind of row that has it.
+        value: (a) =>
+          formatPacificDateTime((a as AdminDraftApplication).updatedAt),
+      },
+    },
   ),
   column("email", "Email", false, (a) => show(a.email)),
   column("major", "Major", false, (a) => show(a.major)),
@@ -350,16 +372,18 @@ export const ALL_APPLICATION_COLUMNS: ApplicationColumn[] = [
 /** The hideable columns of a recruitment of the given type, in table order. */
 export const applicationColumns = (
   type: ApplicationType,
+  draft = false,
 ): ApplicationColumn[] =>
   ALL_APPLICATION_COLUMNS.filter(
     (c) => c.types === undefined || c.types.includes(type),
-  );
+  ).map((c) => (draft && c.draft ? { ...c, ...c.draft } : c));
 
 /** What the Columns menu offers: every hideable column's id and label. */
 export const applicationColumnChoices = (
   type: ApplicationType,
+  draft = false,
 ): { id: string; label: string }[] =>
-  applicationColumns(type).map(({ id, label }) => ({ id, label }));
+  applicationColumns(type, draft).map(({ id, label }) => ({ id, label }));
 
 /**
  * The ids hidden until an admin shows them, plus the marker that says the defaults have been

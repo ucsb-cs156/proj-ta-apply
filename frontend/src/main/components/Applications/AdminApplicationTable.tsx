@@ -2,7 +2,6 @@ import { Link } from "react-router";
 import type { Cell } from "@tanstack/react-table";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
-import type { Application } from "main/components/Applications/ApplicationTable";
 import ApplicationOriginBadge from "main/components/Applications/ApplicationOriginBadge";
 import {
   adminApplicationEditPath,
@@ -12,10 +11,18 @@ import {
   applicationColumns,
   show,
   type ApplicationColumn,
+  type ApplicationRow,
 } from "main/utils/applicationColumns";
 
 type AdminApplicationTableProps = {
-  applications: Application[];
+  /** Submitted applications, or drafts when `draft` is set. */
+  applications: ApplicationRow[];
+  /**
+   * Whether the rows are drafts (issue #296). The same table serves both, so that a column added
+   * or removed shows in both; a draft's differ only in having no Edit button, no origin badge and
+   * links that lead to the draft's page.
+   */
+  draft?: boolean;
   /** TA and ULA applications answer different questions, so the columns differ. */
   type: "TA" | "ULA";
   /** Column ids the admin has hidden (issue #189); see applicationColumns. */
@@ -55,31 +62,48 @@ const toLegacyColumn = (column: ApplicationColumn): LegacyColumn => ({
 export default function AdminApplicationTable({
   applications,
   type,
+  draft = false,
   // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
   hiddenColumns = [],
   testIdPrefix = "AdminApplicationTable",
 }: AdminApplicationTableProps): React.JSX.Element {
+  const editColumn: LegacyColumn = {
+    header: "Edit",
+    id: "edit",
+    meta: shrinkToContent,
+    cell: ({ cell }: { cell: Cell<ApplicationRow, unknown> }) => (
+      <Link
+        className="btn btn-primary btn-sm"
+        to={adminApplicationEditPath(cell.row.original.id)}
+        data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-edit-button`}
+      >
+        Edit
+      </Link>
+    ),
+  };
   const columns: LegacyColumn[] = [
     {
       header: "id",
       id: "id",
       accessorKey: "id",
       meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<Application, unknown> }) => {
+      cell: ({ cell }: { cell: Cell<ApplicationRow, unknown> }) => {
         const application = cell.row.original;
         return (
           <>
             <Link
-              to={adminApplicationPath(application.id)}
+              to={adminApplicationPath(application.id, draft)}
               data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-id-link`}
             >
               {application.id}
             </Link>
-            <ApplicationOriginBadge
-              origin={application.origin}
-              short
-              testId={`${testIdPrefix}-cell-row-${cell.row.index}-col-id-test`}
-            />
+            {application.origin && (
+              <ApplicationOriginBadge
+                origin={application.origin}
+                short
+                testId={`${testIdPrefix}-cell-row-${cell.row.index}-col-id-test`}
+              />
+            )}
           </>
         );
       },
@@ -89,40 +113,28 @@ export default function AdminApplicationTable({
       header: "View",
       id: "view",
       meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<Application, unknown> }) => (
+      cell: ({ cell }: { cell: Cell<ApplicationRow, unknown> }) => (
         <Link
           className="btn btn-outline-primary btn-sm"
-          to={adminApplicationPath(cell.row.original.id)}
+          to={adminApplicationPath(cell.row.original.id, draft)}
           data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-view-button`}
         >
           View
         </Link>
       ),
     },
-    {
-      header: "Edit",
-      id: "edit",
-      meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<Application, unknown> }) => (
-        <Link
-          className="btn btn-primary btn-sm"
-          to={adminApplicationEditPath(cell.row.original.id)}
-          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-edit-button`}
-        >
-          Edit
-        </Link>
-      ),
-    },
+    // An admin comments on a draft but never edits it (issue #296).
+    ...(draft ? [] : [editColumn]),
     {
       header: "Name",
       id: "name",
       meta: shrinkToContent,
-      accessorFn: (application: Application) =>
+      accessorFn: (application: ApplicationRow) =>
         [application.firstName, application.middleName, application.lastName]
           .filter((part) => show(part) !== "")
           .join(" "),
     },
-    ...applicationColumns(type).map(toLegacyColumn),
+    ...applicationColumns(type, draft).map(toLegacyColumn),
   ];
 
   return (

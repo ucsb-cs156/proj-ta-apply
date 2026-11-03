@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.controller;
 
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
@@ -14,6 +15,7 @@ import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.DraftAdminCommentRepository;
 import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -56,6 +58,7 @@ public class ApplicationsController extends ApiController {
 
   @Autowired ApplicationRepository applicationRepository;
   @Autowired DraftApplicationRepository draftApplicationRepository;
+  @Autowired DraftAdminCommentRepository draftAdminCommentRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired NoticeVersionRepository noticeVersionRepository;
   @Autowired ApplicationAccessService applicationAccessService;
@@ -250,11 +253,20 @@ public class ApplicationsController extends ApiController {
             .status(ApplicationReviewStatus.PENDING)
             .build();
     apply(fields, application, recruitment.getType());
+    Optional<DraftApplication> draft =
+        draftApplicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);
+    // Whatever an admin wrote about the draft carries over to the application (issue #296).
+    draft
+        .flatMap(d -> draftAdminCommentRepository.findById(d.getId()))
+        .ifPresent(c -> application.setAdminComments(c.getComments()));
     applicationRepository.save(application);
-    // The application is complete now, so the draft it grew from has done its job (issue #270).
-    draftApplicationRepository
-        .findByEmailAndRecruitmentId(currentEmail(), recruitmentId)
-        .ifPresent(draftApplicationRepository::delete);
+    // The application is complete now, so the draft it grew from has done its job (issue #270);
+    // the admin's comments on it go with it, now that the application has them.
+    draft.ifPresent(
+        d -> {
+          draftAdminCommentRepository.deleteById(d.getId());
+          draftApplicationRepository.delete(d);
+        });
     return forApplicant(application);
   }
 

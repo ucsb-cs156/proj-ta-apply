@@ -3,6 +3,7 @@ import { HttpResponse, http } from "msw";
 import { Route, Routes } from "react-router";
 import AdminApplicationPage from "main/pages/Admin/AdminApplicationPage";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import recruitmentsFixtures from "fixtures/recruitmentsFixtures";
 import noticesFixtures from "fixtures/noticesFixtures";
 import auditTrailFixtures from "fixtures/auditTrailFixtures";
@@ -90,6 +91,36 @@ TaNoCommentsYet.parameters = {
       noAuditRows,
       http.get("/api/admin/applications", () =>
         HttpResponse.json(applicationsFixtures.oneTaApplication),
+      ),
+    ],
+  },
+};
+
+/**
+ * Issue #296: the same page for a draft. No Edit button and no Audit Trail; the admin can still
+ * leave comments, which are copied to the application when it is submitted.
+ */
+const DraftTemplate = () => (
+  <Routes>
+    <Route
+      path="/admin/draft-applications/:id"
+      element={<AdminApplicationPage draft />}
+    />
+  </Routes>
+);
+
+export const UlaDraftWithComments = DraftTemplate.bind({});
+UlaDraftWithComments.parameters = {
+  reactRouter: {
+    initialEntries: [
+      `/admin/draft-applications/${draftApplicationsFixtures.adminSavedUlaDraft.id}`,
+    ],
+  },
+  msw: {
+    handlers: [
+      ...common,
+      http.get("/api/admin/draftApplications", () =>
+        HttpResponse.json(draftApplicationsFixtures.adminSavedUlaDraft),
       ),
     ],
   },

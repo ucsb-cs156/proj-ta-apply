@@ -5,7 +5,7 @@ import type {
 } from "main/components/Applications/ApplicationTable";
 
 /** The submission time in Pacific time; blank when it was never stamped. */
-export const submittedText = (submittedAt: string | null): string =>
+export const submittedText = (submittedAt: string | null | undefined): string =>
   formatPacificDateTime(submittedAt);
 
 /**
@@ -42,14 +42,42 @@ export const originLabel = (origin: ApplicationOrigin): string => {
 export const applicationsText = (count: number): string =>
   `${count} ${count === 1 ? "application" : "applications"}`;
 
-/** The admin's read-only view of one application. */
-export const adminApplicationPath = (id: number | string): string =>
-  `/admin/applications/${id}`;
+/**
+ * The admin's read-only view of one application, or of one draft (issue #296): the same page,
+ * whichever it is shown for.
+ */
+export const adminApplicationPath = (
+  id: number | string,
+  draft = false,
+): string =>
+  draft ? `/admin/draft-applications/${id}` : `/admin/applications/${id}`;
 
 /** The admin's edit form for one application. */
 export const adminApplicationEditPath = (id: number | string): string =>
   `/admin/applications/${id}/edit`;
 
-/** Where Save and Cancel on the admin's view of an application go back to. */
-export const applicationsListPath = (recruitmentId: number | string): string =>
-  `/admin/recruitments/${recruitmentId}/applications`;
+/** Where Save and Cancel on the admin's view of an application or draft go back to. */
+export const applicationsListPath = (
+  recruitmentId: number | string,
+  draft = false,
+): string =>
+  draft
+    ? `/admin/recruitments/${recruitmentId}/draft-applications`
+    : `/admin/recruitments/${recruitmentId}/applications`;
+
+/**
+ * Where an admin reads one application or draft, and saves their comments on it (issue #296). The
+ * two kinds are served by the same page and table; this is all that differs between them.
+ */
+export const adminApplicationUrls = (
+  draft: boolean,
+): { one: string; all: string; comments: string } => {
+  const base = draft
+    ? "/api/admin/draftApplications"
+    : "/api/admin/applications";
+  return { one: base, all: `${base}/all`, comments: `${base}/adminComments` };
+};
+
+/** "3 Draft Applications" or "1 Draft Application", for the top of the drafts page. */
+export const draftsText = (count: number): string =>
+  `${count} Draft ${count === 1 ? "Application" : "Applications"}`;

@@ -23,6 +23,14 @@ export type DraftApplication = ApplicationAnswers & {
   version: number;
 };
 
+/**
+ * A draft as an admin sees it (issue #296): the draft itself, with the admin's comments on it
+ * under the name an application's use, so that one table and one page can show either.
+ */
+export type AdminDraftApplication = DraftApplication & {
+  adminComments: string | null;
+};
+
 /** The warning under "Continue editing draft application" on the home page. */
 export const DRAFT_WARNING =
   "Your application is not yet complete; incomplete applications are not considered.";
