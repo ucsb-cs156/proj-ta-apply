@@ -61,6 +61,7 @@ describe("ApplicationPage tests", () => {
       .onGet("/api/systemInfo")
       .reply(200, systemInfoFixtures.showingNeither);
     axiosMock.onGet("/api/applications").reply(200, application);
+    axiosMock.onGet("/api/applications/mine").reply(200, [application]);
     axiosMock
       .onGet("/api/recruitments/applicable")
       .reply(200, [openUla, closedTa]);
@@ -407,6 +408,148 @@ describe("ApplicationPage tests", () => {
     expect(
       screen.getByTestId("ApplicationPage-summary-Cancelled"),
     ).toHaveTextContent("Found other employment");
+  });
+
+  // ---- starting again after a cancellation (issue #318) ----
+
+  const cancelled = applicationsFixtures.oneCancelledApplication;
+
+  test("a cancelled application offers to start a new one while applications are open", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    renderPage(4);
+
+    const button = await screen.findByTestId("ApplicationPage-restart");
+    expect(button).toHaveTextContent("Start a new application");
+    expect(button).toHaveAttribute("href", "/apply/2");
+    expect(
+      screen.getByTestId("ApplicationPage-restart-note"),
+    ).toHaveTextContent(
+      "This one stays on file as cancelled. The new application starts empty, as if you had not applied.",
+    );
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+  });
+
+  test("the button waits for the applicant's list, so a new application is not missed", async () => {
+    let answer;
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(() => new Promise((resolve) => (answer = resolve)));
+    renderPage(4);
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+
+    answer([200, [cancelled]]);
+    expect(
+      await screen.findByTestId("ApplicationPage-restart"),
+    ).toBeInTheDocument();
+  });
+
+  test("once a new application has been started, the cancelled one points to it", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [application, cancelled]);
+    renderPage(4);
+
+    expect(
+      await screen.findByTestId("ApplicationPage-new-application"),
+    ).toHaveTextContent("You have since started a new application.");
+    expect(
+      screen.getByTestId("ApplicationPage-new-application-link"),
+    ).toHaveAttribute("href", "/applications/2");
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+  });
+
+  test("another recruitment's application is not a replacement", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [{ ...application, recruitmentId: 99 }, cancelled]);
+    renderPage(4);
+
+    expect(
+      await screen.findByTestId("ApplicationPage-restart"),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+  });
+
+  test("another cancelled application is not a replacement", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [{ ...cancelled, id: 5 }, cancelled]);
+    renderPage(4);
+
+    expect(
+      await screen.findByTestId("ApplicationPage-restart"),
+    ).toBeInTheDocument();
+  });
+
+  test("once applications have closed there is no button to start a new application", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    axiosMock
+      .onGet("/api/recruitments/applicable")
+      .reply(200, [{ ...openUla, applicationStatus: "CLOSED" }, closedTa]);
+    renderPage(4);
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/applications/mine"),
+      ).toHaveLength(1),
+    );
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+  });
+
+  test("a cancelled application whose recruitment is not on offer shows no button", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    axiosMock.onGet("/api/recruitments/applicable").reply(200, []);
+    renderPage(4);
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/applications/mine"),
+      ).toHaveLength(1),
+    );
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+  });
+
+  test("a closed application that was not cancelled does not claim a new one was started", async () => {
+    vi.setSystemTime(new Date(2026, 9, 1, 12, 0, 0));
+    const closed = {
+      ...applicationsFixtures.oneTaApplication,
+      recruitmentId: 1,
+    };
+    axiosMock.onGet("/api/applications").reply(200, closed);
+    axiosMock.onGet("/api/applications/mine").reply(200, [closed]);
+
+    renderPage(1);
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/applications/mine"),
+      ).toHaveLength(1),
+    );
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+  });
+
+  test("an application that was not cancelled never offers a new one", async () => {
+    renderPage();
+
+    await screen.findByTestId("ApplicationPage-status");
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
   });
 
   // ---- view only ----

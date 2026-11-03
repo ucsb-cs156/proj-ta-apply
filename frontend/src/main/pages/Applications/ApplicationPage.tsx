@@ -1,5 +1,5 @@
 import type { CourseInstructors } from "main/utils/courseLabels";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { Alert, Button } from "react-bootstrap";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
@@ -22,6 +22,7 @@ import { isEditable, phaseOf } from "main/utils/applicationAccess";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import type { NoticeVersion } from "main/utils/notices";
 import { isConflict } from "main/utils/useDraftSaving";
+import { RESTART_LABEL } from "main/components/Student/StudentRecruitmentCards";
 import {
   applicationHeartbeatUrl,
   applicationLeaveUrl,
@@ -55,6 +56,21 @@ export default function ApplicationPage(): React.JSX.Element {
 
   const recruitment = (applicable ?? []).find(
     (r) => r.id === application?.recruitmentId,
+  );
+
+  // An applicant who cancelled this application may begin another while applications are open,
+  // unless they already have (issue #318).
+  const { data: mine, isFetched: mineFetched } = useBackend<Application[]>(
+    ["/api/applications/mine"],
+    { method: "GET", url: "/api/applications/mine" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+  // Stryker disable next-line all : mine already defaults to an empty list
+  const replacement = (mine ?? []).find(
+    (a) =>
+      a.recruitmentId === application?.recruitmentId &&
+      a.status !== "CANCELLED",
   );
   const noticeFillIn = useNoticeFillIn(recruitment);
 
@@ -316,6 +332,40 @@ export default function ApplicationPage(): React.JSX.Element {
                     ? "You cancelled this application, so it can no longer be changed."
                     : "This recruitment is closed, so your application can no longer be changed."}
                 </p>
+                {application.status === "CANCELLED" &&
+                  mineFetched &&
+                  (replacement ? (
+                    <p data-testid="ApplicationPage-new-application">
+                      <span className="me-2">
+                        You have since started a new application.
+                      </span>
+                      <Link
+                        to={`/applications/${replacement.id}`}
+                        data-testid="ApplicationPage-new-application-link"
+                      >
+                        View your new application
+                      </Link>
+                    </p>
+                  ) : (
+                    recruitment?.applicationStatus === "OPEN" && (
+                      <p>
+                        <Link
+                          className="btn btn-success"
+                          to={`/apply/${application.recruitmentId}`}
+                          data-testid="ApplicationPage-restart"
+                        >
+                          {RESTART_LABEL}
+                        </Link>
+                        <span
+                          className="ms-2"
+                          data-testid="ApplicationPage-restart-note"
+                        >
+                          This one stays on file as cancelled. The new
+                          application starts empty, as if you had not applied.
+                        </span>
+                      </p>
+                    )
+                  ))}
                 {application.postApplicationComments && (
                   <p data-testid="ApplicationPage-saved-comments">
                     Post application comments:{" "}

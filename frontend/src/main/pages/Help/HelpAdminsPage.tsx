@@ -610,6 +610,26 @@ export default function HelpAdminsPage(): React.JSX.Element {
           </li>
         </ul>
 
+        <p
+          id="cancelled-and-new"
+          data-testid="HelpAdminsPage-cancelled-and-new"
+        >
+          <strong>An applicant who cancelled and applied again.</strong> While
+          applications are open, an applicant who cancelled may start a new
+          application (<em>Start a new application</em>). The cancelled
+          application is kept, with its reason and time, and the new one is a
+          separate row in the Applications table and CSV, so the same email
+          address can appear twice: the earlier row (lower id) has the status
+          CANCELLED and the later one is the live application. Only the live one
+          is counted, ranked and assigned: the cancelled row is left out of the
+          Assignments page, the rankings and their CSV, and the number of
+          applications under the Applications step. The count on the
+          recruitment&apos;s card is of applicants, so a person who cancelled
+          and applied again counts once. Faculty see a person under
+          &ldquo;Cancelled applications&rdquo; only while they have no live
+          application.
+        </p>
+
         <h2 className="my-3 h4" id="ta-app-settings">
           TA App Settings
         </h2>

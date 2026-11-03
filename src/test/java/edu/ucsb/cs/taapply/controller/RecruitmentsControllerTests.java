@@ -23,6 +23,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJob;
@@ -649,7 +650,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
                 recruitment(1L, "20261", RecruitmentType.TA)));
     List<Application> fifteen = new ArrayList<>();
     for (int i = 0; i < 15; i++) {
-      fifteen.add(Application.builder().recruitmentId(1L).build());
+      fifteen.add(Application.builder().recruitmentId(1L).email("a" + i + "@ucsb.edu").build());
     }
     // Test and fake applications do not count while Developer Mode is off (issue #219).
     fifteen.add(Application.builder().origin(ApplicationOrigin.ADMIN_TEST).build());
@@ -666,6 +667,30 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals("{\"1\":15,\"2\":0}", response.getResponse().getContentAsString());
   }
 
+  /** Issue #318: a cancelled application and the new one that followed it are one applicant. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_applicant_who_cancelled_and_applied_again_counts_once() throws Exception {
+    when(recruitmentRepository.findAll())
+        .thenReturn(List.of(recruitment(1L, "20261", RecruitmentType.TA)));
+    Application cancelled =
+        Application.builder().email("a@ucsb.edu").status(ApplicationReviewStatus.CANCELLED).build();
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(1L))
+        .thenReturn(
+            List.of(
+                cancelled,
+                Application.builder().email("a@ucsb.edu").attemptNumber(2).build(),
+                Application.builder().email("b@ucsb.edu").build()));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/recruitments/applicationCounts"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals("{\"1\":2}", response.getResponse().getContentAsString());
+  }
+
   /** Developer Mode counts test and fake applications as real, so every feature can be tried. */
   @WithMockUser(roles = {"ADMIN"})
   @Test
@@ -676,9 +701,15 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     when(applicationRepository.findByRecruitmentIdOrderByIdAsc(1L))
         .thenReturn(
             List.of(
-                Application.builder().build(),
-                Application.builder().origin(ApplicationOrigin.ADMIN_TEST).build(),
-                Application.builder().origin(ApplicationOrigin.DEVELOPER_MODE).build()));
+                Application.builder().email("a@ucsb.edu").build(),
+                Application.builder()
+                    .email("b@ucsb.edu")
+                    .origin(ApplicationOrigin.ADMIN_TEST)
+                    .build(),
+                Application.builder()
+                    .email("c@ucsb.edu")
+                    .origin(ApplicationOrigin.DEVELOPER_MODE)
+                    .build()));
 
     MvcResult response =
         mockMvc

@@ -45,6 +45,22 @@ describe("studentRecruitments", () => {
     expect(applicationFor(applications, 9)).toBeUndefined();
   });
 
+  /** Issue #318: after a cancellation and a new application there are two for one recruitment. */
+  test("applicationFor prefers the live application to a cancelled one, in any order", () => {
+    const live = applicationsFixtures.oneUlaApplication;
+    const cancelled = applicationsFixtures.oneCancelledApplication;
+    expect(applicationFor([cancelled, live], 2)).toBe(live);
+    expect(applicationFor([live, cancelled], 2)).toBe(live);
+  });
+
+  test("applicationFor falls back to the newest cancelled application", () => {
+    const older = { ...applicationsFixtures.oneCancelledApplication, id: 4 };
+    const newer = { ...applicationsFixtures.oneCancelledApplication, id: 9 };
+    expect(applicationFor([older, newer], 2)).toBe(newer);
+    expect(applicationFor([newer, older], 2)).toBe(newer);
+    expect(applicationFor([newer, older], 7)).toBeUndefined();
+  });
+
   test("classifyRecruitments splits upcoming, current and past", () => {
     // Today is within six months of the TA's closing, so it is current.
     const result = classifyRecruitments(

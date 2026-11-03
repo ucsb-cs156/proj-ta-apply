@@ -85,6 +85,26 @@ FirstTimeApplicant.parameters = {
   },
 };
 
+/**
+ * Issue #318: the applicant cancelled an application here and started again, so the form is empty
+ * even though they have applied before; the cancelled application is not copied from.
+ */
+export const StartingAgainAfterCancelling = Template.bind({});
+StartingAgainAfterCancelling.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/applications/mine", () =>
+        HttpResponse.json([applicationsFixtures.oneCancelledApplication]),
+      ),
+      ...common,
+      openEmptyDraft,
+      http.get("/api/applications/prefill", () =>
+        HttpResponse.json([applicationsFixtures.oneCancelledApplication]),
+      ),
+    ],
+  },
+};
+
 /** Resuming a draft: what was typed and saved before comes back, and Save Draft is beside Submit. */
 export const ResumedDraft = Template.bind({});
 ResumedDraft.parameters = {

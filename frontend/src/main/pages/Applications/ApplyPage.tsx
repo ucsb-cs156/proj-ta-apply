@@ -112,9 +112,14 @@ export default function ApplyPage(): React.JSX.Element {
     recruitment !== undefined &&
     (found === undefined || recruitment.applicationStatus !== "OPEN");
   const noticeFillIn = useNoticeFillIn(recruitment);
-  const existing = (mine ?? []).find(
+  // Stryker disable next-line all : mine already defaults to an empty list
+  const hereAlready = (mine ?? []).filter(
     (a) => String(a.recruitmentId) === String(recruitmentId),
   );
+  // A cancelled application does not count: the applicant may begin another (issue #318).
+  const existing = hereAlready.find((a) => a.status !== "CANCELLED");
+  // Having cancelled one here, they start "as if from scratch": nothing is filled in from before.
+  const startingOver = hereAlready.length > 0;
 
   // The draft for this recruitment, and the saving into it (issue #270).
   const {
@@ -249,7 +254,11 @@ export default function ApplyPage(): React.JSX.Element {
               // of its own, so the answers from their earlier application fill it in.
               // Stryker disable next-line all : don't test default value of empty list
               initialContents={
-                draftWasSaved(draft) ? draft : (prefill ?? [])[0]
+                draftWasSaved(draft)
+                  ? draft
+                  : startingOver
+                    ? undefined
+                    : (prefill ?? [])[0]
               }
               defaultNames={{
                 firstName: currentUser.root?.user?.givenName,

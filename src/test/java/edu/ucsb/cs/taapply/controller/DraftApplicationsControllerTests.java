@@ -25,6 +25,7 @@ import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFiel
 import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -241,7 +242,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   public void opening_creates_an_empty_draft_when_there_is_none() throws Exception {
     when(recruitmentRepository.findById(1L))
         .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
-    when(applicationRepository.existsByEmailAndRecruitmentId(EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
         .thenReturn(Optional.empty());
     DraftApplication created = draft(9L, EMAIL);
@@ -268,7 +271,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   public void opening_returns_the_draft_that_already_exists() throws Exception {
     when(recruitmentRepository.findById(1L))
         .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
-    when(applicationRepository.existsByEmailAndRecruitmentId(EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     DraftApplication existing = draft(4L, EMAIL);
     existing.setFirstName("Ada");
     when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
@@ -291,7 +296,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   public void opening_twice_at_once_returns_the_draft_the_other_request_made() throws Exception {
     when(recruitmentRepository.findById(1L))
         .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
-    when(applicationRepository.existsByEmailAndRecruitmentId(EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     DraftApplication theirs = draft(4L, EMAIL);
     when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
         .thenReturn(Optional.empty(), Optional.of(theirs));
@@ -314,7 +321,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   public void a_constraint_failure_with_no_draft_to_return_is_not_hidden() throws Exception {
     when(recruitmentRepository.findById(1L))
         .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
-    when(applicationRepository.existsByEmailAndRecruitmentId(EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
         .thenReturn(Optional.empty());
     when(draftApplicationRepository.save(any(DraftApplication.class)))
@@ -373,7 +382,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   public void opening_when_an_application_is_already_submitted_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L))
         .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
-    when(applicationRepository.existsByEmailAndRecruitmentId(EMAIL, 1L)).thenReturn(true);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(true);
 
     MvcResult response =
         mockMvc

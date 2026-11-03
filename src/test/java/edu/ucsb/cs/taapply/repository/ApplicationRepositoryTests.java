@@ -134,7 +134,9 @@ public class ApplicationRepositoryTests {
     entityManager.clear();
 
     Application found =
-        applicationRepository.findByEmailAndRecruitmentId("grad@ucsb.edu", r.getId()).orElseThrow();
+        applicationRepository
+            .findByEmailAndRecruitmentIdOrderByIdDesc("grad@ucsb.edu", r.getId())
+            .get(0);
 
     assertEquals(ApplicationReviewStatus.PENDING, found.getStatus());
     assertEquals("Chris", found.getFirstName());
@@ -191,7 +193,10 @@ public class ApplicationRepositoryTests {
         applicationRepository.findById(saved.getId()).orElseThrow().getStatus());
   }
 
-  /** One application per person per recruitment; a second is rejected by the database. */
+  /**
+   * Two applications by one person to one recruitment with the same attempt number are rejected by
+   * the database, so two simultaneous submissions cannot both be stored.
+   */
   @Test
   public void the_same_person_cannot_apply_twice_to_one_recruitment() {
     Recruitment r = recruitment("20261", RecruitmentType.TA);
@@ -205,6 +210,63 @@ public class ApplicationRepositoryTests {
               Application.builder().recruitmentId(r.getId()).email("grad@ucsb.edu").build());
           entityManager.flush();
         });
+  }
+
+  /** Issue #318: after a cancellation a new application is the next attempt, and both are kept. */
+  @Test
+  public void a_cancelled_application_and_a_new_attempt_may_both_be_stored() {
+    Recruitment r = recruitment("20261", RecruitmentType.TA);
+    Application cancelled =
+        applicationRepository.save(
+            Application.builder()
+                .recruitmentId(r.getId())
+                .email("grad@ucsb.edu")
+                .status(ApplicationReviewStatus.CANCELLED)
+                .build());
+    entityManager.flush();
+    assertEquals(1, cancelled.getAttemptNumber());
+
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(r.getId())
+            .email("grad@ucsb.edu")
+            .attemptNumber(2)
+            .build());
+    entityManager.flush();
+
+    List<Application> both =
+        applicationRepository.findByEmailAndRecruitmentIdOrderByIdDesc("grad@ucsb.edu", r.getId());
+    assertEquals(2, both.size());
+    assertEquals(2, both.get(0).getAttemptNumber());
+    assertEquals(ApplicationReviewStatus.PENDING, both.get(0).getStatus());
+    assertEquals(2, applicationRepository.countByEmailAndRecruitmentId("grad@ucsb.edu", r.getId()));
+    assertEquals(
+        0, applicationRepository.countByEmailAndRecruitmentId("other@ucsb.edu", r.getId()));
+  }
+
+  @Test
+  public void exists_with_status_not_ignores_cancelled_applications() {
+    Recruitment r = recruitment("20261", RecruitmentType.TA);
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(r.getId())
+            .email("grad@ucsb.edu")
+            .status(ApplicationReviewStatus.CANCELLED)
+            .build());
+    assertFalse(
+        applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            "grad@ucsb.edu", r.getId(), ApplicationReviewStatus.CANCELLED));
+    assertTrue(applicationRepository.existsByEmailAndRecruitmentId("grad@ucsb.edu", r.getId()));
+
+    applicationRepository.save(
+        Application.builder()
+            .recruitmentId(r.getId())
+            .email("grad@ucsb.edu")
+            .attemptNumber(2)
+            .build());
+    assertTrue(
+        applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            "grad@ucsb.edu", r.getId(), ApplicationReviewStatus.CANCELLED));
   }
 
   /** The history the design doc asks for: the same person across several recruitments. */

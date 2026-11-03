@@ -1,0 +1,49 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "060-allow-new-application-after-cancellation",
+        "author": "pc",
+        "comment": "An applicant who cancelled may start a new application to the same recruitment while applications are open (issue #318). The cancelled row is kept, so (email, recruitment) is no longer unique; the attempt number is added to the key, which still lets the database refuse two simultaneous submissions.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": { "tableName": "applications", "columnName": "attempt_number" }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [
+                {
+                  "column": {
+                    "name": "attempt_number",
+                    "type": "INT",
+                    "defaultValueNumeric": 1,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "dropUniqueConstraint": {
+              "tableName": "applications",
+              "constraintName": "uk_applications_email_recruitment"
+            }
+          },
+          {
+            "addUniqueConstraint": {
+              "tableName": "applications",
+              "columnNames": "email, recruitment_id, attempt_number",
+              "constraintName": "uk_applications_email_recruitment_attempt"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

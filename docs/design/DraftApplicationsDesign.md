@@ -148,9 +148,47 @@ The card for an open recruitment shows, in the footer:
 | nothing | **Apply to be a TA** (or **ULA**) |
 | a draft | **Continue editing draft application**, with a red warning: *Your application is not yet complete; incomplete applications are not considered.* The badge says *Draft application, not submitted*. |
 | a submitted application | **View submitted application** (and Cancel my Application) |
+| a cancelled application | **View my Application** and, while applications are open, **Start a new application** (issue #318, below); with a new draft begun, **Continue editing draft application** instead |
 
 A recruitment that is not open keeps its greyed-out Apply button; a draft for it offers nothing to
 continue, since it can no longer be saved.
+
+## Cancelling, and starting again (issue #318)
+
+Cancelling (#107) is final for the application cancelled: it cannot be edited, commented on or
+brought back. It no longer locks the applicant out of the recruitment. While applications are open
+(the same rule as for any new application) a cancelled applicant may begin a new application "as if
+from scratch", through **Start a new application** on the home page card and on the cancelled
+application's page. Once applications have closed the button is not shown, and the server refuses
+as it does for anyone.
+
+**One live application per person per recruitment, any number of cancelled ones.**
+
+* *Server.* `POST /api/applications/post` and `POST /api/draftApplications/open` refuse only when
+  the person has an application to the recruitment whose status is not CANCELLED
+  (`existsByEmailAndRecruitmentIdAndStatusNot`). Someone else's applications never matter.
+* *Uniqueness.* The old unique constraint on (email, recruitment) is replaced by one on (email,
+  recruitment, `attempt_number`), changeset `060`. The first application is attempt 1; a new one is
+  one more than the number of applications the person already has there. The cancelled row is kept
+  untouched (reason, time, answers). The database still refuses two simultaneous submissions,
+  because both would compute the same attempt number. An admin's test application follows the same
+  rule: cancelled test rows are set aside and the next test is a new row.
+* *Drafts.* Unchanged: one draft per person per recruitment, with its own id, deleted on submit.
+  After a cancellation there is no draft, so the new one is created empty and every multi-tab
+  warning (#273, #284, #298) is keyed to it; the application it becomes has a new id, so a tab still
+  open on the cancelled application warns no one about the new one.
+* *"As if from scratch".* The form is not pre-filled from any earlier application once the person
+  has one here, cancelled or not, only (as for a first-time applicant) with their Google name.
+
+**What each audience sees.**
+
+| Who | Sees |
+|---|---|
+| the applicant | the card's application is the live one, else the newest cancelled one; the cancelled application's page points to the new one once it exists |
+| an admin, the Applications table and CSV | **both rows**, in id order, the same email twice; the cancelled one has status CANCELLED and its Cancelled column (reason and time) |
+| counts, rankings, rankings CSV, assignments, course targets | the live application only (`ApplicationVisibility.real` already left out CANCELLED) |
+| the card's count (`applicationCounts`) | applicants, not rows: a person with a cancelled and a live application counts once |
+| faculty's **Cancelled applications** table | a person only while they have no live application (`ApplicationVisibility.cancelled`) |
 
 ## What an admin sees of drafts (issue #296)
 

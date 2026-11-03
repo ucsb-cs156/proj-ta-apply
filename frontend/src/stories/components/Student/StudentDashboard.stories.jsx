@@ -57,6 +57,30 @@ OneCancelled.args = {
   ],
 };
 
+/** Issue #318: cancelled while applications are open, so Start a new application is offered. */
+export const CancelledCanStartAgain = Template.bind({});
+CancelledCanStartAgain.args = {
+  recruitments: [openUla],
+  applications: [applicationsFixtures.oneCancelledApplication],
+};
+
+/** Issue #318: the applicant started again; the new application is the one on file. */
+export const CancelledAndStartedAgain = Template.bind({});
+CancelledAndStartedAgain.args = {
+  recruitments: [openUla],
+  applications: [
+    applicationsFixtures.oneUlaApplication,
+    applicationsFixtures.oneCancelledApplication,
+  ],
+};
+
+/** Issue #318: cancelled, then applications closed: no button. */
+export const CancelledAfterClosing = Template.bind({});
+CancelledAfterClosing.args = {
+  recruitments: [{ ...openUla, applicationStatus: "CLOSED" }],
+  applications: [applicationsFixtures.oneCancelledApplication],
+};
+
 export const CardsOnly = () => (
   <StudentRecruitmentCards
     recruitments={[openUla, closedTa]}

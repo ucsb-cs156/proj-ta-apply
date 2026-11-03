@@ -551,7 +551,7 @@ public class FakeApplicationGeneratorTests {
     withSettings();
 
     assertEquals(
-        List.of(315599297, 146938258, -327562974, -1437828550),
+        List.of(-1378083815, -106656864, 1703775240, 2142202316),
         List.of(
             fingerprint(RecruitmentType.TA, FakeCoverage.ALL),
             fingerprint(RecruitmentType.TA, FakeCoverage.SPARSE),

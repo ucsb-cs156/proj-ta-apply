@@ -234,7 +234,9 @@ public class ApplicationsController extends ApiController {
       summary = "Apply to a recruitment",
       description =
           "Any signed-in user may apply to any open recruitment, TA or ULA. Refused if the"
-              + " recruitment is not open or they already have an application for it.")
+              + " recruitment is not open or they already have an application for it that is not"
+              + " cancelled: one who cancelled may apply again while applications are open, as if"
+              + " from scratch, and the cancelled application is kept (issue #318).")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PostMapping("/post")
   public Application postApplication(
@@ -250,7 +252,9 @@ public class ApplicationsController extends ApiController {
       throw new IllegalArgumentException(
           "Applications are not currently open for this recruitment");
     }
-    if (applicationRepository.existsByEmailAndRecruitmentId(currentEmail(), recruitmentId)) {
+    // A cancelled application does not block a new one while applications are open (issue #318).
+    if (applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+        currentEmail(), recruitmentId, ApplicationReviewStatus.CANCELLED)) {
       throw new IllegalArgumentException("You already have an application for this recruitment");
     }
 
@@ -264,6 +268,13 @@ public class ApplicationsController extends ApiController {
             .recruitmentId(recruitmentId)
             .email(currentEmail())
             .status(ApplicationReviewStatus.PENDING)
+            // The first, or one more than the cancelled ones before it, which are kept (issue
+            // #318).
+            .attemptNumber(
+                (int)
+                        applicationRepository.countByEmailAndRecruitmentId(
+                            currentEmail(), recruitmentId)
+                    + 1)
             .build();
     apply(fields, application, recruitment.getType());
     Optional<DraftApplication> draft =
@@ -306,11 +317,15 @@ public class ApplicationsController extends ApiController {
     requireUlaAnswers(recruitment.getType(), fields);
     requireTaAnswers(recruitment.getType(), fields);
 
-    // The unique (email, recruitment) constraint allows one row per admin per recruitment, and an
-    // admin testing a form will naturally submit it more than once, so the second submission
-    // overwrites the first rather than being refused.
+    // An admin has one live row per recruitment, and an admin testing a form will naturally submit
+    // it more than once, so the second submission overwrites the first rather than being refused.
+    // Rows the admin cancelled are kept and set aside (issue #318).
     Optional<Application> existing =
-        applicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);
+        applicationRepository
+            .findByEmailAndRecruitmentIdOrderByIdDesc(currentEmail(), recruitmentId)
+            .stream()
+            .filter(a -> a.getStatus() != ApplicationReviewStatus.CANCELLED)
+            .findFirst();
 
     // An admin who is also a grad student may have a real application here; a test run must
     // never silently turn that into a test application.
@@ -327,6 +342,11 @@ public class ApplicationsController extends ApiController {
                     .email(currentEmail())
                     .status(ApplicationReviewStatus.PENDING)
                     .origin(ApplicationOrigin.ADMIN_TEST)
+                    .attemptNumber(
+                        (int)
+                                applicationRepository.countByEmailAndRecruitmentId(
+                                    currentEmail(), recruitmentId)
+                            + 1)
                     .build());
     apply(fields, application, recruitment.getType());
     applicationRepository.save(application);
@@ -503,7 +523,8 @@ public class ApplicationsController extends ApiController {
       description =
           "Marks the applicant's own application CANCELLED with the reason they gave (issue #107)."
               + " Final: a cancelled application cannot be edited, commented on or un-cancelled,"
-              + " and the applicant cannot apply to that recruitment again.")
+              + " but, while applications are open, the applicant may start a new application to that"
+              + " recruitment (issue #318).")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PutMapping("/cancel")
   public Application cancelApplication(

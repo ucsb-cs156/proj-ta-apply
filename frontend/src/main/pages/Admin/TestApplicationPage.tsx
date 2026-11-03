@@ -103,10 +103,12 @@ export default function TestApplicationPage(): React.JSX.Element {
   // And the instructors the applicant endpoint would give, from the same rows (issue #121).
   const instructors = instructorsFromRows(recruitmentCourses ?? []);
 
+  // Stryker disable next-line all : mine already defaults to an empty list
   const saved = (mine ?? []).find(
     (a) =>
       String(a.recruitmentId) === String(recruitmentId) &&
-      a.origin === "ADMIN_TEST",
+      a.origin === "ADMIN_TEST" &&
+      a.status !== "CANCELLED",
   );
 
   const mutation = useBackendMutation<ApplicationPayload, Application>(

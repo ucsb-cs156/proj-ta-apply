@@ -24,8 +24,10 @@ import lombok.*;
  *
  * <p>The design doc's field table names email as the primary key, but the same section asks for a
  * table of every application a student has ever made. Those cannot both hold, so identity is a
- * generated id with a unique constraint on (email, recruitment): one application per person per
- * recruitment, and the history survives.
+ * generated id. A person has at most one application per recruitment that is not cancelled; one who
+ * cancelled while applications were open may start a new one (issue #318), so the cancelled row is
+ * kept and the unique constraint is on (email, recruitment, attempt number) rather than on (email,
+ * recruitment): the history survives, and two simultaneous submissions cannot both be stored.
  *
  * <p>Which fields are asked for depends on the recruitment's type. The TA-only and ULA-only fields
  * are simply left null on the other kind rather than being split into separate tables, since the
@@ -39,8 +41,8 @@ import lombok.*;
 @Table(
     uniqueConstraints =
         @UniqueConstraint(
-            name = "uk_applications_email_recruitment",
-            columnNames = {"email", "recruitment_id"}))
+            name = "uk_applications_email_recruitment_attempt",
+            columnNames = {"email", "recruitment_id", "attempt_number"}))
 public class Application {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,6 +58,14 @@ public class Application {
    * only on an application that has not been saved yet.
    */
   @Version private Integer version;
+
+  /**
+   * Which of the applicant's applications to this recruitment this is: 1, or one more than the
+   * number they had before when they cancelled and started again (issue #318).
+   */
+  @Builder.Default
+  @Column(name = "attempt_number", nullable = false)
+  private Integer attemptNumber = 1;
 
   /** The applicant, taken from the current user rather than the request. */
   private String email;
