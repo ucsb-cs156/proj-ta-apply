@@ -6,8 +6,9 @@ import java.util.List;
  * What a heartbeat is answered with (issue #273): who else is active on the resource, and how often
  * to send the next heartbeat, and whether this client arrived after every other one (see {@link
  * Arrival}). It is the JSON body of the answer: {@code {&quot;others&quot;: [{&quot;label&quot;: &quot;...&quot;, &quot;samePerson&quot;:
- * false}], &quot;heartbeatSeconds&quot;: 5, &quot;newest&quot;: true, &quot;arrivedAtMillis&quot;: 1788000000000}}.
+ * false, &quot;admin&quot;: false}], &quot;heartbeatSeconds&quot;: 5, &quot;newest&quot;: true, &quot;arrivedAtMillis&quot;:
+ * 1788000000000}}.
  */
-<span class="fc" id="L11">public record Presence(</span>
+<span class="fc" id="L12">public record Presence(</span>
     List&lt;OtherClient&gt; others, long heartbeatSeconds, boolean newest, long arrivedAtMillis) {}
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

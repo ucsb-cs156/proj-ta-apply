@@ -49,6 +49,14 @@ public class Application {
   @Column(name = &quot;recruitment_id&quot;)
   private Long recruitmentId;
 
+  /**
+   * How many times the application has been saved, starting at 0 (issue #302). Hibernate counts it
+   * (optimistic locking), and an edit that carries an older count than the application now has is
+   * refused, so the applicant and an admin (or two tabs) cannot silently overwrite each other. Null
+   * only on an application that has not been saved yet.
+   */
+  @Version private Integer version;
+
   /** The applicant, taken from the current user rather than the request. */
   private String email;
 
@@ -280,7 +288,7 @@ public class Application {
   /** Stamps the Pacific time at which the row is first saved (issue #293). */
   @PrePersist
   void stampSubmitted() {
-<span class="fc" id="L283">    submittedAt = AppTime.now();</span>
-<span class="fc" id="L284">  }</span>
+<span class="fc" id="L291">    submittedAt = AppTime.now();</span>
+<span class="fc" id="L292">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

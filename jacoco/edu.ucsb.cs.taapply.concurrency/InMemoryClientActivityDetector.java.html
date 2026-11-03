@@ -130,15 +130,16 @@ public class InMemoryClientActivityDetector implements ClientActivityDetector {
 <span class="fc bfc" id="L130" title="All 4 branches covered.">          if (!id.equals(clientId) &amp;&amp; active(client.at(), now)) {</span>
 <span class="fc" id="L131">            ClientIdentity who = client.identity();</span>
 <span class="fc" id="L132">            people.putIfAbsent(</span>
-<span class="fc" id="L133">                who.personKey(), new OtherClient(who.label(), who.personKey().equals(callerKey)));</span>
+<span class="fc" id="L133">                who.personKey(),</span>
+<span class="fc" id="L134">                new OtherClient(who.label(), who.personKey().equals(callerKey), who.admin()));</span>
           }
-<span class="fc" id="L135">        });</span>
-<span class="fc" id="L136">    return people.values().stream().sorted(BY_LABEL).toList();</span>
+<span class="fc" id="L136">        });</span>
+<span class="fc" id="L137">    return people.values().stream().sorted(BY_LABEL).toList();</span>
   }
 
   /** How many resources currently have anyone remembered; for tests of the forgetting. */
   synchronized int resourcesRemembered() {
-<span class="fc" id="L141">    return seen.size();</span>
+<span class="fc" id="L142">    return seen.size();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
