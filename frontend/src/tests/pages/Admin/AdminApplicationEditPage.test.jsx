@@ -262,4 +262,211 @@ describe("AdminApplicationEditPage tests", () => {
     ).toBeInTheDocument();
     expect(screen.queryByTestId("AdminApplicationEditPage-submit")).toBeNull();
   });
+
+  // ---- issue #302: the version check and the multi-tab warning ----
+
+  const HEARTBEAT = /\/api\/applications\/heartbeat/;
+  const student = {
+    label: "ula@ucsb.edu (Chris <b>Student</b>)",
+    samePerson: false,
+  };
+  const otherAdmin = {
+    label: "jane@ucsb.edu (Jane Doe)",
+    samePerson: false,
+    admin: true,
+  };
+
+  const heartbeats = () =>
+    axiosMock.history.post.filter((r) =>
+      r.url.startsWith("/api/applications/heartbeat"),
+    );
+
+  async function fillAndSave() {
+    const major = await screen.findByTestId("AdminApplicationEditPage-major");
+    await waitFor(() => expect(major.options.length).toBeGreaterThan(2));
+    await userEvent.selectOptions(major, "Mathematics");
+    await userEvent.click(
+      screen.getByTestId("AdminApplicationEditPage-i9Appointment"),
+    );
+    await userEvent.click(
+      screen.getByTestId("AdminApplicationEditPage-submit"),
+    );
+  }
+
+  test("the heartbeat and the save name this tab by the same identifier, and the save carries the version", async () => {
+    axiosMock
+      .onGet("/api/admin/applications", { params: { id: String(ula.id) } })
+      .reply(200, { ...ula, version: 6 });
+    renderPage();
+
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+    expect(heartbeats()[0].url).toBe(
+      `/api/applications/heartbeat?id=${ula.id}`,
+    );
+    const clientId = heartbeats()[0].headers["X-Client-Id"];
+    expect(clientId).toBeTruthy();
+
+    await fillAndSave();
+
+    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
+    expect(axiosMock.history.put[0].params).toEqual({
+      id: String(ula.id),
+      version: 6,
+    });
+    expect(axiosMock.history.put[0].headers["X-Client-Id"]).toBe(clientId);
+  });
+
+  test("no heartbeat is sent before the application is there", async () => {
+    axiosMock.onGet("/api/admin/applications").reply(200, null);
+    renderPage(77);
+
+    await screen.findByRole("heading", { level: 1 });
+    expect(heartbeats()).toHaveLength(0);
+  });
+
+  test("no warning when nobody else has the application open", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [], heartbeatSeconds: 20 });
+    renderPage();
+
+    await screen.findByTestId("AdminApplicationEditPage-about");
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+    expect(
+      screen.queryByTestId("AdminApplicationEditPage-multiple-tabs"),
+    ).toBeNull();
+  });
+
+  test("an admin whose tab was open first is told the applicant is also editing, and the name is text", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [student],
+      heartbeatSeconds: 20,
+      newest: false,
+      arrivedAtMillis: 1,
+    });
+    renderPage();
+
+    const banner = await screen.findByTestId(
+      "AdminApplicationEditPage-multiple-tabs",
+    );
+    expect(banner).toHaveTextContent(
+      "ula@ucsb.edu (Chris <b>Student</b>) is also editing this application. We recommend that you wait a few minutes or ask them to close it.",
+    );
+    expect(banner.querySelector("b")).toBeNull();
+    expect(
+      screen.queryByTestId("AdminApplicationEditPage-multiple-tabs-modal"),
+    ).toBeNull();
+  });
+
+  test("an admin who arrived later is asked, with the proposed message", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [student],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1,
+    });
+    renderPage();
+
+    const modal = await screen.findByTestId(
+      "AdminApplicationEditPage-multiple-tabs-modal-message",
+    );
+    expect(modal).toHaveTextContent(
+      "ula@ucsb.edu (Chris <b>Student</b>) already has this application open for editing. We recommend that you wait a few minutes or ask them to close it.",
+    );
+  });
+
+  test("another admin gets the admin sentence", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [otherAdmin],
+      heartbeatSeconds: 20,
+      newest: false,
+      arrivedAtMillis: 1,
+    });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("AdminApplicationEditPage-multiple-tabs"),
+    ).toHaveTextContent(
+      "jane@ucsb.edu (Jane Doe) is also editing this application. We recommend that only one admin edits this page at a time.",
+    );
+  });
+
+  test("leaving from the question says goodbye and returns to the view", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [student],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1,
+    });
+    renderPage();
+
+    await screen.findByTestId("AdminApplicationEditPage-multiple-tabs-modal");
+    await userEvent.click(
+      screen.getByTestId("AdminApplicationEditPage-multiple-tabs-modal-leave"),
+    );
+
+    expect(await screen.findByTestId("view-page")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/applications/leave?id=${ula.id}`,
+      expect.objectContaining({ method: "POST", keepalive: true }),
+    );
+    vi.unstubAllGlobals();
+  });
+
+  test("a save from an old copy shows the conflict, not a toast, and Reload brings the latest", async () => {
+    axiosMock
+      .onGet("/api/admin/applications", { params: { id: String(ula.id) } })
+      .reply(200, { ...ula, version: 6 });
+    axiosMock.onPut("/api/admin/applications").reply(409, {
+      message: "changed",
+      version: 7,
+      application: { ...ula, version: 7 },
+    });
+    renderPage();
+
+    await fillAndSave();
+
+    expect(
+      await screen.findByTestId("AdminApplicationEditPage-conflict-message"),
+    ).toHaveTextContent(
+      "This application was changed in another tab or window, or by the applicant. Reload to see the latest version.",
+    );
+    expect(mockToast).not.toHaveBeenCalled();
+
+    axiosMock
+      .onGet("/api/admin/applications", { params: { id: String(ula.id) } })
+      .reply(200, { ...ula, version: 7 });
+    const before = axiosMock.history.get.filter(
+      (r) => r.url === "/api/admin/applications",
+    ).length;
+    await userEvent.click(
+      screen.getByTestId("AdminApplicationEditPage-conflict-reload"),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("AdminApplicationEditPage-conflict"),
+      ).toBeNull(),
+    );
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/admin/applications")
+          .length,
+      ).toBeGreaterThan(before),
+    );
+  });
+
+  test("any other failed save is toasted and shows no conflict", async () => {
+    axiosMock.onPut("/api/admin/applications").reply(500);
+    renderPage();
+
+    await fillAndSave();
+
+    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1));
+    expect(
+      screen.queryByTestId("AdminApplicationEditPage-conflict"),
+    ).toBeNull();
+  });
 });

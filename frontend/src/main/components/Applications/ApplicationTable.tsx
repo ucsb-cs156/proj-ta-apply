@@ -15,6 +15,11 @@ export type ApplicationOrigin = "APPLICANT" | "ADMIN_TEST" | "DEVELOPER_MODE";
 
 export type Application = {
   id: number;
+  /**
+   * How many times the application has been saved. A save carries the one the form last saw, and
+   * is refused if the application has been saved since (issue #302).
+   */
+  version?: number;
   recruitmentId: number;
   email: string;
   status: "PENDING" | "HIRED" | "NOT_HIRED" | "CANCELLED";

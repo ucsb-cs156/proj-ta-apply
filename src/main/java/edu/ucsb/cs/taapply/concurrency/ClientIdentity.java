@@ -9,13 +9,21 @@ package edu.ucsb.cs.taapply.concurrency;
  * are; for the people of this application the key is the email address and the label is the email
  * address followed by the full name in parentheses, or the email address alone if there is no name.
  *
+ * <p>{@link #admin} says whether the person is an admin (issue #302). The detector does not act on
+ * it; it hands it back with the label, for the client to choose its message by.
+ *
  * <p>A label that is blank becomes the key. A label longer than {@value #MAX_LABEL_LENGTH}
  * characters is cut short with an ellipsis, so that no one's name can swell a response.
  */
-public record ClientIdentity(String personKey, String label) {
+public record ClientIdentity(String personKey, String label, boolean admin) {
 
   /** The longest label that is kept, in characters (code points, so no character is split). */
   public static final int MAX_LABEL_LENGTH = 200;
+
+  /** Someone who is not an admin. */
+  public ClientIdentity(String personKey, String label) {
+    this(personKey, label, false);
+  }
 
   public ClientIdentity {
     if (personKey == null || personKey.isBlank()) {

@@ -15,6 +15,13 @@ public class ClientIdentityTests {
   }
 
   @Test
+  public void a_person_is_not_an_admin_unless_said_to_be() {
+    assertEquals(false, new ClientIdentity("k", "Ada").admin());
+    assertEquals(false, new ClientIdentity("k", "Ada", false).admin());
+    assertEquals(true, new ClientIdentity("k", "Ada", true).admin());
+  }
+
+  @Test
   public void a_missing_or_blank_label_becomes_the_key() {
     assertEquals("ada@example.org", new ClientIdentity("ada@example.org", null).label());
     assertEquals("ada@example.org", new ClientIdentity("ada@example.org", "").label());

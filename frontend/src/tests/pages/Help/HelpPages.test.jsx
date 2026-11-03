@@ -114,8 +114,16 @@ function expectRankingSimultaneousEditingSection(page, intro) {
   expect(meaning.nextElementSibling).toBe(modal);
   expect(modal.nextElementSibling).toBe(choices);
   expect(choices.nextElementSibling).toBe(todo);
-  // The refresh section from #281 follows it, and still ends the page.
-  expect(todo.nextElementSibling).toBe(
+  // Issue #302: on the admin page, editing a student's application follows it. Then comes the
+  // refresh section from #281, which still ends the page.
+  const application = screen.queryByTestId(
+    `${page}-simultaneous-editing-application`,
+  );
+  const after = application ?? todo;
+  if (application !== null) {
+    expect(todo.nextElementSibling).toBe(application);
+  }
+  expect(after.nextElementSibling).toBe(
     screen.getByTestId(`${page}-simultaneous-editing-todo`),
   );
 }
@@ -197,7 +205,14 @@ function expectSimultaneousEditingSection(page) {
   expect(choices.nextElementSibling).toBe(todo);
   // Issue #281: the refresh that keeps applications open or closed current ends the section.
   const refresh = screen.getByTestId(`${page}-simultaneous-editing-refresh`);
-  expect(todo.nextElementSibling).toBe(refresh);
+  // Issue #302: what the applicant sees when an admin has the application open comes first.
+  const admin = screen.getByTestId(`${page}-simultaneous-editing-admin`);
+  expect(todo.nextElementSibling).toBe(admin);
+  expect(admin.nextElementSibling).toBe(refresh);
+  expect(admin).toHaveTextContent(
+    "Admin jane@ucsb.edu (Jane Doe) has this application open for editing. We recommend that you close this window and try again in a few minutes. If this message persists, please reach out to jane@ucsb.edu",
+  );
+  expect(admin).toHaveTextContent("refuses your save");
   expect(root.lastElementChild).toBe(refresh);
   expect(refresh).toHaveTextContent(
     "Applications opening and closing. The home page and the application form refresh by themselves, without reloading, about every 15 seconds (somewhere between 10 and 20)",
@@ -801,7 +816,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(4);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -843,6 +858,19 @@ describe("Help pages (issue #140)", () => {
     expect(rows[2].querySelector("a")).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/287",
+    );
+    // Issue #302: a submitted application, edited by its applicant or by an admin.
+    expect(
+      [...rows[3].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Student apply page when editing a submitted application, and the Admin application edit page",
+      "One application, edited by its applicant or by an admin",
+      "application:<applicationId>",
+      "#305",
+    ]);
+    expect(rows[3].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/305",
     );
     for (const phrase of [
       "bumped by every rank edit and by the Developer Mode fake rankings job",
@@ -926,6 +954,25 @@ describe("Help pages (issue #140)", () => {
       screen.getByTestId("HelpAdminsPage-simultaneous-editing-refresh"),
     ).toHaveTextContent(
       "and so do instructors and students, about every 15 seconds",
+    );
+  });
+
+  test("the admin section describes editing a student's application (issue #302)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const note = await screen.findByTestId(
+      "HelpAdminsPage-simultaneous-editing-application",
+    );
+    expect(note).toHaveTextContent(
+      "chris@ucsb.edu (Chris Student) already has this application open for editing. We recommend that you wait a few minutes or ask them to close it.",
+    );
+    expect(note).toHaveTextContent(
+      "We recommend that only one admin edits this page at a time.",
+    );
+    expect(note).toHaveTextContent(
+      "Applications of different students never cause a warning.",
+    );
+    expect(note.nextElementSibling).toBe(
+      screen.getByTestId("HelpAdminsPage-simultaneous-editing-todo"),
     );
   });
 

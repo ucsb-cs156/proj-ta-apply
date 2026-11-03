@@ -106,11 +106,14 @@ resource now?
 * `arrival(resourceKey, clientId)` says whether the client is the **newest** and when it arrived (see
   "Arrival order").
 * `othersActive(resourceKey, clientId)` returns the other people active within the **window**, as a
-  list of `{label, samePerson}`, **one entry for each person** however many tabs they have open,
+  list of `{label, samePerson, admin}`, **one entry for each person** however many tabs they have open,
   sorted by label. An entry has `samePerson` true if it is the same person as the caller (the
   caller's own other tab or window); the caller's own client is never in the list. The caller is
   compared by the identity recorded for its client id; a caller that was not recorded is nobody's
-  same person.
+  same person. `admin` (#302) says whether that person is an admin. The application puts it in the
+  identity it records for a client (`ClientIdentity.admin`) and the detector only hands it back,
+  never acting on it; it lets the client choose its message when an admin and an applicant have the
+  same application open.
 * The timing is two settings, read by the server from environment variables (see "Timing"). The
   window is the heartbeat interval times the number of heartbeats that may be missed. The server
   tells the client how often to beat in each heartbeat answer, so the two are always in step.
@@ -207,7 +210,7 @@ admin edits this page at a time.* (older tab); *a@example.com (Alice) and b@exam
 already have this page open for editing. We recommend that only one admin edits this page at a
 time.* (later tab); *You already have this page open for editing in another tab or window. We
 recommend that only one admin edits this page at a time.* (later tab, admin page, own windows only).
-The banner takes `audience` (default, or `"admin"`) and `newest`; the modal takes `audience` and is
+The banner takes `audience` (default, `"admin"`, and for #302 `"applicant"` and `"applicationAdmin"`, see (g)) and `newest`; the modal takes `audience` and is
 always the later tab. No page uses the admin audience yet; the admin warnings (the budget, course
 editing and assignments) will.
 
@@ -399,6 +402,7 @@ mean something together.
 | #280 | Assignments | The whole assignments page for one recruitment | `assignments:<recruitmentId>` | 5 |
 | #281 | Recruitment settings and workflow steps, for admins, instructors and students | No warning; background refresh plus refetch after each save | None (refresh, not a key) | extension |
 | #282 | Instructors page and non-allocation Courses page saves | No warning; same background refresh as #281 plus a refetch after each save | None (refresh, not a key) | extension |
+| #302 | Student apply page when editing a submitted application, and the Admin application edit page | One application, edited by its applicant or by an admin | `application:<applicationId>` | extension |
 
 ### Two facts that hold for the surveyed screens
 
@@ -732,6 +736,60 @@ banner. #282 covers the saves that are left.
 two pages, which are already safe to repeat, and which queries a page needs refreshed. The survey
 updates this document.
 
+### (g) An admin edits a student's application (#302)
+
+**Two pages, one key.** A submitted application is edited on two pages: the applicant's
+(`ApplicationPage`, `PUT /api/applications`) and the admin's (`AdminApplicationEditPage`,
+`PUT /api/admin/applications`). Both use the key `application:<applicationId>` and the same two
+endpoints, `POST /api/applications/heartbeat?id=` and `POST /api/applications/leave?id=`. Both pages
+send the heartbeat once the application is loaded (the applicant's only while the form is on offer,
+not when the application is view-only), say goodbye on `pagehide` and on unmount, and name the tab
+in `X-Client-Id` on every save. The timing is the `CLIENT_*` settings, as everywhere. The draft
+(`draft:<draftId>`) is a different key: a draft is never edited by an admin, and a draft that is
+submitted becomes an application with a new key.
+
+**Authorization.** The owner of the application or any admin. Anyone else gets `403` before the
+detector is touched, so nothing is recorded and no name is told; an application that does not exist
+is `404`. The applicant's controller checks it for the heartbeat and the goodbye. The save on each
+page is authorized as before (the owner on the applicant's page; `ROLE_ADMIN` on the admin's), and a
+refused save records no one.
+
+**The version check covers it, newly.** The `applications` table had no version (only drafts did), so
+the applicant and an admin could silently overwrite each other. It now has a `version` column
+(Liquibase changeset `056-add-version-to-applications`, an `INT NOT NULL DEFAULT 0`) and the entity a
+`@Version` field. Both `PUT`s take a required `version` parameter: if it is not the application's
+current version nothing is changed and the answer is `409 Conflict` with `{message, version,
+application}` (the applicant's copy leaves out the admin's comments, as every applicant-facing answer
+does); a save that loses a race (`ObjectOptimisticLockingFailureException`) answers the same. A
+successful save answers with the application and its new version. Any other save of the application
+(an admin's comments, the applicant's post-application comments, a cancellation, a tentative
+assignment) also counts a version, so a form opened before one of them is told to reload. Both pages
+show the same message (*This application was changed in another tab or window, or by an admin/the
+applicant. Reload to see the latest version.*) with a **Reload** button that fetches the application
+again and restarts the form from it, and no toast.
+
+**The admin flag on the wire.** The application records each tab's identity with `admin` set from the
+user's roles (the admin's save is always an admin). The heartbeat answer's entries are
+`{label, samePerson, admin}`.
+
+**The wording** (`audience` on the banner and the modal, with the three choices, the modal for the
+newest tab, and the goodbye as for drafts):
+
+| Viewer | Who else | Message |
+|---|---|---|
+| applicant (`audience="applicant"`) | one admin | *Admin jane@ucsb.edu (Jane Doe) has this application open for editing. We recommend that you close this window and try again in a few minutes. If this message persists, please reach out to jane@ucsb.edu* |
+| applicant | several admins | *Admin A, B and C have this application open for editing.* (named as the shared composer does, three then "and N others", "have"), and the request names the first admin's email |
+| applicant | only their own tabs | as any default page: *You are also editing this application in another tab or window. Please know that this is risky; we recommend closing all but one of these.* |
+| admin (`audience="applicationAdmin"`) | the applicant | *chris@ucsb.edu (Chris Student) already has this application open for editing. We recommend that you wait a few minutes or ask them to close it.* ("is also editing" in the tab that was open first) |
+| admin | the applicant and another admin | the shared names, then the sentence above and *We recommend that only one admin edits this page at a time.* |
+| admin | only other admins, or only their own tabs | as any admin page: *... We recommend that only one admin edits this page at a time.* |
+
+The admin-sees-applicant wording was proposed in the issue and confirmed by the maintainer. The
+email in the applicant's message is the part of the label before the first ` (`. With an admin among
+the others, the applicant's message is about the admins alone (the applicant's own other tabs are not
+named). An admin who is also the applicant, on the applicant's page, is only their own tab. The
+names are rendered as text.
+
 ## Iterations
 
 In order, easiest first. Each is written to become an issue, and most already are. Sizes are rough: S
@@ -780,6 +838,11 @@ is a day or less, M a few days, L about a week.
    uploading and deleting instructors, setting a catalog name, and the Courses page saves other than
    the allocations and estimates (which stay with #278). No version check, detector or banner. A
    survey first, which updates section (f) of this document.
+
+8. **An admin edits a student's application. (M, #302, PR #305.)** A version on the `applications`
+   table and a `409` on both edit endpoints, the key `application:<applicationId>` shared by the
+   applicant's page and the admin's edit page, the admin flag on the wire, and the two messages.
+   Section (g).
 
 After iteration 2 it is worth stopping to look at what the second user of the package needed that the
 first did not, and to fix the package before three more screens depend on it. That is also the moment

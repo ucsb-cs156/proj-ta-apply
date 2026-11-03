@@ -1,6 +1,8 @@
 package edu.ucsb.cs.taapply.controller;
 
 import com.opencsv.exceptions.CsvException;
+import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.AuditTrail;
@@ -24,11 +26,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,6 +52,7 @@ public class AdminApplicationsController extends ApiController {
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired ApplicationCsvService applicationCsvService;
   @Autowired ApplicationAuditService applicationAuditService;
+  @Autowired ClientActivityDetector clientActivityDetector;
   @Autowired LegacyApplicationCsvService legacyApplicationCsvService;
   @Autowired LegacyUlaApplicationCsvService legacyUlaApplicationCsvService;
 
@@ -177,11 +182,19 @@ public class AdminApplicationsController extends ApiController {
               + " an admin may correct an application at any time. Each field whose value changes"
               + " gets a row in the audit trail. The coursework minimum still applies; the notice"
               + " agreement rule does not, since the applicant agreed, not the admin. 404 for an"
-              + " application that does not exist.")
+              + " application that does not exist. The version is the one the form last saw; if the"
+              + " application has been saved since, by the applicant or another admin, nothing is"
+              + " changed and the answer is 409 Conflict with the application as it now stands"
+              + " (issue #302). A save that names its client (X-Client-Id) also tells the server this"
+              + " tab or window is working on the application, for the multi-tab warning; see the"
+              + " heartbeat of the applicant's controller, which the admin's page uses too.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("")
-  public Application editApplication(
-      @Parameter(name = "id") @RequestParam Long id, @RequestBody ApplicationFields fields) {
+  public ResponseEntity<Object> editApplication(
+      @Parameter(name = "id") @RequestParam Long id,
+      @Parameter(name = "version") @RequestParam Integer version,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
+      @RequestBody ApplicationFields fields) {
     Application application =
         applicationRepository
             .findById(id)
@@ -192,16 +205,30 @@ public class AdminApplicationsController extends ApiController {
             .orElseThrow(
                 () ->
                     new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));
+    // Only admins reach this method, so this person is an admin to the detector.
+    clientActivityDetector.note(
+        ApplicationsController.resourceKey(id),
+        clientId,
+        ApplicationsController.identityOf(getCurrentUser().getUser(), true));
+    if (!version.equals(application.getVersion())) {
+      return ApplicationsController.conflict(application, false);
+    }
     ApplicationsController.requireCoursework(recruitment.getType(), fields);
     ApplicationsController.requirePermNumberFormat(fields);
 
     ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);
     ApplicationsController.apply(fields, application, recruitment.getType());
-    applicationRepository.save(application);
-    List<AuditTrail> changes =
-        applicationAuditService.record(before, application, recruitment.getType());
+    Application saved;
+    try {
+      saved = applicationRepository.save(application);
+    } catch (ObjectOptimisticLockingFailureException e) {
+      // Another save got in between reading the application and writing it.
+      return ApplicationsController.conflict(
+          applicationRepository.findById(id).orElseThrow(() -> e), false);
+    }
+    List<AuditTrail> changes = applicationAuditService.record(before, saved, recruitment.getType());
     log.info("Admin edited application {}: {} field(s) changed", id, changes.size());
-    return application;
+    return ResponseEntity.ok(saved);
   }
 
   @Operation(

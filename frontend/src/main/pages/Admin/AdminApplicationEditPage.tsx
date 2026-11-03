@@ -1,6 +1,6 @@
 import type { CourseInstructors } from "main/utils/courseLabels";
 import { useNavigate, useParams } from "react-router";
-import { Button } from "react-bootstrap";
+import { Alert, Button } from "react-bootstrap";
 import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
@@ -19,6 +19,17 @@ import {
   adminApplicationPath,
   originLabel,
 } from "main/utils/adminApplications";
+import { isConflict } from "main/utils/useDraftSaving";
+import {
+  applicationHeartbeatUrl,
+  applicationLeaveUrl,
+  toastUnlessConflict,
+} from "main/utils/applicationEditing";
+import {
+  MultipleTabsBanner,
+  MultipleTabsModal,
+  useClientActivity,
+} from "main/concurrency";
 
 /**
  * A student's application open for an admin to correct: /admin/applications/:id/edit. The same
@@ -29,7 +40,7 @@ export default function AdminApplicationEditPage(): React.JSX.Element {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: application } = useBackend<Application | null>(
+  const { data: application, refetch } = useBackend<Application | null>(
     ["/api/admin/applications", id],
     { method: "GET", url: "/api/admin/applications", params: { id } },
     // Stryker disable next-line all : don't test default value of null
@@ -105,11 +116,20 @@ export default function AdminApplicationEditPage(): React.JSX.Element {
 
   const viewPath = adminApplicationPath(id ?? "");
 
+  // Tells the server this tab has the application open and learns whether the applicant, or
+  // another admin, has it open too (issue #302). The applicant's page uses the same endpoints.
+  const activity = useClientActivity({
+    heartbeatUrl: application ? applicationHeartbeatUrl(id) : null,
+    leaveUrl: application ? applicationLeaveUrl(id) : null,
+  });
+
   const saveMutation = useBackendMutation<ApplicationPayload, Application>(
     (payload) => ({
       url: "/api/admin/applications",
       method: "PUT",
-      params: { id },
+      // Stryker disable next-line OptionalChaining : a save can only be made once the application is there
+      params: { id, version: application?.version },
+      headers: activity.headers,
       data: payload,
     }),
     {
@@ -117,9 +137,12 @@ export default function AdminApplicationEditPage(): React.JSX.Element {
         toast("Application saved; the changes are in the audit trail.");
         navigate(viewPath);
       },
+      // A save made from an old copy is shown on the page, not toasted (issue #302).
+      onError: toastUnlessConflict,
     },
     ["/api/admin/applications", "/api/admin/audittrail/application"],
   );
+  const conflicted = isConflict(saveMutation.error);
 
   return (
     <BasicLayout>
@@ -129,6 +152,51 @@ export default function AdminApplicationEditPage(): React.JSX.Element {
           {recruitment &&
             `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`}
         </h1>
+
+        <MultipleTabsBanner
+          others={activity.others}
+          newest={activity.newest}
+          noun="application"
+          audience="applicationAdmin"
+          testId="AdminApplicationEditPage-multiple-tabs"
+        />
+        {/* Only the newest tab is asked; the older ones keep the banner alone. */}
+        <MultipleTabsModal
+          others={activity.others}
+          newest={activity.newest}
+          arrivedAt={activity.arrivedAt}
+          noun="application"
+          audience="applicationAdmin"
+          onLeave={() => {
+            // Stryker disable next-line all : leaving unmounts the page, whose cleanup says the same goodbye; this only says it a moment sooner
+            activity.leave();
+            navigate(viewPath);
+          }}
+          testId="AdminApplicationEditPage-multiple-tabs-modal"
+        />
+        {conflicted && (
+          <Alert
+            variant="danger"
+            data-testid="AdminApplicationEditPage-conflict"
+          >
+            <span data-testid="AdminApplicationEditPage-conflict-message">
+              This application was changed in another tab or window, or by the
+              applicant. Reload to see the latest version.
+            </span>
+            <Button
+              className="ms-2"
+              size="sm"
+              variant="danger"
+              onClick={() => {
+                saveMutation.reset();
+                void refetch();
+              }}
+              data-testid="AdminApplicationEditPage-conflict-reload"
+            >
+              Reload
+            </Button>
+          </Alert>
+        )}
 
         {application && (
           <>
@@ -146,6 +214,8 @@ export default function AdminApplicationEditPage(): React.JSX.Element {
               Cancel
             </Button>
             <ApplicationForm
+              // A reloaded application is a new start: the form takes its answers afresh.
+              key={application.version}
               type={recruitment?.type ?? "TA"}
               courses={courses ?? []}
               instructors={instructors ?? {}}

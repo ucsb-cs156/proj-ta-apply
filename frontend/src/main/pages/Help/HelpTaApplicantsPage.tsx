@@ -170,6 +170,19 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
           twenty seconds if the other copy could not say that it was leaving,
           such as when a computer lost its network connection.
         </p>
+        <p data-testid="HelpTaApplicantsPage-simultaneous-editing-admin">
+          <strong>An admin has your application open.</strong> After you have
+          submitted, an admin may correct your application. If you open it for
+          editing while an admin has it open, the warning names the admin, such
+          as &ldquo;Admin jane@ucsb.edu (Jane Doe) has this application open for
+          editing. We recommend that you close this window and try again in a
+          few minutes. If this message persists, please reach out to
+          jane@ucsb.edu&rdquo; The admin&apos;s email address at the end is
+          where to write if the message does not go away. If you save while the
+          admin has saved since you opened the application, the system refuses
+          your save, says so, and offers <em>Reload</em>; what you typed in the
+          old copy is lost.
+        </p>
         <p data-testid="HelpTaApplicantsPage-simultaneous-editing-refresh">
           <strong>Applications opening and closing.</strong> The home page and
           the application form <strong>refresh by themselves</strong>, without
