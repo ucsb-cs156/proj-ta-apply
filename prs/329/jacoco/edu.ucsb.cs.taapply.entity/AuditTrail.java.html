@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuditTrail.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.entity</a> &gt; <span class="el_source">AuditTrail.java</span></div><h1>AuditTrail.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.entity;
+
+import edu.ucsb.cs.taapply.time.AppTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * One change an admin made to one field of a student's application: what the field was called, what
+ * it held before and what it holds now (Admin &gt; Audit Trail).
+ *
+ * &lt;p&gt;This is the audit trail for &lt;em&gt;individual applications&lt;/em&gt;. Changes to a recruitment itself
+ * (its creation, deletion, status and dates) are a different table, {@link RecruitmentAuditTrail}.
+ *
+ * &lt;p&gt;Exactly one of {@code ulaApplicationId} and {@code taApplicationId} is set, which the table's
+ * check constraint enforces (changeset 017). Values are strings whatever the field's type; a row of
+ * a join table (a prior course, a topic rating, an interest) is stored as the JSON of the whole
+ * row. A null old value means the field was blank, or a row was added; a null new value means the
+ * admin blanked an optional field, or deleted a row.
+ *
+ * &lt;p&gt;Nothing writes rows yet: the admin edit that will is a later feature. The table and its page
+ * come first so that feature has somewhere to record what it does.
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@Entity(name = &quot;audit_trail&quot;)
+public class AuditTrail {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  /** When the change was recorded; stamped on insert, in Pacific time. */
+  @Column(name = &quot;edited_at&quot;, updatable = false)
+  private LocalDateTime editedAt;
+
+  @Column(name = &quot;ula_application_id&quot;)
+  private Long ulaApplicationId;
+
+  @Column(name = &quot;ta_application_id&quot;)
+  private Long taApplicationId;
+
+  @Column(name = &quot;field_name&quot;, nullable = false)
+  private String fieldName;
+
+  @Column(name = &quot;old_value&quot;, length = 4000)
+  private String oldValue;
+
+  @Column(name = &quot;new_value&quot;, length = 4000)
+  private String newValue;
+
+  /** Stamps the Pacific time at which the row is first saved (issue #293). */
+  @PrePersist
+  void stampEdited() {
+<span class="fc" id="L65">    editedAt = AppTime.now();</span>
+<span class="fc" id="L66">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
