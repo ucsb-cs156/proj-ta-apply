@@ -401,7 +401,7 @@ mean something together.
 | #279 | Faculty rankings | One recruitment course's ranking list | `ranking:<recruitmentCourseId>` | 4 |
 | #280 | Assignments | The whole assignments page for one recruitment | `assignments:<recruitmentId>` | 5 |
 | #281 | Recruitment settings and workflow steps, for admins, instructors and students | No warning; background refresh plus refetch after each save | None (refresh, not a key) | extension |
-| #282 | Instructors page and non-allocation Courses page saves | No warning; same background refresh as #281 plus a refetch after each save | None (refresh, not a key) | extension |
+| #282 | Instructors page and the view-only Courses page (the Courses edit page is #278's) | No warning; same background refresh as #281 plus a refetch after each save | None (refresh, not a key) | extension |
 | #302 | Student apply page when editing a submitted application, and the Admin application edit page | One application, edited by its applicant or by an admin | `application:<applicationId>` | extension |
 
 ### Two facts that hold for the surveyed screens
@@ -863,13 +863,50 @@ from there. These are one-click or one-field saves, each of which a stale copy c
 contradict (deleting an instructor who is already gone, removing a course twice), so the remedy is a
 fresh picture and, on the server, saves that are safe to repeat.
 
-**What stays with #278.** The allocations and the estimated enrollments edited on the edit page are
-part of the Courses page split in (b), where the whole edit page is guarded with a heartbeat and a
-banner. #282 covers the saves that are left.
+**What stays with #278.** After the split in (b), every Courses save (Populate, adding, removing and
+restoring a course, flags, estimates, allocations, Auto Allocate, visibility, the hiring target,
+publishing) is on the edit page, guarded with a heartbeat and a banner. So #282 covers the
+Instructors page and the view-only Courses page, which only needs to stay fresh.
 
-**First step of the issue.** A survey, written into this section, before any code: each save on the
-two pages, which are already safe to repeat, and which queries a page needs refreshed. The survey
-updates this document.
+**As built (#282).** The pages call `useRefreshingBackend` from (e) in place of `useBackend` for
+their light reads, at the admin interval and jitter (`ADMIN_REFRESH_SEC`, `ADMIN_REFRESH_JITTER`;
+only admins use these pages). Every save already invalidated the list it changed, which is the
+refetch after each save, so no mutation changed. The queries that refresh:
+
+| Page | Queries refreshed |
+|---|---|
+| Instructors | `/api/admin/instructors/get`, `/api/admin/instructors/catalogNames` |
+| Courses (catalog) | `/api/courses/all` |
+| A recruitment's course list | `/api/recruitmentcourses/all`, `/api/admin/recruitments/all` |
+
+Left alone on the course list page: the ranking summaries (heavier, and read only), the hidden
+columns, and the allocation and estimate saves, which stay with #278.
+
+**View-only versus edit page (after #278's split).** The course list is now two pages sharing one
+component. The background refresh runs on the **view-only page** only, where nothing can be typed.
+The **edit page** passes `refetchInterval: false`: it is guarded by the multi-tab warning
+(`courses-edit:<recruitmentId>`), its allocation saves carry the versions the loaded list holds,
+and a list that moved under an admin who is editing would defeat that check and could replace a
+box being typed in. The edit page still refetches after each save, and on window focus. The
+Instructors page and the Courses (catalog) page refresh as described above.
+
+**Input in progress.** Three kinds of input, three answers:
+
+- The Catalog Name dropdown keeps showing what it showed, or what was just chosen, while it has
+  focus, and follows the stored value again once it is left, so another admin's change appears
+  after the person is done. The cell is a module-level component with its settings in a context:
+  the table renders a `cell` function as a component, so one made anew on every render of the
+  table would be remounted on every render, which would drop the focus and the dropdown with it.
+- The enrollment estimate and allocation boxes (on the edit page, which does not refresh in the background) show their own draft while they have focus
+  (from the saves added in #174 and #175), so a refresh updates every other row and the stored
+  value, never the box being typed in.
+- A CSV being chosen lives in the upload form's own state, which a refresh does not touch.
+
+**Survey.** Each save is one value set to an absolute result and the server already treats a
+repeat as a no-op or the same write (deleting an instructor who is already gone, removing a course
+twice), so no server change was needed. A stale view only risks acting on something already
+changed; a refresh every few seconds, and a refetch on focus, bring that down to the same few
+seconds as in (e).
 
 ### (g) An admin edits a student's application (#302)
 
@@ -969,11 +1006,12 @@ is a day or less, M a few days, L about a week.
    needs no version check, detector or banner. A survey first, which updates section (e) of this
    document. Built: see section (e) for the shared `useRefreshingBackend` hook that #282 reuses.
 
-7. **Keep the Instructors page and Courses page saves fresh. (S to M, #282.)** Refresh instead of a
+7. **Keep the Instructors page and the view-only Courses page fresh. (S to M, #282.)** Refresh instead of a
    warning, with the same background refresh as #281 and a refetch after each save, for adding,
-   uploading and deleting instructors, setting a catalog name, and the Courses page saves other than
-   the allocations and estimates (which stay with #278). No version check, detector or banner. A
-   survey first, which updates section (f) of this document.
+   uploading and deleting instructors, setting a catalog name, and for the view-only Courses page so
+   it does not go stale. Every Courses save now lives on the edit page, which is #278's (warning,
+   and no background refresh). No version check, detector or banner. A
+   survey first, which updates section (f) of this document. Built: see section (f).
 
 8. **An admin edits a student's application. (M, #302, PR #308.)** A version on the `applications`
    table and a `409` on both edit endpoints, the key `application:<applicationId>` shared by the

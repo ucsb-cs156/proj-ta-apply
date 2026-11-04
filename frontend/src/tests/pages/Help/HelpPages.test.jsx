@@ -831,6 +831,24 @@ describe("Help pages (issue #140)", () => {
       /never replaces what a person is typing/,
     );
     expect(text("refresh-input")).toMatch(/no longer be submitted/);
+    // Issue #282: the Instructors and Courses pages.
+    expect(text("refresh-admin-pages")).toMatch(
+      /refresh instead of warning, with the same hook/,
+    );
+    expect(text("refresh-admin-pages")).toMatch(
+      /\/api\/admin\/instructors\/get/,
+    );
+    expect(text("refresh-admin-pages")).toMatch(/\/api\/courses\/all/);
+    expect(text("refresh-admin-pages")).toMatch(
+      /\/api\/recruitmentcourses\/all/,
+    );
+    expect(text("refresh-admin-pages")).toMatch(/guarded by a warning instead/);
+    expect(text("refresh-admin-pages")).toMatch(
+      /only the view-only page refreshes in the background; the edit page does not/,
+    );
+    expect(text("refresh-admin-pages")).toMatch(
+      /Catalog Name dropdown keeps showing what it showed/,
+    );
 
     // Only what has landed is in the table.
     const table = screen.getByTestId("HelpDeveloperPage-simultaneous-table");
@@ -838,7 +856,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(7);
+    expect(rows).toHaveLength(8);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -943,6 +961,19 @@ describe("Help pages (issue #140)", () => {
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/288",
     );
+    // Issue #282: also a refresh, so no key.
+    expect(
+      [...rows[7].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Instructors page and the view-only Courses page",
+      "Background refresh plus a refetch after each save; no warning, no version check, no detector",
+      "None (refresh, not a key)",
+      "#291",
+    ]);
+    expect(rows[7].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/291",
+    );
     const courses = text("courses");
     expect(courses.replace(/\s+/g, " ")).toBe(
       `The Courses pages. A recruitment's Courses page is split in two. The view-only page (/admin/recruitments/:id/courses) is the default, edits nothing, and neither heartbeats nor warns. The edit page (/admin/recruitments/:id/courses/edit) heartbeats POST /api/recruitmentcourses/heartbeat?recruitmentId=, says goodbye at /leave, names itself in the X-Client-Id header of the allocation, estimate and Auto Allocate saves, and shows the banner and the modal with the noun "page"; Leave this page goes to the view-only page. Only an admin may heartbeat, and the recruitment must exist, before anything is recorded. The version check is not a JPA version, since the course refresh and the estimates also write the row: a separate allocation_version column on recruitment_courses is counted by each allocation edit, and allocation_bulk_version on recruitments is counted by Auto Allocate. An allocation edit sends both as expectedVersion and expectedBulkVersion and gets 409 when either moved; after a bulk conflict the page reads everything again.`,
@@ -1020,6 +1051,26 @@ describe("Help pages (issue #140)", () => {
       expect(root.lastElementChild).toBe(todo);
     },
   );
+
+  test("the admin section says the Instructors and course pages refresh (issue #282)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const pages = await screen.findByTestId(
+      "HelpAdminsPage-simultaneous-editing-admin-pages",
+    );
+    expect(pages).toHaveTextContent(
+      "the Instructors page and the view-only Courses page: they refresh by themselves every few seconds",
+    );
+    expect(pages).toHaveTextContent("appears on its own");
+    expect(pages).toHaveTextContent("There is no warning for these pages.");
+    expect(pages).toHaveTextContent("is not replaced");
+    expect(pages).toHaveTextContent(
+      "The Courses edit page does not refresh by itself",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-simultaneous-editing-refresh")
+        .nextElementSibling,
+    ).toBe(pages);
+  });
 
   test("the admin section says what is safe and when about 15 seconds applies", async () => {
     renderPage(<HelpAdminsPage />);
