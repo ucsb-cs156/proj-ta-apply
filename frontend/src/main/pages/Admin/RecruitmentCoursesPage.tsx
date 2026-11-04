@@ -23,6 +23,7 @@ import { useDeveloperModeFooterControls } from "main/utils/developerModeFooter";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
+import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { apiErrorMessage } from "main/utils/apiError";
 import { autoAssignTooltip } from "main/utils/allocations";
 import { toast } from "react-toastify";
@@ -84,7 +85,7 @@ export default function RecruitmentCoursesPage({
   // The enroll code typed into the add-by-enroll-code box (issue #125).
   const [enrollCode, setEnrollCode] = useState("");
 
-  const { data: courses } = useBackend<RecruitmentCourse[]>(
+  const { data: courses } = useRefreshingBackend<RecruitmentCourse[]>(
     ["/api/recruitmentcourses/all", includeRemoved],
     {
       method: "GET",
@@ -93,10 +94,17 @@ export default function RecruitmentCoursesPage({
     },
     // Stryker disable next-line all : don't test default value of empty list
     [],
+    // Stryker disable next-line BooleanLiteral : whether a failed read toasts is not under test here
+    false,
+    // Issue #282: only the view-only page refreshes in the background. The edit page is guarded by
+    // the warning from #278, and its saves carry the versions this list holds, so the list must
+    // not move under an admin who is editing; it still refetches after each save.
+    // Stryker disable next-line BooleanLiteral : react-query treats `true` as no interval too (equivalent)
+    edit ? { refetchInterval: false } : {},
   );
 
   // For the last-refreshed line (issue #124); every Populate stamps the recruitment.
-  const { data: recruitments } = useBackend<Recruitment[]>(
+  const { data: recruitments } = useRefreshingBackend<Recruitment[]>(
     ["/api/admin/recruitments/all"],
     { method: "GET", url: "/api/admin/recruitments/all" },
     // Stryker disable next-line all : don't test default value of empty list

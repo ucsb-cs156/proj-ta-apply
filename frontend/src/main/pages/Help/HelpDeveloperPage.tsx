@@ -535,9 +535,34 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           see that applications are still open. The endpoint that counts
           applications for each recruitment, and the heavy tables (applications,
           rankings, assignments), are not refreshed this way, and a
-          student&apos;s home page never asks an admin endpoint. If the
-          Instructors and Courses page work (issue #282) changes which pages
-          refresh, this list is kept in step.
+          student&apos;s home page never asks an admin endpoint.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-refresh-admin-pages">
+          <strong>
+            The Instructors page and the view-only Courses page (issue #282).
+          </strong>{" "}
+          These pages change small, infrequent settings, each to an absolute
+          value, so they refresh instead of warning, with the same hook and the
+          same four settings (admins only use them, so the admin pair applies).
+          Each save already refetches its lists when it succeeds, and the
+          background refresh covers a change made by another admin. The queries
+          that refresh are <code>/api/admin/instructors/get</code> and{" "}
+          <code>/api/admin/instructors/catalogNames</code> (Instructors),{" "}
+          <code>/api/courses/all</code> (Courses), and{" "}
+          <code>/api/recruitmentcourses/all</code> and{" "}
+          <code>/api/admin/recruitments/all</code> (a recruitment&apos;s course
+          list). On the course list only the <strong>view-only page</strong>{" "}
+          refreshes in the background; the <strong>edit page</strong> does not,
+          because it is guarded by a warning instead (issue #278) and its saves
+          carry the versions the list holds, so the list must not move under an
+          admin who is editing (it still refetches after each save). The ranking
+          summaries are heavier and are not refreshed this way. Input in
+          progress is protected as follows: the Catalog Name dropdown keeps
+          showing what it showed (or what was just chosen) while it has focus,
+          and follows the stored value again when it is left; the enrollment
+          estimate and allocation boxes show their own draft while they have
+          focus; and a CSV being chosen lives in the upload form&apos;s own
+          state.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-refresh-input">
           <strong>Input in progress.</strong> A refresh updates what is shown
@@ -716,6 +741,23 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #288
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-admin-pages">
+              <td>Instructors page and the view-only Courses page</td>
+              <td>
+                Background refresh plus a refetch after each save; no warning,
+                no version check, no detector
+              </td>
+              <td>None (refresh, not a key)</td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/291"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #291
                 </a>
               </td>
             </tr>

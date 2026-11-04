@@ -1,3 +1,4 @@
+import { createContext, useContext, useState } from "react";
 import OurTable from "main/components/Common/OurTable";
 
 import { useBackendMutation } from "main/utils/useBackend";
@@ -34,6 +35,64 @@ type RoleEmailTableProps = {
   /** Called with the email and the chosen name, or null for (null). */
   onCatalogNameChange?: (email: string, catalogName: string | null) => void;
 };
+
+type CatalogNameContextValue = {
+  catalogNames: string[];
+  onChange: (email: string, catalogName: string | null) => void;
+  testIdPrefix: string;
+};
+
+// Stryker disable all : the provider below always supplies the real value; this default is never read
+const CatalogNameContext = createContext<CatalogNameContextValue>({
+  catalogNames: [],
+  onChange: () => {},
+  testIdPrefix: "RoleEmailTable",
+});
+// Stryker restore all
+
+/**
+ * The Catalog Name dropdown of one row. The page refreshes by itself (issue #282), so while the
+ * dropdown has focus it keeps showing what it showed (or what was just chosen), never the
+ * refreshed value; once it is left it follows the stored value again, which shows a change made by
+ * another admin.
+ *
+ * A module-level component, with its settings in a context, because the table renders a cell
+ * function as a component: one made anew on every render would be remounted on every render, which
+ * would lose both this state and the dropdown's focus.
+ */
+function CatalogNameCell({
+  cell,
+}: {
+  cell: Cell<RoleEmail, unknown>;
+}): React.JSX.Element {
+  const { catalogNames, onChange, testIdPrefix } =
+    useContext(CatalogNameContext);
+  const [held, setHeld] = useState<string | null>(null);
+  const email = cell.row.original.email;
+  // Stryker disable next-line StringLiteral : an unmatched value shows the first option, "(null)", the same as ""
+  const stored = cell.row.original.catalogName ?? "";
+  return (
+    <Form.Select
+      size="sm"
+      aria-label={`Catalog name for ${email}`}
+      value={held ?? stored}
+      onFocus={() => setHeld(stored)}
+      onBlur={() => setHeld(null)}
+      onChange={(e) => {
+        setHeld(e.target.value);
+        onChange(email, e.target.value === "" ? null : e.target.value);
+      }}
+      data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-catalogName-select`}
+    >
+      <option value="">{NO_CATALOG_NAME}</option>
+      {catalogNames.map((name) => (
+        <option key={name} value={name}>
+          {name}
+        </option>
+      ))}
+    </Form.Select>
+  );
+}
 
 export default function RoleEmailTable({
   data,
@@ -80,27 +139,7 @@ export default function RoleEmailTable({
           {
             header: "Catalog Name",
             accessorKey: "catalogName",
-            cell: ({ cell }: { cell: Cell<RoleEmail, unknown> }) => (
-              <Form.Select
-                size="sm"
-                aria-label={`Catalog name for ${cell.row.original.email}`}
-                value={cell.row.original.catalogName ?? ""}
-                onChange={(e) =>
-                  onCatalogNameChange(
-                    cell.row.original.email,
-                    e.target.value === "" ? null : e.target.value,
-                  )
-                }
-                data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-col-catalogName-select`}
-              >
-                <option value="">{NO_CATALOG_NAME}</option>
-                {catalogNames.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </Form.Select>
-            ),
+            cell: CatalogNameCell,
           },
         ];
 
@@ -147,11 +186,20 @@ export default function RoleEmailTable({
   // The table takes its natural width (issue #84): on a wide screen the email column no
   // longer stretches to fill the page, and the extra room is left on the right.
   return (
-    <OurTable
-      data={Array.isArray(data) ? data : []}
-      columns={columns}
-      testid={testIdPrefix}
-      fitContent
-    />
+    <CatalogNameContext.Provider
+      value={{
+        catalogNames,
+        // Stryker disable next-line all : only used when the column exists, which needs a handler
+        onChange: onCatalogNameChange ?? (() => {}),
+        testIdPrefix,
+      }}
+    >
+      <OurTable
+        data={Array.isArray(data) ? data : []}
+        columns={columns}
+        testid={testIdPrefix}
+        fitContent
+      />
+    </CatalogNameContext.Provider>
   );
 }
