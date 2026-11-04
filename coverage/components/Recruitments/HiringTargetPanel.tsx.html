@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>14/14</span>
             </div>
         
             
@@ -151,7 +151,16 @@
 <a name='L86'></a><a href='#L86'>86</a>
 <a name='L87'></a><a href='#L87'>87</a>
 <a name='L88'></a><a href='#L88'>88</a>
-<a name='L89'></a><a href='#L89'>89</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -180,13 +189,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">132x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">132x</span>
-<span class="cline-any cline-yes">132x</span>
-<span class="cline-any cline-yes">132x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">132x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">151x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">151x</span>
+<span class="cline-any cline-yes">151x</span>
+<span class="cline-any cline-yes">151x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">151x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -196,14 +208,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">132x</span>
+<span class="cline-any cline-yes">151x</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">132x</span>
+<span class="cline-any cline-yes">151x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -239,6 +256,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useState } from "react";
 import { Form } from "react-bootstrap";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
@@ -253,6 +271,8 @@ type HiringTargetPanelProps = {
   /** The sum of the allocations of the recruitment's courses, removed ones left out. */
   allocatedSoFar: number;
   testIdPrefix?: string;
+  /** The view-only Courses page (issue #278): the target is shown as text, not a box. */
+  readOnly?: boolean;
 };
 &nbsp;
 /**
@@ -265,6 +285,7 @@ export default function HiringTargetPanel({
   recruitment,
   allocatedSoFar,
   testIdPrefix = "HiringTargetPanel",
+  readOnly = false,
 }: HiringTargetPanelProps): React.JSX.Element {
   // What is in the box while it has focus; null means "show the stored value". Cleared on blur,
   // so an invalid entry reverts and a saved one is simply the stored value again.
@@ -293,26 +314,32 @@ export default function HiringTargetPanel({
 &nbsp;
   return (
     &lt;div className="mb-3" data-testid={testIdPrefix}&gt;
-      &lt;Form.Group
-        className="d-flex align-items-center gap-2"
-        controlId={`${testIdPrefix}-totalHiringTarget`}
-      &gt;
-        &lt;Form.Label className="mb-0"&gt;
-          Total number of {type}s expected to be hired:{" "}
-        &lt;/Form.Label&gt;
-        &lt;Form.Control
-          type="number"
-          min={1}
-          step={1}
-          size="sm"
-          style={{ width: "6em" }}
-          value={draft ?? String(stored)}
-          isInvalid={draft !== null &amp;&amp; !isValidHiringTarget(draft)}
-          onChange={(e) =&gt; onChange(e.target.value)}
-          onBlur={() =&gt; setDraft(null)}
-          data-testid={`${testIdPrefix}-totalHiringTarget`}
-        /&gt;
-      &lt;/Form.Group&gt;
+      {readOnly ? (
+        &lt;div data-testid={`${testIdPrefix}-totalHiringTarget`}&gt;
+          Total number of {type}s expected to be hired: {stored}
+        &lt;/div&gt;
+      ) : (
+        &lt;Form.Group
+          className="d-flex align-items-center gap-2"
+          controlId={`${testIdPrefix}-totalHiringTarget`}
+        &gt;
+          &lt;Form.Label className="mb-0"&gt;
+            Total number of {type}s expected to be hired:{" "}
+          &lt;/Form.Label&gt;
+          &lt;Form.Control
+            type="number"
+            min={1}
+            step={1}
+            size="sm"
+            style={{ width: "6em" }}
+            value={draft ?? String(stored)}
+            isInvalid={draft !== null &amp;&amp; !isValidHiringTarget(draft)}
+            onChange={(e) =&gt; onChange(e.target.value)}
+            onBlur={() =&gt; setDraft(null)}
+            data-testid={`${testIdPrefix}-totalHiringTarget`}
+          /&gt;
+        &lt;/Form.Group&gt;
+      )}
       &lt;div data-testid={`${testIdPrefix}-allocated`}&gt;
         Allocated so far: {allocatedSoFar}
       &lt;/div&gt;
@@ -334,7 +361,7 @@ export default function HiringTargetPanel({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-03T22:43:08.781Z
+                at 2026-11-04T00:06:33.417Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
