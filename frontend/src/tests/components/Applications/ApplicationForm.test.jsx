@@ -812,7 +812,9 @@ describe("ApplicationForm tests", () => {
     expect(
       screen.queryByTestId("ApplicationForm-secondChoiceSections"),
     ).toBeNull();
-    expect(axiosMock.history.get).toHaveLength(0);
+    expect(
+      axiosMock.history.get.filter((r) => r.url !== "/api/courses/all"),
+    ).toHaveLength(0);
   });
 
   // ---- availability comments ----
@@ -2076,6 +2078,82 @@ describe("ApplicationForm tests", () => {
         "ApplicationForm-coursework-table-cell-row-2-col-school",
       ),
     ).toHaveTextContent("Another University");
+  });
+
+  // ---- titles from the catalog (issue #306) ----
+
+  const catalog = [
+    { courseId: "CMPSC   156", title: "ADV APP PROGRAM" },
+    { courseId: "CMPSC   130A", title: "DATA STRUCTURES" },
+    { courseId: "CMPSC   8", title: null },
+  ];
+  const untitled = (courseNumber, extra = {}) => ({
+    ucsbCourse: true,
+    otherSchool: null,
+    courseNumber,
+    courseTitle: "",
+    term: "F25",
+    grade: "A",
+    ...extra,
+  });
+
+  test("a blank title is filled in from the catalog, and saved with the application", async () => {
+    axiosMock.onGet("/api/courses/all").reply(200, catalog);
+    const submitAction = renderForm({
+      type: "ULA",
+      initialContents: {
+        priorCoursework: [
+          untitled("CMPSC 156"),
+          untitled("CMPSC 130A", { courseTitle: null }),
+          untitled("CMPSC 8"),
+          untitled("CMPSC 16"),
+          untitled("CMPSC 156", { courseTitle: "My own title" }),
+          untitled("CMPSC 156", {
+            ucsbCourse: false,
+            otherSchool: "UCLA",
+          }),
+        ],
+      },
+    });
+    await fillRequired();
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "ApplicationForm-coursework-table-cell-row-0-col-courseTitle",
+        ),
+      ).toHaveTextContent("ADV APP PROGRAM"),
+    );
+    await userEvent.click(screen.getByTestId("ApplicationForm-submit"));
+
+    await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
+    expect(
+      submitAction.mock.calls[0][0].priorCoursework.map((c) => c.courseTitle),
+    ).toEqual([
+      "ADV APP PROGRAM",
+      "DATA STRUCTURES",
+      "",
+      "",
+      "My own title",
+      "",
+    ]);
+  });
+
+  test("a catalog that cannot be read leaves the titles blank", async () => {
+    axiosMock.onGet("/api/courses/all").reply(200, "not a list");
+    renderForm({
+      initialContents: { priorCoursework: [untitled("CMPSC 156")] },
+    });
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.some((r) => r.url === "/api/courses/all"),
+      ).toBe(true),
+    );
+    expect(
+      screen.getByTestId(
+        "ApplicationForm-coursework-table-cell-row-0-col-courseTitle",
+      ),
+    ).toHaveTextContent("");
   });
 
   test("a previous application with no course list starts empty", () => {

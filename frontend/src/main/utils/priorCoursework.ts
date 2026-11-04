@@ -1,4 +1,8 @@
-import { recentQuarters } from "main/utils/bulkCourses";
+import {
+  collapseCourseId,
+  recentQuarters,
+  type CatalogCourse,
+} from "main/utils/bulkCourses";
 import { qyyToYyyyq } from "main/utils/quarterUtilities";
 
 /** One course an applicant lists as relevant background, as the API stores and returns it. */
@@ -110,3 +114,31 @@ export const termSortKey = (term: string | null | undefined): number => {
   const yyyyq = qyyToYyyyq(term);
   return yyyyq === null ? 0 : parseInt(yyyyq, 10);
 };
+
+/**
+ * The prior courses with a blank title filled in from the course catalog (issue #306). Only a UCSB
+ * course whose number matches a catalog course, written the way the table writes it ("CMPSC 156"),
+ * and whose title is blank is touched; a title the applicant typed is never replaced. When nothing
+ * needs filling the very same array comes back, so callers can tell nothing changed. Meant for any
+ * place an application's courses are loaded or copied in (the form's initial answers, including
+ * those seeded from an earlier application, and any future seeding from another type's application).
+ */
+export function withCatalogTitles(
+  courses: PriorCourse[],
+  catalog: CatalogCourse[],
+): PriorCourse[] {
+  const titles = new Map<string, string>();
+  for (const entry of catalog) {
+    const title = (entry.title ?? "").trim();
+    if (title !== "") titles.set(collapseCourseId(entry.courseId), title);
+  }
+  let changed = false;
+  const filled = courses.map((course) => {
+    const title = titles.get(collapseCourseId(course.courseNumber));
+    if (!course.ucsbCourse || title === undefined) return course;
+    if ((course.courseTitle ?? "").trim() !== "") return course;
+    changed = true;
+    return { ...course, courseTitle: title };
+  });
+  return changed ? filled : courses;
+}

@@ -6,12 +6,15 @@ import {
   SELECTION_TABLE_CLASS,
 } from "main/utils/formTableLayout";
 import { useForm } from "react-hook-form";
+import { useBackend } from "main/utils/useBackend";
+import type { CatalogCourse } from "main/utils/bulkCourses";
 import type { ApplicationAnswers } from "main/utils/draftApplications";
 import CourseSectionsCard from "main/components/Applications/CourseSectionsCard";
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import PriorCourseworkSection from "main/components/PriorCoursework/PriorCourseworkSection";
 import {
   MIN_COURSES,
+  withCatalogTitles,
   withNormalizedTerm,
   type PriorCourse,
 } from "main/utils/priorCoursework";
@@ -389,6 +392,23 @@ export default function ApplicationForm({
     // Terms are brought to the standard form (F25) as the application loads, so saving keeps them.
     ...(initialContents?.priorCoursework ?? []).map(withNormalizedTerm),
   ]);
+  // Issue #306: a UCSB course with a catalog number but a blank title gets the catalog's title, for
+  // an application loaded for editing and for answers copied from an earlier one. The catalog is the
+  // list the "add multiple courses" window uses (one shared request); it arrives after the form is
+  // first shown, so the titles are filled in once it does, and then saved with everything else.
+  const { data: catalog } = useBackend<CatalogCourse[]>(
+    // Stryker disable next-line all : the cache key only shares the request with the bulk-add window
+    ["/api/courses/all"],
+    // Stryker disable next-line StringLiteral : axios reads a blank method as GET
+    { method: "GET", url: "/api/courses/all" },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+  useEffect(() => {
+    // Stryker disable next-line ConditionalExpression : a non-list reply would just fill nothing
+    if (!Array.isArray(catalog)) return;
+    setPriorCoursework((previous) => withCatalogTitles(previous, catalog));
+  }, [catalog]);
   const [tooFewCourses, setTooFewCourses] = useState(false);
   const enoughCourses = priorCoursework.length >= MIN_COURSES[type];
 

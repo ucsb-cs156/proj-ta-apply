@@ -88,7 +88,10 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             list; others are entered by hand. Choose the term from the dropdown
             (F: Fall, W: Winter, S: Spring, M: Summer, then the year, as in
             F25); tick the box under it only for a term the list cannot express,
-            such as a semester.
+            such as a semester. For a UCSB course whose number is in the
+            department's course list but whose title you left blank, the title
+            is filled in for you when the application is opened, and saved with
+            it.
           </li>
           <li>
             A self-assessment of how comfortable you are with each of a set of

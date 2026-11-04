@@ -87,6 +87,7 @@ describe("TestApplicationPage tests", () => {
     axiosMock
       .onGet("/api/recruitmentcourses/all")
       .reply(200, recruitmentCoursesFixtures.fourCourses);
+    axiosMock.onGet("/api/courses/all").reply(200, []);
     axiosMock
       .onGet("/api/recruitments/sections")
       .reply(200, courseSectionsFixtures.cmpsc156);
