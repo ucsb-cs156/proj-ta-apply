@@ -31,18 +31,29 @@ const visibleRankingSummaries =
   );
 const mockClipboardWriteText = vi.fn();
 
-function renderPage() {
+/** The edit page unless told otherwise (issue #278): most of what the page does is editing. */
+function renderPage({ edit = true } = {}) {
   return render(
     <QueryClientProvider
       client={
         new QueryClient({ defaultOptions: { queries: { retry: false } } })
       }
     >
-      <MemoryRouter initialEntries={["/admin/recruitments/7/courses"]}>
+      <MemoryRouter
+        initialEntries={[
+          edit
+            ? "/admin/recruitments/7/courses/edit"
+            : "/admin/recruitments/7/courses",
+        ]}
+      >
         <Routes>
           <Route
             path="/admin/recruitments/:recruitmentId/courses"
             element={<RecruitmentCoursesPage />}
+          />
+          <Route
+            path="/admin/recruitments/:recruitmentId/courses/edit"
+            element={<RecruitmentCoursesPage edit />}
           />
         </Routes>
       </MemoryRouter>

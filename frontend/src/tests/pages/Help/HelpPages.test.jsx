@@ -134,7 +134,11 @@ function expectRankingSimultaneousEditingSection(page, intro) {
       screen.getByTestId(`${page}-simultaneous-editing-assignments`),
     );
   }
-  expect(after.nextElementSibling).toBe(
+  // Issue #278: then the Courses pages, a paragraph, its picture and a paragraph (admins only).
+  const coursesMeaning = screen.queryByTestId(
+    `${page}-simultaneous-editing-courses-meaning`,
+  );
+  expect((coursesMeaning ?? after).nextElementSibling).toBe(
     screen.getByTestId(`${page}-simultaneous-editing-todo`),
   );
 }
@@ -834,7 +838,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(6);
+    expect(rows).toHaveLength(7);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -844,7 +848,7 @@ describe("Help pages (issue #140)", () => {
       "#283, #285",
     ]);
     expect(text("editing")).toMatch(
-      /the assignments page and the Budget page use them/,
+      /the assignments page, the Budget page and the Courses edit page use them/,
     );
     expect(text("compare")).toMatch(/expected/);
     expect(text("compare")).toMatch(/409 Conflict/);
@@ -926,6 +930,34 @@ describe("Help pages (issue #140)", () => {
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/290",
     );
+    // Issue #278: the Courses edit page.
+    expect(
+      [...rows[6].querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "Courses edit page (allocations and estimated enrollments); the view-only page never warns",
+      "The whole edit page for one recruitment",
+      "courses-edit:<recruitmentId>",
+      "#288",
+    ]);
+    expect(rows[6].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/288",
+    );
+    const courses = text("courses");
+    expect(courses.replace(/\s+/g, " ")).toBe(
+      `The Courses pages. A recruitment's Courses page is split in two. The view-only page (/admin/recruitments/:id/courses) is the default, edits nothing, and neither heartbeats nor warns. The edit page (/admin/recruitments/:id/courses/edit) heartbeats POST /api/recruitmentcourses/heartbeat?recruitmentId=, says goodbye at /leave, names itself in the X-Client-Id header of the allocation, estimate and Auto Allocate saves, and shows the banner and the modal with the noun "page"; Leave this page goes to the view-only page. Only an admin may heartbeat, and the recruitment must exist, before anything is recorded. The version check is not a JPA version, since the course refresh and the estimates also write the row: a separate allocation_version column on recruitment_courses is counted by each allocation edit, and allocation_bulk_version on recruitments is counted by Auto Allocate. An allocation edit sends both as expectedVersion and expectedBulkVersion and gets 409 when either moved; after a bulk conflict the page reads everything again.`,
+    );
+    expect(courses).toMatch(/view-only page/);
+    expect(courses).toMatch(/\/admin\/recruitments\/:id\/courses\/edit/);
+    expect(courses).toMatch(
+      /POST \/api\/recruitmentcourses\/heartbeat\?recruitmentId=/,
+    );
+    expect(courses).toMatch(/Leave this page goes to the view-only page/);
+    expect(courses).toMatch(/allocation_version column on recruitment_courses/);
+    expect(courses).toMatch(/allocation_bulk_version on recruitments/);
+    expect(courses).toMatch(/expectedVersion and expectedBulkVersion/);
+    expect(courses).toMatch(/409/);
+    expect(text("editing")).toMatch(/and the Courses edit page use them/);
     for (const phrase of [
       "bumped by every rank edit and by the Developer Mode fake rankings job",
       "no row means version 0",
@@ -1125,8 +1157,52 @@ describe("Help pages (issue #140)", () => {
     expect(example.nextElementSibling).toBe(names);
     expect(names.nextElementSibling).toBe(conflict);
     expect(conflict.nextElementSibling).toBe(
-      screen.getByTestId(`${page}-todo`),
+      screen.getByTestId(`${page}-courses`),
     );
+  });
+
+  test("the admin section covers the view-only and edit Courses pages with the shared admin wording (issue #278)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const page = "HelpAdminsPage-simultaneous-editing";
+    const intro = await screen.findByTestId(`${page}-courses`);
+    expect(intro).toHaveTextContent(
+      "any number of tabs or windows may show it, for you or for other admins, without any warning",
+    );
+    expect(intro).toHaveTextContent(
+      "Its Edit button, beside the words \u201cEdit estimated enrollments, and TA/ULA allocations\u201d, takes you to the edit page",
+    );
+    expect(intro).toHaveTextContent(
+      "Only one tab or window should have a given recruitment's edit page open at a time, and edit pages of different recruitments never warn each other.",
+    );
+    const example = screen.getByTestId(`${page}-courses-example`);
+    expect(example).toHaveTextContent(
+      "phtcon@ucsb.edu (Phill Conrad) is also editing this page. We recommend that only one admin edits this page at a time.",
+    );
+    expect(example).toHaveClass("alert", "alert-warning");
+    expect(screen.queryByRole("alert")).toBeNull();
+    const meaning = screen.getByTestId(`${page}-courses-meaning`);
+    expect(meaning).toHaveTextContent(
+      "use the view-only page in as many tabs as you like",
+    );
+    expect(meaning).toHaveTextContent(
+      "there Leave this page takes you to the view-only Courses page",
+    );
+    expect(intro).toHaveTextContent(
+      "The Courses pages. A recruitment's Courses page comes in two forms. The view-only page",
+    );
+    expect(meaning).toHaveTextContent(
+      "says \u201calready has\u201d instead of \u201cis also editing\u201d",
+    );
+    // Still one section, which still ends the page.
+    expect(
+      screen.getAllByRole("heading", {
+        level: 2,
+        name: "Simultaneous Editing",
+      }),
+    ).toHaveLength(1);
+    expect(intro.nextElementSibling).toBe(example);
+    expect(example.nextElementSibling).toBe(meaning);
+    expect(meaning.nextElementSibling).toBe(screen.getByTestId(`${page}-todo`));
   });
 
   test("the developer page starts with a table of every Developer menu option linking to its section (issue #266)", async () => {

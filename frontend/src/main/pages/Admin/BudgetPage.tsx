@@ -177,7 +177,7 @@ function BudgetForQuarter({
             data-testid={`BudgetPage-target-${which}-mismatch`}
           >
             The allocations do not add up to the target. Adjust them on the{" "}
-            <Link to={`/admin/recruitments/${s.recruitmentId}/courses`}>
+            <Link to={`/admin/recruitments/${s.recruitmentId}/courses/edit`}>
               {type} Recruitment Courses page
             </Link>
             .

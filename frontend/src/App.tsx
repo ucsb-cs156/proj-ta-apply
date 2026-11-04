@@ -10,6 +10,7 @@ import QuartersPage from "main/pages/Admin/QuartersPage";
 import BudgetSelectQuarterPage from "main/pages/Admin/BudgetSelectQuarterPage";
 import BudgetPage from "main/pages/Admin/BudgetPage";
 import RecruitmentCoursesPage from "main/pages/Admin/RecruitmentCoursesPage";
+import RecruitmentCoursesEditPage from "main/pages/Admin/RecruitmentCoursesEditPage";
 import ProtectedPage from "main/pages/Auth/ProtectedPage";
 import NotFoundPage from "main/pages/Auth/NotFoundPage";
 import AboutTaApply from "main/pages/Help/AboutTaApply";
@@ -249,6 +250,16 @@ export default function App() {
             element={
               <ProtectedPage
                 component={<RecruitmentCoursesPage />}
+                enforceRole={"ROLE_ADMIN"}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/admin/recruitments/:recruitmentId/courses/edit"
+            element={
+              <ProtectedPage
+                component={<RecruitmentCoursesEditPage />}
                 enforceRole={"ROLE_ADMIN"}
                 currentUser={currentUser}
               />

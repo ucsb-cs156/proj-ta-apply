@@ -66,6 +66,8 @@ public class FakeAllocationsService {
     }
 
     recruitment.setTotalHiringTarget(hiringTarget);
+    // Every allocation is about to be overwritten, as by Auto Allocate (issue #278).
+    recruitment.setAllocationBulkVersion(recruitment.getAllocationBulkVersion() + 1);
     recruitmentRepository.save(recruitment);
     if (estimates != Estimates.KEEP) {
       for (RecruitmentCourse course : courses) {

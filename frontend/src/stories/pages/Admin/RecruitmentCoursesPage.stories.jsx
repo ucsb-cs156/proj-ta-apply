@@ -100,7 +100,82 @@ export default {
 
 const Template = () => <RecruitmentCoursesPage />;
 
+/** The view-only page, which is the default (issue #278): nothing on it can be changed. */
 export const Default = Template.bind({});
+
+const EditTemplate = () => <RecruitmentCoursesPage edit />;
+
+/** The edit page, alone: the figures are boxes, and the Auto Allocate and other controls show. */
+export const Editing = EditTemplate.bind({});
+Editing.parameters = {
+  reactRouter: { initialEntries: ["/admin/recruitments/7/courses/edit"] },
+  msw: {
+    handlers: [
+      ...(Default.parameters?.msw?.handlers ?? []),
+      http.post("/api/recruitmentcourses/heartbeat", () =>
+        HttpResponse.json({
+          others: [],
+          heartbeatSeconds: 5,
+          newest: true,
+          arrivedAtMillis: 1000,
+        }),
+      ),
+    ],
+  },
+};
+
+/** Another admin has the same edit page open: the banner names them. This is the older tab. */
+export const EditingWithAnotherAdmin = EditTemplate.bind({});
+EditingWithAnotherAdmin.parameters = {
+  reactRouter: { initialEntries: ["/admin/recruitments/7/courses/edit"] },
+  msw: {
+    handlers: [
+      ...(Default.parameters?.msw?.handlers ?? []),
+      http.post("/api/recruitmentcourses/heartbeat", () =>
+        HttpResponse.json({
+          others: [
+            {
+              label: "phtcon@ucsb.edu (Phill Conrad)",
+              samePerson: false,
+              admin: true,
+            },
+          ],
+          heartbeatSeconds: 5,
+          newest: false,
+          arrivedAtMillis: 1000,
+        }),
+      ),
+    ],
+  },
+};
+
+/**
+ * Another admin had the edit page open first, so this is the later tab: the banner says they
+ * "already have" it open and the question covers the page.
+ */
+export const EditingAsTheLaterTab = EditTemplate.bind({});
+EditingAsTheLaterTab.parameters = {
+  reactRouter: { initialEntries: ["/admin/recruitments/7/courses/edit"] },
+  msw: {
+    handlers: [
+      ...(Default.parameters?.msw?.handlers ?? []),
+      http.post("/api/recruitmentcourses/heartbeat", () =>
+        HttpResponse.json({
+          others: [
+            {
+              label: "phtcon@ucsb.edu (Phill Conrad)",
+              samePerson: false,
+              admin: true,
+            },
+          ],
+          heartbeatSeconds: 5,
+          newest: true,
+          arrivedAtMillis: 1000,
+        }),
+      ),
+    ],
+  },
+};
 
 /** The UCSB API is down: the page says so and shows the stored figures. */
 export const RefreshFails = Template.bind({});

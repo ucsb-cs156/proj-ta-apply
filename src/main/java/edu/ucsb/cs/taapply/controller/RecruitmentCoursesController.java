@@ -1,5 +1,9 @@
 package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
+import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
+import edu.ucsb.cs.taapply.concurrency.Presence;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
@@ -16,15 +20,21 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** The course list for one recruitment. */
@@ -39,6 +49,61 @@ public class RecruitmentCoursesController extends ApiController {
   @Autowired UCSBCurriculumService ucsbCurriculumService;
   @Autowired RecruitmentCoursesRefreshService recruitmentCoursesRefreshService;
   @Autowired AllocationService allocationService;
+  @Autowired ClientActivityDetector clientActivityDetector;
+
+  /**
+   * Who the current user is to the detector: the shared identity, marked as an admin (issue #302).
+   */
+  private ClientIdentity identity() {
+    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);
+  }
+
+  /** The detector's name for one recruitment's Courses edit page. */
+  private static String resourceKey(Long recruitmentId) {
+    return "courses-edit:" + recruitmentId;
+  }
+
+  /** The recruitment, or 404; asked before anything is recorded or told to anyone. */
+  private Recruitment recruitment(Long recruitmentId) {
+    return recruitmentRepository
+        .findById(recruitmentId)
+        .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+  }
+
+  @Operation(
+      summary =
+          "Say that this tab or window has the Courses edit page open, and learn who else does",
+      description =
+          "Changes nothing about the courses. Tells the server this client (X-Client-Id) is still"
+              + " here, and answers with the other people who have the same recruitment's edit page"
+              + " open (a label for each, and whether it is the same person in another tab or"
+              + " window), how often to send this, and whether this client came last. Only admins"
+              + " may ask, and nothing is recorded or told to anyone else. 404 for an unknown"
+              + " recruitment.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/heartbeat")
+  public Presence heartbeat(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    // The role check has already passed, so that nobody else is recorded or told who is here.
+    recruitment(recruitmentId);
+    return clientActivityDetector.heartbeat(resourceKey(recruitmentId), clientId, identity());
+  }
+
+  @Operation(
+      summary = "Say that this tab or window has left the Courses edit page",
+      description =
+          "Sent when a tab or window is closed or moves away from the edit page, so that the others"
+              + " stop being warned about it at once. Allowed to exactly those who may send a"
+              + " heartbeat. The answer is 204 whether or not the client was known.")
+  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PostMapping("/leave")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void leave(
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    clientActivityDetector.leave(resourceKey(recruitmentId), clientId);
+  }
 
   /**
    * Course id first, then section, so a course's several lectures sit together in order.
@@ -170,9 +235,18 @@ public class RecruitmentCoursesController extends ApiController {
               + " negative. A planning figure: not recorded in the audit trail.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("/allocation")
-  public RecruitmentCourse setAllocation(
+  public ResponseEntity<Object> setAllocation(
       @Parameter(name = "id") @RequestParam Long id,
-      @Parameter(name = "allocation") @RequestParam Integer allocation) {
+      @Parameter(name = "allocation") @RequestParam Integer allocation,
+      @Parameter(name = "expectedVersion", description = "the row's allocationVersion as seen")
+          @RequestParam(required = false)
+          Integer expectedVersion,
+      @Parameter(
+              name = "expectedBulkVersion",
+              description = "the recruitment's allocationBulkVersion as seen")
+          @RequestParam(required = false)
+          Integer expectedBulkVersion,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
 
     if (allocation < 0) {
       throw new IllegalArgumentException("allocation must not be negative");
@@ -182,10 +256,33 @@ public class RecruitmentCoursesController extends ApiController {
         recruitmentCourseRepository
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(RecruitmentCourse.class, id));
+    clientActivityDetector.note(resourceKey(course.getRecruitmentId()), clientId, identity());
+    // Only an edit that carries the bulk count needs the recruitment to check it against.
+    Recruitment recruitment = expectedBulkVersion == null ? null : recruitmentOf(course);
+
+    boolean bulkMoved =
+        recruitment != null && !expectedBulkVersion.equals(recruitment.getAllocationBulkVersion());
+    boolean rowMoved =
+        expectedVersion != null && !expectedVersion.equals(course.getAllocationVersion());
+    if (bulkMoved || rowMoved) {
+      Map<String, Object> body = new LinkedHashMap<>();
+      body.put(
+          "message",
+          bulkMoved
+              ? "All the allocations were changed in another tab or window. Reload to see them."
+              : "This allocation was changed in another tab or window. Reload to see it.");
+      body.put("reloadAll", bulkMoved);
+      body.put(
+          "allocationBulkVersion",
+          recruitment == null ? null : recruitment.getAllocationBulkVersion());
+      body.put("course", course);
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
 
     course.setAllocation(allocation);
+    course.setAllocationVersion(course.getAllocationVersion() + 1);
     recruitmentCourseRepository.save(course);
-    return course;
+    return ResponseEntity.ok(course);
   }
 
   @Operation(
@@ -224,7 +321,8 @@ public class RecruitmentCoursesController extends ApiController {
   public RecruitmentCourse setEnrollmentEstimate(
       @Parameter(name = "id") @RequestParam Long id,
       @Parameter(name = "enrollmentEstimate") @RequestParam(required = false)
-          Integer enrollmentEstimate) {
+          Integer enrollmentEstimate,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
 
     if (enrollmentEstimate != null && enrollmentEstimate < 0) {
       throw new IllegalArgumentException("enrollmentEstimate must not be negative");
@@ -235,6 +333,7 @@ public class RecruitmentCoursesController extends ApiController {
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(RecruitmentCourse.class, id));
 
+    clientActivityDetector.note(resourceKey(course.getRecruitmentId()), clientId, identity());
     course.setEnrollmentEstimate(enrollmentEstimate);
     recruitmentCourseRepository.save(course);
     allocationService.recompute(recruitmentOf(course));
@@ -252,12 +351,11 @@ public class RecruitmentCoursesController extends ApiController {
   @PutMapping("/enrollmentEstimates")
   public List<RecruitmentCourse> setEnrollmentEstimates(
       @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
-      @Parameter(name = "source") @RequestParam EnrollmentEstimateSource source) {
+      @Parameter(name = "source") @RequestParam EnrollmentEstimateSource source,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
 
-    Recruitment recruitment =
-        recruitmentRepository
-            .findById(recruitmentId)
-            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    Recruitment recruitment = recruitment(recruitmentId);
+    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());
 
     for (RecruitmentCourse row : recruitmentCourseRepository.findByRecruitmentId(recruitmentId)) {
       if (row.isRemoved()) {
@@ -286,14 +384,16 @@ public class RecruitmentCoursesController extends ApiController {
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PostMapping("/autoAllocate")
   public List<RecruitmentCourse> autoAllocate(
-      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId) {
+      @Parameter(name = "recruitmentId") @RequestParam Long recruitmentId,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
 
-    Recruitment recruitment =
-        recruitmentRepository
-            .findById(recruitmentId)
-            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
+    Recruitment recruitment = recruitment(recruitmentId);
+    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());
 
     allocationService.autoAllocate(recruitment);
+    // Every allocation has moved, so edits made against the old numbers must be refused.
+    recruitment.setAllocationBulkVersion(recruitment.getAllocationBulkVersion() + 1);
+    recruitmentRepository.save(recruitment);
     return allForRecruitment(recruitmentId, false);
   }
 }

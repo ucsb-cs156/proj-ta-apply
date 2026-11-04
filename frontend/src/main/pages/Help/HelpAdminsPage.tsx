@@ -5,7 +5,7 @@ import { ADMIN_MENU_ENTRIES } from "main/utils/helpPages";
 import useScrollToHash from "main/utils/useScrollToHash";
 import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
 
-/** The warning as it looks when someone else is ranking the same course. */
+/** The warning as it looks when someone else is editing the same thing. */
 // Stryker disable next-line StringLiteral : the example name is fixed and is checked by the tests
 const EXAMPLE_OTHERS = [
   { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false },
@@ -872,6 +872,41 @@ export default function HelpAdminsPage(): React.JSX.Element {
           drop what you typed, or <strong>Overwrite</strong> to save what you
           typed over it. This applies to the three budget lines, the average
           cost per TA and per ULA, and the two hiring targets.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-courses">
+          <strong>The Courses pages.</strong> A recruitment&apos;s Courses page
+          comes in two forms. The <strong>view-only</strong> page is the one you
+          get when you open it: nothing on it can be changed, and any number of
+          tabs or windows may show it, for you or for other admins, without any
+          warning. Its <strong>Edit</strong> button, beside the words
+          &ldquo;Edit estimated enrollments, and TA/ULA allocations&rdquo;,
+          takes you to the <strong>edit page</strong>, where you can change the
+          estimated enrollments and the allocations, run Auto Allocate, and use
+          Populate and the other controls; it has a link back to the view-only
+          page. Only <em>one</em> tab or window should have a given
+          recruitment&apos;s edit page open at a time, and edit pages of
+          different recruitments never warn each other. If another admin, or
+          another tab of yours, has the same edit page open, you get a warning
+          that looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="page"
+          audience="admin"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-courses-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-courses-meaning">
+          The allocations only make sense together, so a copy that is out of
+          date can leave a total that no longer matches the hiring target. If
+          you go on, the system refuses a change made from a copy that is out of
+          date, tells you, and reads the numbers again; whatever you typed there
+          is lost. The tab or window opened <em>last</em> also asks the same
+          question as for rankings, and says &ldquo;already has&rdquo; instead
+          of &ldquo;is also editing&rdquo;; there{" "}
+          <strong>Leave this page</strong> takes you to the view-only Courses
+          page. To look at the numbers without risk, use the view-only page in
+          as many tabs as you like.
         </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
           <strong>What to do.</strong> If a page looks out of date (for example

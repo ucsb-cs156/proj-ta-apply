@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Form, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import RecruitmentCourseTable, {
   isValidEmail,
@@ -26,8 +26,12 @@ import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { apiErrorMessage } from "main/utils/apiError";
 import { autoAssignTooltip } from "main/utils/allocations";
 import { toast } from "react-toastify";
+import {
+  MultipleTabsBanner,
+  MultipleTabsModal,
+  useClientActivity,
+} from "main/concurrency";
 
-/** The course list for one recruitment: /admin/recruitments/:recruitmentId/courses */
 /**
  * Registers the page's developer-mode controls in the footer. It has to be rendered inside
  * BasicLayout, which provides the footer slot; the page itself sits outside it.
@@ -41,8 +45,38 @@ function DeveloperFooterControls({
   return null;
 }
 
-export default function RecruitmentCoursesPage(): React.JSX.Element {
+/**
+ * The course list for one recruitment, in two forms (issue #278).
+ *
+ * The <b>view-only page</b>, /admin/recruitments/:recruitmentId/courses, is the default. Nothing on
+ * it can be changed, it says nothing to the server about who has it open, and any number of tabs
+ * may show it. It has an Edit button.
+ *
+ * The <b>edit page</b>, /admin/recruitments/:recruitmentId/courses/edit (`edit`), is the page as it
+ * always was: estimated enrollments, allocations, Auto Allocate, Populate and the rest. Only one
+ * tab or window should have a recruitment's edit page open, so it heartbeats under the key
+ * `courses-edit:<recruitmentId>`, names itself in each save, and shows the shared warning, with a
+ * question to the newest tab, when another has it open.
+ */
+export default function RecruitmentCoursesPage({
+  edit = false,
+}: {
+  edit?: boolean;
+} = {}): React.JSX.Element {
   const { recruitmentId } = useParams();
+  const navigate = useNavigate();
+  const viewUrl = `/admin/recruitments/${recruitmentId}/courses`;
+
+  // Only the edit page tells the server it is there, and learns who else is.
+  const activity = useClientActivity({
+    heartbeatUrl: edit
+      ? `/api/recruitmentcourses/heartbeat?recruitmentId=${recruitmentId}`
+      : null,
+    leaveUrl: edit
+      ? `/api/recruitmentcourses/leave?recruitmentId=${recruitmentId}`
+      : null,
+  });
+  const requestHeaders = edit ? activity.headers : undefined;
 
   // Removed courses are hidden by default; the toggle is for operations and debugging, to see
   // what an earlier Populate left out.
@@ -234,6 +268,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
     (source) => ({
       url: "/api/recruitmentcourses/enrollmentEstimates",
       method: "PUT",
+      headers: requestHeaders,
       params: { recruitmentId, source },
     }),
     {
@@ -252,6 +287,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
     () => ({
       url: "/api/recruitmentcourses/autoAllocate",
       method: "POST",
+      headers: requestHeaders,
       params: { recruitmentId },
     }),
     {
@@ -260,7 +296,9 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
         toast("Allocations assigned from the enrollment estimates.");
       },
     },
-    ["/api/recruitmentcourses/all"],
+    // The recruitment carries the count that Auto Allocate moves.
+    // Stryker disable next-line all : cache invalidation is not observable from here
+    ["/api/recruitmentcourses/all", "/api/admin/recruitments/all"],
   );
 
   // Issue #225: the developer-mode button, in the footer's developer slot (which shows only while
@@ -324,9 +362,52 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
 
   return (
     <BasicLayout>
-      <DeveloperFooterControls controls={developerButtons} />
+      {edit && <DeveloperFooterControls controls={developerButtons} />}
       <div className="pt-2">
         <h1>Recruitment Courses</h1>
+        {edit ? (
+          <>
+            <MultipleTabsBanner
+              others={activity.others}
+              noun="page"
+              audience="admin"
+              newest={activity.newest}
+              testId="RecruitmentCoursesPage-multiple-tabs"
+            />
+            {/* Only the newest tab is asked; the older ones keep the banner alone. */}
+            <MultipleTabsModal
+              others={activity.others}
+              newest={activity.newest}
+              arrivedAt={activity.arrivedAt}
+              noun="page"
+              audience="admin"
+              onLeave={() => {
+                // Stryker disable next-line all : moving away unmounts the page, which says goodbye too
+                activity.leave();
+                navigate(viewUrl);
+              }}
+              testId="RecruitmentCoursesPage-multiple-tabs-modal"
+            />
+            <p>
+              <Link to={viewUrl} data-testid="RecruitmentCoursesPage-view-link">
+                Back to the view-only page
+              </Link>
+            </p>
+          </>
+        ) : (
+          <p className="d-flex align-items-center gap-2">
+            <Link
+              className="btn btn-primary"
+              to={`${viewUrl}/edit`}
+              data-testid="RecruitmentCoursesPage-edit-button"
+            >
+              Edit
+            </Link>
+            <span data-testid="RecruitmentCoursesPage-edit-text">
+              Edit estimated enrollments, and TA/ULA allocations
+            </span>
+          </p>
+        )}
         <p>
           The courses in this recruitment: every lecture of a course flagged for
           its type that is offered that quarter. Re-running Populate picks up
@@ -347,11 +428,14 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
               recruitment={recruitment}
               allocatedSoFar={allocatedSoFar}
               testIdPrefix="RecruitmentCoursesPage-hiring-target"
+              readOnly={!edit}
             />
-            <AllocationVisibilityPanel
-              recruitment={recruitment}
-              testIdPrefix="RecruitmentCoursesPage-allocation-visibility"
-            />
+            {edit && (
+              <AllocationVisibilityPanel
+                recruitment={recruitment}
+                testIdPrefix="RecruitmentCoursesPage-allocation-visibility"
+              />
+            )}
           </>
         )}
 
@@ -373,46 +457,50 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
         )}
 
         <div className="d-flex align-items-center gap-3 mb-3">
-          <Button
-            onClick={() => populateMutation.mutate()}
-            data-testid="RecruitmentCoursesPage-populate"
-          >
-            Populate
-          </Button>
-          <Form
-            className="d-flex align-items-center gap-2"
-            onSubmit={(event) => {
-              // Stryker disable next-line all : without this a real browser would reload the page
-              event.preventDefault();
-              addMutation.mutate(enrollCode.trim());
-            }}
-            data-testid="RecruitmentCoursesPage-add-form"
-          >
-            <Form.Label
-              htmlFor="RecruitmentCoursesPage-enrollCode"
-              className="mb-0"
-            >
-              Add by enroll code
-            </Form.Label>
-            <Form.Control
-              id="RecruitmentCoursesPage-enrollCode"
-              data-testid="RecruitmentCoursesPage-enrollCode"
-              size="sm"
-              style={{ width: "7em" }}
-              placeholder="e.g. 07492"
-              value={enrollCode}
-              onChange={(e) => setEnrollCode(e.target.value)}
-            />
+          {edit && (
             <Button
-              type="submit"
-              size="sm"
-              variant="outline-primary"
-              disabled={enrollCode.trim() === ""}
-              data-testid="RecruitmentCoursesPage-add"
+              onClick={() => populateMutation.mutate()}
+              data-testid="RecruitmentCoursesPage-populate"
             >
-              Add
+              Populate
             </Button>
-          </Form>
+          )}
+          {edit && (
+            <Form
+              className="d-flex align-items-center gap-2"
+              onSubmit={(event) => {
+                // Stryker disable next-line all : without this a real browser would reload the page
+                event.preventDefault();
+                addMutation.mutate(enrollCode.trim());
+              }}
+              data-testid="RecruitmentCoursesPage-add-form"
+            >
+              <Form.Label
+                htmlFor="RecruitmentCoursesPage-enrollCode"
+                className="mb-0"
+              >
+                Add by enroll code
+              </Form.Label>
+              <Form.Control
+                id="RecruitmentCoursesPage-enrollCode"
+                data-testid="RecruitmentCoursesPage-enrollCode"
+                size="sm"
+                style={{ width: "7em" }}
+                placeholder="e.g. 07492"
+                value={enrollCode}
+                onChange={(e) => setEnrollCode(e.target.value)}
+              />
+              <Button
+                type="submit"
+                size="sm"
+                variant="outline-primary"
+                disabled={enrollCode.trim() === ""}
+                data-testid="RecruitmentCoursesPage-add"
+              >
+                Add
+              </Button>
+            </Form>
+          )}
           <Form.Check
             type="checkbox"
             id="RecruitmentCoursesPage-show-removed"
@@ -423,30 +511,32 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           />
         </div>
 
-        <div
-          className="mb-2"
-          data-testid="RecruitmentCoursesPage-fill-estimates"
-        >
-          Set enrollment estimates from:{" "}
-          <Button
-            variant="link"
-            className="p-0 align-baseline"
-            onClick={() => fillEstimatesMutation.mutate("MAX")}
-            data-testid="RecruitmentCoursesPage-fill-estimates-max"
+        {edit && (
+          <div
+            className="mb-2"
+            data-testid="RecruitmentCoursesPage-fill-estimates"
           >
-            max
-          </Button>
-          ,{" "}
-          <Button
-            variant="link"
-            className="p-0 align-baseline"
-            onClick={() => fillEstimatesMutation.mutate("ACTUAL")}
-            data-testid="RecruitmentCoursesPage-fill-estimates-actual"
-          >
-            actual
-          </Button>
-          .
-        </div>
+            Set enrollment estimates from:{" "}
+            <Button
+              variant="link"
+              className="p-0 align-baseline"
+              onClick={() => fillEstimatesMutation.mutate("MAX")}
+              data-testid="RecruitmentCoursesPage-fill-estimates-max"
+            >
+              max
+            </Button>
+            ,{" "}
+            <Button
+              variant="link"
+              className="p-0 align-baseline"
+              onClick={() => fillEstimatesMutation.mutate("ACTUAL")}
+              data-testid="RecruitmentCoursesPage-fill-estimates-actual"
+            >
+              actual
+            </Button>
+            .
+          </div>
+        )}
 
         <div className="mb-2">
           <a
@@ -459,7 +549,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           </a>
         </div>
 
-        {recruitment && (
+        {edit && recruitment && (
           <div className="mb-3">
             <OverlayTrigger
               placement="top"
@@ -482,44 +572,46 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
             </OverlayTrigger>
           </div>
         )}
-        <Modal
-          show={showAutoAssign}
-          onHide={() => setShowAutoAssign(false)}
-          centered
-          data-testid="RecruitmentCoursesPage-auto-assign-modal"
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Auto assign allocations</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p>
-              You have requested an automatic allocation based on estimated
-              enrollment.
-            </p>
-            <p>
-              This will overwrite all values currently in the allocation fields.
-              This cannot be undone.
-            </p>
-            <p className="mb-0">Are you sure?</p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="danger"
-              disabled={autoAssignMutation.isPending}
-              onClick={() => autoAssignMutation.mutate()}
-              data-testid="RecruitmentCoursesPage-auto-assign-confirm"
-            >
-              Yes, overwrite allocations
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setShowAutoAssign(false)}
-              data-testid="RecruitmentCoursesPage-auto-assign-cancel"
-            >
-              No, keep my current allocations
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        {edit && (
+          <Modal
+            show={showAutoAssign}
+            onHide={() => setShowAutoAssign(false)}
+            centered
+            data-testid="RecruitmentCoursesPage-auto-assign-modal"
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Auto assign allocations</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <p>
+                You have requested an automatic allocation based on estimated
+                enrollment.
+              </p>
+              <p>
+                This will overwrite all values currently in the allocation
+                fields. This cannot be undone.
+              </p>
+              <p className="mb-0">Are you sure?</p>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="danger"
+                disabled={autoAssignMutation.isPending}
+                onClick={() => autoAssignMutation.mutate()}
+                data-testid="RecruitmentCoursesPage-auto-assign-confirm"
+              >
+                Yes, overwrite allocations
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setShowAutoAssign(false)}
+                data-testid="RecruitmentCoursesPage-auto-assign-cancel"
+              >
+                No, keep my current allocations
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        )}
 
         {rankingSummariesError && (
           <p role="alert">
@@ -552,6 +644,9 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
           }
           includeRemoved={includeRemoved}
           testIdPrefix="RecruitmentCoursesPage"
+          readOnly={!edit}
+          requestHeaders={requestHeaders}
+          allocationBulkVersion={recruitment?.allocationBulkVersion}
         />
         {showRankings && (
           <div className="mb-3">
@@ -577,13 +672,13 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
             )}
           </div>
         )}
-        {recruitment && (
+        {edit && recruitment && (
           <PublishAssignmentsPanel
             recruitment={recruitment}
             testIdPrefix="RecruitmentCoursesPage-publish"
           />
         )}
-        {showFakeAllocations && (
+        {edit && showFakeAllocations && (
           <FakeAllocationsModal
             recruitmentId={recruitmentId as string}
             courseCount={courseCount}
@@ -591,7 +686,7 @@ export default function RecruitmentCoursesPage(): React.JSX.Element {
             testIdPrefix="RecruitmentCoursesPage-fake-allocations-modal"
           />
         )}
-        {showFakeRankings && (
+        {edit && showFakeRankings && (
           <FakeRankingsModal
             recruitmentId={recruitmentId as string}
             onHide={() => setShowFakeRankings(false)}

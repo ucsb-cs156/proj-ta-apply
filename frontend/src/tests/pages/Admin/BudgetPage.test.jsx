@@ -207,7 +207,7 @@ describe("BudgetPage tests", () => {
       within(taMismatch).getByRole("link", {
         name: "TA Recruitment Courses page",
       }),
-    ).toHaveAttribute("href", "/admin/recruitments/5/courses");
+    ).toHaveAttribute("href", "/admin/recruitments/5/courses/edit");
     expect(
       screen.getByTestId("BudgetPage-target-ula-allocated"),
     ).toHaveTextContent("ULAs allocated to courses so far: 7");
@@ -221,7 +221,7 @@ describe("BudgetPage tests", () => {
           name: "ULA Recruitment Courses page",
         },
       ),
-    ).toHaveAttribute("href", "/admin/recruitments/6/courses");
+    ).toHaveAttribute("href", "/admin/recruitments/6/courses/edit");
     expect(
       screen.queryByTestId("BudgetPage-target-ta-none"),
     ).not.toBeInTheDocument();

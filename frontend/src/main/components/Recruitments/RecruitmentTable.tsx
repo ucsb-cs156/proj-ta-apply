@@ -19,6 +19,8 @@ export type Recruitment = {
   lastPopulatedAt?: string | null;
   /** How many TAs or ULAs the recruitment expects to hire in all (issue #174); at least 1. */
   totalHiringTarget?: number;
+  /** Counts the Auto Allocate runs (issue #278); an allocation edit carries it to prove it is current. */
+  allocationBulkVersion?: number;
   /**
    * The estimated average cost of one position of this type, in dollars (issue #177); null until
    * entered on the Budget for Quarter page.

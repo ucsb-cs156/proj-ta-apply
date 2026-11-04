@@ -102,6 +102,16 @@ public class RecruitmentCourse {
   private Integer allocation = 0;
 
   /**
+   * Counts the changes made to {@code allocation} (issue #278), the safety net behind the multi-tab
+   * warning: an allocation edit that carries an older count than the row has is refused. Its own
+   * column and not a JPA {@code @Version}, so that the course refresh and the enrollment estimates,
+   * which also write the row, cannot cause a conflict.
+   */
+  @Column(name = "allocation_version", nullable = false)
+  @Builder.Default
+  private Integer allocationVersion = 0;
+
+  /**
    * The admin's estimate of how many students the section will have (issue #175), the basis for
    * allocating positions. Null until entered; the Recruitment Courses page can fill it from {@code
    * maxEnroll} or {@code enrollment} in one step. A planning figure, so not audited.
