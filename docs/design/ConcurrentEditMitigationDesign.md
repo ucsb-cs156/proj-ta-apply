@@ -401,7 +401,7 @@ mean something together.
 | #279 | Faculty rankings | One recruitment course's ranking list | `ranking:<recruitmentCourseId>` | 4 |
 | #280 | Assignments | The whole assignments page for one recruitment | `assignments:<recruitmentId>` | 5 |
 | #281 | Recruitment settings and workflow steps, for admins, instructors and students | No warning; background refresh plus refetch after each save | None (refresh, not a key) | extension |
-| #282 | Instructors page and non-allocation Courses page saves | No warning; same background refresh as #281 plus a refetch after each save | None (refresh, not a key) | extension |
+| #282 | Instructors page and the view-only Courses page (the Courses edit page is #278's) | No warning; same background refresh as #281 plus a refetch after each save | None (refresh, not a key) | extension |
 | #302 | Student apply page when editing a submitted application, and the Admin application edit page | One application, edited by its applicant or by an admin | `application:<applicationId>` | extension |
 
 ### Two facts that hold for the surveyed screens
@@ -863,9 +863,10 @@ from there. These are one-click or one-field saves, each of which a stale copy c
 contradict (deleting an instructor who is already gone, removing a course twice), so the remedy is a
 fresh picture and, on the server, saves that are safe to repeat.
 
-**What stays with #278.** The allocations and the estimated enrollments edited on the edit page are
-part of the Courses page split in (b), where the whole edit page is guarded with a heartbeat and a
-banner. #282 covers the saves that are left.
+**What stays with #278.** After the split in (b), every Courses save (Populate, adding, removing and
+restoring a course, flags, estimates, allocations, Auto Allocate, visibility, the hiring target,
+publishing) is on the edit page, guarded with a heartbeat and a banner. So #282 covers the
+Instructors page and the view-only Courses page, which only needs to stay fresh.
 
 **As built (#282).** The pages call `useRefreshingBackend` from (e) in place of `useBackend` for
 their light reads, at the admin interval and jitter (`ADMIN_REFRESH_SEC`, `ADMIN_REFRESH_JITTER`;
@@ -1005,10 +1006,11 @@ is a day or less, M a few days, L about a week.
    needs no version check, detector or banner. A survey first, which updates section (e) of this
    document. Built: see section (e) for the shared `useRefreshingBackend` hook that #282 reuses.
 
-7. **Keep the Instructors page and Courses page saves fresh. (S to M, #282.)** Refresh instead of a
+7. **Keep the Instructors page and the view-only Courses page fresh. (S to M, #282.)** Refresh instead of a
    warning, with the same background refresh as #281 and a refetch after each save, for adding,
-   uploading and deleting instructors, setting a catalog name, and the Courses page saves other than
-   the allocations and estimates (which stay with #278). No version check, detector or banner. A
+   uploading and deleting instructors, setting a catalog name, and for the view-only Courses page so
+   it does not go stale. Every Courses save now lives on the edit page, which is #278's (warning,
+   and no background refresh). No version check, detector or banner. A
    survey first, which updates section (f) of this document. Built: see section (f).
 
 8. **An admin edits a student's application. (M, #302, PR #308.)** A version on the `applications`

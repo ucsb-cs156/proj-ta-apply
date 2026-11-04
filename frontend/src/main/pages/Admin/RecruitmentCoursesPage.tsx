@@ -94,10 +94,12 @@ export default function RecruitmentCoursesPage({
     },
     // Stryker disable next-line all : don't test default value of empty list
     [],
+    // Stryker disable next-line BooleanLiteral : whether a failed read toasts is not under test here
     false,
     // Issue #282: only the view-only page refreshes in the background. The edit page is guarded by
     // the warning from #278, and its saves carry the versions this list holds, so the list must
     // not move under an admin who is editing; it still refetches after each save.
+    // Stryker disable next-line BooleanLiteral : react-query treats `true` as no interval too (equivalent)
     edit ? { refetchInterval: false } : {},
   );
 

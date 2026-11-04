@@ -538,13 +538,15 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           student&apos;s home page never asks an admin endpoint.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-refresh-admin-pages">
-          <strong>The Instructors and Courses pages (issue #282).</strong> These
-          pages change small, infrequent settings, each to an absolute value, so
-          they refresh instead of warning, with the same hook and the same four
-          settings (admins only use them, so the admin pair applies). Each save
-          already refetches its lists when it succeeds, and the background
-          refresh covers a change made by another admin. The queries that
-          refresh are <code>/api/admin/instructors/get</code> and{" "}
+          <strong>
+            The Instructors page and the view-only Courses page (issue #282).
+          </strong>{" "}
+          These pages change small, infrequent settings, each to an absolute
+          value, so they refresh instead of warning, with the same hook and the
+          same four settings (admins only use them, so the admin pair applies).
+          Each save already refetches its lists when it succeeds, and the
+          background refresh covers a change made by another admin. The queries
+          that refresh are <code>/api/admin/instructors/get</code> and{" "}
           <code>/api/admin/instructors/catalogNames</code> (Instructors),{" "}
           <code>/api/courses/all</code> (Courses), and{" "}
           <code>/api/recruitmentcourses/all</code> and{" "}
@@ -743,7 +745,7 @@ export default function HelpDeveloperPage(): React.JSX.Element {
               </td>
             </tr>
             <tr data-testid="HelpDeveloperPage-simultaneous-row-admin-pages">
-              <td>Instructors page and non-allocation Courses page saves</td>
+              <td>Instructors page and the view-only Courses page</td>
               <td>
                 Background refresh plus a refetch after each save; no warning,
                 no version check, no detector

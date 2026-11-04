@@ -965,7 +965,7 @@ describe("Help pages (issue #140)", () => {
     expect(
       [...rows[7].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
-      "Instructors page and non-allocation Courses page saves",
+      "Instructors page and the view-only Courses page",
       "Background refresh plus a refetch after each save; no warning, no version check, no detector",
       "None (refresh, not a key)",
       "#291",
@@ -1058,13 +1058,13 @@ describe("Help pages (issue #140)", () => {
       "HelpAdminsPage-simultaneous-editing-admin-pages",
     );
     expect(pages).toHaveTextContent(
-      "the Instructors page and the course pages: they refresh by themselves every few seconds",
+      "the Instructors page and the view-only Courses page: they refresh by themselves every few seconds",
     );
     expect(pages).toHaveTextContent("appears on its own");
-    expect(pages).toHaveTextContent("There is no warning for this area.");
+    expect(pages).toHaveTextContent("There is no warning for these pages.");
     expect(pages).toHaveTextContent("is not replaced");
     expect(pages).toHaveTextContent(
-      "on its view-only page; the edit page does not",
+      "The Courses edit page does not refresh by itself",
     );
     expect(
       screen.getByTestId("HelpAdminsPage-simultaneous-editing-refresh")
