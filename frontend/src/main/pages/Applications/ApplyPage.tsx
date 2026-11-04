@@ -14,6 +14,7 @@ import type { Application } from "main/components/Applications/ApplicationTable"
 import type { StudentRecruitment } from "main/components/Recruitments/RecruitmentTable";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
+import { carryOverTo } from "main/utils/prefillCarryOver";
 import { useNoticeFillIn } from "main/utils/useNoticeFillIn";
 import { useCurrentUser } from "main/utils/currentUser";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
@@ -45,7 +46,7 @@ export default function ApplyPage(): React.JSX.Element {
     [],
   );
 
-  const { data: courses } = useBackend<string[]>(
+  const { data: courses, isFetched: coursesFetched } = useBackend<string[]>(
     ["/api/recruitments/courses", recruitmentId],
     {
       method: "GET",
@@ -69,16 +70,17 @@ export default function ApplyPage(): React.JSX.Element {
   );
 
   // The majors and topics lists for this recruitment's kind of application.
-  const { data: options } = useBackend<ApplicationOptions>(
-    ["/api/recruitments/options", recruitmentId],
-    {
-      method: "GET",
-      url: "/api/recruitments/options",
-      params: { recruitmentId },
-    },
-    // Stryker disable next-line all : don't test default value of empty lists
-    EMPTY_OPTIONS,
-  );
+  const { data: options, isFetched: optionsFetched } =
+    useBackend<ApplicationOptions>(
+      ["/api/recruitments/options", recruitmentId],
+      {
+        method: "GET",
+        url: "/api/recruitments/options",
+        params: { recruitmentId },
+      },
+      // Stryker disable next-line all : don't test default value of empty lists
+      EMPTY_OPTIONS,
+    );
 
   // The applicant's existing applications. Reaching this page for a recruitment they have already
   // applied to (the browser's back button after submitting, or an old link) must not offer a form
@@ -134,6 +136,17 @@ export default function ApplyPage(): React.JSX.Element {
   const existing = hereAlready.find((a) => a.status !== "CANCELLED");
   // Having cancelled one here, they start "as if from scratch": nothing is filled in from before.
   const startingOver = hereAlready.length > 0;
+
+  // Only what this recruitment also has: its courses, topics and interest areas (issue #307).
+  const earlier = (prefill ?? [])[0];
+  const earlierAnswers = earlier
+    ? carryOverTo(
+        earlier,
+        courses ?? [],
+        options?.topics ?? [],
+        options?.interests ?? [],
+      )
+    : undefined;
 
   // The draft for this recruitment, and the saving into it (issue #270).
   const {
@@ -252,42 +265,47 @@ export default function ApplyPage(): React.JSX.Element {
         )}
         {
           // Stryker disable next-line all : the draft is only asked for once the recruitment and the list are there
-          recruitment && mineFetched && prefillFetched && draft && (
-            <ApplicationForm
-              // A reloaded draft is a new start: the form takes its answers afresh.
-              key={draft.version}
-              type={recruitment.type}
-              courses={courses ?? []}
-              instructors={instructors ?? {}}
-              recruitmentId={recruitmentId}
-              majors={options?.majors ?? []}
-              topics={options?.topics ?? []}
-              interests={options?.interests ?? []}
-              notice={(notices ?? [])[0] ?? null}
-              noticeFillIn={noticeFillIn}
-              // A draft the form has saved before is what the applicant left; a new one has nothing
-              // of its own, so the answers from their earlier application fill it in.
-              // Stryker disable next-line all : don't test default value of empty list
-              initialContents={
-                draftWasSaved(draft)
-                  ? draft
-                  : startingOver
-                    ? undefined
-                    : (prefill ?? [])[0]
-              }
-              defaultNames={{
-                firstName: currentUser.root?.user?.givenName,
-                lastName: currentUser.root?.user?.familyName,
-              }}
-              submitAction={(payload) => mutation.mutate(payload)}
-              // Draft saves are refused once applications close (#276), so none are tried.
-              onDraftChange={closed ? undefined : autosave}
-              submitDisabled={closed}
-              onSaveDraft={saveAndLeave}
-              buttonLabel="Submit Application"
-              testIdPrefix="ApplyPage"
-            />
-          )
+          recruitment &&
+            mineFetched &&
+            prefillFetched &&
+            coursesFetched &&
+            optionsFetched &&
+            draft && (
+              <ApplicationForm
+                // A reloaded draft is a new start: the form takes its answers afresh.
+                key={draft.version}
+                type={recruitment.type}
+                courses={courses ?? []}
+                instructors={instructors ?? {}}
+                recruitmentId={recruitmentId}
+                majors={options?.majors ?? []}
+                topics={options?.topics ?? []}
+                interests={options?.interests ?? []}
+                notice={(notices ?? [])[0] ?? null}
+                noticeFillIn={noticeFillIn}
+                // A draft the form has saved before is what the applicant left; a new one has nothing
+                // of its own, so the answers from their earlier application fill it in.
+                // Stryker disable next-line all : don't test default value of empty list
+                initialContents={
+                  draftWasSaved(draft)
+                    ? draft
+                    : startingOver
+                      ? undefined
+                      : earlierAnswers
+                }
+                defaultNames={{
+                  firstName: currentUser.root?.user?.givenName,
+                  lastName: currentUser.root?.user?.familyName,
+                }}
+                submitAction={(payload) => mutation.mutate(payload)}
+                // Draft saves are refused once applications close (#276), so none are tried.
+                onDraftChange={closed ? undefined : autosave}
+                submitDisabled={closed}
+                onSaveDraft={saveAndLeave}
+                buttonLabel="Submit Application"
+                testIdPrefix="ApplyPage"
+              />
+            )
         }
         {!recruitment && (
           <p data-testid="ApplyPage-unavailable">

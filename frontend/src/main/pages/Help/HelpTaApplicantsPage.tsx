@@ -45,14 +45,17 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
               <strong>Copied from your most recent ULA application:</strong>{" "}
               your name, your major, your previous teaching experience, your
               &ldquo;anything else&rdquo; comments, and the courses you listed
-              as relevant background.
+              as relevant background. Also your course choices, your interest in
+              the other courses, and your topic ratings, but only for the
+              courses and topics this TA application also asks about; the topic
+              ratings are converted to the 1 to 5 scale.
             </li>
             <li>
               <strong>Not copied:</strong> your GPAs and the first quarter box,
               your year in the program and your graduation date (they described
-              you as an undergraduate); your course choices, availability and
-              course interests (they were for the ULA courses); your topic
-              ratings (the scale is different); the notice agreement; and the
+              you as an undergraduate); your lecture and discussion availability
+              (the TA form does not ask for it); any course or topic this TA
+              application does not offer; the notice agreement; and the
               questions only a ULA is asked, such as the perm number, employment
               questions and training commitment. Please look over what was
               copied before you submit.

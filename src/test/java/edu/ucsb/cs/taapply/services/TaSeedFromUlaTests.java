@@ -52,7 +52,7 @@ public class TaSeedFromUlaTests {
         .availabilityCommentsFirstChoice("mwf")
         .availabilityCommentsSecondChoice("tr")
         .courseInterests(Map.of("CMPSC  24", CourseInterest.ENTHUSIASTIC))
-        .topicProficiencies(Map.of("Python", 1))
+        .topicProficiencies(Map.of("Python", 1, "Java", 2, "Git", 3))
         .interests(Map.of("Teaching", 5))
         .priorCoursework(
             List.of(
@@ -98,6 +98,25 @@ public class TaSeedFromUlaTests {
   }
 
   @Test
+  public void course_choices_and_interests_carry_over_by_name_as_copies() {
+    Application ula = fullUla();
+    Application seed = TaSeedFromUla.seed(ula);
+
+    assertEquals("CMPSC   8", seed.getFirstChoiceCourse());
+    assertEquals("CMPSC  16", seed.getSecondChoiceCourse());
+    assertEquals(Map.of("CMPSC  24", CourseInterest.ENTHUSIASTIC), seed.getCourseInterests());
+    assertNotSame(ula.getCourseInterests(), seed.getCourseInterests());
+  }
+
+  /** ULA 1 (very comfortable) to 3 (not familiar) becomes TA 5 (highest) to 1 (lowest). */
+  @Test
+  public void topic_ratings_are_translated_to_the_ta_scale() {
+    Application seed = TaSeedFromUla.seed(fullUla());
+
+    assertEquals(Map.of("Python", 5, "Java", 3, "Git", 1), seed.getTopicProficiencies());
+  }
+
+  @Test
   public void prior_coursework_is_copied_as_new_rows_without_ids() {
     Application ula = fullUla();
     Application seed = TaSeedFromUla.seed(ula);
@@ -117,7 +136,10 @@ public class TaSeedFromUlaTests {
     assertNotSame(ula.getPriorCoursework().get(1), second);
   }
 
-  /** Everything else is as on a brand new application: no ids, no state, no ULA-only answers. */
+  /**
+   * Everything else is as on a brand new application: no ids, no state, no availability, no
+   * ULA-only answers.
+   */
   @Test
   public void nothing_else_carries_over() {
     Application seed = TaSeedFromUla.seed(fullUla());
@@ -129,6 +151,10 @@ public class TaSeedFromUlaTests {
             .major("Computer Science")
             .prevExperience("tutored")
             .comments("hello")
+            .firstChoiceCourse("CMPSC   8")
+            .secondChoiceCourse("CMPSC  16")
+            .courseInterests(Map.of("CMPSC  24", CourseInterest.ENTHUSIASTIC))
+            .topicProficiencies(Map.of("Python", 5, "Java", 3, "Git", 1))
             .priorCoursework(seed.getPriorCoursework())
             .build();
 

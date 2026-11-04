@@ -463,7 +463,7 @@ form (issue #65).
   answers never reach a TA form, rather than relying on the form to ignore them. The seed is built
   from an empty application plus an allow-list of fields, not by copying the ULA application and
   clearing fields, so a field added to the entity later does not carry over until someone decides it
-  should. The prior courses are copied as new rows (no ids); their blank catalog titles are filled
+  should. Course choices, course interests and topic ratings are carried across by name and the apply page keeps only those the new recruitment also has (`carryOverTo`), so the overlap, however small, is kept rather than starting from nothing. The prior courses are copied as new rows (no ids); their blank catalog titles are filled
   by the form (`withCatalogTitles`, issue #306). The apply page now waits for the pre-fill before
   showing the form, since the form reads its starting answers only once.
 
@@ -476,8 +476,9 @@ form (issue #65).
   | Prior coursework | Yes, as new rows | The courses taken are still the courses taken. |
   | GPAs, first quarter box | No | The ULA values are undergraduate; a TA applicant is a grad student. |
   | Year in program, graduation date | No | Described the person as an undergraduate. |
-  | First and second choice course, lecture and discussion availability and comments, interest in other courses | No | They name ULA courses and a past quarter's schedule; a TA form must not hold choices its recruitment does not offer. |
-  | Topic proficiencies | No | The ULA scale (1 very comfortable to 3 not familiar) does not map onto the TA 1 to 5 scale. |
+  | First and second choice course, interest in other courses | Yes, for courses the TA recruitment also has | The answers are keyed by course; the apply page keeps those whose course is in the new recruitment's list and drops the rest, so a choice that is not offered is cleared. |
+  | Lecture and discussion availability and comments | No | The TA form does not ask them. |
+  | Topic proficiencies | Yes, for topics the TA list also has, on the TA scale | ULA 1 (very comfortable), 2 and 3 (not familiar) become TA 5, 3 and 1; the seed does this and the apply page keeps topics in the TA list. |
   | Notice version agreed to | No | It is the ULA notice; the TA notice must be agreed to afresh. |
   | Video link, previous service as a ULA, perm number, BS/MS answers, other campus job, prior UCSB employment, employee id, I-9, training commitment and explanation, changing major, interests | No | ULA-only questions with no TA counterpart. |
   | Residency, language exam, class level | n/a | TA-only questions with no ULA source; left blank. |
