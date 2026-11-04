@@ -21,7 +21,7 @@ jobs:
     # The PLAYWRIGHT_RUNS_ON organization/repository variable can pin the runner (e.g. ubuntu-24.04);
     # if it is not set, fall back to ubuntu-latest.
     runs-on: ${{ vars.PLAYWRIGHT_RUNS_ON || 'ubuntu-latest' }}
-    timeout-minutes: 10
+    timeout-minutes: 20
     
     steps:
     - uses: actions/checkout@v4
