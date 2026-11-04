@@ -439,6 +439,13 @@ form (issue #65).
 * The pre-fill of a new application (`GET /api/applications/prefill`) now picks the applicant's
   application for the most recent recruitment quarter rather than the most recently inserted row,
   since an imported application is newer as a row but older as an application.
+* Issue #306: when an application is loaded into the form (for editing, or as the pre-fill copied
+  from the applicant's most recent application), a UCSB prior course whose number is in the course
+  catalog (`GET /api/courses/all`, the list the bulk-add window already uses) but whose title is blank
+  gets the catalog title (`withCatalogTitles` in `priorCoursework.ts`). This is done in the frontend,
+  in `ApplicationForm`, so drafts, submitted applications and copied answers are all covered by one
+  code path and the catalog request is shared with the bulk-add window; the filled title is then saved
+  with the form. A typed title is never replaced, and other schools' courses are never touched.
 
 # Twentieth Iteration
 

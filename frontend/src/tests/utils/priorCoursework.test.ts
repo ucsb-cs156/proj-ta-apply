@@ -7,6 +7,7 @@ import {
   normalizeTerm,
   termOptions,
   termSortKey,
+  withCatalogTitles,
   withNormalizedTerm,
   TERM_LEGEND,
   tooFewCoursesMessage,
@@ -119,6 +120,54 @@ describe("priorCoursework utils", () => {
     };
     expect(withNormalizedTerm(course)).toEqual({ ...course, term: "S24" });
     expect(withNormalizedTerm({ ...course, term: null }).term).toBeNull();
+  });
+
+  describe("withCatalogTitles", () => {
+    const catalog = [
+      { courseId: "CMPSC   156", title: "ADV APP PROGRAM" },
+      { courseId: "CMPSC   8", title: null },
+      { courseId: "CMPSC   16", title: "   " },
+    ];
+    const blank = (courseNumber: string, extra = {}): PriorCourse => ({
+      ucsbCourse: true,
+      otherSchool: null,
+      courseNumber,
+      courseTitle: null,
+      term: "F25",
+      grade: "A",
+      ...extra,
+    });
+
+    test("fills a blank or missing title, matching the number as the table writes it", () => {
+      expect(
+        withCatalogTitles(
+          [
+            blank("CMPSC 156"),
+            blank("  CMPSC   156 ", { courseTitle: "  " }),
+            blank("CMPSC 156", { courseTitle: "" }),
+          ],
+          catalog,
+        ).map((c) => c.courseTitle),
+      ).toEqual(["ADV APP PROGRAM", "ADV APP PROGRAM", "ADV APP PROGRAM"]);
+    });
+
+    test("fills nothing else, and changes only the title", () => {
+      const course = blank("CMPSC 156", { id: 4, grade: "B" });
+      expect(withCatalogTitles([course], catalog)).toEqual([
+        { ...course, courseTitle: "ADV APP PROGRAM" },
+      ]);
+    });
+
+    test("leaves a typed title, another school, an unknown number or an untitled catalog entry alone", () => {
+      const courses = [
+        blank("CMPSC 156", { courseTitle: "Mine" }),
+        blank("CMPSC 156", { ucsbCourse: false, otherSchool: "UCLA" }),
+        blank("CMPSC 999"),
+        blank("CMPSC 8"),
+        blank("CMPSC 16"),
+      ];
+      expect(withCatalogTitles(courses, catalog)).toBe(courses);
+    });
   });
 
   test("termSortKey is YYYYQ, and 0 for anything not in standard form", () => {

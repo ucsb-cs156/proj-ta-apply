@@ -76,6 +76,7 @@ describe("AdminApplicationEditPage tests", () => {
       .onGet("/api/recruitments/options")
       .reply(200, appSettingsFixtures.ulaOptions);
     axiosMock.onGet("/api/notices").reply(200, noticesFixtures.ulaV1);
+    axiosMock.onGet("/api/courses/all").reply(200, []);
     axiosMock
       .onGet("/api/recruitments/sections")
       .reply(200, courseSectionsFixtures.cmpsc156);
