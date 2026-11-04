@@ -204,12 +204,15 @@
 <a name='L139'></a><a href='#L139'>139</a>
 <a name='L140'></a><a href='#L140'>140</a>
 <a name='L141'></a><a href='#L141'>141</a>
-<a name='L142'></a><a href='#L142'>142</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -259,29 +262,32 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">231x</span>
-<span class="cline-any cline-yes">231x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">231x</span>
+<span class="cline-any cline-yes">790x</span>
+<span class="cline-any cline-yes">790x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">231x</span>
-<span class="cline-any cline-yes">231x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">790x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">231x</span>
-<span class="cline-any cline-yes">92x</span>
+<span class="cline-any cline-yes">790x</span>
+<span class="cline-any cline-yes">790x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">231x</span>
-<span class="cline-any cline-yes">199x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">790x</span>
+<span class="cline-any cline-yes">327x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">790x</span>
+<span class="cline-any cline-yes">739x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">51x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">51x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -335,7 +341,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -347,7 +353,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useEffect, useId, useRef, useState } from "react";
 import Modal from "react-bootstrap/Modal";
-import { RISK_SENTENCE, describeOthers, type OtherClient } from "./others";
+import { warningMessage, type Audience, type OtherClient } from "./others";
 &nbsp;
 /** How long Enter is ignored after the modal appears, so a keystroke meant for the form is safe. */
 export const ENTER_IGNORED_MS = 1000;
@@ -366,6 +372,8 @@ type MultipleTabsModalProps = {
   arrivedAt: number;
   /** What is open twice, as it should read in the sentence: "application", "budget". */
   noun: string;
+  /** Who is reading it, which decides the closing sentence; "default" if not said. */
+  audience?: Audience;
   /** Called when the user chooses to leave. It should say goodbye and take the user away. */
   onLeave: () =&gt; void;
   testId?: string;
@@ -397,6 +405,7 @@ export default function MultipleTabsModal({
   newest,
   arrivedAt,
   noun,
+  audience,
   onLeave,
   testId = "MultipleTabsModal",
 }: MultipleTabsModalProps): React.JSX.Element | null {
@@ -447,7 +456,7 @@ export default function MultipleTabsModal({
       &lt;/Modal.Header&gt;
       &lt;Modal.Body style={{ overflowWrap: "anywhere" }}&gt;
         &lt;p data-testid={`${testId}-message`}&gt;
-          {describeOthers(others, noun)} {RISK_SENTENCE}
+          {warningMessage(others, noun, audience, true)}
         &lt;/p&gt;
         {choice === "wait" &amp;&amp; (
           &lt;p role="status" data-testid={`${testId}-waiting`}&gt;
@@ -493,7 +502,7 @@ export default function MultipleTabsModal({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-03T00:26:15.304Z
+                at 2026-11-04T00:21:13.933Z
             </div>
         <script src="../prettify.js"></script>
         <script>
