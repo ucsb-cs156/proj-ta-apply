@@ -844,6 +844,9 @@ describe("Help pages (issue #140)", () => {
     );
     expect(text("refresh-admin-pages")).toMatch(/guarded by a warning instead/);
     expect(text("refresh-admin-pages")).toMatch(
+      /only the view-only page refreshes in the background; the edit page does not/,
+    );
+    expect(text("refresh-admin-pages")).toMatch(
       /Catalog Name dropdown keeps showing what it showed/,
     );
 
@@ -1060,6 +1063,9 @@ describe("Help pages (issue #140)", () => {
     expect(pages).toHaveTextContent("appears on its own");
     expect(pages).toHaveTextContent("There is no warning for this area.");
     expect(pages).toHaveTextContent("is not replaced");
+    expect(pages).toHaveTextContent(
+      "on its view-only page; the edit page does not",
+    );
     expect(
       screen.getByTestId("HelpAdminsPage-simultaneous-editing-refresh")
         .nextElementSibling,

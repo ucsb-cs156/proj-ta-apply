@@ -744,8 +744,9 @@ export default function HelpAdminsPage(): React.JSX.Element {
           seconds, so an instructor added, removed or given a catalog name by
           another admin, or a course removed, put back or given a new enrollment
           estimate, appears on its own. There is no warning for this area. A
-          catalog name or an estimate you are in the middle of choosing or
-          typing is not replaced.
+          catalog name you are in the middle of choosing is not replaced. A
+          recruitment&apos;s course list refreshes by itself on its view-only
+          page; the edit page does not, because it warns instead (see below).
         </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-safe">
           <strong>What is safe.</strong> A click made in the few seconds before

@@ -549,9 +549,12 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <code>/api/courses/all</code> (Courses), and{" "}
           <code>/api/recruitmentcourses/all</code> and{" "}
           <code>/api/admin/recruitments/all</code> (a recruitment&apos;s course
-          list). The ranking summaries on that page are heavier and are not
-          refreshed this way, and the allocations and estimated enrollments on
-          the edit page are guarded by a warning instead (issue #278). Input in
+          list). On the course list only the <strong>view-only page</strong>{" "}
+          refreshes in the background; the <strong>edit page</strong> does not,
+          because it is guarded by a warning instead (issue #278) and its saves
+          carry the versions the list holds, so the list must not move under an
+          admin who is editing (it still refetches after each save). The ranking
+          summaries are heavier and are not refreshed this way. Input in
           progress is protected as follows: the Catalog Name dropdown keeps
           showing what it showed (or what was just chosen) while it has focus,
           and follows the stored value again when it is left; the enrollment
@@ -753,7 +756,8 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #291
-
+                </a>
+              </td>
             </tr>
           </tbody>
         </Table>

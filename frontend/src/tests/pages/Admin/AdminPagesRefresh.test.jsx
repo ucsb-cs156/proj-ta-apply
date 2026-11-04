@@ -184,54 +184,58 @@ describe("A recruitment's course list refreshes by itself (issue #282)", () => {
       .reply(200, recruitmentCoursesFixtures.rankingSummaries);
   });
 
-  const renderPage = () =>
+  const renderPage = (edit = false) =>
     render(
       <QueryClientProvider client={client()}>
-        <MemoryRouter initialEntries={["/admin/recruitments/7/courses"]}>
+        <MemoryRouter
+          initialEntries={[
+            `/admin/recruitments/7/courses${edit ? "/edit" : ""}`,
+          ]}
+        >
           <Routes>
             <Route
               path="/admin/recruitments/:recruitmentId/courses"
               element={<RecruitmentCoursesPage />}
+            />
+            <Route
+              path="/admin/recruitments/:recruitmentId/courses/edit"
+              element={<RecruitmentCoursesPage edit />}
             />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>,
     );
 
-  test("shows another admin's estimate, but never replaces one being typed", async () => {
+  test("the view-only page shows another admin's estimate on its own", async () => {
     axiosMock
       .onGet("/api/recruitmentcourses/all")
       .reply(200, withEstimate(220));
     renderPage();
-    const input = await screen.findByTestId(box);
-    expect(input).toHaveValue(220);
-
-    // Half typed: the refreshed value must not replace it.
-    await userEvent.clear(input);
-    await userEvent.type(input, "3");
+    expect(await screen.findByTestId(box)).toHaveTextContent("220");
     axiosMock
       .onGet("/api/recruitmentcourses/all")
       .reply(200, withEstimate(500));
-    const before = gets("/api/recruitmentcourses/all").length;
     await waitFor(
-      () =>
-        expect(gets("/api/recruitmentcourses/all").length).toBeGreaterThan(
-          before,
-        ),
+      () => expect(screen.getByTestId(box)).toHaveTextContent("500"),
       slow,
     );
-    expect(screen.getByTestId(box)).toHaveValue(3);
   });
 
-  test("shows another admin's estimate when no box is being used", async () => {
+  test("the edit page does not refresh in the background, so nothing moves under the editor", async () => {
+    axiosMock.onPost("/api/recruitmentcourses/heartbeat").reply(200, {});
     axiosMock
       .onGet("/api/recruitmentcourses/all")
       .reply(200, withEstimate(220));
-    renderPage();
+    renderPage(true);
     expect(await screen.findByTestId(box)).toHaveValue(220);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const before = gets("/api/recruitmentcourses/all").length;
     axiosMock
       .onGet("/api/recruitmentcourses/all")
       .reply(200, withEstimate(500));
-    await waitFor(() => expect(screen.getByTestId(box)).toHaveValue(500), slow);
+    // Longer than the 1 s refresh interval used here: no further read is made.
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    expect(gets("/api/recruitmentcourses/all").length).toBe(before);
+    expect(screen.getByTestId(box)).toHaveValue(220);
   });
 });

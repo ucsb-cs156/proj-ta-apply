@@ -94,6 +94,11 @@ export default function RecruitmentCoursesPage({
     },
     // Stryker disable next-line all : don't test default value of empty list
     [],
+    false,
+    // Issue #282: only the view-only page refreshes in the background. The edit page is guarded by
+    // the warning from #278, and its saves carry the versions this list holds, so the list must
+    // not move under an admin who is editing; it still refetches after each save.
+    edit ? { refetchInterval: false } : {},
   );
 
   // For the last-refreshed line (issue #124); every Populate stamps the recruitment.

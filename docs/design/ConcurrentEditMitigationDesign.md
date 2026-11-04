@@ -881,6 +881,14 @@ refetch after each save, so no mutation changed. The queries that refresh:
 Left alone on the course list page: the ranking summaries (heavier, and read only), the hidden
 columns, and the allocation and estimate saves, which stay with #278.
 
+**View-only versus edit page (after #278's split).** The course list is now two pages sharing one
+component. The background refresh runs on the **view-only page** only, where nothing can be typed.
+The **edit page** passes `refetchInterval: false`: it is guarded by the multi-tab warning
+(`courses-edit:<recruitmentId>`), its allocation saves carry the versions the loaded list holds,
+and a list that moved under an admin who is editing would defeat that check and could replace a
+box being typed in. The edit page still refetches after each save, and on window focus. The
+Instructors page and the Courses (catalog) page refresh as described above.
+
 **Input in progress.** Three kinds of input, three answers:
 
 - The Catalog Name dropdown keeps showing what it showed, or what was just chosen, while it has
@@ -888,7 +896,7 @@ columns, and the allocation and estimate saves, which stay with #278.
   after the person is done. The cell is a module-level component with its settings in a context:
   the table renders a `cell` function as a component, so one made anew on every render of the
   table would be remounted on every render, which would drop the focus and the dropdown with it.
-- The enrollment estimate and allocation boxes already show their own draft while they have focus
+- The enrollment estimate and allocation boxes (on the edit page, which does not refresh in the background) show their own draft while they have focus
   (from the saves added in #174 and #175), so a refresh updates every other row and the stored
   value, never the box being typed in.
 - A CSV being chosen lives in the upload form's own state, which a refresh does not touch.
