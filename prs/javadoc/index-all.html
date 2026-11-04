@@ -595,7 +595,7 @@ student's application.</div>
 <div class="block">Overwrites every non-removed section's allocation with a best effort at the hiring target from
 the enrollment estimates, and returns the sections in page order.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#autoAllocate(java.lang.Long)" class="member-name-link">autoAllocate(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#autoAllocate(java.lang.Long,java.lang.String)" class="member-name-link">autoAllocate(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#availabilityCommentsFirstChoice()" class="member-name-link">availabilityCommentsFirstChoice()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
@@ -2237,6 +2237,8 @@ same course and section.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#heartbeat(java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#heartbeat(java.lang.Long,java.lang.String)" class="member-name-link">heartbeat(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/BudgetController.html#heartbeat(java.lang.String,java.lang.String)" class="member-name-link">heartbeat(String, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/BudgetController.html" title="class in edu.ucsb.cs.taapply.controller">BudgetController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#heartbeat(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">heartbeat(String, String, ClientIdentity)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
@@ -2667,6 +2669,8 @@ the same month rule as the front end (January to March is 1, April to June 2, Ju
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#leave(java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#leave(java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#leave(java.lang.Long,java.lang.String)" class="member-name-link">leave(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#leave(java.lang.String,java.lang.String)" class="member-name-link">leave(String, String)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
 <dd>
@@ -3717,13 +3721,13 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/SecurityConfig.html#%3Cinit%3E()" class="member-name-link">SecurityConfig()</a> - Constructor for class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/SecurityConfig.html" title="class in edu.ucsb.cs.taapply.config">SecurityConfig</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setAllocation(java.lang.Long,java.lang.Integer)" class="member-name-link">setAllocation(Long, Integer)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setAllocation(java.lang.Long,java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.String)" class="member-name-link">setAllocation(Long, Integer, Integer, Integer, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.html#setCatalogName(java.lang.String,java.lang.String)" class="member-name-link">setCatalogName(String, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setEnrollmentEstimate(java.lang.Long,java.lang.Integer)" class="member-name-link">setEnrollmentEstimate(Long, Integer)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setEnrollmentEstimate(java.lang.Long,java.lang.Integer,java.lang.String)" class="member-name-link">setEnrollmentEstimate(Long, Integer, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setEnrollmentEstimates(java.lang.Long,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource)" class="member-name-link">setEnrollmentEstimates(Long, EnrollmentEstimateSource)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setEnrollmentEstimates(java.lang.Long,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource,java.lang.String)" class="member-name-link">setEnrollmentEstimates(Long, EnrollmentEstimateSource, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/migration/UtcToPacificTimestamps.html#setFileOpener(liquibase.resource.ResourceAccessor)" class="member-name-link">setFileOpener(ResourceAccessor)</a> - Method in class edu.ucsb.cs.taapply.migration.<a href="edu/ucsb/cs/taapply/migration/UtcToPacificTimestamps.html" title="class in edu.ucsb.cs.taapply.migration">UtcToPacificTimestamps</a></dt>
 <dd>&nbsp;</dd>
