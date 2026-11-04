@@ -848,7 +848,9 @@ public class ApplicationsWebIT extends WebTestCase {
     // Issue #148: a choice not listed as taken is flagged, with the explanation in a row under it.
     assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-156-untaken")).isVisible();
     assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-156-untaken-warning"))
-        .containsText("signifies that this is a course you have not listed as one you have taken");
+        .containsText("Have you taken this course?");
+    assertThat(page.getByTestId("ApplyPage-comments-untaken"))
+        .containsText("You have listed CMPSC");
     assertThat(page.getByTestId("ApplyPage-firstChoiceSections-title"))
         .containsText("ADV APP PROGRAM");
     assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type"))
@@ -870,6 +872,7 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-156-untaken-warning"))
         .not()
         .isVisible();
+    assertThat(page.getByTestId("ApplyPage-comments-untaken")).not().isVisible();
     page.getByTestId("ApplyPage-notice-agree").check();
 
     // The questions from the ULA Google Form (issue #72). The perm number is required and

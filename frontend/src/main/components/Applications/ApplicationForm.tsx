@@ -20,10 +20,10 @@ import {
 } from "main/utils/priorCoursework";
 import { courseLabel, type CourseInstructors } from "main/utils/courseLabels";
 import {
-  UNTAKEN_EXAMPLE,
   UNTAKEN_EXPLANATION,
   UNTAKEN_TITLE,
   untakenAskedFor,
+  untakenCommentsReminder,
 } from "main/utils/untakenCourses";
 import { WarningIcon } from "main/components/Common/Icons";
 import RequiredField from "main/components/Common/RequiredField";
@@ -1679,11 +1679,10 @@ export default function ApplicationForm({
                         data-testid={legendId}
                       >
                         <td colSpan={2 + COURSE_INTEREST_OPTIONS.length}>
-                          <p className="mb-1">
+                          <p className="mb-0">
                             <WarningIcon className="me-1 align-text-bottom" />
                             {UNTAKEN_EXPLANATION}
                           </p>
-                          <p className="mb-0">{UNTAKEN_EXAMPLE}</p>
                         </td>
                       </tr>
                     )}
@@ -1724,6 +1723,15 @@ export default function ApplicationForm({
               can let us know that.
             </p>
           </>
+        )}
+        {untaken.size > 0 && (
+          <p
+            className="small text-danger mb-2"
+            data-testid={id("comments-untaken")}
+          >
+            <WarningIcon className="me-1 align-text-bottom" />
+            {untakenCommentsReminder(courseList.filter((c) => untaken.has(c)))}
+          </p>
         )}
         <Form.Control
           id={id("comments")}

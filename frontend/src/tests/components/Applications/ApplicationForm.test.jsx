@@ -1084,13 +1084,17 @@ describe("ApplicationForm tests", () => {
     const warning = untakenWarning();
     expect(warning).toHaveClass("small", "text-danger");
     const paragraphs = [...warning.querySelectorAll("p")];
-    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs).toHaveLength(1);
     expect(paragraphs[0].querySelector("svg")).not.toBeNull();
     expect(paragraphs[0].textContent).toBe(
-      "signifies that this is a course you have not listed as one you have taken. Be sure that in the comments field at the bottom of the application, you explain what background you have that prepares you to be a ULA for this course.",
+      "Have you taken this course? If so, add it to the courses taken section. If not, please explain your background for serving as a ULA for this course in the comments section at the bottom of the application.",
     );
-    expect(paragraphs[1].textContent).toBe(
-      "For example, CS students don't typically take CMPSC 5A or 5B, but if they have Python programming background, and some statistics background (e.g. PSTAT 5 or PSTAT 120A), that's typically enough preparation to be a ULA for CMPSC 5A/5B.",
+    // The red reminder beside the comments box names the flagged course.
+    const reminder = screen.getByTestId("ApplicationForm-comments-untaken");
+    expect(reminder).toHaveClass("small", "text-danger");
+    expect(reminder.querySelector("svg")).not.toBeNull();
+    expect(reminder.textContent).toBe(
+      "You have listed CMPSC 156 as a course you are interested in serving as a ULA for. Please explain in the comments section what your preparation is for serving as a ULA for this course.",
     );
     // The legend is a virtual row directly beneath its own course row, spanning every column,
     // and the course row is described by it.
