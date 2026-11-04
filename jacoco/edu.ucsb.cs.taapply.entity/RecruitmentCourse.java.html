@@ -102,6 +102,16 @@ public class RecruitmentCourse {
   private Integer allocation = 0;
 
   /**
+   * Counts the changes made to {@code allocation} (issue #278), the safety net behind the multi-tab
+   * warning: an allocation edit that carries an older count than the row has is refused. Its own
+   * column and not a JPA {@code @Version}, so that the course refresh and the enrollment estimates,
+   * which also write the row, cannot cause a conflict.
+   */
+  @Column(name = &quot;allocation_version&quot;, nullable = false)
+  @Builder.Default
+  private Integer allocationVersion = 0;
+
+  /**
    * The admin's estimate of how many students the section will have (issue #175), the basis for
    * allocating positions. Null until entered; the Recruitment Courses page can fill it from {@code
    * maxEnroll} or {@code enrollment} in one step. A planning figure, so not audited.
@@ -128,7 +138,7 @@ public class RecruitmentCourse {
    */
   @JsonIgnore
   public boolean isOnOffer() {
-<span class="fc bfc" id="L131" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
+<span class="fc bfc" id="L141" title="All 6 branches covered.">    return !removed &amp;&amp; !stale &amp;&amp; !CANCELLED.equals(status);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
