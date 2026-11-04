@@ -405,6 +405,63 @@ describe("ApplyPage tests", () => {
     expect(screen.queryByTestId("ApplyPage-submit")).toBeNull();
   });
 
+  // ---- starting again after a cancellation (issue #318) ----
+
+  /** The cancelled application is kept; it does not stand in the way of a new one. */
+  test("an applicant who cancelled is given an empty form, not sent to the cancelled application", async () => {
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [applicationsFixtures.oneCancelledApplication]);
+    // The most recent application would normally fill the form in.
+    axiosMock
+      .onGet("/api/applications/prefill")
+      .reply(200, [applicationsFixtures.oneCancelledApplication]);
+
+    renderPage(applicationsFixtures.oneCancelledApplication.recruitmentId);
+
+    expect(await screen.findByTestId("ApplyPage-submit")).toBeInTheDocument();
+    expect(screen.queryByTestId("redirected-to-application")).toBeNull();
+    // Nothing from the earlier application: only what a first-time applicant gets, the Google name.
+    expect(screen.getByTestId("ApplyPage-firstName")).not.toHaveValue("Chris");
+    expect(screen.getByTestId("ApplyPage-major")).toHaveValue("");
+    // A draft of its own is begun.
+    await waitFor(() =>
+      expect(
+        axiosMock.history.post.filter(
+          (r) => r.url === "/api/draftApplications/open",
+        ).length,
+      ).toBe(1),
+    );
+  });
+
+  test("a draft saved while starting again is what comes back", async () => {
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [applicationsFixtures.oneCancelledApplication]);
+    axiosMock.onPost("/api/draftApplications/open").reply(200, savedUlaDraft);
+
+    renderPage(applicationsFixtures.oneCancelledApplication.recruitmentId);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-firstName")).toHaveValue("Dana"),
+    );
+  });
+
+  test("an applicant who cancelled and then applied again is sent to the new application", async () => {
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [
+        applicationsFixtures.oneUlaApplication,
+        applicationsFixtures.oneCancelledApplication,
+      ]);
+
+    renderPage(applicationsFixtures.oneUlaApplication.recruitmentId);
+
+    expect(
+      await screen.findByTestId("redirected-to-application"),
+    ).toBeInTheDocument();
+  });
+
   test("an application for a different recruitment does not redirect", async () => {
     axiosMock
       .onGet("/api/applications/mine")
@@ -999,6 +1056,7 @@ describe("ApplyPage tests", () => {
       r.url.startsWith("/api/draftApplications/heartbeat"),
     );
   const HEARTBEAT = /\/api\/draftApplications\/heartbeat/;
+  const ADMIN = "We recommend that only one admin edits this page at a time.";
   const RISK =
     "Please know that this is risky; we recommend closing all but one of these.";
   const phill = { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false };
@@ -1068,7 +1126,7 @@ describe("ApplyPage tests", () => {
     expect(
       await screen.findByTestId("ApplyPage-multiple-tabs"),
     ).toHaveTextContent(
-      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this application in other windows or tabs. ${RISK}`,
+      `You and phtcon@ucsb.edu (Phill Conrad) are also editing this application in other windows or tabs. ${ADMIN}`,
     );
   });
 
@@ -1129,9 +1187,12 @@ describe("ApplyPage tests", () => {
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByTestId(`${MODAL}-message`)).toHaveTextContent(
-      `phtcon@ucsb.edu (Phill Conrad) is also editing this application. ${RISK}`,
+      `phtcon@ucsb.edu (Phill Conrad) already has this application open for editing. ${ADMIN}`,
     );
-    expect(screen.getByTestId("ApplyPage-multiple-tabs")).toBeInTheDocument();
+    // The banner of the tab that arrived later says "already" too.
+    expect(screen.getByTestId("ApplyPage-multiple-tabs")).toHaveTextContent(
+      `phtcon@ucsb.edu (Phill Conrad) already has this application open for editing. ${ADMIN}`,
+    );
   });
 
   test("an older tab has the banner alone, and is not interrupted", async () => {

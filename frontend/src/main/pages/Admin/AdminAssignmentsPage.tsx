@@ -1,5 +1,6 @@
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
@@ -10,6 +11,13 @@ import CancelledApplicationsTable, {
 import InterestLegend from "main/components/Common/InterestLegend";
 import type { Assignments } from "main/utils/assignments";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
+import { apiErrorMessage, shouldToastBackendError } from "main/utils/apiError";
+import { isConflict } from "main/utils/useDraftSaving";
+import {
+  MultipleTabsBanner,
+  MultipleTabsModal,
+  useClientActivity,
+} from "main/concurrency";
 
 // Stryker disable all : the page before the first answer; nothing reads its fields
 const emptyAssignments: Assignments = {
@@ -18,6 +26,7 @@ const emptyAssignments: Assignments = {
   identityHeaders: [],
   courses: [],
   rows: [],
+  version: 0,
 };
 // Stryker restore all
 
@@ -28,6 +37,14 @@ const emptyAssignments: Assignments = {
 export default function AdminAssignmentsPage(): React.JSX.Element {
   const { recruitmentId } = useParams();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // Issues #280 and #284: the whole page for one recruitment is one thing to edit, so a second tab
+  // or window on it (or a second admin) gets the warning, and the newest of them is asked what to do.
+  const activity = useClientActivity({
+    heartbeatUrl: `/api/admin/assignments/heartbeat?recruitmentId=${recruitmentId}`,
+    leaveUrl: `/api/admin/assignments/leave?recruitmentId=${recruitmentId}`,
+  });
 
   const { data: recruitments } = useBackend<Recruitment[]>(
     // Stryker disable next-line all : the query key is only a cache name
@@ -68,12 +85,36 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
     ({ applicationId, recruitmentCourseId }) => ({
       url: "/api/admin/assignments/tentative",
       method: "PUT",
+      // The version this page last saw: the server refuses the move if it has changed since.
       params:
         recruitmentCourseId === null
-          ? { applicationId }
-          : { applicationId, recruitmentCourseId },
+          ? { applicationId, version: page.version }
+          : { applicationId, recruitmentCourseId, version: page.version },
+      headers: activity.headers,
     }),
-    { onSuccess: (updated) => queryClient.setQueryData(queryKey, updated) },
+    {
+      onSuccess: (updated) => queryClient.setQueryData(queryKey, updated),
+      onError: (error) => {
+        if (isConflict(error)) {
+          const refreshed = (
+            error as {
+              response: { data: { assignments?: Assignments } | null };
+            }
+          ).response.data?.assignments;
+          if (refreshed) {
+            // The click is not replayed: after the refresh it may no longer be the right move.
+            queryClient.setQueryData(queryKey, refreshed);
+            toast(apiErrorMessage(error));
+            return;
+          }
+        }
+        if (shouldToastBackendError(error)) {
+          toast(`${error}`);
+        } else {
+          console.error("Backend request failed", error);
+        }
+      },
+    },
   );
 
   const positions = `${page.type}s`;
@@ -85,6 +126,26 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           {recruitment &&
             `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`}
         </h1>
+        <MultipleTabsBanner
+          others={activity.others}
+          noun="assignments page"
+          audience="admin"
+          newest={activity.newest}
+          testId="AdminAssignmentsPage-multiple-tabs"
+        />
+        {/* Only the newest tab is asked; the older ones keep the banner alone. */}
+        <MultipleTabsModal
+          others={activity.others}
+          newest={activity.newest}
+          arrivedAt={activity.arrivedAt}
+          noun="assignments page"
+          audience="admin"
+          onLeave={() => {
+            activity.leave();
+            navigate("/");
+          }}
+          testId="AdminAssignmentsPage-multiple-tabs-modal"
+        />
         <p data-testid="AdminAssignmentsPage-intro">
           Every real applicant with each lecture&apos;s ranking of them. Choose
           a lecture under <strong>Tentative Assignment</strong> to pencil an

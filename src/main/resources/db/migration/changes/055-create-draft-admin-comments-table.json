@@ -1,0 +1,58 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "055-create-draft-admin-comments-table",
+        "author": "pc",
+        "comment": "An admin's comments on a draft application (issue #296). Kept apart from draft_applications so that an admin commenting never changes the draft's version, which would make the applicant's next autosave fail, and so that the applicant is never sent them. The row goes when its draft does; submitting the application copies the text to applications.admin_comments first.",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "tableExists": {
+                "tableName": "draft_admin_comments"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "draft_admin_comments",
+              "columns": [
+                {
+                  "column": {
+                    "name": "draft_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false,
+                      "primaryKey": true
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "comments",
+                    "type": "VARCHAR(4000)"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "addForeignKeyConstraint": {
+              "baseTableName": "draft_admin_comments",
+              "baseColumnNames": "draft_id",
+              "referencedTableName": "draft_applications",
+              "referencedColumnNames": "id",
+              "constraintName": "fk_draft_admin_comments_draft",
+              "onDelete": "CASCADE"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -30,6 +30,7 @@ public class CreateFakeRankingsJobFactoryTests {
   @MockitoBean private RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean private ApplicationRepository applicationRepository;
   @MockitoBean private CandidateRankingRepository candidateRankingRepository;
+  @MockitoBean private edu.ucsb.cs.taapply.services.RankingVersionService rankingVersionService;
 
   @Test
   public void create_wires_in_the_request_and_collaborators() {
@@ -46,6 +47,7 @@ public class CreateFakeRankingsJobFactoryTests {
     assertSame(recruitmentCourseRepository, job.getRecruitmentCourseRepository());
     assertSame(applicationRepository, job.getApplicationRepository());
     assertSame(candidateRankingRepository, job.getCandidateRankingRepository());
+    assertSame(rankingVersionService, job.getRankingVersionService());
   }
 
   @Test

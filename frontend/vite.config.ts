@@ -2,6 +2,10 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 
+// The tests run as if the browser were not in California (issue #293): the app must show Pacific time
+// whatever zone the browser is in. Set before the test workers start, so they inherit it.
+process.env.TZ = "UTC";
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],

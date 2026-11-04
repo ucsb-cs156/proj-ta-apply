@@ -10,6 +10,7 @@ import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.User;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -95,7 +96,7 @@ public class DraftApplicationsController extends ApiController {
       description =
           "Returns the current user's draft for the recruitment, creating an empty one if there is"
               + " none. Refused if the recruitment is not open or they already have an application"
-              + " for it, since a draft is only for an application not yet submitted.")
+              + " for it that is not cancelled, since a draft is only for an application not yet submitted.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @PostMapping("/open")
   public DraftApplication openDraft(
@@ -106,7 +107,9 @@ public class DraftApplicationsController extends ApiController {
           "Applications are not currently open for this recruitment");
     }
     String email = currentEmail();
-    if (applicationRepository.existsByEmailAndRecruitmentId(email, recruitmentId)) {
+    // A cancelled application does not stop them starting a new one (issue #318).
+    if (applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+        email, recruitmentId, ApplicationReviewStatus.CANCELLED)) {
       throw new IllegalArgumentException("You already have an application for this recruitment");
     }
     return draftApplicationRepository
@@ -273,6 +276,7 @@ public class DraftApplicationsController extends ApiController {
     draft.setMajor(fields.major());
     draft.setGpaMajor(fields.gpaMajor());
     draft.setGpaOverall(fields.gpaOverall());
+    draft.setFirstQuarter(fields.firstQuarter());
     draft.setYearInProgram(fields.yearInProgram());
     draft.setGraduationDate(fields.graduationDate());
     draft.setPriorCoursework(coursework(fields.priorCoursework()));

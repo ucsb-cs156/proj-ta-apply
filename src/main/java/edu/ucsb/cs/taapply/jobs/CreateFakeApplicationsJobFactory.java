@@ -5,6 +5,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.fake.FakeApplicationGenerator;
 import edu.ucsb.cs.taapply.services.fake.FakeCoverage;
+import edu.ucsb.cs.taapply.time.AppTime;
 import java.time.LocalDate;
 import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ public class CreateFakeApplicationsJobFactory {
 
   /** A job with a fresh, unseeded random source, for today. */
   public CreateFakeApplicationsJob create(Long recruitmentId, int count, FakeCoverage coverage) {
-    return create(recruitmentId, count, coverage, new Random(), LocalDate.now());
+    return create(recruitmentId, count, coverage, new Random(), AppTime.today());
   }
 
   /** A job drawing from the given random source and date, so a test can fix the outcome. */

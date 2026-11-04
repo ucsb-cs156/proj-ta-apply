@@ -1,3 +1,4 @@
+import { formatPacificDateTime } from "main/utils/pacificTime";
 import { useMemo, useState, type ComponentProps } from "react";
 import { Button, Card, Col, Form, Row, Table } from "react-bootstrap";
 import ReactMarkdown from "react-markdown";
@@ -307,7 +308,7 @@ export default function NoticeEditorCard({
                 {versions.map((version, index) => (
                   <tr key={version.id} data-testid={id(`history-row-${index}`)}>
                     <td>{version.id}</td>
-                    <td>{new Date(version.createdAt).toLocaleString()}</td>
+                    <td>{formatPacificDateTime(version.createdAt)}</td>
                     <td>{version.content.length} characters</td>
                   </tr>
                 ))}

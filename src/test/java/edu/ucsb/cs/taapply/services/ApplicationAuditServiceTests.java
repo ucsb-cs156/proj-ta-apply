@@ -107,6 +107,18 @@ public class ApplicationAuditServiceTests {
     verify(auditTrailRepository, times(1)).saveAll(changes);
   }
 
+  /** Issue #292: ticking or clearing the first quarter box is an edit like any other. */
+  @Test
+  public void ticking_the_first_quarter_box_is_recorded() {
+    Application application = application();
+    ApplicationAuditService.Snapshot before = service.snapshot(application);
+
+    application.setFirstQuarter(true);
+    List<AuditTrail> changes = service.record(before, application, RecruitmentType.TA);
+
+    assertEquals(List.of(row(7L, null, "firstQuarter", "false", "true")), changes);
+  }
+
   /** A blanked field has a null new value, and a ULA application fills the other id column. */
   @Test
   public void a_blanked_field_has_a_null_new_value_and_a_ula_edit_uses_the_ula_id() {

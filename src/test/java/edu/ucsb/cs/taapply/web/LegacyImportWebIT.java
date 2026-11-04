@@ -200,6 +200,7 @@ public class LegacyImportWebIT extends WebTestCase {
     assertThat(page.getByTestId("AdminApplicationPage-summary-Training Commitment"))
         .containsText("I AGREE to this commitment.");
     assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
-        .hasValue("Imported from the ULA application form; submitted 5/9/2026 13:45:12.");
+        .hasValue(
+            "Imported from the ULA application form; submitted 5/9/2026 13:45:12 Pacific time.");
   }
 }

@@ -3,6 +3,13 @@ import { Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { ADMIN_MENU_ENTRIES } from "main/utils/helpPages";
 import useScrollToHash from "main/utils/useScrollToHash";
+import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
+
+/** The warning as it looks when someone else is editing the same thing. */
+// Stryker disable next-line StringLiteral : the example name is fixed and is checked by the tests
+const EXAMPLE_OTHERS = [
+  { label: "phtcon@ucsb.edu (Phill Conrad)", samePerson: false },
+];
 
 /**
  * The admin's handbook: /help/admins (issue #140). A table of every option on the Admin menu and
@@ -44,14 +51,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           TA columns are first name, last name, email, major, class level, year
           in program and expected graduation. ULA columns are first name, last
           name, email, major, year in program, expected graduation, GPA in
-          major, overall GPA and quarters of previous ULA service. No video
-          links or admin comments are exported. Course columns follow in course
-          ID and section order, each headed by the bare course number (16, 5A);
-          the section is added only when the recruitment has more than one
-          section of that course (16 (section 0100), 16 (section 0200)), so
-          independent faculty rankings stay distinct. Removed, stale and
-          cancelled sections remain in this historical export so saved rankings
-          are not lost when offerings change.
+          major, overall GPA and quarters of previous ULA service; an applicant
+          who ticked the first quarter box has no GPAs, and both columns read
+          &ldquo;First quarter&rdquo;. No video links or admin comments are
+          exported. Course columns follow in course ID and section order, each
+          headed by the bare course number (16, 5A); the section is added only
+          when the recruitment has more than one section of that course (16
+          (section 0100), 16 (section 0200)), so independent faculty rankings
+          stay distinct. Removed, stale and cancelled sections remain in this
+          historical export so saved rankings are not lost when offerings
+          change.
         </p>
         <p data-testid="HelpAdminsPage-rankings-csv-planning">
           The file also carries the planning from the Assignments page: a{" "}
@@ -474,7 +483,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <Link to="/help/recruitment-steps">Recruitment Steps</Link> diagram
           (collapsed to a one-line summary on older cards, expanded on the
           latest TA and ULA recruitments). Its boxes carry the lifecycle
-          actions, and the card has Courses and Applications buttons:
+          actions, and the card has Courses, Draft Applications and Applications
+          buttons:
         </p>
         <ul data-testid="HelpAdminsPage-recruitment-buttons">
           <li
@@ -534,6 +544,29 @@ export default function HelpAdminsPage(): React.JSX.Element {
             Applications page; the rankings download,{" "}
             <strong>Download Rankings CSV</strong>, is on the Courses page.
           </li>
+          <li
+            id="draft-applications"
+            data-testid="HelpAdminsPage-draft-applications"
+          >
+            <strong>Draft Applications.</strong> The applications students have
+            started but not yet submitted, which are not considered until they
+            are. A student&apos;s draft appears as soon as they open the form,
+            even if they have typed nothing, and is saved as they type, so the
+            page always shows what they have so far; the count of drafts is at
+            the top. The table has the same columns as the Applications table
+            (and hiding or showing a column on one does the same on the other),
+            except that there is no <em>Edit</em> column, since an admin may not
+            change what a student has written, and <em>Submitted</em> is
+            replaced by <em>Last saved</em>. <em>View</em> opens the draft read
+            only, with a box for your own comments; the student never sees them.
+            When the student submits, the draft leaves this page and your
+            comments are copied to the new application&apos;s Admin Comments. A
+            draft that goes any other way (for example, its recruitment is
+            deleted) takes its comments with it. There is no CSV download of
+            drafts, since a draft may be empty or half finished. Drafts show the
+            same personal details as applications do, so the same care is asked
+            of you.
+          </li>
           <li>
             <strong>Applications.</strong> The list of applications, with a
             count that leaves test applications out. Each has a <em>View</em>{" "}
@@ -576,6 +609,26 @@ export default function HelpAdminsPage(): React.JSX.Element {
             applications that is.
           </li>
         </ul>
+
+        <p
+          id="cancelled-and-new"
+          data-testid="HelpAdminsPage-cancelled-and-new"
+        >
+          <strong>An applicant who cancelled and applied again.</strong> While
+          applications are open, an applicant who cancelled may start a new
+          application (<em>Start a new application</em>). The cancelled
+          application is kept, with its reason and time, and the new one is a
+          separate row in the Applications table and CSV, so the same email
+          address can appear twice: the earlier row (lower id) has the status
+          CANCELLED and the later one is the live application. Only the live one
+          is counted, ranked and assigned: the cancelled row is left out of the
+          Assignments page, the rankings and their CSV, and the number of
+          applications under the Applications step. The count on the
+          recruitment&apos;s card is of applicants, so a person who cancelled
+          and applied again counts once. Faculty see a person under
+          &ldquo;Cancelled applications&rdquo; only while they have no live
+          application.
+        </p>
 
         <h2 className="my-3 h4" id="ta-app-settings">
           TA App Settings
@@ -661,7 +714,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           after. It is paged and can be sorted by any column; a long value is
           cut short with a <em>[See value]</em> link that shows the whole thing.
           The trail for one application is also shown on that application&apos;s
-          View page.
+          View page. Its times, like every date and time on this site, are
+          Pacific Time.
         </p>
 
         <h2
@@ -701,6 +755,187 @@ export default function HelpAdminsPage(): React.JSX.Element {
           for something that has just been done by someone else, it closes
           itself and tells you, and nothing is changed. A date you are typing is
           never replaced by a refresh.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-ranking">
+          If you, or another admin, or an instructor, is ranking the same course
+          at the same time, you may get a warning that looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="ranking"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-meaning">
+          <strong>What it means.</strong> The rankings of the same course are
+          open somewhere else: in another tab or window of this browser, on
+          another device, or in the browser of someone else who can rank the
+          course. This applies to the Candidate Ranking page, reached from the
+          course on the Instructor section of the home page. Everyone ranking
+          the course shares one list, so one person&apos;s change can be missed
+          by the other. If you go on, the system will refuse a ranking saved
+          from a copy of the list that is out of date, and say{" "}
+          <em>
+            Rankings for this course changed while you were editing; your change
+            has not been saved.
+          </em>{" "}
+          The table is then read again, what you typed stays in its box, and you
+          can press <strong>Save again</strong> once you have seen the new
+          rankings. Rankings of a <em>different</em> course never cause a
+          warning, even if the same person ranks both, and a page that only
+          shows rankings (read-only) never warns.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-modal">
+          <strong>The question.</strong> The tab or window you opened{" "}
+          <em>last</em> also asks what you want to do, in a box that covers the
+          page until you answer. The one you opened first only shows the
+          warning, so that it never interrupts you while you are typing. The box
+          says who already has the ranking open, such as &ldquo;You and
+          fay@ucsb.edu (Fay Faculty) already have this ranking open for editing
+          in other windows or tabs.&rdquo; It offers three choices:
+        </p>
+        <ul data-testid="HelpAdminsPage-simultaneous-editing-choices">
+          <li>
+            <strong>Leave this page</strong> takes this tab or window to the
+            home page. Your rankings are safe in the other one.
+          </li>
+          <li>
+            <strong>
+              Wait for the other tabs or windows to close, then resume here
+            </strong>{" "}
+            keeps the page covered. When the other tabs or windows are closed,
+            the box closes by itself within a few seconds and you can carry on
+            here.
+          </li>
+          <li>
+            <strong>Continue anyway</strong> closes the box and keeps the
+            warning on the page. Use it only if you are sure that the other copy
+            will not be used to rank as well. The box does not come back.
+          </li>
+        </ul>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-ranking-todo">
+          <strong>What to do.</strong> Close all the other tabs or windows that
+          have this course&apos;s rankings open, and keep just one, or agree
+          with the other person on who ranks this course. The warning goes away
+          on its own within a few seconds after the others are closed, or in up
+          to about twenty seconds if one of them could not say that it was
+          leaving, such as when a computer lost its network connection.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-application">
+          <strong>Editing a student&apos;s application.</strong> If you, or
+          another admin, is editing a student&apos;s application on the Edit
+          Application page, and the student (or another admin) has the same
+          application open, you may get a warning. When the student has it open,
+          it says so, such as &ldquo;chris@ucsb.edu (Chris Student) already has
+          this application open for editing. We recommend that you wait a few
+          minutes or ask them to close it.&rdquo; When another admin has it
+          open, it says &ldquo;We recommend that only one admin edits this page
+          at a time.&rdquo; The student sees your name, and is asked to close
+          their window and try again in a few minutes. If you save after the
+          application has been saved by someone else since you opened it, the
+          system refuses your save, says so, and offers <em>Reload</em>.
+          Applications of different students never cause a warning.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-assignments">
+          <strong>The Assignments page.</strong> The whole Assignments page of
+          one recruitment counts as one thing, because the counts under each
+          lecture only mean something together. Only one tab or window, and one
+          admin, should have it open at a time. If you open it in a second tab
+          or window, or another admin has it open, you get a warning that looks
+          like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="assignments page"
+          audience="admin"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-assignments-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-assignments-detail">
+          The tab or window opened <em>last</em> also asks the same question as
+          for rankings (<strong>Leave this page</strong>, wait, or continue
+          anyway), and the warning only appears for the Assignments page of the{" "}
+          <em>same</em> recruitment. If something changes while you are working,
+          such as another admin&apos;s assignment, publishing the assignments or
+          an applicant cancelling, your next change is not made and you see
+          &ldquo;Assignments changed while you were working. The page has been
+          refreshed; please check the placement and try again.&rdquo; The page
+          already shows the up-to-date assignments, so check them and choose
+          again if the move still makes sense. Your click is not repeated for
+          you.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-budget">
+          <strong>The Budget for Quarter page.</strong> One quarter&apos;s
+          budget counts as one thing. If another admin has the same
+          quarter&apos;s budget open, or you have it open in a second tab or
+          window, you get a warning that looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="budget page"
+          audience="admin"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-budget-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-budget-names">
+          It names the other people who have it open, up to three and then
+          &quot;and 2 others&quot;. If the other copy is your own, in another
+          tab or window, it says &quot;You are also editing this budget page in
+          another tab or window.&quot;, and if both are open it says &quot;You
+          and phtcon@ucsb.edu (Phill Conrad) are also editing this budget page
+          in other windows or tabs.&quot; Two admins on different quarters never
+          see it. Every box saves as it is typed, so without the warning the
+          last save would win and the earlier one would be lost without anyone
+          noticing. The tab or window opened <em>last</em> also asks the same
+          question as for rankings (<strong>Leave this page</strong>, wait, or{" "}
+          <strong>Continue anyway</strong>), and says &quot;already has&quot;
+          instead of &quot;is also editing&quot;.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-budget-conflict">
+          <strong>If a save is refused.</strong> When a figure was changed by
+          someone else after your page last showed it, your save is not made.
+          The page keeps what you typed and says, for example, &quot;The
+          TAs-only budget was changed in another tab or window. It is now
+          $45,000.00; you entered $40,000.00.&quot; The page then shows what is
+          stored. Choose <strong>Use theirs</strong> to keep what is stored and
+          drop what you typed, or <strong>Overwrite</strong> to save what you
+          typed over it. This applies to the three budget lines, the average
+          cost per TA and per ULA, and the two hiring targets.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-courses">
+          <strong>The Courses pages.</strong> A recruitment&apos;s Courses page
+          comes in two forms. The <strong>view-only</strong> page is the one you
+          get when you open it: nothing on it can be changed, and any number of
+          tabs or windows may show it, for you or for other admins, without any
+          warning. Its <strong>Edit</strong> button, beside the words
+          &ldquo;Edit estimated enrollments, and TA/ULA allocations&rdquo;,
+          takes you to the <strong>edit page</strong>, where you can change the
+          estimated enrollments and the allocations, run Auto Allocate, and use
+          Populate and the other controls; it has a link back to the view-only
+          page. Only <em>one</em> tab or window should have a given
+          recruitment&apos;s edit page open at a time, and edit pages of
+          different recruitments never warn each other. If another admin, or
+          another tab of yours, has the same edit page open, you get a warning
+          that looks like this:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="page"
+          audience="admin"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-courses-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-courses-meaning">
+          The allocations only make sense together, so a copy that is out of
+          date can leave a total that no longer matches the hiring target. If
+          you go on, the system refuses a change made from a copy that is out of
+          date, tells you, and reads the numbers again; whatever you typed there
+          is lost. The tab or window opened <em>last</em> also asks the same
+          question as for rankings, and says &ldquo;already has&rdquo; instead
+          of &ldquo;is also editing&rdquo;; there{" "}
+          <strong>Leave this page</strong> takes you to the view-only Courses
+          page. To look at the numbers without risk, use the view-only page in
+          as many tabs as you like.
         </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
           <strong>What to do.</strong> If a page looks out of date (for example

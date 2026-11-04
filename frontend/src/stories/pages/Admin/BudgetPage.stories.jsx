@@ -18,7 +18,12 @@ const Template = () => (
   </Routes>
 );
 
-const handlers = (summary) => [
+const handlers = (summary, presence = { others: [], heartbeatSeconds: 5 }) => [
+  http.post("/api/admin/budget/heartbeat", () => HttpResponse.json(presence)),
+  http.post(
+    "/api/admin/budget/leave",
+    () => new HttpResponse(null, { status: 204 }),
+  ),
   http.get("/api/currentUser", () =>
     HttpResponse.json(apiCurrentUserFixtures.adminUser),
   ),
@@ -57,4 +62,38 @@ export const NotAQuarter = Template.bind({});
 NotAQuarter.parameters = {
   reactRouter: { initialEntries: ["/admin/budget/Fall2026"] },
   msw: { handlers: handlers(budgetFixtures.bothTypes) },
+};
+
+const phill = {
+  label: "phtcon@ucsb.edu (Phill Conrad)",
+  samePerson: false,
+  admin: true,
+};
+
+/** An older tab: another admin has the same quarter open, and only the banner shows. */
+export const AnotherAdminIsEditing = Template.bind({});
+AnotherAdminIsEditing.parameters = {
+  reactRouter: { initialEntries: ["/admin/budget/F26"] },
+  msw: {
+    handlers: handlers(budgetFixtures.bothTypes, {
+      others: [phill],
+      heartbeatSeconds: 5,
+      newest: false,
+      arrivedAtMillis: 1000,
+    }),
+  },
+};
+
+/** The newest tab is asked what to do: leave, wait, or continue anyway. */
+export const NewestTabIsAsked = Template.bind({});
+NewestTabIsAsked.parameters = {
+  reactRouter: { initialEntries: ["/admin/budget/F26"] },
+  msw: {
+    handlers: handlers(budgetFixtures.bothTypes, {
+      others: [phill],
+      heartbeatSeconds: 5,
+      newest: true,
+      arrivedAtMillis: 1000,
+    }),
+  },
 };

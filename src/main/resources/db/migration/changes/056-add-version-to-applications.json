@@ -1,0 +1,32 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "056-add-version-to-applications",
+        "author": "pc",
+        "comment": "A version on each application, so that an edit made from a stale copy (by the applicant or by an admin) is refused instead of overwriting the other's change (issue #302).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "columnExists": { "tableName": "applications", "columnName": "version" } } }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "INT",
+                    "defaultValueNumeric": 0,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

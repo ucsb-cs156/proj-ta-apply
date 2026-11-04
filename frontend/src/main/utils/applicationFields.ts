@@ -76,6 +76,29 @@ export const TA_PREV_EXPERIENCE_HELP =
 export const TA_COMMENTS_HELP =
   "Is there anything else you would like the department to know as we consider your application? For example, if there is a particular reason you are interested in being a TA for a certain course, or working with a particular professor, here is where you can share that.";
 
+/**
+ * The box under the GPA fields (issue #292): ticked, the applicant has no GPAs yet and none is
+ * required. The wording differs by form, since a TA is a grad student and a ULA an undergraduate.
+ */
+export const FIRST_QUARTER_LABELS = {
+  TA: "Check here if you are a first quarter grad student, and do not yet have a GPA in Major and Overall GPA as a grad student.",
+  ULA: "Check here if you are applying during your first quarter at UCSB, and do not yet have a GPA in Major and Overall GPA.",
+};
+
+/** What a table or summary shows in place of a GPA for an applicant who has none yet (#292). */
+export const FIRST_QUARTER_TEXT = "First quarter";
+
+/** A GPA as shown: the marker for a first quarter applicant, else the number (blank if none). */
+export const gpaText = (
+  application: { firstQuarter?: boolean | null },
+  gpa: number | null | undefined,
+): string =>
+  application.firstQuarter
+    ? FIRST_QUARTER_TEXT
+    : gpa === null || gpa === undefined
+      ? ""
+      : String(gpa);
+
 /** The option value that means "my major is not on the list"; never stored. */
 export const OTHER_MAJOR = "__OTHER__";
 
@@ -103,6 +126,8 @@ export type ApplicationFormFields = {
   major: string;
   gpaMajor: string;
   gpaOverall: string;
+  /** Issue #292: no GPAs yet, so none is required (and none is sent). */
+  firstQuarter: boolean;
   yearInProgram: string;
   graduationDate: string;
   /** The courses listed as relevant background, in order; see utils/priorCoursework. */
@@ -218,8 +243,9 @@ export function toPayload(data: ApplicationFormFields): ApplicationPayload {
   return {
     ...data,
     courseInterests: interestsWorthSending(data),
-    gpaMajor: asNumber(data.gpaMajor),
-    gpaOverall: asNumber(data.gpaOverall),
+    // A first quarter applicant has no GPAs: any typed before the box was ticked are not sent.
+    gpaMajor: data.firstQuarter ? null : asNumber(data.gpaMajor),
+    gpaOverall: data.firstQuarter ? null : asNumber(data.gpaOverall),
     previousServiceAsUla: asNumber(data.previousServiceAsUla),
     languageExamDatePassed: orNull(data.languageExamDatePassed),
     residencyStatus: orNull(data.residencyStatus),

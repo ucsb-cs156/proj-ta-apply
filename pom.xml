@@ -20,6 +20,7 @@
   <properties>
     <java.version>25</java.version>
     <mainClass>edu.ucsb.cs.taapply.TaApplyApplication</mainClass>
+    <test.tz>UTC</test.tz>
     <app.package>edu.ucsb.cs.taapply</app.package>
     <app.packagePath>edu/ucsb/cs/taapply</app.packagePath>
     <targetClasses>${targetClasses:edu.ucsb.cs.taapply.*}</targetClasses>
@@ -230,6 +231,11 @@
           <!-- Activate the use of TCP to transmit events to the plugin -->
           <forkNode
             implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
+          <!-- Tests run with a server that is NOT in Pacific time, as a deployed one is not (issue #293);
+               the app puts the JVM into Pacific time itself. Override with -Dtest.tz=Asia/Tokyo. -->
+          <environmentVariables>
+            <TZ>${test.tz}</TZ>
+          </environmentVariables>
         </configuration>
       </plugin>
 

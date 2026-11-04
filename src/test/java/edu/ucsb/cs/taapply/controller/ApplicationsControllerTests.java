@@ -20,6 +20,7 @@ import edu.ucsb.cs.taapply.ControllerTestCase;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFields;
 import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.DraftAdminComment;
 import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.NoticeVersion;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
@@ -36,6 +37,7 @@ import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
+import edu.ucsb.cs.taapply.repository.DraftAdminCommentRepository;
 import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
@@ -54,6 +56,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -62,11 +65,17 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(controllers = ApplicationsController.class)
-@Import({edu.ucsb.cs.taapply.testconfig.TestConfig.class, ApplicationAccessService.class})
+@Import({
+  edu.ucsb.cs.taapply.testconfig.TestConfig.class,
+  ApplicationAccessService.class,
+  DraftApplicationsControllerTests.DetectorConfig.class
+})
 public class ApplicationsControllerTests extends ControllerTestCase {
 
+  @Autowired DraftApplicationsControllerTests.ResettableDetector detector;
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean DraftApplicationRepository draftApplicationRepository;
+  @MockitoBean DraftAdminCommentRepository draftAdminCommentRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean NoticeVersionRepository noticeVersionRepository;
   @MockitoBean UserRepository userRepository;
@@ -132,6 +141,10 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   /** Every submitting test agrees to the TA notice; the ULA tests swap it for the ULA one. */
   @BeforeEach
   public void noticesExist() {
+    detector.reset();
+    // A save answers with the application it saved, as the real repository does.
+    when(applicationRepository.save(any(Application.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
     when(noticeVersionRepository.findById(NOTICE_ID)).thenReturn(Optional.of(TA_NOTICE));
     when(noticeVersionRepository.findById(41L)).thenReturn(Optional.of(ULA_NOTICE));
     when(noticeVersionRepository.findFirstByTypeOrderByIdDesc(RecruitmentType.TA))
@@ -182,7 +195,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.trainingCommitment(),
         FULL_FIELDS.trainingCommitmentExplanation(),
         FULL_FIELDS.changingMajor(),
-        noticeVersionId);
+        noticeVersionId,
+        null);
   }
 
   private static Recruitment recruitment(
@@ -255,7 +269,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           TrainingCommitment.AGREE,
           null,
           false,
-          NOTICE_ID);
+          NOTICE_ID,
+          null);
 
   /** The same application with every availability answer turned off. */
   private static final ApplicationFields NO_AVAILABILITY =
@@ -299,7 +314,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
           FULL_FIELDS.trainingCommitment(),
           FULL_FIELDS.trainingCommitmentExplanation(),
           FULL_FIELDS.changingMajor(),
-          FULL_FIELDS.noticeVersionId());
+          FULL_FIELDS.noticeVersionId(),
+          null);
 
   /** The full application with a different set of course interest answers. */
   private static ApplicationFields withInterests(Map<String, CourseInterest> interests) {
@@ -343,7 +359,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.trainingCommitment(),
         FULL_FIELDS.trainingCommitmentExplanation(),
         FULL_FIELDS.changingMajor(),
-        FULL_FIELDS.noticeVersionId());
+        FULL_FIELDS.noticeVersionId(),
+        null);
   }
 
   /** The full application with a different set of topic ratings. */
@@ -388,7 +405,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         FULL_FIELDS.trainingCommitment(),
         FULL_FIELDS.trainingCommitmentExplanation(),
         FULL_FIELDS.changingMajor(),
-        FULL_FIELDS.noticeVersionId());
+        FULL_FIELDS.noticeVersionId(),
+        null);
   }
 
   /** The full application with a different prior coursework list. */
@@ -403,6 +421,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     boolean ula = recruitmentId == 2L;
     return Application.builder()
         .id(id)
+        // One that has been saved is on its first version; a new one has none yet.
+        .version(id == null ? null : 0)
         .recruitmentId(recruitmentId)
         .email(email)
         .status(ApplicationReviewStatus.PENDING)
@@ -461,6 +481,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   private static Application application(long id, long recruitmentId, String email) {
     return Application.builder()
         .id(id)
+        .version(0)
         .recruitmentId(recruitmentId)
         .email(email)
         .status(ApplicationReviewStatus.PENDING)
@@ -494,7 +515,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .andExpect(status().is(403));
     mockMvc
         .perform(
-            put("/api/applications?id=1")
+            put("/api/applications?id=1&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}")
                 .with(csrf()))
@@ -677,7 +698,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_signed_in_user_can_apply_to_an_open_ta_recruitment() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     MvcResult response =
         mockMvc
@@ -700,7 +723,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void submitting_deletes_the_draft_it_grew_from() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     DraftApplication draft =
         DraftApplication.builder().id(5L).recruitmentId(1L).email(GRAD_EMAIL).build();
     when(draftApplicationRepository.findByEmailAndRecruitmentId(GRAD_EMAIL, 1L))
@@ -716,6 +741,49 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     verify(applicationRepository, times(1)).save(any(Application.class));
     verify(draftApplicationRepository, times(1)).delete(draft);
+    verify(draftAdminCommentRepository, times(1)).deleteById(5L);
+    // No admin wrote anything about it, so there is nothing to carry over.
+    assertEquals(null, saved().getAdminComments());
+  }
+
+  /** Issue #296: what an admin wrote on the draft is on the application, and no longer on file. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void submitting_copies_the_admins_comments_on_the_draft_to_the_application()
+      throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
+    DraftApplication draft =
+        DraftApplication.builder().id(5L).recruitmentId(1L).email(GRAD_EMAIL).build();
+    when(draftApplicationRepository.findByEmailAndRecruitmentId(GRAD_EMAIL, 1L))
+        .thenReturn(Optional.of(draft));
+    when(draftAdminCommentRepository.findById(5L))
+        .thenReturn(Optional.of(new DraftAdminComment(5L, "Strong; ask about CMPSC 130A")));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body())
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals("Strong; ask about CMPSC 130A", saved().getAdminComments());
+    // Never in what the applicant is sent back.
+    assertEquals(
+        null,
+        mapper
+            .readTree(response.getResponse().getContentAsString())
+            .get("adminComments")
+            .textValue());
+    verify(draftAdminCommentRepository, times(1)).deleteById(5L);
+    verify(draftApplicationRepository, times(1)).delete(draft);
   }
 
   @WithMockUser(
@@ -724,7 +792,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void submitting_without_a_draft_deletes_nothing() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     when(draftApplicationRepository.findByEmailAndRecruitmentId(GRAD_EMAIL, 1L))
         .thenReturn(Optional.empty());
 
@@ -737,6 +807,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         .andExpect(status().isOk());
 
     verify(draftApplicationRepository, never()).delete(any(DraftApplication.class));
+    verify(draftAdminCommentRepository, never()).deleteById(any());
   }
 
   @WithMockUser(
@@ -745,7 +816,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_refused_submission_keeps_the_draft() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -766,7 +839,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_signed_in_user_can_apply_to_an_open_ula_recruitment() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -790,7 +865,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void the_same_user_may_apply_to_a_ula_recruitment_too() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -813,7 +890,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void an_instructor_or_admin_may_apply_as_well() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -876,7 +955,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_second_application_to_the_same_recruitment_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(true);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(true);
 
     MvcResult response =
         mockMvc
@@ -890,6 +971,65 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     assertEquals(
         "You already have an application for this recruitment",
+        responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  /**
+   * Issue #318: an applicant whose only application to the recruitment was cancelled may apply
+   * again while it is open. The new one is the next attempt; the cancelled one is not touched.
+   */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void an_applicant_who_cancelled_may_apply_again_and_the_cancelled_one_is_kept()
+      throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    // Only a cancelled application exists, so nothing live blocks the new one.
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
+    when(applicationRepository.countByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(1L);
+
+    mockMvc
+        .perform(
+            post("/api/applications/post?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    Application expected = expectedFrom(null, 1L, GRAD_EMAIL, null);
+    expected.setAttemptNumber(2);
+    assertEquals(expected, saved());
+    assertEquals(ApplicationReviewStatus.PENDING, saved().getStatus());
+    verify(applicationRepository, never()).delete(any());
+    verify(applicationRepository, never()).deleteById(any());
+  }
+
+  /** Once applications have closed, a cancelled applicant is refused like anyone else. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void an_applicant_who_cancelled_cannot_apply_again_once_applications_have_closed()
+      throws Exception {
+    when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
+    when(applicationRepository.countByEmailAndRecruitmentId(GRAD_EMAIL, 3L)).thenReturn(1L);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=3")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body())
+                    .with(csrf()))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+
+    assertEquals(
+        "Applications are not currently open for this recruitment",
         responseToJson(response).get("message"));
     verify(applicationRepository, never()).save(any());
   }
@@ -909,7 +1049,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/applications?id=5")
+                put("/api/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(body())
                     .with(csrf()))
@@ -938,7 +1078,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/applications?id=5")
+            put("/api/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(NO_AVAILABILITY))
                 .with(csrf()))
@@ -964,7 +1104,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void course_interests_keep_only_the_answers_that_say_something() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     Map<String, CourseInterest> sent = new HashMap<>();
     sent.put("CMPSC     8", CourseInterest.ENTHUSIASTIC);
@@ -990,7 +1132,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_missing_course_interest_map_is_stored_as_empty() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -1016,7 +1160,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/applications?id=5")
+            put("/api/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     mapper.writeValueAsString(
@@ -1040,7 +1184,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/applications?id=5")
+                put("/api/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(body())
                     .with(csrf()))
@@ -1065,7 +1209,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/applications?id=5")
+            put("/api/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body())
                 .with(csrf()))
@@ -1085,7 +1229,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/applications?id=5")
+                put("/api/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(body())
                     .with(csrf()))
@@ -1110,7 +1254,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/applications?id=5")
+                put("/api/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(body())
                     .with(csrf()))
@@ -1249,6 +1393,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertTrue(stored.getCancelledAt().isAfter(LocalDateTime.now().minusMinutes(1)));
     // The admin's notes stay stored but are not sent back.
     assertEquals("Strong candidate", stored.getAdminComments());
+    // Issue #280: the assignments page no longer matches the applicants.
+    verify(recruitmentRepository).bumpAssignmentsVersion(3L);
     Map<String, Object> json = responseToJson(response);
     assertEquals("CANCELLED", json.get("status"));
     assertEquals("Found other employment", json.get("cancellationReason"));
@@ -1298,7 +1444,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/applications?id=5")
+            put("/api/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body())
                 .with(csrf()))
@@ -1381,8 +1527,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void an_admin_can_enter_a_test_application_for_a_closed_recruitment() throws Exception {
     when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
-    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 3L))
-        .thenReturn(Optional.empty());
+    when(applicationRepository.findByEmailAndRecruitmentIdOrderByIdDesc(ADMIN_EMAIL, 3L))
+        .thenReturn(List.of());
 
     MvcResult response =
         mockMvc
@@ -1411,8 +1557,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     earlier.setOrigin(ApplicationOrigin.ADMIN_TEST);
     earlier.setPostApplicationComments("kept");
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 2L))
-        .thenReturn(Optional.of(earlier));
+    when(applicationRepository.findByEmailAndRecruitmentIdOrderByIdDesc(ADMIN_EMAIL, 2L))
+        .thenReturn(List.of(earlier));
 
     mockMvc
         .perform(
@@ -1431,6 +1577,34 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertEquals(expected, saved());
   }
 
+  /** Issue #318: a cancelled test application is kept, and the next test makes a new one. */
+  @WithMockUser(
+      username = "admin",
+      roles = {"ADMIN"})
+  @Test
+  public void a_test_application_after_a_cancelled_one_is_a_new_attempt() throws Exception {
+    Application cancelledTest = cancelled(7L, 1L, ADMIN_EMAIL);
+    cancelledTest.setOrigin(ApplicationOrigin.ADMIN_TEST);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.findByEmailAndRecruitmentIdOrderByIdDesc(ADMIN_EMAIL, 1L))
+        .thenReturn(List.of(cancelledTest));
+    when(applicationRepository.countByEmailAndRecruitmentId(ADMIN_EMAIL, 1L)).thenReturn(1L);
+
+    mockMvc
+        .perform(
+            post("/api/applications/test?recruitmentId=1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body())
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    Application expected = expectedFrom(null, 1L, ADMIN_EMAIL, null);
+    expected.setOrigin(ApplicationOrigin.ADMIN_TEST);
+    expected.setAttemptNumber(2);
+    assertEquals(expected, saved());
+    assertEquals(ApplicationReviewStatus.CANCELLED, cancelledTest.getStatus());
+  }
+
   /** An admin who is also an applicant must not have a real application turned into a test one. */
   @WithMockUser(
       username = "admin",
@@ -1439,8 +1613,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   public void a_real_application_is_never_converted_into_a_test_application() throws Exception {
     Application real = application(8L, 1L, ADMIN_EMAIL);
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 1L))
-        .thenReturn(Optional.of(real));
+    when(applicationRepository.findByEmailAndRecruitmentIdOrderByIdDesc(ADMIN_EMAIL, 1L))
+        .thenReturn(List.of(real));
 
     MvcResult response =
         mockMvc
@@ -1489,7 +1663,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void topic_ratings_are_stored_and_unrated_topics_are_skipped() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     Map<String, Integer> sent = new HashMap<>();
     sent.put("Python", 1);
@@ -1513,7 +1689,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_missing_topic_rating_map_is_stored_as_empty() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -1534,7 +1712,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @ValueSource(ints = {0, 6, -1})
   public void a_topic_rating_off_the_scale_is_refused(int level) throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     MvcResult response =
         mockMvc
@@ -1558,7 +1738,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void topic_ratings_of_1_and_5_are_accepted() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -1584,7 +1766,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/applications?id=5")
+            put("/api/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(withProficiencies(Map.of("Java", 4))))
                 .with(csrf()))
@@ -1602,7 +1784,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void applying_without_agreeing_to_the_notice_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     MvcResult response =
         mockMvc
@@ -1629,7 +1813,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     when(noticeVersionRepository.findFirstByTypeOrderByIdDesc(RecruitmentType.TA))
         .thenReturn(Optional.empty());
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -1657,7 +1843,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
             .build();
     when(noticeVersionRepository.findById(39L)).thenReturn(Optional.of(older));
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -1677,7 +1865,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   public void agreeing_to_a_notice_version_that_does_not_exist_is_a_404() throws Exception {
     when(noticeVersionRepository.findById(99L)).thenReturn(Optional.empty());
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     MvcResult response =
         mockMvc
@@ -1700,7 +1890,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void agreeing_to_the_other_forms_notice_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     MvcResult response =
         mockMvc
@@ -1728,7 +1920,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/applications?id=5")
+            put("/api/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(withNotice(null)))
                 .with(csrf()))
@@ -1737,7 +1929,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/applications?id=5")
+            put("/api/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body())
                 .with(csrf()))
@@ -1752,8 +1944,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_test_application_also_requires_agreement() throws Exception {
     when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
-    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 3L))
-        .thenReturn(Optional.empty());
+    when(applicationRepository.findByEmailAndRecruitmentIdOrderByIdDesc(ADMIN_EMAIL, 3L))
+        .thenReturn(List.of());
 
     mockMvc
         .perform(
@@ -1808,7 +2000,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   /** The full ULA application (agreeing to the ULA notice) with the given interest levels. */
@@ -1825,7 +2018,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @ValueSource(ints = {0, 4, 5})
   public void a_ula_topic_rating_off_its_three_point_scale_is_refused(int level) throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     ApplicationFields f = withNotice(41L);
 
     MvcResult response =
@@ -1852,7 +2047,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_ula_topic_rating_of_3_is_accepted() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     ApplicationFields f = withNotice(41L);
 
     mockMvc
@@ -1877,7 +2074,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void interest_levels_are_stored_and_unanswered_areas_are_skipped() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     Map<String, Integer> sent = new HashMap<>();
     sent.put("Tutoring", 1);
@@ -1901,7 +2100,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_missing_interests_map_is_stored_as_empty() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -1922,7 +2123,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @ValueSource(ints = {0, 6, -1})
   public void an_interest_level_off_the_scale_is_refused(int level) throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     MvcResult response =
         mockMvc
@@ -1946,7 +2149,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void interests_sent_with_a_ta_application_are_ignored() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     // Not even checked against the scale: an off-scale level on a TA form is simply dropped.
     mockMvc
@@ -1976,7 +2181,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/applications?id=6")
+            put("/api/applications?id=6&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(ulaWithInterests(Map.of("Tutoring", 4))))
                 .with(csrf()))
@@ -2035,7 +2240,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   /** A TA application needs three courses; two is refused before anything is saved. */
@@ -2045,7 +2251,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_ta_application_with_fewer_than_three_courses_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     MvcResult response =
         mockMvc
@@ -2072,7 +2280,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_ula_application_with_no_courses_is_refused() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     for (List<PriorCourseworkFields> courses :
         java.util.Arrays.<List<PriorCourseworkFields>>asList(List.of(), null)) {
@@ -2099,7 +2309,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_ula_application_with_one_course_is_accepted() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -2121,7 +2333,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_course_without_a_number_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     for (String number : java.util.Arrays.asList("   ", null)) {
       MvcResult response =
@@ -2148,7 +2362,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_course_taken_elsewhere_needs_its_school() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     for (String school : java.util.Arrays.asList("  ", null)) {
       MvcResult response =
@@ -2181,7 +2397,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void prior_courses_are_stored_tidy_and_in_order() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     List<PriorCourseworkFields> sent =
         List.of(
@@ -2233,7 +2451,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/applications?id=5")
+            put("/api/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body())
                 .with(csrf()))
@@ -2255,7 +2473,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/applications?id=5")
+                put("/api/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(mapper.writeValueAsString(withCourses(List.of(course("CMPSC 8")))))
                     .with(csrf()))
@@ -2275,8 +2493,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_test_application_with_too_few_courses_is_refused() throws Exception {
     when(recruitmentRepository.findById(3L)).thenReturn(Optional.of(CLOSED_TA));
-    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 3L))
-        .thenReturn(Optional.empty());
+    when(applicationRepository.findByEmailAndRecruitmentIdOrderByIdDesc(ADMIN_EMAIL, 3L))
+        .thenReturn(List.of());
 
     MvcResult response =
         mockMvc
@@ -2353,7 +2571,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   /** FULL_FIELDS' TA answers, each argument defaulting to the fixture's value when null. */
@@ -2372,7 +2591,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
 
   private MvcResult postTa(ApplicationFields fields, int status) throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     return mockMvc
         .perform(
             post("/api/applications/post?recruitmentId=1")
@@ -2505,7 +2726,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
             ula.trainingCommitment(),
             ula.trainingCommitmentExplanation(),
             ula.changingMajor(),
-            ula.noticeVersionId());
+            ula.noticeVersionId(),
+            null);
     postUla(noTaAnswers, 200);
   }
 
@@ -2522,7 +2744,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/applications?id=5")
+                put("/api/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(mapper.writeValueAsString(taMissing("residencyStatus")))
                     .with(csrf()))
@@ -2608,12 +2830,15 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         trainingCommitment,
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   private MvcResult postUla(ApplicationFields fields, int status) throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     return mockMvc
         .perform(
             post("/api/applications/post?recruitmentId=2")
@@ -2747,7 +2972,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   /** Issue #213: a first-time applicant (previous service 0) must give a video link. */
@@ -2799,7 +3025,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_ta_application_needs_none_of_the_ula_answers() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     ApplicationFields f = withUla(null, null, null, null, 0, null);
     ApplicationFields ta =
         new ApplicationFields(
@@ -2842,7 +3070,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
             f.trainingCommitment(),
             f.trainingCommitmentExplanation(),
             f.changingMajor(),
-            NOTICE_ID);
+            NOTICE_ID,
+            null);
 
     mockMvc
         .perform(
@@ -2870,7 +3099,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/applications?id=6")
+                put("/api/applications?id=6&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         mapper.writeValueAsString(
@@ -2934,7 +3163,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         explanation,
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   @WithMockUser(
@@ -2961,8 +3191,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_test_application_for_a_ula_recruitment_needs_the_ula_answers() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 2L))
-        .thenReturn(Optional.empty());
+    when(applicationRepository.findByEmailAndRecruitmentIdOrderByIdDesc(ADMIN_EMAIL, 2L))
+        .thenReturn(List.of());
 
     MvcResult response =
         mockMvc
@@ -3029,7 +3259,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         f.trainingCommitment(),
         f.trainingCommitmentExplanation(),
         f.changingMajor(),
-        f.noticeVersionId());
+        f.noticeVersionId(),
+        null);
   }
 
   @WithMockUser(
@@ -3146,7 +3377,7 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     MvcResult edited =
         mockMvc
             .perform(
-                put("/api/applications?id=5")
+                put("/api/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(body())
                     .with(csrf()))
@@ -3177,7 +3408,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_new_application_s_response_has_no_admin_comments() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     MvcResult response =
         mockMvc
@@ -3202,8 +3435,8 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     Application existing = withAdminComments(application(8L, 1L, ADMIN_EMAIL));
     existing.setOrigin(ApplicationOrigin.ADMIN_TEST);
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.findByEmailAndRecruitmentId(ADMIN_EMAIL, 1L))
-        .thenReturn(Optional.of(existing));
+    when(applicationRepository.findByEmailAndRecruitmentIdOrderByIdDesc(ADMIN_EMAIL, 1L))
+        .thenReturn(List.of(existing));
 
     MvcResult response =
         mockMvc
@@ -3226,7 +3459,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_ta_application_drops_any_availability_answers_it_is_sent() throws Exception {
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(GRAD_EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     // FULL_FIELDS answers yes to all four and fills both comment boxes.
     mockMvc
@@ -3252,7 +3487,9 @@ public class ApplicationsControllerTests extends ControllerTestCase {
   @Test
   public void a_ula_application_keeps_its_availability_answers() throws Exception {
     when(recruitmentRepository.findById(2L)).thenReturn(Optional.of(OPEN_ULA));
-    when(applicationRepository.existsByEmailAndRecruitmentId(ULA_EMAIL, 2L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            ULA_EMAIL, 2L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
 
     mockMvc
         .perform(
@@ -3269,5 +3506,546 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     assertEquals(true, saved.isAvailableForDiscussionSecondChoice());
     assertEquals("Free T R afternoons", saved.getAvailabilityCommentsFirstChoice());
     assertEquals("Any section but Friday", saved.getAvailabilityCommentsSecondChoice());
+  }
+
+  // ---- the first quarter box (issue #292) ----
+
+  /** The fields with the GPAs and the first quarter box replaced, by way of their JSON. */
+  private ApplicationFields withFirstQuarter(
+      ApplicationFields f, Double gpaMajor, Double gpaOverall, Boolean firstQuarter)
+      throws Exception {
+    com.fasterxml.jackson.databind.node.ObjectNode node = mapper.valueToTree(f);
+    node.put("gpaMajor", gpaMajor);
+    node.put("gpaOverall", gpaOverall);
+    node.put("firstQuarter", firstQuarter);
+    return mapper.treeToValue(node, ApplicationFields.class);
+  }
+
+  @Test
+  public void a_missing_first_quarter_answer_is_not_ticked() throws Exception {
+    assertFalse(withFirstQuarter(FULL_FIELDS, 3.0, 3.0, null).firstQuarterTicked());
+    assertFalse(withFirstQuarter(FULL_FIELDS, 3.0, 3.0, false).firstQuarterTicked());
+    assertTrue(withFirstQuarter(FULL_FIELDS, 3.0, 3.0, true).firstQuarterTicked());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_applicant_in_a_first_quarter_needs_no_gpas() throws Exception {
+    postTa(withFirstQuarter(FULL_FIELDS, null, null, true), 200);
+
+    Application saved = saved();
+    assertTrue(saved.isFirstQuarter());
+    assertNull(saved.getGpaMajor());
+    assertNull(saved.getGpaOverall());
+  }
+
+  /** GPAs typed before the box was ticked are dropped, not kept beside a flag that says none. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_first_quarter_application_drops_any_gpas_that_came_with_it() throws Exception {
+    postTa(withFirstQuarter(FULL_FIELDS, 3.9, 3.8, true), 200);
+
+    Application saved = saved();
+    assertTrue(saved.isFirstQuarter());
+    assertNull(saved.getGpaMajor());
+    assertNull(saved.getGpaOverall());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_application_not_in_a_first_quarter_still_needs_both_gpas() throws Exception {
+    for (Boolean unticked : java.util.Arrays.asList(null, false)) {
+      MvcResult response = postTa(withFirstQuarter(FULL_FIELDS, null, 3.8, unticked), 400);
+      assertEquals(
+          "A TA application needs your GPA in major", responseToJson(response).get("message"));
+      response = postTa(withFirstQuarter(FULL_FIELDS, 3.9, null, unticked), 400);
+      assertEquals(
+          "A TA application needs your overall GPA", responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_ta_application_not_in_a_first_quarter_keeps_its_gpas() throws Exception {
+    postTa(withFirstQuarter(FULL_FIELDS, 3.9, 3.8, false), 200);
+
+    Application saved = saved();
+    assertFalse(saved.isFirstQuarter());
+    assertEquals(3.9, saved.getGpaMajor());
+    assertEquals(3.8, saved.getGpaOverall());
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_applicant_in_a_first_quarter_needs_no_gpas() throws Exception {
+    ApplicationFields ok = withUla("1234567", true, OtherCampusJob.NO, true, 2, null);
+
+    postUla(withFirstQuarter(ok, 3.9, 3.8, true), 200);
+
+    Application saved = saved();
+    assertTrue(saved.isFirstQuarter());
+    assertNull(saved.getGpaMajor());
+    assertNull(saved.getGpaOverall());
+  }
+
+  @WithMockUser(
+      username = "ula",
+      roles = {"USER"})
+  @Test
+  public void a_ula_application_not_in_a_first_quarter_still_needs_both_gpas() throws Exception {
+    ApplicationFields ok = withUla("1234567", true, OtherCampusJob.NO, true, 2, null);
+
+    for (Boolean unticked : java.util.Arrays.asList(null, false)) {
+      MvcResult response = postUla(withFirstQuarter(ok, null, 3.8, unticked), 400);
+      assertEquals(
+          "A ULA application needs your GPA in major", responseToJson(response).get("message"));
+      response = postUla(withFirstQuarter(ok, 3.9, null, unticked), 400);
+      assertEquals(
+          "A ULA application needs your overall GPA", responseToJson(response).get("message"));
+    }
+    verify(applicationRepository, never()).save(any());
+  }
+
+  // ---- version check and the multi-tab warning (issue #302) ----
+
+  private static final String CLIENT_ID = "X-Client-Id";
+
+  private static Application versioned(long id, int version, String adminComments) {
+    Application a = application(id, 1L, GRAD_EMAIL);
+    a.setVersion(version);
+    a.setAdminComments(adminComments);
+    return a;
+  }
+
+  private org.springframework.test.web.servlet.ResultActions putAs(
+      long id, int version, String clientId) throws Exception {
+    var request =
+        put("/api/applications?id=" + id + "&version=" + version)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body())
+            .with(csrf());
+    return mockMvc.perform(clientId == null ? request : request.header(CLIENT_ID, clientId));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void an_edit_made_from_an_old_version_is_refused_and_shows_the_application_as_it_is()
+      throws Exception {
+    when(applicationRepository.findById(301L))
+        .thenReturn(Optional.of(versioned(301L, 4, "private notes")));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    MvcResult response = putAs(301L, 3, null).andExpect(status().isConflict()).andReturn();
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals(
+        "This application was changed in another tab or window, or by an admin. Reload to see"
+            + " the latest version.",
+        json.get("message"));
+    assertEquals(4, json.get("version"));
+    Map<?, ?> current = (Map<?, ?>) json.get("application");
+    assertEquals(4, current.get("version"));
+    assertEquals("Ada", current.get("firstName"));
+    // The applicant never sees the admin's notes, not even in a refusal.
+    assertNull(current.get("adminComments"));
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void an_edit_made_from_the_current_version_is_saved_and_returns_the_new_version()
+      throws Exception {
+    when(applicationRepository.findById(302L)).thenReturn(Optional.of(versioned(302L, 4, null)));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.save(any(Application.class)))
+        .thenAnswer(
+            invocation -> {
+              Application saved = invocation.getArgument(0);
+              saved.setVersion(5);
+              return saved;
+            });
+
+    MvcResult response = putAs(302L, 4, null).andExpect(status().isOk()).andReturn();
+
+    // What comes back is what the repository answered with, so its new version is the form's next.
+    assertEquals(5, responseToJson(response).get("version"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_save_that_loses_a_race_is_a_conflict_too() throws Exception {
+    when(applicationRepository.findById(303L))
+        .thenReturn(Optional.of(versioned(303L, 4, null)), Optional.of(versioned(303L, 5, "n")));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.save(any(Application.class)))
+        .thenThrow(
+            new org.springframework.orm.ObjectOptimisticLockingFailureException(
+                Application.class, 303L));
+
+    MvcResult response = putAs(303L, 4, null).andExpect(status().isConflict()).andReturn();
+
+    assertEquals(5, responseToJson(response).get("version"));
+    assertNull(((Map<?, ?>) responseToJson(response).get("application")).get("adminComments"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_race_with_an_application_that_has_since_gone_is_not_hidden() throws Exception {
+    when(applicationRepository.findById(304L))
+        .thenReturn(Optional.of(versioned(304L, 4, null)), Optional.empty());
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.save(any(Application.class)))
+        .thenThrow(
+            new org.springframework.orm.ObjectOptimisticLockingFailureException(
+                Application.class, 304L));
+
+    jakarta.servlet.ServletException thrown =
+        org.junit.jupiter.api.Assertions.assertThrows(
+            jakarta.servlet.ServletException.class, () -> putAs(304L, 4, null));
+    // The race itself is what is reported, not a failure to report it.
+    org.junit.jupiter.api.Assertions.assertInstanceOf(
+        org.springframework.orm.ObjectOptimisticLockingFailureException.class, thrown.getCause());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_save_that_names_its_client_counts_as_being_there_even_when_refused()
+      throws Exception {
+    when(applicationRepository.findById(305L)).thenReturn(Optional.of(versioned(305L, 4, null)));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    putAs(305L, 1, "tab-one").andExpect(status().isConflict());
+
+    assertEquals(
+        List.of(
+            new edu.ucsb.cs.taapply.concurrency.OtherClient("grad@example.org (Fake grad)", false)),
+        detector.othersActive("application:305", "observer"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_save_that_names_no_client_records_nobody() throws Exception {
+    when(applicationRepository.findById(306L)).thenReturn(Optional.of(versioned(306L, 4, null)));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+
+    putAs(306L, 4, null).andExpect(status().isOk());
+
+    assertEquals(List.of(), detector.othersActive("application:306", "observer"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void someone_elses_application_cannot_be_saved_or_recorded() throws Exception {
+    Application theirs = versioned(307L, 4, null);
+    theirs.setEmail("other@example.org");
+    when(applicationRepository.findById(307L)).thenReturn(Optional.of(theirs));
+
+    putAs(307L, 4, "intruder-tab").andExpect(status().isForbidden());
+
+    assertEquals(List.of(), detector.othersActive("application:307", "observer"));
+  }
+
+  private org.springframework.test.web.servlet.ResultActions beatAs(long id, String clientId)
+      throws Exception {
+    var request = post("/api/applications/heartbeat?id=" + id).with(csrf());
+    return mockMvc.perform(clientId == null ? request : request.header(CLIENT_ID, clientId));
+  }
+
+  private org.springframework.test.web.servlet.ResultActions leaveAs(long id, String clientId)
+      throws Exception {
+    var request = post("/api/applications/leave?id=" + id).with(csrf());
+    return mockMvc.perform(clientId == null ? request : request.header(CLIENT_ID, clientId));
+  }
+
+  private static final org.springframework.test.web.servlet.request.RequestPostProcessor ADMIN =
+      org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+          .user("admin")
+          .roles("USER", "ADMIN");
+
+  private static final org.springframework.test.web.servlet.request.RequestPostProcessor
+      OTHER_STUDENT =
+          org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+              .user("other")
+              .roles("USER");
+
+  private org.springframework.test.web.servlet.ResultActions beatAsUser(
+      org.springframework.test.web.servlet.request.RequestPostProcessor who,
+      long id,
+      String clientId)
+      throws Exception {
+    return mockMvc.perform(
+        post("/api/applications/heartbeat?id=" + id)
+            .header(CLIENT_ID, clientId)
+            .with(who)
+            .with(csrf()));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void the_owner_alone_finds_no_one_and_is_told_how_often_to_beat() throws Exception {
+    when(applicationRepository.findById(310L)).thenReturn(Optional.of(versioned(310L, 0, null)));
+
+    beatAs(310L, "only-tab")
+        .andExpect(status().isOk())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.others.length()")
+                .value(0))
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.heartbeatSeconds")
+                .value(5));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void an_applicant_is_told_that_an_admin_has_the_application_open() throws Exception {
+    when(applicationRepository.findById(311L)).thenReturn(Optional.of(versioned(311L, 0, null)));
+
+    beatAsUser(ADMIN, 311L, "admin-tab").andExpect(status().isOk());
+    beatAs(311L, "student-tab")
+        .andExpect(status().isOk())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.others.length()")
+                .value(1))
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.others[0].label")
+                .value("admin@example.org (Fake admin)"))
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.others[0].admin")
+                .value(true))
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.others[0].samePerson")
+                .value(false));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void an_admin_is_told_that_the_student_has_the_application_open_and_is_no_admin()
+      throws Exception {
+    when(applicationRepository.findById(312L)).thenReturn(Optional.of(versioned(312L, 0, null)));
+
+    beatAs(312L, "student-tab").andExpect(status().isOk());
+    mockMvc
+        .perform(
+            post("/api/applications/heartbeat?id=312")
+                .header(CLIENT_ID, "admin-tab")
+                .with(ADMIN)
+                .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.others[0].label")
+                .value("grad@example.org (Fake grad)"))
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.others[0].admin")
+                .value(false));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void another_students_heartbeat_is_forbidden_and_records_and_names_nobody()
+      throws Exception {
+    when(applicationRepository.findById(313L)).thenReturn(Optional.of(versioned(313L, 0, null)));
+    beatAs(313L, "owner-tab").andExpect(status().isOk());
+
+    beatAsUser(OTHER_STUDENT, 313L, "intruder-tab").andExpect(status().isForbidden());
+
+    // Only the owner's tab is there: the intruder was not recorded.
+    assertEquals(
+        List.of("grad@example.org (Fake grad)"),
+        detector.othersActive("application:313", "observer").stream()
+            .map(edu.ucsb.cs.taapply.concurrency.OtherClient::label)
+            .toList());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_heartbeat_for_an_application_that_does_not_exist_is_not_found() throws Exception {
+    when(applicationRepository.findById(314L)).thenReturn(Optional.empty());
+
+    beatAs(314L, "lost-tab").andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void heartbeats_and_goodbyes_need_a_signed_in_user() throws Exception {
+    beatAs(315L, "a-tab").andExpect(status().is(403));
+    leaveAs(315L, "a-tab").andExpect(status().is(403));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_heartbeat_that_names_no_client_finds_no_one_and_is_not_recorded() throws Exception {
+    when(applicationRepository.findById(316L)).thenReturn(Optional.of(versioned(316L, 0, null)));
+    beatAsUser(ADMIN, 316L, "admin-tab").andExpect(status().isOk());
+
+    beatAs(316L, null)
+        .andExpect(status().isOk())
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath(
+                    "$.others.length()")
+                .value(0));
+
+    assertEquals(1, detector.othersActive("application:316", "observer").size());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void the_owner_and_an_admin_may_say_goodbye_and_it_takes_effect_at_once()
+      throws Exception {
+    when(applicationRepository.findById(317L)).thenReturn(Optional.of(versioned(317L, 0, null)));
+    beatAs(317L, "student-tab").andExpect(status().isOk());
+    beatAsUser(ADMIN, 317L, "admin-tab").andExpect(status().isOk());
+    assertEquals(2, detector.othersActive("application:317", "observer").size());
+
+    leaveAs(317L, "student-tab").andExpect(status().isNoContent());
+    assertEquals(
+        List.of("admin@example.org (Fake admin)"),
+        detector.othersActive("application:317", "observer").stream()
+            .map(edu.ucsb.cs.taapply.concurrency.OtherClient::label)
+            .toList());
+
+    mockMvc
+        .perform(
+            post("/api/applications/leave?id=317")
+                .header(CLIENT_ID, "admin-tab")
+                .with(ADMIN)
+                .with(csrf()))
+        .andExpect(status().isNoContent());
+    assertEquals(List.of(), detector.othersActive("application:317", "observer"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void another_students_goodbye_is_forbidden_and_removes_nobody() throws Exception {
+    when(applicationRepository.findById(318L)).thenReturn(Optional.of(versioned(318L, 0, null)));
+    beatAs(318L, "owner-tab").andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            post("/api/applications/leave?id=318")
+                .header(CLIENT_ID, "owner-tab")
+                .with(OTHER_STUDENT)
+                .with(csrf()))
+        .andExpect(status().isForbidden());
+
+    assertEquals(1, detector.othersActive("application:318", "observer").size());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_goodbye_for_an_application_that_does_not_exist_is_not_found() throws Exception {
+    when(applicationRepository.findById(319L)).thenReturn(Optional.empty());
+
+    leaveAs(319L, "lost-tab").andExpect(status().isNotFound());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_user_with_no_name_is_labelled_by_the_email_alone() throws Exception {
+    when(applicationRepository.findById(320L)).thenReturn(Optional.of(versioned(320L, 0, null)));
+
+    mockMvc
+        .perform(
+            post("/api/applications/heartbeat?id=320")
+                .header(CLIENT_ID, "nameless-tab")
+                .with(
+                    org.springframework.security.test.web.servlet.request
+                        .SecurityMockMvcRequestPostProcessors.oauth2Login()
+                        .authorities(
+                            new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                "ROLE_USER"))
+                        .attributes(
+                            attributes -> {
+                              attributes.put("sub", "sub-grad");
+                              attributes.put("email", GRAD_EMAIL);
+                              attributes.put("name", "   ");
+                            }))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(
+        List.of(new edu.ucsb.cs.taapply.concurrency.OtherClient(GRAD_EMAIL, false)),
+        detector.othersActive("application:320", "observer"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_user_with_no_name_at_all_is_labelled_by_the_email_alone() throws Exception {
+    when(applicationRepository.findById(321L)).thenReturn(Optional.of(versioned(320L, 0, null)));
+
+    mockMvc
+        .perform(
+            post("/api/applications/heartbeat?id=321")
+                .header(CLIENT_ID, "nameless-tab")
+                .with(
+                    org.springframework.security.test.web.servlet.request
+                        .SecurityMockMvcRequestPostProcessors.oauth2Login()
+                        .authorities(
+                            new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                "ROLE_USER"))
+                        .attributes(
+                            attributes -> {
+                              attributes.put("sub", "sub-grad");
+                              attributes.put("email", GRAD_EMAIL);
+                            }))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(
+        List.of(new edu.ucsb.cs.taapply.concurrency.OtherClient(GRAD_EMAIL, false)),
+        detector.othersActive("application:321", "observer"));
   }
 }

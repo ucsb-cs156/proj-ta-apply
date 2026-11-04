@@ -558,13 +558,21 @@ describe("RecruitmentCards tests", () => {
     );
   });
 
-  test("the footer has just the Courses and Applications buttons, leading to that recruitment's pages", () => {
+  test("the footer has just the Courses, Draft Applications and Applications buttons, in that order, leading to that recruitment's pages", () => {
     renderCards();
     // Card 2 is id 2.
     const courses = screen.getByTestId("Cards-card-2-courses-button");
     expect(courses).toHaveTextContent("Courses");
     expect(courses).toHaveAttribute("href", "/admin/recruitments/2/courses");
     expect(courses).toHaveClass("btn", "btn-primary");
+
+    const drafts = screen.getByTestId("Cards-card-2-draft-applications-button");
+    expect(drafts).toHaveTextContent("Draft Applications");
+    expect(drafts).toHaveAttribute(
+      "href",
+      "/admin/recruitments/2/draft-applications",
+    );
+    expect(drafts).toHaveClass("btn", "btn-outline-info");
 
     const applications = screen.getByTestId("Cards-card-2-applications-button");
     expect(applications).toHaveTextContent("Applications");
@@ -579,7 +587,11 @@ describe("RecruitmentCards tests", () => {
       .getByTestId("Cards-card-2-card")
       .querySelector(".card-footer");
     expect(footer).toHaveClass("d-flex", "flex-wrap", "gap-2");
-    expect(footer.children).toHaveLength(2);
+    expect(Array.from(footer.children)).toEqual([
+      courses,
+      drafts,
+      applications,
+    ]);
     expect(footer).not.toContainElement(
       screen.getByTestId("Cards-card-2-delete-button"),
     );

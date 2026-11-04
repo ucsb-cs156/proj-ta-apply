@@ -1,5 +1,6 @@
 package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
@@ -16,6 +17,7 @@ import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.HiringDecisions;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
+import edu.ucsb.cs.taapply.time.AppTime;
 import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +33,8 @@ import java.util.TreeMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -98,7 +102,7 @@ public class RecruitmentsController extends ApiController {
                 .applicationStatus(ApplicationStatus.CLOSED)
                 .tentativeOpeningDate(tentativeOpeningDate)
                 .primaryConsiderationDate(primaryConsiderationDate)
-                .createdAt(LocalDateTime.now())
+                .createdAt(AppTime.now())
                 .build());
     recruitmentAuditService.recordCreated(recruitment);
 
@@ -147,14 +151,14 @@ public class RecruitmentsController extends ApiController {
 
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
     if ("Open".equals(status) && recruitment.getFacultyReviewOpeningDate() == null) {
-      recruitment.setFacultyReviewOpeningDate(LocalDate.now());
+      recruitment.setFacultyReviewOpeningDate(AppTime.today());
     }
     recruitment.setReviewStatus(status);
     if ("Open".equals(status)) {
       recruitment.setFacultyRankingDeadline(facultyRankingDeadline);
     }
     if ("Closed".equals(status)) {
-      recruitment.setFacultyReviewClosedAt(LocalDateTime.now());
+      recruitment.setFacultyReviewClosedAt(AppTime.now());
     }
 
     recruitmentRepository.save(recruitment);
@@ -196,9 +200,10 @@ public class RecruitmentsController extends ApiController {
               + " trail.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("/totalHiringTarget")
-  public Recruitment updateTotalHiringTarget(
+  public ResponseEntity<Object> updateTotalHiringTarget(
       @Parameter(name = "id") @RequestParam Long id,
-      @Parameter(name = "totalHiringTarget") @RequestParam Integer totalHiringTarget) {
+      @Parameter(name = "totalHiringTarget") @RequestParam Integer totalHiringTarget,
+      @Parameter(name = "expected") @RequestParam(required = false) Integer expected) {
 
     if (totalHiringTarget < 1) {
       throw new IllegalArgumentException("totalHiringTarget must be at least 1");
@@ -209,11 +214,30 @@ public class RecruitmentsController extends ApiController {
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
 
-    recruitment.setTotalHiringTarget(totalHiringTarget);
-    recruitmentRepository.save(recruitment);
+    synchronized (COMPARE_AND_SET) {
+      if (expected != null && !expected.equals(recruitment.getTotalHiringTarget())) {
+        return staleValue(recruitment, "hiring target");
+      }
+      recruitment.setTotalHiringTarget(totalHiringTarget);
+      recruitmentRepository.save(recruitment);
+    }
     // Every section's fractional share depends on the target (issue #176).
     allocationService.recompute(recruitment);
-    return recruitment;
+    return ResponseEntity.ok(recruitment);
+  }
+
+  /**
+   * Makes the read, compare and write of a compare-and-set one step as far as this server goes. The
+   * app runs as one instance (see the design of issue #270), so that is enough.
+   */
+  private static final Object COMPARE_AND_SET = new Object();
+
+  /** What a refused compare-and-set tells the page: why, and the recruitment as it now stands. */
+  private static ResponseEntity<Object> staleValue(Recruitment current, String what) {
+    Map<String, Object> body = new LinkedHashMap<>();
+    body.put("message", "The %s was changed in another tab or window.".formatted(what));
+    body.put("recruitment", current);
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
   }
 
   @Operation(
@@ -221,12 +245,15 @@ public class RecruitmentsController extends ApiController {
       description =
           "In dollars and cents, per TA on a TA recruitment and per ULA on a ULA recruitment, for"
               + " the Budget for Quarter page (issue #177). Must not be negative. A planning"
-              + " figure: not recorded in the audit trail.")
+              + " figure: not recorded in the audit trail. If expected (the value the page last"
+              + " saw) is given and the stored value is no longer that, nothing is changed and the"
+              + " answer is 409 Conflict with the recruitment as it now stands (issue #277).")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("/avgCostPerPosition")
-  public Recruitment updateAvgCostPerPosition(
+  public ResponseEntity<Object> updateAvgCostPerPosition(
       @Parameter(name = "id") @RequestParam Long id,
-      @Parameter(name = "avgCostPerPosition") @RequestParam BigDecimal avgCostPerPosition) {
+      @Parameter(name = "avgCostPerPosition") @RequestParam BigDecimal avgCostPerPosition,
+      @Parameter(name = "expected") @RequestParam(required = false) BigDecimal expected) {
 
     if (avgCostPerPosition.signum() < 0) {
       throw new IllegalArgumentException("avgCostPerPosition must not be negative");
@@ -237,9 +264,19 @@ public class RecruitmentsController extends ApiController {
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
 
-    recruitment.setAvgCostPerPosition(avgCostPerPosition.setScale(2, RoundingMode.HALF_UP));
-    recruitmentRepository.save(recruitment);
-    return recruitment;
+    synchronized (COMPARE_AND_SET) {
+      if (expected != null && !sameMoney(expected, recruitment.getAvgCostPerPosition())) {
+        return staleValue(recruitment, "average cost per position");
+      }
+      recruitment.setAvgCostPerPosition(avgCostPerPosition.setScale(2, RoundingMode.HALF_UP));
+      recruitmentRepository.save(recruitment);
+    }
+    return ResponseEntity.ok(recruitment);
+  }
+
+  /** Whether the stored cost (null while unknown) is the one the page saw, to the cent. */
+  private static boolean sameMoney(BigDecimal expected, BigDecimal stored) {
+    return stored != null && expected.setScale(2, RoundingMode.HALF_UP).compareTo(stored) == 0;
   }
 
   @Operation(
@@ -301,9 +338,10 @@ public class RecruitmentsController extends ApiController {
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
     recruitment.setAssignmentsPublished(published);
     if (published) {
-      recruitment.setAssignmentsPublishedAt(LocalDateTime.now());
+      recruitment.setAssignmentsPublishedAt(AppTime.now());
     }
     recruitmentRepository.save(recruitment);
+    recruitmentRepository.bumpAssignmentsVersion(id);
     recruitmentAuditService.recordChanges(before, recruitment);
     return recruitment;
   }
@@ -338,7 +376,7 @@ public class RecruitmentsController extends ApiController {
     }
 
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
-    LocalDate today = LocalDate.now();
+    LocalDate today = AppTime.today();
     if (status == ApplicationStatus.OPEN) {
       if (recruitment.getActualOpeningDate() == null) {
         recruitment.setActualOpeningDate(today);
@@ -356,9 +394,10 @@ public class RecruitmentsController extends ApiController {
   @Operation(
       summary = "How many applications each recruitment has on file",
       description =
-          "Recruitment id to the number of real (non-test) applications, for the admin's cards and"
-              + " the warning before deleting one (issue #108). Every recruitment is listed, with 0"
-              + " for one that has none.")
+          "Recruitment id to the number of applicants with a real (non-test) application, for the"
+              + " admin's cards and the warning before deleting one (issue #108). An applicant who"
+              + " cancelled and applied again counts once (issue #318). Every recruitment is"
+              + " listed, with 0 for one that has none.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/applicationCounts")
   public Map<Long, Long> applicationCounts() {
@@ -369,6 +408,10 @@ public class RecruitmentsController extends ApiController {
           recruitment.getId(),
           applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId()).stream()
               .filter(application -> ApplicationVisibility.isReal(application, developerModeOn))
+              // One per applicant: a cancelled application and the new one that followed it
+              // (issue #318) are one person's, not two.
+              .map(Application::getEmail)
+              .distinct()
               .count());
     }
     return counts;

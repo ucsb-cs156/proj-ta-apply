@@ -1,5 +1,6 @@
 package edu.ucsb.cs.taapply;
 
+import edu.ucsb.cs.taapply.time.AppTime;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.time.Duration;
@@ -16,6 +17,13 @@ import org.springframework.web.client.RestTemplate;
 @SpringBootApplication(
     excludeName = {"de.flapdoodle.embed.mongo.spring.autoconfigure.EmbeddedMongoAutoConfiguration"})
 public class TaApplyApplication {
+
+  // Pacific time is the JVM's default zone, whatever TZ the server runs with (issue #293); done as
+  // soon
+  // as this class loads, so tests that load it get it too, and before anything reads the clock.
+  static {
+    AppTime.installAsDefaultTimeZone();
+  }
 
   /*
    * A RestTemplate built with no timeout blocks its calling thread forever on a hung external

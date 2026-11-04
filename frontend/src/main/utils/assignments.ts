@@ -34,6 +34,11 @@ export type Assignments = {
   identityHeaders: string[];
   courses: AssignmentCourse[];
   rows: AssignmentRow[];
+  /**
+   * The recruitment's assignments version (issue #280): a tentative assignment sends back the one
+   * its page last saw, and is refused with a 409 if the assignments have changed since.
+   */
+  version: number;
 };
 
 /** The column headings for the rankings CSV's identity fields. */

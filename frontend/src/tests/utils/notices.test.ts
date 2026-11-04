@@ -16,7 +16,7 @@ describe("notices utils", () => {
   });
 
   test("a version is described by its id and local save time", () => {
-    const expected = `Version 1, saved ${new Date("2026-01-02T03:04:05").toLocaleString()}`;
+    const expected = `Version 1, saved 1/2/2026, 3:04:05 AM`;
     expect(describeVersion(taV1)).toBe(expected);
   });
 });

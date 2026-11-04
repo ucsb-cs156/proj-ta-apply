@@ -1,17 +1,18 @@
 package edu.ucsb.cs.taapply.entity;
 
+import edu.ucsb.cs.taapply.time.AppTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
 
 /**
  * One change to a recruitment itself (issue #139): its creation, its deletion, or one field going
@@ -45,8 +46,7 @@ public class RecruitmentAuditTrail {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  /** When the change was recorded; stamped by Hibernate on insert. */
-  @CreationTimestamp
+  /** When the change was recorded; stamped on insert, in Pacific time. */
   @Column(name = "changed_at", updatable = false)
   private LocalDateTime changedAt;
 
@@ -61,4 +61,10 @@ public class RecruitmentAuditTrail {
 
   @Column(name = "new_value", length = 4000)
   private String newValue;
+
+  /** Stamps the Pacific time at which the row is first saved (issue #293). */
+  @PrePersist
+  void stampChanged() {
+    changedAt = AppTime.now();
+  }
 }

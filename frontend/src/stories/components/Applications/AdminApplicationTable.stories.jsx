@@ -1,6 +1,7 @@
 import React from "react";
 import AdminApplicationTable from "main/components/Applications/AdminApplicationTable";
 import applicationsFixtures from "fixtures/applicationsFixtures";
+import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
 import { defaultHiddenColumns } from "main/utils/applicationColumns";
 
 export default {
@@ -63,4 +64,34 @@ UlaEveryColumn.args = {
   ],
   type: "ULA",
   hiddenColumns: [],
+};
+
+/**
+ * Issue #296: the same table, shown for drafts. No Edit column, Last saved in place of Submitted,
+ * and links to the drafts' own pages; the Admin Comments column shows the admin's comments on each.
+ */
+export const TaDrafts = Template.bind({});
+TaDrafts.args = {
+  applications: [
+    draftApplicationsFixtures.adminSavedTaDraft,
+    {
+      ...draftApplicationsFixtures.adminSavedTaDraft,
+      id: 23,
+      firstName: "Uma",
+    },
+  ],
+  draft: true,
+  type: "TA",
+  hiddenColumns: defaultHiddenColumns("TA"),
+};
+
+/** A ULA draft with every column shown, one saved and one only just opened. */
+export const UlaDraftsEveryColumn = Template.bind({});
+UlaDraftsEveryColumn.args = {
+  applications: [
+    draftApplicationsFixtures.adminSavedUlaDraft,
+    draftApplicationsFixtures.adminEmptyUlaDraft,
+  ],
+  draft: true,
+  type: "ULA",
 };

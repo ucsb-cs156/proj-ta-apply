@@ -47,6 +47,10 @@ public abstract class WebTestCase {
   protected static WireMockServer wireMockServer;
 
   protected Browser browser;
+
+  /** The browser's own time zone: anything but Pacific, which the app must show regardless. */
+  protected static final String BROWSER_TIME_ZONE = "Asia/Tokyo";
+
   protected Page page;
 
   @BeforeAll
@@ -177,7 +181,9 @@ public abstract class WebTestCase {
             .chromium()
             .launch(new BrowserType.LaunchOptions().setHeadless(runHeadless));
 
-    BrowserContext context = browser.newContext();
+    // A browser that is not in California (issue #293): the app must show Pacific time anyway.
+    BrowserContext context =
+        browser.newContext(new Browser.NewContextOptions().setTimezoneId(BROWSER_TIME_ZONE));
     page = context.newPage();
 
     String url = String.format("http://localhost:%d/oauth2/authorization/my-oauth-provider", port);

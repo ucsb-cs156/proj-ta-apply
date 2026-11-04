@@ -96,7 +96,7 @@ describe("NoticeEditorCard tests", () => {
     );
 
     expect(screen.getByTestId("Card-current")).toHaveTextContent(
-      `Current: Version 2, saved ${new Date("2026-02-03T04:05:06").toLocaleString()}`,
+      `Current: Version 2, saved 2/3/2026, 4:05:06 AM`,
     );
     // The preview renders the Markdown.
     expect(
@@ -193,9 +193,7 @@ describe("NoticeEditorCard tests", () => {
 
     const row0 = await screen.findByTestId("Card-history-row-0");
     expect(row0).toHaveTextContent("2");
-    expect(row0).toHaveTextContent(
-      new Date("2026-02-03T04:05:06").toLocaleString(),
-    );
+    expect(row0).toHaveTextContent("2/3/2026, 4:05:06 AM");
     expect(row0).toHaveTextContent(
       `${noticesFixtures.taV2.content.length} characters`,
     );

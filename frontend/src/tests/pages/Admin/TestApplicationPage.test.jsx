@@ -361,6 +361,20 @@ describe("TestApplicationPage tests", () => {
     expect(screen.queryByTestId("TestApplicationPage-saved")).toBeNull();
   });
 
+  /** Issue #318: a cancelled test application is kept but is no longer the saved one. */
+  test("a cancelled test application is not shown as the saved one", async () => {
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [
+        { ...applicationsFixtures.oneTestApplication, status: "CANCELLED" },
+      ]);
+
+    renderPage();
+
+    await screen.findByTestId("TestApplicationPage-firstName");
+    expect(screen.queryByTestId("TestApplicationPage-saved")).toBeNull();
+  });
+
   test("a test application for another recruitment is not shown", async () => {
     axiosMock
       .onGet("/api/applications/mine")

@@ -78,6 +78,8 @@ public class FakeAllocationsServiceTests {
 
     assertSame(allocated, result);
     assertEquals(5, recruitment.getTotalHiringTarget());
+    // Every allocation was overwritten, so edits made against the old ones are refused (#278).
+    assertEquals(1, recruitment.getAllocationBulkVersion());
     assertEquals(300, withNumbers.getEnrollmentEstimate());
     // A course with no figure keeps the estimate it had; a removed one is never touched.
     assertEquals(222, withoutNumbers.getEnrollmentEstimate());

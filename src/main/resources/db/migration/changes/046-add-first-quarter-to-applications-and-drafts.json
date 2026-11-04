@@ -1,0 +1,78 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "046-add-first-quarter-to-applications",
+        "author": "pc",
+        "comment": "Issue #292: the applicant says it is their first quarter, so they have no GPAs yet and none is required.",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "applications",
+                "columnName": "first_quarter"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "applications",
+              "columns": [
+                {
+                  "column": {
+                    "name": "first_quarter",
+                    "type": "BOOLEAN",
+                    "defaultValueBoolean": false,
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "046-add-first-quarter-to-draft_applications",
+        "author": "pc",
+        "comment": "Issue #292: the applicant says it is their first quarter, so they have no GPAs yet and none is required.",
+        "preConditions": [
+          {
+            "onFail": "MARK_RAN"
+          },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "draft_applications",
+                "columnName": "first_quarter"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "draft_applications",
+              "columns": [
+                {
+                  "column": {
+                    "name": "first_quarter",
+                    "type": "BOOLEAN"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

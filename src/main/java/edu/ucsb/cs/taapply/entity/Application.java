@@ -10,6 +10,7 @@ import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.ResidencyStatus;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
+import edu.ucsb.cs.taapply.time.AppTime;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,15 +18,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 /**
  * One person's application to one recruitment.
  *
  * <p>The design doc's field table names email as the primary key, but the same section asks for a
  * table of every application a student has ever made. Those cannot both hold, so identity is a
- * generated id with a unique constraint on (email, recruitment): one application per person per
- * recruitment, and the history survives.
+ * generated id. A person has at most one application per recruitment that is not cancelled; one who
+ * cancelled while applications were open may start a new one (issue #318), so the cancelled row is
+ * kept and the unique constraint is on (email, recruitment, attempt number) rather than on (email,
+ * recruitment): the history survives, and two simultaneous submissions cannot both be stored.
  *
  * <p>Which fields are asked for depends on the recruitment's type. The TA-only and ULA-only fields
  * are simply left null on the other kind rather than being split into separate tables, since the
@@ -39,8 +41,8 @@ import org.hibernate.annotations.CreationTimestamp;
 @Table(
     uniqueConstraints =
         @UniqueConstraint(
-            name = "uk_applications_email_recruitment",
-            columnNames = {"email", "recruitment_id"}))
+            name = "uk_applications_email_recruitment_attempt",
+            columnNames = {"email", "recruitment_id", "attempt_number"}))
 public class Application {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,6 +50,22 @@ public class Application {
 
   @Column(name = "recruitment_id")
   private Long recruitmentId;
+
+  /**
+   * How many times the application has been saved, starting at 0 (issue #302). Hibernate counts it
+   * (optimistic locking), and an edit that carries an older count than the application now has is
+   * refused, so the applicant and an admin (or two tabs) cannot silently overwrite each other. Null
+   * only on an application that has not been saved yet.
+   */
+  @Version private Integer version;
+
+  /**
+   * Which of the applicant's applications to this recruitment this is: 1, or one more than the
+   * number they had before when they cancelled and started again (issue #318).
+   */
+  @Builder.Default
+  @Column(name = "attempt_number", nullable = false)
+  private Integer attemptNumber = 1;
 
   /** The applicant, taken from the current user rather than the request. */
   private String email;
@@ -62,9 +80,8 @@ public class Application {
 
   /**
    * When the row was first saved: the moment the applicant (or an admin testing the form) first
-   * submitted. Stamped by Hibernate on insert and never changed by an edit.
+   * submitted. Stamped on insert, in Pacific time, and never changed by an edit.
    */
-  @CreationTimestamp
   @Column(name = "submitted_at", updatable = false)
   private LocalDateTime submittedAt;
 
@@ -98,6 +115,14 @@ public class Application {
   private String major;
   private Double gpaMajor;
   private Double gpaOverall;
+
+  /**
+   * Issue #292: the applicant says it is their first quarter (a first quarter grad student on a TA
+   * form, a first quarter at UCSB on a ULA one), so they have no GPAs yet. The GPAs are then not
+   * required, and are stored empty whatever was typed.
+   */
+  @Builder.Default private boolean firstQuarter = false;
+
   private String yearInProgram;
   private String graduationDate;
 
@@ -269,4 +294,10 @@ public class Application {
   @JsonIgnore
   @Column(name = "tentative_assignment_id")
   private Long tentativeAssignmentId;
+
+  /** Stamps the Pacific time at which the row is first saved (issue #293). */
+  @PrePersist
+  void stampSubmitted() {
+    submittedAt = AppTime.now();
+  }
 }

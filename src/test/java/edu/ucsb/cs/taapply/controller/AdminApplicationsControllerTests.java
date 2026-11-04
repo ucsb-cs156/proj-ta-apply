@@ -38,8 +38,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -51,12 +53,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 @WebMvcTest(controllers = AdminApplicationsController.class)
 @Import({
+  DraftApplicationsControllerTests.DetectorConfig.class,
   edu.ucsb.cs.taapply.testconfig.TestConfig.class,
   ApplicationCsvService.class,
   ApplicationAuditService.class
 })
 public class AdminApplicationsControllerTests extends ControllerTestCase {
 
+  @Autowired DraftApplicationsControllerTests.ResettableDetector detector;
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean UserRepository userRepository;
@@ -64,9 +68,18 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
   @MockitoBean LegacyApplicationCsvService legacyApplicationCsvService;
   @MockitoBean LegacyUlaApplicationCsvService legacyUlaApplicationCsvService;
 
+  // A save answers with the application it saved, as the real repository does.
+  @BeforeEach
+  public void savesAnswerWithWhatTheySaved() {
+    detector.reset();
+    when(applicationRepository.save(any(Application.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+  }
+
   private static Application application(long id, long recruitmentId, String email, boolean test) {
     return Application.builder()
         .id(id)
+        .version(0)
         .recruitmentId(recruitmentId)
         .email(email)
         .status(ApplicationReviewStatus.PENDING)
@@ -90,7 +103,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
         .andExpect(status().is(403));
     mockMvc
         .perform(
-            put("/api/admin/applications?id=1")
+            put("/api/admin/applications?id=1&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}")
                 .with(csrf()))
@@ -108,7 +121,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
         .andExpect(status().is(403));
     mockMvc
         .perform(
-            put("/api/admin/applications?id=1")
+            put("/api/admin/applications?id=1&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}")
                 .with(csrf()))
@@ -352,7 +365,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/admin/applications?id=5")
+                put("/api/admin/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         editBody(
@@ -397,7 +410,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/admin/applications?id=5")
+            put("/api/admin/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(editBody(Map.of()))
                 .with(csrf()))
@@ -420,7 +433,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/admin/applications?id=5")
+            put("/api/admin/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     editBody(Map.of("lastName", "Byron", "topicProficiencies", Map.of("Java", 3))))
@@ -441,7 +454,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/admin/applications?id=5")
+                put("/api/admin/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         editBody(
@@ -467,7 +480,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/admin/applications?id=5")
+                put("/api/admin/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(editBody(Map.of()))
                     .with(csrf()))
@@ -487,7 +500,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/admin/applications?id=5")
+                put("/api/admin/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(editBody(Map.of()))
                     .with(csrf()))
@@ -676,7 +689,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     Map<String, Object> ulaScale = Map.of("topicProficiencies", Map.of("Java", 3));
     mockMvc
         .perform(
-            put("/api/admin/applications?id=5")
+            put("/api/admin/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(editBody(ulaScale))
                 .with(csrf()))
@@ -687,7 +700,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     lowerCase.put("permNumber", "a1b2c3d");
     mockMvc
         .perform(
-            put("/api/admin/applications?id=5")
+            put("/api/admin/applications?id=5&version=0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(editBody(lowerCase))
                 .with(csrf()))
@@ -699,7 +712,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/admin/applications?id=5")
+                put("/api/admin/applications?id=5&version=0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         editBody(
@@ -804,5 +817,139 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
         "Quarter should be like W26, S26, M26 or F26 (or 20261), not 'Fall'",
         responseToJson(response).get("message"));
     verify(recruitmentRepository, never()).findByQuarterAndType(any(), any());
+  }
+
+  // ---- version check and the multi-tab warning (issue #302) ----
+
+  private static Application versionedEditable(long id, int version) {
+    Application application = editable();
+    application.setId(id);
+    application.setVersion(version);
+    return application;
+  }
+
+  private org.springframework.test.web.servlet.ResultActions adminPut(
+      long id, int version, String clientId) throws Exception {
+    var request =
+        put("/api/admin/applications?id=" + id + "&version=" + version)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(editBody(Map.of()))
+            .with(csrf());
+    return mockMvc.perform(clientId == null ? request : request.header("X-Client-Id", clientId));
+  }
+
+  private void recruitmentExists() {
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.TA)));
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_edit_made_from_an_old_version_is_refused_and_shows_the_application()
+      throws Exception {
+    when(applicationRepository.findById(401L)).thenReturn(Optional.of(versionedEditable(401L, 4)));
+    recruitmentExists();
+
+    MvcResult response = adminPut(401L, 3, null).andExpect(status().isConflict()).andReturn();
+
+    Map<String, Object> json = responseToJson(response);
+    assertEquals(4, json.get("version"));
+    Map<?, ?> current = (Map<?, ?>) json.get("application");
+    assertEquals(4, current.get("version"));
+    // An admin may see the admin's notes.
+    assertEquals("Looks strong", current.get("adminComments"));
+    verify(applicationRepository, never()).save(any());
+    verify(auditTrailRepository, never()).saveAll(any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_edit_from_the_current_version_is_saved_and_audited_from_what_was_saved()
+      throws Exception {
+    when(applicationRepository.findById(402L)).thenReturn(Optional.of(versionedEditable(402L, 4)));
+    recruitmentExists();
+    when(applicationRepository.save(any(Application.class)))
+        .thenAnswer(
+            invocation -> {
+              Application saved = invocation.getArgument(0);
+              saved.setVersion(5);
+              return saved;
+            });
+
+    MvcResult response = adminPut(402L, 4, null).andExpect(status().isOk()).andReturn();
+
+    assertEquals(5, responseToJson(response).get("version"));
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_save_that_loses_a_race_is_a_conflict_too() throws Exception {
+    when(applicationRepository.findById(403L))
+        .thenReturn(
+            Optional.of(versionedEditable(403L, 4)), Optional.of(versionedEditable(403L, 5)));
+    recruitmentExists();
+    when(applicationRepository.save(any(Application.class)))
+        .thenThrow(
+            new org.springframework.orm.ObjectOptimisticLockingFailureException(
+                Application.class, 403L));
+
+    MvcResult response = adminPut(403L, 4, null).andExpect(status().isConflict()).andReturn();
+
+    assertEquals(5, responseToJson(response).get("version"));
+    verify(auditTrailRepository, never()).saveAll(any());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void a_race_with_an_application_that_has_since_gone_is_not_hidden() throws Exception {
+    when(applicationRepository.findById(404L))
+        .thenReturn(Optional.of(versionedEditable(404L, 4)), Optional.empty());
+    recruitmentExists();
+    when(applicationRepository.save(any(Application.class)))
+        .thenThrow(
+            new org.springframework.orm.ObjectOptimisticLockingFailureException(
+                Application.class, 404L));
+
+    jakarta.servlet.ServletException thrown =
+        org.junit.jupiter.api.Assertions.assertThrows(
+            jakarta.servlet.ServletException.class, () -> adminPut(404L, 4, null));
+    // The race itself is what is reported, not a failure to report it.
+    org.junit.jupiter.api.Assertions.assertInstanceOf(
+        org.springframework.orm.ObjectOptimisticLockingFailureException.class, thrown.getCause());
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_save_that_names_its_client_is_recorded_as_an_admin() throws Exception {
+    when(applicationRepository.findById(405L)).thenReturn(Optional.of(versionedEditable(405L, 4)));
+    recruitmentExists();
+
+    // Refused or not, a save that names its client counts as being there.
+    adminPut(405L, 1, "admin-tab").andExpect(status().isConflict());
+
+    assertEquals(
+        List.of(
+            new edu.ucsb.cs.taapply.concurrency.OtherClient(
+                "user@example.org (Fake user)", false, true)),
+        detector.othersActive("application:405", "observer"));
+  }
+
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_save_that_names_no_client_records_nobody() throws Exception {
+    when(applicationRepository.findById(406L)).thenReturn(Optional.of(versionedEditable(406L, 4)));
+    recruitmentExists();
+
+    adminPut(406L, 4, null).andExpect(status().isOk());
+
+    assertEquals(List.of(), detector.othersActive("application:406", "observer"));
+  }
+
+  @WithMockUser(roles = {"USER"})
+  @Test
+  public void a_plain_user_cannot_save_and_is_not_recorded() throws Exception {
+    adminPut(407L, 4, "intruder-tab").andExpect(status().isForbidden());
+
+    assertEquals(List.of(), detector.othersActive("application:407", "observer"));
   }
 }

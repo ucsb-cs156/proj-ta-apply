@@ -23,6 +23,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.jobs.PopulateRecruitmentCoursesJob;
@@ -304,6 +305,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(put("/api/admin/recruitments/status?id=99&status=OPEN").with(csrf()))
         .andExpect(status().isNotFound());
     verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentRepository, never()).bumpAssignmentsVersion(any());
     verify(recruitmentAuditService, never()).snapshot(any());
     verify(recruitmentAuditService, never()).recordChanges(any(), any());
   }
@@ -648,7 +650,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
                 recruitment(1L, "20261", RecruitmentType.TA)));
     List<Application> fifteen = new ArrayList<>();
     for (int i = 0; i < 15; i++) {
-      fifteen.add(Application.builder().recruitmentId(1L).build());
+      fifteen.add(Application.builder().recruitmentId(1L).email("a" + i + "@ucsb.edu").build());
     }
     // Test and fake applications do not count while Developer Mode is off (issue #219).
     fifteen.add(Application.builder().origin(ApplicationOrigin.ADMIN_TEST).build());
@@ -665,6 +667,30 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals("{\"1\":15,\"2\":0}", response.getResponse().getContentAsString());
   }
 
+  /** Issue #318: a cancelled application and the new one that followed it are one applicant. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_applicant_who_cancelled_and_applied_again_counts_once() throws Exception {
+    when(recruitmentRepository.findAll())
+        .thenReturn(List.of(recruitment(1L, "20261", RecruitmentType.TA)));
+    Application cancelled =
+        Application.builder().email("a@ucsb.edu").status(ApplicationReviewStatus.CANCELLED).build();
+    when(applicationRepository.findByRecruitmentIdOrderByIdAsc(1L))
+        .thenReturn(
+            List.of(
+                cancelled,
+                Application.builder().email("a@ucsb.edu").attemptNumber(2).build(),
+                Application.builder().email("b@ucsb.edu").build()));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/admin/recruitments/applicationCounts"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals("{\"1\":2}", response.getResponse().getContentAsString());
+  }
+
   /** Developer Mode counts test and fake applications as real, so every feature can be tried. */
   @WithMockUser(roles = {"ADMIN"})
   @Test
@@ -675,9 +701,15 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     when(applicationRepository.findByRecruitmentIdOrderByIdAsc(1L))
         .thenReturn(
             List.of(
-                Application.builder().build(),
-                Application.builder().origin(ApplicationOrigin.ADMIN_TEST).build(),
-                Application.builder().origin(ApplicationOrigin.DEVELOPER_MODE).build()));
+                Application.builder().email("a@ucsb.edu").build(),
+                Application.builder()
+                    .email("b@ucsb.edu")
+                    .origin(ApplicationOrigin.ADMIN_TEST)
+                    .build(),
+                Application.builder()
+                    .email("c@ucsb.edu")
+                    .origin(ApplicationOrigin.DEVELOPER_MODE)
+                    .build()));
 
     MvcResult response =
         mockMvc
@@ -912,6 +944,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
     inOrder.verify(recruitmentAuditService).snapshot(r);
     inOrder.verify(recruitmentRepository).save(r);
+    // Issue #280: a page that has not seen this is out of date.
+    inOrder.verify(recruitmentRepository).bumpAssignmentsVersion(1L);
     inOrder.verify(recruitmentAuditService).recordChanges(before, r);
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
   }
@@ -933,6 +967,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
 
     assertEquals(false, r.getAssignmentsPublished());
     verify(recruitmentRepository).save(r);
+    verify(recruitmentRepository).bumpAssignmentsVersion(1L);
     verify(recruitmentAuditService).recordChanges(before, r);
   }
 
@@ -1409,5 +1444,101 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
 
     assertEquals(false, r.getAssignmentsPublished());
     verify(assignmentsService, never()).anyAssigned(any());
+  }
+
+  // ---- compare-and-set on the two budget figures (issue #277) ----
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_hiring_target_save_that_expects_the_stored_value_is_applied() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setTotalHiringTarget(7);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=9&expected=7")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(9, r.getTotalHiringTarget());
+    verify(recruitmentRepository).save(r);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_hiring_target_save_that_expects_a_stale_value_is_a_409_and_changes_nothing()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setTotalHiringTarget(8);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/totalHiringTarget?id=1&totalHiringTarget=9&expected=7")
+                    .with(csrf()))
+            .andExpect(status().isConflict())
+            .andReturn();
+
+    assertEquals(
+        "The hiring target was changed in another tab or window.",
+        responseToJson(response).get("message"));
+    assertEquals(8, r.getTotalHiringTarget());
+    verify(recruitmentRepository, never()).save(any());
+    verify(allocationService, never()).recompute(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_cost_save_that_expects_the_stored_value_to_the_cent_is_applied() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAvgCostPerPosition(new BigDecimal("100.50"));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=200&expected=100.5")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(new BigDecimal("200.00"), r.getAvgCostPerPosition());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_cost_save_that_expects_a_stale_value_is_a_409_and_changes_nothing()
+      throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    r.setAvgCostPerPosition(new BigDecimal("150.00"));
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=200&expected=100")
+                    .with(csrf()))
+            .andExpect(status().isConflict())
+            .andReturn();
+
+    assertEquals(
+        "The average cost per position was changed in another tab or window.",
+        responseToJson(response).get("message"));
+    assertEquals(new BigDecimal("150.00"), r.getAvgCostPerPosition());
+    verify(recruitmentRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_cost_save_that_expects_a_value_when_none_is_stored_is_a_409() throws Exception {
+    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
+
+    mockMvc
+        .perform(
+            put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=200&expected=100")
+                .with(csrf()))
+        .andExpect(status().isConflict());
+    verify(recruitmentRepository, never()).save(any());
   }
 }

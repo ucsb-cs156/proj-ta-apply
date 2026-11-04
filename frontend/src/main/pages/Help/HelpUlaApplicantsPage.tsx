@@ -45,7 +45,9 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             Your major (and whether you are changing it), your GPA (in your
             major and overall), your year in the program, and your expected
             graduation date. You must still be an undergraduate in the quarter
-            you are applying for.
+            you are applying for. If you are applying during your first quarter
+            at UCSB and do not yet have a GPA, you can check the box under the
+            two GPA fields instead of entering them.
           </li>
           <li>Whether you have served as a ULA before, and how many times.</li>
           <li>
@@ -118,6 +120,11 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           terms and conditions for ULA applications and asked to agree to them.
         </p>
 
+        <p data-testid="HelpUlaApplicantsPage-time-zone">
+          Every date and time on this site is in Pacific Time (Santa Barbara
+          time), wherever you are.
+        </p>
+
         <h2 className="my-3 h4">Tips</h2>
         <ul>
           <li>
@@ -140,6 +147,29 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             there until the primary consideration date.
           </li>
         </ul>
+
+        <h2 className="my-3 h4" data-testid="HelpUlaApplicantsPage-cancelling">
+          Cancelling, and applying again
+        </h2>
+        <p>
+          Until the recruitment closes you can withdraw a submitted application
+          with <strong>Cancel my Application</strong> on its card on your home
+          page. You are asked for a brief reason and to confirm. A cancelled
+          application is not considered, can no longer be edited, and cannot be
+          brought back; the system keeps it, with your reason and the time you
+          cancelled, so the admins can still see it.
+        </p>
+        <p data-testid="HelpUlaApplicantsPage-start-again">
+          <strong>Changed your mind, or cancelled by mistake?</strong> While
+          applications are still open for that recruitment, the card and the
+          cancelled application&apos;s page show
+          <strong>Start a new application</strong>. It gives you an empty form,
+          as if you had never applied, with the usual saved draft and the usual
+          <strong>Submit Application</strong>. Once you submit it, the new
+          application is the one that counts, and the cancelled one stays on
+          file, marked as cancelled. Once applications have closed the button is
+          gone and a new application can no longer be started.
+        </p>
 
         <h2
           className="my-3 h4"
@@ -170,7 +200,9 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           <em>last</em> also asks what you want to do, in a box that covers the
           form until you answer. The one you opened first only shows the
           warning, so that it never interrupts you while you are typing. The box
-          offers three choices:
+          says who already has the application open, such as &ldquo;You already
+          have this application open for editing in another tab or
+          window.&rdquo; It offers three choices:
         </p>
         <ul data-testid="HelpUlaApplicantsPage-simultaneous-editing-choices">
           <li>
@@ -198,6 +230,19 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           a few seconds after the other copies are closed, or in up to about
           twenty seconds if the other copy could not say that it was leaving,
           such as when a computer lost its network connection.
+        </p>
+        <p data-testid="HelpUlaApplicantsPage-simultaneous-editing-admin">
+          <strong>An admin has your application open.</strong> After you have
+          submitted, an admin may correct your application. If you open it for
+          editing while an admin has it open, the warning names the admin, such
+          as &ldquo;Admin jane@ucsb.edu (Jane Doe) has this application open for
+          editing. We recommend that you close this window and try again in a
+          few minutes. If this message persists, please reach out to
+          jane@ucsb.edu&rdquo; The admin&apos;s email address at the end is
+          where to write if the message does not go away. If you save while the
+          admin has saved since you opened the application, the system refuses
+          your save, says so, and offers <em>Reload</em>; what you typed in the
+          old copy is lost.
         </p>
         <p data-testid="HelpUlaApplicantsPage-simultaneous-editing-refresh">
           <strong>Applications opening and closing.</strong> The home page and

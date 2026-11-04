@@ -127,6 +127,26 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           already have rankings are never changed.
         </p>
 
+        <h2 className="my-3 h4" id="dates-and-times">
+          Dates and Times
+        </h2>
+        <p data-testid="HelpDeveloperPage-dates-and-times">
+          Every date and time the app shows or accepts is Pacific Time
+          (America/Los_Angeles), whatever zone the server or the browser is in
+          (issue #293). A <strong>calendar date</strong> (an opening date, a
+          deadline) has no zone and is shown as entered. A{" "}
+          <strong>date and time</strong> the app records (when an application
+          was submitted, when a change was made) is stored in the database as
+          Pacific wall-clock time, so it reads the same in the database as on
+          the screen; the one exact instant, when a user was last online, is
+          stored with its zone and converted for display. The backend takes
+          &quot;now&quot; and &quot;today&quot; from <code>AppTime</code> and
+          the frontend formats and works out &quot;today&quot; only in{" "}
+          <code>pacificTime.ts</code>; a test fails if anything else calls{" "}
+          <code>toLocaleString</code> or reads the browser's clock. The design
+          is in <code>docs/design/PacificTimeDesign.md</code>.
+        </p>
+
         <h2 className="my-3 h4" id="simultaneous-editing">
           Simultaneous Editing
         </h2>
@@ -139,9 +159,11 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <strong>multi-tab warning</strong> is the courtesy: it tells the user,
           before anything is refused, that another copy is open, and who. The
           full design, including where else it is planned, is{" "}
-          <code>docs/design/ConcurrentEditMitigationDesign.md</code>. Only the
-          draft application form uses either so far; recruitment state is kept
-          fresh by a refresh instead (see below).
+          <code>docs/design/ConcurrentEditMitigationDesign.md</code>. So far the
+          draft application form, the faculty rankings, the editing of a
+          submitted application, the assignments page, the Budget page and the
+          Courses edit page use them; recruitment state is kept fresh by a
+          refresh instead (see below).
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-version">
           <strong>The version check.</strong> A saved thing carries an integer{" "}
@@ -150,7 +172,28 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           version, in one atomic step (JPA optimistic locking), and answers with
           it. If not, nothing is changed and the answer is{" "}
           <code>409 Conflict</code> with the draft as it now stands. The form
-          then stops saving, says so, and offers <em>Reload</em>.
+          then stops saving, says so, and offers <em>Reload</em>. Where the
+          saved thing is a whole page of numbers that several admins might
+          touch, a simpler form is used: the Assignments page of a recruitment
+          has a recruitment-level <code>assignmentsVersion</code>, counted up by
+          one atomic update (
+          <code>WHERE id = ? AND assignments_version = ?</code>) on every
+          tentative assignment, on publishing or taking back, and on an
+          applicant cancelling. A stale tentative assignment is answered{" "}
+          <code>409</code> with the current assignments, and the page shows them
+          and a message, without repeating the click.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-compare">
+          <strong>Compare-and-set.</strong> Where a version column would be
+          heavy, a save carries the value the page last saw (
+          <code>expected</code>) and the server applies it only if that is still
+          the stored value; otherwise nothing changes and the answer is{" "}
+          <code>409 Conflict</code> with the current value. The Budget page uses
+          a version for the budget&apos;s three lines and compare-and-set for a
+          recruitment&apos;s average cost and hiring target, which the
+          recruitment&apos;s row shares with many other pages. The page keeps
+          what the user typed, says what is stored now, and offers{" "}
+          <em>Use theirs</em> and <em>Overwrite</em>.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-heartbeat">
           <strong>The client id and the heartbeat.</strong> Each tab makes a
@@ -195,16 +238,45 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <code>email (Full Name)</code>, or just the email), and the detector
           treats the key and the label as opaque. It answers the heartbeat with
           a JSON body,{" "}
-          <code>{`{"others": [{"label", "samePerson"}], "heartbeatSeconds", "newest", "arrivedAtMillis"}`}</code>
+          <code>{`{"others": [{"label", "samePerson", "admin"}], "heartbeatSeconds", "newest", "arrivedAtMillis"}`}</code>
           : one entry for each other <em>person</em>, however many tabs they
           have open, with <code>samePerson</code> true for the user&apos;s own
-          other tabs. Names are in the body and not in headers because they are
-          not always ASCII and can be long. A label is cut to 200 characters. In
-          the browser a pure function composes the sentence (&quot;You are also
-          editing this application in another tab or window.&quot;,
-          &quot;phtcon@ucsb.edu (Phill Conrad) is also editing this
-          application.&quot;, and so on, three people named and the rest
-          counted) and the banner shows it as text, never as markup.
+          other tabs and <code>admin</code> true for an admin (the app says so
+          in the identity, and the detector only passes it on). Names are in the
+          body and not in headers because they are not always ASCII and can be
+          long. A label is cut to 200 characters. In the browser a pure function
+          composes the sentence (&quot;You are also editing this application in
+          another tab or window.&quot;, &quot;phtcon@ucsb.edu (Phill Conrad) is
+          also editing this application.&quot;, and so on, three people named
+          and the rest counted) and the banner shows it as text, never as
+          markup. The tab that arrived later (the modal, and the banner of the
+          newest tab) says who is <em>already</em> there instead (&quot;You
+          already have this application open for editing in another tab or
+          window.&quot;, &quot;A already has this page open for editing.&quot;,
+          &quot;A and B already have this page open for editing.&quot;), with
+          the singular verb for one person. The closing sentence depends on who
+          is involved. When every other copy is the user&apos;s own, on the
+          application form and the faculty ranking page, it asks the user to
+          close the extra ones (&quot;Please know that this is risky; we
+          recommend closing all but one of these.&quot;). When another person is
+          involved, whose window the user cannot close, and on admin pages (the{" "}
+          <code>admin</code> option of <code>audience</code> on the banner and
+          the modal), it is &quot;We recommend that only one admin edits this
+          page at a time.&quot; The noun is still a parameter of the first
+          sentence, but this one always says &quot;page&quot;. A submitted
+          application is edited on two pages at once, the applicant&apos;s and
+          the admin&apos;s, and they say different things (issue #302): with{" "}
+          <code>audience=&quot;applicant&quot;</code>, an admin among the others
+          replaces the whole message with &quot;Admin A (Name) has this
+          application open for editing. We recommend that you close this window
+          and try again in a few minutes. If this message persists, please reach
+          out to A&quot; (the first admin&apos;s email, and &quot;have&quot;
+          with several, named as above); with{" "}
+          <code>audience=&quot;applicationAdmin&quot;</code>, an applicant among
+          the others gets the closing sentence &quot;We recommend that you wait
+          a few minutes or ask them to close it.&quot;, followed by the admin
+          sentence if other admins are there too. The wording was confirmed by
+          the maintainer.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-modal">
           <strong>The modal and how the newer tab is chosen.</strong> A client
@@ -237,8 +309,8 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           Otherwise anyone could probe resource keys to learn who is working
           where. For a draft only its owner may heartbeat, say goodbye or save,
           and anyone else gets <code>403</code> with nothing recorded or removed
-          and no names in the answer. Every future use must make the same check
-          first.
+          and no names in the answer. For a submitted application the owner or
+          any admin may. Every future use must make the same check first.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-timing">
           <strong>Timing.</strong> Two environment variables, read by the
@@ -301,6 +373,28 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           afresh as the newest and the warning returns. That is accepted:
           raising the two variables makes it rarer. The warning is advice and
           never a lock; the version check still protects the data.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-courses">
+          <strong>The Courses pages.</strong> A recruitment&apos;s Courses page
+          is split in two. The view-only page (
+          <code>/admin/recruitments/:id/courses</code>) is the default, edits
+          nothing, and neither heartbeats nor warns. The edit page (
+          <code>/admin/recruitments/:id/courses/edit</code>) heartbeats{" "}
+          <code>POST /api/recruitmentcourses/heartbeat?recruitmentId=</code>,
+          says goodbye at <code>/leave</code>, names itself in the{" "}
+          <code>X-Client-Id</code> header of the allocation, estimate and Auto
+          Allocate saves, and shows the banner and the modal with the noun
+          &quot;page&quot;; <em>Leave this page</em> goes to the view-only page.
+          Only an admin may heartbeat, and the recruitment must exist, before
+          anything is recorded. The version check is not a JPA version, since
+          the course refresh and the estimates also write the row: a separate{" "}
+          <code>allocation_version</code> column on{" "}
+          <code>recruitment_courses</code> is counted by each allocation edit,
+          and <code>allocation_bulk_version</code> on <code>recruitments</code>{" "}
+          is counted by Auto Allocate. An allocation edit sends both as{" "}
+          <code>expectedVersion</code> and <code>expectedBulkVersion</code> and
+          gets <code>409</code> when either moved; after a bulk conflict the
+          page reads everything again.
         </p>
         <h3 className="mt-4 h5" id="state-refresh">
           Refresh instead of a warning: keeping recruitment state fresh
@@ -477,6 +571,25 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           turns off Submit and Save Draft, and stops trying to save (draft saves
           are refused once applications close, issue #276).
         </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-ranking">
+          <strong>The version check on rankings.</strong> A course&apos;s whole
+          ranking list has one version, in its own table, bumped by every rank
+          edit and by the Developer Mode fake rankings job; no row means version
+          0. The candidates are sent with the version they were read at, a rank
+          save names it as <code>?version=</code>, and the server moves the
+          version on with a single compare-and-set statement before it changes
+          the ranking, so of several saves made from one version only one is
+          accepted. The others get <code>409 Conflict</code> with the current
+          version; the page reads the candidates again, keeps what the
+          instructor typed in its box and offers <em>Save again</em>. The
+          candidates are read after the version, so a change in between can only
+          make a save refused, never wrongly accepted. Only someone who may rank
+          the course (its instructor while reviews are Open) may heartbeat or
+          say goodbye for <code>ranking:&lt;recruitmentCourseId&gt;</code>: an
+          instructor of another course, or an admin who does not teach the
+          course, gets <code>403</code> and is neither recorded nor told who is
+          there.
+        </p>
         <p>Where the version check and the warning are used so far:</p>
         <Table
           striped
@@ -536,6 +649,96 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                 </a>
               </td>
             </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-ranking">
+              <td>Faculty rankings</td>
+              <td>One recruitment course&apos;s ranking list</td>
+              <td>
+                <code>ranking:&lt;recruitmentCourseId&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/287"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #287
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-application">
+              <td>
+                Student apply page when editing a submitted application, and the
+                Admin application edit page
+              </td>
+              <td>One application, edited by its applicant or by an admin</td>
+              <td>
+                <code>application:&lt;applicationId&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/308"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #308
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-assignments">
+              <td>Assignments (admin)</td>
+              <td>The whole assignments page for one recruitment</td>
+              <td>
+                <code>assignments:&lt;recruitmentId&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/289"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #289
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-budget">
+              <td>Budget</td>
+              <td>
+                One quarter&apos;s budget (compare-and-set for a
+                recruitment&apos;s average cost and hiring target, keyed{" "}
+                <code>recruitment:&lt;id&gt;</code>)
+              </td>
+              <td>
+                <code>budget:&lt;quarter&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/290"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #290
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-courses-edit">
+              <td>
+                Courses edit page (allocations and estimated enrollments); the
+                view-only page never warns
+              </td>
+              <td>The whole edit page for one recruitment</td>
+              <td>
+                <code>courses-edit:&lt;recruitmentId&gt;</code>
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/288"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #288
+                </a>
+              </td>
+            </tr>
             <tr data-testid="HelpDeveloperPage-simultaneous-row-admin-pages">
               <td>Instructors page and non-allocation Courses page saves</td>
               <td>
@@ -550,8 +753,7 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #291
-                </a>
-              </td>
+
             </tr>
           </tbody>
         </Table>

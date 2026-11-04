@@ -25,6 +25,7 @@ import edu.ucsb.cs.taapply.controller.ApplicationsController.PriorCourseworkFiel
 import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
@@ -195,7 +196,8 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
           TrainingCommitment.AGREE,
           "Because",
           false,
-          7L);
+          7L,
+          null);
 
   /** What a form with almost nothing filled in yet sends: a name, blank text, nulls and false. */
   private static final ApplicationFields NEARLY_EMPTY =
@@ -240,7 +242,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   public void opening_creates_an_empty_draft_when_there_is_none() throws Exception {
     when(recruitmentRepository.findById(1L))
         .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
-    when(applicationRepository.existsByEmailAndRecruitmentId(EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
         .thenReturn(Optional.empty());
     DraftApplication created = draft(9L, EMAIL);
@@ -267,7 +271,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   public void opening_returns_the_draft_that_already_exists() throws Exception {
     when(recruitmentRepository.findById(1L))
         .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
-    when(applicationRepository.existsByEmailAndRecruitmentId(EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     DraftApplication existing = draft(4L, EMAIL);
     existing.setFirstName("Ada");
     when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
@@ -290,7 +296,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   public void opening_twice_at_once_returns_the_draft_the_other_request_made() throws Exception {
     when(recruitmentRepository.findById(1L))
         .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
-    when(applicationRepository.existsByEmailAndRecruitmentId(EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     DraftApplication theirs = draft(4L, EMAIL);
     when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
         .thenReturn(Optional.empty(), Optional.of(theirs));
@@ -313,7 +321,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   public void a_constraint_failure_with_no_draft_to_return_is_not_hidden() throws Exception {
     when(recruitmentRepository.findById(1L))
         .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
-    when(applicationRepository.existsByEmailAndRecruitmentId(EMAIL, 1L)).thenReturn(false);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
     when(draftApplicationRepository.findByEmailAndRecruitmentId(EMAIL, 1L))
         .thenReturn(Optional.empty());
     when(draftApplicationRepository.save(any(DraftApplication.class)))
@@ -372,7 +382,9 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
   public void opening_when_an_application_is_already_submitted_is_refused() throws Exception {
     when(recruitmentRepository.findById(1L))
         .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
-    when(applicationRepository.existsByEmailAndRecruitmentId(EMAIL, 1L)).thenReturn(true);
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(true);
 
     MvcResult response =
         mockMvc
@@ -478,6 +490,45 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
     verify(draftApplicationRepository, times(1)).save(saved.capture());
     assertEquals(expected, saved.getValue());
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+  }
+
+  /** Issue #292: the first quarter box is saved with the draft, so it is there after a reload. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void the_first_quarter_box_is_saved_with_the_draft_and_cleared_when_unanswered()
+      throws Exception {
+    List<Boolean> seen = new java.util.ArrayList<>();
+    when(draftApplicationRepository.findById(5L)).thenReturn(Optional.of(draft(5L, EMAIL)));
+    when(recruitmentRepository.findById(1L))
+        .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
+    when(draftApplicationRepository.save(any(DraftApplication.class)))
+        .thenAnswer(
+            invocation -> {
+              DraftApplication draft = invocation.getArgument(0);
+              seen.add(draft.getFirstQuarter());
+              return draft;
+            });
+    com.fasterxml.jackson.databind.node.ObjectNode ticked = mapper.valueToTree(NEARLY_EMPTY);
+    ticked.put("firstQuarter", true);
+
+    mockMvc
+        .perform(
+            put("/api/draftApplications?id=5&version=3")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(ticked))
+                .with(csrf()))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(
+            put("/api/draftApplications?id=5&version=3")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(NEARLY_EMPTY))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(java.util.Arrays.asList(Boolean.TRUE, null), seen);
   }
 
   @WithMockUser(

@@ -14,6 +14,7 @@ import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.services.RecruitmentStepsService.Link;
 import edu.ucsb.cs.taapply.services.RecruitmentStepsService.Step;
@@ -35,10 +36,13 @@ public class RecruitmentStepsServiceTests {
   @Autowired RecruitmentStepsService service;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean AssignmentsService assignmentsService;
+  @MockitoBean DraftApplicationRepository draftApplicationRepository;
 
   private static final String COURSES = "/admin/recruitments/7/courses";
   private static final List<Link> SEE_APPLICATIONS =
       List.of(new Link("(see applications)", "/admin/recruitments/7/applications"));
+  private static final List<Link> SEE_DRAFTS =
+      List.of(new Link("(see draft applications)", "/admin/recruitments/7/draft-applications"));
   private static final List<Link> SEE_RANKINGS = List.of(new Link("(see rankings)", COURSES));
   private static final List<Link> SEE_ASSIGNMENTS = List.of(new Link("(see assignments)", COURSES));
 
@@ -58,6 +62,7 @@ public class RecruitmentStepsServiceTests {
   public void nothingAllocatedOrAssigned() {
     when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of());
     when(assignmentsService.realApplications(7L)).thenReturn(List.of());
+    when(draftApplicationRepository.countByRecruitmentId(7L)).thenReturn(0L);
   }
 
   private Step step(Recruitment recruitment, int number) {
@@ -178,11 +183,11 @@ public class RecruitmentStepsServiceTests {
             2,
             false,
             "Tentative: 2026-09-01",
-            "0 applications",
+            "0 draft applications",
             null,
             "openApplications",
             null,
-            SEE_APPLICATIONS,
+            SEE_DRAFTS,
             null,
             null),
         step(fresh(), 2));
@@ -203,11 +208,11 @@ public class RecruitmentStepsServiceTests {
             2,
             true,
             "Opened: 2026-09-02",
-            "0 applications",
+            "0 draft applications",
             null,
             "closeApplications",
             null,
-            SEE_APPLICATIONS,
+            SEE_DRAFTS,
             null,
             null),
         step(open, 2));
@@ -292,7 +297,8 @@ public class RecruitmentStepsServiceTests {
     assertNull(step.href());
     assertNull(step.action());
     assertEquals(
-        List.of(new Link("Budget", "/admin/budget/F26"), new Link("Allocations", COURSES)),
+        List.of(
+            new Link("Budget", "/admin/budget/F26"), new Link("Allocations", COURSES + "/edit")),
         step.titleLinks());
   }
 
@@ -638,16 +644,25 @@ public class RecruitmentStepsServiceTests {
   }
 
   @Test
-  public void steps_2_and_4_count_the_real_applications_and_link_to_them() {
+  public void step_4_counts_the_real_applications_and_links_to_them() {
     when(assignmentsService.realApplications(7L))
         .thenReturn(List.of(assignedTo(1, 10L), assignedTo(2, null), assignedTo(3, null)));
-    for (int number : new int[] {2, 4}) {
-      assertEquals("3 applications", step(fresh(), number).detail());
-      assertEquals(SEE_APPLICATIONS, step(fresh(), number).links());
-    }
+    assertEquals("3 applications", step(fresh(), 4).detail());
+    assertEquals(SEE_APPLICATIONS, step(fresh(), 4).links());
 
     when(assignmentsService.realApplications(7L)).thenReturn(List.of(assignedTo(1, null)));
-    assertEquals("1 application", step(fresh(), 2).detail());
+    assertEquals("1 application", step(fresh(), 4).detail());
+  }
+
+  @Test
+  public void step_2_counts_the_drafts_not_the_applications_and_links_to_them() {
+    when(assignmentsService.realApplications(7L)).thenReturn(List.of(assignedTo(1, null)));
+    when(draftApplicationRepository.countByRecruitmentId(7L)).thenReturn(3L);
+    assertEquals("3 draft applications", step(fresh(), 2).detail());
+    assertEquals(SEE_DRAFTS, step(fresh(), 2).links());
+
+    when(draftApplicationRepository.countByRecruitmentId(7L)).thenReturn(1L);
+    assertEquals("1 draft application", step(fresh(), 2).detail());
   }
 
   @Test

@@ -31,18 +31,29 @@ const visibleRankingSummaries =
   );
 const mockClipboardWriteText = vi.fn();
 
-function renderPage() {
+/** The edit page unless told otherwise (issue #278): most of what the page does is editing. */
+function renderPage({ edit = true } = {}) {
   return render(
     <QueryClientProvider
       client={
         new QueryClient({ defaultOptions: { queries: { retry: false } } })
       }
     >
-      <MemoryRouter initialEntries={["/admin/recruitments/7/courses"]}>
+      <MemoryRouter
+        initialEntries={[
+          edit
+            ? "/admin/recruitments/7/courses/edit"
+            : "/admin/recruitments/7/courses",
+        ]}
+      >
         <Routes>
           <Route
             path="/admin/recruitments/:recruitmentId/courses"
             element={<RecruitmentCoursesPage />}
+          />
+          <Route
+            path="/admin/recruitments/:recruitmentId/courses/edit"
+            element={<RecruitmentCoursesPage edit />}
           />
         </Routes>
       </MemoryRouter>
@@ -121,7 +132,7 @@ describe("RecruitmentCoursesPage tests", () => {
       expect(
         screen.getByTestId("RecruitmentCoursesPage-last-refreshed"),
       ).toHaveTextContent(
-        `Last refreshed from the UCSB schedule: ${new Date("2026-02-01T03:00:00").toLocaleString()}. Open, upcoming and recently closed recruitments are also refreshed automatically every night.`,
+        `Last refreshed from the UCSB schedule: 2/1/2026, 3:00:00 AM. Open, upcoming and recently closed recruitments are also refreshed automatically every night.`,
       ),
     );
   });

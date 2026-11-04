@@ -12,8 +12,10 @@ const candidatesFixtures = [
     graduationDate: "S27",
     gpaMajor: 3.9,
     gpaOverall: 3.8,
+    firstQuarter: false,
     previousServiceAsUla: 2,
     videoLink: "https://example.edu/ada",
+    rankingVersion: 3,
   },
   {
     applicationId: 2,
@@ -28,8 +30,10 @@ const candidatesFixtures = [
     graduationDate: "F27",
     gpaMajor: 3.7,
     gpaOverall: 3.6,
+    firstQuarter: false,
     previousServiceAsUla: 10,
     videoLink: "https://example.edu/grace",
+    rankingVersion: 3,
   },
   {
     applicationId: 3,
@@ -44,8 +48,10 @@ const candidatesFixtures = [
     graduationDate: "W28",
     gpaMajor: 3.95,
     gpaOverall: 3.9,
+    firstQuarter: false,
     previousServiceAsUla: 1,
     videoLink: "https://example.edu/alan",
+    rankingVersion: 3,
   },
   {
     applicationId: 4,
@@ -60,8 +66,10 @@ const candidatesFixtures = [
     graduationDate: "S28",
     gpaMajor: 4,
     gpaOverall: 4,
+    firstQuarter: false,
     previousServiceAsUla: 0,
     videoLink: null,
+    rankingVersion: 3,
   },
 ];
 
@@ -81,8 +89,10 @@ export const candidatesWithNotInterested = [
     graduationDate: "S26",
     gpaMajor: 4.0,
     gpaOverall: 3.9,
+    firstQuarter: false,
     previousServiceAsUla: 0,
     videoLink: null,
+    rankingVersion: 3,
   },
 ];
 

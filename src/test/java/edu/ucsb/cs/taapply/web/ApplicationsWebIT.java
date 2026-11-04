@@ -2,6 +2,8 @@ package edu.ucsb.cs.taapply.web;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
@@ -16,6 +18,7 @@ import edu.ucsb.cs.taapply.entity.TaTopic;
 import edu.ucsb.cs.taapply.entity.UlaInterest;
 import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -30,6 +33,8 @@ import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -188,12 +193,23 @@ public class ApplicationsWebIT extends WebTestCase {
   }
 
   private void fillAndSubmit() {
+    fillAndSubmit(false);
+  }
+
+  /**
+   * Fills the TA form and submits it. With {@code firstQuarter}, the GPAs are typed first and the
+   * first quarter box (issue #292) ticked afterwards, so the typed values have to be dropped.
+   */
+  private void fillAndSubmit(boolean firstQuarter) {
     page.getByTestId("ApplyPage-firstName").fill("Chris");
     page.getByTestId("ApplyPage-lastName").fill("Gaucho");
     page.getByTestId("ApplyPage-major").selectOption("Computer Science");
     // The TA answers required since issue #214.
     page.getByTestId("ApplyPage-gpaMajor").fill("3.9");
     page.getByTestId("ApplyPage-gpaOverall").fill("3.8");
+    if (firstQuarter) {
+      page.getByTestId("ApplyPage-firstQuarter").check();
+    }
     page.getByTestId("ApplyPage-yearInProgram").fill("2nd");
     page.getByTestId("ApplyPage-graduationDate").fill("S27");
     page.getByTestId("ApplyPage-classLevel").selectOption("PHD");
@@ -297,6 +313,67 @@ public class ApplicationsWebIT extends WebTestCase {
   }
 
   /**
+   * Issue #292: a first quarter grad student ticks the box under the GPA fields, which then need no
+   * values; the application is stored without GPAs, and shows the box ticked when reopened.
+   */
+  @Test
+  public void a_first_quarter_applicant_applies_without_gpas() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+
+    assertThat(page.getByTestId("ApplyPage-firstQuarter")).not().isChecked();
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).isEnabled();
+    page.getByTestId("ApplyPage-firstQuarter").check();
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).isDisabled();
+    assertThat(page.getByTestId("ApplyPage-gpaOverall")).isDisabled();
+    page.getByTestId("ApplyPage-firstQuarter").uncheck();
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).isEnabled();
+
+    fillAndSubmit(true);
+
+    // Stored with the flag and without GPAs, though some were typed before the box was ticked.
+    assertThat(
+            page.getByTestId(
+                "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-applied"))
+        .containsText("Application on File");
+    Application stored = applicationRepository.findAll().iterator().next();
+    assertTrue(stored.isFirstQuarter());
+    assertNull(stored.getGpaMajor());
+    assertNull(stored.getGpaOverall());
+
+    // Reopened, the box is ticked and the GPA fields are disabled.
+    page.getByTestId("HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-view")
+        .click();
+    assertThat(page.getByTestId("ApplicationPage-firstQuarter")).isChecked();
+    assertThat(page.getByTestId("ApplicationPage-gpaMajor")).isDisabled();
+  }
+
+  /**
+   * Issue #292: the box is part of the draft, so a draft saved with it ticked comes back ticked.
+   */
+  @Test
+  public void the_first_quarter_box_is_kept_in_the_draft() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    page.getByTestId("ApplyPage-firstQuarter").check();
+    page.getByTestId("ApplyPage-saveDraft").click();
+
+    String card = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    assertThat(page.getByTestId(card + "draft")).containsText("Continue editing draft application");
+    assertEquals(
+        Boolean.TRUE, draftApplicationRepository.findAll().iterator().next().getFirstQuarter());
+    page.getByTestId(card + "draft").click();
+    assertThat(page.getByTestId("ApplyPage-firstQuarter")).isChecked();
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).isDisabled();
+  }
+
+  /**
    * Issue #270: nothing typed is lost. Opening the form makes a draft; Save Draft keeps what was
    * typed and returns home, where the card offers to continue it; continuing brings it back;
    * submitting turns it into the application and removes the draft.
@@ -354,6 +431,89 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId(card + "draft")).not().isVisible();
     assertEquals(1, applicationRepository.count());
     assertEquals(0, draftApplicationRepository.count());
+  }
+
+  /**
+   * Issue #296: an admin sees the applications students have started, counted at the top of the
+   * Draft Applications page, with no way to edit them, and leaves a comment on one. When the
+   * student submits, the draft leaves the page and the comment is on the application.
+   */
+  @Test
+  public void an_admin_sees_a_draft_comments_on_it_and_the_comment_moves_to_the_application()
+      throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    // The student starts an application and saves it unfinished.
+    setupRegularUser();
+    goTo("/");
+    String card = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    page.getByTestId(card + "apply").click();
+    page.getByTestId("ApplyPage-firstName").fill("Dana");
+    page.getByTestId("ApplyPage-lastName").fill("Draft");
+    page.getByTestId("ApplyPage-saveDraft").click();
+    assertThat(page.getByTestId(card + "draft")).isVisible();
+    assertEquals(1, draftApplicationRepository.count());
+
+    // The admin finds it from the recruitment's card, counted, in the Applications table's columns
+    // but with no Edit column.
+    browser.close();
+    setupAdminUser();
+    goTo("/");
+    assertThat(page.getByTestId("HomePageLoggedIn-admin-card-0-draft-applications-button"))
+        .containsText("Draft Applications");
+    page.getByTestId("HomePageLoggedIn-admin-card-0-draft-applications-button").click();
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-count"))
+        .containsText("1 Draft Application");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-name"))
+        .containsText("Dana Draft");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-email"))
+        .containsText("cgaucho@ucsb.edu");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-header-submittedAt"))
+        .containsText("Last saved");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-drafts-header-edit")).hasCount(0);
+
+    // Opening it shows what the student has so far, read only, with a box for comments.
+    page.getByTestId("RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-id-link").click();
+    assertThat(page.getByTestId("AdminApplicationPage-summary-Name")).containsText("Dana Draft");
+    assertThat(page.getByTestId("AdminApplicationPage-about")).containsText("has not submitted it");
+    assertThat(page.getByTestId("AdminApplicationPage-edit")).hasCount(0);
+    page.getByTestId("AdminApplicationPage-adminComments").fill("Strong; ask about CMPSC 156");
+    page.getByTestId("AdminApplicationPage-save").click();
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-count"))
+        .containsText("1 Draft Application");
+    page.getByTestId("RecruitmentDraftApplicationsPage-drafts-cell-row-0-col-id-link").click();
+    assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
+        .hasValue("Strong; ask about CMPSC 156");
+    // The comment did not touch the draft, so the student's autosave is not disturbed.
+    assertEquals(1, draftApplicationRepository.count());
+    assertEquals(0, applicationRepository.count());
+
+    // The student carries on and submits; their draft never showed the comment.
+    browser.close();
+    loginAs("cgaucho@ucsb.edu");
+    goTo("/");
+    page.getByTestId(card + "draft").click();
+    assertThat(page.getByTestId("ApplyPage-firstName")).hasValue("Dana");
+    fillAndSubmit();
+    assertThat(page.getByTestId(card + "view")).containsText("View submitted application");
+    assertEquals(0, draftApplicationRepository.count());
+    assertEquals(1, applicationRepository.count());
+    assertEquals(
+        "Strong; ask about CMPSC 156",
+        applicationRepository.findAll().iterator().next().getAdminComments());
+
+    // The draft has left the admin's page, and the comment is on the application.
+    browser.close();
+    loginAs("admin@ucsb.edu");
+    goTo("/admin/recruitments/" + recruitment.getId() + "/draft-applications");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-count"))
+        .containsText("0 Draft Applications");
+    assertThat(page.getByTestId("RecruitmentDraftApplicationsPage-none")).isVisible();
+    goTo("/admin/recruitments/" + recruitment.getId() + "/applications");
+    page.getByTestId("RecruitmentApplicationsPage-applications-cell-row-0-col-id-link").click();
+    assertThat(page.getByTestId("AdminApplicationPage-adminComments"))
+        .hasValue("Strong; ask about CMPSC 156");
   }
 
   /**
@@ -888,6 +1048,63 @@ public class ApplicationsWebIT extends WebTestCase {
     assertEquals("Found other employment", stored.getCancellationReason());
   }
 
+  /**
+   * Issue #318: after cancelling, while applications are open, the applicant starts a new
+   * application from scratch; the cancelled one is kept, and only the new one is live.
+   */
+  @Test
+  public void an_applicant_who_cancelled_can_start_a_new_application() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    fillAndSubmit();
+
+    String card = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    String modal = "HomePageLoggedIn-dashboard-cancel-";
+    assertThat(page.getByTestId(card + "restart")).hasCount(0);
+    page.getByTestId(card + "cancel").click();
+    page.getByTestId(modal + "step1-yes").click();
+    page.getByTestId(modal + "reason").fill("Changed my mind");
+    page.getByTestId(modal + "step2-yes").click();
+    assertThat(page.getByTestId(card + "applied")).containsText("Application cancelled");
+
+    // The cancelled application's own page offers the same button, and says the old one is kept.
+    page.getByTestId(card + "view").click();
+    assertThat(page.getByTestId("ApplicationPage-restart")).containsText("Start a new application");
+    assertThat(page.getByTestId("ApplicationPage-restart-note")).containsText("stays on file");
+    page.goBack();
+
+    assertThat(page.getByTestId(card + "restart")).containsText("Start a new application");
+    page.getByTestId(card + "restart").click();
+
+    // As if from scratch: nothing is copied from the cancelled application.
+    assertThat(page.getByTestId("ApplyPage-major")).hasValue("");
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).hasValue("");
+    assertThat(page.getByTestId("ApplyPage-coursework-count")).containsText("0 of at least 3");
+    fillAndSubmit();
+
+    // The new application is the one on file, and can be cancelled in turn.
+    assertThat(page.getByTestId(card + "applied")).containsText("Application on File");
+    assertThat(page.getByTestId(card + "cancel")).isVisible();
+    assertThat(page.getByTestId(card + "restart")).hasCount(0);
+
+    List<Application> stored = new ArrayList<>();
+    applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId()).forEach(stored::add);
+    assertEquals(2, stored.size());
+    assertEquals(ApplicationReviewStatus.CANCELLED, stored.get(0).getStatus());
+    assertEquals("Changed my mind", stored.get(0).getCancellationReason());
+    assertEquals(1, stored.get(0).getAttemptNumber());
+    assertEquals(ApplicationReviewStatus.PENDING, stored.get(1).getStatus());
+    assertEquals(2, stored.get(1).getAttemptNumber());
+
+    // The cancelled application's page now points to the new one instead of offering a button.
+    goTo("/applications/" + stored.get(0).getId());
+    assertThat(page.getByTestId("ApplicationPage-new-application-link")).isVisible();
+    assertThat(page.getByTestId("ApplicationPage-restart")).hasCount(0);
+  }
+
   /** An admin reviews the applications to a recruitment and leaves comments on one (issue #49). */
   @Test
   public void an_admin_can_review_the_applications_and_comment_on_one() throws Exception {
@@ -1075,5 +1292,112 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("TestApplicationPage-saved")).isVisible();
     assertThat(page.getByTestId("TestApplicationPage-summary-Name")).containsText("Ada Admin");
     assertThat(page.getByTestId("TestOnlyBanner")).isVisible();
+  }
+
+  @Autowired edu.ucsb.cs.taapply.repository.UserRepository itUserRepository;
+  @Autowired edu.ucsb.cs.taapply.repository.AdminRepository itAdminRepository;
+
+  /** A submitted application of the given student, to the given recruitment. */
+  private Application seedApplication(Recruitment recruitment, String email, String firstName) {
+    return applicationRepository.save(
+        Application.builder()
+            .recruitmentId(recruitment.getId())
+            .email(email)
+            .status(edu.ucsb.cs.taapply.enums.ApplicationReviewStatus.PENDING)
+            .firstName(firstName)
+            .lastName("Gaucho")
+            .build());
+  }
+
+  /**
+   * Issue #302: an admin signs in, in a second browser context, as a different person from the
+   * student whose window is already open. The student's window is {@code page}.
+   */
+  private com.microsoft.playwright.Page openAsAdmin(String path) {
+    if (itUserRepository.findByEmail("admin@ucsb.edu").isEmpty()) {
+      itUserRepository.save(
+          edu.ucsb.cs.taapply.entity.User.builder()
+              .email("admin@ucsb.edu")
+              .familyName("Admin")
+              .givenName("Ada")
+              .fullName("Ada Admin")
+              .googleSub("987654321")
+              .pictureUrl("")
+              .build());
+      itAdminRepository.save(
+          edu.ucsb.cs.taapply.entity.Admin.builder().email("admin@ucsb.edu").build());
+    }
+    edu.ucsb.cs.taapply.services.wiremock.WiremockServiceImpl.setupOauthMocks(
+        wireMockServer, "admin@ucsb.edu");
+    String base = page.url().replaceAll("(http://localhost:\\d+).*", "$1");
+    com.microsoft.playwright.BrowserContext adminContext = browser.newContext();
+    com.microsoft.playwright.Page adminPage = adminContext.newPage();
+    adminPage.navigate(base + "/oauth2/authorization/my-oauth-provider");
+    adminPage.locator("#username").fill("admin@ucsb.edu");
+    adminPage.locator("#password").fill("password");
+    adminPage.locator("#submit").click();
+    adminPage.navigate(base + path);
+    return adminPage;
+  }
+
+  /**
+   * Issue #302: the student has a submitted application open for editing and an admin opens the
+   * admin edit page for the same application. Each is told of the other, in the maintainer's
+   * wording; the warning goes when the admin closes the window; and an admin on a different
+   * student's application warns no one.
+   */
+  @Test
+  public void an_admin_and_a_student_editing_the_same_application_warn_each_other()
+      throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+    Application mine = seedApplication(recruitment, "cgaucho@ucsb.edu", "Chris");
+    Application theirs = seedApplication(recruitment, "someone.else@ucsb.edu", "Sam");
+
+    setupRegularUser();
+    goTo("/applications/" + mine.getId());
+    assertThat(page.getByTestId("ApplicationPage-submit")).isVisible();
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs")).not().isVisible();
+
+    com.microsoft.playwright.Page adminPage =
+        openAsAdmin("/admin/applications/" + mine.getId() + "/edit");
+    assertThat(adminPage.getByTestId("AdminApplicationEditPage-submit")).isVisible();
+
+    var wait =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsVisibleOptions()
+            .setTimeout(20000);
+    // The student, whose window was open first, is told which admin has it.
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs")).isVisible(wait);
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs"))
+        .containsText(
+            "Admin admin@ucsb.edu (Test User) has this application open for editing. We recommend"
+                + " that you close this window and try again in a few minutes. If this message"
+                + " persists, please reach out to admin@ucsb.edu");
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs-modal-leave")).not().isVisible();
+    // The admin, who arrived last, is asked, with the student named.
+    assertThat(adminPage.getByTestId("AdminApplicationEditPage-multiple-tabs-modal-message"))
+        .isVisible(wait);
+    assertThat(adminPage.getByTestId("AdminApplicationEditPage-multiple-tabs-modal-message"))
+        .containsText(
+            "cgaucho@ucsb.edu (Test User) already has this application open for editing. We"
+                + " recommend that you wait a few minutes or ask them to close it.");
+
+    // Closing the admin's window lets the student's warning go.
+    adminPage.context().close();
+    var gone =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsHiddenOptions()
+            .setTimeout(30000);
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs")).isHidden(gone);
+
+    // An admin on another student's application warns no one: neither page shows a warning.
+    com.microsoft.playwright.Page elsewhere =
+        openAsAdmin("/admin/applications/" + theirs.getId() + "/edit");
+    assertThat(elsewhere.getByTestId("AdminApplicationEditPage-submit")).isVisible();
+    Thread.sleep(8000);
+    assertThat(elsewhere.getByTestId("AdminApplicationEditPage-multiple-tabs")).not().isVisible();
+    assertThat(elsewhere.getByTestId("AdminApplicationEditPage-multiple-tabs-modal-leave"))
+        .not()
+        .isVisible();
+    assertThat(page.getByTestId("ApplicationPage-multiple-tabs")).not().isVisible();
   }
 }

@@ -83,6 +83,15 @@ public class Recruitment {
   private Integer totalHiringTarget = 1;
 
   /**
+   * Counts the changes that overwrite many allocations at once, Auto Allocate (issue #278). An
+   * allocation edit that carries an older count is refused, since every number it was made against
+   * has moved.
+   */
+  @Column(name = "allocation_bulk_version", nullable = false)
+  @Builder.Default
+  private Integer allocationBulkVersion = 0;
+
+  /**
    * The estimated average cost of one position of this recruitment's type, in dollars and cents
    * (issue #177): per TA on a TA recruitment, per ULA on a ULA recruitment. Entered on the Budget
    * for Quarter page; null until it has been. A planning figure, not audited.
@@ -108,6 +117,18 @@ public class Recruitment {
   @Column(name = "assignments_published", nullable = false)
   @Builder.Default
   private Boolean assignmentsPublished = false;
+
+  /**
+   * The version of the recruitment's assignments (issue #280): starts at 1 and is counted up by
+   * every tentative assignment, by publishing or taking back, and by an applicant cancelling. A
+   * tentative assignment carries the version its page last saw and is refused if it has moved.
+   * Never written by saving the entity ({@code updatable = false}), so that a stale copy of the
+   * recruitment cannot move it back; only {@link
+   * edu.ucsb.cs.taapply.repository.RecruitmentRepository} changes it, in one atomic statement.
+   */
+  @Column(name = "assignments_version", nullable = false, updatable = false)
+  @Builder.Default
+  private Integer assignmentsVersion = 1;
 
   /**
    * When the recruitment was created (issue #231); null for rows older than the column whose

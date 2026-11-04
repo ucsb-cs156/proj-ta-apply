@@ -61,6 +61,7 @@ describe("ApplicationPage tests", () => {
       .onGet("/api/systemInfo")
       .reply(200, systemInfoFixtures.showingNeither);
     axiosMock.onGet("/api/applications").reply(200, application);
+    axiosMock.onGet("/api/applications/mine").reply(200, [application]);
     axiosMock
       .onGet("/api/recruitments/applicable")
       .reply(200, [openUla, closedTa]);
@@ -409,6 +410,148 @@ describe("ApplicationPage tests", () => {
     ).toHaveTextContent("Found other employment");
   });
 
+  // ---- starting again after a cancellation (issue #318) ----
+
+  const cancelled = applicationsFixtures.oneCancelledApplication;
+
+  test("a cancelled application offers to start a new one while applications are open", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    renderPage(4);
+
+    const button = await screen.findByTestId("ApplicationPage-restart");
+    expect(button).toHaveTextContent("Start a new application");
+    expect(button).toHaveAttribute("href", "/apply/2");
+    expect(
+      screen.getByTestId("ApplicationPage-restart-note"),
+    ).toHaveTextContent(
+      "This one stays on file as cancelled. The new application starts empty, as if you had not applied.",
+    );
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+  });
+
+  test("the button waits for the applicant's list, so a new application is not missed", async () => {
+    let answer;
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(() => new Promise((resolve) => (answer = resolve)));
+    renderPage(4);
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+
+    answer([200, [cancelled]]);
+    expect(
+      await screen.findByTestId("ApplicationPage-restart"),
+    ).toBeInTheDocument();
+  });
+
+  test("once a new application has been started, the cancelled one points to it", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [application, cancelled]);
+    renderPage(4);
+
+    expect(
+      await screen.findByTestId("ApplicationPage-new-application"),
+    ).toHaveTextContent("You have since started a new application.");
+    expect(
+      screen.getByTestId("ApplicationPage-new-application-link"),
+    ).toHaveAttribute("href", "/applications/2");
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+  });
+
+  test("another recruitment's application is not a replacement", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [{ ...application, recruitmentId: 99 }, cancelled]);
+    renderPage(4);
+
+    expect(
+      await screen.findByTestId("ApplicationPage-restart"),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+  });
+
+  test("another cancelled application is not a replacement", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock
+      .onGet("/api/applications/mine")
+      .reply(200, [{ ...cancelled, id: 5 }, cancelled]);
+    renderPage(4);
+
+    expect(
+      await screen.findByTestId("ApplicationPage-restart"),
+    ).toBeInTheDocument();
+  });
+
+  test("once applications have closed there is no button to start a new application", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    axiosMock
+      .onGet("/api/recruitments/applicable")
+      .reply(200, [{ ...openUla, applicationStatus: "CLOSED" }, closedTa]);
+    renderPage(4);
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/applications/mine"),
+      ).toHaveLength(1),
+    );
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+  });
+
+  test("a cancelled application whose recruitment is not on offer shows no button", async () => {
+    axiosMock.onGet("/api/applications").reply(200, cancelled);
+    axiosMock.onGet("/api/applications/mine").reply(200, [cancelled]);
+    axiosMock.onGet("/api/recruitments/applicable").reply(200, []);
+    renderPage(4);
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/applications/mine"),
+      ).toHaveLength(1),
+    );
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+  });
+
+  test("a closed application that was not cancelled does not claim a new one was started", async () => {
+    vi.setSystemTime(new Date(2026, 9, 1, 12, 0, 0));
+    const closed = {
+      ...applicationsFixtures.oneTaApplication,
+      recruitmentId: 1,
+    };
+    axiosMock.onGet("/api/applications").reply(200, closed);
+    axiosMock.onGet("/api/applications/mine").reply(200, [closed]);
+
+    renderPage(1);
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/applications/mine"),
+      ).toHaveLength(1),
+    );
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+  });
+
+  test("an application that was not cancelled never offers a new one", async () => {
+    renderPage();
+
+    await screen.findByTestId("ApplicationPage-status");
+    expect(screen.queryByTestId("ApplicationPage-restart")).toBeNull();
+    expect(screen.queryByTestId("ApplicationPage-new-application")).toBeNull();
+  });
+
   // ---- view only ----
 
   test("a closed recruitment leaves nothing to change", async () => {
@@ -486,5 +629,176 @@ describe("ApplicationPage tests", () => {
       await screen.findByTestId("ApplicationPage-view-only"),
     ).toBeInTheDocument();
     expect(screen.getByText("Your Application")).toBeInTheDocument();
+  });
+
+  // ---- issue #302: the version check and the multi-tab warning ----
+
+  const HEARTBEAT = /\/api\/applications\/heartbeat/;
+  const admin = {
+    label: "jane@ucsb.edu (Jane <b>Doe</b>)",
+    samePerson: false,
+    admin: true,
+  };
+  const me = { label: "ula@ucsb.edu (Chris)", samePerson: true };
+
+  const heartbeats = () =>
+    axiosMock.history.post.filter((r) =>
+      r.url.startsWith("/api/applications/heartbeat"),
+    );
+
+  async function editAndSave() {
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplicationPage-firstName")).toHaveValue(
+        "Chris",
+      ),
+    );
+    await userEvent.clear(screen.getByTestId("ApplicationPage-firstName"));
+    await userEvent.type(
+      screen.getByTestId("ApplicationPage-firstName"),
+      "Christina",
+    );
+    await userEvent.click(screen.getByTestId("ApplicationPage-i9Appointment"));
+    await userEvent.click(screen.getByTestId("ApplicationPage-submit"));
+  }
+
+  test("the heartbeat and the save name this tab by the same identifier, and the save carries the version", async () => {
+    axiosMock
+      .onGet("/api/applications")
+      .reply(200, { ...application, version: 4 });
+    axiosMock
+      .onPut("/api/applications")
+      .reply(200, { ...application, version: 5 });
+    renderPage();
+
+    await waitFor(() => expect(heartbeats().length).toBe(1));
+    expect(heartbeats()[0].url).toBe("/api/applications/heartbeat?id=2");
+    const clientId = heartbeats()[0].headers["X-Client-Id"];
+    expect(clientId).toBeTruthy();
+
+    await editAndSave();
+
+    await waitFor(() => expect(axiosMock.history.put.length).toBe(1));
+    expect(axiosMock.history.put[0].params).toEqual({ id: "2", version: 4 });
+    expect(axiosMock.history.put[0].headers["X-Client-Id"]).toBe(clientId);
+  });
+
+  test("no heartbeat while the application is only to be read", async () => {
+    axiosMock
+      .onGet("/api/recruitments/applicable")
+      .reply(200, [{ ...openUla, applicationStatus: "CLOSED" }, closedTa]);
+    vi.setSystemTime(new Date(2026, 5, 1, 12, 0, 0));
+    renderPage();
+
+    await screen.findByTestId("ApplicationPage-view-only");
+    expect(heartbeats()).toHaveLength(0);
+    expect(screen.queryByTestId("ApplicationPage-multiple-tabs")).toBeNull();
+  });
+
+  test("an applicant is told that an admin has the application open, with the name as text", async () => {
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [admin, me],
+      heartbeatSeconds: 20,
+      newest: false,
+      arrivedAtMillis: 1,
+    });
+    renderPage();
+
+    const banner = await screen.findByTestId("ApplicationPage-multiple-tabs");
+    expect(banner).toHaveTextContent(
+      "Admin jane@ucsb.edu (Jane <b>Doe</b>) has this application open for editing. We recommend that you close this window and try again in a few minutes. If this message persists, please reach out to jane@ucsb.edu",
+    );
+    expect(banner.querySelector("b")).toBeNull();
+    // It is advice: the form is still there.
+    expect(screen.getByTestId("ApplicationPage-submit")).toBeInTheDocument();
+  });
+
+  test("the applicant's own other tab is announced as before", async () => {
+    axiosMock
+      .onPost(HEARTBEAT)
+      .reply(200, { others: [me], heartbeatSeconds: 20 });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("ApplicationPage-multiple-tabs"),
+    ).toHaveTextContent(
+      "You are also editing this application in another tab or window. Please know that this is risky; we recommend closing all but one of these.",
+    );
+  });
+
+  test("the applicant who arrived last is asked, and may leave for the home page", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
+    axiosMock.onPost(HEARTBEAT).reply(200, {
+      others: [admin],
+      heartbeatSeconds: 20,
+      newest: true,
+      arrivedAtMillis: 1,
+    });
+    renderPage();
+
+    expect(
+      await screen.findByTestId("ApplicationPage-multiple-tabs-modal-message"),
+    ).toHaveTextContent("Admin jane@ucsb.edu (Jane <b>Doe</b>) has this");
+    await userEvent.click(
+      screen.getByTestId("ApplicationPage-multiple-tabs-modal-leave"),
+    );
+
+    expect(mockNavigate).toHaveBeenCalledWith("/");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/applications/leave?id=2",
+      expect.objectContaining({ method: "POST", keepalive: true }),
+    );
+    vi.unstubAllGlobals();
+  });
+
+  test("a save from an old copy shows the conflict, not a toast, and Reload brings the latest", async () => {
+    axiosMock
+      .onGet("/api/applications")
+      .reply(200, { ...application, version: 4 });
+    axiosMock.onPut("/api/applications").reply(409, {
+      message: "changed",
+      version: 5,
+      application: { ...application, version: 5 },
+    });
+    renderPage();
+
+    await editAndSave();
+
+    expect(
+      await screen.findByTestId("ApplicationPage-conflict-message"),
+    ).toHaveTextContent(
+      "This application was changed in another tab or window, or by an admin. Reload to see the latest version.",
+    );
+    expect(mockToast).not.toHaveBeenCalled();
+
+    axiosMock
+      .onGet("/api/applications")
+      .reply(200, { ...application, version: 5 });
+    const before = axiosMock.history.get.filter(
+      (r) => r.url === "/api/applications",
+    ).length;
+    await userEvent.click(
+      screen.getByTestId("ApplicationPage-conflict-reload"),
+    );
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("ApplicationPage-conflict")).toBeNull(),
+    );
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter((r) => r.url === "/api/applications")
+          .length,
+      ).toBeGreaterThan(before),
+    );
+  });
+
+  test("any other failed save is toasted and shows no conflict", async () => {
+    axiosMock.onPut("/api/applications").reply(500);
+    renderPage();
+
+    await editAndSave();
+
+    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId("ApplicationPage-conflict")).toBeNull();
   });
 });

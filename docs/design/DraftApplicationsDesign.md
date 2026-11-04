@@ -148,9 +148,93 @@ The card for an open recruitment shows, in the footer:
 | nothing | **Apply to be a TA** (or **ULA**) |
 | a draft | **Continue editing draft application**, with a red warning: *Your application is not yet complete; incomplete applications are not considered.* The badge says *Draft application, not submitted*. |
 | a submitted application | **View submitted application** (and Cancel my Application) |
+| a cancelled application | **View my Application** and, while applications are open, **Start a new application** (issue #318, below); with a new draft begun, **Continue editing draft application** instead |
 
 A recruitment that is not open keeps its greyed-out Apply button; a draft for it offers nothing to
 continue, since it can no longer be saved.
+
+## Cancelling, and starting again (issue #318)
+
+Cancelling (#107) is final for the application cancelled: it cannot be edited, commented on or
+brought back. It no longer locks the applicant out of the recruitment. While applications are open
+(the same rule as for any new application) a cancelled applicant may begin a new application "as if
+from scratch", through **Start a new application** on the home page card and on the cancelled
+application's page. Once applications have closed the button is not shown, and the server refuses
+as it does for anyone.
+
+**One live application per person per recruitment, any number of cancelled ones.**
+
+* *Server.* `POST /api/applications/post` and `POST /api/draftApplications/open` refuse only when
+  the person has an application to the recruitment whose status is not CANCELLED
+  (`existsByEmailAndRecruitmentIdAndStatusNot`). Someone else's applications never matter.
+* *Uniqueness.* The old unique constraint on (email, recruitment) is replaced by one on (email,
+  recruitment, `attempt_number`), changeset `060`. The first application is attempt 1; a new one is
+  one more than the number of applications the person already has there. The cancelled row is kept
+  untouched (reason, time, answers). The database still refuses two simultaneous submissions,
+  because both would compute the same attempt number. An admin's test application follows the same
+  rule: cancelled test rows are set aside and the next test is a new row.
+* *Drafts.* Unchanged: one draft per person per recruitment, with its own id, deleted on submit.
+  After a cancellation there is no draft, so the new one is created empty and every multi-tab
+  warning (#273, #284, #298) is keyed to it; the application it becomes has a new id, so a tab still
+  open on the cancelled application warns no one about the new one.
+* *"As if from scratch".* The form is not pre-filled from any earlier application once the person
+  has one here, cancelled or not, only (as for a first-time applicant) with their Google name.
+
+**What each audience sees.**
+
+| Who | Sees |
+|---|---|
+| the applicant | the card's application is the live one, else the newest cancelled one; the cancelled application's page points to the new one once it exists |
+| an admin, the Applications table and CSV | **both rows**, in id order, the same email twice; the cancelled one has status CANCELLED and its Cancelled column (reason and time) |
+| counts, rankings, rankings CSV, assignments, course targets | the live application only (`ApplicationVisibility.real` already left out CANCELLED) |
+| the card's count (`applicationCounts`) | applicants, not rows: a person with a cancelled and a live application counts once |
+| faculty's **Cancelled applications** table | a person only while they have no live application (`ApplicationVisibility.cancelled`) |
+
+## What an admin sees of drafts (issue #296)
+
+The **Admin card for a recruitment** has a **Draft Applications** button between **Courses** and
+**Applications**. It opens `/admin/recruitments/:id/draft-applications`: the count of drafts at the
+top ("3 Draft Applications"), then the same table as the Applications page. Opening a draft
+(`/admin/draft-applications/:id`) shows it read-only in the same summary an application has, with a
+box for the admin's comments.
+
+**One implementation for both, so they cannot drift.** The components are parameterized by whether
+the row is a draft, and nothing is copied:
+
+| Shared piece | How a draft differs |
+|---|---|
+| `AdminApplicationTable` (`draft` prop) | no Edit column; links lead to the draft's page; no origin badge |
+| `applicationColumns(type, draft)` (the column catalogue) | one column differs: **Submitted** is **Last saved**; the ids and order are the same, so a column added to the catalogue is in both tables |
+| `ApplicationSummary` (`draft` prop) | a yes/no question not yet answered is blank, not "No" |
+| `AdminApplicationPage` (`draft` prop) | reads from and saves comments to the drafts endpoints; no Edit button, no audit trail |
+| `useHiddenApplicationColumns` | none: the same stored choice of hidden columns serves both tables |
+
+Only the list page (`RecruitmentDraftApplicationsPage`) is its own, since the Applications page has
+things that make no sense for drafts: the CSV download, Test Application, fake data and the
+recruitment's change history.
+
+**Admin comments.** An admin may comment on a draft but never edit it, and there is no endpoint
+that edits one. The comments are kept in their own table, `draft_admin_comments`, one row per draft
+(changeset `055`), not on the draft, for two reasons: the draft is returned to the applicant, who
+must never see them, and the draft carries a version that every save increments, so an admin
+commenting would make the applicant's next autosave fail as a conflict. When the application is
+submitted, the comments are copied to `applications.admin_comments` and the row is deleted along
+with the draft. The row also goes (by `ON DELETE CASCADE`) whenever its draft does for any other
+reason, including the recruitment being deleted.
+
+**API** (all admin-only; 403 for anyone else, 404 for an unknown recruitment or draft):
+
+* `GET /api/admin/draftApplications/all?recruitmentId=` lists that recruitment's drafts, oldest
+  first, each with `adminComments`.
+* `GET /api/admin/draftApplications/count?recruitmentId=` returns how many, as a bare number. The
+  page counts the list it already has; the endpoint is for places that want only the number (the
+  steps card, issue #297).
+* `GET /api/admin/draftApplications?id=` returns one draft; `PUT .../adminComments?id=&adminComments=`
+  replaces its comments.
+
+A draft appears in the list as soon as the applicant opens the form, even if empty, and leaves it
+when submitted. There is no CSV of drafts: they may be empty or half finished, and the CSV writer is
+built for submitted applications of one form type.
 
 ## Not done
 
