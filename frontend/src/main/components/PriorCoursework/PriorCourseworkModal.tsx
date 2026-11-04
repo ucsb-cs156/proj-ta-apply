@@ -128,7 +128,14 @@ export default function PriorCourseworkModal({
       <Modal.Header closeButton>
         {course ? "Edit Course" : "Add Course"}
       </Modal.Header>
-      <Form onSubmit={handleSubmit(submit)}>
+      <Form
+        onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
+          // The modal is portalled out of the page but still sits inside the application form in
+          // the React tree; stop this submit from bubbling up and submitting the application (#309).
+          event.stopPropagation();
+          return handleSubmit(submit)(event);
+        }}
+      >
         <Modal.Body>
           <p className="mb-2">
             <RequiredFieldExplanation />

@@ -1204,6 +1204,78 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-app-link")).isVisible();
   }
 
+  /**
+   * Issue #309: filling a blank application top to bottom, Enter in a field and the course dialog's
+   * buttons (and its Enter) must not submit the application or make the page jump to the first
+   * missing answer; only the Submit Application button submits.
+   */
+  @Test
+  public void enter_and_the_course_dialog_never_submit_the_application() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+
+    // Top to bottom, pressing Enter in the text fields as an applicant might.
+    page.getByTestId("ApplyPage-firstName").fill("Chris");
+    page.getByTestId("ApplyPage-firstName").press("Enter");
+    page.getByTestId("ApplyPage-lastName").fill("Gaucho");
+    page.getByTestId("ApplyPage-lastName").press("Enter");
+    page.getByTestId("ApplyPage-major").selectOption("Computer Science");
+    page.getByTestId("ApplyPage-gpaMajor").fill("3.9");
+    page.getByTestId("ApplyPage-gpaMajor").press("Enter");
+    page.getByTestId("ApplyPage-gpaOverall").fill("3.8");
+    page.getByTestId("ApplyPage-gpaOverall").press("Enter");
+    page.getByTestId("ApplyPage-yearInProgram").fill("2nd");
+    page.getByTestId("ApplyPage-yearInProgram").press("Enter");
+    page.getByTestId("ApplyPage-graduationDate").fill("S27");
+    page.getByTestId("ApplyPage-classLevel").selectOption("PHD");
+    page.getByTestId("ApplyPage-residencyStatus").selectOption("US_CITIZEN");
+    page.getByTestId("ApplyPage-languageExam").selectOption("EXEMPT_US_CITIZEN");
+    page.getByTestId("ApplyPage-topic-Java-4").check();
+    assertThat(page.getByTestId("ApplyPage-missing")).not().isVisible();
+    assertEquals(0, applicationRepository.count());
+
+    // The first choice course is deliberately still blank, as it is in the reported sequence.
+    // Add a course with the dialog's button.
+    page.getByTestId("ApplyPage-coursework-add-button").click();
+    page.getByTestId("ApplyPage-coursework-modal-courseNumber").fill("CMPSC 130A");
+    Object before = page.evaluate("window.scrollY");
+    page.getByTestId("ApplyPage-coursework-modal-save").click();
+    assertThat(page.getByTestId("ApplyPage-coursework-modal")).not().isVisible();
+    assertThat(page.getByTestId("ApplyPage-coursework-count")).containsText("1 of at least 3");
+    assertThat(page.getByTestId("ApplyPage-missing")).not().isVisible();
+    assertEquals(before, page.evaluate("window.scrollY"));
+
+    // Add another with Enter inside the dialog: that adds the course, not the application.
+    page.getByTestId("ApplyPage-coursework-add-button").click();
+    page.getByTestId("ApplyPage-coursework-modal-courseNumber").fill("CMPSC 130B");
+    assertThat(page.getByTestId("ApplyPage-coursework-modal-courseNumber")).hasValue("CMPSC 130B");
+    page.getByTestId("ApplyPage-coursework-modal-courseNumber").press("Enter");
+    assertThat(page.getByTestId("ApplyPage-coursework-modal")).not().isVisible();
+    assertThat(page.getByTestId("ApplyPage-coursework-count")).containsText("2 of at least 3");
+    assertThat(page.getByTestId("ApplyPage-missing")).not().isVisible();
+    assertEquals(before, page.evaluate("window.scrollY"));
+
+    addCourse("ApplyPage", "CMPSC 156");
+    assertThat(page.getByTestId("ApplyPage-coursework-count")).containsText("3 of at least 3");
+    assertThat(page.getByTestId("ApplyPage-missing")).not().isVisible();
+    assertEquals(0, applicationRepository.count());
+
+    // Finish, with Enter pressed once more in the last text field; still nothing is submitted.
+    page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
+    page.getByTestId("ApplyPage-notice-agree").check();
+    page.getByTestId("ApplyPage-yearInProgram").press("Enter");
+    assertEquals(0, applicationRepository.count());
+    assertThat(page.getByTestId("ApplyPage-submit")).isVisible();
+
+    // Only the explicit button submits.
+    page.getByTestId("ApplyPage-submit").click();
+    assertThat(page.getByTestId("ApplyPage-submit")).not().isVisible();
+    assertEquals(1, applicationRepository.count());
+  }
+
   /** Issue #100: several UCSB courses can be added to the prior coursework table at once. */
   @Test
   public void several_ucsb_courses_can_be_added_to_prior_coursework_at_once() throws Exception {

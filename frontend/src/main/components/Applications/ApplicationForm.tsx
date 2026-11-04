@@ -225,6 +225,22 @@ const CLASS_LEVEL_OPTIONS = [
 /** "CMPSC   156" becomes "CMPSC-156": a course id or topic as it can appear in an element id. */
 const slug = (name: string): string => name.replace(/\s+/g, "-");
 
+/**
+ * Enter in a text-like field must not submit the application (issue #309); only the Submit
+ * button does. Enter in a textarea (new line), on a button or link (activate it), or anywhere
+ * outside this form's own DOM (a dialog portalled out of it) is left alone.
+ */
+const ignoreEnterInFields = (event: React.KeyboardEvent<HTMLFormElement>) => {
+  const target = event.target as HTMLElement;
+  if (
+    event.key === "Enter" &&
+    event.currentTarget.contains(target) &&
+    target.tagName === "INPUT"
+  ) {
+    event.preventDefault();
+  }
+};
+
 export default function ApplicationForm({
   type,
   courses,
@@ -681,7 +697,15 @@ export default function ApplicationForm({
   };
 
   return (
-    <Form onSubmit={handleSubmit(submit, flagMissingAnswers)}>
+    <Form
+      onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
+        // A dialog (React portal) rendered inside this form still bubbles its own submit event
+        // here through the React tree; only a submit of this very form counts (issue #309).
+        if (event.target !== event.currentTarget) return;
+        return handleSubmit(submit, flagMissingAnswers)(event);
+      }}
+      onKeyDown={ignoreEnterInFields}
+    >
       <p className="mb-0 mt-3">
         <RequiredFieldExplanation />
       </p>
