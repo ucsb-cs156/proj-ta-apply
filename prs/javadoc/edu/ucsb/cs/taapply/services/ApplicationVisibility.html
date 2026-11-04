@@ -101,7 +101,10 @@ assignment and export, as test applications always were.</div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#cancelled(java.util.List,boolean)" class="member-name-link">cancelled</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
  boolean&nbsp;developerModeOn)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">The applications that count and that the applicant cancelled.</div>
+<div class="block">The applications that count and that the applicant cancelled and has not since replaced: an
+applicant who cancelled and then started a new application (issue #318) is on the lists of
+people who are applying, not on the list of people who withdrew, and the cancelled application
+stays on file for the admin's table and CSV.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isReal(edu.ucsb.cs.taapply.entity.Application,boolean)" class="member-name-link">isReal</a><wbr>(<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application,
@@ -158,7 +161,10 @@ assignment and export, as test applications always were.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</span>&nbsp;<span class="element-name">cancelled</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
  boolean&nbsp;developerModeOn)</span></div>
-<div class="block">The applications that count and that the applicant cancelled.</div>
+<div class="block">The applications that count and that the applicant cancelled and has not since replaced: an
+applicant who cancelled and then started a new application (issue #318) is on the lists of
+people who are applying, not on the list of people who withdrew, and the cancelled application
+stays on file for the admin's table and CSV.</div>
 </div>
 </section>
 </li>

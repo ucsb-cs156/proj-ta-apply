@@ -138,10 +138,13 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicationRepository.</span><code><a href="../../repository/ApplicationRepository.html#findByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">findByEmailAndRecruitmentId</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationRepository.</span><code><a href="../../repository/ApplicationRepository.html#findByEmailAndRecruitmentIdOrderByIdDesc(java.lang.String,java.lang.Long)" class="member-name-link">findByEmailAndRecruitmentIdOrderByIdDesc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId)</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-last even-row-color">
+<div class="block">One person's applications to one recruitment, newest first: several only when they cancelled
+and started again (issue #318).</div>
+</div>
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
 <div class="col-second odd-row-color"><span class="type-name-label">ApplicationRepository.</span><code><a href="../../repository/ApplicationRepository.html#findByEmailOrderByIdDesc(java.lang.String)" class="member-name-link">findByEmailOrderByIdDesc</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;email)</code></div>
 <div class="col-last odd-row-color">
@@ -167,7 +170,10 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color"><span class="type-name-label">ApplicationVisibility.</span><code><a href="../../services/ApplicationVisibility.html#cancelled(java.util.List,boolean)" class="member-name-link">cancelled</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
  boolean&nbsp;developerModeOn)</code></div>
 <div class="col-last even-row-color">
-<div class="block">The applications that count and that the applicant cancelled.</div>
+<div class="block">The applications that count and that the applicant cancelled and has not since replaced: an
+applicant who cancelled and then started a new application (issue #318) is on the lists of
+people who are applying, not on the list of people who withdrew, and the cancelled application
+stays on file for the admin's table and CSV.</div>
 </div>
 <div class="col-first odd-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
 <div class="col-second odd-row-color"><span class="type-name-label">ApplicationVisibility.</span><code><a href="../../services/ApplicationVisibility.html#real(java.util.List,boolean)" class="member-name-link">real</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
@@ -239,7 +245,10 @@ is now, and returns the rows written (empty when nothing changed).</div>
 <div class="col-second odd-row-color"><span class="type-name-label">ApplicationVisibility.</span><code><a href="../../services/ApplicationVisibility.html#cancelled(java.util.List,boolean)" class="member-name-link">cancelled</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,
  boolean&nbsp;developerModeOn)</code></div>
 <div class="col-last odd-row-color">
-<div class="block">The applications that count and that the applicant cancelled.</div>
+<div class="block">The applications that count and that the applicant cancelled and has not since replaced: an
+applicant who cancelled and then started a new application (issue #318) is on the lists of
+people who are applying, not on the list of people who withdrew, and the cancelled application
+stays on file for the admin's table and CSV.</div>
 </div>
 <div class="col-first even-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a>&gt;</code></div>
 <div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#cancelled(java.util.List,boolean)" class="member-name-link">cancelled</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;&nbsp;applications,

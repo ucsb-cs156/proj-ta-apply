@@ -733,7 +733,10 @@ expected</code> (issue #280).</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html#cancelled(java.util.List,boolean)" class="member-name-link">cancelled(List, boolean)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationVisibility.html" title="class in edu.ucsb.cs.taapply.services">ApplicationVisibility</a></dt>
 <dd>
-<div class="block">The applications that count and that the applicant cancelled.</div>
+<div class="block">The applications that count and that the applicant cancelled and has not since replaced: an
+applicant who cancelled and then started a new application (issue #318) is on the lists of
+people who are applying, not on the list of people who withdrew, and the cancelled application
+stays on file for the admin's table and CSV.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.html#cancelled(java.util.List,boolean)" class="member-name-link">cancelled(List, boolean)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService</a></dt>
 <dd>
@@ -914,6 +917,10 @@ send in it.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html#count(java.lang.Long)" class="member-name-link">count(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminDraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminDraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#countByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">countByEmailAndRecruitmentId(String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
+<dd>
+<div class="block">How many applications, cancelled or not, one person has made to one recruitment.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html#countByRecruitmentId(java.lang.Long)" class="member-name-link">countByRecruitmentId(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">DraftApplicationRepository</a></dt>
 <dd>
 <div class="block">How many drafts one recruitment has (issue #296).</div>
@@ -1570,6 +1577,10 @@ both Summer and Fall are reachable.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#existsByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">existsByEmailAndRecruitmentId(String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#existsByEmailAndRecruitmentIdAndStatusNot(java.lang.String,java.lang.Long,edu.ucsb.cs.taapply.enums.ApplicationReviewStatus)" class="member-name-link">existsByEmailAndRecruitmentIdAndStatusNot(String, Long, ApplicationReviewStatus)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
+<dd>
+<div class="block">Whether the person has an application to the recruitment other than one with this status.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html#existsByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">existsByQuarterAndType(String, RecruitmentType)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentRepository</a></dt>
 <dd>&nbsp;</dd>
 </dl>
@@ -1700,10 +1711,13 @@ science courses of a few other universities.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/UserRepository.html#findByEmail(java.lang.String)" class="member-name-link">findByEmail(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/UserRepository.html" title="interface in edu.ucsb.cs.taapply.repository">UserRepository</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#findByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">findByEmailAndRecruitmentId(String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html#findByEmailAndRecruitmentId(java.lang.String,java.lang.Long)" class="member-name-link">findByEmailAndRecruitmentId(String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/DraftApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">DraftApplicationRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#findByEmailAndRecruitmentIdOrderByIdDesc(java.lang.String,java.lang.Long)" class="member-name-link">findByEmailAndRecruitmentIdOrderByIdDesc(String, Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
+<dd>
+<div class="block">One person's applications to one recruitment, newest first: several only when they cancelled
+and started again (issue #318).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html#findByEmailOrderByIdDesc(java.lang.String)" class="member-name-link">findByEmailOrderByIdDesc(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/ApplicationRepository.html" title="interface in edu.ucsb.cs.taapply.repository">ApplicationRepository</a></dt>
 <dd>
 <div class="block">Every application belonging to one person, newest first.</div>

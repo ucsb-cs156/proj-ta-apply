@@ -81,8 +81,10 @@ loadScripts(document, 'script');</script>
 
 <p>The design doc's field table names email as the primary key, but the same section asks for a
 table of every application a student has ever made. Those cannot both hold, so identity is a
-generated id with a unique constraint on (email, recruitment): one application per person per
-recruitment, and the history survives.
+generated id. A person has at most one application per recruitment that is not cancelled; one who
+cancelled while applications were open may start a new one (issue #318), so the cancelled row is
+kept and the unique constraint is on (email, recruitment, attempt number) rather than on (email,
+recruitment): the history survives, and two simultaneous submissions cannot both be stored.
 
 <p>Which fields are asked for depends on the recruitment's type. The TA-only and ULA-only fields
 are simply left null on the other kind rather than being split into separate tables, since the
