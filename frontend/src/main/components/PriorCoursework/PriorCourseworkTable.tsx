@@ -2,7 +2,11 @@ import { Button } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
 import OurTable from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
-import { schoolOf, type PriorCourse } from "main/utils/priorCoursework";
+import {
+  schoolOf,
+  termSortKey,
+  type PriorCourse,
+} from "main/utils/priorCoursework";
 
 type PriorCourseworkTableProps = {
   courses: PriorCourse[];
@@ -39,7 +43,14 @@ export default function PriorCourseworkTable({
       accessorKey: "courseTitle",
       meta: { style: { width: "100%" } },
     },
-    { header: "Term", accessorKey: "term", meta: shrink },
+    {
+      header: "Term",
+      accessorKey: "term",
+      // Oldest to newest by YYYYQ (S26 is 20262); anything not in that form counts as 0, oldest.
+      sortingFn: (a: { original: PriorCourse }, b: { original: PriorCourse }) =>
+        termSortKey(a.original.term) - termSortKey(b.original.term),
+      meta: shrink,
+    },
     { header: "Grade", accessorKey: "grade", meta: shrink },
   ];
 

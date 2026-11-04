@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 
@@ -99,7 +99,6 @@ describe("PriorCourseworkModal tests", () => {
 
     await userEvent.type(screen.getByTestId("M-courseNumber"), "  CMPSC 156 ");
     await userEvent.type(screen.getByTestId("M-courseTitle"), " Advanced App ");
-    await userEvent.type(screen.getByTestId("M-term"), "  ");
     await userEvent.type(screen.getByTestId("M-grade"), "A");
     await userEvent.click(screen.getByTestId("M-save"));
 
@@ -120,6 +119,7 @@ describe("PriorCourseworkModal tests", () => {
     await userEvent.click(screen.getByTestId("M-ucsbCourse"));
     await userEvent.type(screen.getByTestId("M-otherSchool"), " De Anza ");
     await userEvent.type(screen.getByTestId("M-courseNumber"), "CIS 22A");
+    await userEvent.type(screen.getByTestId("M-grade"), "  ");
     await userEvent.click(screen.getByTestId("M-save"));
 
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
@@ -145,7 +145,9 @@ describe("PriorCourseworkModal tests", () => {
     );
     expect(screen.getByTestId("M-courseNumber")).toHaveValue("CS 143");
     expect(screen.getByTestId("M-courseTitle")).toHaveValue("Compilers");
-    expect(screen.getByTestId("M-term")).toHaveValue("Spring 2024");
+    // "Spring 2024" is brought to the standard form and shown through the dropdown.
+    expect(screen.getByTestId("M-term")).toHaveValue("S24");
+    expect(screen.getByTestId("M-freeText")).not.toBeChecked();
     expect(screen.getByTestId("M-grade")).toHaveValue("A-");
     expect(screen.getByTestId("M-save")).toHaveTextContent("Save Changes");
 
@@ -156,6 +158,7 @@ describe("PriorCourseworkModal tests", () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
     expect(onSave.mock.calls[0][0]).toStrictEqual({
       ...priorCourseworkFixtures.elsewhere,
+      term: "S24",
       grade: "A",
     });
   });
@@ -171,7 +174,106 @@ describe("PriorCourseworkModal tests", () => {
     });
     expect(screen.getByTestId("M-courseTitle")).toHaveValue("");
     expect(screen.getByTestId("M-term")).toHaveValue("");
+    expect(screen.getByTestId("M-freeText")).not.toBeChecked();
     expect(screen.getByTestId("M-grade")).toHaveValue("");
+  });
+
+  describe("term", () => {
+    afterEach(() => vi.useRealTimers());
+
+    test("is a dropdown of quarters, current first, back 8 years, with a legend", () => {
+      // 2026-11-03 is in the fall quarter.
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(2026, 10, 3, 12, 0, 0));
+      renderModal();
+
+      const options = within(screen.getByTestId("M-term"))
+        .getAllByRole("option")
+        .map((option) => option.textContent);
+      expect(options[0]).toBe("Select a term");
+      expect(options[1]).toBe("F26");
+      expect(options[2]).toBe("M26");
+      expect(options[options.length - 1]).toBe("F18");
+      expect(options).toHaveLength(1 + 33);
+      expect(screen.getByTestId("M-termLegend")).toHaveTextContent(
+        "F: Fall, W: Winter, S: Spring, M: Summer",
+      );
+      expect(screen.getByTestId("M-termLegend")).toHaveClass("small");
+      expect(
+        screen.getByLabelText("Check to enter term in free text"),
+      ).not.toBeChecked();
+      expect(screen.queryByTestId("M-termText")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Term")).toBe(screen.getByTestId("M-term"));
+      expect(screen.getByTestId("M-term")).toHaveAttribute("id", "M-term");
+      expect(screen.getByTestId("M-freeText")).toHaveAttribute(
+        "id",
+        "M-freeText",
+      );
+    });
+
+    test("a chosen quarter is saved", async () => {
+      const { onSave } = renderModal();
+      await userEvent.type(screen.getByTestId("M-courseNumber"), "CS 1");
+      await userEvent.selectOptions(screen.getByTestId("M-term"), "W25");
+      await userEvent.click(screen.getByTestId("M-save"));
+      await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+      expect(onSave.mock.calls[0][0].term).toBe("W25");
+    });
+
+    test("a standard term older than the dropdown is still offered", () => {
+      renderModal({
+        course: { ...priorCourseworkFixtures.ucsbCourse, term: "F05" },
+      });
+      expect(screen.getByTestId("M-term")).toHaveValue("F05");
+      expect(screen.getByTestId("M-freeText")).not.toBeChecked();
+    });
+
+    test("a term that cannot be converted opens in free text, and is saved as typed", async () => {
+      const { onSave } = renderModal({
+        course: { ...priorCourseworkFixtures.ucsbCourse, term: "Semester 1" },
+      });
+      expect(screen.getByTestId("M-freeText")).toBeChecked();
+      expect(screen.getByTestId("M-termText")).toHaveValue("Semester 1");
+      expect(screen.queryByTestId("M-term")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("M-termLegend")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Term")).toBe(
+        screen.getByTestId("M-termText"),
+      );
+
+      await userEvent.click(screen.getByTestId("M-save"));
+      await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+      expect(onSave.mock.calls[0][0].term).toBe("Semester 1");
+    });
+
+    test("free text that can be made standard is saved in the standard form", async () => {
+      const { onSave } = renderModal();
+      await userEvent.type(screen.getByTestId("M-courseNumber"), "CS 1");
+      await userEvent.click(screen.getByTestId("M-freeText"));
+      await userEvent.type(screen.getByTestId("M-termText"), "Fall 2025");
+      await userEvent.click(screen.getByTestId("M-save"));
+      await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+      expect(onSave.mock.calls[0][0].term).toBe("F25");
+    });
+
+    test("ticking free text carries the chosen quarter over; unticking carries a standard one back", async () => {
+      renderModal();
+      await userEvent.selectOptions(screen.getByTestId("M-term"), "S25");
+      await userEvent.click(screen.getByTestId("M-freeText"));
+      expect(screen.getByTestId("M-termText")).toHaveValue("S25");
+
+      await userEvent.clear(screen.getByTestId("M-termText"));
+      await userEvent.type(screen.getByTestId("M-termText"), "Winter 2024");
+      await userEvent.click(screen.getByTestId("M-freeText"));
+      expect(screen.getByTestId("M-term")).toHaveValue("W24");
+    });
+
+    test("unticking free text with an unconvertible term clears the dropdown", async () => {
+      renderModal({
+        course: { ...priorCourseworkFixtures.ucsbCourse, term: "Semester 1" },
+      });
+      await userEvent.click(screen.getByTestId("M-freeText"));
+      expect(screen.getByTestId("M-term")).toHaveValue("");
+    });
   });
 
   test("Cancel and the close button report back without saving", async () => {

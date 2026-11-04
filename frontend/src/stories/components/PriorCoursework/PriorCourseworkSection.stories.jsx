@@ -85,3 +85,13 @@ export const ReadOnlyTable = () => (
     readOnly
   />
 );
+
+/** A term that cannot be made standard opens with the free text box ticked (issue #305). */
+export const ModalEditingANonStandardTerm = () => (
+  <PriorCourseworkModal
+    show={true}
+    course={{ ...priorCourseworkFixtures.elsewhere, term: "Semester 1" }}
+    onSave={(course) => console.log("save", course)}
+    onCancel={() => console.log("cancel")}
+  />
+);
