@@ -113,8 +113,9 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             among the courses you have taken, whether as a choice or as
             Enthusiastic or Would Consider, the form marks it with a red warning
             triangle and asks you to explain, in the Anything Else box, what
-            background prepares you to be a ULA for it; listing the course in
-            your coursework clears the mark.
+            background prepares you to be a ULA for it. The explanation appears
+            in a row directly beneath that course, so it stays with the course;
+            listing the course in your coursework clears the mark.
           </li>
           <li>
             Anything else you would like the department to know, such as

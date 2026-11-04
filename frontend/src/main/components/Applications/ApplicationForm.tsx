@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Alert, Button, Col, Form, Row, Table } from "react-bootstrap";
 import {
   CHOICE_CELL_STYLE,
@@ -1609,79 +1609,89 @@ export default function ApplicationForm({
               {courseList.map((courseId) => {
                 const rank = rankOf(courseId);
                 const rowId = id(`courseInterest-${slug(courseId)}`);
+                const legendId = `${rowId}-untaken-warning`;
+                const flagged = !isTa && untaken.has(courseId);
                 return (
-                  <tr key={courseId} data-testid={rowId}>
-                    {!isTa && (
-                      <td className="text-center text-danger">
-                        {untaken.has(courseId) && (
-                          <span
-                            title={UNTAKEN_TITLE}
-                            data-testid={`${rowId}-untaken`}
-                          >
-                            <WarningIcon
-                              role="img"
-                              aria-hidden={undefined}
-                              aria-label={UNTAKEN_TITLE}
-                            />
-                          </span>
-                        )}
-                      </td>
-                    )}
-                    <td
-                      style={{
-                        ...LABEL_CELL_STYLE,
-                        fontFamily: "monospace",
-                        whiteSpace: "pre",
-                      }}
+                  <Fragment key={courseId}>
+                    <tr
+                      data-testid={rowId}
+                      aria-describedby={flagged ? legendId : undefined}
                     >
-                      {courseLabel(courseId, courseInstructors)}
-                    </td>
-                    {rank ? (
-                      <td
-                        colSpan={COURSE_INTEREST_OPTIONS.length}
-                        className="text-center"
-                        data-testid={`${rowId}-choice`}
-                      >
-                        <strong>{rank}</strong>
-                      </td>
-                    ) : (
-                      COURSE_INTEREST_OPTIONS.map((option) => (
-                        <td key={option.value} className="text-center">
-                          <Form.Check
-                            type="radio"
-                            name={rowId}
-                            id={`${rowId}-${option.value}`}
-                            data-testid={`${rowId}-${option.value}`}
-                            aria-label={`${courseId}: ${option.label}`}
-                            value={option.value}
-                            checked={interestIn(courseId) === option.value}
-                            onChange={() =>
-                              setInterests((previous) => ({
-                                ...previous,
-                                [courseId]: option.value,
-                              }))
-                            }
-                          />
+                      {!isTa && (
+                        <td className="text-center text-danger">
+                          {untaken.has(courseId) && (
+                            <span
+                              title={UNTAKEN_TITLE}
+                              data-testid={`${rowId}-untaken`}
+                            >
+                              <WarningIcon
+                                role="img"
+                                aria-hidden={undefined}
+                                aria-label={UNTAKEN_TITLE}
+                              />
+                            </span>
+                          )}
                         </td>
-                      ))
+                      )}
+                      <td
+                        style={{
+                          ...LABEL_CELL_STYLE,
+                          fontFamily: "monospace",
+                          whiteSpace: "pre",
+                        }}
+                      >
+                        {courseLabel(courseId, courseInstructors)}
+                      </td>
+                      {rank ? (
+                        <td
+                          colSpan={COURSE_INTEREST_OPTIONS.length}
+                          className="text-center"
+                          data-testid={`${rowId}-choice`}
+                        >
+                          <strong>{rank}</strong>
+                        </td>
+                      ) : (
+                        COURSE_INTEREST_OPTIONS.map((option) => (
+                          <td key={option.value} className="text-center">
+                            <Form.Check
+                              type="radio"
+                              name={rowId}
+                              id={`${rowId}-${option.value}`}
+                              data-testid={`${rowId}-${option.value}`}
+                              aria-label={`${courseId}: ${option.label}`}
+                              value={option.value}
+                              checked={interestIn(courseId) === option.value}
+                              onChange={() =>
+                                setInterests((previous) => ({
+                                  ...previous,
+                                  [courseId]: option.value,
+                                }))
+                              }
+                            />
+                          </td>
+                        ))
+                      )}
+                    </tr>
+                    {flagged && (
+                      <tr
+                        id={legendId}
+                        className="small text-danger"
+                        data-testid={legendId}
+                      >
+                        <td colSpan={2 + COURSE_INTEREST_OPTIONS.length}>
+                          <p className="mb-1">
+                            <WarningIcon className="me-1 align-text-bottom" />
+                            {UNTAKEN_EXPLANATION}
+                          </p>
+                          <p className="mb-0">{UNTAKEN_EXAMPLE}</p>
+                        </td>
+                      </tr>
                     )}
-                  </tr>
+                  </Fragment>
                 );
               })}
             </tbody>
           </Table>
-        )}
-        {untaken.size > 0 && (
-          <div
-            className="small text-danger"
-            data-testid={id("courseInterests-untaken-warning")}
-          >
-            <p className="mb-1">
-              <WarningIcon className="me-1 align-text-bottom" />
-              {UNTAKEN_EXPLANATION}
-            </p>
-            <p className="mb-0">{UNTAKEN_EXAMPLE}</p>
-          </div>
         )}
       </Form.Group>
 

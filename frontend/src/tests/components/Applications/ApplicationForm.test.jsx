@@ -1000,8 +1000,10 @@ describe("ApplicationForm tests", () => {
 
   const untakenIcon = (course) =>
     screen.queryByTestId(`ApplicationForm-courseInterest-${course}-untaken`);
-  const untakenWarning = () =>
-    screen.queryByTestId("ApplicationForm-courseInterests-untaken-warning");
+  const untakenWarning = (course = "CMPSC-156") =>
+    screen.queryByTestId(
+      `ApplicationForm-courseInterest-${course}-untaken-warning`,
+    );
 
   test("the ULA table has an unlabelled first column, blank until a course is asked for", () => {
     renderForm({ type: "ULA" });
@@ -1090,18 +1092,35 @@ describe("ApplicationForm tests", () => {
     expect(paragraphs[1].textContent).toBe(
       "For example, CS students don't typically take CMPSC 5A or 5B, but if they have Python programming background, and some statistics background (e.g. PSTAT 5 or PSTAT 120A), that's typically enough preparation to be a ULA for CMPSC 5A/5B.",
     );
-    // The table precedes the explanation.
+    // The legend is a virtual row directly beneath its own course row, spanning every column,
+    // and the course row is described by it.
+    const courseRow = screen.getByTestId(
+      "ApplicationForm-courseInterest-CMPSC-156",
+    );
+    expect(warning.tagName).toBe("TR");
+    expect(courseRow.nextElementSibling).toBe(warning);
+    expect(warning.children).toHaveLength(1);
+    expect(warning.children[0]).toHaveAttribute("colspan", "5");
+    expect(courseRow).toHaveAttribute("aria-describedby", warning.id);
+    expect(warning.id).toBe(
+      "ApplicationForm-courseInterest-CMPSC-156-untaken-warning",
+    );
+    // Other courses have no legend row and no description.
+    expect(untakenWarning("CMPSC-8")).toBeNull();
     expect(
-      screen
-        .getByTestId("ApplicationForm-courseInterest-CMPSC-156")
-        .compareDocumentPosition(warning),
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      screen.getByTestId("ApplicationForm-courseInterest-CMPSC-8"),
+    ).not.toHaveAttribute("aria-describedby");
 
     await userEvent.selectOptions(
       screen.getByTestId("ApplicationForm-secondChoiceCourse"),
       "CMPSC   130A",
     );
     expect(untakenIcon("CMPSC-130A")).toBeInTheDocument();
+    // Each flagged course gets its own legend row, right under it.
+    expect(
+      screen.getByTestId("ApplicationForm-courseInterest-CMPSC-130A")
+        .nextElementSibling,
+    ).toBe(untakenWarning("CMPSC-130A"));
 
     await userEvent.click(radio("CMPSC-8", "ENTHUSIASTIC"));
     expect(untakenIcon("CMPSC-8")).toBeInTheDocument();
@@ -1116,6 +1135,7 @@ describe("ApplicationForm tests", () => {
       "",
     );
     expect(untakenIcon("CMPSC-130A")).toBeNull();
+    expect(untakenWarning("CMPSC-130A")).toBeNull();
     expect(untakenWarning()).toBeInTheDocument();
     await userEvent.selectOptions(
       screen.getByTestId("ApplicationForm-firstChoiceCourse"),
