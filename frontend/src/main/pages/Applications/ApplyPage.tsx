@@ -80,15 +80,6 @@ export default function ApplyPage(): React.JSX.Element {
     EMPTY_OPTIONS,
   );
 
-  // The applicant's most recent application, so they need not retype everything. Empty the
-  // first time; never carries over status or the recruitment it belonged to.
-  const { data: prefill } = useBackend<Application[]>(
-    ["/api/applications/prefill"],
-    { method: "GET", url: "/api/applications/prefill" },
-    // Stryker disable next-line all : don't test default value of empty list
-    [],
-  );
-
   // The applicant's existing applications. Reaching this page for a recruitment they have already
   // applied to (the browser's back button after submitting, or an old link) must not offer a form
   // whose submission the backend would refuse (issue #102); it goes to the application instead.
@@ -112,6 +103,29 @@ export default function ApplyPage(): React.JSX.Element {
     recruitment !== undefined &&
     (found === undefined || recruitment.applicationStatus !== "OPEN");
   const noticeFillIn = useNoticeFillIn(recruitment);
+
+  // The applicant's most recent application, so they need not retype everything. Empty the
+  // first time; never carries over status or the recruitment it belonged to. For a TA form the
+  // server prefers their latest TA application and otherwise seeds from their latest ULA one
+  // (issue #307), so the recruitment's type is sent along and the request waits for it.
+  const { data: prefill, isFetched: prefillFetched } = useBackend<
+    Application[]
+  >(
+    // Stryker disable next-line all : the cache key only separates the requests of different types
+    ["/api/applications/prefill", recruitment?.type],
+    {
+      // Stryker disable next-line StringLiteral : axios reads a blank method as GET
+      method: "GET",
+      url: "/api/applications/prefill",
+      params: { type: recruitment?.type },
+    },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+    false,
+    // The form waits for this, so a failure must not keep it waiting through the retries.
+    // Stryker disable next-line all : the guard only avoids a request made before the type is known
+    { enabled: Boolean(recruitment), retry: false },
+  );
   // Stryker disable next-line all : mine already defaults to an empty list
   const hereAlready = (mine ?? []).filter(
     (a) => String(a.recruitmentId) === String(recruitmentId),
@@ -194,7 +208,8 @@ export default function ApplyPage(): React.JSX.Element {
             `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`}
         </h1>
         {/* The form waits for the list of existing applications, so it is never offered to someone
-            whose submission would be refused, and for the draft it saves into. */}
+            whose submission would be refused, for the draft it saves into, and for the earlier
+            application it is filled in from (the form reads its starting answers only once). */}
         <MultipleTabsBanner
           others={others}
           newest={newest}
@@ -237,7 +252,7 @@ export default function ApplyPage(): React.JSX.Element {
         )}
         {
           // Stryker disable next-line all : the draft is only asked for once the recruitment and the list are there
-          recruitment && mineFetched && draft && (
+          recruitment && mineFetched && prefillFetched && draft && (
             <ApplicationForm
               // A reloaded draft is a new start: the form takes its answers afresh.
               key={draft.version}

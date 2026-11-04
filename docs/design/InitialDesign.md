@@ -446,6 +446,42 @@ form (issue #65).
   in `ApplicationForm`, so drafts, submitted applications and copied answers are all covered by one
   code path and the catalog request is shared with the bulk-add window; the filled title is then saved
   with the form. A typed title is never replaced, and other schools' courses are never touched.
+* Issue #307: a person's first TA application is seeded from their ULA application when they have no
+  TA application. `GET /api/applications/prefill` takes an optional `type` (the type of the
+  recruitment being applied to). With `type=TA` it returns, in this order: their TA application
+  for the most recent recruitment quarter, as before and unchanged; else the ULA application for
+  the most recent quarter, reduced to a TA-shaped seed; else nothing. So a TA application, however
+  old, beats a ULA one, however new, and among applications of one type the most recent quarter
+  wins (cancelled ones included, as before; applications whose recruitment no longer exists never
+  qualify). With any other `type`, or none, the endpoint is exactly as it was, so a ULA form is
+  still seeded from the most recent application of either type (the reverse direction, a ULA
+  first-timer who was a TA, is not part of this issue and is left as a possible follow-up).
+  The mapping is the pure function `TaSeedFromUla.seed` on the server rather than code in the
+  browser: the server already decides which application is the "most recent" (it is the only side
+  that sees all of them with their recruitments' types and quarters), it is the layer that already
+  scrubs what an applicant may not see (`forApplicant`), and doing it there means the ULA-only
+  answers never reach a TA form, rather than relying on the form to ignore them. The seed is built
+  from an empty application plus an allow-list of fields, not by copying the ULA application and
+  clearing fields, so a field added to the entity later does not carry over until someone decides it
+  should. The prior courses are copied as new rows (no ids); their blank catalog titles are filled
+  by the form (`withCatalogTitles`, issue #306). The apply page now waits for the pre-fill before
+  showing the form, since the form reads its starting answers only once.
+
+  | Field | Carried to the TA form? | Why |
+  |---|---|---|
+  | First, middle and last name | Yes | The same person. |
+  | Major | Yes | Free text on both; the applicant can change it. |
+  | Previous teaching experience | Yes | Same question; the TA help text names ULA service. |
+  | Anything else (comments) | Yes | Same question. |
+  | Prior coursework | Yes, as new rows | The courses taken are still the courses taken. |
+  | GPAs, first quarter box | No | The ULA values are undergraduate; a TA applicant is a grad student. |
+  | Year in program, graduation date | No | Described the person as an undergraduate. |
+  | First and second choice course, lecture and discussion availability and comments, interest in other courses | No | They name ULA courses and a past quarter's schedule; a TA form must not hold choices its recruitment does not offer. |
+  | Topic proficiencies | No | The ULA scale (1 very comfortable to 3 not familiar) does not map onto the TA 1 to 5 scale. |
+  | Notice version agreed to | No | It is the ULA notice; the TA notice must be agreed to afresh. |
+  | Video link, previous service as a ULA, perm number, BS/MS answers, other campus job, prior UCSB employment, employee id, I-9, training commitment and explanation, changing major, interests | No | ULA-only questions with no TA counterpart. |
+  | Residency, language exam, class level | n/a | TA-only questions with no ULA source; left blank. |
+  | Id, version, recruitment, attempt number, email, status, submission time, post-application comments, admin comments, origin, cancellation reason and time, tentative assignment | No | State of the old application, not answers; the seed is a fresh application. |
 
 # Twentieth Iteration
 

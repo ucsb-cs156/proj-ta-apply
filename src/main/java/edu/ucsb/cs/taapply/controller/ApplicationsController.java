@@ -25,6 +25,7 @@ import edu.ucsb.cs.taapply.repository.DraftApplicationRepository;
 import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.TaSeedFromUla;
 import edu.ucsb.cs.taapply.time.AppTime;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -210,24 +211,54 @@ public class ApplicationsController extends ApiController {
       summary = "The applicant's most recent application, for pre-filling a new one",
       description =
           "The one for the most recent recruitment quarter (newest row first within a quarter)."
-              + " Empty if they have never applied.")
+              + " Empty if they have never applied. With type=TA (issue #307), their most recent"
+              + " TA application if they have one, as is; otherwise, if they have a ULA"
+              + " application, a TA-shaped seed built from the most recent of those (only the"
+              + " answers that carry over, see TaSeedFromUla); otherwise empty. Any other type, or"
+              + " none, behaves as without the parameter.")
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("/prefill")
-  public List<Application> prefill() {
+  public List<Application> prefill(
+      @Parameter(name = "type") @RequestParam(required = false) RecruitmentType type) {
     List<Application> mine = applicationRepository.findByEmailOrderByIdDesc(currentEmail());
     // By recruitment quarter rather than by id: an application imported from the legacy app's
     // data gets a newer id than one the student made since, yet is the older of the two.
-    Map<Long, String> quarters = new HashMap<>();
+    Map<Long, Recruitment> recruitments = new HashMap<>();
     recruitmentRepository
         .findAllById(mine.stream().map(Application::getRecruitmentId).toList())
-        .forEach(r -> quarters.put(r.getId(), r.getQuarter()));
-    return mine.stream()
-        .sorted(
-            Comparator.comparing((Application a) -> quarters.getOrDefault(a.getRecruitmentId(), ""))
-                .reversed())
-        .limit(1)
-        .map(ApplicationsController::forApplicant)
-        .toList();
+        .forEach(r -> recruitments.put(r.getId(), r));
+    List<Application> newestFirst =
+        mine.stream()
+            .sorted(
+                Comparator.comparing(
+                        (Application a) ->
+                            Optional.ofNullable(recruitments.get(a.getRecruitmentId()))
+                                .map(Recruitment::getQuarter)
+                                .orElse(""))
+                    .reversed())
+            .toList();
+    if (type == RecruitmentType.TA) {
+      Optional<Application> ta = newestOfType(newestFirst, recruitments, RecruitmentType.TA);
+      if (ta.isPresent()) {
+        return List.of(forApplicant(ta.get()));
+      }
+      return newestOfType(newestFirst, recruitments, RecruitmentType.ULA)
+          .map(TaSeedFromUla::seed)
+          .stream()
+          .toList();
+    }
+    return newestFirst.stream().limit(1).map(ApplicationsController::forApplicant).toList();
+  }
+
+  private static Optional<Application> newestOfType(
+      List<Application> newestFirst, Map<Long, Recruitment> recruitments, RecruitmentType type) {
+    return newestFirst.stream()
+        .filter(
+            a ->
+                Optional.ofNullable(recruitments.get(a.getRecruitmentId()))
+                    .map(r -> r.getType() == type)
+                    .orElse(false))
+        .findFirst();
   }
 
   @Operation(

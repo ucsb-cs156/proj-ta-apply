@@ -276,6 +276,21 @@ describe("Help pages (issue #140)", () => {
     );
   });
 
+  test("the TA applicants page says what a former ULA's first TA form starts with (issue #307)", async () => {
+    renderPage(<HelpTaApplicantsPage />);
+    const section = await screen.findByTestId("HelpTaApplicantsPage-from-ula");
+    expect(section).toHaveTextContent(
+      "never applied to be a TA but you did apply to be a ULA",
+    );
+    expect(section).toHaveTextContent(
+      "most recent TA application is used instead",
+    );
+    expect(section).toHaveTextContent(
+      "Copied from your most recent ULA application: your name, your major",
+    );
+    expect(section).toHaveTextContent("Not copied: your GPAs");
+  });
+
   test("the TA applicants page lists what is asked for, at a high level", async () => {
     renderPage(<HelpTaApplicantsPage />);
     expect(

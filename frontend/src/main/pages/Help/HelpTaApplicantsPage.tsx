@@ -32,6 +32,33 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
           If you have applied before, your most recent answers are copied into
           the new form, so you only need to update what has changed.
         </p>
+        <div data-testid="HelpTaApplicantsPage-from-ula">
+          <p>
+            If you have never applied to be a TA but you did apply to be a ULA,
+            the form starts with the answers that mean the same thing on both
+            applications. If you have applied to be a TA before, your most
+            recent TA application is used instead, whatever you have applied for
+            since. The rest is left blank for you to answer:
+          </p>
+          <ul>
+            <li>
+              <strong>Copied from your most recent ULA application:</strong>{" "}
+              your name, your major, your previous teaching experience, your
+              &ldquo;anything else&rdquo; comments, and the courses you listed
+              as relevant background.
+            </li>
+            <li>
+              <strong>Not copied:</strong> your GPAs and the first quarter box,
+              your year in the program and your graduation date (they described
+              you as an undergraduate); your course choices, availability and
+              course interests (they were for the ULA courses); your topic
+              ratings (the scale is different); the notice agreement; and the
+              questions only a ULA is asked, such as the perm number, employment
+              questions and training commitment. Please look over what was
+              copied before you submit.
+            </li>
+          </ul>
+        </div>
 
         <h2 className="my-3 h4">What you will be asked for</h2>
         <p>You will be asked to provide the following information:</p>

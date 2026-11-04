@@ -43,6 +43,7 @@ import edu.ucsb.cs.taapply.repository.NoticeVersionRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.ApplicationAccessService;
+import edu.ucsb.cs.taapply.services.TaSeedFromUla;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -688,6 +689,124 @@ public class ApplicationsControllerTests extends ControllerTestCase {
         mockMvc.perform(get("/api/applications/prefill")).andExpect(status().isOk()).andReturn();
 
     assertEquals("[]", response.getResponse().getContentAsString());
+  }
+
+  // ---- GET /prefill?type=TA (issue #307) ----
+
+  private static Recruitment recruitmentOfType(long id, String quarter, RecruitmentType type) {
+    return Recruitment.builder().id(id).quarter(quarter).type(type).build();
+  }
+
+  private Application ulaApplication(long id, long recruitmentId) {
+    return Application.builder()
+        .id(id)
+        .version(3)
+        .recruitmentId(recruitmentId)
+        .email(GRAD_EMAIL)
+        .status(ApplicationReviewStatus.CANCELLED)
+        .adminComments("secret")
+        .firstName("Ula")
+        .lastName("Learner")
+        .videoLink("https://example.org/v")
+        .permNumber("1234567")
+        .build();
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void prefill_for_ta_with_only_a_ula_application_returns_a_ta_seed() throws Exception {
+    Application older = ulaApplication(1L, 1L);
+    Application newer = ulaApplication(2L, 2L);
+    newer.setFirstName("Newest");
+    when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL))
+        .thenReturn(List.of(newer, older));
+    when(recruitmentRepository.findAllById(List.of(2L, 1L)))
+        .thenReturn(
+            List.of(
+                recruitmentOfType(1L, "20251", RecruitmentType.ULA),
+                recruitmentOfType(2L, "20262", RecruitmentType.ULA)));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/applications/prefill?type=TA"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    String json = response.getResponse().getContentAsString();
+    assertEquals(
+        mapper.writeValueAsString(List.of(TaSeedFromUla.seed(newer))), json, "newest ULA seeds");
+    assertFalse(json.contains("secret"));
+    assertFalse(json.contains("1234567"));
+    assertFalse(json.contains("example.org/v"));
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void prefill_for_ta_prefers_an_older_ta_application_to_a_newer_ula_one() throws Exception {
+    Application ula = ulaApplication(5L, 2L);
+    Application ta = application(1L, 1L, GRAD_EMAIL);
+    when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL)).thenReturn(List.of(ula, ta));
+    when(recruitmentRepository.findAllById(List.of(2L, 1L)))
+        .thenReturn(
+            List.of(
+                recruitmentOfType(2L, "20262", RecruitmentType.ULA),
+                recruitmentOfType(1L, "20251", RecruitmentType.TA)));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/applications/prefill?type=TA"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(
+        mapper.writeValueAsString(List.of(ta)), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void prefill_for_ta_is_empty_when_nothing_is_usable() throws Exception {
+    Application orphan = ulaApplication(5L, 8L);
+    when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL)).thenReturn(List.of(orphan));
+    when(recruitmentRepository.findAllById(List.of(8L))).thenReturn(List.of());
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/applications/prefill?type=TA"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals("[]", response.getResponse().getContentAsString());
+  }
+
+  /** The ULA form keeps its earlier behavior: the most recent application, whatever its type. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void prefill_for_ula_is_unchanged() throws Exception {
+    Application ta = application(2L, 2L, GRAD_EMAIL);
+    Application ula = ulaApplication(1L, 1L);
+    when(applicationRepository.findByEmailOrderByIdDesc(GRAD_EMAIL)).thenReturn(List.of(ta, ula));
+    when(recruitmentRepository.findAllById(List.of(2L, 1L)))
+        .thenReturn(
+            List.of(
+                recruitmentOfType(2L, "20262", RecruitmentType.TA),
+                recruitmentOfType(1L, "20251", RecruitmentType.ULA)));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/applications/prefill?type=ULA"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals(
+        mapper.writeValueAsString(List.of(ta)), response.getResponse().getContentAsString());
   }
 
   // ---- POST ----
