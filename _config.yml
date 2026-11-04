@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/309-enter-submits","number":329,"title":"Enter and the course dialog no longer submit the application (#309)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/329"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/310-not-taken-legend","number":330,"title":"Show the not-taken warning legend in a row under its course (#310)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/330"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/309-enter-submits","number":329,"title":"Enter and the course dialog no longer submit the application (#309)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/329"}]
