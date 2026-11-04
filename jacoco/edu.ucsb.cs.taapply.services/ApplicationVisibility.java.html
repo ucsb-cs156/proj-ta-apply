@@ -4,6 +4,8 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.enums.ApplicationOrigin;
 import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The one rule for which applications count (issue #219). An application from a real applicant
@@ -18,24 +20,34 @@ public final class ApplicationVisibility {
 
   /** Whether the application counts as a real one, ignoring whether it was cancelled. */
   public static boolean isReal(Application application, boolean developerModeOn) {
-<span class="fc bfc" id="L21" title="All 4 branches covered.">    return application.getOrigin() == ApplicationOrigin.APPLICANT || developerModeOn;</span>
+<span class="fc bfc" id="L23" title="All 4 branches covered.">    return application.getOrigin() == ApplicationOrigin.APPLICANT || developerModeOn;</span>
   }
 
   /** The applications that count and that the applicant has not cancelled. */
   public static List&lt;Application&gt; real(List&lt;Application&gt; applications, boolean developerModeOn) {
-<span class="fc" id="L26">    return applications.stream()</span>
-<span class="fc" id="L27">        .filter(a -&gt; isReal(a, developerModeOn))</span>
-<span class="fc bfc" id="L28" title="All 2 branches covered.">        .filter(a -&gt; a.getStatus() != ApplicationReviewStatus.CANCELLED)</span>
-<span class="fc" id="L29">        .toList();</span>
+<span class="fc" id="L28">    return applications.stream()</span>
+<span class="fc" id="L29">        .filter(a -&gt; isReal(a, developerModeOn))</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        .filter(a -&gt; a.getStatus() != ApplicationReviewStatus.CANCELLED)</span>
+<span class="fc" id="L31">        .toList();</span>
   }
 
-  /** The applications that count and that the applicant cancelled. */
+  /**
+   * The applications that count and that the applicant cancelled and has not since replaced: an
+   * applicant who cancelled and then started a new application (issue #318) is on the lists of
+   * people who are applying, not on the list of people who withdrew, and the cancelled application
+   * stays on file for the admin's table and CSV.
+   */
   public static List&lt;Application&gt; cancelled(
       List&lt;Application&gt; applications, boolean developerModeOn) {
-<span class="fc" id="L35">    return applications.stream()</span>
-<span class="fc" id="L36">        .filter(a -&gt; isReal(a, developerModeOn))</span>
-<span class="fc bfc" id="L37" title="All 2 branches covered.">        .filter(a -&gt; a.getStatus() == ApplicationReviewStatus.CANCELLED)</span>
-<span class="fc" id="L38">        .toList();</span>
+<span class="fc" id="L42">    Set&lt;String&gt; applying =</span>
+<span class="fc" id="L43">        real(applications, developerModeOn).stream()</span>
+<span class="fc" id="L44">            .map(Application::getEmail)</span>
+<span class="fc" id="L45">            .collect(Collectors.toSet());</span>
+    // An application that counts, whose applicant has no live one: it can only be a cancelled one.
+<span class="fc" id="L47">    return applications.stream()</span>
+<span class="fc" id="L48">        .filter(a -&gt; isReal(a, developerModeOn))</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        .filter(a -&gt; !applying.contains(a.getEmail()))</span>
+<span class="fc" id="L50">        .toList();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

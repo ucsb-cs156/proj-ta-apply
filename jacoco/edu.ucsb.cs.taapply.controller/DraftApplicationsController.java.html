@@ -10,6 +10,7 @@ import edu.ucsb.cs.taapply.entity.DraftApplication;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.User;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.errors.ForbiddenException;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -53,7 +54,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = &quot;Draft applications&quot;)
 @RequestMapping(&quot;/api/draftApplications&quot;)
 @RestController
-<span class="fc" id="L56">public class DraftApplicationsController extends ApiController {</span>
+<span class="fc" id="L57">public class DraftApplicationsController extends ApiController {</span>
 
   @Autowired DraftApplicationRepository draftApplicationRepository;
   @Autowired ApplicationRepository applicationRepository;
@@ -62,32 +63,32 @@ import org.springframework.web.bind.annotation.RestController;
   @Autowired ClientActivityDetector clientActivityDetector;
 
   private String currentEmail() {
-<span class="fc" id="L65">    return getCurrentUser().getUser().getEmail();</span>
+<span class="fc" id="L66">    return getCurrentUser().getUser().getEmail();</span>
   }
 
   /** Loads a draft, refusing anyone else's rather than merely not finding it. */
   private DraftApplication mine(Long id) {
-<span class="fc" id="L70">    DraftApplication draft =</span>
+<span class="fc" id="L71">    DraftApplication draft =</span>
         draftApplicationRepository
-<span class="fc" id="L72">            .findById(id)</span>
-<span class="fc" id="L73">            .orElseThrow(() -&gt; new EntityNotFoundException(DraftApplication.class, id));</span>
-<span class="fc bfc" id="L74" title="All 2 branches covered.">    if (!currentEmail().equals(draft.getEmail())) {</span>
-<span class="fc" id="L75">      throw new ForbiddenException(&quot;That draft belongs to someone else&quot;);</span>
+<span class="fc" id="L73">            .findById(id)</span>
+<span class="fc" id="L74">            .orElseThrow(() -&gt; new EntityNotFoundException(DraftApplication.class, id));</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">    if (!currentEmail().equals(draft.getEmail())) {</span>
+<span class="fc" id="L76">      throw new ForbiddenException(&quot;That draft belongs to someone else&quot;);</span>
     }
-<span class="fc" id="L77">    return draft;</span>
+<span class="fc" id="L78">    return draft;</span>
   }
 
   private Recruitment recruitment(Long recruitmentId) {
-<span class="fc" id="L81">    return recruitmentRepository</span>
-<span class="fc" id="L82">        .findById(recruitmentId)</span>
-<span class="fc" id="L83">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L82">    return recruitmentRepository</span>
+<span class="fc" id="L83">        .findById(recruitmentId)</span>
+<span class="fc" id="L84">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
   }
 
   @Operation(summary = &quot;The current user's own drafts, newest first&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;/mine&quot;)
   public List&lt;DraftApplication&gt; myDrafts() {
-<span class="fc" id="L90">    return draftApplicationRepository.findByEmailOrderByIdDesc(currentEmail());</span>
+<span class="fc" id="L91">    return draftApplicationRepository.findByEmailOrderByIdDesc(currentEmail());</span>
   }
 
   @Operation(
@@ -95,23 +96,25 @@ import org.springframework.web.bind.annotation.RestController;
       description =
           &quot;Returns the current user's draft for the recruitment, creating an empty one if there is&quot;
               + &quot; none. Refused if the recruitment is not open or they already have an application&quot;
-              + &quot; for it, since a draft is only for an application not yet submitted.&quot;)
+              + &quot; for it that is not cancelled, since a draft is only for an application not yet submitted.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @PostMapping(&quot;/open&quot;)
   public DraftApplication openDraft(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc" id="L103">    Recruitment recruitment = recruitment(recruitmentId);</span>
-<span class="fc bfc" id="L104" title="All 2 branches covered.">    if (!applicationAccessService.acceptingApplications(recruitment)) {</span>
-<span class="fc" id="L105">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L104">    Recruitment recruitment = recruitment(recruitmentId);</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">    if (!applicationAccessService.acceptingApplications(recruitment)) {</span>
+<span class="fc" id="L106">      throw new IllegalArgumentException(</span>
           &quot;Applications are not currently open for this recruitment&quot;);
     }
-<span class="fc" id="L108">    String email = currentEmail();</span>
-<span class="fc bfc" id="L109" title="All 2 branches covered.">    if (applicationRepository.existsByEmailAndRecruitmentId(email, recruitmentId)) {</span>
-<span class="fc" id="L110">      throw new IllegalArgumentException(&quot;You already have an application for this recruitment&quot;);</span>
+<span class="fc" id="L109">    String email = currentEmail();</span>
+    // A cancelled application does not stop them starting a new one (issue #318).
+<span class="fc bfc" id="L111" title="All 2 branches covered.">    if (applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(</span>
+        email, recruitmentId, ApplicationReviewStatus.CANCELLED)) {
+<span class="fc" id="L113">      throw new IllegalArgumentException(&quot;You already have an application for this recruitment&quot;);</span>
     }
-<span class="fc" id="L112">    return draftApplicationRepository</span>
-<span class="fc" id="L113">        .findByEmailAndRecruitmentId(email, recruitmentId)</span>
-<span class="fc" id="L114">        .orElseGet(() -&gt; createDraft(email, recruitmentId));</span>
+<span class="fc" id="L115">    return draftApplicationRepository</span>
+<span class="fc" id="L116">        .findByEmailAndRecruitmentId(email, recruitmentId)</span>
+<span class="fc" id="L117">        .orElseGet(() -&gt; createDraft(email, recruitmentId));</span>
   }
 
   /**
@@ -120,12 +123,12 @@ import org.springframework.web.bind.annotation.RestController;
    */
   private DraftApplication createDraft(String email, Long recruitmentId) {
     try {
-<span class="fc" id="L123">      return draftApplicationRepository.save(</span>
-<span class="fc" id="L124">          DraftApplication.builder().email(email).recruitmentId(recruitmentId).build());</span>
-<span class="fc" id="L125">    } catch (DataIntegrityViolationException e) {</span>
-<span class="fc" id="L126">      return draftApplicationRepository</span>
-<span class="fc" id="L127">          .findByEmailAndRecruitmentId(email, recruitmentId)</span>
-<span class="fc" id="L128">          .orElseThrow(() -&gt; e);</span>
+<span class="fc" id="L126">      return draftApplicationRepository.save(</span>
+<span class="fc" id="L127">          DraftApplication.builder().email(email).recruitmentId(recruitmentId).build());</span>
+<span class="fc" id="L128">    } catch (DataIntegrityViolationException e) {</span>
+<span class="fc" id="L129">      return draftApplicationRepository</span>
+<span class="fc" id="L130">          .findByEmailAndRecruitmentId(email, recruitmentId)</span>
+<span class="fc" id="L131">          .orElseThrow(() -&gt; e);</span>
     }
   }
 
@@ -135,29 +138,29 @@ import org.springframework.web.bind.annotation.RestController;
    * email address alone if there is no name.
    */
   private ClientIdentity identity() {
-<span class="fc" id="L138">    User user = getCurrentUser().getUser();</span>
-<span class="fc" id="L139">    String name = user.getFullName();</span>
+<span class="fc" id="L141">    User user = getCurrentUser().getUser();</span>
+<span class="fc" id="L142">    String name = user.getFullName();</span>
     String label =
-<span class="fc bfc" id="L141" title="All 4 branches covered.">        name == null || name.isBlank()</span>
-<span class="fc" id="L142">            ? user.getEmail()</span>
-<span class="fc" id="L143">            : user.getEmail() + &quot; (&quot; + name.trim() + &quot;)&quot;;</span>
-<span class="fc" id="L144">    return new ClientIdentity(user.getEmail(), label);</span>
+<span class="fc bfc" id="L144" title="All 4 branches covered.">        name == null || name.isBlank()</span>
+<span class="fc" id="L145">            ? user.getEmail()</span>
+<span class="fc" id="L146">            : user.getEmail() + &quot; (&quot; + name.trim() + &quot;)&quot;;</span>
+<span class="fc" id="L147">    return new ClientIdentity(user.getEmail(), label);</span>
   }
 
   /** The detector's name for a draft. */
   private static String resourceKey(Long id) {
-<span class="fc" id="L149">    return &quot;draft:&quot; + id;</span>
+<span class="fc" id="L152">    return &quot;draft:&quot; + id;</span>
   }
 
   /** What a refused save tells the form: why, and the draft as it now stands. */
   private ResponseEntity&lt;Object&gt; conflict(DraftApplication current) {
-<span class="fc" id="L154">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L155">    body.put(</span>
+<span class="fc" id="L157">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L158">    body.put(</span>
         &quot;message&quot;,
         &quot;This draft was changed in another tab or window. Reload to see the latest version.&quot;);
-<span class="fc" id="L158">    body.put(&quot;version&quot;, current.getVersion());</span>
-<span class="fc" id="L159">    body.put(&quot;draft&quot;, current);</span>
-<span class="fc" id="L160">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
+<span class="fc" id="L161">    body.put(&quot;version&quot;, current.getVersion());</span>
+<span class="fc" id="L162">    body.put(&quot;draft&quot;, current);</span>
+<span class="fc" id="L163">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
   }
 
   @Operation(
@@ -177,20 +180,20 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;version&quot;) @RequestParam Integer version,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
       @RequestBody ApplicationFields fields) {
-<span class="fc" id="L180">    DraftApplication draft = mine(id);</span>
-<span class="fc" id="L181">    clientActivityDetector.note(resourceKey(id), clientId, identity());</span>
-<span class="fc bfc" id="L182" title="All 2 branches covered.">    if (!applicationAccessService.editable(recruitment(draft.getRecruitmentId()))) {</span>
-<span class="fc" id="L183">      throw new ForbiddenException(&quot;Applications are closed, so this draft can no longer be saved&quot;);</span>
+<span class="fc" id="L183">    DraftApplication draft = mine(id);</span>
+<span class="fc" id="L184">    clientActivityDetector.note(resourceKey(id), clientId, identity());</span>
+<span class="fc bfc" id="L185" title="All 2 branches covered.">    if (!applicationAccessService.editable(recruitment(draft.getRecruitmentId()))) {</span>
+<span class="fc" id="L186">      throw new ForbiddenException(&quot;Applications are closed, so this draft can no longer be saved&quot;);</span>
     }
-<span class="fc bfc" id="L185" title="All 2 branches covered.">    if (!version.equals(draft.getVersion())) {</span>
-<span class="fc" id="L186">      return conflict(draft);</span>
+<span class="fc bfc" id="L188" title="All 2 branches covered.">    if (!version.equals(draft.getVersion())) {</span>
+<span class="fc" id="L189">      return conflict(draft);</span>
     }
-<span class="fc" id="L188">    apply(fields, draft);</span>
+<span class="fc" id="L191">    apply(fields, draft);</span>
     try {
-<span class="fc" id="L190">      return ResponseEntity.ok(draftApplicationRepository.save(draft));</span>
-<span class="fc" id="L191">    } catch (ObjectOptimisticLockingFailureException e) {</span>
+<span class="fc" id="L193">      return ResponseEntity.ok(draftApplicationRepository.save(draft));</span>
+<span class="fc" id="L194">    } catch (ObjectOptimisticLockingFailureException e) {</span>
       // Another save got in between reading the draft and writing it.
-<span class="fc" id="L193">      return conflict(draftApplicationRepository.findById(id).orElseThrow(() -&gt; e));</span>
+<span class="fc" id="L196">      return conflict(draftApplicationRepository.findById(id).orElseThrow(() -&gt; e));</span>
     }
   }
 
@@ -209,8 +212,8 @@ import org.springframework.web.bind.annotation.RestController;
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
     // The owner check comes first and throws, so that nothing below runs for anyone else: they are
     // neither recorded nor told who is working here.
-<span class="fc" id="L212">    mine(id);</span>
-<span class="fc" id="L213">    return clientActivityDetector.heartbeat(resourceKey(id), clientId, identity());</span>
+<span class="fc" id="L215">    mine(id);</span>
+<span class="fc" id="L216">    return clientActivityDetector.heartbeat(resourceKey(id), clientId, identity());</span>
   }
 
   @Operation(
@@ -228,86 +231,86 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
     // The owner check comes first, as for the heartbeat.
-<span class="fc" id="L231">    mine(id);</span>
-<span class="fc" id="L232">    clientActivityDetector.leave(resourceKey(id), clientId);</span>
-<span class="fc" id="L233">  }</span>
+<span class="fc" id="L234">    mine(id);</span>
+<span class="fc" id="L235">    clientActivityDetector.leave(resourceKey(id), clientId);</span>
+<span class="fc" id="L236">  }</span>
 
   /** Name-to-level answers as sent, without the null entries and in a stable order. */
   private static Map&lt;String, Integer&gt; levels(Map&lt;String, Integer&gt; sent) {
-<span class="fc" id="L237">    Map&lt;String, Integer&gt; levels = new TreeMap&lt;&gt;();</span>
-<span class="fc bfc" id="L238" title="All 2 branches covered.">    if (sent != null) {</span>
-<span class="fc" id="L239">      sent.forEach(</span>
+<span class="fc" id="L240">    Map&lt;String, Integer&gt; levels = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L241" title="All 2 branches covered.">    if (sent != null) {</span>
+<span class="fc" id="L242">      sent.forEach(</span>
           (name, level) -&gt; {
-<span class="fc bfc" id="L241" title="All 2 branches covered.">            if (level != null) {</span>
-<span class="fc" id="L242">              levels.put(name, level);</span>
+<span class="fc bfc" id="L244" title="All 2 branches covered.">            if (level != null) {</span>
+<span class="fc" id="L245">              levels.put(name, level);</span>
             }
-<span class="fc" id="L244">          });</span>
+<span class="fc" id="L247">          });</span>
     }
-<span class="fc" id="L246">    return levels;</span>
+<span class="fc" id="L249">    return levels;</span>
   }
 
   /** The rows as the form has them, kept as typed: a half-filled row is still worth keeping. */
   private static List&lt;PriorCoursework&gt; coursework(List&lt;PriorCourseworkFields&gt; sent) {
-<span class="fc" id="L251">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L252" title="All 2 branches covered.">    if (sent != null) {</span>
-<span class="fc bfc" id="L253" title="All 2 branches covered.">      for (PriorCourseworkFields row : sent) {</span>
-<span class="fc" id="L254">        rows.add(</span>
-<span class="fc" id="L255">            PriorCoursework.builder()</span>
-<span class="fc" id="L256">                .ucsbCourse(row.ucsbCourse())</span>
-<span class="fc" id="L257">                .otherSchool(row.otherSchool())</span>
-<span class="fc" id="L258">                .courseNumber(row.courseNumber())</span>
-<span class="fc" id="L259">                .courseTitle(row.courseTitle())</span>
-<span class="fc" id="L260">                .term(row.term())</span>
-<span class="fc" id="L261">                .grade(row.grade())</span>
-<span class="fc" id="L262">                .build());</span>
-<span class="fc" id="L263">      }</span>
+<span class="fc" id="L254">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">    if (sent != null) {</span>
+<span class="fc bfc" id="L256" title="All 2 branches covered.">      for (PriorCourseworkFields row : sent) {</span>
+<span class="fc" id="L257">        rows.add(</span>
+<span class="fc" id="L258">            PriorCoursework.builder()</span>
+<span class="fc" id="L259">                .ucsbCourse(row.ucsbCourse())</span>
+<span class="fc" id="L260">                .otherSchool(row.otherSchool())</span>
+<span class="fc" id="L261">                .courseNumber(row.courseNumber())</span>
+<span class="fc" id="L262">                .courseTitle(row.courseTitle())</span>
+<span class="fc" id="L263">                .term(row.term())</span>
+<span class="fc" id="L264">                .grade(row.grade())</span>
+<span class="fc" id="L265">                .build());</span>
+<span class="fc" id="L266">      }</span>
     }
-<span class="fc" id="L265">    return rows;</span>
+<span class="fc" id="L268">    return rows;</span>
   }
 
   /** Copies the form's fields as they are; never the person or the recruitment. */
   static void apply(ApplicationFields fields, DraftApplication draft) {
-<span class="fc" id="L270">    draft.setFirstName(fields.firstName());</span>
-<span class="fc" id="L271">    draft.setMiddleName(fields.middleName());</span>
-<span class="fc" id="L272">    draft.setLastName(fields.lastName());</span>
-<span class="fc" id="L273">    draft.setMajor(fields.major());</span>
-<span class="fc" id="L274">    draft.setGpaMajor(fields.gpaMajor());</span>
-<span class="fc" id="L275">    draft.setGpaOverall(fields.gpaOverall());</span>
-<span class="fc" id="L276">    draft.setFirstQuarter(fields.firstQuarter());</span>
-<span class="fc" id="L277">    draft.setYearInProgram(fields.yearInProgram());</span>
-<span class="fc" id="L278">    draft.setGraduationDate(fields.graduationDate());</span>
-<span class="fc" id="L279">    draft.setPriorCoursework(coursework(fields.priorCoursework()));</span>
-<span class="fc" id="L280">    draft.setTopicProficiencies(levels(fields.topicProficiencies()));</span>
-<span class="fc" id="L281">    draft.setInterests(levels(fields.interests()));</span>
-<span class="fc" id="L282">    draft.setPrevExperience(fields.prevExperience());</span>
-<span class="fc" id="L283">    draft.setComments(fields.comments());</span>
-<span class="fc" id="L284">    draft.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
-<span class="fc" id="L285">    draft.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
-<span class="fc" id="L286">    draft.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
-<span class="fc" id="L287">    draft.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
-<span class="fc" id="L288">    draft.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
-<span class="fc" id="L289">    draft.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
-<span class="fc" id="L290">    draft.setAvailabilityCommentsFirstChoice(fields.availabilityCommentsFirstChoice());</span>
-<span class="fc" id="L291">    draft.setAvailabilityCommentsSecondChoice(fields.availabilityCommentsSecondChoice());</span>
-<span class="fc" id="L292">    draft.setCourseInterests(ApplicationsController.courseInterestsFrom(fields));</span>
-<span class="fc" id="L293">    draft.setResidencyStatus(fields.residencyStatus());</span>
-<span class="fc" id="L294">    draft.setLanguageExam(fields.languageExam());</span>
-<span class="fc" id="L295">    draft.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
-<span class="fc" id="L296">    draft.setClassLevel(fields.classLevel());</span>
-<span class="fc" id="L297">    draft.setVideoLink(fields.videoLink());</span>
-<span class="fc" id="L298">    draft.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
-<span class="fc" id="L299">    draft.setPermNumber(fields.permNumber());</span>
-<span class="fc" id="L300">    draft.setBsMsStudent(fields.bsMsStudent());</span>
-<span class="fc" id="L301">    draft.setStudentStatusNextQuarter(fields.studentStatusNextQuarter());</span>
-<span class="fc" id="L302">    draft.setWantsTaEligibility(fields.wantsTaEligibility());</span>
-<span class="fc" id="L303">    draft.setOtherCampusJob(fields.otherCampusJob());</span>
-<span class="fc" id="L304">    draft.setPriorUcsbEmployment(fields.priorUcsbEmployment());</span>
-<span class="fc" id="L305">    draft.setEmployeeId(fields.employeeId());</span>
-<span class="fc" id="L306">    draft.setI9Appointment(fields.i9Appointment());</span>
-<span class="fc" id="L307">    draft.setTrainingCommitment(fields.trainingCommitment());</span>
-<span class="fc" id="L308">    draft.setTrainingCommitmentExplanation(fields.trainingCommitmentExplanation());</span>
-<span class="fc" id="L309">    draft.setChangingMajor(fields.changingMajor());</span>
-<span class="fc" id="L310">    draft.setNoticeVersionId(fields.noticeVersionId());</span>
-<span class="fc" id="L311">  }</span>
+<span class="fc" id="L273">    draft.setFirstName(fields.firstName());</span>
+<span class="fc" id="L274">    draft.setMiddleName(fields.middleName());</span>
+<span class="fc" id="L275">    draft.setLastName(fields.lastName());</span>
+<span class="fc" id="L276">    draft.setMajor(fields.major());</span>
+<span class="fc" id="L277">    draft.setGpaMajor(fields.gpaMajor());</span>
+<span class="fc" id="L278">    draft.setGpaOverall(fields.gpaOverall());</span>
+<span class="fc" id="L279">    draft.setFirstQuarter(fields.firstQuarter());</span>
+<span class="fc" id="L280">    draft.setYearInProgram(fields.yearInProgram());</span>
+<span class="fc" id="L281">    draft.setGraduationDate(fields.graduationDate());</span>
+<span class="fc" id="L282">    draft.setPriorCoursework(coursework(fields.priorCoursework()));</span>
+<span class="fc" id="L283">    draft.setTopicProficiencies(levels(fields.topicProficiencies()));</span>
+<span class="fc" id="L284">    draft.setInterests(levels(fields.interests()));</span>
+<span class="fc" id="L285">    draft.setPrevExperience(fields.prevExperience());</span>
+<span class="fc" id="L286">    draft.setComments(fields.comments());</span>
+<span class="fc" id="L287">    draft.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
+<span class="fc" id="L288">    draft.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
+<span class="fc" id="L289">    draft.setAvailableForLecturesFirstChoice(fields.availableForLecturesFirstChoice());</span>
+<span class="fc" id="L290">    draft.setAvailableForLecturesSecondChoice(fields.availableForLecturesSecondChoice());</span>
+<span class="fc" id="L291">    draft.setAvailableForDiscussionFirstChoice(fields.availableForDiscussionFirstChoice());</span>
+<span class="fc" id="L292">    draft.setAvailableForDiscussionSecondChoice(fields.availableForDiscussionSecondChoice());</span>
+<span class="fc" id="L293">    draft.setAvailabilityCommentsFirstChoice(fields.availabilityCommentsFirstChoice());</span>
+<span class="fc" id="L294">    draft.setAvailabilityCommentsSecondChoice(fields.availabilityCommentsSecondChoice());</span>
+<span class="fc" id="L295">    draft.setCourseInterests(ApplicationsController.courseInterestsFrom(fields));</span>
+<span class="fc" id="L296">    draft.setResidencyStatus(fields.residencyStatus());</span>
+<span class="fc" id="L297">    draft.setLanguageExam(fields.languageExam());</span>
+<span class="fc" id="L298">    draft.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
+<span class="fc" id="L299">    draft.setClassLevel(fields.classLevel());</span>
+<span class="fc" id="L300">    draft.setVideoLink(fields.videoLink());</span>
+<span class="fc" id="L301">    draft.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
+<span class="fc" id="L302">    draft.setPermNumber(fields.permNumber());</span>
+<span class="fc" id="L303">    draft.setBsMsStudent(fields.bsMsStudent());</span>
+<span class="fc" id="L304">    draft.setStudentStatusNextQuarter(fields.studentStatusNextQuarter());</span>
+<span class="fc" id="L305">    draft.setWantsTaEligibility(fields.wantsTaEligibility());</span>
+<span class="fc" id="L306">    draft.setOtherCampusJob(fields.otherCampusJob());</span>
+<span class="fc" id="L307">    draft.setPriorUcsbEmployment(fields.priorUcsbEmployment());</span>
+<span class="fc" id="L308">    draft.setEmployeeId(fields.employeeId());</span>
+<span class="fc" id="L309">    draft.setI9Appointment(fields.i9Appointment());</span>
+<span class="fc" id="L310">    draft.setTrainingCommitment(fields.trainingCommitment());</span>
+<span class="fc" id="L311">    draft.setTrainingCommitmentExplanation(fields.trainingCommitmentExplanation());</span>
+<span class="fc" id="L312">    draft.setChangingMajor(fields.changingMajor());</span>
+<span class="fc" id="L313">    draft.setNoticeVersionId(fields.noticeVersionId());</span>
+<span class="fc" id="L314">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

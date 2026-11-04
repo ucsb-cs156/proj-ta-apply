@@ -234,53 +234,64 @@ import org.springframework.web.bind.annotation.RestController;
       summary = &quot;Apply to a recruitment&quot;,
       description =
           &quot;Any signed-in user may apply to any open recruitment, TA or ULA. Refused if the&quot;
-              + &quot; recruitment is not open or they already have an application for it.&quot;)
+              + &quot; recruitment is not open or they already have an application for it that is not&quot;
+              + &quot; cancelled: one who cancelled may apply again while applications are open, as if&quot;
+              + &quot; from scratch, and the cancelled application is kept (issue #318).&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @PostMapping(&quot;/post&quot;)
   public Application postApplication(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestBody ApplicationFields fields) {
 
-<span class="fc" id="L244">    Recruitment recruitment =</span>
+<span class="fc" id="L246">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L246">            .findById(recruitmentId)</span>
-<span class="fc" id="L247">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L248">            .findById(recruitmentId)</span>
+<span class="fc" id="L249">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
 
-<span class="fc bfc" id="L249" title="All 2 branches covered.">    if (!applicationAccessService.acceptingApplications(recruitment)) {</span>
-<span class="fc" id="L250">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L251" title="All 2 branches covered.">    if (!applicationAccessService.acceptingApplications(recruitment)) {</span>
+<span class="fc" id="L252">      throw new IllegalArgumentException(</span>
           &quot;Applications are not currently open for this recruitment&quot;);
     }
-<span class="fc bfc" id="L253" title="All 2 branches covered.">    if (applicationRepository.existsByEmailAndRecruitmentId(currentEmail(), recruitmentId)) {</span>
-<span class="fc" id="L254">      throw new IllegalArgumentException(&quot;You already have an application for this recruitment&quot;);</span>
+    // A cancelled application does not block a new one while applications are open (issue #318).
+<span class="fc bfc" id="L256" title="All 2 branches covered.">    if (applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(</span>
+<span class="fc" id="L257">        currentEmail(), recruitmentId, ApplicationReviewStatus.CANCELLED)) {</span>
+<span class="fc" id="L258">      throw new IllegalArgumentException(&quot;You already have an application for this recruitment&quot;);</span>
     }
 
-<span class="fc" id="L257">    requireAgreement(recruitment.getType(), fields);</span>
-<span class="fc" id="L258">    requireCoursework(recruitment.getType(), fields);</span>
-<span class="fc" id="L259">    requireUlaAnswers(recruitment.getType(), fields);</span>
-<span class="fc" id="L260">    requireTaAnswers(recruitment.getType(), fields);</span>
+<span class="fc" id="L261">    requireAgreement(recruitment.getType(), fields);</span>
+<span class="fc" id="L262">    requireCoursework(recruitment.getType(), fields);</span>
+<span class="fc" id="L263">    requireUlaAnswers(recruitment.getType(), fields);</span>
+<span class="fc" id="L264">    requireTaAnswers(recruitment.getType(), fields);</span>
 
     Application application =
-<span class="fc" id="L263">        Application.builder()</span>
-<span class="fc" id="L264">            .recruitmentId(recruitmentId)</span>
-<span class="fc" id="L265">            .email(currentEmail())</span>
-<span class="fc" id="L266">            .status(ApplicationReviewStatus.PENDING)</span>
-<span class="fc" id="L267">            .build();</span>
-<span class="fc" id="L268">    apply(fields, application, recruitment.getType());</span>
-<span class="fc" id="L269">    Optional&lt;DraftApplication&gt; draft =</span>
-<span class="fc" id="L270">        draftApplicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);</span>
+<span class="fc" id="L267">        Application.builder()</span>
+<span class="fc" id="L268">            .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L269">            .email(currentEmail())</span>
+<span class="fc" id="L270">            .status(ApplicationReviewStatus.PENDING)</span>
+            // The first, or one more than the cancelled ones before it, which are kept (issue
+            // #318).
+<span class="fc" id="L273">            .attemptNumber(</span>
+<span class="fc" id="L274">                (int)</span>
+<span class="fc" id="L275">                        applicationRepository.countByEmailAndRecruitmentId(</span>
+<span class="fc" id="L276">                            currentEmail(), recruitmentId)</span>
+                    + 1)
+<span class="fc" id="L278">            .build();</span>
+<span class="fc" id="L279">    apply(fields, application, recruitment.getType());</span>
+<span class="fc" id="L280">    Optional&lt;DraftApplication&gt; draft =</span>
+<span class="fc" id="L281">        draftApplicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);</span>
     // Whatever an admin wrote about the draft carries over to the application (issue #296).
-<span class="fc" id="L272">    draft</span>
-<span class="fc" id="L273">        .flatMap(d -&gt; draftAdminCommentRepository.findById(d.getId()))</span>
-<span class="fc" id="L274">        .ifPresent(c -&gt; application.setAdminComments(c.getComments()));</span>
-<span class="fc" id="L275">    applicationRepository.save(application);</span>
+<span class="fc" id="L283">    draft</span>
+<span class="fc" id="L284">        .flatMap(d -&gt; draftAdminCommentRepository.findById(d.getId()))</span>
+<span class="fc" id="L285">        .ifPresent(c -&gt; application.setAdminComments(c.getComments()));</span>
+<span class="fc" id="L286">    applicationRepository.save(application);</span>
     // The application is complete now, so the draft it grew from has done its job (issue #270);
     // the admin's comments on it go with it, now that the application has them.
-<span class="fc" id="L278">    draft.ifPresent(</span>
+<span class="fc" id="L289">    draft.ifPresent(</span>
         d -&gt; {
-<span class="fc" id="L280">          draftAdminCommentRepository.deleteById(d.getId());</span>
-<span class="fc" id="L281">          draftApplicationRepository.delete(d);</span>
-<span class="fc" id="L282">        });</span>
-<span class="fc" id="L283">    return forApplicant(application);</span>
+<span class="fc" id="L291">          draftAdminCommentRepository.deleteById(d.getId());</span>
+<span class="fc" id="L292">          draftApplicationRepository.delete(d);</span>
+<span class="fc" id="L293">        });</span>
+<span class="fc" id="L294">    return forApplicant(application);</span>
   }
 
   @Operation(
@@ -297,40 +308,49 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestBody ApplicationFields fields) {
 
-<span class="fc" id="L300">    Recruitment recruitment =</span>
+<span class="fc" id="L311">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L302">            .findById(recruitmentId)</span>
-<span class="fc" id="L303">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc" id="L304">    requireAgreement(recruitment.getType(), fields);</span>
-<span class="fc" id="L305">    requireCoursework(recruitment.getType(), fields);</span>
-<span class="fc" id="L306">    requireUlaAnswers(recruitment.getType(), fields);</span>
-<span class="fc" id="L307">    requireTaAnswers(recruitment.getType(), fields);</span>
+<span class="fc" id="L313">            .findById(recruitmentId)</span>
+<span class="fc" id="L314">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L315">    requireAgreement(recruitment.getType(), fields);</span>
+<span class="fc" id="L316">    requireCoursework(recruitment.getType(), fields);</span>
+<span class="fc" id="L317">    requireUlaAnswers(recruitment.getType(), fields);</span>
+<span class="fc" id="L318">    requireTaAnswers(recruitment.getType(), fields);</span>
 
-    // The unique (email, recruitment) constraint allows one row per admin per recruitment, and an
-    // admin testing a form will naturally submit it more than once, so the second submission
-    // overwrites the first rather than being refused.
-<span class="fc" id="L312">    Optional&lt;Application&gt; existing =</span>
-<span class="fc" id="L313">        applicationRepository.findByEmailAndRecruitmentId(currentEmail(), recruitmentId);</span>
+    // An admin has one live row per recruitment, and an admin testing a form will naturally submit
+    // it more than once, so the second submission overwrites the first rather than being refused.
+    // Rows the admin cancelled are kept and set aside (issue #318).
+<span class="fc" id="L323">    Optional&lt;Application&gt; existing =</span>
+        applicationRepository
+<span class="fc" id="L325">            .findByEmailAndRecruitmentIdOrderByIdDesc(currentEmail(), recruitmentId)</span>
+<span class="fc" id="L326">            .stream()</span>
+<span class="fc bfc" id="L327" title="All 2 branches covered.">            .filter(a -&gt; a.getStatus() != ApplicationReviewStatus.CANCELLED)</span>
+<span class="fc" id="L328">            .findFirst();</span>
 
     // An admin who is also a grad student may have a real application here; a test run must
     // never silently turn that into a test application.
-<span class="fc bfc" id="L317" title="All 4 branches covered.">    if (existing.isPresent() &amp;&amp; existing.get().getOrigin() != ApplicationOrigin.ADMIN_TEST) {</span>
-<span class="fc" id="L318">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L332" title="All 4 branches covered.">    if (existing.isPresent() &amp;&amp; existing.get().getOrigin() != ApplicationOrigin.ADMIN_TEST) {</span>
+<span class="fc" id="L333">      throw new IllegalArgumentException(</span>
           &quot;You already have a real application for this recruitment&quot;);
     }
 
-<span class="fc" id="L322">    Application application =</span>
-<span class="fc" id="L323">        existing.orElseGet(</span>
+<span class="fc" id="L337">    Application application =</span>
+<span class="fc" id="L338">        existing.orElseGet(</span>
             () -&gt;
-<span class="fc" id="L325">                Application.builder()</span>
-<span class="fc" id="L326">                    .recruitmentId(recruitmentId)</span>
-<span class="fc" id="L327">                    .email(currentEmail())</span>
-<span class="fc" id="L328">                    .status(ApplicationReviewStatus.PENDING)</span>
-<span class="fc" id="L329">                    .origin(ApplicationOrigin.ADMIN_TEST)</span>
-<span class="fc" id="L330">                    .build());</span>
-<span class="fc" id="L331">    apply(fields, application, recruitment.getType());</span>
-<span class="fc" id="L332">    applicationRepository.save(application);</span>
-<span class="fc" id="L333">    return forApplicant(application);</span>
+<span class="fc" id="L340">                Application.builder()</span>
+<span class="fc" id="L341">                    .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L342">                    .email(currentEmail())</span>
+<span class="fc" id="L343">                    .status(ApplicationReviewStatus.PENDING)</span>
+<span class="fc" id="L344">                    .origin(ApplicationOrigin.ADMIN_TEST)</span>
+<span class="fc" id="L345">                    .attemptNumber(</span>
+<span class="fc" id="L346">                        (int)</span>
+<span class="fc" id="L347">                                applicationRepository.countByEmailAndRecruitmentId(</span>
+<span class="fc" id="L348">                                    currentEmail(), recruitmentId)</span>
+                            + 1)
+<span class="fc" id="L350">                    .build());</span>
+<span class="fc" id="L351">    apply(fields, application, recruitment.getType());</span>
+<span class="fc" id="L352">    applicationRepository.save(application);</span>
+<span class="fc" id="L353">    return forApplicant(application);</span>
   }
 
   @Operation(
@@ -351,28 +371,28 @@ import org.springframework.web.bind.annotation.RestController;
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
       @RequestBody ApplicationFields fields) {
 
-<span class="fc" id="L354">    Application application = mine(id);</span>
-<span class="fc" id="L355">    clientActivityDetector.note(resourceKey(id), clientId, identity());</span>
-<span class="fc" id="L356">    requireNotCancelled(application);</span>
-<span class="fc" id="L357">    Recruitment recruitment = recruitmentFor(application);</span>
-<span class="fc bfc" id="L358" title="All 2 branches covered.">    if (!applicationAccessService.editable(recruitment)) {</span>
-<span class="fc" id="L359">      throw new ForbiddenException(</span>
+<span class="fc" id="L374">    Application application = mine(id);</span>
+<span class="fc" id="L375">    clientActivityDetector.note(resourceKey(id), clientId, identity());</span>
+<span class="fc" id="L376">    requireNotCancelled(application);</span>
+<span class="fc" id="L377">    Recruitment recruitment = recruitmentFor(application);</span>
+<span class="fc bfc" id="L378" title="All 2 branches covered.">    if (!applicationAccessService.editable(recruitment)) {</span>
+<span class="fc" id="L379">      throw new ForbiddenException(</span>
           &quot;This application can no longer be edited; applications are closed&quot;);
     }
-<span class="fc bfc" id="L362" title="All 2 branches covered.">    if (!version.equals(application.getVersion())) {</span>
-<span class="fc" id="L363">      return conflict(application, true);</span>
+<span class="fc bfc" id="L382" title="All 2 branches covered.">    if (!version.equals(application.getVersion())) {</span>
+<span class="fc" id="L383">      return conflict(application, true);</span>
     }
-<span class="fc" id="L365">    requireAgreement(recruitment.getType(), fields);</span>
-<span class="fc" id="L366">    requireCoursework(recruitment.getType(), fields);</span>
-<span class="fc" id="L367">    requireUlaAnswers(recruitment.getType(), fields);</span>
-<span class="fc" id="L368">    requireTaAnswers(recruitment.getType(), fields);</span>
+<span class="fc" id="L385">    requireAgreement(recruitment.getType(), fields);</span>
+<span class="fc" id="L386">    requireCoursework(recruitment.getType(), fields);</span>
+<span class="fc" id="L387">    requireUlaAnswers(recruitment.getType(), fields);</span>
+<span class="fc" id="L388">    requireTaAnswers(recruitment.getType(), fields);</span>
 
-<span class="fc" id="L370">    apply(fields, application, recruitment.getType());</span>
+<span class="fc" id="L390">    apply(fields, application, recruitment.getType());</span>
     try {
-<span class="fc" id="L372">      return ResponseEntity.ok(forApplicant(applicationRepository.save(application)));</span>
-<span class="fc" id="L373">    } catch (ObjectOptimisticLockingFailureException e) {</span>
+<span class="fc" id="L392">      return ResponseEntity.ok(forApplicant(applicationRepository.save(application)));</span>
+<span class="fc" id="L393">    } catch (ObjectOptimisticLockingFailureException e) {</span>
       // Another save got in between reading the application and writing it.
-<span class="fc" id="L375">      return conflict(applicationRepository.findById(id).orElseThrow(() -&gt; e), true);</span>
+<span class="fc" id="L395">      return conflict(applicationRepository.findById(id).orElseThrow(() -&gt; e), true);</span>
     }
   }
 
@@ -381,19 +401,19 @@ import org.springframework.web.bind.annotation.RestController;
    * admin's notes if the form is the applicant's (issue #302).
    */
   static ResponseEntity&lt;Object&gt; conflict(Application current, boolean forApplicant) {
-<span class="fc" id="L384">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L385">    body.put(</span>
+<span class="fc" id="L404">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L405">    body.put(</span>
         &quot;message&quot;,
         &quot;This application was changed in another tab or window, or by an admin. Reload to see&quot;
             + &quot; the latest version.&quot;);
-<span class="fc" id="L389">    body.put(&quot;version&quot;, current.getVersion());</span>
-<span class="fc bfc" id="L390" title="All 2 branches covered.">    body.put(&quot;application&quot;, forApplicant ? forApplicant(current) : current);</span>
-<span class="fc" id="L391">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
+<span class="fc" id="L409">    body.put(&quot;version&quot;, current.getVersion());</span>
+<span class="fc bfc" id="L410" title="All 2 branches covered.">    body.put(&quot;application&quot;, forApplicant ? forApplicant(current) : current);</span>
+<span class="fc" id="L411">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
   }
 
   /** The detector's name for an application, shared by the applicant's and the admin's pages. */
   static String resourceKey(Long id) {
-<span class="fc" id="L396">    return &quot;application:&quot; + id;</span>
+<span class="fc" id="L416">    return &quot;application:&quot; + id;</span>
   }
 
   /**
@@ -403,23 +423,23 @@ import org.springframework.web.bind.annotation.RestController;
    * side's page can choose its message.
    */
   static ClientIdentity identityOf(User user, boolean admin) {
-<span class="fc" id="L406">    String name = user.getFullName();</span>
+<span class="fc" id="L426">    String name = user.getFullName();</span>
     String label =
-<span class="fc bfc" id="L408" title="All 4 branches covered.">        name == null || name.isBlank()</span>
-<span class="fc" id="L409">            ? user.getEmail()</span>
-<span class="fc" id="L410">            : user.getEmail() + &quot; (&quot; + name.trim() + &quot;)&quot;;</span>
-<span class="fc" id="L411">    return new ClientIdentity(user.getEmail(), label, admin);</span>
+<span class="fc bfc" id="L428" title="All 4 branches covered.">        name == null || name.isBlank()</span>
+<span class="fc" id="L429">            ? user.getEmail()</span>
+<span class="fc" id="L430">            : user.getEmail() + &quot; (&quot; + name.trim() + &quot;)&quot;;</span>
+<span class="fc" id="L431">    return new ClientIdentity(user.getEmail(), label, admin);</span>
   }
 
   /** Whether the signed-in user holds the admin role. */
   private boolean isAdmin() {
-<span class="fc" id="L416">    return getCurrentUser().getRoles().stream()</span>
-<span class="fc" id="L417">        .map(GrantedAuthority::getAuthority)</span>
-<span class="fc" id="L418">        .anyMatch(&quot;ROLE_ADMIN&quot;::equals);</span>
+<span class="fc" id="L436">    return getCurrentUser().getRoles().stream()</span>
+<span class="fc" id="L437">        .map(GrantedAuthority::getAuthority)</span>
+<span class="fc" id="L438">        .anyMatch(&quot;ROLE_ADMIN&quot;::equals);</span>
   }
 
   private ClientIdentity identity() {
-<span class="fc" id="L422">    return identityOf(getCurrentUser().getUser(), isAdmin());</span>
+<span class="fc" id="L442">    return identityOf(getCurrentUser().getUser(), isAdmin());</span>
   }
 
   /**
@@ -427,14 +447,14 @@ import org.springframework.web.bind.annotation.RestController;
    * until this has returned.
    */
   private void requireOwnerOrAdmin(Long id) {
-<span class="fc" id="L430">    Application application =</span>
+<span class="fc" id="L450">    Application application =</span>
         applicationRepository
-<span class="fc" id="L432">            .findById(id)</span>
-<span class="fc" id="L433">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
-<span class="fc bfc" id="L434" title="All 4 branches covered.">    if (!currentEmail().equals(application.getEmail()) &amp;&amp; !isAdmin()) {</span>
-<span class="fc" id="L435">      throw new ForbiddenException(&quot;That application belongs to someone else&quot;);</span>
+<span class="fc" id="L452">            .findById(id)</span>
+<span class="fc" id="L453">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc bfc" id="L454" title="All 4 branches covered.">    if (!currentEmail().equals(application.getEmail()) &amp;&amp; !isAdmin()) {</span>
+<span class="fc" id="L455">      throw new ForbiddenException(&quot;That application belongs to someone else&quot;);</span>
     }
-<span class="fc" id="L437">  }</span>
+<span class="fc" id="L457">  }</span>
 
   @Operation(
       summary =
@@ -454,8 +474,8 @@ import org.springframework.web.bind.annotation.RestController;
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
     // The check comes first and throws, so that nothing below runs for anyone else: they are
     // neither recorded nor told who is working here.
-<span class="fc" id="L457">    requireOwnerOrAdmin(id);</span>
-<span class="fc" id="L458">    return clientActivityDetector.heartbeat(resourceKey(id), clientId, identity());</span>
+<span class="fc" id="L477">    requireOwnerOrAdmin(id);</span>
+<span class="fc" id="L478">    return clientActivityDetector.heartbeat(resourceKey(id), clientId, identity());</span>
   }
 
   @Operation(
@@ -471,9 +491,9 @@ import org.springframework.web.bind.annotation.RestController;
   public void leave(
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
-<span class="fc" id="L474">    requireOwnerOrAdmin(id);</span>
-<span class="fc" id="L475">    clientActivityDetector.leave(resourceKey(id), clientId);</span>
-<span class="fc" id="L476">  }</span>
+<span class="fc" id="L494">    requireOwnerOrAdmin(id);</span>
+<span class="fc" id="L495">    clientActivityDetector.leave(resourceKey(id), clientId);</span>
+<span class="fc" id="L496">  }</span>
 
   @Operation(
       summary = &quot;Update post-application comments&quot;,
@@ -487,15 +507,15 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;postApplicationComments&quot;) @RequestParam String postApplicationComments) {
 
-<span class="fc" id="L490">    Application application = mine(id);</span>
-<span class="fc" id="L491">    requireNotCancelled(application);</span>
-<span class="fc bfc" id="L492" title="All 2 branches covered.">    if (!applicationAccessService.commentable(recruitmentFor(application), AppTime.today())) {</span>
-<span class="fc" id="L493">      throw new ForbiddenException(&quot;This recruitment closed more than six months ago&quot;);</span>
+<span class="fc" id="L510">    Application application = mine(id);</span>
+<span class="fc" id="L511">    requireNotCancelled(application);</span>
+<span class="fc bfc" id="L512" title="All 2 branches covered.">    if (!applicationAccessService.commentable(recruitmentFor(application), AppTime.today())) {</span>
+<span class="fc" id="L513">      throw new ForbiddenException(&quot;This recruitment closed more than six months ago&quot;);</span>
     }
 
-<span class="fc" id="L496">    application.setPostApplicationComments(postApplicationComments);</span>
-<span class="fc" id="L497">    applicationRepository.save(application);</span>
-<span class="fc" id="L498">    return forApplicant(application);</span>
+<span class="fc" id="L516">    application.setPostApplicationComments(postApplicationComments);</span>
+<span class="fc" id="L517">    applicationRepository.save(application);</span>
+<span class="fc" id="L518">    return forApplicant(application);</span>
   }
 
   @Operation(
@@ -503,36 +523,37 @@ import org.springframework.web.bind.annotation.RestController;
       description =
           &quot;Marks the applicant's own application CANCELLED with the reason they gave (issue #107).&quot;
               + &quot; Final: a cancelled application cannot be edited, commented on or un-cancelled,&quot;
-              + &quot; and the applicant cannot apply to that recruitment again.&quot;)
+              + &quot; but, while applications are open, the applicant may start a new application to that&quot;
+              + &quot; recruitment (issue #318).&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @PutMapping(&quot;/cancel&quot;)
   public Application cancelApplication(
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;reason&quot;) @RequestParam String reason) {
 
-<span class="fc" id="L513">    Application application = mine(id);</span>
-<span class="fc" id="L514">    requireNotCancelled(application);</span>
-<span class="fc" id="L515">    String why = blankToNull(reason);</span>
-<span class="fc bfc" id="L516" title="All 2 branches covered.">    if (why == null) {</span>
-<span class="fc" id="L517">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L534">    Application application = mine(id);</span>
+<span class="fc" id="L535">    requireNotCancelled(application);</span>
+<span class="fc" id="L536">    String why = blankToNull(reason);</span>
+<span class="fc bfc" id="L537" title="All 2 branches covered.">    if (why == null) {</span>
+<span class="fc" id="L538">      throw new IllegalArgumentException(</span>
           &quot;Please give a brief reason for cancelling your application&quot;);
     }
 
-<span class="fc" id="L521">    application.setStatus(ApplicationReviewStatus.CANCELLED);</span>
-<span class="fc" id="L522">    application.setCancellationReason(why);</span>
-<span class="fc" id="L523">    application.setCancelledAt(AppTime.now());</span>
-<span class="fc" id="L524">    applicationRepository.save(application);</span>
+<span class="fc" id="L542">    application.setStatus(ApplicationReviewStatus.CANCELLED);</span>
+<span class="fc" id="L543">    application.setCancellationReason(why);</span>
+<span class="fc" id="L544">    application.setCancelledAt(AppTime.now());</span>
+<span class="fc" id="L545">    applicationRepository.save(application);</span>
     // The applicant leaves the assignments page, so a page that still shows them is out of date.
-<span class="fc" id="L526">    recruitmentRepository.bumpAssignmentsVersion(application.getRecruitmentId());</span>
-<span class="fc" id="L527">    return forApplicant(application);</span>
+<span class="fc" id="L547">    recruitmentRepository.bumpAssignmentsVersion(application.getRecruitmentId());</span>
+<span class="fc" id="L548">    return forApplicant(application);</span>
   }
 
   /** A cancelled application is final: nothing about it may change. */
   private static void requireNotCancelled(Application application) {
-<span class="fc bfc" id="L532" title="All 2 branches covered.">    if (application.getStatus() == ApplicationReviewStatus.CANCELLED) {</span>
-<span class="fc" id="L533">      throw new ForbiddenException(&quot;This application was cancelled&quot;);</span>
+<span class="fc bfc" id="L553" title="All 2 branches covered.">    if (application.getStatus() == ApplicationReviewStatus.CANCELLED) {</span>
+<span class="fc" id="L554">      throw new ForbiddenException(&quot;This application was cancelled&quot;);</span>
     }
-<span class="fc" id="L535">  }</span>
+<span class="fc" id="L556">  }</span>
 
   /**
    * The course interests worth storing. The form sends only the answers that differ from the
@@ -541,14 +562,14 @@ import org.springframework.web.bind.annotation.RestController;
    * the form does not even ask about them. A missing map means no answers.
    */
   static Map&lt;String, CourseInterest&gt; courseInterestsFrom(ApplicationFields fields) {
-<span class="fc" id="L544">    Map&lt;String, CourseInterest&gt; interests = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L545" title="All 2 branches covered.">    if (fields.courseInterests() != null) {</span>
-<span class="fc" id="L546">      interests.putAll(fields.courseInterests());</span>
+<span class="fc" id="L565">    Map&lt;String, CourseInterest&gt; interests = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L566" title="All 2 branches covered.">    if (fields.courseInterests() != null) {</span>
+<span class="fc" id="L567">      interests.putAll(fields.courseInterests());</span>
     }
-<span class="fc bfc" id="L548" title="All 2 branches covered.">    interests.values().removeIf(interest -&gt; interest == CourseInterest.NOT_INTERESTED);</span>
-<span class="fc" id="L549">    interests.remove(fields.firstChoiceCourse());</span>
-<span class="fc" id="L550">    interests.remove(fields.secondChoiceCourse());</span>
-<span class="fc" id="L551">    return interests;</span>
+<span class="fc bfc" id="L569" title="All 2 branches covered.">    interests.values().removeIf(interest -&gt; interest == CourseInterest.NOT_INTERESTED);</span>
+<span class="fc" id="L570">    interests.remove(fields.firstChoiceCourse());</span>
+<span class="fc" id="L571">    interests.remove(fields.secondChoiceCourse());</span>
+<span class="fc" id="L572">    return interests;</span>
   }
 
   public static final int MIN_PROFICIENCY = 1;
@@ -565,7 +586,7 @@ import org.springframework.web.bind.annotation.RestController;
   public static final int MAX_INTEREST = 5;
 
   static int maxProficiency(RecruitmentType type) {
-<span class="fc bfc" id="L568" title="All 2 branches covered.">    return type == RecruitmentType.TA ? MAX_TA_PROFICIENCY : MAX_ULA_PROFICIENCY;</span>
+<span class="fc bfc" id="L589" title="All 2 branches covered.">    return type == RecruitmentType.TA ? MAX_TA_PROFICIENCY : MAX_ULA_PROFICIENCY;</span>
   }
 
   /**
@@ -576,33 +597,33 @@ import org.springframework.web.bind.annotation.RestController;
   private static Map&lt;String, Integer&gt; levelsFrom(
       Map&lt;String, Integer&gt; sent, String what, int min, int max) {
     // Sorted by name so the JSON an application is returned as is stable.
-<span class="fc" id="L579">    Map&lt;String, Integer&gt; levels = new TreeMap&lt;&gt;();</span>
+<span class="fc" id="L600">    Map&lt;String, Integer&gt; levels = new TreeMap&lt;&gt;();</span>
     for (Map.Entry&lt;String, Integer&gt; entry :
-<span class="fc bfc" id="L581" title="All 4 branches covered.">        (sent == null ? Map.&lt;String, Integer&gt;of() : sent).entrySet()) {</span>
-<span class="fc" id="L582">      Integer level = entry.getValue();</span>
-<span class="fc bfc" id="L583" title="All 2 branches covered.">      if (level == null) {</span>
-<span class="fc" id="L584">        continue;</span>
+<span class="fc bfc" id="L602" title="All 4 branches covered.">        (sent == null ? Map.&lt;String, Integer&gt;of() : sent).entrySet()) {</span>
+<span class="fc" id="L603">      Integer level = entry.getValue();</span>
+<span class="fc bfc" id="L604" title="All 2 branches covered.">      if (level == null) {</span>
+<span class="fc" id="L605">        continue;</span>
       }
-<span class="fc bfc" id="L586" title="All 4 branches covered.">      if (level &lt; min || level &gt; max) {</span>
-<span class="fc" id="L587">        throw new IllegalArgumentException(</span>
-<span class="fc" id="L588">            &quot;%s in %s must be between %d and %d&quot;.formatted(what, entry.getKey(), min, max));</span>
+<span class="fc bfc" id="L607" title="All 4 branches covered.">      if (level &lt; min || level &gt; max) {</span>
+<span class="fc" id="L608">        throw new IllegalArgumentException(</span>
+<span class="fc" id="L609">            &quot;%s in %s must be between %d and %d&quot;.formatted(what, entry.getKey(), min, max));</span>
       }
-<span class="fc" id="L590">      levels.put(entry.getKey(), level);</span>
-<span class="fc" id="L591">    }</span>
-<span class="fc" id="L592">    return levels;</span>
+<span class="fc" id="L611">      levels.put(entry.getKey(), level);</span>
+<span class="fc" id="L612">    }</span>
+<span class="fc" id="L613">    return levels;</span>
   }
 
   /** The topic ratings worth storing, on the scale the form type uses. */
   static Map&lt;String, Integer&gt; topicProficienciesFrom(
       ApplicationFields fields, RecruitmentType type) {
-<span class="fc" id="L598">    return levelsFrom(</span>
-<span class="fc" id="L599">        fields.topicProficiencies(), &quot;Proficiency&quot;, MIN_PROFICIENCY, maxProficiency(type));</span>
+<span class="fc" id="L619">    return levelsFrom(</span>
+<span class="fc" id="L620">        fields.topicProficiencies(), &quot;Proficiency&quot;, MIN_PROFICIENCY, maxProficiency(type));</span>
   }
 
   /** The interest levels worth storing; a TA form has no interests section, so none are kept. */
   static Map&lt;String, Integer&gt; interestsFrom(ApplicationFields fields, RecruitmentType type) {
-<span class="fc bfc" id="L604" title="All 2 branches covered.">    Map&lt;String, Integer&gt; sent = type == RecruitmentType.TA ? null : fields.interests();</span>
-<span class="fc" id="L605">    return levelsFrom(sent, &quot;Interest&quot;, MIN_INTEREST, MAX_INTEREST);</span>
+<span class="fc bfc" id="L625" title="All 2 branches covered.">    Map&lt;String, Integer&gt; sent = type == RecruitmentType.TA ? null : fields.interests();</span>
+<span class="fc" id="L626">    return levelsFrom(sent, &quot;Interest&quot;, MIN_INTEREST, MAX_INTEREST);</span>
   }
 
   /**
@@ -613,27 +634,27 @@ import org.springframework.web.bind.annotation.RestController;
    * written yet the form shows none, so nothing is required.
    */
   void requireAgreement(RecruitmentType type, ApplicationFields fields) {
-<span class="fc" id="L616">    Long versionId = fields.noticeVersionId();</span>
-<span class="fc bfc" id="L617" title="All 2 branches covered.">    if (versionId == null) {</span>
-<span class="fc bfc" id="L618" title="All 2 branches covered.">      if (noticeVersionRepository.findFirstByTypeOrderByIdDesc(type).isPresent()) {</span>
-<span class="fc" id="L619">        throw new IllegalArgumentException(</span>
+<span class="fc" id="L637">    Long versionId = fields.noticeVersionId();</span>
+<span class="fc bfc" id="L638" title="All 2 branches covered.">    if (versionId == null) {</span>
+<span class="fc bfc" id="L639" title="All 2 branches covered.">      if (noticeVersionRepository.findFirstByTypeOrderByIdDesc(type).isPresent()) {</span>
+<span class="fc" id="L640">        throw new IllegalArgumentException(</span>
             &quot;You must agree to the Notices, Terms and Conditions to submit this application&quot;);
       }
-<span class="fc" id="L622">      return;</span>
+<span class="fc" id="L643">      return;</span>
     }
-<span class="fc" id="L624">    NoticeVersion version =</span>
+<span class="fc" id="L645">    NoticeVersion version =</span>
         noticeVersionRepository
-<span class="fc" id="L626">            .findById(versionId)</span>
-<span class="fc" id="L627">            .orElseThrow(() -&gt; new EntityNotFoundException(NoticeVersion.class, versionId));</span>
-<span class="fc bfc" id="L628" title="All 2 branches covered.">    if (version.getType() != type) {</span>
-<span class="fc" id="L629">      throw new IllegalArgumentException(</span>
-<span class="fc" id="L630">          &quot;Notice version %d is not a %s notice&quot;.formatted(versionId, type));</span>
+<span class="fc" id="L647">            .findById(versionId)</span>
+<span class="fc" id="L648">            .orElseThrow(() -&gt; new EntityNotFoundException(NoticeVersion.class, versionId));</span>
+<span class="fc bfc" id="L649" title="All 2 branches covered.">    if (version.getType() != type) {</span>
+<span class="fc" id="L650">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L651">          &quot;Notice version %d is not a %s notice&quot;.formatted(versionId, type));</span>
     }
-<span class="fc" id="L632">  }</span>
+<span class="fc" id="L653">  }</span>
 
   /** How many prior courses an application of this type must list. */
   static int minimumCourses(RecruitmentType type) {
-<span class="fc bfc" id="L636" title="All 2 branches covered.">    return type == RecruitmentType.TA ? MIN_TA_COURSES : MIN_ULA_COURSES;</span>
+<span class="fc bfc" id="L657" title="All 2 branches covered.">    return type == RecruitmentType.TA ? MIN_TA_COURSES : MIN_ULA_COURSES;</span>
   }
 
   /**
@@ -643,31 +664,31 @@ import org.springframework.web.bind.annotation.RestController;
    */
   static void requireCoursework(RecruitmentType type, ApplicationFields fields) {
     List&lt;PriorCourseworkFields&gt; rows =
-<span class="fc bfc" id="L646" title="All 2 branches covered.">        fields.priorCoursework() == null ? List.of() : fields.priorCoursework();</span>
-<span class="fc" id="L647">    int minimum = minimumCourses(type);</span>
-<span class="fc bfc" id="L648" title="All 2 branches covered.">    if (rows.size() &lt; minimum) {</span>
-<span class="fc" id="L649">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L667" title="All 2 branches covered.">        fields.priorCoursework() == null ? List.of() : fields.priorCoursework();</span>
+<span class="fc" id="L668">    int minimum = minimumCourses(type);</span>
+<span class="fc bfc" id="L669" title="All 2 branches covered.">    if (rows.size() &lt; minimum) {</span>
+<span class="fc" id="L670">      throw new IllegalArgumentException(</span>
           &quot;A %s application must list at least %d prior course%s&quot;
-<span class="fc bfc" id="L651" title="All 2 branches covered.">              .formatted(type, minimum, minimum == 1 ? &quot;&quot; : &quot;s&quot;));</span>
+<span class="fc bfc" id="L672" title="All 2 branches covered.">              .formatted(type, minimum, minimum == 1 ? &quot;&quot; : &quot;s&quot;));</span>
     }
-<span class="fc bfc" id="L653" title="All 2 branches covered.">    for (PriorCourseworkFields row : rows) {</span>
-<span class="fc bfc" id="L654" title="All 4 branches covered.">      if (row.courseNumber() == null || row.courseNumber().isBlank()) {</span>
-<span class="fc" id="L655">        throw new IllegalArgumentException(&quot;Every prior course needs a course number&quot;);</span>
+<span class="fc bfc" id="L674" title="All 2 branches covered.">    for (PriorCourseworkFields row : rows) {</span>
+<span class="fc bfc" id="L675" title="All 4 branches covered.">      if (row.courseNumber() == null || row.courseNumber().isBlank()) {</span>
+<span class="fc" id="L676">        throw new IllegalArgumentException(&quot;Every prior course needs a course number&quot;);</span>
       }
-<span class="fc bfc" id="L657" title="All 6 branches covered.">      if (!row.ucsbCourse() &amp;&amp; (row.otherSchool() == null || row.otherSchool().isBlank())) {</span>
-<span class="fc" id="L658">        throw new IllegalArgumentException(</span>
-<span class="fc" id="L659">            &quot;Prior course %s needs the school it was taken at&quot;.formatted(row.courseNumber()));</span>
+<span class="fc bfc" id="L678" title="All 6 branches covered.">      if (!row.ucsbCourse() &amp;&amp; (row.otherSchool() == null || row.otherSchool().isBlank())) {</span>
+<span class="fc" id="L679">        throw new IllegalArgumentException(</span>
+<span class="fc" id="L680">            &quot;Prior course %s needs the school it was taken at&quot;.formatted(row.courseNumber()));</span>
       }
-<span class="fc" id="L661">    }</span>
-<span class="fc" id="L662">  }</span>
+<span class="fc" id="L682">    }</span>
+<span class="fc" id="L683">  }</span>
 
   /** A perm number is 7 letters or digits; see requireUlaAnswers. */
-<span class="fc" id="L665">  static final Pattern PERM_NUMBER = Pattern.compile(&quot;[A-Z0-9]{7}&quot;);</span>
+<span class="fc" id="L686">  static final Pattern PERM_NUMBER = Pattern.compile(&quot;[A-Z0-9]{7}&quot;);</span>
 
   /** The perm number as stored: trimmed and upper case; a blank one is no answer. */
   public static String normalizePermNumber(String permNumber) {
-<span class="fc" id="L669">    String text = blankToNull(permNumber);</span>
-<span class="fc bfc" id="L670" title="All 2 branches covered.">    return text == null ? null : text.toUpperCase();</span>
+<span class="fc" id="L690">    String text = blankToNull(permNumber);</span>
+<span class="fc bfc" id="L691" title="All 2 branches covered.">    return text == null ? null : text.toUpperCase();</span>
   }
 
   /**
@@ -675,12 +696,12 @@ import org.springframework.web.bind.annotation.RestController;
    * letters or digits (checked after upper-casing, so case does not matter).
    */
   static void requirePermNumberFormat(ApplicationFields fields) {
-<span class="fc" id="L678">    String perm = normalizePermNumber(fields.permNumber());</span>
-<span class="fc bfc" id="L679" title="All 4 branches covered.">    if (perm != null &amp;&amp; !PERM_NUMBER.matcher(perm).matches()) {</span>
-<span class="fc" id="L680">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L699">    String perm = normalizePermNumber(fields.permNumber());</span>
+<span class="fc bfc" id="L700" title="All 4 branches covered.">    if (perm != null &amp;&amp; !PERM_NUMBER.matcher(perm).matches()) {</span>
+<span class="fc" id="L701">      throw new IllegalArgumentException(</span>
           &quot;Perm number must be exactly 7 characters, letters and digits only&quot;);
     }
-<span class="fc" id="L683">  }</span>
+<span class="fc" id="L704">  }</span>
 
   /**
    * The questions a ULA applicant must answer, as on the Google Form the ULA application used to
@@ -692,55 +713,55 @@ import org.springframework.web.bind.annotation.RestController;
    * format.
    */
   static void requireUlaAnswers(RecruitmentType type, ApplicationFields fields) {
-<span class="fc bfc" id="L695" title="All 2 branches covered.">    if (type != RecruitmentType.ULA) {</span>
-<span class="fc" id="L696">      return;</span>
+<span class="fc bfc" id="L716" title="All 2 branches covered.">    if (type != RecruitmentType.ULA) {</span>
+<span class="fc" id="L717">      return;</span>
     }
-<span class="fc bfc" id="L698" title="All 2 branches covered.">    if (normalizePermNumber(fields.permNumber()) == null) {</span>
-<span class="fc" id="L699">      throw new IllegalArgumentException(&quot;A ULA application needs your perm number&quot;);</span>
+<span class="fc bfc" id="L719" title="All 2 branches covered.">    if (normalizePermNumber(fields.permNumber()) == null) {</span>
+<span class="fc" id="L720">      throw new IllegalArgumentException(&quot;A ULA application needs your perm number&quot;);</span>
     }
-<span class="fc" id="L701">    requirePermNumberFormat(fields);</span>
-<span class="fc bfc" id="L702" title="All 2 branches covered.">    if (fields.bsMsStudent() == null) {</span>
-<span class="fc" id="L703">      throw new IllegalArgumentException(&quot;Please say whether you are a BS/MS student&quot;);</span>
+<span class="fc" id="L722">    requirePermNumberFormat(fields);</span>
+<span class="fc bfc" id="L723" title="All 2 branches covered.">    if (fields.bsMsStudent() == null) {</span>
+<span class="fc" id="L724">      throw new IllegalArgumentException(&quot;Please say whether you are a BS/MS student&quot;);</span>
     }
-<span class="fc bfc" id="L705" title="All 2 branches covered.">    if (fields.otherCampusJob() == null) {</span>
-<span class="fc" id="L706">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L726" title="All 2 branches covered.">    if (fields.otherCampusJob() == null) {</span>
+<span class="fc" id="L727">      throw new IllegalArgumentException(</span>
           &quot;Please say whether you will have another campus job this quarter&quot;);
     }
-<span class="fc bfc" id="L709" title="All 2 branches covered.">    if (fields.priorUcsbEmployment() == null) {</span>
-<span class="fc" id="L710">      throw new IllegalArgumentException(&quot;Please say whether you have been employed at UCSB&quot;);</span>
+<span class="fc bfc" id="L730" title="All 2 branches covered.">    if (fields.priorUcsbEmployment() == null) {</span>
+<span class="fc" id="L731">      throw new IllegalArgumentException(&quot;Please say whether you have been employed at UCSB&quot;);</span>
     }
-<span class="fc bfc" id="L712" title="All 4 branches covered.">    if (!fields.firstQuarterTicked() &amp;&amp; fields.gpaMajor() == null) {</span>
-<span class="fc" id="L713">      throw new IllegalArgumentException(&quot;A ULA application needs your GPA in major&quot;);</span>
+<span class="fc bfc" id="L733" title="All 4 branches covered.">    if (!fields.firstQuarterTicked() &amp;&amp; fields.gpaMajor() == null) {</span>
+<span class="fc" id="L734">      throw new IllegalArgumentException(&quot;A ULA application needs your GPA in major&quot;);</span>
     }
-<span class="fc bfc" id="L715" title="All 4 branches covered.">    if (!fields.firstQuarterTicked() &amp;&amp; fields.gpaOverall() == null) {</span>
-<span class="fc" id="L716">      throw new IllegalArgumentException(&quot;A ULA application needs your overall GPA&quot;);</span>
+<span class="fc bfc" id="L736" title="All 4 branches covered.">    if (!fields.firstQuarterTicked() &amp;&amp; fields.gpaOverall() == null) {</span>
+<span class="fc" id="L737">      throw new IllegalArgumentException(&quot;A ULA application needs your overall GPA&quot;);</span>
     }
-<span class="fc bfc" id="L718" title="All 2 branches covered.">    if (blankToNull(fields.yearInProgram()) == null) {</span>
-<span class="fc" id="L719">      throw new IllegalArgumentException(&quot;A ULA application needs your year in program&quot;);</span>
+<span class="fc bfc" id="L739" title="All 2 branches covered.">    if (blankToNull(fields.yearInProgram()) == null) {</span>
+<span class="fc" id="L740">      throw new IllegalArgumentException(&quot;A ULA application needs your year in program&quot;);</span>
     }
-<span class="fc bfc" id="L721" title="All 2 branches covered.">    if (blankToNull(fields.graduationDate()) == null) {</span>
-<span class="fc" id="L722">      throw new IllegalArgumentException(&quot;A ULA application needs your expected graduation&quot;);</span>
+<span class="fc bfc" id="L742" title="All 2 branches covered.">    if (blankToNull(fields.graduationDate()) == null) {</span>
+<span class="fc" id="L743">      throw new IllegalArgumentException(&quot;A ULA application needs your expected graduation&quot;);</span>
     }
-<span class="fc bfc" id="L724" title="All 2 branches covered.">    if (fields.previousServiceAsUla() == null) {</span>
-<span class="fc" id="L725">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L745" title="All 2 branches covered.">    if (fields.previousServiceAsUla() == null) {</span>
+<span class="fc" id="L746">      throw new IllegalArgumentException(</span>
           &quot;A ULA application needs the number of quarters you have served as a ULA (0 if none)&quot;);
     }
-<span class="fc bfc" id="L728" title="All 2 branches covered.">    if (Integer.valueOf(0).equals(fields.previousServiceAsUla())</span>
-<span class="fc bfc" id="L729" title="All 2 branches covered.">        &amp;&amp; fields.trainingCommitment() == null) {</span>
-<span class="fc" id="L730">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L749" title="All 2 branches covered.">    if (Integer.valueOf(0).equals(fields.previousServiceAsUla())</span>
+<span class="fc bfc" id="L750" title="All 2 branches covered.">        &amp;&amp; fields.trainingCommitment() == null) {</span>
+<span class="fc" id="L751">      throw new IllegalArgumentException(</span>
           &quot;As a first-time ULA applicant, please answer the training commitment question&quot;);
     }
     // Issue #213: a first-time applicant must give a video link, and everyone confirms the I-9.
-<span class="fc bfc" id="L734" title="All 2 branches covered.">    if (Integer.valueOf(0).equals(fields.previousServiceAsUla())</span>
-<span class="fc bfc" id="L735" title="All 2 branches covered.">        &amp;&amp; blankToNull(fields.videoLink()) == null) {</span>
-<span class="fc" id="L736">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L755" title="All 2 branches covered.">    if (Integer.valueOf(0).equals(fields.previousServiceAsUla())</span>
+<span class="fc bfc" id="L756" title="All 2 branches covered.">        &amp;&amp; blankToNull(fields.videoLink()) == null) {</span>
+<span class="fc" id="L757">      throw new IllegalArgumentException(</span>
           &quot;As a first-time ULA applicant, please include a link to your video&quot;);
     }
-<span class="fc bfc" id="L739" title="All 2 branches covered.">    if (!Boolean.TRUE.equals(fields.i9Appointment())) {</span>
-<span class="fc" id="L740">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L760" title="All 2 branches covered.">    if (!Boolean.TRUE.equals(fields.i9Appointment())) {</span>
+<span class="fc" id="L761">      throw new IllegalArgumentException(</span>
           &quot;Please confirm that you will make an I-9 verification appointment if hired&quot;);
     }
-<span class="fc" id="L743">  }</span>
+<span class="fc" id="L764">  }</span>
 
   /**
    * The questions a TA applicant must answer (issue #214): PhD or MS, residency status, both GPAs,
@@ -749,119 +770,119 @@ import org.springframework.web.bind.annotation.RestController;
    * rule covers the academic answers). An admin editing an application is not held to them.
    */
   static void requireTaAnswers(RecruitmentType type, ApplicationFields fields) {
-<span class="fc bfc" id="L752" title="All 2 branches covered.">    if (type != RecruitmentType.TA) {</span>
-<span class="fc" id="L753">      return;</span>
+<span class="fc bfc" id="L773" title="All 2 branches covered.">    if (type != RecruitmentType.TA) {</span>
+<span class="fc" id="L774">      return;</span>
     }
-<span class="fc bfc" id="L755" title="All 2 branches covered.">    if (fields.classLevel() == null) {</span>
-<span class="fc" id="L756">      throw new IllegalArgumentException(&quot;Please say whether you are a PhD or MS student&quot;);</span>
+<span class="fc bfc" id="L776" title="All 2 branches covered.">    if (fields.classLevel() == null) {</span>
+<span class="fc" id="L777">      throw new IllegalArgumentException(&quot;Please say whether you are a PhD or MS student&quot;);</span>
     }
-<span class="fc bfc" id="L758" title="All 2 branches covered.">    if (fields.residencyStatus() == null) {</span>
-<span class="fc" id="L759">      throw new IllegalArgumentException(&quot;A TA application needs your residency status&quot;);</span>
+<span class="fc bfc" id="L779" title="All 2 branches covered.">    if (fields.residencyStatus() == null) {</span>
+<span class="fc" id="L780">      throw new IllegalArgumentException(&quot;A TA application needs your residency status&quot;);</span>
     }
-<span class="fc bfc" id="L761" title="All 4 branches covered.">    if (!fields.firstQuarterTicked() &amp;&amp; fields.gpaMajor() == null) {</span>
-<span class="fc" id="L762">      throw new IllegalArgumentException(&quot;A TA application needs your GPA in major&quot;);</span>
+<span class="fc bfc" id="L782" title="All 4 branches covered.">    if (!fields.firstQuarterTicked() &amp;&amp; fields.gpaMajor() == null) {</span>
+<span class="fc" id="L783">      throw new IllegalArgumentException(&quot;A TA application needs your GPA in major&quot;);</span>
     }
-<span class="fc bfc" id="L764" title="All 4 branches covered.">    if (!fields.firstQuarterTicked() &amp;&amp; fields.gpaOverall() == null) {</span>
-<span class="fc" id="L765">      throw new IllegalArgumentException(&quot;A TA application needs your overall GPA&quot;);</span>
+<span class="fc bfc" id="L785" title="All 4 branches covered.">    if (!fields.firstQuarterTicked() &amp;&amp; fields.gpaOverall() == null) {</span>
+<span class="fc" id="L786">      throw new IllegalArgumentException(&quot;A TA application needs your overall GPA&quot;);</span>
     }
-<span class="fc bfc" id="L767" title="All 2 branches covered.">    if (blankToNull(fields.yearInProgram()) == null) {</span>
-<span class="fc" id="L768">      throw new IllegalArgumentException(&quot;A TA application needs your year in program&quot;);</span>
+<span class="fc bfc" id="L788" title="All 2 branches covered.">    if (blankToNull(fields.yearInProgram()) == null) {</span>
+<span class="fc" id="L789">      throw new IllegalArgumentException(&quot;A TA application needs your year in program&quot;);</span>
     }
-<span class="fc bfc" id="L770" title="All 2 branches covered.">    if (blankToNull(fields.graduationDate()) == null) {</span>
-<span class="fc" id="L771">      throw new IllegalArgumentException(&quot;A TA application needs your expected graduation&quot;);</span>
+<span class="fc bfc" id="L791" title="All 2 branches covered.">    if (blankToNull(fields.graduationDate()) == null) {</span>
+<span class="fc" id="L792">      throw new IllegalArgumentException(&quot;A TA application needs your expected graduation&quot;);</span>
     }
-<span class="fc bfc" id="L773" title="All 2 branches covered.">    if (fields.languageExam() == null) {</span>
-<span class="fc" id="L774">      throw new IllegalArgumentException(&quot;A TA application needs your TA language exam status&quot;);</span>
+<span class="fc bfc" id="L794" title="All 2 branches covered.">    if (fields.languageExam() == null) {</span>
+<span class="fc" id="L795">      throw new IllegalArgumentException(&quot;A TA application needs your TA language exam status&quot;);</span>
     }
-<span class="fc bfc" id="L776" title="All 4 branches covered.">    if (examPassed(fields.languageExam()) &amp;&amp; blankToNull(fields.languageExamDatePassed()) == null) {</span>
-<span class="fc" id="L777">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L797" title="All 4 branches covered.">    if (examPassed(fields.languageExam()) &amp;&amp; blankToNull(fields.languageExamDatePassed()) == null) {</span>
+<span class="fc" id="L798">      throw new IllegalArgumentException(</span>
           &quot;Please give the quarter and year you passed the TA language exam&quot;);
     }
-<span class="fc" id="L780">  }</span>
+<span class="fc" id="L801">  }</span>
 
   /** The two answers that say the TA language exam was passed; &quot;not passed&quot; is not one of them. */
   static boolean examPassed(edu.ucsb.cs.taapply.enums.LanguageExamStatus languageExam) {
-<span class="fc bfc" id="L784" title="All 4 branches covered.">    return languageExam == edu.ucsb.cs.taapply.enums.LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT</span>
+<span class="fc bfc" id="L805" title="All 4 branches covered.">    return languageExam == edu.ucsb.cs.taapply.enums.LanguageExamStatus.PASSED_US_PERMANENT_RESIDENT</span>
         || languageExam == edu.ucsb.cs.taapply.enums.LanguageExamStatus.PASSED_F1_OR_J1_VISA;
   }
 
   /** Fresh rows from the request, trimmed; replaces whatever the application had. */
   static List&lt;PriorCoursework&gt; priorCourseworkFrom(ApplicationFields fields) {
-<span class="fc" id="L790">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L791" title="All 2 branches covered.">    for (PriorCourseworkFields row : fields.priorCoursework()) {</span>
-<span class="fc" id="L792">      rows.add(</span>
-<span class="fc" id="L793">          PriorCoursework.builder()</span>
-<span class="fc" id="L794">              .ucsbCourse(row.ucsbCourse())</span>
-<span class="fc bfc" id="L795" title="All 2 branches covered.">              .otherSchool(row.ucsbCourse() ? null : row.otherSchool().strip())</span>
-<span class="fc" id="L796">              .courseNumber(row.courseNumber().strip())</span>
-<span class="fc" id="L797">              .courseTitle(blankToNull(row.courseTitle()))</span>
-<span class="fc" id="L798">              .term(blankToNull(row.term()))</span>
-<span class="fc" id="L799">              .grade(blankToNull(row.grade()))</span>
-<span class="fc" id="L800">              .build());</span>
-<span class="fc" id="L801">    }</span>
-<span class="fc" id="L802">    return rows;</span>
+<span class="fc" id="L811">    List&lt;PriorCoursework&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L812" title="All 2 branches covered.">    for (PriorCourseworkFields row : fields.priorCoursework()) {</span>
+<span class="fc" id="L813">      rows.add(</span>
+<span class="fc" id="L814">          PriorCoursework.builder()</span>
+<span class="fc" id="L815">              .ucsbCourse(row.ucsbCourse())</span>
+<span class="fc bfc" id="L816" title="All 2 branches covered.">              .otherSchool(row.ucsbCourse() ? null : row.otherSchool().strip())</span>
+<span class="fc" id="L817">              .courseNumber(row.courseNumber().strip())</span>
+<span class="fc" id="L818">              .courseTitle(blankToNull(row.courseTitle()))</span>
+<span class="fc" id="L819">              .term(blankToNull(row.term()))</span>
+<span class="fc" id="L820">              .grade(blankToNull(row.grade()))</span>
+<span class="fc" id="L821">              .build());</span>
+<span class="fc" id="L822">    }</span>
+<span class="fc" id="L823">    return rows;</span>
   }
 
   private static String blankToNull(String value) {
-<span class="fc bfc" id="L806" title="All 4 branches covered.">    return value == null || value.isBlank() ? null : value.strip();</span>
+<span class="fc bfc" id="L827" title="All 4 branches covered.">    return value == null || value.isBlank() ? null : value.strip();</span>
   }
 
   /** Copies the applicant-supplied fields; never status, email or recruitment. */
   static void apply(ApplicationFields fields, Application application, RecruitmentType type) {
-<span class="fc" id="L811">    application.setFirstName(fields.firstName());</span>
-<span class="fc" id="L812">    application.setMiddleName(fields.middleName());</span>
-<span class="fc" id="L813">    application.setLastName(fields.lastName());</span>
-<span class="fc" id="L814">    application.setMajor(fields.major());</span>
+<span class="fc" id="L832">    application.setFirstName(fields.firstName());</span>
+<span class="fc" id="L833">    application.setMiddleName(fields.middleName());</span>
+<span class="fc" id="L834">    application.setLastName(fields.lastName());</span>
+<span class="fc" id="L835">    application.setMajor(fields.major());</span>
     // Issue #292: a first quarter applicant has no GPAs, so any typed before the box was ticked
     // are dropped rather than kept beside a flag that says there are none.
-<span class="fc" id="L817">    application.setFirstQuarter(fields.firstQuarterTicked());</span>
-<span class="fc bfc" id="L818" title="All 2 branches covered.">    application.setGpaMajor(fields.firstQuarterTicked() ? null : fields.gpaMajor());</span>
-<span class="fc bfc" id="L819" title="All 2 branches covered.">    application.setGpaOverall(fields.firstQuarterTicked() ? null : fields.gpaOverall());</span>
-<span class="fc" id="L820">    application.setYearInProgram(fields.yearInProgram());</span>
-<span class="fc" id="L821">    application.setGraduationDate(fields.graduationDate());</span>
-<span class="fc" id="L822">    application.getPriorCoursework().clear();</span>
-<span class="fc" id="L823">    application.getPriorCoursework().addAll(priorCourseworkFrom(fields));</span>
-<span class="fc" id="L824">    application.setTopicProficiencies(topicProficienciesFrom(fields, type));</span>
-<span class="fc" id="L825">    application.setInterests(interestsFrom(fields, type));</span>
-<span class="fc" id="L826">    application.setPrevExperience(fields.prevExperience());</span>
-<span class="fc" id="L827">    application.setComments(fields.comments());</span>
-<span class="fc" id="L828">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
-<span class="fc" id="L829">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
+<span class="fc" id="L838">    application.setFirstQuarter(fields.firstQuarterTicked());</span>
+<span class="fc bfc" id="L839" title="All 2 branches covered.">    application.setGpaMajor(fields.firstQuarterTicked() ? null : fields.gpaMajor());</span>
+<span class="fc bfc" id="L840" title="All 2 branches covered.">    application.setGpaOverall(fields.firstQuarterTicked() ? null : fields.gpaOverall());</span>
+<span class="fc" id="L841">    application.setYearInProgram(fields.yearInProgram());</span>
+<span class="fc" id="L842">    application.setGraduationDate(fields.graduationDate());</span>
+<span class="fc" id="L843">    application.getPriorCoursework().clear();</span>
+<span class="fc" id="L844">    application.getPriorCoursework().addAll(priorCourseworkFrom(fields));</span>
+<span class="fc" id="L845">    application.setTopicProficiencies(topicProficienciesFrom(fields, type));</span>
+<span class="fc" id="L846">    application.setInterests(interestsFrom(fields, type));</span>
+<span class="fc" id="L847">    application.setPrevExperience(fields.prevExperience());</span>
+<span class="fc" id="L848">    application.setComments(fields.comments());</span>
+<span class="fc" id="L849">    application.setFirstChoiceCourse(fields.firstChoiceCourse());</span>
+<span class="fc" id="L850">    application.setSecondChoiceCourse(fields.secondChoiceCourse());</span>
     // Only the ULA form asks about availability (issue #76); a TA application keeps none, even
     // when a pre-filled earlier answer comes along with the request.
-<span class="fc bfc" id="L832" title="All 2 branches covered.">    boolean asksAvailability = type == RecruitmentType.ULA;</span>
-<span class="fc bfc" id="L833" title="All 2 branches covered.">    application.setAvailableForLecturesFirstChoice(</span>
-<span class="fc bfc" id="L834" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForLecturesFirstChoice());</span>
-<span class="fc bfc" id="L835" title="All 2 branches covered.">    application.setAvailableForLecturesSecondChoice(</span>
-<span class="fc bfc" id="L836" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForLecturesSecondChoice());</span>
-<span class="fc bfc" id="L837" title="All 2 branches covered.">    application.setAvailableForDiscussionFirstChoice(</span>
-<span class="fc bfc" id="L838" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForDiscussionFirstChoice());</span>
-<span class="fc bfc" id="L839" title="All 2 branches covered.">    application.setAvailableForDiscussionSecondChoice(</span>
-<span class="fc bfc" id="L840" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForDiscussionSecondChoice());</span>
-<span class="fc" id="L841">    application.setAvailabilityCommentsFirstChoice(</span>
-<span class="fc bfc" id="L842" title="All 2 branches covered.">        asksAvailability ? fields.availabilityCommentsFirstChoice() : null);</span>
-<span class="fc" id="L843">    application.setAvailabilityCommentsSecondChoice(</span>
-<span class="fc bfc" id="L844" title="All 2 branches covered.">        asksAvailability ? fields.availabilityCommentsSecondChoice() : null);</span>
-<span class="fc" id="L845">    application.setCourseInterests(courseInterestsFrom(fields));</span>
-<span class="fc" id="L846">    application.setResidencyStatus(fields.residencyStatus());</span>
-<span class="fc" id="L847">    application.setLanguageExam(fields.languageExam());</span>
-<span class="fc" id="L848">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
-<span class="fc" id="L849">    application.setClassLevel(fields.classLevel());</span>
-<span class="fc" id="L850">    application.setVideoLink(fields.videoLink());</span>
-<span class="fc" id="L851">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
-<span class="fc" id="L852">    application.setPermNumber(normalizePermNumber(fields.permNumber()));</span>
-<span class="fc" id="L853">    application.setBsMsStudent(fields.bsMsStudent());</span>
-<span class="fc" id="L854">    application.setStudentStatusNextQuarter(fields.studentStatusNextQuarter());</span>
-<span class="fc" id="L855">    application.setWantsTaEligibility(fields.wantsTaEligibility());</span>
-<span class="fc" id="L856">    application.setOtherCampusJob(fields.otherCampusJob());</span>
-<span class="fc" id="L857">    application.setPriorUcsbEmployment(fields.priorUcsbEmployment());</span>
-<span class="fc" id="L858">    application.setEmployeeId(blankToNull(fields.employeeId()));</span>
-<span class="fc" id="L859">    application.setI9Appointment(fields.i9Appointment());</span>
-<span class="fc" id="L860">    application.setTrainingCommitment(fields.trainingCommitment());</span>
-<span class="fc" id="L861">    application.setTrainingCommitmentExplanation(</span>
-<span class="fc" id="L862">        blankToNull(fields.trainingCommitmentExplanation()));</span>
-<span class="fc" id="L863">    application.setChangingMajor(fields.changingMajor());</span>
-<span class="fc" id="L864">    application.setNoticeVersionId(fields.noticeVersionId());</span>
-<span class="fc" id="L865">  }</span>
+<span class="fc bfc" id="L853" title="All 2 branches covered.">    boolean asksAvailability = type == RecruitmentType.ULA;</span>
+<span class="fc bfc" id="L854" title="All 2 branches covered.">    application.setAvailableForLecturesFirstChoice(</span>
+<span class="fc bfc" id="L855" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForLecturesFirstChoice());</span>
+<span class="fc bfc" id="L856" title="All 2 branches covered.">    application.setAvailableForLecturesSecondChoice(</span>
+<span class="fc bfc" id="L857" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForLecturesSecondChoice());</span>
+<span class="fc bfc" id="L858" title="All 2 branches covered.">    application.setAvailableForDiscussionFirstChoice(</span>
+<span class="fc bfc" id="L859" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForDiscussionFirstChoice());</span>
+<span class="fc bfc" id="L860" title="All 2 branches covered.">    application.setAvailableForDiscussionSecondChoice(</span>
+<span class="fc bfc" id="L861" title="All 2 branches covered.">        asksAvailability &amp;&amp; fields.availableForDiscussionSecondChoice());</span>
+<span class="fc" id="L862">    application.setAvailabilityCommentsFirstChoice(</span>
+<span class="fc bfc" id="L863" title="All 2 branches covered.">        asksAvailability ? fields.availabilityCommentsFirstChoice() : null);</span>
+<span class="fc" id="L864">    application.setAvailabilityCommentsSecondChoice(</span>
+<span class="fc bfc" id="L865" title="All 2 branches covered.">        asksAvailability ? fields.availabilityCommentsSecondChoice() : null);</span>
+<span class="fc" id="L866">    application.setCourseInterests(courseInterestsFrom(fields));</span>
+<span class="fc" id="L867">    application.setResidencyStatus(fields.residencyStatus());</span>
+<span class="fc" id="L868">    application.setLanguageExam(fields.languageExam());</span>
+<span class="fc" id="L869">    application.setLanguageExamDatePassed(fields.languageExamDatePassed());</span>
+<span class="fc" id="L870">    application.setClassLevel(fields.classLevel());</span>
+<span class="fc" id="L871">    application.setVideoLink(fields.videoLink());</span>
+<span class="fc" id="L872">    application.setPreviousServiceAsUla(fields.previousServiceAsUla());</span>
+<span class="fc" id="L873">    application.setPermNumber(normalizePermNumber(fields.permNumber()));</span>
+<span class="fc" id="L874">    application.setBsMsStudent(fields.bsMsStudent());</span>
+<span class="fc" id="L875">    application.setStudentStatusNextQuarter(fields.studentStatusNextQuarter());</span>
+<span class="fc" id="L876">    application.setWantsTaEligibility(fields.wantsTaEligibility());</span>
+<span class="fc" id="L877">    application.setOtherCampusJob(fields.otherCampusJob());</span>
+<span class="fc" id="L878">    application.setPriorUcsbEmployment(fields.priorUcsbEmployment());</span>
+<span class="fc" id="L879">    application.setEmployeeId(blankToNull(fields.employeeId()));</span>
+<span class="fc" id="L880">    application.setI9Appointment(fields.i9Appointment());</span>
+<span class="fc" id="L881">    application.setTrainingCommitment(fields.trainingCommitment());</span>
+<span class="fc" id="L882">    application.setTrainingCommitmentExplanation(</span>
+<span class="fc" id="L883">        blankToNull(fields.trainingCommitmentExplanation()));</span>
+<span class="fc" id="L884">    application.setChangingMajor(fields.changingMajor());</span>
+<span class="fc" id="L885">    application.setNoticeVersionId(fields.noticeVersionId());</span>
+<span class="fc" id="L886">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
