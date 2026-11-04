@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/305-term-normalize","number":321,"title":"Normalize prior coursework term to [FWSM]yy with a quarter dropdown (#305)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/321"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/282-instructors-refresh","number":291,"title":"Keep the Instructors page and Courses saves fresh by refresh instead of a warning (closes #282; includes #286)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/291"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/282-instructors-refresh","number":291,"title":"Keep the Instructors page and Courses saves fresh by refresh instead of a warning (closes #282; includes #286)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/291"}]
