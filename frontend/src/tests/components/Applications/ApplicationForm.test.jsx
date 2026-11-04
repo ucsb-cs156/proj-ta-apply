@@ -1192,6 +1192,46 @@ describe("ApplicationForm tests", () => {
     expect(untakenWarning()).toBeNull();
   });
 
+  test("each course added to the coursework table leaves the comments reminder, and the last one removes it", async () => {
+    renderForm({ type: "ULA" });
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-secondChoiceCourse"),
+      "CMPSC   130A",
+    );
+    const reminder = () =>
+      screen.queryByTestId("ApplicationForm-comments-untaken");
+    expect(reminder().textContent).toContain(
+      "CMPSC 130A and CMPSC 156 as courses",
+    );
+
+    const addCourse = async (number) => {
+      await userEvent.click(
+        screen.getByTestId("ApplicationForm-coursework-add-button"),
+      );
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-coursework-modal-courseNumber"),
+        number,
+      );
+      await userEvent.click(
+        screen.getByTestId("ApplicationForm-coursework-modal-save"),
+      );
+    };
+
+    await addCourse("CMPSC 156");
+    await waitFor(() => expect(untakenIcon("CMPSC-156")).toBeNull());
+    expect(untakenWarning("CMPSC-156")).toBeNull();
+    expect(reminder().textContent).toContain("CMPSC 130A as a course");
+    expect(reminder().textContent).not.toContain("CMPSC 156");
+
+    await addCourse("CMPSC 130A");
+    await waitFor(() => expect(reminder()).toBeNull());
+    expect(untakenIcon("CMPSC-130A")).toBeNull();
+  });
+
   /** A course marked earlier and then made a choice is not reported twice. */
   test("submits only the courses marked, leaving out the defaults and the two choices", async () => {
     const submitAction = renderForm({
