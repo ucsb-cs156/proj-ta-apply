@@ -4,7 +4,13 @@ import { Button, Col, Form, Row } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import RequiredField from "main/components/Common/RequiredField";
 import RequiredFieldExplanation from "main/components/Common/RequiredFieldExplanation";
-import type { PriorCourse } from "main/utils/priorCoursework";
+import {
+  TERM_LEGEND,
+  canonicalTerm,
+  normalizeTerm,
+  termOptions,
+  type PriorCourse,
+} from "main/utils/priorCoursework";
 
 /** The form's own view of a row: every answer a string except the checkbox. */
 export type PriorCourseFormFields = {
@@ -12,7 +18,12 @@ export type PriorCourseFormFields = {
   otherSchool: string;
   courseNumber: string;
   courseTitle: string;
+  /** The dropdown's choice, a quarter such as F25, or "" for none. */
   term: string;
+  /** Ticked to type the term instead of choosing it. */
+  freeText: boolean;
+  /** What was typed while freeText is ticked. */
+  termText: string;
   grade: string;
 };
 
@@ -27,12 +38,25 @@ type PriorCourseworkModalProps = {
 
 const asString = (value: string | null | undefined): string => value ?? "";
 
-const toFormFields = (course: PriorCourse | null): PriorCourseFormFields => ({
+const toFormFields = (course: PriorCourse | null): PriorCourseFormFields => {
+  const term = normalizeTerm(course?.term) ?? "";
+  const standard = term === "" || canonicalTerm(term) === term;
+  return {
+    ...rowFields(course),
+    // Stryker disable next-line StringLiteral : the dropdown is hidden while free text is ticked
+    term: standard ? term : "",
+    freeText: !standard,
+    termText: term,
+  };
+};
+
+const rowFields = (
+  course: PriorCourse | null,
+): Omit<PriorCourseFormFields, "term" | "freeText" | "termText"> => ({
   ucsbCourse: course ? course.ucsbCourse : true,
   otherSchool: asString(course?.otherSchool),
   courseNumber: asString(course?.courseNumber),
   courseTitle: asString(course?.courseTitle),
-  term: asString(course?.term),
   grade: asString(course?.grade),
 });
 
@@ -59,6 +83,7 @@ export default function PriorCourseworkModal({
     watch,
     reset,
     setValue,
+    getValues,
   } = useForm<PriorCourseFormFields>({ defaultValues: toFormFields(course) });
   // Stryker restore all
 
@@ -70,6 +95,15 @@ export default function PriorCourseworkModal({
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() returns a new function each render; React Compiler correctly skips memoizing this component
   const ucsbCourse = watch("ucsbCourse");
 
+  const freeText = watch("freeText");
+  const chosenTerm = watch("term");
+  // A standard term from further back than the dropdown goes is still offered while it is chosen.
+  const options = termOptions();
+  const choices =
+    chosenTerm === "" || options.includes(chosenTerm)
+      ? options
+      : [...options, chosenTerm];
+
   const id = (name: string) => `${testIdPrefix}-${name}`;
 
   const submit = (data: PriorCourseFormFields) => {
@@ -79,7 +113,7 @@ export default function PriorCourseworkModal({
       otherSchool: data.ucsbCourse ? null : blankToNull(data.otherSchool),
       courseNumber: data.courseNumber.trim(),
       courseTitle: blankToNull(data.courseTitle),
-      term: blankToNull(data.term),
+      term: normalizeTerm(data.freeText ? data.termText : data.term),
       grade: blankToNull(data.grade),
     });
   };
@@ -162,14 +196,55 @@ export default function PriorCourseworkModal({
           </Row>
           <Row>
             <Form.Group as={Col} md={7} className="mb-3">
-              <Form.Label htmlFor={id("term")}>
-                Term (quarter or semester)
-              </Form.Label>
-              <Form.Control
-                id={id("term")}
-                data-testid={id("term")}
-                placeholder="e.g. F25 or Fall 2025"
-                {...register("term")}
+              <Form.Label htmlFor={id("term")}>Term</Form.Label>
+              {freeText ? (
+                <Form.Control
+                  id={id("term")}
+                  data-testid={id("termText")}
+                  placeholder="e.g. Fall 2025 or Semester 1"
+                  {...register("termText")}
+                />
+              ) : (
+                <>
+                  <Form.Select
+                    id={id("term")}
+                    data-testid={id("term")}
+                    {...register("term")}
+                  >
+                    <option value="">Select a term</option>
+                    {choices.map((qyy) => (
+                      <option key={qyy} value={qyy}>
+                        {qyy}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  <Form.Text
+                    className="small"
+                    data-testid={id("termLegend")}
+                    as="div"
+                  >
+                    {TERM_LEGEND}
+                  </Form.Text>
+                </>
+              )}
+              <Form.Check
+                className="small mt-1"
+                type="checkbox"
+                id={id("freeText")}
+                data-testid={id("freeText")}
+                label="Check to enter term in free text"
+                {...register("freeText", {
+                  // Moving between the two keeps the answer: a typed term that can be made
+                  // standard lands in the dropdown, a chosen term lands in the text box.
+                  onChange: (e) => {
+                    const { term, termText } = getValues();
+                    if (e.target.checked) {
+                      setValue("termText", term);
+                    } else {
+                      setValue("term", canonicalTerm(termText) ?? "");
+                    }
+                  },
+                })}
               />
             </Form.Group>
             <Form.Group as={Col} md={5} className="mb-3">

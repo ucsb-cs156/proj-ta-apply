@@ -3,6 +3,12 @@ import {
   COURSEWORK_INSTRUCTIONS,
   MIN_COURSES,
   schoolOf,
+  canonicalTerm,
+  normalizeTerm,
+  termOptions,
+  termSortKey,
+  withNormalizedTerm,
+  TERM_LEGEND,
   tooFewCoursesMessage,
   type PriorCourse,
 } from "main/utils/priorCoursework";
@@ -37,5 +43,105 @@ describe("priorCoursework utils", () => {
     expect(
       schoolOf({ ...priorCourseworkFixtures.elsewhere, otherSchool: null }),
     ).toBe("");
+  });
+
+  test.each([
+    ["F25", "F25"],
+    ["f25", "F25"],
+    [" w26 ", "W26"],
+    ["Fall 2025", "F25"],
+    ["fall 2025", "F25"],
+    ["Fall25", "F25"],
+    ["Fall '25", "F25"],
+    ["Fall, 2025", "F25"],
+    ["Winter 2026", "W26"],
+    ["Spring 2024", "S24"],
+    ["Summer 2023", "M23"],
+    ["Fa 25", "F25"],
+    ["Fa25", "F25"],
+    ["Wi 2026", "W26"],
+    ["Sp-24", "S24"],
+    ["Su 23", "M23"],
+    ["Sum 2023", "M23"],
+    ["2025 Fall", "F25"],
+    ["25 Sp", "S25"],
+    ["F 25", "F25"],
+    ["Win 2026", "W26"],
+    ["Spr 2024", "S24"],
+    ["s24", "S24"],
+    ["m23", "M23"],
+    ["F2025", "F25"],
+    ["2025Fall", "F25"],
+    ["2025 - Fall", "F25"],
+    ["Fall  -  2025", "F25"],
+  ])("%j is made standard: %s", (text, expected) => {
+    expect(canonicalTerm(text)).toBe(expected);
+    expect(normalizeTerm(text)).toBe(expected);
+  });
+
+  test.each([
+    "",
+    "   ",
+    "Semester 1",
+    "Fall",
+    "2025",
+    "Fall 1999",
+    "Fall 2025 (transfer)",
+    "Transfer Fall 2025",
+    "Transfer 2025 Fall",
+    "2025 Fall transfer",
+    "1999 Fall",
+    "Autumn 2025",
+    "X25",
+    "F2",
+    "Fall 20255",
+    "FALL 205",
+  ])("%j cannot be made standard with certainty", (text) => {
+    expect(canonicalTerm(text)).toBeNull();
+  });
+
+  test("canonicalTerm tolerates null and undefined", () => {
+    expect(canonicalTerm(null)).toBeNull();
+    expect(canonicalTerm(undefined)).toBeNull();
+  });
+
+  test("normalizeTerm keeps what it cannot convert, trimmed, and nulls blanks", () => {
+    expect(normalizeTerm("  Semester 1 ")).toBe("Semester 1");
+    expect(normalizeTerm("   ")).toBeNull();
+    expect(normalizeTerm(null)).toBeNull();
+    expect(normalizeTerm(undefined)).toBeNull();
+  });
+
+  test("withNormalizedTerm changes only the term", () => {
+    const course: PriorCourse = {
+      ...priorCourseworkFixtures.elsewhere,
+      term: "Spring 2024",
+    };
+    expect(withNormalizedTerm(course)).toEqual({ ...course, term: "S24" });
+    expect(withNormalizedTerm({ ...course, term: null }).term).toBeNull();
+  });
+
+  test("termSortKey is YYYYQ, and 0 for anything not in standard form", () => {
+    expect(termSortKey("S26")).toBe(20262);
+    expect(termSortKey("W26")).toBe(20261);
+    expect(termSortKey("M26")).toBe(20263);
+    expect(termSortKey("F25")).toBe(20254);
+    expect(termSortKey("Spring 2024")).toBe(0);
+    expect(termSortKey("s26")).toBe(0);
+    expect(termSortKey(null)).toBe(0);
+    expect(termSortKey(undefined)).toBe(0);
+  });
+
+  test("termOptions starts with the current quarter and goes back 8 years", () => {
+    const options = termOptions(new Date(2026, 10, 3));
+    expect(options[0]).toBe("F26");
+    expect(options[1]).toBe("M26");
+    expect(options[options.length - 1]).toBe("F18");
+    expect(options).toHaveLength(33);
+    expect(termOptions(new Date(2026, 0, 15))[0]).toBe("W26");
+  });
+
+  test("the legend names the four letters", () => {
+    expect(TERM_LEGEND).toBe("F: Fall, W: Winter, S: Spring, M: Summer");
   });
 });

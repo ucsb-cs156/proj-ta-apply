@@ -572,3 +572,31 @@ Else that you would like us to know?** with a note on what to put there (experie
 never taken, or a reason for wanting to ULA in general or for a specific course). The TA form is
 unchanged.
 
+# Thirtieth Iteration
+
+The **term** of a prior course is steered to the standard quarter form `[FWSM]\d\d` (F25, W26, S26,
+M26; issue #305).
+
+* In the Add / Edit Course modal the term is a dropdown: the current quarter first, then every
+  quarter back eight years (the existing `recentQuarters` helper, with a years-back parameter, and
+  `yyyyqToQyy`), with the legend "F: Fall, W: Winter, S: Spring, M: Summer" in small type under it.
+  A checkbox, **Check to enter term in free text**, swaps the dropdown for a text box for terms the
+  list cannot express (a semester, a term abroad). Ticking carries the chosen quarter into the
+  text; unticking carries typed text back only if it can be made standard.
+* `canonicalTerm` (`priorCoursework.ts`) makes a term standard only when that is certain: it
+  upper-cases (`f25`), and reads a quarter name or abbreviation (Fall, Fa, Winter, Wi, Spring, Sp,
+  Summer, Su, Sum) beside a 20xx or two-digit year in either order ("Fall 2025", "Fa 25",
+  "2025 Fall"). Anything else (no year, 19xx, extra words) is left as typed.
+* **Conversion happens on load and save, not in the database.** `ApplicationForm` normalizes every
+  prior course's term as it builds its initial state (so drafts and submitted applications are
+  both covered), and the modal normalizes again when it opens and when it saves; the converted
+  value is what the next draft save or submit stores. A term that cannot be converted opens in the
+  modal with the free text box ticked. No Liquibase changeset is used: the terms live both in the
+  `prior_coursework` table and inside the JSON of draft applications, the heuristics do not
+  translate to portable SQL (H2 in development, PostgreSQL in production), and a regular-expression
+  UPDATE cannot be reversed. The trade-off is that stored rows converge only as applicants edit
+  them; until then CSV exports and read-only views show the old text, and the Term column sorts it
+  as oldest.
+* The Term column sorts by YYYYQ (S26 is 20262, via `qyyToYyyyq`); a term not in the standard form
+  has key 0 and sorts as oldest.
+

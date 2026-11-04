@@ -66,6 +66,44 @@ describe("PriorCourseworkTable tests", () => {
     expect(columnText("grade")).toEqual(["A", "IP", "A-"]);
   });
 
+  test("sorts the term column by YYYYQ, with anything not in standard form oldest", async () => {
+    const course = (term) => ({
+      ...priorCourseworkFixtures.ucsbCourse,
+      term,
+    });
+    render(
+      <PriorCourseworkTable
+        courses={[
+          course("S26"),
+          course(null),
+          course("Spring 2024"),
+          course("F25"),
+          course("W26"),
+        ]}
+        onEdit={() => {}}
+        onDelete={() => {}}
+        testIdPrefix="T"
+      />,
+    );
+    await userEvent.click(screen.getByTestId("T-header-term-sort-header"));
+    expect(columnText("term")).toEqual([
+      "",
+      "Spring 2024",
+      "F25",
+      "W26",
+      "S26",
+    ]);
+    await userEvent.click(screen.getByTestId("T-header-term-sort-header"));
+    expect(columnText("term")).toEqual([
+      "S26",
+      "W26",
+      "F25",
+      // Ties (both count as 0) keep the order they were listed in.
+      "",
+      "Spring 2024",
+    ]);
+  });
+
   /** Every data column sorts on a header click; the actions column does not. */
   test("sorts by any column when its header is clicked", async () => {
     renderTable();

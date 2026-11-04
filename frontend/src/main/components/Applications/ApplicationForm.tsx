@@ -10,7 +10,11 @@ import type { ApplicationAnswers } from "main/utils/draftApplications";
 import CourseSectionsCard from "main/components/Applications/CourseSectionsCard";
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
 import PriorCourseworkSection from "main/components/PriorCoursework/PriorCourseworkSection";
-import { MIN_COURSES, type PriorCourse } from "main/utils/priorCoursework";
+import {
+  MIN_COURSES,
+  withNormalizedTerm,
+  type PriorCourse,
+} from "main/utils/priorCoursework";
 import { courseLabel, type CourseInstructors } from "main/utils/courseLabels";
 import {
   UNTAKEN_EXAMPLE,
@@ -382,7 +386,8 @@ export default function ApplicationForm({
 
   // The prior courses, edited in their own table and modal; sent with the rest on submit.
   const [priorCoursework, setPriorCoursework] = useState<PriorCourse[]>(() => [
-    ...(initialContents?.priorCoursework ?? []),
+    // Terms are brought to the standard form (F25) as the application loads, so saving keeps them.
+    ...(initialContents?.priorCoursework ?? []).map(withNormalizedTerm),
   ]);
   const [tooFewCourses, setTooFewCourses] = useState(false);
   const enoughCourses = priorCoursework.length >= MIN_COURSES[type];

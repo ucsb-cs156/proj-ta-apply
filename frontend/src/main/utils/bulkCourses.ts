@@ -47,9 +47,10 @@ export function quarterOf(date: Date): string {
 /** The terms on offer: the current quarter and every quarter of the ten years before it, newest first. */
 export function recentQuarters(
   now: Date = pacificWallClock(),
+  yearsBack: number = YEARS_BACK,
 ): { yyyyq: string; qyy: string }[] {
   const current = quarterOf(now);
-  const earliest = `${now.getFullYear() - YEARS_BACK}${current.charAt(4)}`;
+  const earliest = `${now.getFullYear() - yearsBack}${current.charAt(4)}`;
   return quarterRange(earliest, current).reverse();
 }
 

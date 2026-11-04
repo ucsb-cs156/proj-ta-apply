@@ -2064,7 +2064,8 @@ describe("ApplicationForm tests", () => {
     await waitFor(() => expect(submitAction).toHaveBeenCalledTimes(1));
     expect(submitAction.mock.calls[0][0].priorCoursework).toEqual([
       priorCourseworkFixtures.inProgress,
-      priorCourseworkFixtures.elsewhere,
+      // "Spring 2024" was brought to the standard form when the application loaded.
+      { ...priorCourseworkFixtures.elsewhere, term: "S24" },
     ]);
   });
 

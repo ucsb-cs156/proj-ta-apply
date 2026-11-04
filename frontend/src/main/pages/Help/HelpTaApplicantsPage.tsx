@@ -52,7 +52,10 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
           <li>
             A list of courses you have taken, at UCSB or elsewhere, that are
             relevant to your application to be a TA. UCSB CMPSC courses can be
-            ticked off a list; others are entered by hand.
+            ticked off a list; others are entered by hand. Choose the term from
+            the dropdown (F: Fall, W: Winter, S: Spring, M: Summer, then the
+            year, as in F25); tick the box under it only for a term the list
+            cannot express, such as a semester.
           </li>
           <li>
             A self-assessment of your level of proficiency, from 5 (highest) to
