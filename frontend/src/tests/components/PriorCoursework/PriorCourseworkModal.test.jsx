@@ -339,4 +339,25 @@ describe("PriorCourseworkModal tests", () => {
     );
     expect(screen.getByTestId("PriorCourseworkModal-save")).toBeInTheDocument();
   });
+
+  // Issue #309: the modal sits inside the application form in the React tree.
+  test("saving does not submit a form the modal is rendered inside", async () => {
+    const outerSubmit = vi.fn((event) => event.preventDefault());
+    const onSave = vi.fn();
+    render(
+      <form onSubmit={outerSubmit}>
+        <PriorCourseworkModal
+          show={true}
+          course={null}
+          onSave={onSave}
+          onCancel={vi.fn()}
+          testIdPrefix="M"
+        />
+      </form>,
+    );
+    await userEvent.type(screen.getByTestId("M-courseNumber"), "CMPSC 24");
+    await userEvent.click(screen.getByTestId("M-save"));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    expect(outerSubmit).not.toHaveBeenCalled();
+  });
 });
