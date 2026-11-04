@@ -80,7 +80,8 @@ counts the recruitment's courses that have not been removed. **n draft applicati
 non-cancelled applications: applications made by applicants, plus test and fake ones only in
 developer mode. It is therefore the same number the Assignments page works from, and it can be
 smaller than the count on the card's own application button, which also includes cancelled
-applications. The created date in step 1 is stamped when the recruitment is created; recruitments
+applications (counted per applicant: a person who cancelled and then applied again, issue #318,
+counts once there). The created date in step 1 is stamped when the recruitment is created; recruitments
 that predate the field were filled in from their audit trail.
 
 ### Hiring decisions and reopening

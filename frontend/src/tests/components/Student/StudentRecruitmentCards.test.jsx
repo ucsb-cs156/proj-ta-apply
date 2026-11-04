@@ -206,6 +206,72 @@ describe("StudentRecruitmentCards tests", () => {
     expect(screen.queryByTestId("S-card-2-apply")).toBeNull();
   });
 
+  // ---- starting again after a cancellation (issue #318) ----
+
+  test("a cancelled application, while applications are open, offers Start a new application", () => {
+    renderCards([openUla], [applicationsFixtures.oneCancelledApplication]);
+
+    const restart = screen.getByTestId("S-card-2-restart");
+    expect(restart).toHaveTextContent("Start a new application");
+    expect(restart).toHaveAttribute("href", "/apply/2");
+    expect(restart).toHaveClass("btn", "btn-success");
+    // The cancelled one is still there to look at.
+    expect(screen.getByTestId("S-card-2-view")).toHaveAttribute(
+      "href",
+      "/applications/4",
+    );
+    expect(screen.queryByTestId("S-card-2-draft")).toBeNull();
+  });
+
+  test("once applications have closed a cancelled applicant is offered nothing", () => {
+    renderCards(
+      [{ ...openUla, applicationStatus: "CLOSED" }],
+      [applicationsFixtures.oneCancelledApplication],
+    );
+
+    expect(screen.queryByTestId("S-card-2-restart")).toBeNull();
+    expect(screen.queryByTestId("S-card-2-apply")).toBeNull();
+    expect(screen.queryByTestId("S-card-2-draft")).toBeNull();
+    expect(screen.getByTestId("S-card-2-view")).toBeInTheDocument();
+  });
+
+  test("a cancelled applicant who began a new draft is offered it, not a second button", () => {
+    renderCards(
+      [openUla],
+      [applicationsFixtures.oneCancelledApplication],
+      vi.fn(),
+      [draftApplicationsFixtures.savedUlaDraft],
+    );
+
+    expect(screen.getByTestId("S-card-2-applied")).toHaveTextContent(
+      "Application cancelled",
+    );
+    expect(screen.getByTestId("S-card-2-draft")).toHaveAttribute(
+      "href",
+      "/apply/2",
+    );
+    expect(screen.getByTestId("S-card-2-draft-warning")).toBeInTheDocument();
+    expect(screen.queryByTestId("S-card-2-restart")).toBeNull();
+  });
+
+  test("a new application after a cancelled one is the application on file", () => {
+    // /api/applications/mine is newest first, but the card does not depend on it.
+    renderCards(
+      [openUla],
+      [applicationsFixtures.oneCancelledApplication, ulaApp],
+    );
+
+    expect(screen.getByTestId("S-card-2-applied")).toHaveTextContent(
+      "Application on File",
+    );
+    expect(screen.getByTestId("S-card-2-view")).toHaveAttribute(
+      "href",
+      `/applications/${ulaApp.id}`,
+    );
+    expect(screen.getByTestId("S-card-2-cancel")).toBeInTheDocument();
+    expect(screen.queryByTestId("S-card-2-restart")).toBeNull();
+  });
+
   test("tolerates non-array props and has defaults", async () => {
     render(
       <MemoryRouter>

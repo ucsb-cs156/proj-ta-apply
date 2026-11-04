@@ -20,6 +20,7 @@ const stillOpen = { ...openUla, primaryConsiderationDate: "2099-01-20" };
 const pastDeadline = { ...openUla, primaryConsiderationDate: "2000-01-20" };
 
 const common = [
+  http.get("/api/applications/mine", () => HttpResponse.json([])),
   http.get("/api/currentUser", () =>
     HttpResponse.json(apiCurrentUserFixtures.userOnly),
   ),
@@ -137,6 +138,58 @@ AdminHasItOpen.parameters = {
           newest: false,
           arrivedAtMillis: 1,
         }),
+      ),
+    ],
+  },
+};
+
+const cancelled = { ...applicationsFixtures.oneCancelledApplication, id: 2 };
+
+/** Issue #318: cancelled while applications are open, so Start a new application is offered. */
+export const CancelledCanStartAgain = Template.bind({});
+CancelledCanStartAgain.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/applications/mine", () => HttpResponse.json([cancelled])),
+      ...common,
+      http.get("/api/applications", () => HttpResponse.json(cancelled)),
+      http.get("/api/recruitments/applicable", () =>
+        HttpResponse.json([stillOpen]),
+      ),
+    ],
+  },
+};
+
+/** Issue #318: the applicant has since started a new application, which the page points to. */
+export const CancelledAndStartedAgain = Template.bind({});
+CancelledAndStartedAgain.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/applications/mine", () =>
+        HttpResponse.json([
+          { ...applicationsFixtures.oneUlaApplication, id: 7 },
+          cancelled,
+        ]),
+      ),
+      ...common,
+      http.get("/api/applications", () => HttpResponse.json(cancelled)),
+      http.get("/api/recruitments/applicable", () =>
+        HttpResponse.json([stillOpen]),
+      ),
+    ],
+  },
+};
+
+/** Issue #318: cancelled, and applications have closed, so no button is offered. */
+export const CancelledAfterClosing = Template.bind({});
+CancelledAfterClosing.parameters = {
+  msw: {
+    handlers: [
+      http.get("/api/applications/mine", () => HttpResponse.json([cancelled])),
+      ...common,
+      http.get("/api/applications", () => HttpResponse.json(cancelled)),
+      http.get("/api/recruitments/applicable", () =>
+        HttpResponse.json([{ ...stillOpen, applicationStatus: "CLOSED" }]),
       ),
     ],
   },

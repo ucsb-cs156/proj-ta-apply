@@ -18,6 +18,7 @@ import edu.ucsb.cs.taapply.entity.TaTopic;
 import edu.ucsb.cs.taapply.entity.UlaInterest;
 import edu.ucsb.cs.taapply.entity.UlaMajor;
 import edu.ucsb.cs.taapply.entity.UlaTopic;
+import edu.ucsb.cs.taapply.enums.ApplicationReviewStatus;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
@@ -32,6 +33,8 @@ import edu.ucsb.cs.taapply.repository.UlaTopicRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -1043,6 +1046,63 @@ public class ApplicationsWebIT extends WebTestCase {
 
     Application stored = applicationRepository.findAll().iterator().next();
     assertEquals("Found other employment", stored.getCancellationReason());
+  }
+
+  /**
+   * Issue #318: after cancelling, while applications are open, the applicant starts a new
+   * application from scratch; the cancelled one is kept, and only the new one is live.
+   */
+  @Test
+  public void an_applicant_who_cancelled_can_start_a_new_application() throws Exception {
+    Recruitment recruitment = seedRecruitment(RecruitmentType.TA, LocalDate.now().plusDays(30));
+    seedTaLists();
+
+    setupRegularUser();
+    goTo("/apply/" + recruitment.getId());
+    fillAndSubmit();
+
+    String card = "HomePageLoggedIn-dashboard-current-card-" + recruitment.getId() + "-";
+    String modal = "HomePageLoggedIn-dashboard-cancel-";
+    assertThat(page.getByTestId(card + "restart")).hasCount(0);
+    page.getByTestId(card + "cancel").click();
+    page.getByTestId(modal + "step1-yes").click();
+    page.getByTestId(modal + "reason").fill("Changed my mind");
+    page.getByTestId(modal + "step2-yes").click();
+    assertThat(page.getByTestId(card + "applied")).containsText("Application cancelled");
+
+    // The cancelled application's own page offers the same button, and says the old one is kept.
+    page.getByTestId(card + "view").click();
+    assertThat(page.getByTestId("ApplicationPage-restart")).containsText("Start a new application");
+    assertThat(page.getByTestId("ApplicationPage-restart-note")).containsText("stays on file");
+    page.goBack();
+
+    assertThat(page.getByTestId(card + "restart")).containsText("Start a new application");
+    page.getByTestId(card + "restart").click();
+
+    // As if from scratch: nothing is copied from the cancelled application.
+    assertThat(page.getByTestId("ApplyPage-major")).hasValue("");
+    assertThat(page.getByTestId("ApplyPage-gpaMajor")).hasValue("");
+    assertThat(page.getByTestId("ApplyPage-coursework-count")).containsText("0 of at least 3");
+    fillAndSubmit();
+
+    // The new application is the one on file, and can be cancelled in turn.
+    assertThat(page.getByTestId(card + "applied")).containsText("Application on File");
+    assertThat(page.getByTestId(card + "cancel")).isVisible();
+    assertThat(page.getByTestId(card + "restart")).hasCount(0);
+
+    List<Application> stored = new ArrayList<>();
+    applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId()).forEach(stored::add);
+    assertEquals(2, stored.size());
+    assertEquals(ApplicationReviewStatus.CANCELLED, stored.get(0).getStatus());
+    assertEquals("Changed my mind", stored.get(0).getCancellationReason());
+    assertEquals(1, stored.get(0).getAttemptNumber());
+    assertEquals(ApplicationReviewStatus.PENDING, stored.get(1).getStatus());
+    assertEquals(2, stored.get(1).getAttemptNumber());
+
+    // The cancelled application's page now points to the new one instead of offering a button.
+    goTo("/applications/" + stored.get(0).getId());
+    assertThat(page.getByTestId("ApplicationPage-new-application-link")).isVisible();
+    assertThat(page.getByTestId("ApplicationPage-restart")).hasCount(0);
   }
 
   /** An admin reviews the applications to a recruitment and leaves comments on one (issue #49). */

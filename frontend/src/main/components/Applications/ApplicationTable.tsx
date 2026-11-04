@@ -21,6 +21,11 @@ export type Application = {
    */
   version?: number;
   recruitmentId: number;
+  /**
+   * 1, or higher for an application started after cancelling an earlier one to the same
+   * recruitment (issue #318).
+   */
+  attemptNumber?: number;
   email: string;
   status: "PENDING" | "HIRED" | "NOT_HIRED" | "CANCELLED";
   postApplicationComments: string | null;

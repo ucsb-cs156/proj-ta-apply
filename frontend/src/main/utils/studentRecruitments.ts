@@ -22,12 +22,21 @@ export function opensInText(days: number): string {
   return days === 1 ? "1 day" : `${days} days`;
 }
 
-/** The student's application to one recruitment, if any. */
+/**
+ * The student's application to one recruitment, if any. One who cancelled and then applied again
+ * has two (issue #318); the live one is the application, and the newest cancelled one only when
+ * there is no live one.
+ */
 export const applicationFor = (
   applications: Application[],
   recruitmentId: number,
-): Application | undefined =>
-  applications.find((a) => a.recruitmentId === recruitmentId);
+): Application | undefined => {
+  const mine = applications.filter((a) => a.recruitmentId === recruitmentId);
+  return (
+    mine.find((a) => a.status !== "CANCELLED") ??
+    [...mine].sort((a, b) => b.id - a.id)[0]
+  );
+};
 
 export type StudentRecruitments = {
   /** Not yet opened, soonest tentative opening first. */

@@ -1,5 +1,6 @@
 package edu.ucsb.cs.taapply.controller;
 
+import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
@@ -393,9 +394,10 @@ public class RecruitmentsController extends ApiController {
   @Operation(
       summary = "How many applications each recruitment has on file",
       description =
-          "Recruitment id to the number of real (non-test) applications, for the admin's cards and"
-              + " the warning before deleting one (issue #108). Every recruitment is listed, with 0"
-              + " for one that has none.")
+          "Recruitment id to the number of applicants with a real (non-test) application, for the"
+              + " admin's cards and the warning before deleting one (issue #108). An applicant who"
+              + " cancelled and applied again counts once (issue #318). Every recruitment is"
+              + " listed, with 0 for one that has none.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("/applicationCounts")
   public Map<Long, Long> applicationCounts() {
@@ -406,6 +408,10 @@ public class RecruitmentsController extends ApiController {
           recruitment.getId(),
           applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId()).stream()
               .filter(application -> ApplicationVisibility.isReal(application, developerModeOn))
+              // One per applicant: a cancelled application and the new one that followed it
+              // (issue #318) are one person's, not two.
+              .map(Application::getEmail)
+              .distinct()
               .count());
     }
     return counts;

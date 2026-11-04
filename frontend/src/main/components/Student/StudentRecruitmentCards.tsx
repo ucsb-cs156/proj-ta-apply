@@ -11,6 +11,9 @@ import {
   type DraftApplication,
 } from "main/utils/draftApplications";
 
+/** The button for an applicant who cancelled while applications are still open (issue #318). */
+export const RESTART_LABEL = "Start a new application";
+
 /** On the greyed-out Apply button of a closed recruitment. */
 export const NOT_OPEN_TOOLTIP = "Applications are not open yet";
 
@@ -33,7 +36,8 @@ type StudentRecruitmentCardsProps = {
  * and dates as the admin's cards, a badge saying whether they have applied, and the buttons that
  * fit: Apply to be a TA (or ULA) or, for an application begun and not submitted, Continue editing
  * draft application with a warning that it is not yet complete (issue #270); View submitted
- * application or View/Comment; and Cancel my Application.
+ * application or View/Comment; and Cancel my Application. After a cancellation, while applications
+ * are open, Start a new application begins again from scratch (issue #318).
  */
 export default function StudentRecruitmentCards({
   recruitments,
@@ -57,6 +61,9 @@ export default function StudentRecruitmentCards({
         const application = applicationFor(applicationList, recruitment.id);
         const cancelled = application?.status === "CANCELLED";
         const draft = draftFor(draftList, recruitment.id);
+        // Nothing submitted, or only a cancelled application: the applicant may begin one while
+        // applications are open (issue #318).
+        const mayApply = application === undefined || cancelled;
         const applyLabel = `Apply to be a ${recruitment.type}`;
         const badge = cancelled
           ? { bg: "secondary", text: "Application cancelled" }
@@ -105,7 +112,7 @@ export default function StudentRecruitmentCards({
               </dl>
             </Card.Body>
             <Card.Footer className="d-flex flex-wrap gap-2">
-              {application === undefined && open && draft !== undefined && (
+              {mayApply && open && draft !== undefined && (
                 <div>
                   <Link
                     className="btn btn-success"
@@ -121,6 +128,15 @@ export default function StudentRecruitmentCards({
                     {DRAFT_WARNING}
                   </div>
                 </div>
+              )}
+              {cancelled && open && draft === undefined && (
+                <Link
+                  className="btn btn-success"
+                  to={`/apply/${recruitment.id}`}
+                  data-testid={id("restart")}
+                >
+                  {RESTART_LABEL}
+                </Link>
               )}
               {application === undefined &&
                 (open ? (

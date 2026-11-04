@@ -148,6 +148,29 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
           </li>
         </ul>
 
+        <h2 className="my-3 h4" data-testid="HelpUlaApplicantsPage-cancelling">
+          Cancelling, and applying again
+        </h2>
+        <p>
+          Until the recruitment closes you can withdraw a submitted application
+          with <strong>Cancel my Application</strong> on its card on your home
+          page. You are asked for a brief reason and to confirm. A cancelled
+          application is not considered, can no longer be edited, and cannot be
+          brought back; the system keeps it, with your reason and the time you
+          cancelled, so the admins can still see it.
+        </p>
+        <p data-testid="HelpUlaApplicantsPage-start-again">
+          <strong>Changed your mind, or cancelled by mistake?</strong> While
+          applications are still open for that recruitment, the card and the
+          cancelled application&apos;s page show
+          <strong>Start a new application</strong>. It gives you an empty form,
+          as if you had never applied, with the usual saved draft and the usual
+          <strong>Submit Application</strong>. Once you submit it, the new
+          application is the one that counts, and the cancelled one stays on
+          file, marked as cancelled. Once applications have closed the button is
+          gone and a new application can no longer be started.
+        </p>
+
         <h2
           className="my-3 h4"
           data-testid="HelpUlaApplicantsPage-simultaneous-editing"

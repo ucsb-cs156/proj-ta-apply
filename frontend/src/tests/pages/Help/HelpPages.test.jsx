@@ -1798,4 +1798,29 @@ describe("Help pages (issue #140)", () => {
       "like every date and time on this site, are Pacific Time",
     );
   });
+
+  // Issue #318: cancelling, and starting a new application while applications are open.
+  test.each(["Ta", "Ula"])(
+    "the %s applicants page explains cancelling and starting a new application (issue #318)",
+    async (type) => {
+      const Page = type === "Ta" ? HelpTaApplicantsPage : HelpUlaApplicantsPage;
+      renderPage(<Page />);
+      const page = `Help${type}ApplicantsPage`;
+      expect(await screen.findByTestId(`${page}-cancelling`)).toHaveTextContent(
+        "Cancelling, and applying again",
+      );
+      expect(screen.getByTestId(`${page}-start-again`).textContent).toMatch(
+        /Start a new application.*empty form, as if you had never applied.*the cancelled one stays on file.*Once applications have closed the button is gone/,
+      );
+    },
+  );
+
+  test("the admins page explains an applicant who cancelled and applied again (issue #318)", async () => {
+    renderPage(<HelpAdminsPage />);
+    expect(
+      await screen.findByTestId("HelpAdminsPage-cancelled-and-new"),
+    ).toHaveTextContent(
+      /Start a new application.*the same email address can appear twice.*Only the live one is counted, ranked and assigned.*counts once/,
+    );
+  });
 });
