@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/300-courses-ux","number":350,"title":"Courses page UX: columns, instructor view and links (closes #300)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/350"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/342-widen-columns","number":351,"title":"Widen the long text columns of the application tables, resizable (#342)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/351"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/300-courses-ux","number":350,"title":"Courses page UX: columns, instructor view and links (closes #300)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/350"}]
