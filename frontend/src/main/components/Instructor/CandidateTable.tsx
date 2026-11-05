@@ -4,14 +4,11 @@ import axios from "axios";
 import { apiErrorMessage } from "main/utils/apiError";
 import InterestMark from "main/components/Common/InterestMark";
 import { gpaText } from "main/utils/applicationFields";
+import { interestDisplay } from "main/utils/interestDisplay";
 import {
-  ENTHUSIASTIC,
-  FIRST_CHOICE,
-  interestDisplay,
-  NOT_INTERESTED,
-  SECOND_CHOICE,
-  WOULD_CONSIDER,
-} from "main/utils/interestDisplay";
+  compareByRankThenPreference,
+  PREFERENCE_ORDER,
+} from "main/utils/candidateOrder";
 
 export type Candidate = {
   applicationId: number;
@@ -64,13 +61,7 @@ export const CONFLICT_MESSAGE =
   "Rankings for this course changed while you were editing; your change has not been saved.";
 
 // Strongest interest first; "Not Interested" candidates appear only when the instructor asks.
-const preferences = [
-  FIRST_CHOICE,
-  SECOND_CHOICE,
-  ENTHUSIASTIC,
-  WOULD_CONSIDER,
-  NOT_INTERESTED,
-];
+const preferences = PREFERENCE_ORDER;
 
 /** The tooltip on the Default Sort button (issue #265). */
 export const DEFAULT_SORT_TOOLTIP =
@@ -259,10 +250,10 @@ export default function CandidateTable({
   // so equal candidates stay in that order.
   const sorted = [...candidates].sort((a, b) => {
     if (sort === null) {
-      const byRank = defaultRank(a) - defaultRank(b);
-      if (byRank !== 0 && !Number.isNaN(byRank)) return byRank;
-      return (
-        preferences.indexOf(a.preference) - preferences.indexOf(b.preference)
+      // Shared with the admin Assignments page (issue #345).
+      return compareByRankThenPreference(
+        { rank: defaultRank(a), preference: a.preference },
+        { rank: defaultRank(b), preference: b.preference },
       );
     }
     const left = valueOf(a, sort.key) ?? "";
