@@ -721,6 +721,7 @@ export default function ApplicationForm({
             setAgreementMissing(false);
             setAgreedTo(checked && notice ? notice.id : null);
           }}
+          type={type}
           testIdPrefix={id("notice")}
         />
       </div>

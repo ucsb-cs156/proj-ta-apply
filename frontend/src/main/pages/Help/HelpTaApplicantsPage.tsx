@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
 
@@ -7,6 +9,17 @@ const EXAMPLE_OTHERS = [{ label: "you", samePerson: true }];
 
 /** What a TA applicant should know before starting the form: /help/ta-applicants (issue #140). */
 export default function HelpTaApplicantsPage(): React.JSX.Element {
+  const location = useLocation();
+
+  // The notices' version line links to #notices-terms-and-conditions; scroll to it on arrival.
+  // Stryker disable all : the hash never changes while the page is mounted in a test, so the
+  // dependency list cannot be told apart from an empty one; the behaviour itself is tested.
+  useEffect(() => {
+    if (!location.hash) return;
+    document.getElementById(location.hash.slice(1))?.scrollIntoView();
+  }, [location.hash]);
+  // Stryker restore all
+
   return (
     <BasicLayout>
       <div className="pt-2" data-testid="HelpTaApplicantsPage">
@@ -121,6 +134,37 @@ export default function HelpTaApplicantsPage(): React.JSX.Element {
         <p data-testid="HelpTaApplicantsPage-time-zone">
           Every date and time on this site is in Pacific Time (Santa Barbara
           time), wherever you are.
+        </p>
+
+        <h2
+          className="my-3 h4"
+          id="notices-terms-and-conditions"
+          data-testid="HelpTaApplicantsPage-notices"
+        >
+          Notices, Terms and Conditions
+        </h2>
+        <p>
+          When you apply to be a TA, there are certain things that its important
+          for you to know, and certain things you must agree to in order to be
+          eligible to be considered, and to serve if and when you are hired.
+        </p>
+        <p>
+          These are listed in the Notices, Terms and Conditions at the top of
+          the application form.
+        </p>
+        <p>
+          These change from time to time, so we record which specific version
+          you agreed to; that&apos;s what the version number, date and time
+          means in this case; the version number, date and time changes each
+          time these are updated.
+        </p>
+        <p>
+          Once you start an application, the version you agreed to is recorded,
+          and will always be the same for this particular round of applications.
+        </p>
+        <p>
+          If you have questions about these, please contact the CS department;
+          we are happy to answer your questions.
         </p>
 
         <h2 className="my-3 h4">Tips</h2>

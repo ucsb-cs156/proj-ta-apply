@@ -1,10 +1,12 @@
 import { Card, Form } from "react-bootstrap";
+import { Link } from "react-router";
 import RequiredField from "main/components/Common/RequiredField";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   AGREEMENT_LABEL,
   describeVersion,
+  noticesHelpPath,
   type NoticeVersion,
 } from "main/utils/notices";
 import { fillNoticeFields, type NoticeFillIn } from "main/utils/noticeFields";
@@ -20,6 +22,8 @@ type NoticeAgreementProps = {
   readOnly?: boolean;
   /** The recruitment's values for `${quarter}` and `${primaryConsiderationDate}` (issue #150). */
   fillIn?: NoticeFillIn | null;
+  /** Which kind of application this is; picks the Help page the version line links to (issue #325). */
+  type: "TA" | "ULA";
   testIdPrefix?: string;
 };
 
@@ -34,6 +38,7 @@ export default function NoticeAgreement({
   invalid = false,
   readOnly = false,
   fillIn = null,
+  type,
   testIdPrefix = "NoticeAgreement",
 }: NoticeAgreementProps): React.JSX.Element | null {
   if (!notice) {
@@ -50,8 +55,18 @@ export default function NoticeAgreement({
             {fillNoticeFields(notice.content, fillIn)}
           </ReactMarkdown>
         </div>
-        <p className="text-muted small" data-testid={`${testIdPrefix}-version`}>
-          {describeVersion(notice)}
+        <p
+          className="text-muted small text-end"
+          data-testid={`${testIdPrefix}-version`}
+        >
+          {describeVersion(notice)} (
+          <Link
+            to={noticesHelpPath(type)}
+            data-testid={`${testIdPrefix}-version-help`}
+          >
+            what is this?
+          </Link>
+          )
         </p>
         <Form.Check
           type="checkbox"

@@ -17,3 +17,7 @@ export const AGREEMENT_LABEL =
 /** "Version 3, saved 1/2/2026, 3:04:05 AM" for a card footer or a summary line. */
 export const describeVersion = (version: NoticeVersion): string =>
   `Version ${version.id}, saved ${formatPacificDateTime(version.createdAt)}`;
+
+/** Where the Help page for each kind of application explains the notices and their version. */
+export const noticesHelpPath = (type: "TA" | "ULA"): string =>
+  `/help/${type === "TA" ? "ta" : "ula"}-applicants#notices-terms-and-conditions`;

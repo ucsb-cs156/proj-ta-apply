@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 
 import ApplicationSummary from "main/components/Applications/ApplicationSummary";
 import applicationsFixtures from "fixtures/applicationsFixtures";
@@ -51,11 +52,13 @@ describe("ApplicationSummary tests", () => {
 
   test("shows the notice version agreed to, ticked and read-only", () => {
     render(
-      <ApplicationSummary
-        application={applicationsFixtures.oneTaApplication} // noticeVersionId: 1
-        type="TA"
-        notice={noticesFixtures.taV1}
-      />,
+      <MemoryRouter>
+        <ApplicationSummary
+          application={applicationsFixtures.oneTaApplication} // noticeVersionId: 1
+          type="TA"
+          notice={noticesFixtures.taV1}
+        />
+      </MemoryRouter>,
     );
 
     expect(
@@ -71,11 +74,13 @@ describe("ApplicationSummary tests", () => {
   /** If the versions disagree (should not happen), the box is honest about it. */
   test("a notice the application did not agree to is shown unticked", () => {
     render(
-      <ApplicationSummary
-        application={applicationsFixtures.oneTaApplication} // noticeVersionId: 1
-        type="TA"
-        notice={noticesFixtures.taV2}
-      />,
+      <MemoryRouter>
+        <ApplicationSummary
+          application={applicationsFixtures.oneTaApplication} // noticeVersionId: 1
+          type="TA"
+          notice={noticesFixtures.taV2}
+        />
+      </MemoryRouter>,
     );
     expect(
       screen.getByTestId("ApplicationSummary-notice-agree"),
@@ -611,11 +616,13 @@ describe("ApplicationSummary tests", () => {
   /** Issue #77: the agreement is shown first on the summary too, as on the form. */
   test("the notice agreement comes before the answers", () => {
     render(
-      <ApplicationSummary
-        application={applicationsFixtures.oneTaApplication}
-        type="TA"
-        notice={noticesFixtures.taV1}
-      />,
+      <MemoryRouter>
+        <ApplicationSummary
+          application={applicationsFixtures.oneTaApplication}
+          type="TA"
+          notice={noticesFixtures.taV1}
+        />
+      </MemoryRouter>,
     );
 
     const notice = screen.getByTestId("ApplicationSummary-notice");
