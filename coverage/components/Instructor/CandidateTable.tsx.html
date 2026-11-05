@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>125/125</span>
+                <span class='fraction'>122/122</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>131/131</span>
+                <span class='fraction'>127/127</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>111/111</span>
+                <span class='fraction'>109/109</span>
             </div>
         
             
@@ -545,19 +545,7 @@
 <a name='L480'></a><a href='#L480'>480</a>
 <a name='L481'></a><a href='#L481'>481</a>
 <a name='L482'></a><a href='#L482'>482</a>
-<a name='L483'></a><a href='#L483'>483</a>
-<a name='L484'></a><a href='#L484'>484</a>
-<a name='L485'></a><a href='#L485'>485</a>
-<a name='L486'></a><a href='#L486'>486</a>
-<a name='L487'></a><a href='#L487'>487</a>
-<a name='L488'></a><a href='#L488'>488</a>
-<a name='L489'></a><a href='#L489'>489</a>
-<a name='L490'></a><a href='#L490'>490</a>
-<a name='L491'></a><a href='#L491'>491</a>
-<a name='L492'></a><a href='#L492'>492</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L483'></a><a href='#L483'>483</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -621,12 +609,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -815,9 +797,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">360x</span>
 <span class="cline-any cline-yes">1308x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1123x</span>
-<span class="cline-any cline-yes">1123x</span>
-<span class="cline-any cline-yes">675x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1051,14 +1033,11 @@ import axios from "axios";
 import { apiErrorMessage } from "main/utils/apiError";
 import InterestMark from "main/components/Common/InterestMark";
 import { gpaText } from "main/utils/applicationFields";
+import { interestDisplay } from "main/utils/interestDisplay";
 import {
-  ENTHUSIASTIC,
-  FIRST_CHOICE,
-  interestDisplay,
-  NOT_INTERESTED,
-  SECOND_CHOICE,
-  WOULD_CONSIDER,
-} from "main/utils/interestDisplay";
+  compareByRankThenPreference,
+  PREFERENCE_ORDER,
+} from "main/utils/candidateOrder";
 &nbsp;
 export type Candidate = {
   applicationId: number;
@@ -1111,13 +1090,7 @@ export const CONFLICT_MESSAGE =
   "Rankings for this course changed while you were editing; your change has not been saved.";
 &nbsp;
 // Strongest interest first; "Not Interested" candidates appear only when the instructor asks.
-const preferences = [
-  FIRST_CHOICE,
-  SECOND_CHOICE,
-  ENTHUSIASTIC,
-  WOULD_CONSIDER,
-  NOT_INTERESTED,
-];
+const preferences = PREFERENCE_ORDER;
 &nbsp;
 /** The tooltip on the Default Sort button (issue #265). */
 export const DEFAULT_SORT_TOOLTIP =
@@ -1306,10 +1279,10 @@ export default function CandidateTable({
   // so equal candidates stay in that order.
   const sorted = [...candidates].sort((a, b) =&gt; {
     if (sort === null) {
-      const byRank = defaultRank(a) - defaultRank(b);
-      if (byRank !== 0 &amp;&amp; !Number.isNaN(byRank)) return byRank;
-      return (
-        preferences.indexOf(a.preference) - preferences.indexOf(b.preference)
+      // Shared with the admin Assignments page (issue #345).
+      return compareByRankThenPreference(
+        { rank: defaultRank(a), preference: a.preference },
+        { rank: defaultRank(b), preference: b.preference },
       );
     }
     const left = valueOf(a, sort.key) ?? "";
@@ -1543,7 +1516,7 @@ export default function CandidateTable({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-05T20:13:16.031Z
+                at 2026-11-05T20:43:56.463Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
