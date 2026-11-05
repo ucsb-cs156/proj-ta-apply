@@ -211,6 +211,16 @@ describe("RecruitmentDraftApplicationsPage tests", () => {
     await screen.findByTestId(`${prefix}-drafts-cell-row-0-col-id-link`);
 
     await userEvent.click(screen.getByTestId(`${prefix}-columns-toggle`));
+    // Issue #343: the course actions belong to the Assignments page alone.
+    expect(
+      screen.queryByTestId(`${prefix}-columns-show-all-courses`),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId(`${prefix}-columns-show-incomplete-courses`),
+    ).toBeNull();
+    expect(
+      screen.getByTestId(`${prefix}-columns-select-none`),
+    ).toHaveTextContent("Show None");
     expect(screen.getByLabelText("Last saved")).toBe(
       screen.getByTestId(`${prefix}-columns-submittedAt`),
     );

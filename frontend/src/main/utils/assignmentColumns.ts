@@ -31,3 +31,16 @@ export const assignmentColumnChoices = (
     label: courseLabel(course),
   })),
 ];
+
+/**
+ * The lecture columns, each with whether its lecture is complete: as many applicants pencilled in
+ * (the page's "Assigned", the tentative assignments) as its allocation, the hiring target the page
+ * shows as "Allocation". Over the target counts as complete too (issue #343).
+ */
+export const courseColumnStatus = (
+  data: Pick<Assignments, "courses">,
+): { id: string; complete: boolean }[] =>
+  data.courses.map((course) => ({
+    id: courseColumnId(course.id),
+    complete: course.assigned >= course.allocation,
+  }));
