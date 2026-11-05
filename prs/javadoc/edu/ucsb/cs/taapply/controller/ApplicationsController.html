@@ -78,7 +78,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#myApplications()" tabindex="0">myApplications()</a></li>
 <li><a href="#getApplication(java.lang.Long)" tabindex="0">getApplication(Long)</a></li>
-<li><a href="#prefill()" tabindex="0">prefill()</a></li>
+<li><a href="#prefill(edu.ucsb.cs.taapply.enums.RecruitmentType)" tabindex="0">prefill(RecruitmentType)</a></li>
 <li><a href="#postApplication(java.lang.Long,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" tabindex="0">postApplication(Long, ApplicationsController.ApplicationFields)</a></li>
 <li><a href="#postTestApplication(java.lang.Long,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" tabindex="0">postTestApplication(Long, ApplicationsController.ApplicationFields)</a></li>
 <li><a href="#updateApplication(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" tabindex="0">updateApplication(Long, Integer, String, ApplicationsController.ApplicationFields)</a></li>
@@ -234,7 +234,7 @@ ownership is checked explicitly rather than relying on a query happening to filt
  <a href="ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a>&nbsp;fields)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prefill()" class="member-name-link">prefill</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prefill(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">prefill</a><wbr>(<a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateApplication(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">updateApplication</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
@@ -427,12 +427,13 @@ ownership is checked explicitly rather than relying on a query happening to filt
 </section>
 </li>
 <li>
-<section class="detail" id="prefill()">
+<section class="detail" id="prefill(edu.ucsb.cs.taapply.enums.RecruitmentType)">
 <h3>prefill</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_USER')")
 @GetMapping("/prefill")
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</span>&nbsp;<span class="element-name">prefill</span>()</div>
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</span>&nbsp;<span class="element-name">prefill</span><wbr><span class="parameters">(@RequestParam(required=false)
+ <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</span></div>
 </div>
 </section>
 </li>

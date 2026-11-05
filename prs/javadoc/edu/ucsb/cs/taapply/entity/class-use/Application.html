@@ -116,7 +116,7 @@ loadScripts(document, 'script');</script>
 <div class="col-second odd-row-color"><span class="type-name-label">ApplicationsController.</span><code><a href="../../controller/ApplicationsController.html#myApplications()" class="member-name-link">myApplications</a>()</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">ApplicationsController.</span><code><a href="../../controller/ApplicationsController.html#prefill()" class="member-name-link">prefill</a>()</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationsController.</span><code><a href="../../controller/ApplicationsController.html#prefill(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">prefill</a><wbr>(<a href="../../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -161,6 +161,17 @@ and started again (issue #318).</div>
 <li>
 <section class="detail" id="edu.ucsb.cs.taapply.services">
 <h2>Uses of <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a> in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a></h2>
+<div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> that return <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">TaSeedFromUla.</span><code><a href="../../services/TaSeedFromUla.html#seed(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">seed</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;ula)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The ULA application's carried-over answers, as an unsaved TA-shaped application.</div>
+</div>
+</div>
 <div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> that return types with arguments of type <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span></div>
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -227,9 +238,14 @@ answer, never stored).</div>
 <div class="block">Records every difference between the snapshot taken before the edit and the application as it
 is now, and returns the rows written (empty when nothing changed).</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#snapshot(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">snapshot</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application)</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">TaSeedFromUla.</span><code><a href="../../services/TaSeedFromUla.html#seed(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">seed</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;ula)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">The ULA application's carried-over answers, as an unsaved TA-shaped application.</div>
+</div>
+<div class="col-first even-row-color"><code><a href="../../services/ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">ApplicationAuditService.</span><code><a href="../../services/ApplicationAuditService.html#snapshot(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">snapshot</a><wbr>(<a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;application)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <div class="caption"><span>Method parameters in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with type arguments of type <a href="../Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></span></div>
 <div class="summary-table three-column-summary">

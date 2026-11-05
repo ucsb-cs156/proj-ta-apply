@@ -3152,7 +3152,7 @@ answer, never stored).</div>
 <dd>
 <div class="block">Returns the value of the <code>preferences</code> record component.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#prefill()" class="member-name-link">prefill()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#prefill(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">prefill(RecruitmentType)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html#preHandle(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,java.lang.Object)" class="member-name-link">preHandle(HttpServletRequest, HttpServletResponse, Object)</a> - Method in class edu.ucsb.cs.taapply.interceptors.<a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">LastOnlineInterceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -3735,6 +3735,10 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/SecurityConfig.html#%3Cinit%3E()" class="member-name-link">SecurityConfig()</a> - Constructor for class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/SecurityConfig.html" title="class in edu.ucsb.cs.taapply.config">SecurityConfig</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/TaSeedFromUla.html#seed(edu.ucsb.cs.taapply.entity.Application)" class="member-name-link">seed(Application)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/TaSeedFromUla.html" title="class in edu.ucsb.cs.taapply.services">TaSeedFromUla</a></dt>
+<dd>
+<div class="block">The ULA application's carried-over answers, as an unsaved TA-shaped application.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setAllocation(java.lang.Long,java.lang.Integer,java.lang.Integer,java.lang.Integer,java.lang.String)" class="member-name-link">setAllocation(Long, Integer, Integer, Integer, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorsController.html#setCatalogName(java.lang.String,java.lang.String)" class="member-name-link">setCatalogName(String, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorsController.html" title="class in edu.ucsb.cs.taapply.controller">InstructorsController</a></dt>
@@ -3954,6 +3958,11 @@ for; ULA positions are funded for undergraduates only.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/CourseTargetsService.html#targetsFor(java.lang.Long,java.util.List)" class="member-name-link">targetsFor(Long, List)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/CourseTargetsService.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService</a></dt>
 <dd>
 <div class="block">The figures for every course given, keyed by course id, loading the applications once.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/TaSeedFromUla.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">TaSeedFromUla</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">Issue #307: the answers a person's first TA application starts with when all they have on file is
+a ULA application.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/TaTopic.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">TaTopic</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
 <dd>
