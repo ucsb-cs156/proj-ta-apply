@@ -12,6 +12,7 @@ import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityCont
 import {
   ASSIGNMENTS_TABLE_KEY,
   assignmentColumnChoices,
+  courseColumnStatus,
 } from "main/utils/assignmentColumns";
 import InterestLegend from "main/components/Common/InterestLegend";
 import type { Assignments } from "main/utils/assignments";
@@ -214,6 +215,7 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
             onToggle={(columnId, hidden) =>
               hideColumnMutation.mutate({ columnId, hidden })
             }
+            courseColumns={courseColumnStatus(page)}
             testIdPrefix="AdminAssignmentsPage-columns"
           />
         </div>

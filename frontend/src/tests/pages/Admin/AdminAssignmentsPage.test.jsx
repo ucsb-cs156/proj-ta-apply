@@ -671,4 +671,115 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
       hidden: true,
     });
   });
+
+  // ---- Issue #343: Show All Courses and Show Only Incomplete Courses ----
+  // The fixture's lectures: course-10 has 1 of 2 assigned (incomplete), course-20 has 2 of 1
+  // (over its target), course-30 has 0 of 0 (exactly at its target).
+
+  const openColumns = async () => {
+    await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-col-email",
+    );
+    await userEvent.click(
+      screen.getByTestId("AdminAssignmentsPage-columns-toggle"),
+    );
+  };
+  const putSummary = () =>
+    hiddenColumnPuts()
+      .map((r) => [r.params.columnId, r.params.hidden])
+      .sort();
+
+  test("the Columns menu offers Show All Courses and Show Only Incomplete Courses, with the tooltip", async () => {
+    renderPage();
+    await openColumns();
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-columns-show-all-courses"),
+    ).toHaveTextContent("Show All Courses");
+    expect(
+      screen.getByTestId(
+        "AdminAssignmentsPage-columns-show-incomplete-courses",
+      ),
+    ).toHaveAccessibleDescription(
+      "This will hide all course columns except the ones where the number of assigned TAs/ULAs is currently less than the hiring target.",
+    );
+  });
+
+  test("Show Only Incomplete Courses hides the course at its target and the one over it, keeping the incomplete one and the other columns", async () => {
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, []);
+    renderPage();
+    await openColumns();
+    await userEvent.click(
+      screen.getByTestId(
+        "AdminAssignmentsPage-columns-show-incomplete-courses",
+      ),
+    );
+    await waitFor(() => expect(hiddenColumnPuts()).toHaveLength(2));
+    expect(putSummary()).toEqual([
+      ["course-20", true],
+      ["course-30", true],
+    ]);
+    for (const p of hiddenColumnPuts()) {
+      expect(p.params.tableKey).toBe("recruitmentAssignments");
+      expect(p.params.recruitmentId).toBe("7");
+    }
+  });
+
+  test("Show Only Incomplete Courses brings back a hidden incomplete course", async () => {
+    axiosMock
+      .onGet("/api/admin/hiddencolumns")
+      .reply(200, ["course-10", "major"]);
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, []);
+    renderPage();
+    await openColumns();
+    await userEvent.click(
+      screen.getByTestId(
+        "AdminAssignmentsPage-columns-show-incomplete-courses",
+      ),
+    );
+    await waitFor(() => expect(hiddenColumnPuts()).toHaveLength(3));
+    expect(putSummary()).toEqual([
+      ["course-10", false],
+      ["course-20", true],
+      ["course-30", true],
+    ]);
+  });
+
+  test("Show All Courses shows every hidden course column but not the other hidden ones", async () => {
+    axiosMock
+      .onGet("/api/admin/hiddencolumns")
+      .reply(200, ["course-20", "course-30", "major"]);
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, []);
+    renderPage();
+    await openColumns();
+    await userEvent.click(
+      screen.getByTestId("AdminAssignmentsPage-columns-show-all-courses"),
+    );
+    await waitFor(() => expect(hiddenColumnPuts()).toHaveLength(2));
+    expect(putSummary()).toEqual([
+      ["course-20", false],
+      ["course-30", false],
+    ]);
+  });
+
+  test("after an assignment moves a course to its target, Show Only Incomplete Courses hides it", async () => {
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, []);
+    renderPage();
+    await openColumns();
+    // taPageAfterMove: course-10 now has 0 of 2, course-20 has 2 of 1, course-30 has 1 of 0.
+    // Drive the move through the page, then use the menu.
+    await userEvent.selectOptions(
+      screen.getByTestId(
+        "AdminAssignmentsPage-table-cell-row-0-tentative-select",
+      ),
+      "10",
+    );
+    await waitFor(() => expect(tentativePuts()).toHaveLength(1));
+    await userEvent.click(
+      screen.getByTestId(
+        "AdminAssignmentsPage-columns-show-incomplete-courses",
+      ),
+    );
+    await waitFor(() => expect(hiddenColumnPuts().length).toBeGreaterThan(0));
+    expect(putSummary()).toContainEqual(["course-20", true]);
+  });
 });

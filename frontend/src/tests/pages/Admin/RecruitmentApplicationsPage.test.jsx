@@ -232,6 +232,20 @@ describe("RecruitmentApplicationsPage tests", () => {
     await userEvent.click(
       screen.getByTestId("RecruitmentApplicationsPage-columns-toggle"),
     );
+    // Issue #343: the course actions belong to the Assignments page alone.
+    expect(
+      screen.queryByTestId(
+        "RecruitmentApplicationsPage-columns-show-all-courses",
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId(
+        "RecruitmentApplicationsPage-columns-show-incomplete-courses",
+      ),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("RecruitmentApplicationsPage-columns-select-all"),
+    ).toHaveTextContent("Show All");
     expect(
       screen.queryByTestId("RecruitmentApplicationsPage-columns-id"),
     ).toBeNull();
