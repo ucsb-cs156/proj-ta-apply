@@ -1,6 +1,12 @@
 package edu.ucsb.cs.taapply.entity;
 
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
 import lombok.*;
 
 /**
@@ -41,4 +47,56 @@ public class PriorCoursework {
 
   /** Optional; "IP" for a course in progress, as the legacy form suggested. */
   private String grade;
+
+  /**
+   * What makes two rows the same course (issue #334): course number, school (UCSB, or the named
+   * other school) and term, each ignoring case and spacing, so "CMPSC 156" and "cmpsc156" match. A
+   * retake in another term is a different row. Null when there is no course number: such a row
+   * (only a draft may hold one) is never the same as another.
+   */
+  public static String key(
+      boolean ucsbCourse, String otherSchool, String courseNumber, String term) {
+    if (courseNumber == null || courseNumber.isBlank()) {
+      return null;
+    }
+    String school = ucsbCourse ? "UCSB" : "other:" + squash(otherSchool);
+    return String.join("|", school, squash(courseNumber), squash(term));
+  }
+
+  /** The key of this row; see {@link #key(boolean, String, String, String)}. */
+  public String key() {
+    return key(ucsbCourse, otherSchool, courseNumber, term);
+  }
+
+  private static String squash(String text) {
+    return text == null ? "" : text.toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
+  }
+
+  /**
+   * The rows with identical courses collapsed to one (issue #334): the later row replaces the
+   * earlier in the earlier's place, so the list keeps its order. Which of two disagreeing rows wins
+   * does not matter. A row with no key is kept as it is.
+   */
+  public static <T> List<T> collapse(List<T> rows, Function<T, String> keyOf) {
+    Map<String, Integer> positions = new HashMap<>();
+    List<T> collapsed = new ArrayList<>();
+    for (T row : rows) {
+      String key = keyOf.apply(row);
+      Integer position = key == null ? null : positions.get(key);
+      if (position != null) {
+        collapsed.set(position, row);
+      } else {
+        if (key != null) {
+          positions.put(key, collapsed.size());
+        }
+        collapsed.add(row);
+      }
+    }
+    return collapsed;
+  }
+
+  /** The rows with identical courses collapsed to one; see {@link #collapse(List, Function)}. */
+  public static List<PriorCoursework> collapse(List<PriorCoursework> rows) {
+    return collapse(rows, PriorCoursework::key);
+  }
 }

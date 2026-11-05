@@ -4,6 +4,7 @@ import {
   type CatalogCourse,
 } from "main/utils/bulkCourses";
 import { qyyToYyyyq } from "main/utils/quarterUtilities";
+import { courseKey } from "main/utils/untakenCourses";
 
 /** One course an applicant lists as relevant background, as the API stores and returns it. */
 export type PriorCourse = {
@@ -26,6 +27,64 @@ export const COURSEWORK_INSTRUCTIONS: Record<"TA" | "ULA", string> = {
   TA: "List the courses that are relevant background for serving as a TA. TA applicants must list at least 3 courses; there is no maximum.",
   ULA: "List, at a minimum, every course that is relevant background for the courses you are applying to be a ULA for. That means at least one course; there is no maximum.",
 };
+
+/**
+ * What makes two rows the same course (issue #334): course number, school (UCSB, or the named other
+ * school) and term, each ignoring case and spacing; the term as it would be saved (Fall 2025 and
+ * F25 are one). The same course in another term, a retake, is a different row.
+ */
+export const sameCourseKey = (course: PriorCourse): string =>
+  [
+    // Stryker disable next-line StringLiteral : any text unlike a school's does, and a blank school equals a missing one
+    course.ucsbCourse ? "UCSB" : `other:${courseKey(course.otherSchool ?? "")}`,
+    courseKey(course.courseNumber),
+    // Stryker disable next-line StringLiteral : a missing term and a blank one are the same, whatever stands for them
+    courseKey(normalizeTerm(course.term) ?? ""),
+  ].join("|");
+
+/**
+ * The courses with `added` joined in, one row per course (issue #334). An added course that matches
+ * one already listed takes that row's place (and replaces its answers, a changed grade for
+ * example) instead of becoming a second row; one that matches nothing goes on the end. Rows that
+ * were already duplicated, as an older application may have them, collapse into the first's place.
+ */
+export function upsertCourses(
+  list: PriorCourse[],
+  added: PriorCourse[],
+): PriorCourse[] {
+  let result = list;
+  for (const course of added) {
+    const key = sameCourseKey(course);
+    const first = result.findIndex((row) => sameCourseKey(row) === key);
+    result =
+      first === -1
+        ? [...result, course]
+        : result.flatMap((row, index) =>
+            index === first
+              ? [course]
+              : sameCourseKey(row) === key
+                ? []
+                : [row],
+          );
+  }
+  return result;
+}
+
+/**
+ * The courses with the row at `index` replaced by its edited version (issue #334). If the edit made
+ * it the same course as another row, that other row goes: the edited row is the one the applicant
+ * is looking at, so it wins.
+ */
+export function replaceCourse(
+  list: PriorCourse[],
+  index: number,
+  course: PriorCourse,
+): PriorCourse[] {
+  const key = sameCourseKey(course);
+  return list.flatMap((row, position) =>
+    position === index ? [course] : sameCourseKey(row) === key ? [] : [row],
+  );
+}
 
 /** "UCSB" or the other school, for the table's School column. */
 export const schoolOf = (course: PriorCourse): string =>

@@ -137,6 +137,23 @@ public class TaSeedFromUlaTests {
   }
 
   /**
+   * Issue #334: a ULA application that lists a course twice seeds a TA application with it once.
+   */
+  @Test
+  public void identical_courses_are_seeded_once() {
+    Application ula = fullUla();
+    ula.setPriorCoursework(
+        List.of(
+            PriorCoursework.builder().courseNumber("CMPSC 8").term("F24").grade("A").build(),
+            PriorCoursework.builder().courseNumber("cmpsc8").term("F24").grade("B").build(),
+            PriorCoursework.builder().courseNumber("CMPSC 8").term("W25").grade("C").build()));
+
+    List<PriorCoursework> seeded = TaSeedFromUla.seed(ula).getPriorCoursework();
+
+    assertEquals(List.of("B", "C"), seeded.stream().map(PriorCoursework::getGrade).toList());
+  }
+
+  /**
    * Everything else is as on a brand new application: no ids, no state, no availability, no
    * ULA-only answers.
    */

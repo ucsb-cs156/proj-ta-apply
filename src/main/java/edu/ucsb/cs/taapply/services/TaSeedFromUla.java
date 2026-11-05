@@ -59,17 +59,18 @@ public final class TaSeedFromUla {
   }
 
   private static List<PriorCoursework> copyOfCoursework(List<PriorCoursework> courses) {
-    return courses.stream()
-        .map(
-            course ->
-                PriorCoursework.builder()
-                    .ucsbCourse(course.isUcsbCourse())
-                    .otherSchool(course.getOtherSchool())
-                    .courseNumber(course.getCourseNumber())
-                    .courseTitle(course.getCourseTitle())
-                    .term(course.getTerm())
-                    .grade(course.getGrade())
-                    .build())
-        .toList();
+    return PriorCoursework.collapse(
+        courses.stream()
+            .map(
+                course ->
+                    PriorCoursework.builder()
+                        .ucsbCourse(course.isUcsbCourse())
+                        .otherSchool(course.getOtherSchool())
+                        .courseNumber(course.getCourseNumber())
+                        .courseTitle(course.getCourseTitle())
+                        .term(course.getTerm())
+                        .grade(course.getGrade())
+                        .build())
+            .toList());
   }
 }
