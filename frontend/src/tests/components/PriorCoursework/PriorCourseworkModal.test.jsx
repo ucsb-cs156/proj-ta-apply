@@ -21,6 +21,35 @@ function renderModal({ course = null, show = true } = {}) {
 }
 
 describe("PriorCourseworkModal tests", () => {
+  test("closing removes the dialog at once, so it never reads Add Course while fading after an edit", () => {
+    const { rerender } = render(
+      <PriorCourseworkModal
+        show={true}
+        course={priorCourseworkFixtures.ucsbCourse}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+        testIdPrefix="M"
+      />,
+    );
+    expect(
+      screen.getByTestId("M").querySelector(".modal-header"),
+    ).toHaveTextContent("Edit Course");
+
+    // What the section passes once a save has set the row being edited back to none.
+    rerender(
+      <PriorCourseworkModal
+        show={false}
+        course={null}
+        onSave={vi.fn()}
+        onCancel={vi.fn()}
+        testIdPrefix="M"
+      />,
+    );
+
+    expect(screen.queryByTestId("M")).toBeNull();
+    expect(screen.queryByText("Add Course")).toBeNull();
+  });
+
   test("adding starts as a UCSB course with the school box visible but locked and blank", () => {
     renderModal();
 

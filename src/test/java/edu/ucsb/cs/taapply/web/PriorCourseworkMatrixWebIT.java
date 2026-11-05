@@ -230,15 +230,21 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     assertThat(p.getByTestId(prefix + "-coursework-modal")).not().isVisible();
   }
 
-  private static void changeGrade(Page p, String prefix, int row, String grade) {
+  /** Clicks Edit on a row and waits until the dialog is showing that row, not an empty one. */
+  private static void openRowForEdit(Page p, String prefix, int row) {
     p.getByTestId(prefix + "-coursework-table-cell-row-" + row + "-col-edit-button").click();
+    assertThat(p.getByTestId(prefix + "-coursework-modal")).containsText("Edit Course");
+  }
+
+  private static void changeGrade(Page p, String prefix, int row, String grade) {
+    openRowForEdit(p, prefix, row);
     p.getByTestId(prefix + "-coursework-modal-grade").fill(grade);
     p.getByTestId(prefix + "-coursework-modal-save").click();
     assertThat(p.getByTestId(prefix + "-coursework-modal")).not().isVisible();
   }
 
   private static void changeTerm(Page p, String prefix, int row, String term) {
-    p.getByTestId(prefix + "-coursework-table-cell-row-" + row + "-col-edit-button").click();
+    openRowForEdit(p, prefix, row);
     p.getByTestId(prefix + "-coursework-modal-freeText").check();
     p.getByTestId(prefix + "-coursework-modal-termText").fill(term);
     p.getByTestId(prefix + "-coursework-modal-save").click();

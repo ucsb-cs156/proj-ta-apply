@@ -133,6 +133,9 @@ export default function PriorCourseworkModal({
       show={show}
       onHide={onCancel}
       centered={true}
+      // No fade: while a dialog fades out its course is already null, so it would read "Add Course"
+      // for a moment after an edit, and a slow browser could leave it lingering (seen in CI).
+      animation={false}
       data-testid={testIdPrefix}
     >
       <Modal.Header closeButton>
