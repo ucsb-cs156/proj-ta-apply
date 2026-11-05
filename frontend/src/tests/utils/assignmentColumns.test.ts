@@ -1,3 +1,4 @@
+import { describe, expect, test } from "vitest";
 import {
   ASSIGNMENTS_TABLE_KEY,
   TENTATIVE_COLUMN_ID,
