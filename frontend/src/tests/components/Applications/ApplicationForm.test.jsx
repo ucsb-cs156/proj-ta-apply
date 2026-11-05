@@ -397,6 +397,7 @@ describe("ApplicationForm tests", () => {
       "i9Appointment",
       "changingMajor",
       "graduationDate-note",
+      "major-note",
       "videoLink-note",
       "course-preferences-guidance",
       "training",
@@ -2544,6 +2545,15 @@ describe("ApplicationForm tests", () => {
       ]) {
         expect(labelNamed(label).textContent).toMatch(/\*\s*$/);
       }
+      // Issue #332: the double major hint sits directly under the Major dropdown.
+      const majorNote = screen.getByTestId("ApplicationForm-major-note");
+      expect(majorNote).toHaveTextContent(
+        'If you are a double major, select "Other" and enter both majors in the field that appears.',
+      );
+      expect(majorNote).toHaveClass("form-text", "text-muted");
+      expect(majorNote.previousElementSibling).toBe(
+        screen.getByTestId("ApplicationForm-major"),
+      );
       expect(
         screen.getByTestId("ApplicationForm-graduationDate-note"),
       ).toHaveTextContent("you are not eligible to serve as a ULA");

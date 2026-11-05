@@ -52,6 +52,7 @@ import {
   EMPLOYEE_ID_NOTE_BEFORE,
   EMPLOYMENT_INTRO,
   GRADUATE_WARNING,
+  DOUBLE_MAJOR_HINT,
   GRADUATION_NOTE,
   I9_AGREEMENT,
   I9_CONSEQUENCES,
@@ -784,6 +785,11 @@ export default function ApplicationForm({
             ))}
             <option value={OTHER_MAJOR}>Other</option>
           </Form.Select>
+          {!isTa && (
+            <Form.Text muted data-testid={id("major-note")}>
+              {DOUBLE_MAJOR_HINT}
+            </Form.Text>
+          )}
           <Form.Control.Feedback type="invalid">
             A major is required.
           </Form.Control.Feedback>
