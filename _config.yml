@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/flaky-prior-coursework-it","number":341,"title":"Fix flaky prior coursework IT: the edit dialog no longer fades out","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/341"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/325-notices-version-link","number":339,"title":"Make the notices version line clearer: flush right, with a (what is this?) link to Help (#325)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/339"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/flaky-prior-coursework-it","number":341,"title":"Fix flaky prior coursework IT: the edit dialog no longer fades out","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/341"}]
