@@ -242,7 +242,21 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     p.getByTestId(prefix + "-coursework-modal-freeText").check();
     p.getByTestId(prefix + "-coursework-modal-termText").fill(term);
     p.getByTestId(prefix + "-coursework-modal-save").click();
-    assertThat(p.getByTestId(prefix + "-coursework-modal")).not().isVisible();
+    try {
+      assertThat(p.getByTestId(prefix + "-coursework-modal")).not().isVisible();
+    } catch (AssertionError e) {
+      // Say what the dialog shows, so a failure on a slower machine can be diagnosed.
+      throw new AssertionError(
+          "The dialog stayed open after Save. It shows: "
+              + p.getByTestId(prefix + "-coursework-modal").innerText().replace('\n', '/')
+              + " freeText="
+              + p.getByTestId(prefix + "-coursework-modal-freeText").isChecked()
+              + " termText="
+              + p.getByTestId(prefix + "-coursework-modal-termText").inputValue()
+              + " invalid="
+              + p.locator(".is-invalid").count(),
+          e);
+    }
   }
 
   private static void delete(Page p, String prefix, int row) {
@@ -277,6 +291,10 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     String path = "/apply/" + id;
     String where = (firstSession ? "new draft " : "saved draft ") + recruitment.getType();
 
+    if (firstSession) {
+      p.onConsoleMessage(m -> System.out.println("BROWSER " + m.type() + ": " + m.text()));
+      p.onPageError(e -> System.out.println("BROWSER pageerror: " + e));
+    }
     goTo(p, path);
     assertThat(p.getByTestId(prefix + "-saveDraft")).isVisible();
     // What the form shows: a new draft is only saved once something changes, and it may start with
