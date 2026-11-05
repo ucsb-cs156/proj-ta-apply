@@ -1367,6 +1367,18 @@ describe("RecruitmentCoursesPage tests", () => {
     expect(
       screen.getByTestId("RecruitmentCoursesPage-columns-rankingCount"),
     ).toBeInTheDocument();
+    // Issue #343: the course actions belong to the Assignments page alone.
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-columns-show-all-courses"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId(
+        "RecruitmentCoursesPage-columns-show-incomplete-courses",
+      ),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-columns-select-all"),
+    ).toHaveTextContent("Show All");
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-columns-courseId"),
     ).not.toBeInTheDocument();

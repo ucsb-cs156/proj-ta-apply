@@ -1,6 +1,13 @@
-import { Dropdown, Form } from "react-bootstrap";
+import { Dropdown, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 export type ColumnChoice = { id: string; label: string };
+
+/** A per-course column and whether its course has met its hiring target (assigned >= target). */
+export type CourseColumn = { id: string; complete: boolean };
+
+/** What the "Show Only Incomplete Courses" action says it does, for its tooltip. */
+export const INCOMPLETE_COURSES_TOOLTIP =
+  "This will hide all course columns except the ones where the number of assigned TAs/ULAs is currently less than the hiring target.";
 
 type ColumnVisibilityControlProps = {
   /** Every column that may be hidden, in table order. */
@@ -9,11 +16,17 @@ type ColumnVisibilityControlProps = {
   hidden: string[];
   onToggle: (columnId: string, hidden: boolean) => void;
   testIdPrefix?: string;
+  /**
+   * The per-course columns among the choices, when the page has them (the Assignments page). With
+   * at least one, the menu also offers "Show All Courses" and "Show Only Incomplete Courses";
+   * pages that leave it out never show those two actions.
+   */
+  courseColumns?: CourseColumn[];
 };
 
 /**
  * A "Columns" menu of checkboxes, one per hideable column (issue #185): unticking hides the column
- * and ticking brings it back. "Select All" shows every column at once and "Select None" hides them
+ * and ticking brings it back. "Show All" shows every column at once and "Show None" hides them
  * all (the columns outside the menu, such as ids and action links, always stay). The menu stays
  * open while boxes are ticked, so several can be changed in one visit.
  */
@@ -22,9 +35,15 @@ export default function ColumnVisibilityControl({
   hidden,
   onToggle,
   testIdPrefix = "ColumnVisibilityControl",
+  courseColumns = [],
 }: ColumnVisibilityControlProps): React.JSX.Element {
   const hiddenHere = choices.filter((choice) => hidden.includes(choice.id));
   const shownHere = choices.filter((choice) => !hidden.includes(choice.id));
+  const setHidden = (ids: string[], shouldHide: boolean) =>
+    ids
+      .filter((id) => hidden.includes(id) === !shouldHide)
+      .forEach((id) => onToggle(id, shouldHide));
+  const tooltipId = `${testIdPrefix}-incomplete-courses-tooltip`;
   return (
     <Dropdown autoClose="outside" data-testid={testIdPrefix}>
       <Dropdown.Toggle
@@ -45,7 +64,7 @@ export default function ColumnVisibilityControl({
           }
           data-testid={`${testIdPrefix}-select-all`}
         >
-          Select All
+          Show All
         </Dropdown.Item>
         <Dropdown.Item
           as="button"
@@ -55,8 +74,55 @@ export default function ColumnVisibilityControl({
           }
           data-testid={`${testIdPrefix}-select-none`}
         >
-          Select None
+          Show None
         </Dropdown.Item>
+        {courseColumns.length > 0 && (
+          <>
+            <Dropdown.Item
+              as="button"
+              onClick={() =>
+                setHidden(
+                  courseColumns.map((c) => c.id),
+                  false,
+                )
+              }
+              data-testid={`${testIdPrefix}-show-all-courses`}
+            >
+              Show All Courses
+            </Dropdown.Item>
+            <OverlayTrigger
+              placement="left"
+              overlay={
+                <Tooltip id={tooltipId}>{INCOMPLETE_COURSES_TOOLTIP}</Tooltip>
+              }
+            >
+              <Dropdown.Item
+                as="button"
+                aria-describedby={`${tooltipId}-text`}
+                onClick={() => {
+                  setHidden(
+                    courseColumns.filter((c) => c.complete).map((c) => c.id),
+                    true,
+                  );
+                  setHidden(
+                    courseColumns.filter((c) => !c.complete).map((c) => c.id),
+                    false,
+                  );
+                }}
+                data-testid={`${testIdPrefix}-show-incomplete-courses`}
+              >
+                Show Only Incomplete Courses
+              </Dropdown.Item>
+            </OverlayTrigger>
+            <span
+              id={`${tooltipId}-text`}
+              className="visually-hidden"
+              data-testid={`${testIdPrefix}-show-incomplete-courses-description`}
+            >
+              {INCOMPLETE_COURSES_TOOLTIP}
+            </span>
+          </>
+        )}
         <Dropdown.Divider />
         {choices.map((choice) => (
           <Dropdown.ItemText key={choice.id}>

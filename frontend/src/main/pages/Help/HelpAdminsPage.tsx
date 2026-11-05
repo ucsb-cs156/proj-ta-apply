@@ -98,12 +98,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
         <p data-testid="HelpAdminsPage-assignment-columns">
           The <strong>Columns</strong> menu above the table hides and shows
           columns while you work: any of the applicant&apos;s fields or any
-          lecture (<em>Select All</em> and <em>Select None</em> do them all at
-          once). Each of those columns also has a small <strong>hide</strong>{" "}
-          link at the top right of its heading, for dropping a column you do not
-          need with one click while you assign; tick it in the menu to bring it
-          back. <strong>Tentative Assignment</strong> is always shown, and is
-          wide enough for a full lecture name. The choice is kept for that
+          lecture (<em>Show All</em> and <em>Show None</em> do them all at once;{" "}
+          <em>Show All Courses</em> shows every lecture column, and{" "}
+          <em>Show Only Incomplete Courses</em> hides every lecture column
+          except those with fewer TAs/ULAs assigned so far than the allocation,
+          the hiring target, so a lecture exactly at its target is hidden). Each
+          of those columns also has a small <strong>hide</strong> link at the
+          top right of its heading, for dropping a column you do not need with
+          one click while you assign; tick it in the menu to bring it back.{" "}
+          <strong>Tentative Assignment</strong> is always shown, and is wide
+          enough for a full lecture name. The choice is kept for that
           recruitment, the same way as on the Courses and Applications pages.
         </p>
         <p data-testid="HelpAdminsPage-interest-cells">
@@ -335,9 +339,9 @@ export default function HelpAdminsPage(): React.JSX.Element {
           The table can be trimmed to what you need: the{" "}
           <strong>Columns</strong> menu above it lists every column but the
           course number, and unticking one hides it, heading, cells and totals
-          alike, until you tick it again. <em>Select All</em> and{" "}
-          <em>Select None</em> at the top of the menu show or hide every column
-          at once. Each of those columns also has a small <strong>hide</strong>{" "}
+          alike, until you tick it again. <em>Show All</em> and{" "}
+          <em>Show None</em> at the top of the menu show or hide every column at
+          once. Each of those columns also has a small <strong>hide</strong>{" "}
           link at the top right of its heading: one click hides that column
           without opening the menu, exactly as unticking it there does. A
           recruitment&apos;s table starts with only the Course Number,
@@ -611,8 +615,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
               The table shows the id, View, Edit and Name first, then Submitted
               and the other answers, and takes only the width it needs. Every
               column but the first four can be hidden or shown from the{" "}
-              <strong>Columns</strong> menu above it (use <em>Select All</em> or{" "}
-              <em>Select None</em> at its top to show or hide them all, or click
+              <strong>Columns</strong> menu above it (use <em>Show All</em> or{" "}
+              <em>Show None</em> at its top to show or hide them all, or click
               the small <strong>hide</strong> link at the top right of a
               column&apos;s heading), which lists every answer on the form for
               that recruitment&apos;s type (TA or ULA); the columns the table
