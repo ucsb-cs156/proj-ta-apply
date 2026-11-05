@@ -35,3 +35,11 @@ export const TwoHiddenSummerWithRankings = () => (
     summer={true}
   />
 );
+
+export const AllHidden = () => (
+  <Interactive
+    initiallyHidden={columnChoices(false, false).map((c) => c.id)}
+    showRankings={false}
+    summer={false}
+  />
+);
