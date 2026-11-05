@@ -218,12 +218,14 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "CMPSC 8 (0100)Allocation 2Assigned 1Left 1",
     );
 
+    // The second click reverses the order; applicants who tie (Grace and the blank applicant,
+    // both unranked and not interested) keep the order they applied in.
     await userEvent.click(header);
     expect(emailsInOrder("T")).toEqual([
-      "alan@ucsb.edu",
-      "ada@ucsb.edu",
       "grace@ucsb.edu",
       "blank@ucsb.edu",
+      "alan@ucsb.edu",
+      "ada@ucsb.edu",
     ]);
     expect(screen.getByTestId("T-header-course-10")).toHaveTextContent(
       "CMPSC 8 (0100)Allocation 2Assigned 1Left 1",
@@ -236,6 +238,74 @@ describe("AssignmentsTable tests (issue #179)", () => {
       "grace@ucsb.edu",
       "alan@ucsb.edu",
       "blank@ucsb.edu",
+    ]);
+  });
+
+  test("each lecture column sorts on its own rank and the student's preference for that lecture (issue #345)", async () => {
+    render(
+      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="T" />,
+    );
+
+    // CMPSC 16: Grace 1 and Ada 3 are ranked; Alan and the blank applicant are unranked and
+    // marked nothing, so they keep the order they applied in.
+    await userEvent.click(screen.getByTestId("T-header-course-20-sort-header"));
+    expect(emailsInOrder("T")).toEqual([
+      "grace@ucsb.edu",
+      "ada@ucsb.edu",
+      "alan@ucsb.edu",
+      "blank@ucsb.edu",
+    ]);
+
+    // CMPSC 24: Alan is ranked; Grace (2nd choice, unranked) comes before Ada and the blank
+    // applicant, who marked nothing. Alan is first here though he is unranked on CMPSC 16.
+    await userEvent.click(screen.getByTestId("T-header-course-30-sort-header"));
+    expect(emailsInOrder("T")).toEqual([
+      "alan@ucsb.edu",
+      "grace@ucsb.edu",
+      "ada@ucsb.edu",
+      "blank@ucsb.edu",
+    ]);
+  });
+
+  test("unranked applicants sort by 1st choice, 2nd choice, Enthusiastic, Would Consider, then Not Interested, after the ranked ones", async () => {
+    const row = (applicationId, email, rankings, preferences) => ({
+      ...page.rows[3],
+      applicationId,
+      identity: { ...page.rows[3].identity, email },
+      rankings,
+      preferences,
+    });
+    const data = {
+      ...page,
+      rows: [
+        row(1, "none@ucsb.edu", {}, {}),
+        row(2, "consider@ucsb.edu", {}, { 10: "Would Consider" }),
+        row(3, "enthusiastic@ucsb.edu", {}, { 10: "Enthusiastic" }),
+        row(4, "second@ucsb.edu", {}, { 10: "2nd Choice" }),
+        row(5, "first@ucsb.edu", {}, { 10: "1st Choice" }),
+        row(6, "rankedNone@ucsb.edu", { 10: 2 }, {}),
+        row(7, "ranked@ucsb.edu", { 10: 2 }, { 10: "1st Choice" }),
+        row(8, "top@ucsb.edu", { 10: 1 }, { 10: "Would Consider" }),
+        row(9, "storedNull@ucsb.edu", { 10: null }, { 10: "Not Interested" }),
+      ],
+    };
+    render(
+      <AssignmentsTable data={data} onAssign={vi.fn()} testIdPrefix="T" />,
+    );
+
+    await userEvent.click(screen.getByTestId("T-header-course-10-sort-header"));
+    // Rank 1, then the two rank 2s by preference, then the unranked by preference; the last two
+    // (nothing marked, and Not Interested) tie and stay in application order.
+    expect(emailsInOrder("T")).toEqual([
+      "top@ucsb.edu",
+      "ranked@ucsb.edu",
+      "rankedNone@ucsb.edu",
+      "first@ucsb.edu",
+      "second@ucsb.edu",
+      "enthusiastic@ucsb.edu",
+      "consider@ucsb.edu",
+      "none@ucsb.edu",
+      "storedNull@ucsb.edu",
     ]);
   });
 
