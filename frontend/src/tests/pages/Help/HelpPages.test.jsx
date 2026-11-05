@@ -1522,6 +1522,10 @@ describe("Help pages (issue #140)", () => {
     expect(applicationColumns).toHaveTextContent(
       "the columns the table has always had start shown and the rest start hidden, and the choice is kept for that recruitment, for all admins.",
     );
+    // Issue #342: the long text columns are wide and resizable.
+    expect(applicationColumns).toHaveTextContent(
+      "are wide, 400 pixels to start with. Drag the thin bar at the right edge of such a heading to widen or narrow the column (never narrower than 200 pixels; there is no upper limit), or tab to the bar and press the left and right arrow keys.",
+    );
     expect(applicationColumns.closest("li")).toHaveTextContent(
       "Applications. The list of applications",
     );

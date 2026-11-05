@@ -31,6 +31,30 @@ NewStyleTable.args = {
   data: ourTableFixtures.newStyleColumns.data,
 };
 
+/**
+ * Issue #342: a column marked enableResizing with a size, minSize and no maxSize is that wide to
+ * begin with and has a drag handle (and arrow-key resizing) at the right edge of its heading.
+ */
+export const ResizableColumn = Template.bind({});
+
+ResizableColumn.args = {
+  data: [
+    { id: 1, notes: "A long answer that wraps in the wide column. ".repeat(6) },
+    { id: 2, notes: "Short" },
+  ],
+  columns: [
+    { header: "id", accessorKey: "id" },
+    {
+      header: "Notes",
+      accessorKey: "notes",
+      size: 400,
+      minSize: 200,
+      maxSize: Number.MAX_SAFE_INTEGER,
+      enableResizing: true,
+    },
+  ],
+};
+
 export const ComplexArgs = Template.bind({});
 
 ComplexArgs.args = {

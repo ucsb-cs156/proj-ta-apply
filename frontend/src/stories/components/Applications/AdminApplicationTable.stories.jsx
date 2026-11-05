@@ -2,7 +2,11 @@ import React from "react";
 import AdminApplicationTable from "main/components/Applications/AdminApplicationTable";
 import applicationsFixtures from "fixtures/applicationsFixtures";
 import draftApplicationsFixtures from "fixtures/draftApplicationsFixtures";
-import { defaultHiddenColumns } from "main/utils/applicationColumns";
+import {
+  applicationColumnChoices,
+  applicationColumns,
+  defaultHiddenColumns,
+} from "main/utils/applicationColumns";
 
 export default {
   title: "components/Applications/AdminApplicationTable",
@@ -94,4 +98,44 @@ UlaDraftsEveryColumn.args = {
   ],
   draft: true,
   type: "ULA",
+};
+
+const TA_WIDE = [
+  "courseInterests",
+  "topicProficiencies",
+  "prevExperience",
+  "comments",
+  "postApplicationComments",
+  "adminComments",
+];
+const ULA_WIDE = [...TA_WIDE, "interests"];
+
+/** Every column id of the type except the given ones: what to hide to show only those. */
+const allBut = (type, shown) =>
+  applicationColumns(type)
+    .map((c) => c.id)
+    .filter((id) => !shown.includes(id));
+
+/**
+ * Issue #342: the long text columns (Other Courses of Interest, Topic Proficiencies, Previous
+ * Experience, Anything Else, Post-Application Comments, Admin Comments) are 400px wide with a drag
+ * handle at the right edge of the heading, here beside the small hide link of issue #314.
+ */
+export const TaWideColumnsWithHideLinks = Template.bind({});
+TaWideColumnsWithHideLinks.args = {
+  applications: [applicationsFixtures.oneTaApplication],
+  type: "TA",
+  hiddenColumns: allBut("TA", TA_WIDE),
+  hideLinks: {
+    choices: applicationColumnChoices("TA"),
+    onHide: () => {},
+  },
+};
+
+/** Issue #342: the ULA form's wide columns, which also include Interests. */
+export const UlaWideColumns = Template.bind({});
+UlaWideColumns.args = {
+  applications: [applicationsFixtures.oneUlaApplication],
+  type: "ULA",
+  hiddenColumns: allBut("ULA", ULA_WIDE),
 };

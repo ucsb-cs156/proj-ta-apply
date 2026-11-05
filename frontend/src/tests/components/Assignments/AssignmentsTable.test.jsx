@@ -20,6 +20,36 @@ const emailsInOrder = (prefix) =>
 const selectValuesInOrder = (prefix) =>
   bodyRows(prefix).map((tr) => tr.querySelector("select").value);
 
+describe("AssignmentsTable wide columns (issue #342)", () => {
+  test("a long text column in the identity headers is wide and resizable; the others are not", () => {
+    const withNotes = {
+      ...page,
+      identityHeaders: [...page.identityHeaders, "comments"],
+      rows: page.rows.map((row) => ({
+        ...row,
+        identity: { ...row.identity, comments: "Anything else" },
+      })),
+    };
+    render(
+      <AssignmentsTable data={withNotes} onAssign={vi.fn()} testIdPrefix="W" />,
+    );
+    expect(screen.getByTestId("W-header-comments").style.width).toBe("400px");
+    expect(screen.getByTestId("W-header-comments-resize")).toHaveAttribute(
+      "aria-valuemin",
+      "200",
+    );
+    expect(screen.getByTestId("W-header-email").style.width).toBe("");
+    expect(screen.queryByTestId("W-header-email-resize")).toBeNull();
+  });
+
+  test("the usual columns have no handle", () => {
+    render(
+      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="N" />,
+    );
+    expect(screen.queryAllByRole("separator")).toHaveLength(0);
+  });
+});
+
 describe("AssignmentsTable tests (issue #179)", () => {
   test("headers: identity labels, the dropdown column, then a stacked heading per lecture", () => {
     render(
