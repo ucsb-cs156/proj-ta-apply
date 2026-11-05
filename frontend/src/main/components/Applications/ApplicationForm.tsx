@@ -785,11 +785,6 @@ export default function ApplicationForm({
             ))}
             <option value={OTHER_MAJOR}>Other</option>
           </Form.Select>
-          {!isTa && (
-            <Form.Text muted data-testid={id("major-note")}>
-              {DOUBLE_MAJOR_HINT}
-            </Form.Text>
-          )}
           <Form.Control.Feedback type="invalid">
             A major is required.
           </Form.Control.Feedback>
@@ -871,8 +866,17 @@ export default function ApplicationForm({
         {isTa && graduationField(2)}
       </Row>
       {/* Issue #292: under the two GPA fields (the Major column is 4 wide), across both of them. */}
+      {/* Issue #332: on the ULA form the double major hint shares this row, under the Major field, so
+          it does not stretch the row above and leave a gap between the GPA fields and their box. */}
       <Row data-testid={id("first-quarter-row")}>
-        <Col md={{ span: 4, offset: 4 }} className="mb-3">
+        {!isTa && (
+          <Col md={4} className="mb-3">
+            <Form.Text muted data-testid={id("major-note")}>
+              {DOUBLE_MAJOR_HINT}
+            </Form.Text>
+          </Col>
+        )}
+        <Col md={isTa ? { span: 4, offset: 4 } : 4} className="mb-3">
           <Form.Check
             type="checkbox"
             id={id("firstQuarter")}

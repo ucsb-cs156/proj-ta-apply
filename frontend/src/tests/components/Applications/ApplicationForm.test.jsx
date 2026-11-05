@@ -2545,15 +2545,23 @@ describe("ApplicationForm tests", () => {
       ]) {
         expect(labelNamed(label).textContent).toMatch(/\*\s*$/);
       }
-      // Issue #332: the double major hint sits directly under the Major dropdown.
+      // Issue #332: the double major hint sits under the Major column.
       const majorNote = screen.getByTestId("ApplicationForm-major-note");
       expect(majorNote).toHaveTextContent(
         'If you are a double major, select "Other" and enter both majors in the field that appears.',
       );
       expect(majorNote).toHaveClass("form-text", "text-muted");
-      expect(majorNote.previousElementSibling).toBe(
-        screen.getByTestId("ApplicationForm-major"),
+      // It shares the row of the first quarter box, under the Major column, so the Major column
+      // does not grow and leave a gap above the GPA fields' box.
+      const row = screen.getByTestId("ApplicationForm-first-quarter-row");
+      expect(row).toContainElement(majorNote);
+      expect(row).toContainElement(
+        screen.getByTestId("ApplicationForm-firstQuarter"),
       );
+      expect(majorNote.closest(".col-md-4")).toBe(row.children[0]);
+      expect(
+        screen.getByTestId("ApplicationForm-firstQuarter").closest(".col-md-4"),
+      ).toBe(row.children[1]);
       expect(
         screen.getByTestId("ApplicationForm-graduationDate-note"),
       ).toHaveTextContent("you are not eligible to serve as a ULA");
