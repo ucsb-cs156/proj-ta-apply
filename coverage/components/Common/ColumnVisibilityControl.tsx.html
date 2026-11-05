@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
@@ -127,7 +127,19 @@
 <a name='L62'></a><a href='#L62'>62</a>
 <a name='L63'></a><a href='#L63'>63</a>
 <a name='L64'></a><a href='#L64'>64</a>
-<a name='L65'></a><a href='#L65'>65</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -151,8 +163,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5303x</span>
-<span class="cline-any cline-yes">278x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5312x</span>
+<span class="cline-any cline-yes">5312x</span>
+<span class="cline-any cline-yes">281x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -165,13 +179,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5303x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -183,6 +194,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5312x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -206,7 +230,8 @@ type ColumnVisibilityControlProps = {
 &nbsp;
 /**
  * A "Columns" menu of checkboxes, one per hideable column (issue #185): unticking hides the column
- * and ticking brings it back, and "Show all columns" brings every one back at once. The menu stays
+ * and ticking brings it back. "Select All" shows every column at once and "Select None" hides them
+ * all (the columns outside the menu, such as ids and action links, always stay). The menu stays
  * open while boxes are ticked, so several can be changed in one visit.
  */
 export default function ColumnVisibilityControl({
@@ -216,6 +241,7 @@ export default function ColumnVisibilityControl({
   testIdPrefix = "ColumnVisibilityControl",
 }: ColumnVisibilityControlProps): React.JSX.Element {
   const hiddenHere = choices.filter((choice) =&gt; hidden.includes(choice.id));
+  const shownHere = choices.filter((choice) =&gt; !hidden.includes(choice.id));
   return (
     &lt;Dropdown autoClose="outside" data-testid={testIdPrefix}&gt;
       &lt;Dropdown.Toggle
@@ -228,6 +254,27 @@ export default function ColumnVisibilityControl({
         {hiddenHere.length &gt; 0 &amp;&amp; ` (${hiddenHere.length} hidden)`}
       &lt;/Dropdown.Toggle&gt;
       &lt;Dropdown.Menu&gt;
+        &lt;Dropdown.Item
+          as="button"
+          disabled={hiddenHere.length === 0}
+          onClick={() =&gt;
+            hiddenHere.forEach((choice) =&gt; onToggle(choice.id, false))
+          }
+          data-testid={`${testIdPrefix}-select-all`}
+        &gt;
+          Select All
+        &lt;/Dropdown.Item&gt;
+        &lt;Dropdown.Item
+          as="button"
+          disabled={shownHere.length === 0}
+          onClick={() =&gt;
+            shownHere.forEach((choice) =&gt; onToggle(choice.id, true))
+          }
+          data-testid={`${testIdPrefix}-select-none`}
+        &gt;
+          Select None
+        &lt;/Dropdown.Item&gt;
+        &lt;Dropdown.Divider /&gt;
         {choices.map((choice) =&gt; (
           &lt;Dropdown.ItemText key={choice.id}&gt;
             &lt;Form.Check
@@ -240,17 +287,6 @@ export default function ColumnVisibilityControl({
             /&gt;
           &lt;/Dropdown.ItemText&gt;
         ))}
-        &lt;Dropdown.Divider /&gt;
-        &lt;Dropdown.Item
-          as="button"
-          disabled={hiddenHere.length === 0}
-          onClick={() =&gt;
-            hiddenHere.forEach((choice) =&gt; onToggle(choice.id, false))
-          }
-          data-testid={`${testIdPrefix}-show-all`}
-        &gt;
-          Show all columns
-        &lt;/Dropdown.Item&gt;
       &lt;/Dropdown.Menu&gt;
     &lt;/Dropdown&gt;
   );
@@ -262,7 +298,7 @@ export default function ColumnVisibilityControl({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-05T18:11:22.083Z
+                at 2026-11-05T19:13:41.665Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
