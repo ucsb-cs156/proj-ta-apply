@@ -63,6 +63,16 @@ const rowFields = (
 const blankToNull = (value: string): string | null =>
   value.trim() === "" ? null : value.trim();
 
+/** The sizes of the database columns; the server refuses anything longer (issue #323). */
+export const MAX_GRADE_LENGTH = 16;
+export const MAX_TERM_LENGTH = 64;
+export const MAX_TEXT_LENGTH = 255;
+
+/** A rule for react-hook-form: valid while the trimmed text, as it would be stored, fits. */
+const fits = (max: number) => (value: string) => value.trim().length <= max;
+
+const tooLong = (max: number) => `${max} characters max`;
+
 /**
  * Add or edit one prior course, in a modal (the proj-frontiers pattern). "UCSB course" is ticked
  * by default; the Other School box is always visible but disabled and blank while it is ticked,
@@ -166,12 +176,17 @@ export default function PriorCourseworkModal({
               placeholder={ucsbCourse ? "" : "Where the course was taken"}
               isInvalid={Boolean(errors.otherSchool)}
               {...register("otherSchool", {
-                validate: (value, fields) =>
-                  fields.ucsbCourse || value.trim() !== "",
+                validate: {
+                  required: (value, fields) =>
+                    fields.ucsbCourse || value.trim() !== "",
+                  length: fits(MAX_TEXT_LENGTH),
+                },
               })}
             />
             <Form.Control.Feedback type="invalid">
-              The school is required for a course not taken at UCSB.
+              {errors.otherSchool?.type === "length"
+                ? tooLong(MAX_TEXT_LENGTH)
+                : "The school is required for a course not taken at UCSB."}
             </Form.Control.Feedback>
           </Form.Group>
           <Row>
@@ -185,11 +200,16 @@ export default function PriorCourseworkModal({
                 placeholder="e.g. CMPSC 156"
                 isInvalid={Boolean(errors.courseNumber)}
                 {...register("courseNumber", {
-                  validate: (value) => value.trim() !== "",
+                  validate: {
+                    required: (value) => value.trim() !== "",
+                    length: fits(MAX_TEXT_LENGTH),
+                  },
                 })}
               />
               <Form.Control.Feedback type="invalid">
-                A course number is required.
+                {errors.courseNumber?.type === "length"
+                  ? tooLong(MAX_TEXT_LENGTH)
+                  : "A course number is required."}
               </Form.Control.Feedback>
             </Form.Group>
             <Form.Group as={Col} md={7} className="mb-3">
@@ -197,20 +217,34 @@ export default function PriorCourseworkModal({
               <Form.Control
                 id={id("courseTitle")}
                 data-testid={id("courseTitle")}
-                {...register("courseTitle")}
+                isInvalid={Boolean(errors.courseTitle)}
+                {...register("courseTitle", {
+                  validate: fits(MAX_TEXT_LENGTH),
+                })}
               />
+              <Form.Control.Feedback type="invalid">
+                {tooLong(MAX_TEXT_LENGTH)}
+              </Form.Control.Feedback>
             </Form.Group>
           </Row>
           <Row>
             <Form.Group as={Col} md={7} className="mb-3">
               <Form.Label htmlFor={id("term")}>Term</Form.Label>
               {freeText ? (
-                <Form.Control
-                  id={id("term")}
-                  data-testid={id("termText")}
-                  placeholder="e.g. Fall 2025 or Semester 1"
-                  {...register("termText")}
-                />
+                <>
+                  <Form.Control
+                    id={id("term")}
+                    data-testid={id("termText")}
+                    placeholder="e.g. Fall 2025 or Semester 1"
+                    isInvalid={Boolean(errors.termText)}
+                    {...register("termText", {
+                      validate: fits(MAX_TERM_LENGTH),
+                    })}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {tooLong(MAX_TERM_LENGTH)}
+                  </Form.Control.Feedback>
+                </>
               ) : (
                 <>
                   <Form.Select
@@ -260,8 +294,12 @@ export default function PriorCourseworkModal({
                 id={id("grade")}
                 data-testid={id("grade")}
                 placeholder="IP if in progress"
-                {...register("grade")}
+                isInvalid={Boolean(errors.grade)}
+                {...register("grade", { validate: fits(MAX_GRADE_LENGTH) })}
               />
+              <Form.Control.Feedback type="invalid">
+                {tooLong(MAX_GRADE_LENGTH)}
+              </Form.Control.Feedback>
             </Form.Group>
           </Row>
         </Modal.Body>

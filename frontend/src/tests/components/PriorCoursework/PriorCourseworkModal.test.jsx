@@ -360,4 +360,64 @@ describe("PriorCourseworkModal tests", () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
     expect(outerSubmit).not.toHaveBeenCalled();
   });
+
+  // Issue #323: the columns hold 16 (grade), 64 (term) and 255 characters; the server refuses more.
+  describe("length limits", () => {
+    const paste = async (testId, text) => {
+      await userEvent.click(screen.getByTestId(testId));
+      await userEvent.paste(text);
+    };
+
+    const fields = [
+      ["grade", "M-grade", 16, "grade", {}],
+      ["course title", "M-courseTitle", 255, "courseTitle", {}],
+      ["term typed as free text", "M-termText", 64, "term", { freeText: true }],
+      ["course number", "M-courseNumber", 255, "courseNumber", {}],
+      ["other school", "M-otherSchool", 255, "otherSchool", { other: true }],
+    ];
+
+    test.each(fields)(
+      "%s is accepted at %i characters and refused one over",
+      async (_name, testId, max, key, how) => {
+        const { onSave } = renderModal();
+        if (how.other)
+          await userEvent.click(screen.getByTestId("M-ucsbCourse"));
+        if (how.freeText)
+          await userEvent.click(screen.getByTestId("M-freeText"));
+        if (key !== "courseNumber") await paste("M-courseNumber", "CMPSC 24");
+        if (key === "otherSchool") {
+          // nothing else needed
+        }
+
+        // One over: shown as invalid, with the message, and nothing is saved.
+        await paste(testId, "x".repeat(max + 1));
+        await userEvent.click(screen.getByTestId("M-save"));
+        await waitFor(() =>
+          expect(screen.getByTestId(testId)).toHaveClass("is-invalid"),
+        );
+        expect(
+          screen
+            .getByTestId(testId)
+            .parentElement.querySelector(".invalid-feedback"),
+        ).toHaveTextContent(`${max} characters max`);
+        expect(onSave).not.toHaveBeenCalled();
+
+        // At the limit: saved.
+        await userEvent.clear(screen.getByTestId(testId));
+        await paste(testId, "x".repeat(max));
+        await userEvent.click(screen.getByTestId("M-save"));
+        await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+        expect(screen.getByTestId(testId)).not.toHaveClass("is-invalid");
+      },
+    );
+
+    test("spaces around a value do not count towards its limit", async () => {
+      const { onSave } = renderModal();
+      await paste("M-courseNumber", "CMPSC 24");
+      await paste("M-grade", `  ${"x".repeat(16)}  `);
+      await userEvent.click(screen.getByTestId("M-save"));
+      await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+      expect(onSave.mock.calls[0][0].grade).toBe("x".repeat(16));
+    });
+  });
 });

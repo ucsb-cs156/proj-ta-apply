@@ -47,7 +47,7 @@ public class FakeApplicationsRuleComplianceTests {
           mock(TaMajorRepository.class),
           mock(UlaMajorRepository.class));
 
-  private static ApplicationFields fieldsOf(Application a) {
+  static ApplicationFields fieldsOf(Application a) {
     List<PriorCourseworkFields> prior =
         a.getPriorCoursework().stream()
             .map(
