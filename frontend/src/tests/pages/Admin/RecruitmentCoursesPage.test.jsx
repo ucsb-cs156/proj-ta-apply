@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -61,6 +67,8 @@ function renderPage({ edit = true } = {}) {
   );
 }
 
+const HIDDEN_KEY = "recruitmentCourses.hiddenColumns.7";
+
 describe("RecruitmentCoursesPage tests", () => {
   beforeEach(() => {
     mockToast.mockClear();
@@ -78,8 +86,10 @@ describe("RecruitmentCoursesPage tests", () => {
     axiosMock
       .onGet("/api/systemInfo")
       .reply(200, systemInfoFixtures.showingNeither);
-    axiosMock.onGet("/api/admin/hiddencolumns").reply(200, []);
-    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, []);
+    // Issue #300: the shown columns are remembered in local storage. Most tests want every column,
+    // so recruitment 7 starts with none hidden; the tests of the defaults clear it.
+    localStorage.clear();
+    localStorage.setItem(HIDDEN_KEY, "[]");
     axiosMock
       .onPost("/api/jobs/launch/populateRecruitmentCourses")
       .reply(200, { id: 1 });
@@ -1190,24 +1200,14 @@ describe("RecruitmentCoursesPage tests", () => {
 
   // ---- Issue #185: hiding and showing columns ----
 
-  test("asks the backend which columns are hidden and leaves them out of the table", async () => {
-    axiosMock.onGet("/api/admin/hiddencolumns").reply(200, ["room", "days"]);
+  test("leaves the columns stored as hidden out of the table", async () => {
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify(["room", "days"]));
     renderPage();
 
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
-    const gets = axiosMock.history.get.filter(
-      (r) => r.url === "/api/admin/hiddencolumns",
-    );
-    expect(gets).toHaveLength(1);
-    expect(gets[0].params).toEqual({
-      tableKey: "recruitmentCourses",
-      recruitmentId: "7",
-    });
-    await waitFor(() =>
-      expect(
-        screen.queryByTestId("RecruitmentCoursesPage-header-room"),
-      ).not.toBeInTheDocument(),
-    );
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-header-room"),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-header-days"),
     ).not.toBeInTheDocument();
@@ -1217,15 +1217,55 @@ describe("RecruitmentCoursesPage tests", () => {
     expect(
       screen.getByTestId("RecruitmentCoursesPage-columns-toggle"),
     ).toHaveTextContent("Columns (2 hidden)");
+    // Nothing is asked of the server any more.
+    expect(
+      axiosMock.history.get.filter((r) => r.url === "/api/admin/hiddencolumns"),
+    ).toHaveLength(0);
   });
 
-  test("unticking a column in the Columns menu hides it on the backend and re-reads the list", async () => {
-    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, ["room"]);
+  test("with nothing stored, only the default columns show (issue #300)", async () => {
+    localStorage.clear();
+    renderPage();
+
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    const shown = [
+      "courseId",
+      "instructor",
+      "enrollment",
+      "maxEnroll",
+      "enrollmentEstimate",
+      "allocation",
+      "unroundedAllocation",
+      "delta",
+      "ratio",
+    ];
+    for (const id of shown) {
+      expect(
+        screen.getByTestId(`RecruitmentCoursesPage-header-${id}`),
+      ).toBeInTheDocument();
+    }
+    for (const id of [
+      "section",
+      "title",
+      "instructorEmail",
+      "days",
+      "time",
+      "room",
+      "status",
+      "removed",
+      "rankingCount",
+    ]) {
+      expect(
+        screen.queryByTestId(`RecruitmentCoursesPage-header-${id}`),
+      ).not.toBeInTheDocument();
+    }
+    // Opening the page stores nothing.
+    expect(localStorage.getItem(HIDDEN_KEY)).toBeNull();
+  });
+
+  test("unticking a column in the Columns menu hides it and remembers that in local storage", async () => {
     renderPage();
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
-    const getsBefore = axiosMock.history.get.filter(
-      (r) => r.url === "/api/admin/hiddencolumns",
-    ).length;
 
     await userEvent.click(
       screen.getByTestId("RecruitmentCoursesPage-columns-toggle"),
@@ -1236,27 +1276,82 @@ describe("RecruitmentCoursesPage tests", () => {
 
     await waitFor(() =>
       expect(
-        axiosMock.history.put.filter(
-          (r) => r.url === "/api/admin/hiddencolumns",
-        ),
-      ).toHaveLength(1),
+        screen.queryByTestId("RecruitmentCoursesPage-header-room"),
+      ).not.toBeInTheDocument(),
     );
+    expect(JSON.parse(localStorage.getItem(HIDDEN_KEY))).toEqual(["room"]);
     expect(
-      axiosMock.history.put.find((r) => r.url === "/api/admin/hiddencolumns")
-        .params,
-    ).toEqual({
-      tableKey: "recruitmentCourses",
-      recruitmentId: "7",
-      columnId: "room",
-      hidden: true,
-    });
+      axiosMock.history.put.filter((r) => r.url === "/api/admin/hiddencolumns"),
+    ).toHaveLength(0);
+  });
+
+  test("a stored choice is restored on a later visit, and is kept per recruitment", async () => {
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify(["room"]));
+    localStorage.setItem(
+      "recruitmentCourses.hiddenColumns.8",
+      JSON.stringify(["days"]),
+    );
+    renderPage();
+
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-header-room"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-header-days"),
+    ).toBeInTheDocument();
+  });
+
+  test("Select All and Select None store the whole change", async () => {
+    localStorage.clear();
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-columns-toggle"),
+    );
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-columns-select-all"),
+    );
     await waitFor(() =>
       expect(
-        axiosMock.history.get.filter(
-          (r) => r.url === "/api/admin/hiddencolumns",
-        ).length,
-      ).toBeGreaterThan(getsBefore),
+        screen.getByTestId("RecruitmentCoursesPage-header-room"),
+      ).toBeInTheDocument(),
     );
+    // Every column the menu offers is shown; Summer Session is not offered for this quarter, so it
+    // stays as the defaults had it.
+    expect(JSON.parse(localStorage.getItem(HIDDEN_KEY))).toEqual([
+      "summerSession",
+    ]);
+
+    await userEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-columns-select-none"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("RecruitmentCoursesPage-header-room"),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      JSON.parse(localStorage.getItem(HIDDEN_KEY)).length,
+    ).toBeGreaterThanOrEqual(15);
+  });
+
+  test("a stored value that is not a list of ids is ignored", async () => {
+    localStorage.setItem(HIDDEN_KEY, "{not json");
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-header-room"),
+    ).not.toBeInTheDocument();
+
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify([1, 2]));
+    cleanup();
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-header-room"),
+    ).not.toBeInTheDocument();
   });
 
   test("the Columns menu offers the Rankings column once reviews start, and never the course number", async () => {
@@ -1698,7 +1793,6 @@ describe("RecruitmentCoursesPage tests", () => {
   });
 
   test("the hide link over a column hides it like the Columns menu (issue #314)", async () => {
-    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, ["room"]);
     renderPage();
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     expect(
@@ -1711,19 +1805,9 @@ describe("RecruitmentCoursesPage tests", () => {
 
     await waitFor(() =>
       expect(
-        axiosMock.history.put.filter(
-          (r) => r.url === "/api/admin/hiddencolumns",
-        ),
-      ).toHaveLength(1),
+        screen.queryByTestId("RecruitmentCoursesPage-header-room"),
+      ).not.toBeInTheDocument(),
     );
-    expect(
-      axiosMock.history.put.find((r) => r.url === "/api/admin/hiddencolumns")
-        .params,
-    ).toEqual({
-      tableKey: "recruitmentCourses",
-      recruitmentId: "7",
-      columnId: "room",
-      hidden: true,
-    });
+    expect(JSON.parse(localStorage.getItem(HIDDEN_KEY))).toEqual(["room"]);
   });
 });

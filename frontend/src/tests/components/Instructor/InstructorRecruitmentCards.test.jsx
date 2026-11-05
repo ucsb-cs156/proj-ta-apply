@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 
@@ -334,33 +334,47 @@ describe("InstructorRecruitmentCards tests", () => {
     ).not.toBeInTheDocument();
   });
 
-  // ---- issue #224: the All allocations page link ----
+  // ---- issues #300 and #301: the Courses button in each course's dropdown ----
 
-  test("an All allocations link appears only while the admin shows all courses to all faculty", () => {
+  test("each course's dropdown has a Courses button to the recruitment's Courses page", () => {
     const [ta, ula] =
       instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations;
-    renderCards([ta, { ...ula, allocationVisibility: "OWN_COURSES" }]);
+    renderCards([ta, ula]);
 
-    const link = screen.getByTestId("I-card-1-all-allocations-button");
-    expect(link).toHaveTextContent("All allocations");
-    expect(link).toHaveAttribute("href", "/recruitments/1/allocations");
-    expect(link).toHaveClass("btn", "btn-outline-primary");
-    expect(screen.queryByTestId("I-card-2-all-allocations-button")).toBeNull();
-    // Above the courses accordion.
-    expect(
-      link.compareDocumentPosition(screen.getByTestId("I-card-1-courses")) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    for (const [card, recruitment] of [
+      ["I-card-1", ta],
+      ["I-card-2", ula],
+    ]) {
+      for (const course of recruitment.courses) {
+        const button = screen.getByTestId(
+          `${card}-course-${course.id}-courses`,
+        );
+        expect(button).toHaveTextContent("Courses");
+        expect(button).toHaveAttribute(
+          "href",
+          `/recruitments/${recruitment.id}/courses`,
+        );
+        expect(button).toHaveClass("btn", "btn-outline-primary");
+        expect(
+          screen.getByTestId(`${card}-course-${course.id}-body`),
+        ).toContainElement(button);
+      }
+    }
   });
 
-  test("no All allocations link while admins only see them", () => {
+  test("the old All allocations button is gone, whatever the visibility", () => {
     const [ta] = instructorRecruitmentsFixtures.twoRecruitmentsWithAllocations;
-    renderCards([{ ...ta, allocationVisibility: "ADMINS_ONLY" }]);
-    expect(screen.queryByText("All allocations")).toBeNull();
-  });
-
-  test("no All allocations link when the setting is absent", () => {
-    renderCards(instructorRecruitmentsFixtures.twoRecruitments);
-    expect(screen.queryByText("All allocations")).toBeNull();
+    for (const allocationVisibility of [
+      "ALL_COURSES",
+      "OWN_COURSES",
+      "ADMINS_ONLY",
+    ]) {
+      renderCards([{ ...ta, allocationVisibility }]);
+      expect(screen.queryByText("All allocations")).toBeNull();
+      expect(
+        screen.queryByTestId("I-card-1-all-allocations-button"),
+      ).toBeNull();
+      cleanup();
+    }
   });
 });

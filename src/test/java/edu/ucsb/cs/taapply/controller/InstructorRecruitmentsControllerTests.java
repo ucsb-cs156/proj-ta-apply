@@ -13,7 +13,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import edu.ucsb.cs.taapply.ControllerTestCase;
-import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.AllocationRow;
 import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.CandidateRankingPage;
 import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.CourseDetails;
 import edu.ucsb.cs.taapply.controller.InstructorRecruitmentsController.InstructorRecruitment;
@@ -1025,11 +1024,14 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(4, json.get("targets").get("stillNeeded").asInt());
   }
 
-  // ---- GET /api/instructor/recruitments/{id}/allocations (issue #224) ----
+  // ---- GET /api/instructor/recruitments/{id}/courses (issues #300 and #301) ----
 
-  private static final String ALLOCATIONS_URL = "/api/instructor/recruitments/11/allocations";
+  private static final String COURSES_URL = "/api/instructor/recruitments/11/courses";
+  private static final String[] ALLOCATION_FIELDS = {
+    "allocation", "enrollmentEstimate", "unroundedAllocation"
+  };
 
-  private Recruitment allocationsSetup(AllocationVisibility visibility) {
+  private Recruitment coursesSetup(AllocationVisibility visibility) {
     Recruitment ta = recruitment(11L, "20261", RecruitmentType.TA);
     ta.setAllocationVisibility(visibility);
     when(recruitmentRepository.findById(11L)).thenReturn(Optional.of(ta));
@@ -1039,6 +1041,16 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     second.setInstructor("SOMEONE ELSE");
     second.setAllocation(1);
     RecruitmentCourse first = rowWithFigures(1L, 11L);
+    first.setEnrollCode("07492");
+    first.setTitle("ADV APP PROGRAM");
+    first.setDays("M W");
+    first.setTime("9:30-10:45");
+    first.setRoom("PHELP 1160");
+    first.setStatus("open");
+    first.setSummerSession("A");
+    first.setStale(true);
+    first.setManuallyAdded(true);
+    first.setAllocationVersion(7);
     RecruitmentCourse removed = rowWithFigures(3L, 11L);
     removed.setRemoved(true);
     RecruitmentCourse eight = rowWithFigures(4L, 11L);
@@ -1049,15 +1061,20 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     return ta;
   }
 
+  private JsonNode coursesBody() throws Exception {
+    MvcResult response = mockMvc.perform(get(COURSES_URL)).andExpect(status().isOk()).andReturn();
+    return mapper.readTree(response.getResponse().getContentAsString());
+  }
+
   @Test
-  public void logged_out_users_cannot_read_the_allocations() throws Exception {
-    mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403));
+  public void logged_out_users_cannot_read_the_courses() throws Exception {
+    mockMvc.perform(get(COURSES_URL)).andExpect(status().is(403));
   }
 
   @WithMockUser(roles = {"USER"})
   @Test
-  public void plain_users_cannot_read_the_allocations() throws Exception {
-    mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403));
+  public void plain_users_cannot_read_the_courses() throws Exception {
+    mockMvc.perform(get(COURSES_URL)).andExpect(status().is(403));
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
@@ -1065,48 +1082,100 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   @EnumSource(
       value = AllocationVisibility.class,
       names = {"ADMINS_ONLY", "OWN_COURSES"})
-  public void instructors_get_403_unless_the_admin_shows_all_allocations(
+  public void instructors_get_no_allocation_fields_unless_the_admin_shows_all_courses(
       AllocationVisibility visibility) throws Exception {
     currentUser(EMAIL, false);
-    allocationsSetup(visibility);
+    coursesSetup(visibility);
 
-    MvcResult response =
-        mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403)).andReturn();
+    JsonNode body = coursesBody();
 
-    assertEquals(
-        "The admin has not chosen to show this recruitment's allocations to all faculty.",
-        responseToJson(response).get("message"));
-    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
+    assertFalse(body.get("allocationsShown").asBoolean());
+    assertEquals(3, body.get("courses").size());
+    for (JsonNode course : body.get("courses")) {
+      for (String field : ALLOCATION_FIELDS) {
+        assertFalse(course.has(field), field + " must not be sent");
+      }
+    }
+    String raw = body.toString();
+    for (String field : ALLOCATION_FIELDS) {
+      assertFalse(raw.contains("\"" + field + "\""), field + " must not be in the response");
+    }
+    // The figures other than allocations are still there.
+    assertEquals(100, body.get("courses").get(1).get("enrollment").asInt());
+    assertEquals(150, body.get("courses").get(1).get("maxEnroll").asInt());
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
   @Test
-  public void instructors_get_every_non_removed_course_in_page_order_once_shown() throws Exception {
+  public void instructors_get_the_allocation_fields_once_the_admin_shows_all_courses()
+      throws Exception {
     currentUser(EMAIL, false);
-    allocationsSetup(AllocationVisibility.ALL_COURSES);
+    coursesSetup(AllocationVisibility.ALL_COURSES);
 
-    MvcResult response =
-        mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().isOk()).andReturn();
+    JsonNode body = coursesBody();
 
-    assertEquals(
-        mapper.writeValueAsString(
-            List.of(
-                new AllocationRow(4L, "CMPSC     8", "0100", "CONRAD P", 0),
-                new AllocationRow(1L, "CMPSC   156", "0100", "CONRAD P", 3),
-                new AllocationRow(2L, "CMPSC   156", "0200", "SOMEONE ELSE", 1))),
-        response.getResponse().getContentAsString());
+    assertTrue(body.get("allocationsShown").asBoolean());
+    JsonNode first = body.get("courses").get(1);
+    assertEquals(3, first.get("allocation").asInt());
+    assertEquals(120, first.get("enrollmentEstimate").asInt());
+    assertEquals(2.5, first.get("unroundedAllocation").asDouble());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void the_courses_are_every_non_removed_section_in_page_order_with_their_details()
+      throws Exception {
+    currentUser(EMAIL, false);
+    coursesSetup(AllocationVisibility.ALL_COURSES);
+
+    JsonNode body = coursesBody();
+
+    assertEquals(11, body.get("recruitmentId").asLong());
+    assertEquals("20261", body.get("quarter").asText());
+    assertEquals("TA", body.get("type").asText());
+    JsonNode courses = body.get("courses");
+    assertEquals(3, courses.size());
+    assertEquals(4, courses.get(0).get("id").asLong());
+    assertEquals("CMPSC     8", courses.get(0).get("courseId").asText());
+    assertEquals(0, courses.get(0).get("allocation").asInt());
+    assertEquals(1, courses.get(1).get("id").asLong());
+    assertEquals(2, courses.get(2).get("id").asLong());
+    assertEquals("SOMEONE ELSE", courses.get(2).get("instructor").asText());
+    assertEquals(1, courses.get(2).get("allocation").asInt());
+
+    JsonNode first = courses.get(1);
+    assertEquals(11, first.get("recruitmentId").asLong());
+    assertEquals("CMPSC   156", first.get("courseId").asText());
+    assertEquals("07492", first.get("enrollCode").asText());
+    assertEquals("0100", first.get("section").asText());
+    assertEquals("ADV APP PROGRAM", first.get("title").asText());
+    assertEquals("CONRAD P", first.get("instructor").asText());
+    assertEquals("M W", first.get("days").asText());
+    assertEquals("9:30-10:45", first.get("time").asText());
+    assertEquals("PHELP 1160", first.get("room").asText());
+    assertEquals(100, first.get("enrollment").asInt());
+    assertEquals(150, first.get("maxEnroll").asInt());
+    assertEquals("open", first.get("status").asText());
+    assertEquals("A", first.get("summerSession").asText());
+    assertFalse(first.get("removed").asBoolean());
+    // Admin-only bookkeeping stays on the server.
+    assertFalse(first.has("stale"));
+    assertFalse(first.has("manuallyAdded"));
+    assertFalse(first.has("allocationVersion"));
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void admins_read_the_allocations_even_while_hidden() throws Exception {
+  public void admins_read_the_allocation_fields_even_while_hidden_from_faculty() throws Exception {
     currentUser(EMAIL, true);
-    allocationsSetup(AllocationVisibility.ADMINS_ONLY);
+    coursesSetup(AllocationVisibility.ADMINS_ONLY);
 
-    MvcResult response =
-        mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().isOk()).andReturn();
+    JsonNode body = coursesBody();
 
-    assertEquals(3, mapper.readTree(response.getResponse().getContentAsString()).size());
+    assertTrue(body.get("allocationsShown").asBoolean());
+    assertEquals(3, body.get("courses").size());
+    assertEquals(3, body.get("courses").get(1).get("allocation").asInt());
+    assertEquals(120, body.get("courses").get(1).get("enrollmentEstimate").asInt());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -1114,22 +1183,23 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   public void an_admin_whose_roles_are_missing_is_treated_as_a_plain_viewer() throws Exception {
     when(currentUserService.getCurrentUser())
         .thenReturn(CurrentUser.builder().user(User.builder().email(EMAIL).build()).build());
-    allocationsSetup(AllocationVisibility.ADMINS_ONLY);
-    mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403));
+    coursesSetup(AllocationVisibility.ADMINS_ONLY);
+    assertFalse(coursesBody().get("allocationsShown").asBoolean());
 
     when(currentUserService.getCurrentUser()).thenReturn(null);
-    mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().is(403));
+    assertFalse(coursesBody().get("allocationsShown").asBoolean());
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
   @Test
-  public void the_allocations_of_an_unknown_recruitment_are_a_404() throws Exception {
+  public void the_courses_of_an_unknown_recruitment_are_a_404() throws Exception {
     currentUser(EMAIL, false);
     when(recruitmentRepository.findById(11L)).thenReturn(Optional.empty());
 
     MvcResult response =
-        mockMvc.perform(get(ALLOCATIONS_URL)).andExpect(status().isNotFound()).andReturn();
+        mockMvc.perform(get(COURSES_URL)).andExpect(status().isNotFound()).andReturn();
 
     assertEquals("Recruitment with id 11 not found", responseToJson(response).get("message"));
+    verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
   }
 }

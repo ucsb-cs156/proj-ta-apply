@@ -546,6 +546,29 @@ view-only page; the steps diagram's step 3 "Allocations" link and the Budget pag
 the ... Recruitment Courses page" link, which are for changing allocations, land on the edit page.
 The Help text for admins and the Developer Help table describe both pages.
 
+**Page text, columns and faculty (#300, which merged #301).** The view-only page's description is
+now "Courses for which the department is planning to hire {TAs|ULAs} for {quarter}.", and the Edit
+button's text is "Click Edit to: change the number of TAs/ULAs expected to be hired; set the
+expected enrollments for each course; set the number of TAs/ULAs allocated to each course; adjust
+the visibility of these allocations." The long Populate explanation stays on the edit page, where
+Populate is. Both pages start with the Course Number, Instructor, Enrolled, Max, Enrollment
+Estimate, Allocation, Unrounded Allocation, Delta and TA:student ratio columns and hide the rest
+(Rankings and Summer Session included). Which columns are hidden is kept in the browser's local
+storage, per recruitment and shared by the two pages (`useStoredHiddenColumns`), replacing the
+server-side store for this page; `/api/admin/hiddencolumns` stays because the Applications and
+Assignments pages still use it. Admins' earlier saved choices were on the server and are not
+carried over: they see the new defaults once. Faculty reach the table from a **Courses** button in
+each course's dropdown on their home page: `/recruitments/:id/courses`, which replaces the All
+Allocations page (`/recruitments/:id/allocations` redirects to it). It is read-only, shows every
+non-removed course of the recruitment, and never has the Email or Remove columns. The five
+`AllocationsRelatedColumns` (Enrollment Estimate, Allocation, Unrounded Allocation, Delta,
+TA:student ratio) are in a faculty member's table only when the admin chose "Faculty see all
+courses"; under "Admins only" and "Faculty see their own courses" the server leaves
+`enrollmentEstimate`, `allocation` and `unroundedAllocation` out of
+`GET /api/instructor/recruitments/:id/courses` altogether, and the table omits the columns, which
+are not offered in the Columns menu either. Admins always get them. The faculty page has no
+heartbeat and no warning: it reads, and cannot edit.
+
 The wording is the shared one (#298), with nothing local to the page (`audience="admin"` on the
 banner and the modal, and `newest` passed to the banner):
 

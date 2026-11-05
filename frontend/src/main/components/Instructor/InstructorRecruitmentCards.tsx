@@ -115,15 +115,6 @@ export default function InstructorRecruitmentCards({
                   Assignments
                 </Link>
               )}
-              {recruitment.allocationVisibility === "ALL_COURSES" && (
-                <Link
-                  className="btn btn-outline-primary mb-2 ms-2"
-                  to={`/recruitments/${recruitment.id}/allocations`}
-                  data-testid={id("all-allocations-button")}
-                >
-                  All allocations
-                </Link>
-              )}
               <Accordion alwaysOpen data-testid={id("courses")}>
                 {courses.map((course) => (
                   <Accordion.Item
@@ -147,6 +138,15 @@ export default function InstructorRecruitmentCards({
                     <Accordion.Body
                       data-testid={id(`course-${course.id}-body`)}
                     >
+                      <div className="mb-2">
+                        <Link
+                          className="btn btn-outline-primary"
+                          to={`/recruitments/${recruitment.id}/courses`}
+                          data-testid={id(`course-${course.id}-courses`)}
+                        >
+                          Courses
+                        </Link>
+                      </div>
                       {recruitment.targets?.[String(course.id)] && (
                         <div
                           className="mb-2"

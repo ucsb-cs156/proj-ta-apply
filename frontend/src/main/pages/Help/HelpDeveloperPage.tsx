@@ -396,6 +396,24 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           gets <code>409</code> when either moved; after a bulk conflict the
           page reads everything again.
         </p>
+        <p data-testid="HelpDeveloperPage-courses-columns">
+          <strong>Which Courses columns show (issue #300).</strong> The
+          view-only and edit pages keep the hidden columns in the browser&apos;s
+          local storage, under{" "}
+          <code>recruitmentCourses.hiddenColumns.&lt;id&gt;</code>, through{" "}
+          <code>useStoredHiddenColumns</code>; nothing is stored on the server,
+          and the Courses page no longer uses{" "}
+          <code>/api/admin/hiddencolumns</code>, which the Applications and
+          Assignments pages still do. Faculty read{" "}
+          <code>/recruitments/:id/courses</code> (the old{" "}
+          <code>/allocations</code> route redirects to it) from{" "}
+          <code>GET /api/instructor/recruitments/:id/courses</code>. For anyone
+          but an admin, <code>enrollmentEstimate</code>, <code>allocation</code>{" "}
+          and <code>unroundedAllocation</code> are left out of the JSON unless
+          the recruitment&apos;s allocation visibility is{" "}
+          <code>ALL_COURSES</code>, and the table omits the matching columns (
+          <code>AllocationsRelatedColumns</code>) instead of hiding them.
+        </p>
         <h3 className="mt-4 h5" id="state-refresh">
           Refresh instead of a warning: keeping recruitment state fresh
         </h3>

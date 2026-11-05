@@ -410,7 +410,7 @@ describe("Help pages (issue #140)", () => {
       "Once an admin lets faculty see the allocations, each of your courses shows a small table, both on the card and at the top of its ranking page: the Hiring Target (how many TAs or ULAs were allocated to the course), the Ranking Target (how many candidates you are asked to rank: twice the hiring target, or every interested candidate if there are fewer), Candidates Ranked so far and Rankings Still Needed.",
     );
     expect(allocations).toHaveTextContent(
-      "If you have concerns about your course's target, raise them with the admin once you see it. Until the admin does, nothing about it is shown. If the admin chooses to show all courses to all faculty, your cards also offer All allocations, a read-only list of every course's number; otherwise that page does not exist.",
+      "If you have concerns about your course's target, raise them with the admin once you see it. Until the admin does, nothing about it is shown. Each course you teach also has a Courses button, which opens it (click the course to see the button): the read-only Courses page, listing every course of the recruitment with its instructor, enrollment and meeting times. The Columns menu above the table hides and shows columns, and your choice is remembered in this browser. If the admin chooses to show all courses to all faculty, the page also has the Enrollment Estimate, Allocation, Unrounded Allocation, Delta and TA:student ratio columns for every course; otherwise those columns are not there at all. (The old All allocations page is now this one.)",
     );
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
     // Issue #199: interest colours, the not-interested opt-in and cancelled applications.
@@ -652,6 +652,21 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByRole("link", { name: "For Developers" }),
     ).toHaveAttribute("href", "/help/developer");
+  });
+
+  test("the developer page explains where the Courses columns are kept and how the instructor rule is enforced (issue #300)", async () => {
+    renderPage(<HelpDeveloperPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Developers" });
+
+    const text = screen.getByTestId("HelpDeveloperPage-courses-columns");
+    expect(text).toHaveTextContent("browser's local storage");
+    expect(text).toHaveTextContent("recruitmentCourses.hiddenColumns.<id>");
+    expect(text).toHaveTextContent(
+      "GET /api/instructor/recruitments/:id/courses",
+    );
+    expect(text).toHaveTextContent(
+      "enrollmentEstimate, allocation and unroundedAllocation are left out of the JSON unless the recruitment's allocation visibility is ALL_COURSES",
+    );
   });
 
   test("the developer page explains simultaneous editing under the hood, with a table of where it is used (issue #273)", async () => {
@@ -1235,7 +1250,7 @@ describe("Help pages (issue #140)", () => {
       "any number of tabs or windows may show it, for you or for other admins, without any warning",
     );
     expect(intro).toHaveTextContent(
-      "Its Edit button, beside the words \u201cEdit estimated enrollments, and TA/ULA allocations\u201d, takes you to the edit page",
+      "Its Edit button, beside the words \u201cClick Edit to: change the number of TAs/ULAs expected to be hired; set the expected enrollments for each course; set the number of TAs/ULAs allocated to each course; adjust the visibility of these allocations\u201d, takes you to the edit page",
     );
     expect(intro).toHaveTextContent(
       "Only one tab or window should have a given recruitment's edit page open at a time, and edit pages of different recruitments never warn each other.",
@@ -1502,6 +1517,12 @@ describe("Help pages (issue #140)", () => {
       "Each of those columns also has a small hide link at the top right of its heading: one click hides that column without opening the menu, exactly as unticking it there does.",
     );
     expect(columns).toHaveTextContent(
+      "A recruitment's table starts with only the Course Number, Instructor, Enrolled, Max, Enrollment Estimate, Allocation, Unrounded Allocation, Delta and TA:student ratio columns shown, on the view-only page and the edit page alike",
+    );
+    expect(columns).toHaveTextContent(
+      "Your choice is kept in this browser, for that recruitment and for both pages, so it is the same on your next visit from the same browser; it is not shared with other admins or other browsers.",
+    );
+    expect(columns).toHaveTextContent(
       "sorting by course number follows the padded course id exactly as it is shown, so CMPSC 5A comes before CMPSC 130A.",
     );
     expect(
@@ -1606,7 +1627,7 @@ describe("Help pages (issue #140)", () => {
       "Faculty see their own courses is what Release Allocations to Faculty means: each faculty member sees the allocations for the courses they teach, as a small table on their home page card and at the top of each ranking page: the Hiring Target (the allocation), the Ranking Target (twice the allocation, but never more than the candidates who expressed interest in the course), Candidates Ranked so far and Rankings Still Needed.",
     );
     expect(visibility).toHaveTextContent(
-      "Faculty see all courses goes further, for when the whole plan is public: every faculty member teaching in the recruitment also gets an All allocations page listing every course's number. Move off Admins only once the numbers are mostly final; you can still change an allocation afterwards, and faculty see the change immediately. Every change of state is recorded in the recruitment's change history.",
+      "Faculty see all courses goes further, for when the whole plan is public: every faculty member teaching in the recruitment sees the enrollment estimate, allocation, unrounded allocation, delta and TA:student ratio columns of every course on the read-only Courses page that each of their courses offers. Under the other two settings that page shows faculty no such columns at all: the figures are not even sent to their browser. Move off Admins only once the numbers are mostly final; you can still change an allocation afterwards, and faculty see the change immediately. Every change of state is recorded in the recruitment's change history.",
     );
     expect(
       auto.compareDocumentPosition(visibility) &

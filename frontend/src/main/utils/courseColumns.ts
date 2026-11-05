@@ -7,8 +7,59 @@
 export const isSummerQuarter = (quarter: string | null | undefined): boolean =>
   quarter != null && quarter.endsWith("3");
 
-/** The table's key in the hidden-columns table (issue #185). */
-export const COURSES_TABLE_KEY = "recruitmentCourses";
+/** Where a recruitment's hidden course columns are remembered, in the browser's local storage. */
+export const courseColumnsStorageKey = (
+  recruitmentId: string | undefined,
+): string => `recruitmentCourses.hiddenColumns.${recruitmentId}`;
+
+/**
+ * The columns that hold the planning figures (issue #300): Enrollment Estimate, Allocation,
+ * Unrounded Allocation, Delta and TA:student ratio, by column id. Admins always see them; an
+ * instructor's table has them only while the admin shows all courses' allocations to all faculty,
+ * and otherwise does not have them at all, so they are not even offered in the Columns menu.
+ */
+export const AllocationsRelatedColumns: readonly string[] = [
+  "enrollmentEstimate",
+  "allocation",
+  "unroundedAllocation",
+  "delta",
+  "ratio",
+];
+
+/**
+ * The columns an instructor never gets, whatever the allocation visibility: the admin's email
+ * mapping, with its link to the Instructors admin page, and the admin's Remove button.
+ */
+export const AdminOnlyColumns: readonly string[] = [
+  "rankingCount",
+  "instructorEmail",
+  "removed",
+];
+
+/**
+ * The columns that start visible (issue #300), besides Course Number, which cannot be hidden. Every
+ * other column starts hidden, and the Columns menu brings it back.
+ */
+export const DEFAULT_VISIBLE_COLUMNS: readonly string[] = [
+  "instructor",
+  "enrollment",
+  "maxEnroll",
+  "enrollmentEstimate",
+  "allocation",
+  "unroundedAllocation",
+  "delta",
+  "ratio",
+];
+
+/**
+ * The ids hidden until the user chooses otherwise: every column that may be hidden, in any
+ * recruitment, except the default-visible ones. Computed over the full set (Rankings and Summer
+ * Session included) so that a recruitment that gains one of them still starts with it hidden.
+ */
+export const defaultHiddenColumns = (): string[] =>
+  columnChoices(true, true)
+    .map((choice) => choice.id)
+    .filter((id) => !DEFAULT_VISIBLE_COLUMNS.includes(id));
 
 /**
  * Every column an admin may hide, by column id, with the label the Columns menu shows (issue
@@ -38,3 +89,19 @@ export const columnChoices = (
   ...(summer ? [{ id: "summerSession", label: "Summer Session" }] : []),
   { id: "removed", label: "Remove / Unremove" },
 ];
+
+/**
+ * What an instructor may hide on the Courses page (issue #300): {@link columnChoices} without the
+ * {@link AdminOnlyColumns} and, unless the admin shows all courses' allocations to all faculty,
+ * without the {@link AllocationsRelatedColumns}.
+ */
+export const instructorColumnChoices = (
+  summer: boolean,
+  allocationsShown: boolean,
+): { id: string; label: string }[] =>
+  // Stryker disable next-line BooleanLiteral : Rankings is one of the AdminOnlyColumns, filtered out below
+  columnChoices(false, summer).filter(
+    (choice) =>
+      !AdminOnlyColumns.includes(choice.id) &&
+      (allocationsShown || !AllocationsRelatedColumns.includes(choice.id)),
+  );

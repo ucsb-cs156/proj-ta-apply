@@ -1,4 +1,10 @@
-import { BrowserRouter, Route, Routes } from "react-router";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useParams,
+} from "react-router";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminsIndexPage from "main/pages/Admin/AdminsIndexPage";
@@ -49,11 +55,17 @@ import LegacyTaApplicationPage from "main/pages/Admin/LegacyTaApplicationPage";
 import AuditTrailPage from "main/pages/Admin/AuditTrailPage";
 import CandidateRankingPage from "main/pages/Instructor/CandidateRankingPage";
 import CandidateApplicationPage from "main/pages/Instructor/CandidateApplicationPage";
-import AllAllocationsPage from "main/pages/Instructor/AllAllocationsPage";
+import CoursesPage from "main/pages/Instructor/CoursesPage";
 import PublishedAssignmentsPage from "main/pages/Assignments/PublishedAssignmentsPage";
 
 /** Any signed-in user may apply; there is no separate applicant role. */
 const APPLICANT_ROLES = ["ROLE_USER"];
+
+/** Old links to /recruitments/:id/allocations keep working: they land on the Courses page. */
+function AllocationsToCoursesRedirect(): React.JSX.Element {
+  const { recruitmentId } = useParams();
+  return <Navigate to={`/recruitments/${recruitmentId}/courses`} replace />;
+}
 
 export default function App() {
   const currentUser = useCurrentUser();
@@ -276,14 +288,19 @@ export default function App() {
             }
           />
           <Route
-            path="/recruitments/:recruitmentId/allocations"
+            path="/recruitments/:recruitmentId/courses"
             element={
               <ProtectedPage
-                component={<AllAllocationsPage />}
+                component={<CoursesPage />}
                 enforceRole={["ROLE_INSTRUCTOR", "ROLE_ADMIN"]}
                 currentUser={currentUser}
               />
             }
+          />
+          {/* The All Allocations page (issue #224) became the Courses page (issue #300). */}
+          <Route
+            path="/recruitments/:recruitmentId/allocations"
+            element={<AllocationsToCoursesRedirect />}
           />
           <Route
             path="/recruitments/:recruitmentId/assignments"

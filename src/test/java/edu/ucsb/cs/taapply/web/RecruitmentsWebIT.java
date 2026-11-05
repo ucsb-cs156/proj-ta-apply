@@ -222,7 +222,7 @@ public class RecruitmentsWebIT extends WebTestCase {
     waitFor(firstCourse);
     // View-only: the Edit button and its words, and nothing to change.
     assertThat(page.getByTestId("RecruitmentCoursesPage-edit-text"))
-        .containsText("Edit estimated enrollments, and TA/ULA allocations");
+        .containsText("Click Edit to: change the number of TAs/ULAs expected to be hired;");
     assertThat(page.getByTestId("RecruitmentCoursesPage-add")).not().isVisible();
     assertThat(page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-removed-button"))
         .not()
@@ -288,6 +288,10 @@ public class RecruitmentsWebIT extends WebTestCase {
     waitFor(firstCourse);
     openEditPage();
     waitFor(firstCourse);
+    // Issue #300: only the default columns show at first; the Remove button's column is one of the
+    // others, so it is ticked in the Columns menu.
+    page.getByTestId("RecruitmentCoursesPage-columns-toggle").click();
+    page.getByTestId("RecruitmentCoursesPage-columns-removed").check();
 
     page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-removed-button").click();
 

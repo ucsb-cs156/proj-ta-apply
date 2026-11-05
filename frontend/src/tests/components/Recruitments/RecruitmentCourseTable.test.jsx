@@ -1089,4 +1089,33 @@ describe("RecruitmentCourseTable tests", () => {
       screen.getByTestId("RecruitmentCourseTable-header-courseId"),
     ).toBeInTheDocument();
   });
+
+  test("omitted columns are not in the table at all, unlike hidden ones (issue #300)", () => {
+    renderWith({
+      omitColumns: ["enrollmentEstimate", "allocation", "delta", "ratio"],
+    });
+
+    for (const id of ["enrollmentEstimate", "allocation", "delta", "ratio"]) {
+      expect(
+        screen.queryByTestId(`RecruitmentCourseTable-header-${id}`),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId(`RecruitmentCourseTable-footer-${id}`),
+      ).not.toBeInTheDocument();
+    }
+    expect(
+      screen.queryByTestId("RecruitmentCourseTable-cell-row-0-allocation"),
+    ).not.toBeInTheDocument();
+    for (const id of [
+      "courseId",
+      "instructor",
+      "unroundedAllocation",
+      "status",
+      "removed",
+    ]) {
+      expect(
+        screen.getByTestId(`RecruitmentCourseTable-header-${id}`),
+      ).toBeInTheDocument();
+    }
+  });
 });
