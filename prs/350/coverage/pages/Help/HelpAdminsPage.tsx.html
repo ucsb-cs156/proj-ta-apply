@@ -1047,7 +1047,11 @@
 <a name='L982'></a><a href='#L982'>982</a>
 <a name='L983'></a><a href='#L983'>983</a>
 <a name='L984'></a><a href='#L984'>984</a>
-<a name='L985'></a><a href='#L985'>985</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L985'></a><a href='#L985'>985</a>
+<a name='L986'></a><a href='#L986'>986</a>
+<a name='L987'></a><a href='#L987'>987</a>
+<a name='L988'></a><a href='#L988'>988</a>
+<a name='L989'></a><a href='#L989'>989</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1071,6 +1075,10 @@
 <span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2131,12 +2139,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
         &lt;p data-testid="HelpAdminsPage-assignment-columns"&gt;
           The &lt;strong&gt;Columns&lt;/strong&gt; menu above the table hides and shows
           columns while you work: any of the applicant&amp;apos;s fields or any
-          lecture (&lt;em&gt;Select All&lt;/em&gt; and &lt;em&gt;Select None&lt;/em&gt; do them all at
-          once). Each of those columns also has a small &lt;strong&gt;hide&lt;/strong&gt;{" "}
-          link at the top right of its heading, for dropping a column you do not
-          need with one click while you assign; tick it in the menu to bring it
-          back. &lt;strong&gt;Tentative Assignment&lt;/strong&gt; is always shown, and is
-          wide enough for a full lecture name. The choice is kept for that
+          lecture (&lt;em&gt;Show All&lt;/em&gt; and &lt;em&gt;Show None&lt;/em&gt; do them all at once;{" "}
+          &lt;em&gt;Show All Courses&lt;/em&gt; shows every lecture column, and{" "}
+          &lt;em&gt;Show Only Incomplete Courses&lt;/em&gt; hides every lecture column
+          except those with fewer TAs/ULAs assigned so far than the allocation,
+          the hiring target, so a lecture exactly at its target is hidden). Each
+          of those columns also has a small &lt;strong&gt;hide&lt;/strong&gt; link at the
+          top right of its heading, for dropping a column you do not need with
+          one click while you assign; tick it in the menu to bring it back.{" "}
+          &lt;strong&gt;Tentative Assignment&lt;/strong&gt; is always shown, and is wide
+          enough for a full lecture name. The choice is kept for that
           recruitment, the same way as on the Courses and Applications pages.
         &lt;/p&gt;
         &lt;p data-testid="HelpAdminsPage-interest-cells"&gt;
@@ -2368,9 +2380,9 @@ export default function HelpAdminsPage(): React.JSX.Element {
           The table can be trimmed to what you need: the{" "}
           &lt;strong&gt;Columns&lt;/strong&gt; menu above it lists every column but the
           course number, and unticking one hides it, heading, cells and totals
-          alike, until you tick it again. &lt;em&gt;Select All&lt;/em&gt; and{" "}
-          &lt;em&gt;Select None&lt;/em&gt; at the top of the menu show or hide every column
-          at once. Each of those columns also has a small &lt;strong&gt;hide&lt;/strong&gt;{" "}
+          alike, until you tick it again. &lt;em&gt;Show All&lt;/em&gt; and{" "}
+          &lt;em&gt;Show None&lt;/em&gt; at the top of the menu show or hide every column at
+          once. Each of those columns also has a small &lt;strong&gt;hide&lt;/strong&gt;{" "}
           link at the top right of its heading: one click hides that column
           without opening the menu, exactly as unticking it there does. A
           recruitment&amp;apos;s table starts with only the Course Number,
@@ -2644,8 +2656,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
               The table shows the id, View, Edit and Name first, then Submitted
               and the other answers, and takes only the width it needs. Every
               column but the first four can be hidden or shown from the{" "}
-              &lt;strong&gt;Columns&lt;/strong&gt; menu above it (use &lt;em&gt;Select All&lt;/em&gt; or{" "}
-              &lt;em&gt;Select None&lt;/em&gt; at its top to show or hide them all, or click
+              &lt;strong&gt;Columns&lt;/strong&gt; menu above it (use &lt;em&gt;Show All&lt;/em&gt; or{" "}
+              &lt;em&gt;Show None&lt;/em&gt; at its top to show or hide them all, or click
               the small &lt;strong&gt;hide&lt;/strong&gt; link at the top right of a
               column&amp;apos;s heading), which lists every answer on the form for
               that recruitment&amp;apos;s type (TA or ULA); the columns the table
@@ -3022,7 +3034,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-05T21:05:11.052Z
+                at 2026-11-05T21:38:25.049Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
