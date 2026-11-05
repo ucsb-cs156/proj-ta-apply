@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/323-prior-coursework","number":333,"title":"Reject over-long prior course values and test every course edit path (#323, #324)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/333"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/332-ula-double-major-hint","number":335,"title":"ULA application: double-major hint under the Major field","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/335"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/323-prior-coursework","number":333,"title":"Reject over-long prior course values and test every course edit path (#323, #324)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/333"}]
