@@ -1000,8 +1000,10 @@ describe("ApplicationForm tests", () => {
 
   const untakenIcon = (course) =>
     screen.queryByTestId(`ApplicationForm-courseInterest-${course}-untaken`);
-  const untakenWarning = () =>
-    screen.queryByTestId("ApplicationForm-courseInterests-untaken-warning");
+  const untakenWarning = (course = "CMPSC-156") =>
+    screen.queryByTestId(
+      `ApplicationForm-courseInterest-${course}-untaken-warning`,
+    );
 
   test("the ULA table has an unlabelled first column, blank until a course is asked for", () => {
     renderForm({ type: "ULA" });
@@ -1082,26 +1084,47 @@ describe("ApplicationForm tests", () => {
     const warning = untakenWarning();
     expect(warning).toHaveClass("small", "text-danger");
     const paragraphs = [...warning.querySelectorAll("p")];
-    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs).toHaveLength(1);
     expect(paragraphs[0].querySelector("svg")).not.toBeNull();
     expect(paragraphs[0].textContent).toBe(
-      "signifies that this is a course you have not listed as one you have taken. Be sure that in the comments field at the bottom of the application, you explain what background you have that prepares you to be a ULA for this course.",
+      "Have you taken this course? If so, add it to the courses taken section. If not, please explain your background for serving as a ULA for this course in the comments section at the bottom of the application.",
     );
-    expect(paragraphs[1].textContent).toBe(
-      "For example, CS students don't typically take CMPSC 5A or 5B, but if they have Python programming background, and some statistics background (e.g. PSTAT 5 or PSTAT 120A), that's typically enough preparation to be a ULA for CMPSC 5A/5B.",
+    // The red reminder beside the comments box names the flagged course.
+    const reminder = screen.getByTestId("ApplicationForm-comments-untaken");
+    expect(reminder).toHaveClass("small", "text-danger");
+    expect(reminder.querySelector("svg")).not.toBeNull();
+    expect(reminder.textContent).toBe(
+      "You have listed CMPSC 156 as a course you are interested in serving as a ULA for. Please explain in the comments section what your preparation is for serving as a ULA for this course.",
     );
-    // The table precedes the explanation.
+    // The legend is a virtual row directly beneath its own course row, spanning every column,
+    // and the course row is described by it.
+    const courseRow = screen.getByTestId(
+      "ApplicationForm-courseInterest-CMPSC-156",
+    );
+    expect(warning.tagName).toBe("TR");
+    expect(courseRow.nextElementSibling).toBe(warning);
+    expect(warning.children).toHaveLength(1);
+    expect(warning.children[0]).toHaveAttribute("colspan", "5");
+    expect(courseRow).toHaveAttribute("aria-describedby", warning.id);
+    expect(warning.id).toBe(
+      "ApplicationForm-courseInterest-CMPSC-156-untaken-warning",
+    );
+    // Other courses have no legend row and no description.
+    expect(untakenWarning("CMPSC-8")).toBeNull();
     expect(
-      screen
-        .getByTestId("ApplicationForm-courseInterest-CMPSC-156")
-        .compareDocumentPosition(warning),
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      screen.getByTestId("ApplicationForm-courseInterest-CMPSC-8"),
+    ).not.toHaveAttribute("aria-describedby");
 
     await userEvent.selectOptions(
       screen.getByTestId("ApplicationForm-secondChoiceCourse"),
       "CMPSC   130A",
     );
     expect(untakenIcon("CMPSC-130A")).toBeInTheDocument();
+    // Each flagged course gets its own legend row, right under it.
+    expect(
+      screen.getByTestId("ApplicationForm-courseInterest-CMPSC-130A")
+        .nextElementSibling,
+    ).toBe(untakenWarning("CMPSC-130A"));
 
     await userEvent.click(radio("CMPSC-8", "ENTHUSIASTIC"));
     expect(untakenIcon("CMPSC-8")).toBeInTheDocument();
@@ -1116,6 +1139,7 @@ describe("ApplicationForm tests", () => {
       "",
     );
     expect(untakenIcon("CMPSC-130A")).toBeNull();
+    expect(untakenWarning("CMPSC-130A")).toBeNull();
     expect(untakenWarning()).toBeInTheDocument();
     await userEvent.selectOptions(
       screen.getByTestId("ApplicationForm-firstChoiceCourse"),
@@ -1166,6 +1190,46 @@ describe("ApplicationForm tests", () => {
 
     await waitFor(() => expect(untakenIcon("CMPSC-156")).toBeNull());
     expect(untakenWarning()).toBeNull();
+  });
+
+  test("each course added to the coursework table leaves the comments reminder, and the last one removes it", async () => {
+    renderForm({ type: "ULA" });
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-firstChoiceCourse"),
+      "CMPSC   156",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("ApplicationForm-secondChoiceCourse"),
+      "CMPSC   130A",
+    );
+    const reminder = () =>
+      screen.queryByTestId("ApplicationForm-comments-untaken");
+    expect(reminder().textContent).toContain(
+      "CMPSC 130A and CMPSC 156 as courses",
+    );
+
+    const addCourse = async (number) => {
+      await userEvent.click(
+        screen.getByTestId("ApplicationForm-coursework-add-button"),
+      );
+      await userEvent.type(
+        screen.getByTestId("ApplicationForm-coursework-modal-courseNumber"),
+        number,
+      );
+      await userEvent.click(
+        screen.getByTestId("ApplicationForm-coursework-modal-save"),
+      );
+    };
+
+    await addCourse("CMPSC 156");
+    await waitFor(() => expect(untakenIcon("CMPSC-156")).toBeNull());
+    expect(untakenWarning("CMPSC-156")).toBeNull();
+    expect(reminder().textContent).toContain("CMPSC 130A as a course");
+    expect(reminder().textContent).not.toContain("CMPSC 156");
+
+    await addCourse("CMPSC 130A");
+    await waitFor(() => expect(reminder()).toBeNull());
+    expect(untakenIcon("CMPSC-130A")).toBeNull();
   });
 
   /** A course marked earlier and then made a choice is not reported twice. */

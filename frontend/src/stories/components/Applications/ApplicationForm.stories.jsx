@@ -110,3 +110,17 @@ UlaFirstQuarter.args = {
   initialContents: { firstQuarter: true },
   submitAction: (payload) => console.log("submit", payload),
 };
+
+/** Issue #310: a course asked for but not listed as taken is flagged, with its legend in a row right under it. */
+export const UlaUntakenCourseWarning = Template.bind({});
+UlaUntakenCourseWarning.args = {
+  type: "ULA",
+  courses,
+  majors: ulaMajors,
+  topics: ulaTopics,
+  initialContents: {
+    firstChoiceCourse: courses[0],
+    courseInterests: { [courses[1]]: "ENTHUSIASTIC" },
+  },
+  submitAction: (payload) => console.log("submit", payload),
+};

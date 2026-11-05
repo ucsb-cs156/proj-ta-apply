@@ -37,9 +37,22 @@ export function untakenAskedFor(
 /** The hover text on the warning icon. */
 export const UNTAKEN_TITLE = "Not listed as a course you have taken";
 
-/** The explanation under the table, after the icon. */
+/** The legend directly beneath each flagged course row. */
 export const UNTAKEN_EXPLANATION =
-  "signifies that this is a course you have not listed as one you have taken. Be sure that in the comments field at the bottom of the application, you explain what background you have that prepares you to be a ULA for this course.";
+  "Have you taken this course? If so, add it to the courses taken section. If not, please explain your background for serving as a ULA for this course in the comments section at the bottom of the application.";
 
-export const UNTAKEN_EXAMPLE =
-  "For example, CS students don't typically take CMPSC 5A or 5B, but if they have Python programming background, and some statistics background (e.g. PSTAT 5 or PSTAT 120A), that's typically enough preparation to be a ULA for CMPSC 5A/5B.";
+/** "A", "A and B", "A, B and C". */
+function joinNames(names: string[]): string {
+  const last = names[names.length - 1];
+  return names.length < 2
+    ? last
+    : `${names.slice(0, -1).join(", ")} and ${last}`;
+}
+
+/** The red reminder beside the comments box, naming every flagged course. */
+export function untakenCommentsReminder(courseIds: string[]): string {
+  // Course ids pad the department to a fixed width ("CMPSC   156"); show a single space.
+  const courses = courseIds.map((id) => id.replace(/\s+/g, " "));
+  const many = courses.length > 1;
+  return `You have listed ${joinNames(courses)} as ${many ? "courses" : "a course"} you are interested in serving as a ULA for. Please explain in the comments section what your preparation is for serving as a ULA for ${many ? "these courses" : "this course"}.`;
+}

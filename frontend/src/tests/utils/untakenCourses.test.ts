@@ -3,10 +3,10 @@ import {
   asksFor,
   courseKey,
   hasTaken,
-  UNTAKEN_EXAMPLE,
   UNTAKEN_EXPLANATION,
   UNTAKEN_TITLE,
   untakenAskedFor,
+  untakenCommentsReminder,
 } from "main/utils/untakenCourses";
 import priorCourseworkFixtures from "fixtures/priorCourseworkFixtures";
 
@@ -80,10 +80,19 @@ describe("untakenCourses (issue #148)", () => {
   test("the wording", () => {
     expect(UNTAKEN_TITLE).toBe("Not listed as a course you have taken");
     expect(UNTAKEN_EXPLANATION).toBe(
-      "signifies that this is a course you have not listed as one you have taken. Be sure that in the comments field at the bottom of the application, you explain what background you have that prepares you to be a ULA for this course.",
+      "Have you taken this course? If so, add it to the courses taken section. If not, please explain your background for serving as a ULA for this course in the comments section at the bottom of the application.",
     );
-    expect(UNTAKEN_EXAMPLE).toBe(
-      "For example, CS students don't typically take CMPSC 5A or 5B, but if they have Python programming background, and some statistics background (e.g. PSTAT 5 or PSTAT 120A), that's typically enough preparation to be a ULA for CMPSC 5A/5B.",
+  });
+
+  test("the comments reminder names the courses and agrees in number", () => {
+    expect(untakenCommentsReminder(["CMPSC   156"])).toBe(
+      "You have listed CMPSC 156 as a course you are interested in serving as a ULA for. Please explain in the comments section what your preparation is for serving as a ULA for this course.",
+    );
+    expect(untakenCommentsReminder(["CMPSC 156", "CMPSC 130A"])).toBe(
+      "You have listed CMPSC 156 and CMPSC 130A as courses you are interested in serving as a ULA for. Please explain in the comments section what your preparation is for serving as a ULA for these courses.",
+    );
+    expect(untakenCommentsReminder(["A 1", "B 2", "C 3"])).toContain(
+      "A 1, B 2 and C 3 as courses",
     );
   });
 });

@@ -845,10 +845,12 @@ public class ApplicationsWebIT extends WebTestCase {
     // availability questions; it can be folded away. Only the ULA form asks about availability.
     assertThat(page.getByTestId("ApplyPage-firstChoiceSections")).not().isVisible();
     page.getByTestId("ApplyPage-firstChoiceCourse").selectOption("CMPSC   156");
-    // Issue #148: a choice not listed as taken is flagged, with the explanation under the table.
+    // Issue #148: a choice not listed as taken is flagged, with the explanation in a row under it.
     assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-156-untaken")).isVisible();
-    assertThat(page.getByTestId("ApplyPage-courseInterests-untaken-warning"))
-        .containsText("signifies that this is a course you have not listed as one you have taken");
+    assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-156-untaken-warning"))
+        .containsText("Have you taken this course?");
+    assertThat(page.getByTestId("ApplyPage-comments-untaken"))
+        .containsText("You have listed CMPSC");
     assertThat(page.getByTestId("ApplyPage-firstChoiceSections-title"))
         .containsText("ADV APP PROGRAM");
     assertThat(page.getByTestId("ApplyPage-firstChoiceSections-row-0-type"))
@@ -867,7 +869,10 @@ public class ApplicationsWebIT extends WebTestCase {
     // Listing the chosen course as taken clears the flag and the explanation.
     addCourse("ApplyPage", "CMPSC 156");
     assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-156-untaken")).not().isVisible();
-    assertThat(page.getByTestId("ApplyPage-courseInterests-untaken-warning")).not().isVisible();
+    assertThat(page.getByTestId("ApplyPage-courseInterest-CMPSC-156-untaken-warning"))
+        .not()
+        .isVisible();
+    assertThat(page.getByTestId("ApplyPage-comments-untaken")).not().isVisible();
     page.getByTestId("ApplyPage-notice-agree").check();
 
     // The questions from the ULA Google Form (issue #72). The perm number is required and

@@ -112,9 +112,11 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             with a B or better. If you ask for a course you have not listed
             among the courses you have taken, whether as a choice or as
             Enthusiastic or Would Consider, the form marks it with a red warning
-            triangle and asks you to explain, in the Anything Else box, what
-            background prepares you to be a ULA for it; listing the course in
-            your coursework clears the mark.
+            triangle and asks whether you have taken it. If you have, add it to
+            your coursework; if not, explain in the Anything Else box what
+            background prepares you to be a ULA for it. A red reminder naming
+            those courses also appears next to the Anything Else box. Listing
+            the course in your coursework clears the mark and the reminder.
           </li>
           <li>
             Anything else you would like the department to know, such as
