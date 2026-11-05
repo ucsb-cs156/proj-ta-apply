@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/334-no-duplicate-courses","number":336,"title":"Prior coursework: no duplicate courses; adding a listed course updates it (#334)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/336"}]
+pull_requests: []
