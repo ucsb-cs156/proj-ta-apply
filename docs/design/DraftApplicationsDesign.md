@@ -38,7 +38,7 @@ form as one.
 |---|---|
 | `GET /api/draftApplications/mine` | The current user's drafts, newest first. |
 | `POST /api/draftApplications/open?recruitmentId=` | The user's draft for the recruitment, creating an empty one if there is none. Refused (400) if the recruitment is not open or the user already has an application for it. |
-| `PUT /api/draftApplications?id=&version=` | Replaces what the draft holds with the form's answers, and returns the draft with its new version. **Nothing is validated.** Refused (403) once applications close, and (409) if the version is out of date; see Concurrent edits. |
+| `PUT /api/draftApplications?id=&version=` | Replaces what the draft holds with the form's answers, and returns the draft with its new version. **Nothing is validated** except that a prior course's grade, term and text fields fit their columns (400 if not, issue #323). Refused (403) once applications close, and (409) if the version is out of date; see Concurrent edits. |
 
 A draft belongs to its owner alone: reading or saving someone else's is a 403. All the rules about
 a complete application apply, unchanged, at submission.

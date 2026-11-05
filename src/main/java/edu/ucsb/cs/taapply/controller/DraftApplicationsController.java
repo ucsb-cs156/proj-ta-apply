@@ -166,7 +166,8 @@ public class DraftApplicationsController extends ApiController {
   @Operation(
       summary = "Save a draft",
       description =
-          "Replaces what the draft holds with what the form has now. Nothing is validated. Allowed"
+          "Replaces what the draft holds with what the form has now. Nothing is validated except that a"
+              + " prior course's grade, term and text fields fit their columns (400 if not). Allowed"
               + " for as long as the recruitment is open. The version is the one the form last"
               + " saw (from opening the draft or from its last save); if the draft has been saved"
               + " since, by another tab or window, nothing is changed and the answer is 409"
@@ -188,6 +189,7 @@ public class DraftApplicationsController extends ApiController {
     if (!version.equals(draft.getVersion())) {
       return conflict(draft);
     }
+    ApplicationsController.requireCourseworkLengths(fields);
     apply(fields, draft);
     try {
       return ResponseEntity.ok(draftApplicationRepository.save(draft));

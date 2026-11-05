@@ -2315,6 +2315,88 @@ public class ApplicationsControllerTests extends ControllerTestCase {
     return new PriorCourseworkFields(true, null, number, null, null, null);
   }
 
+  // ---- prior coursework column lengths (issue #323) ----
+
+  private static ApplicationFields oneCourse(PriorCourseworkFields row) {
+    return withCourses(List.of(row));
+  }
+
+  /** Each field is accepted at its column's size and refused one character over, with a message. */
+  @Test
+  public void course_text_is_accepted_at_its_column_size_and_refused_one_over() {
+    String ok16 = "x".repeat(16);
+    String ok64 = "x".repeat(64);
+    String ok255 = "x".repeat(255);
+    ApplicationsController.requireCourseworkLengths(
+        oneCourse(new PriorCourseworkFields(false, ok255, ok255, ok255, ok64, ok16)));
+
+    record Case(PriorCourseworkFields row, String message) {}
+    for (Case c :
+        List.of(
+            new Case(
+                new PriorCourseworkFields(true, null, "C", null, null, "x".repeat(17)),
+                "Grade must be at most 16 characters (17 given)"),
+            new Case(
+                new PriorCourseworkFields(true, null, "C", null, "x".repeat(65), null),
+                "Term must be at most 64 characters (65 given)"),
+            new Case(
+                new PriorCourseworkFields(false, "x".repeat(256), "C", null, null, null),
+                "Other school must be at most 255 characters (256 given)"),
+            new Case(
+                new PriorCourseworkFields(true, null, "x".repeat(256), null, null, null),
+                "Course number must be at most 255 characters (256 given)"),
+            new Case(
+                new PriorCourseworkFields(true, null, "C", "x".repeat(256), null, null),
+                "Course title must be at most 255 characters (256 given)"))) {
+      IllegalArgumentException e =
+          org.junit.jupiter.api.Assertions.assertThrows(
+              IllegalArgumentException.class,
+              () -> ApplicationsController.requireCourseworkLengths(oneCourse(c.row())));
+      assertEquals(c.message(), e.getMessage());
+    }
+  }
+
+  /** Spaces around a value are not stored, so they do not count; no list at all is fine. */
+  @Test
+  public void course_text_length_is_that_of_the_trimmed_value() {
+    ApplicationsController.requireCourseworkLengths(
+        oneCourse(
+            new PriorCourseworkFields(true, null, "C", null, null, "  " + "x".repeat(16) + "  ")));
+    ApplicationsController.requireCourseworkLengths(withCourses(null));
+  }
+
+  /** Submitting refuses an over-long grade with a 400 and saves nothing. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void submitting_a_grade_over_16_characters_is_a_bad_request() throws Exception {
+    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(OPEN_TA));
+    when(applicationRepository.existsByEmailAndRecruitmentIdAndStatusNot(
+            GRAD_EMAIL, 1L, ApplicationReviewStatus.CANCELLED))
+        .thenReturn(false);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                post("/api/applications/post?recruitmentId=1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        mapper.writeValueAsString(
+                            withCourses(
+                                List.of(
+                                    course("CMPSC 8"),
+                                    course("CMPSC 16"),
+                                    new PriorCourseworkFields(
+                                        true, null, "CMPSC 24", null, null, "x".repeat(23))))))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+    assertEquals(
+        "Grade must be at most 16 characters (23 given)", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+  }
+
   /** FULL_FIELDS agrees to the TA notice; the ULA tests need the ULA one and their own courses. */
   private static ApplicationFields withNoticeAndCourses(
       Long noticeVersionId, List<PriorCourseworkFields> courses) {

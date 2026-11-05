@@ -354,6 +354,46 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     return captor.getValue();
   }
 
+  /**
+   * Issue #323: an admin edit refuses a grade that does not fit its column, saving and auditing
+   * nothing.
+   */
+  @WithMockUser(roles = {"USER", "ADMIN"})
+  @Test
+  public void an_admin_edit_with_a_grade_over_16_characters_is_a_bad_request() throws Exception {
+    when(applicationRepository.findById(5L)).thenReturn(Optional.of(editable()));
+    when(recruitmentRepository.findById(7L))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.TA)));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/applications?id=5&version=0")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        editBody(
+                            Map.of(
+                                "priorCoursework",
+                                List.of(
+                                    Map.of("ucsbCourse", true, "courseNumber", "CMPSC 8"),
+                                    Map.of("ucsbCourse", true, "courseNumber", "CMPSC 16"),
+                                    Map.of(
+                                        "ucsbCourse",
+                                        true,
+                                        "courseNumber",
+                                        "CMPSC 24",
+                                        "grade",
+                                        "x".repeat(17))))))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "Grade must be at most 16 characters (17 given)", responseToJson(response).get("message"));
+    verify(applicationRepository, never()).save(any());
+    verify(auditTrailRepository, never()).saveAll(any());
+  }
+
   /** Every changed field is applied and gets an audit row; unchanged ones get none. */
   @WithMockUser(roles = {"USER", "ADMIN"})
   @Test

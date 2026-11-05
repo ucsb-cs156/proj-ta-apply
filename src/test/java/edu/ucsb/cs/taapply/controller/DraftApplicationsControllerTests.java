@@ -683,6 +683,40 @@ public class DraftApplicationsControllerTests extends ControllerTestCase {
     assertEquals(4, responseToJson(response).get("version"));
   }
 
+  /** Issue #323: the one check a draft save makes, so a grade that cannot be stored never is. */
+  @WithMockUser(
+      username = "grad",
+      roles = {"USER"})
+  @Test
+  public void a_save_with_a_grade_over_16_characters_is_a_bad_request_and_saves_nothing()
+      throws Exception {
+    DraftApplication stored = draft(5L, EMAIL);
+    when(draftApplicationRepository.findById(5L)).thenReturn(Optional.of(stored));
+    when(recruitmentRepository.findById(1L))
+        .thenReturn(Optional.of(recruitment(1L, ApplicationStatus.OPEN)));
+
+    com.fasterxml.jackson.databind.node.ObjectNode body = mapper.valueToTree(NEARLY_EMPTY);
+    body.putArray("priorCoursework")
+        .addObject()
+        .put("ucsbCourse", true)
+        .put("courseNumber", "CMPSC 8")
+        .put("grade", "x".repeat(17));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/draftApplications?id=5&version=3")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(body))
+                    .with(csrf()))
+            .andExpect(status().is(400))
+            .andReturn();
+
+    assertEquals(
+        "Grade must be at most 16 characters (17 given)", responseToJson(response).get("message"));
+    verify(draftApplicationRepository, never()).save(any());
+  }
+
   @WithMockUser(
       username = "grad",
       roles = {"USER"})

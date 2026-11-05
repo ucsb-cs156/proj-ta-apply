@@ -694,6 +694,7 @@ public class ApplicationsController extends ApiController {
    * client sent, so the two never disagree.
    */
   static void requireCoursework(RecruitmentType type, ApplicationFields fields) {
+    requireCourseworkLengths(fields);
     List<PriorCourseworkFields> rows =
         fields.priorCoursework() == null ? List.of() : fields.priorCoursework();
     int minimum = minimumCourses(type);
@@ -710,6 +711,41 @@ public class ApplicationsController extends ApiController {
         throw new IllegalArgumentException(
             "Prior course %s needs the school it was taken at".formatted(row.courseNumber()));
       }
+    }
+  }
+
+  /** The longest grade the {@code prior_coursework.grade} column holds (issue #323). */
+  public static final int MAX_GRADE_LENGTH = 16;
+
+  /** The longest term the {@code prior_coursework.term} column holds. */
+  public static final int MAX_TERM_LENGTH = 64;
+
+  /** The longest school, course number or course title the columns hold. */
+  public static final int MAX_COURSE_TEXT_LENGTH = 255;
+
+  /**
+   * The length rule for every save path, drafts included (issue #323): a value longer than its
+   * column is refused with a clear message, never truncated. Lengths are those of the value as it
+   * would be stored, that is, without surrounding spaces.
+   */
+  public static void requireCourseworkLengths(ApplicationFields fields) {
+    if (fields.priorCoursework() == null) {
+      return;
+    }
+    for (PriorCourseworkFields row : fields.priorCoursework()) {
+      requireLength(row.grade(), MAX_GRADE_LENGTH, "Grade");
+      requireLength(row.term(), MAX_TERM_LENGTH, "Term");
+      requireLength(row.otherSchool(), MAX_COURSE_TEXT_LENGTH, "Other school");
+      requireLength(row.courseNumber(), MAX_COURSE_TEXT_LENGTH, "Course number");
+      requireLength(row.courseTitle(), MAX_COURSE_TEXT_LENGTH, "Course title");
+    }
+  }
+
+  private static void requireLength(String value, int max, String what) {
+    if (value != null && value.strip().length() > max) {
+      throw new IllegalArgumentException(
+          "%s must be at most %d characters (%d given)"
+              .formatted(what, max, value.strip().length()));
     }
   }
 
