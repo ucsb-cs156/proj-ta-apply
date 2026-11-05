@@ -25,7 +25,7 @@ taapply,edu.ucsb.cs.taapply.services,RoleAssignmentService,0,89,0,14,0,17,0,13,0
 taapply,edu.ucsb.cs.taapply.services,MinimaxAllocator,0,54,0,6,0,9,0,4,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService,0,469,0,54,0,79,0,35,0,8
 taapply,edu.ucsb.cs.taapply.services,AllocationVisibilityService,0,39,0,6,0,11,0,5,0,2
-taapply,edu.ucsb.cs.taapply.services,TaSeedFromUla,0,90,0,0,0,27,0,5,0,5
+taapply,edu.ucsb.cs.taapply.services,TaSeedFromUla,0,91,0,0,0,28,0,5,0,5
 taapply,edu.ucsb.cs.taapply.services,RecruitmentCoursesRefreshService.Offered,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentCoursesRefreshService,0,138,0,18,0,30,0,12,0,3
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.IdentityColumn,0,9,0,0,0,1,0,1,0,1
@@ -101,7 +101,7 @@ taapply,edu.ucsb.cs.taapply.controller,JobsController,0,79,0,2,0,13,0,7,0,6
 taapply,edu.ucsb.cs.taapply.controller,HealthController,0,7,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController.PriorCourseworkFields,0,21,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,AuditTrailController.AuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
-taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,1533,0,184,0,343,0,149,0,57
+taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,1624,0,192,0,362,0,156,0,60
 taapply,edu.ucsb.cs.taapply.controller,AdminApplicationsController,0,301,0,4,0,69,0,19,0,17
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.Candidate,0,51,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,0,596,0,42,0,123,0,48,0,27
@@ -125,7 +125,7 @@ taapply,edu.ucsb.cs.taapply.controller,AdminDraftApplicationsController,0,125,0,
 taapply,edu.ucsb.cs.taapply.controller,AdminsController.AdminDTO,0,36,0,0,0,7,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.RankEdit,0,9,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,AuditTrailController,0,84,0,6,0,15,0,7,0,4
-taapply,edu.ucsb.cs.taapply.controller,DraftApplicationsController,0,498,0,22,0,117,0,33,0,22
+taapply,edu.ucsb.cs.taapply.controller,DraftApplicationsController,0,501,0,22,0,118,0,33,0,22
 taapply,edu.ucsb.cs.taapply.controller,AppSettingsController.NameList,0,18,0,0,0,3,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,AdminRankingsController,0,48,0,0,0,9,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,ApiController,0,59,0,0,0,17,0,9,0,9
@@ -141,6 +141,7 @@ taapply,edu.ucsb.cs.taapply.entity,Application,0,4,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.entity,DraftApplication.LevelsConverter,0,7,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.entity,RecruitmentCourse,0,15,0,6,0,1,0,4,0,1
 taapply,edu.ucsb.cs.taapply.entity,RecruitmentAuditTrail,0,4,0,0,0,2,0,1,0,1
+taapply,edu.ucsb.cs.taapply.entity,PriorCoursework,0,115,0,16,0,19,0,13,0,5
 taapply,edu.ucsb.cs.taapply.entity,DraftApplication,0,4,0,0,0,2,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services.fake,FakeAllocationsService.Estimates,0,21,0,0,0,4,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services.fake,FakeCoursework,0,524,0,44,0,98,0,38,0,16
