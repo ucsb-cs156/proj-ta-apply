@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: []
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/314-assignments-columns","number":344,"title":"Assignments page: wider assigned-course column, show/hide columns, and a hide link over each column (closes #314)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/344"}]
