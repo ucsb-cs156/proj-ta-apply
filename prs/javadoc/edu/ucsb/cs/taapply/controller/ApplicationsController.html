@@ -67,6 +67,9 @@ loadScripts(document, 'script');</script>
 <li><a href="#MAX_ULA_PROFICIENCY" tabindex="0">MAX_ULA_PROFICIENCY</a></li>
 <li><a href="#MIN_INTEREST" tabindex="0">MIN_INTEREST</a></li>
 <li><a href="#MAX_INTEREST" tabindex="0">MAX_INTEREST</a></li>
+<li><a href="#MAX_GRADE_LENGTH" tabindex="0">MAX_GRADE_LENGTH</a></li>
+<li><a href="#MAX_TERM_LENGTH" tabindex="0">MAX_TERM_LENGTH</a></li>
+<li><a href="#MAX_COURSE_TEXT_LENGTH" tabindex="0">MAX_COURSE_TEXT_LENGTH</a></li>
 </ol>
 </li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
@@ -86,6 +89,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#leave(java.lang.Long,java.lang.String)" tabindex="0">leave(Long, String)</a></li>
 <li><a href="#updateComments(java.lang.Long,java.lang.String)" tabindex="0">updateComments(Long, String)</a></li>
 <li><a href="#cancelApplication(java.lang.Long,java.lang.String)" tabindex="0">cancelApplication(Long, String)</a></li>
+<li><a href="#requireCourseworkLengths(edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" tabindex="0">requireCourseworkLengths(ApplicationsController.ApplicationFields)</a></li>
 <li><a href="#normalizePermNumber(java.lang.String)" tabindex="0">normalizePermNumber(String)</a></li>
 </ol>
 </li>
@@ -149,6 +153,16 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>static final int</code></div>
+<div class="col-second even-row-color"><code><a href="#MAX_COURSE_TEXT_LENGTH" class="member-name-link">MAX_COURSE_TEXT_LENGTH</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">The longest school, course number or course title the columns hold.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final int</code></div>
+<div class="col-second odd-row-color"><code><a href="#MAX_GRADE_LENGTH" class="member-name-link">MAX_GRADE_LENGTH</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">The longest grade the <code>prior_coursework.grade</code> column holds (issue #323).</div>
+</div>
+<div class="col-first even-row-color"><code>static final int</code></div>
 <div class="col-second even-row-color"><code><a href="#MAX_INTEREST" class="member-name-link">MAX_INTEREST</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final int</code></div>
@@ -157,24 +171,29 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <div class="block">A TA applicant rates each topic 1 (lowest) to 5 (highest).</div>
 </div>
 <div class="col-first even-row-color"><code>static final int</code></div>
-<div class="col-second even-row-color"><code><a href="#MAX_ULA_PROFICIENCY" class="member-name-link">MAX_ULA_PROFICIENCY</a></code></div>
+<div class="col-second even-row-color"><code><a href="#MAX_TERM_LENGTH" class="member-name-link">MAX_TERM_LENGTH</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">The longest term the <code>prior_coursework.term</code> column holds.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final int</code></div>
+<div class="col-second odd-row-color"><code><a href="#MAX_ULA_PROFICIENCY" class="member-name-link">MAX_ULA_PROFICIENCY</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">A ULA applicant rates each topic 1 (very comfortable), 2 (somewhat) or 3 (not familiar).</div>
 </div>
-<div class="col-first odd-row-color"><code>static final int</code></div>
-<div class="col-second odd-row-color"><code><a href="#MIN_INTEREST" class="member-name-link">MIN_INTEREST</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>static final int</code></div>
+<div class="col-second even-row-color"><code><a href="#MIN_INTEREST" class="member-name-link">MIN_INTEREST</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">A ULA applicant rates each interest area 1 (not interested) to 5 (very interested).</div>
 </div>
-<div class="col-first even-row-color"><code>static final int</code></div>
-<div class="col-second even-row-color"><code><a href="#MIN_PROFICIENCY" class="member-name-link">MIN_PROFICIENCY</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final int</code></div>
-<div class="col-second odd-row-color"><code><a href="#MIN_TA_COURSES" class="member-name-link">MIN_TA_COURSES</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#MIN_PROFICIENCY" class="member-name-link">MIN_PROFICIENCY</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final int</code></div>
-<div class="col-second even-row-color"><code><a href="#MIN_ULA_COURSES" class="member-name-link">MIN_ULA_COURSES</a></code></div>
+<div class="col-second even-row-color"><code><a href="#MIN_TA_COURSES" class="member-name-link">MIN_TA_COURSES</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static final int</code></div>
+<div class="col-second odd-row-color"><code><a href="#MIN_ULA_COURSES" class="member-name-link">MIN_ULA_COURSES</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -236,16 +255,22 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prefill(edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">prefill</a><wbr>(<a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateApplication(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">updateApplication</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requireCourseworkLengths(edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">requireCourseworkLengths</a><wbr>(<a href="ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a>&nbsp;fields)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">The length rule for every save path, drafts included (issue #323): a value longer than its
+column is refused with a clear message, never truncated.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateApplication(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">updateApplication</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;version,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId,
  <a href="ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a>&nbsp;fields)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateComments(java.lang.Long,java.lang.String)" class="member-name-link">updateComments</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;postApplicationComments)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateComments(java.lang.Long,java.lang.String)" class="member-name-link">updateComments</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;postApplicationComments)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -375,6 +400,57 @@ ownership is checked explicitly rather than relying on a query happening to filt
 <dd>
 <ul class="tag-list">
 <li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.ApplicationsController.MAX_INTEREST">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="MAX_GRADE_LENGTH">
+<h3>MAX_GRADE_LENGTH</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">MAX_GRADE_LENGTH</span></div>
+<div class="block">The longest grade the <code>prior_coursework.grade</code> column holds (issue #323).</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.ApplicationsController.MAX_GRADE_LENGTH">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="MAX_TERM_LENGTH">
+<h3>MAX_TERM_LENGTH</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">MAX_TERM_LENGTH</span></div>
+<div class="block">The longest term the <code>prior_coursework.term</code> column holds.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.ApplicationsController.MAX_TERM_LENGTH">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="MAX_COURSE_TEXT_LENGTH">
+<h3>MAX_COURSE_TEXT_LENGTH</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">MAX_COURSE_TEXT_LENGTH</span></div>
+<div class="block">The longest school, course number or course title the columns hold.</div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../../constant-values.html#edu.ucsb.cs.taapply.controller.ApplicationsController.MAX_COURSE_TEXT_LENGTH">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
@@ -530,6 +606,17 @@ ownership is checked explicitly rather than relying on a query happening to filt
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
  @RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;reason)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="requireCourseworkLengths(edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)">
+<h3>requireCourseworkLengths</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">requireCourseworkLengths</span><wbr><span class="parameters">(<a href="ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a>&nbsp;fields)</span></div>
+<div class="block">The length rule for every save path, drafts included (issue #323): a value longer than its
+column is refused with a clear message, never truncated. Lengths are those of the value as it
+would be stored, that is, without surrounding spaces.</div>
 </div>
 </section>
 </li>

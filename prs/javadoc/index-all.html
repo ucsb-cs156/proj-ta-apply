@@ -2784,6 +2784,14 @@ overwriting what is on file, and returns them oldest first (issue #151).</div>
 <dd>
 <div class="block">The longest client identifier that is kept; a UUID is 36 characters.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MAX_COURSE_TEXT_LENGTH" class="member-name-link">MAX_COURSE_TEXT_LENGTH</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dd>
+<div class="block">The longest school, course number or course title the columns hold.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MAX_GRADE_LENGTH" class="member-name-link">MAX_GRADE_LENGTH</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dd>
+<div class="block">The longest grade the <code>prior_coursework.grade</code> column holds (issue #323).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MAX_INTEREST" class="member-name-link">MAX_INTEREST</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html#MAX_LABEL_LENGTH" class="member-name-link">MAX_LABEL_LENGTH</a> - Static variable in record class edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientIdentity.html" title="class in edu.ucsb.cs.taapply.concurrency">ClientIdentity</a></dt>
@@ -2797,6 +2805,10 @@ overwriting what is on file, and returns them oldest first (issue #151).</div>
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeAllocationsService.html#MAX_TARGET_PER_COURSE" class="member-name-link">MAX_TARGET_PER_COURSE</a> - Static variable in class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeAllocationsService.html" title="class in edu.ucsb.cs.taapply.services.fake">FakeAllocationsService</a></dt>
 <dd>
 <div class="block">The largest hiring target offered, as a multiple of the recruitment's courses.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MAX_TERM_LENGTH" class="member-name-link">MAX_TERM_LENGTH</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dd>
+<div class="block">The longest term the <code>prior_coursework.term</code> column holds.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#MAX_ULA_PROFICIENCY" class="member-name-link">MAX_ULA_PROFICIENCY</a> - Static variable in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>
@@ -3605,6 +3617,11 @@ current quarter plus one, or plus two during Spring, as <a href="edu/ucsb/cs/taa
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html#replaceHidden(java.lang.String,java.lang.Long,java.util.List)" class="member-name-link">replaceHidden(String, Long, List)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html" title="class in edu.ucsb.cs.taapply.controller">HiddenColumnsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#requireCourseworkLengths(edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">requireCourseworkLengths(ApplicationsController.ApplicationFields)</a> - Static method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
+<dd>
+<div class="block">The length rule for every save path, drafts included (issue #323): a value longer than its
+column is refused with a clear message, never truncated.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.html#REQUIRED_COLUMNS" class="member-name-link">REQUIRED_COLUMNS</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/LegacyApplicationCsvService.html" title="class in edu.ucsb.cs.taapply.services">LegacyApplicationCsvService</a></dt>
 <dd>
 <div class="block">The columns a legacy export must have for a row to be imported at all.</div>
