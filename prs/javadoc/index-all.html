@@ -869,6 +869,15 @@ the person, and the label to show other people.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/ApplicationStatus.html#CLOSED" class="member-name-link">CLOSED</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/ApplicationStatus.html" title="enum class in edu.ucsb.cs.taapply.enums">ApplicationStatus</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html#collapse(java.util.List)" class="member-name-link">collapse(List)</a> - Static method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></dt>
+<dd>
+<div class="block">The rows with identical courses collapsed to one; see <a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html#collapse(java.util.List,java.util.function.Function)"><code>PriorCoursework.collapse(List, Function)</code></a>.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html#collapse(java.util.List,java.util.function.Function)" class="member-name-link">collapse(List, Function)</a> - Static method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></dt>
+<dd>
+<div class="block">The rows with identical courses collapsed to one (issue #334): the later row replaces the
+earlier in the earlier's place, so the list keeps its order.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html#commentable(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">commentable(Recruitment, LocalDate)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAccessService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAccessService</a></dt>
 <dd>
 <div class="block">Whether post-application comments may still be changed: while the recruitment is open, and for
@@ -2596,6 +2605,15 @@ stamp createdById/createdByEmail on Job records.</div>
 <dl class="index">
 <dt><a href="edu/ucsb/cs/taapply/services/fake/FakeAllocationsService.Estimates.html#KEEP" class="member-name-link">KEEP</a> - Enum constant in enum class edu.ucsb.cs.taapply.services.fake.<a href="edu/ucsb/cs/taapply/services/fake/FakeAllocationsService.Estimates.html" title="enum class in edu.ucsb.cs.taapply.services.fake">FakeAllocationsService.Estimates</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html#key()" class="member-name-link">key()</a> - Method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></dt>
+<dd>
+<div class="block">The key of this row; see <a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html#key(boolean,java.lang.String,java.lang.String,java.lang.String)"><code>PriorCoursework.key(boolean, String, String, String)</code></a>.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html#key(boolean,java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">key(boolean, String, String, String)</a> - Static method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/PriorCoursework.html" title="class in edu.ucsb.cs.taapply.entity">PriorCoursework</a></dt>
+<dd>
+<div class="block">What makes two rows the same course (issue #334): course number, school (UCSB, or the named
+other school) and term, each ignoring case and spacing, so "CMPSC 156" and "cmpsc156" match.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:L">L</h2>
 <dl class="index">
