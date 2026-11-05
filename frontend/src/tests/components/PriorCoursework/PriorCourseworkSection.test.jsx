@@ -240,6 +240,123 @@ describe("PriorCourseworkSection tests", () => {
     ]);
   });
 
+  /** Issue #334: no duplicate courses; adding one that is listed updates it. */
+  test("Add Course for a course already listed updates that row instead of adding one", async () => {
+    const onChange = renderSection({
+      courses: priorCourseworkFixtures.threeCourses,
+    });
+
+    await userEvent.click(screen.getByTestId("S-add-button"));
+    await userEvent.type(
+      screen.getByTestId("S-modal-courseNumber"),
+      "cmpsc263",
+    );
+    await userEvent.selectOptions(screen.getByTestId("S-modal-term"), "F25");
+    await userEvent.type(screen.getByTestId("S-modal-grade"), "B");
+    await userEvent.click(screen.getByTestId("S-modal-save"));
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    expect(onChange.mock.calls[0][0]).toEqual([
+      {
+        ucsbCourse: true,
+        otherSchool: null,
+        courseNumber: "cmpsc263",
+        courseTitle: null,
+        term: "F25",
+        grade: "B",
+      },
+      priorCourseworkFixtures.inProgress,
+      priorCourseworkFixtures.elsewhere,
+    ]);
+  });
+
+  test("Add Course for the same course in another term keeps both rows", async () => {
+    const onChange = renderSection({
+      courses: [priorCourseworkFixtures.ucsbCourse],
+    });
+
+    await userEvent.click(screen.getByTestId("S-add-button"));
+    await userEvent.type(
+      screen.getByTestId("S-modal-courseNumber"),
+      "CMPSC 263",
+    );
+    await userEvent.selectOptions(screen.getByTestId("S-modal-term"), "W26");
+    await userEvent.click(screen.getByTestId("S-modal-save"));
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    expect(onChange.mock.calls[0][0]).toHaveLength(2);
+    expect(onChange.mock.calls[0][0][0]).toEqual(
+      priorCourseworkFixtures.ucsbCourse,
+    );
+  });
+
+  test("editing a row into a course that is already listed removes the other row", async () => {
+    const onChange = renderSection({
+      courses: priorCourseworkFixtures.threeCourses,
+    });
+
+    await userEvent.click(
+      screen.getByTestId("S-table-cell-row-1-col-edit-button"),
+    );
+    await userEvent.clear(screen.getByTestId("S-modal-courseNumber"));
+    await userEvent.type(
+      screen.getByTestId("S-modal-courseNumber"),
+      "CMPSC 263",
+    );
+    await userEvent.selectOptions(screen.getByTestId("S-modal-term"), "F25");
+    await userEvent.click(screen.getByTestId("S-modal-save"));
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    expect(onChange.mock.calls[0][0]).toEqual([
+      {
+        ...priorCourseworkFixtures.inProgress,
+        courseNumber: "CMPSC 263",
+        term: "F25",
+      },
+      priorCourseworkFixtures.elsewhere,
+    ]);
+  });
+
+  test("the bulk dialog updates a course that is already listed instead of adding it again", async () => {
+    axiosMock
+      .onGet("/api/courses/all")
+      .reply(200, coursesFixtures.threeCourses);
+    const listed = {
+      ucsbCourse: true,
+      otherSchool: null,
+      courseNumber: "CMPSC 16",
+      courseTitle: null,
+      term: "F25",
+      grade: "A",
+    };
+    const onChange = renderSection({
+      courses: [listed, priorCourseworkFixtures.elsewhere],
+    });
+
+    await userEvent.click(screen.getByTestId("S-bulk-button"));
+    await userEvent.click(
+      await screen.findByTestId("S-bulk-row-CMPSC-16-taken"),
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("S-bulk-row-CMPSC-16-term"),
+      "F25",
+    );
+    await userEvent.selectOptions(
+      screen.getByTestId("S-bulk-row-CMPSC-16-grade"),
+      "B",
+    );
+    await userEvent.click(screen.getByTestId("S-bulk-add"));
+
+    expect(onChange.mock.calls[0][0]).toEqual([
+      {
+        ...listed,
+        courseTitle: "Problem Solving with Computers I",
+        grade: "B",
+      },
+      priorCourseworkFixtures.elsewhere,
+    ]);
+  });
+
   test("Delete removes just that row", async () => {
     const onChange = renderSection({
       courses: priorCourseworkFixtures.threeCourses,

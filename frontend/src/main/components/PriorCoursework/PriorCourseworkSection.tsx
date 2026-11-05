@@ -7,7 +7,9 @@ import RequiredField from "main/components/Common/RequiredField";
 import {
   COURSEWORK_INSTRUCTIONS,
   MIN_COURSES,
+  replaceCourse,
   tooFewCoursesMessage,
+  upsertCourses,
   type PriorCourse,
 } from "main/utils/priorCoursework";
 
@@ -45,11 +47,11 @@ export default function PriorCourseworkSection({
   const minimum = MIN_COURSES[type];
 
   const save = (course: PriorCourse) => {
-    if (editing === -1) {
-      onChange([...list, course]);
-    } else {
-      onChange(list.map((row, index) => (index === editing ? course : row)));
-    }
+    onChange(
+      editing === -1
+        ? upsertCourses(list, [course])
+        : replaceCourse(list, editing as number, course),
+    );
     setEditing(null);
   };
 
@@ -117,7 +119,7 @@ export default function PriorCourseworkSection({
           show
           subjectArea={subjectArea}
           onAdd={(added) => {
-            onChange([...list, ...added]);
+            onChange(upsertCourses(list, added));
             setBulkOpen(false);
           }}
           onCancel={() => setBulkOpen(false)}
