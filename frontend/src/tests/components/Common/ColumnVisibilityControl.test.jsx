@@ -77,28 +77,68 @@ describe("ColumnVisibilityControl tests", () => {
     expect(screen.getByLabelText("Status")).toBeVisible();
   });
 
-  test("Show all columns shows every hidden column, and is disabled when none is hidden", async () => {
+  test("Select All shows every hidden column", async () => {
     const onToggle = renderControl(["room", "status"]);
     await userEvent.click(screen.getByTestId("Cols-toggle"));
 
-    const showAll = screen.getByTestId("Cols-show-all");
-    expect(showAll).toHaveTextContent("Show all columns");
-    expect(showAll).not.toHaveClass("disabled");
-    await userEvent.click(showAll);
+    const selectAll = screen.getByTestId("Cols-select-all");
+    expect(selectAll).toHaveTextContent("Select All");
+    expect(selectAll).not.toHaveClass("disabled");
+    await userEvent.click(selectAll);
     expect(onToggle.mock.calls).toEqual([
       ["room", false],
       ["status", false],
     ]);
   });
 
-  test("Show all columns is disabled when nothing is hidden", async () => {
+  test("Select All is disabled when nothing is hidden", async () => {
     const onToggle = renderControl([]);
     await userEvent.click(screen.getByTestId("Cols-toggle"));
 
-    const showAll = screen.getByTestId("Cols-show-all");
-    expect(showAll).toHaveClass("disabled");
-    expect(showAll).toHaveAttribute("aria-disabled", "true");
-    await userEvent.click(showAll);
+    const selectAll = screen.getByTestId("Cols-select-all");
+    expect(selectAll).toHaveClass("disabled");
+    expect(selectAll).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(selectAll);
     expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  test("Select None hides every shown column, and leaves hidden ones alone", async () => {
+    const onToggle = renderControl(["room", "somethingElse"]);
+    await userEvent.click(screen.getByTestId("Cols-toggle"));
+
+    const selectNone = screen.getByTestId("Cols-select-none");
+    expect(selectNone).toHaveTextContent("Select None");
+    expect(selectNone).not.toHaveClass("disabled");
+    await userEvent.click(selectNone);
+    expect(onToggle.mock.calls).toEqual([
+      ["section", true],
+      ["status", true],
+    ]);
+  });
+
+  test("Select None is disabled when every column is already hidden", async () => {
+    const onToggle = renderControl(["section", "room", "status"]);
+    await userEvent.click(screen.getByTestId("Cols-toggle"));
+
+    const selectNone = screen.getByTestId("Cols-select-none");
+    expect(selectNone).toHaveClass("disabled");
+    expect(selectNone).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(selectNone);
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  test("Select All and Select None come before the checkboxes and are keyboard operable", async () => {
+    const onToggle = renderControl(["room"]);
+    await userEvent.click(screen.getByTestId("Cols-toggle"));
+
+    const selectAll = screen.getByTestId("Cols-select-all");
+    const first = screen.getByLabelText("Section");
+    expect(
+      selectAll.compareDocumentPosition(first) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    selectAll.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(onToggle).toHaveBeenCalledWith("room", false);
   });
 });

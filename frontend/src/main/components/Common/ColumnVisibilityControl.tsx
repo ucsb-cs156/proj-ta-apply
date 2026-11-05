@@ -13,7 +13,8 @@ type ColumnVisibilityControlProps = {
 
 /**
  * A "Columns" menu of checkboxes, one per hideable column (issue #185): unticking hides the column
- * and ticking brings it back, and "Show all columns" brings every one back at once. The menu stays
+ * and ticking brings it back. "Select All" shows every column at once and "Select None" hides them
+ * all (the columns outside the menu, such as ids and action links, always stay). The menu stays
  * open while boxes are ticked, so several can be changed in one visit.
  */
 export default function ColumnVisibilityControl({
@@ -23,6 +24,7 @@ export default function ColumnVisibilityControl({
   testIdPrefix = "ColumnVisibilityControl",
 }: ColumnVisibilityControlProps): React.JSX.Element {
   const hiddenHere = choices.filter((choice) => hidden.includes(choice.id));
+  const shownHere = choices.filter((choice) => !hidden.includes(choice.id));
   return (
     <Dropdown autoClose="outside" data-testid={testIdPrefix}>
       <Dropdown.Toggle
@@ -35,6 +37,27 @@ export default function ColumnVisibilityControl({
         {hiddenHere.length > 0 && ` (${hiddenHere.length} hidden)`}
       </Dropdown.Toggle>
       <Dropdown.Menu>
+        <Dropdown.Item
+          as="button"
+          disabled={hiddenHere.length === 0}
+          onClick={() =>
+            hiddenHere.forEach((choice) => onToggle(choice.id, false))
+          }
+          data-testid={`${testIdPrefix}-select-all`}
+        >
+          Select All
+        </Dropdown.Item>
+        <Dropdown.Item
+          as="button"
+          disabled={shownHere.length === 0}
+          onClick={() =>
+            shownHere.forEach((choice) => onToggle(choice.id, true))
+          }
+          data-testid={`${testIdPrefix}-select-none`}
+        >
+          Select None
+        </Dropdown.Item>
+        <Dropdown.Divider />
         {choices.map((choice) => (
           <Dropdown.ItemText key={choice.id}>
             <Form.Check
@@ -47,17 +70,6 @@ export default function ColumnVisibilityControl({
             />
           </Dropdown.ItemText>
         ))}
-        <Dropdown.Divider />
-        <Dropdown.Item
-          as="button"
-          disabled={hiddenHere.length === 0}
-          onClick={() =>
-            hiddenHere.forEach((choice) => onToggle(choice.id, false))
-          }
-          data-testid={`${testIdPrefix}-show-all`}
-        >
-          Show all columns
-        </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
   );

@@ -318,9 +318,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
           The table can be trimmed to what you need: the{" "}
           <strong>Columns</strong> menu above it lists every column but the
           course number, and unticking one hides it, heading, cells and totals
-          alike, until you tick it again or choose <em>Show all columns</em>.
-          The choice is kept for that recruitment, so it is the same on your
-          next visit and for the other admins. The{" "}
+          alike, until you tick it again. <em>Select All</em> and{" "}
+          <em>Select None</em> at the top of the menu show or hide every column
+          at once. The choice is kept for that recruitment, so it is the same on
+          your next visit and for the other admins. The{" "}
           <strong>Summer Session</strong> column appears only for a summer
           quarter. Headings are centred, numbers are right-aligned, and sorting
           by course number follows the padded course id exactly as it is shown,
@@ -581,11 +582,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
               The table shows the id, View, Edit and Name first, then Submitted
               and the other answers, and takes only the width it needs. Every
               column but the first four can be hidden or shown from the{" "}
-              <strong>Columns</strong> menu above it, which lists every answer
-              on the form for that recruitment&apos;s type (TA or ULA); the
-              columns the table has always had start shown and the rest start
-              hidden, and the choice is kept for that recruitment, for all
-              admins.
+              <strong>Columns</strong> menu above it (use <em>Select All</em> or{" "}
+              <em>Select None</em> at its top to show or hide them all), which
+              lists every answer on the form for that recruitment&apos;s type
+              (TA or ULA); the columns the table has always had start shown and
+              the rest start hidden, and the choice is kept for that
+              recruitment, for all admins.
             </span>
           </li>
           <li>

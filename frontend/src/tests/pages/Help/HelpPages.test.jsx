@@ -1484,7 +1484,7 @@ describe("Help pages (issue #140)", () => {
     const columns = screen.getByTestId("HelpAdminsPage-course-columns");
     expect(columns.id).toBe("course-columns");
     expect(columns).toHaveTextContent(
-      "the Columns menu above it lists every column but the course number, and unticking one hides it, heading, cells and totals alike, until you tick it again or choose Show all columns.",
+      "the Columns menu above it lists every column but the course number, and unticking one hides it, heading, cells and totals alike, until you tick it again. Select All and Select None at the top of the menu show or hide every column at once.",
     );
     expect(columns).toHaveTextContent(
       "sorting by course number follows the padded course id exactly as it is shown, so CMPSC 5A comes before CMPSC 130A.",
