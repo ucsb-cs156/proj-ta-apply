@@ -39,3 +39,13 @@ The workflow here is: branch from `main`, open the PR against `main`, and merge
 PRs in order from oldest to newest. If a PR depends on an earlier unmerged PR,
 its diff will show the earlier commits too; say so in the description and let
 the reviewer merge in order. Before `gh pr create`, confirm `--base main`.
+
+## Link PR and issue numbers in chat replies
+
+When a reply to the user (in the chat, not in a PR or issue body) names a pull
+request or issue, write the number as a markdown hyperlink to GitHub, for
+example `[#336](https://github.com/ucsb-cs156/proj-ta-apply/pull/336)` or
+`[#313](https://github.com/ucsb-cs156/proj-ta-apply/issues/313)`, not as a bare
+`#336`. The user reads these replies to decide what to review, accept and
+merge. PR and issue bodies on GitHub can keep plain `#123`, which GitHub links
+by itself.
