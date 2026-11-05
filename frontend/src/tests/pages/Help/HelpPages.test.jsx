@@ -1688,6 +1688,13 @@ describe("Help pages (issue #140)", () => {
         .querySelectorAll("li"),
     ].map((li) => li.textContent);
     expect(items[3]).toMatch(/See the Instructions for preparing your video\./);
+    // Issue #332: the double major hint, next to where the major is described.
+    expect(items[1]).toMatch(/If you are a double major/);
+    expect(
+      screen.getByTestId("HelpUlaApplicantsPage-double-major"),
+    ).toHaveTextContent(
+      'If you are a double major, select "Other" under Major and enter both majors in the field that appears.',
+    );
   });
 
   /** Issue #153: every field on one admin-only page, each shown with a sample value. */

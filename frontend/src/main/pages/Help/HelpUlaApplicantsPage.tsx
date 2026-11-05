@@ -47,7 +47,11 @@ export default function HelpUlaApplicantsPage(): React.JSX.Element {
             graduation date. You must still be an undergraduate in the quarter
             you are applying for. If you are applying during your first quarter
             at UCSB and do not yet have a GPA, you can check the box under the
-            two GPA fields instead of entering them.
+            two GPA fields instead of entering them.{" "}
+            <span data-testid="HelpUlaApplicantsPage-double-major">
+              If you are a double major, select "Other" under Major and enter
+              both majors in the field that appears.
+            </span>
           </li>
           <li>Whether you have served as a ULA before, and how many times.</li>
           <li>

@@ -63,6 +63,9 @@ export const PERM_NUMBER_HINT =
 export const GRADUATION_NOTE =
   "Your best guess of the earliest quarter you could graduate; it does not have to be exact. If you will graduate before the quarter you are applying for, you are not eligible to serve as a ULA in it.";
 
+export const DOUBLE_MAJOR_HINT =
+  'If you are a double major, select "Other" and enter both majors in the field that appears.';
+
 export const BS_MS_QUESTION =
   "Have you been accepted to, or are you considering applying to, a BS/MS degree program at UCSB?";
 
