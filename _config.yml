@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/300-courses-ux","number":350,"title":"Courses page UX: columns, instructor view and links (closes #300)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/350"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/343-show-courses-actions","number":349,"title":"Columns menu: Show All/None rename; Show All Courses and Show Only Incomplete Courses on Assignments page","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/349"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/300-courses-ux","number":350,"title":"Courses page UX: columns, instructor view and links (closes #300)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/350"}]
