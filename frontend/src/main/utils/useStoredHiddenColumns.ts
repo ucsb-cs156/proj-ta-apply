@@ -44,7 +44,7 @@ export function useStoredHiddenColumns(
 
   return {
     hiddenColumns: stored ?? defaultHidden,
-    // A function update, since "Select All" and "Select None" toggle one column after another
+    // A function update, since "Show All" and "Show None" toggle one column after another
     // within the same event.
     toggleColumn: (columnId, hidden) =>
       setStored((previous) => {

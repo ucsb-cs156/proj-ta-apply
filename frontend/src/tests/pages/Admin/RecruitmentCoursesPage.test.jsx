@@ -1302,7 +1302,7 @@ describe("RecruitmentCoursesPage tests", () => {
     ).toBeInTheDocument();
   });
 
-  test("Select All and Select None store the whole change", async () => {
+  test("Show All and Show None store the whole change", async () => {
     localStorage.clear();
     renderPage();
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");

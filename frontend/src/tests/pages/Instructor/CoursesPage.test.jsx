@@ -140,6 +140,18 @@ describe("CoursesPage (instructors) tests", () => {
         screen.getByTestId(`CoursesPage-columns-${id}`),
       ).toBeInTheDocument();
     }
+    // The menu is Show All and Show None plus the checkboxes: the course actions are the
+    // Assignments page's alone.
+    expect(
+      screen.getByTestId("CoursesPage-columns-select-all"),
+    ).toHaveTextContent("Show All");
+    expect(
+      screen.getByTestId("CoursesPage-columns-select-none"),
+    ).toHaveTextContent("Show None");
+    expect(
+      screen.queryByTestId("CoursesPage-columns-show-all-courses"),
+    ).toBeNull();
+    expect(screen.queryByText("Show Only Incomplete Courses")).toBeNull();
     // Not hidden by the user's own list either: showing every column brings back only the offered.
     fireEvent.click(screen.getByTestId("CoursesPage-columns-select-all"));
     await screen.findByTestId("CoursesPage-header-section");
