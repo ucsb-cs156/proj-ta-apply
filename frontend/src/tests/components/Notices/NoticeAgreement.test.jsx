@@ -1,31 +1,50 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
+import { MemoryRouter } from "react-router";
 
 import NoticeAgreement from "main/components/Notices/NoticeAgreement";
+import { noticesHelpPath } from "main/utils/notices";
 import noticesFixtures from "fixtures/noticesFixtures";
 
 describe("NoticeAgreement tests", () => {
   test("renders nothing at all without a notice", () => {
     const { container } = render(
-      <NoticeAgreement notice={null} agreed={false} onChange={vi.fn()} />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={null}
+          agreed={false}
+          onChange={vi.fn()}
+        />
+      </MemoryRouter>,
     );
     expect(container).toBeEmptyDOMElement();
 
     const { container: c2 } = render(
-      <NoticeAgreement notice={undefined} agreed={false} onChange={vi.fn()} />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={undefined}
+          agreed={false}
+          onChange={vi.fn()}
+        />
+      </MemoryRouter>,
     );
     expect(c2).toBeEmptyDOMElement();
   });
 
   test("shows the text as rendered Markdown, the version, and the required box", () => {
     render(
-      <NoticeAgreement
-        notice={noticesFixtures.taV2}
-        agreed={false}
-        onChange={vi.fn()}
-        testIdPrefix="N"
-      />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={noticesFixtures.taV2}
+          agreed={false}
+          onChange={vi.fn()}
+          testIdPrefix="N"
+        />
+      </MemoryRouter>,
     );
 
     expect(screen.getByTestId("N")).toHaveClass("card");
@@ -56,12 +75,15 @@ describe("NoticeAgreement tests", () => {
 
   test("GitHub-flavoured Markdown such as strikethrough renders, via remark-gfm", () => {
     render(
-      <NoticeAgreement
-        notice={noticesFixtures.taV1}
-        agreed={false}
-        onChange={vi.fn()}
-        testIdPrefix="G"
-      />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={noticesFixtures.taV1}
+          agreed={false}
+          onChange={vi.fn()}
+          testIdPrefix="G"
+        />
+      </MemoryRouter>,
     );
     expect(
       screen.getByTestId("G-content").querySelector("del"),
@@ -71,12 +93,15 @@ describe("NoticeAgreement tests", () => {
   test("ticking and unticking report through onChange", async () => {
     const onChange = vi.fn();
     render(
-      <NoticeAgreement
-        notice={noticesFixtures.taV1}
-        agreed={false}
-        onChange={onChange}
-        testIdPrefix="N"
-      />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={noticesFixtures.taV1}
+          agreed={false}
+          onChange={onChange}
+          testIdPrefix="N"
+        />
+      </MemoryRouter>,
     );
 
     await userEvent.click(screen.getByTestId("N-agree"));
@@ -86,12 +111,15 @@ describe("NoticeAgreement tests", () => {
   test("a ticked box reports unticking", async () => {
     const onChange = vi.fn();
     render(
-      <NoticeAgreement
-        notice={noticesFixtures.taV1}
-        agreed={true}
-        onChange={onChange}
-        testIdPrefix="N"
-      />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={noticesFixtures.taV1}
+          agreed={true}
+          onChange={onChange}
+          testIdPrefix="N"
+        />
+      </MemoryRouter>,
     );
 
     expect(screen.getByTestId("N-agree")).toBeChecked();
@@ -101,13 +129,16 @@ describe("NoticeAgreement tests", () => {
 
   test("invalid shows the complaint", () => {
     render(
-      <NoticeAgreement
-        notice={noticesFixtures.taV1}
-        agreed={false}
-        onChange={vi.fn()}
-        invalid
-        testIdPrefix="N"
-      />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={noticesFixtures.taV1}
+          agreed={false}
+          onChange={vi.fn()}
+          invalid
+          testIdPrefix="N"
+        />
+      </MemoryRouter>,
     );
 
     expect(screen.getByTestId("N-agree")).toHaveClass("is-invalid");
@@ -120,13 +151,16 @@ describe("NoticeAgreement tests", () => {
 
   test("read-only shows the box ticked and disabled", () => {
     render(
-      <NoticeAgreement
-        notice={noticesFixtures.taV1}
-        agreed={true}
-        onChange={vi.fn()}
-        readOnly
-        testIdPrefix="N"
-      />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={noticesFixtures.taV1}
+          agreed={true}
+          onChange={vi.fn()}
+          readOnly
+          testIdPrefix="N"
+        />
+      </MemoryRouter>,
     );
 
     const box = screen.getByTestId("N-agree");
@@ -142,12 +176,15 @@ describe("NoticeAgreement tests", () => {
         "Apply for **${quarter}** by ${primaryConsiderationDate}. Not ${other}.",
     };
     const { rerender } = render(
-      <NoticeAgreement
-        notice={notice}
-        agreed={false}
-        onChange={() => {}}
-        fillIn={{ quarter: "20261", primaryConsiderationDate: "2026-01-20" }}
-      />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={notice}
+          agreed={false}
+          onChange={() => {}}
+          fillIn={{ quarter: "20261", primaryConsiderationDate: "2026-01-20" }}
+        />
+      </MemoryRouter>,
     );
     const content = screen.getByTestId("NoticeAgreement-content");
     expect(content).toHaveTextContent(
@@ -156,7 +193,14 @@ describe("NoticeAgreement tests", () => {
     expect(content.querySelector("strong")).toHaveTextContent("Winter 2026");
 
     rerender(
-      <NoticeAgreement notice={notice} agreed={false} onChange={() => {}} />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={notice}
+          agreed={false}
+          onChange={() => {}}
+        />
+      </MemoryRouter>,
     );
     expect(screen.getByTestId("NoticeAgreement-content")).toHaveTextContent(
       "Apply for ${quarter} by ${primaryConsiderationDate}. Not ${other}.",
@@ -165,12 +209,61 @@ describe("NoticeAgreement tests", () => {
 
   test("uses NoticeAgreement as the default test id prefix", () => {
     render(
-      <NoticeAgreement
-        notice={noticesFixtures.taV1}
-        agreed={false}
-        onChange={vi.fn()}
-      />,
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={noticesFixtures.taV1}
+          agreed={false}
+          onChange={vi.fn()}
+        />
+      </MemoryRouter>,
     );
     expect(screen.getByTestId("NoticeAgreement-agree")).toBeInTheDocument();
+  });
+
+  test("the version line is flush right and links to the Help section for the kind of application (issue #325)", () => {
+    render(
+      <MemoryRouter>
+        <NoticeAgreement
+          type="TA"
+          notice={noticesFixtures.taV2}
+          agreed={false}
+          onChange={vi.fn()}
+          testIdPrefix="N"
+        />
+      </MemoryRouter>,
+    );
+    const line = screen.getByTestId("N-version");
+    expect(line).toHaveClass("text-end");
+    expect(line).toHaveTextContent(
+      "Version 2, saved 2/3/2026, 4:05:06 AM (what is this?)",
+    );
+    const link = screen.getByRole("link", { name: "what is this?" });
+    expect(link).toHaveAttribute(
+      "href",
+      "/help/ta-applicants#notices-terms-and-conditions",
+    );
+    expect(link).not.toHaveAttribute("target");
+    expect(screen.getByTestId("N-version-help")).toBe(link);
+  });
+
+  test("a ULA application links to the ULA Help page", () => {
+    render(
+      <MemoryRouter>
+        <NoticeAgreement
+          type="ULA"
+          notice={noticesFixtures.ulaV1}
+          agreed={false}
+          onChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("link", { name: "what is this?" })).toHaveAttribute(
+      "href",
+      "/help/ula-applicants#notices-terms-and-conditions",
+    );
+    expect(noticesHelpPath("TA")).toBe(
+      "/help/ta-applicants#notices-terms-and-conditions",
+    );
   });
 });

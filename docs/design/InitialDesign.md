@@ -644,3 +644,14 @@ M26; issue #305).
 * The Term column sorts by YYYYQ (S26 is 20262, via `qyyToYyyyq`); a term not in the standard form
   has key 0 and sorts as oldest.
 
+
+# Version line on the notices (issue #325)
+
+The version line under the **Notices, Terms and Conditions** text ("Version 5, saved 10/31/2026,
+1:43:05 PM") is now flush right and ends with a link, **(what is this?)**, to the new **Notices,
+Terms and Conditions** section (`#notices-terms-and-conditions`) of the Help page for that kind of
+application, `/help/ta-applicants` or `/help/ula-applicants`. The section explains that the version
+number, date and time identify which text the applicant agreed to. `NoticeAgreement` takes the
+application `type` for this; it is used by the application form and by the read-only summary, so the
+link appears on the apply and edit pages, the application view, and the admin test-application and
+application pages. The two Help pages scroll to the section when opened with the hash.

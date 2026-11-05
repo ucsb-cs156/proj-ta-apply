@@ -1896,4 +1896,49 @@ describe("Help pages (issue #140)", () => {
       /Start a new application.*the same email address can appear twice.*Only the live one is counted, ranked and assigned.*counts once/,
     );
   });
+
+  test.each([
+    ["TA", "Ta", HelpTaApplicantsPage],
+    ["ULA", "Ula", HelpUlaApplicantsPage],
+  ])(
+    "the %s applicants page explains the notices' version, and a hash scrolls to it (issue #325)",
+    async (kind, camel, Page) => {
+      const scrollIntoView = vi.fn();
+      window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+      renderPage(<Page />, [
+        `/help/${kind.toLowerCase()}-applicants#notices-terms-and-conditions`,
+      ]);
+      const heading = await screen.findByRole("heading", {
+        name: "Notices, Terms and Conditions",
+      });
+      expect(heading).toHaveAttribute("id", "notices-terms-and-conditions");
+      expect(screen.getByTestId(`Help${camel}ApplicantsPage-notices`)).toBe(
+        heading,
+      );
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+      expect(scrollIntoView.mock.instances[0]).toBe(heading);
+      expect(
+        screen.getByText(
+          new RegExp(`When you apply to be a ${kind}, there are`),
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/we record which specific version you agreed to/),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/will always be the same for this particular round/),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/please contact the CS department/),
+      ).toBeInTheDocument();
+    },
+  );
+
+  test("the applicants pages scroll nowhere without a hash", async () => {
+    const scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    renderPage(<HelpTaApplicantsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For TA Applicants" });
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
 });

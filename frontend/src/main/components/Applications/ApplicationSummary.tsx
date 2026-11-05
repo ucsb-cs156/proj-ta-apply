@@ -275,6 +275,7 @@ export default function ApplicationSummary({
         agreed={application.noticeVersionId === notice?.id}
         onChange={() => {}}
         readOnly
+        type={type}
         testIdPrefix={`${testIdPrefix}-notice`}
       />
       <dl className="row" data-testid={testIdPrefix}>
