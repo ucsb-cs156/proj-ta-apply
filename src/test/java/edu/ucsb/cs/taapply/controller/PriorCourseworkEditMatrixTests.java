@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -78,6 +79,19 @@ public class PriorCourseworkEditMatrixTests extends ControllerTestCase {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired DraftApplicationRepository draftApplicationRepository;
   @Autowired AuditTrailRepository auditTrailRepository;
+
+  /**
+   * The database is shared with the other tests of the run (some of which expect empty tables), so
+   * everything this class commits is deleted again, children first.
+   */
+  @AfterEach
+  void deleteWhatWasCreated() {
+    auditTrailRepository.deleteAll();
+    draftApplicationRepository.deleteAll();
+    applicationRepository.deleteAll();
+    recruitmentRepository.deleteAll();
+    noticeVersionRepository.deleteAll();
+  }
 
   enum Path {
     NEW_DRAFT,
