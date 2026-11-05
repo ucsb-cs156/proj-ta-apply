@@ -85,6 +85,7 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
   );
   useDeveloperModeFooterControls(fakeApplicationsControls);
 
+  const columnChoices = applicationColumnChoices(recruitment?.type ?? "TA");
   // Issue #189: which columns the admin has hidden, kept on the backend; see the shared code.
   const { hiddenColumns, toggleColumn } = useHiddenApplicationColumns(
     recruitmentId,
@@ -153,7 +154,7 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
 
         <div className="mb-2">
           <ColumnVisibilityControl
-            choices={applicationColumnChoices(recruitment?.type ?? "TA")}
+            choices={columnChoices}
             hidden={hiddenColumns}
             onToggle={toggleColumn}
             testIdPrefix="RecruitmentApplicationsPage-columns"
@@ -163,6 +164,10 @@ export default function RecruitmentApplicationsPage(): React.JSX.Element {
           applications={applicationList}
           type={recruitment?.type ?? "TA"}
           hiddenColumns={hiddenColumns}
+          hideLinks={{
+            choices: columnChoices,
+            onHide: (columnId) => toggleColumn(columnId, true),
+          }}
           testIdPrefix="RecruitmentApplicationsPage-applications"
         />
 

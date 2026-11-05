@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import OurTable from "main/components/Common/OurTable";
+import OurTable, { type HideLinks } from "main/components/Common/OurTable";
 import { useBackendMutation } from "main/utils/useBackend";
 import {
   allocationDelta,
@@ -233,6 +233,8 @@ type RecruitmentCourseTableProps = {
   quarter?: string | null;
   /** Column ids the admin has hidden (issue #185); see {@link columnChoices}. */
   hiddenColumns?: string[];
+  /** The "hide" links over the hideable columns' headings (issue #314). */
+  hideLinks?: HideLinks;
   testIdPrefix?: string;
   /**
    * The view-only page (issue #278): the figures are text, there is no Remove button, and nothing
@@ -255,6 +257,7 @@ export default function RecruitmentCourseTable({
   quarter = null,
   // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
   hiddenColumns = [],
+  hideLinks,
   testIdPrefix = "RecruitmentCourseTable",
   readOnly = false,
   requestHeaders,
@@ -763,6 +766,7 @@ export default function RecruitmentCourseTable({
       columnVisibility={Object.fromEntries(
         hiddenColumns.map((id) => [id, false]),
       )}
+      hideLinks={hideLinks}
     />
   );
 }

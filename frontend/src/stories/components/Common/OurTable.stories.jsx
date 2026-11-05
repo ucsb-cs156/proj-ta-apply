@@ -57,3 +57,18 @@ PlaceholderExample.args = {
   columns: ourTableFixtures.placeholderExample.columns,
   data: ourTableFixtures.placeholderExample.data,
 };
+
+/** A small "hide" link in the top right of each listed column's heading (issue #314). */
+export const WithHideLinks = Template.bind({});
+
+WithHideLinks.args = {
+  columns: ourTableFixtures.simpleExample.columns,
+  data: ourTableFixtures.simpleExample.data,
+  hideLinks: {
+    choices: ourTableFixtures.simpleExample.columns.map((column) => ({
+      id: column.accessor ?? column.accessorKey ?? column.id,
+      label: column.Header ?? column.header,
+    })),
+    onHide: () => {},
+  },
+};

@@ -8,7 +8,9 @@ import { apiCurrentUserFixtures } from "fixtures/currentUserFixtures";
 import { systemInfoFixtures } from "fixtures/systemInfoFixtures";
 
 /** The requests the page makes; `after` is what any change to a dropdown comes back with. */
-const handlers = (page, after, others) => [
+const handlers = (page, after, others, hidden = []) => [
+  http.get("/api/admin/hiddencolumns", () => HttpResponse.json(hidden)),
+  http.put("/api/admin/hiddencolumns", () => HttpResponse.json(hidden)),
   http.get("/api/currentUser", () =>
     HttpResponse.json(apiCurrentUserFixtures.adminUser),
   ),
@@ -89,6 +91,19 @@ AnotherAdminHasItOpen.parameters = {
           admin: true,
         },
       ],
+    ),
+  },
+};
+
+/** Two applicant columns and a lecture hidden: the Columns button counts them, each can be shown again. */
+export const SomeColumnsHidden = Template.bind({});
+SomeColumnsHidden.parameters = {
+  msw: {
+    handlers: handlers(
+      assignmentsFixtures.taPage,
+      assignmentsFixtures.taPageAfterMove,
+      [],
+      ["major", "classLevel", "course-20"],
     ),
   },
 };

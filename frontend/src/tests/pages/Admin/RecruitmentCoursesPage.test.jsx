@@ -1696,4 +1696,34 @@ describe("RecruitmentCoursesPage tests", () => {
         .compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
+
+  test("the hide link over a column hides it like the Columns menu (issue #314)", async () => {
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, ["room"]);
+    renderPage();
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-header-courseId-hide"),
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Hide Room column" }),
+    );
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter(
+          (r) => r.url === "/api/admin/hiddencolumns",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find((r) => r.url === "/api/admin/hiddencolumns")
+        .params,
+    ).toEqual({
+      tableKey: "recruitmentCourses",
+      recruitmentId: "7",
+      columnId: "room",
+      hidden: true,
+    });
+  });
 });

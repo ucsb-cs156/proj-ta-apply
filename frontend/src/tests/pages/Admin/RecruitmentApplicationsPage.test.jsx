@@ -671,4 +671,35 @@ describe("RecruitmentApplicationsPage tests", () => {
       screen.getByTestId("RecruitmentApplicationsPage-audit-page-indicator"),
     ).toHaveTextContent("Page 1 of 1");
   });
+
+  test("the hide link over a column hides it like the menu, and the id and name columns have none (issue #314)", async () => {
+    renderPage(1);
+    await screen.findByTestId(
+      "RecruitmentApplicationsPage-applications-cell-row-0-col-id-link",
+    );
+    expect(
+      screen.queryByTestId(
+        "RecruitmentApplicationsPage-applications-header-id-hide",
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId(
+        "RecruitmentApplicationsPage-applications-header-name-hide",
+      ),
+    ).toBeNull();
+
+    await userEvent.click(
+      screen.getByTestId(
+        "RecruitmentApplicationsPage-applications-header-major-hide",
+      ),
+    );
+
+    await waitFor(() => expect(togglePuts()).toHaveLength(1));
+    expect(togglePuts()[0].params).toEqual({
+      tableKey: "recruitmentApplications",
+      recruitmentId: "1",
+      columnId: "major",
+      hidden: true,
+    });
+  });
 });

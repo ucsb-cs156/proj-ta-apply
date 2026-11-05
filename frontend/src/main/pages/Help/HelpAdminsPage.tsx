@@ -89,6 +89,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>Left</strong>, in red when more have been assigned than
           allocated; those numbers stay put when you sort.
         </p>
+        <p data-testid="HelpAdminsPage-assignment-columns">
+          The <strong>Columns</strong> menu above the table hides and shows
+          columns while you work: any of the applicant&apos;s fields or any
+          lecture (<em>Select All</em> and <em>Select None</em> do them all at
+          once). Each of those columns also has a small <strong>hide</strong>{" "}
+          link at the top right of its heading, for dropping a column you do not
+          need with one click while you assign; tick it in the menu to bring it
+          back. <strong>Tentative Assignment</strong> is always shown, and is
+          wide enough for a full lecture name. The choice is kept for that
+          recruitment, the same way as on the Courses and Applications pages.
+        </p>
         <p data-testid="HelpAdminsPage-interest-cells">
           Each lecture&apos;s ranking cell is right-aligned and coloured by the
           applicant&apos;s own interest in that lecture: light green for a first
@@ -320,15 +331,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
           course number, and unticking one hides it, heading, cells and totals
           alike, until you tick it again. <em>Select All</em> and{" "}
           <em>Select None</em> at the top of the menu show or hide every column
-          at once. The choice is kept for that recruitment, so it is the same on
-          your next visit and for the other admins. The{" "}
-          <strong>Summer Session</strong> column appears only for a summer
-          quarter. Headings are centred, numbers are right-aligned, and sorting
-          by course number follows the padded course id exactly as it is shown,
-          so CMPSC 5A comes before CMPSC 130A. In the <strong>Email</strong>{" "}
-          column, the copy icon copies one address and <em>Not mapped</em> opens
-          the Instructors page in a new tab, where the catalog name can be given
-          an email.
+          at once. Each of those columns also has a small <strong>hide</strong>{" "}
+          link at the top right of its heading: one click hides that column
+          without opening the menu, exactly as unticking it there does. The
+          choice is kept for that recruitment, so it is the same on your next
+          visit and for the other admins. The <strong>Summer Session</strong>{" "}
+          column appears only for a summer quarter. Headings are centred,
+          numbers are right-aligned, and sorting by course number follows the
+          padded course id exactly as it is shown, so CMPSC 5A comes before
+          CMPSC 130A. In the <strong>Email</strong> column, the copy icon copies
+          one address and <em>Not mapped</em> opens the Instructors page in a
+          new tab, where the catalog name can be given an email.
         </p>
         <p id="hiring-target" data-testid="HelpAdminsPage-hiring-target">
           The top of that page is where the hiring is planned. Enter the{" "}
@@ -583,11 +596,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
               and the other answers, and takes only the width it needs. Every
               column but the first four can be hidden or shown from the{" "}
               <strong>Columns</strong> menu above it (use <em>Select All</em> or{" "}
-              <em>Select None</em> at its top to show or hide them all), which
-              lists every answer on the form for that recruitment&apos;s type
-              (TA or ULA); the columns the table has always had start shown and
-              the rest start hidden, and the choice is kept for that
-              recruitment, for all admins.
+              <em>Select None</em> at its top to show or hide them all, or click
+              the small <strong>hide</strong> link at the top right of a
+              column&apos;s heading), which lists every answer on the form for
+              that recruitment&apos;s type (TA or ULA); the columns the table
+              has always had start shown and the rest start hidden, and the
+              choice is kept for that recruitment, for all admins.
             </span>
           </li>
           <li>

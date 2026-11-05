@@ -90,6 +90,8 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     axiosMock
       .onGet("/api/admin/assignments/cancelled")
       .reply(200, cancelledApplicationsFixtures.two);
+    axiosMock.onGet("/api/admin/hiddencolumns").reply(200, []);
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, []);
   });
 
   test("heads the page with the recruitment, explains it, and asks for the recruitment's assignments", async () => {
@@ -559,5 +561,114 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
       "/api/admin/assignments/leave?recruitmentId=7",
     );
     vi.unstubAllGlobals();
+  });
+
+  // ---- Issue #314: hiding and showing columns ----
+
+  const hiddenColumnGets = () =>
+    axiosMock.history.get.filter((r) => r.url === "/api/admin/hiddencolumns");
+  const hiddenColumnPuts = () =>
+    axiosMock.history.put.filter((r) => r.url === "/api/admin/hiddencolumns");
+
+  test("asks the backend which columns are hidden and leaves them out of the table", async () => {
+    axiosMock
+      .onGet("/api/admin/hiddencolumns")
+      .reply(200, ["major", "course-20"]);
+    renderPage();
+
+    await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-col-email",
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("AdminAssignmentsPage-table-header-major"),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByTestId("AdminAssignmentsPage-table-header-course-20"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-table-header-course-10"),
+    ).toBeInTheDocument();
+    expect(hiddenColumnGets()).toHaveLength(1);
+    expect(hiddenColumnGets()[0].params).toEqual({
+      tableKey: "recruitmentAssignments",
+      recruitmentId: "7",
+    });
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-columns-toggle"),
+    ).toHaveTextContent("Columns (2 hidden)");
+  });
+
+  test("the Columns menu lists the identity columns and lectures, but not Tentative Assignment", async () => {
+    renderPage();
+    await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-col-email",
+    );
+    await userEvent.click(
+      screen.getByTestId("AdminAssignmentsPage-columns-toggle"),
+    );
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-columns-email"),
+    ).toBeChecked();
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-columns-course-30"),
+    ).toBeChecked();
+    expect(
+      screen.queryByTestId("AdminAssignmentsPage-columns-tentativeAssignment"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("unticking a column hides it on the backend and re-reads the list", async () => {
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, ["major"]);
+    renderPage();
+    await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-col-email",
+    );
+    const getsBefore = hiddenColumnGets().length;
+
+    await userEvent.click(
+      screen.getByTestId("AdminAssignmentsPage-columns-toggle"),
+    );
+    await userEvent.click(
+      screen.getByTestId("AdminAssignmentsPage-columns-major"),
+    );
+
+    await waitFor(() => expect(hiddenColumnPuts()).toHaveLength(1));
+    expect(hiddenColumnPuts()[0].params).toEqual({
+      tableKey: "recruitmentAssignments",
+      recruitmentId: "7",
+      columnId: "major",
+      hidden: true,
+    });
+    await waitFor(() =>
+      expect(hiddenColumnGets().length).toBeGreaterThan(getsBefore),
+    );
+  });
+
+  test("the hide link over a column hides it like unticking it in the menu (issue #314)", async () => {
+    axiosMock.onPut("/api/admin/hiddencolumns").reply(200, ["course-20"]);
+    renderPage();
+    await screen.findByTestId(
+      "AdminAssignmentsPage-table-cell-row-0-col-email",
+    );
+    // The Tentative Assignment column cannot be hidden, so it has no link.
+    expect(
+      screen.queryByTestId(
+        "AdminAssignmentsPage-table-header-tentativeAssignment-hide",
+      ),
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Hide CMPSC 16 (0100) column" }),
+    );
+
+    await waitFor(() => expect(hiddenColumnPuts()).toHaveLength(1));
+    expect(hiddenColumnPuts()[0].params).toEqual({
+      tableKey: "recruitmentAssignments",
+      recruitmentId: "7",
+      columnId: "course-20",
+      hidden: true,
+    });
   });
 });

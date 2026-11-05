@@ -386,4 +386,39 @@ describe("AssignmentsTable tests (issue #179)", () => {
     });
     expect(mark(0, 10)).toHaveAttribute("title", "Applicant's 1st choice");
   });
+
+  test("the Tentative Assignment column is wide enough for a full lecture name (issue #314)", () => {
+    render(
+      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="T" />,
+    );
+    // jsdom's computed style does not know min-width, so the style attribute is read directly.
+    expect(
+      screen.getByTestId("T-header-tentativeAssignment").style.minWidth,
+    ).toBe("20em");
+    expect(
+      screen.getByTestId("T-cell-row-0-col-tentativeAssignment").style.minWidth,
+    ).toBe("20em");
+  });
+
+  test("hidden columns leave out heading and cells and nothing else (issue #314)", () => {
+    render(
+      <AssignmentsTable
+        data={page}
+        onAssign={vi.fn()}
+        hiddenColumns={["major", "course-20"]}
+        testIdPrefix="T"
+      />,
+    );
+    expect(screen.queryByTestId("T-header-major")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("T-cell-row-0-col-major"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("T-header-course-20")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("T-course-20-label")).not.toBeInTheDocument();
+    expect(screen.getByTestId("T-header-email")).toBeInTheDocument();
+    expect(screen.getByTestId("T-header-course-10")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("T-cell-row-0-tentative-select"),
+    ).toBeInTheDocument();
+  });
 });

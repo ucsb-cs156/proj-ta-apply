@@ -189,6 +189,11 @@ export default function RecruitmentCoursesPage({
     [rankingSummaries],
   );
 
+  const courseColumnChoices = columnChoices(
+    showRankings,
+    isSummerQuarter(recruitment?.quarter),
+  );
+
   const copyToClipboard = async (value: string, successMessage: string) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -629,10 +634,7 @@ export default function RecruitmentCoursesPage({
         )}
         <div className="mb-2">
           <ColumnVisibilityControl
-            choices={columnChoices(
-              showRankings,
-              isSummerQuarter(recruitment?.quarter),
-            )}
+            choices={courseColumnChoices}
             hidden={hiddenColumns}
             onToggle={(columnId, hidden) =>
               hideColumnMutation.mutate({ columnId, hidden })
@@ -645,6 +647,11 @@ export default function RecruitmentCoursesPage({
           type={recruitment?.type}
           quarter={recruitment?.quarter}
           hiddenColumns={hiddenColumns}
+          hideLinks={{
+            choices: courseColumnChoices,
+            onHide: (columnId) =>
+              hideColumnMutation.mutate({ columnId, hidden: true }),
+          }}
           rankingSummaries={rankingSummaries ?? []}
           showRankings={showRankings}
           onCopyEmail={(email) =>
