@@ -1,7 +1,8 @@
 import { Badge, Form } from "react-bootstrap";
-import type { Cell } from "@tanstack/react-table";
+import type { Cell, Row } from "@tanstack/react-table";
 import OurTable, { type HideLinks } from "main/components/Common/OurTable";
 import InterestMark from "main/components/Common/InterestMark";
+import { compareByRankThenPreference } from "main/utils/candidateOrder";
 import { interestDisplay } from "main/utils/interestDisplay";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import {
@@ -159,8 +160,8 @@ type AssignmentsTableProps = {
 /**
  * The admin Assignments table (issue #179): the rankings CSV's identity columns, a Tentative
  * Assignment dropdown, then one column per lecture with that lecture's rank for each applicant.
- * Every column sorts; a lecture column keeps the unranked applicants after the ranked ones in
- * either direction.
+ * Every column sorts; a lecture column sorts like the faculty ranking page's default order: the
+ * ranked applicants by rank, then the unranked by the student's preference (issue #345).
  */
 export default function AssignmentsTable({
   data,
@@ -195,12 +196,23 @@ export default function AssignmentsTable({
     ...data.courses.map((course): LegacyColumn => ({
       id: courseColumnId(course.id),
       header: <CourseHeader course={course} testIdPrefix={testIdPrefix} />,
+      // Stryker disable next-line all : the cell and the sortingFn below read the row, not this
       accessorFn: (row: AssignmentRow) => rankFor(row, course),
-      // An unranked applicant sorts after every ranked one, ascending or descending. Rank 1 is
-      // the top choice, so the first click lists the ranked applicants best first, not the
-      // descending order TanStack would give a number column.
-      sortUndefined: "last",
-      sortingFn: "basic",
+      // The faculty ranking page's default order (issue #345): ranked applicants first, rank 1
+      // down, then the unranked by the student's preference. Applicants who tie keep the order
+      // they applied in (rows arrive by application id, and TanStack's sort is stable). The first
+      // click gives that order; the second reverses it.
+      sortingFn: (a: Row<AssignmentRow>, b: Row<AssignmentRow>) =>
+        compareByRankThenPreference(
+          {
+            rank: rankFor(a.original, course),
+            preference: preferenceFor(a.original, course),
+          },
+          {
+            rank: rankFor(b.original, course),
+            preference: preferenceFor(b.original, course),
+          },
+        ),
       sortDescFirst: false,
       cell: CourseRankCell,
       meta: {
