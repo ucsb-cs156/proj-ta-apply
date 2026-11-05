@@ -2,6 +2,7 @@ import { render, waitFor, fireEvent, screen } from "@testing-library/react";
 import OurTable, { ButtonColumn } from "main/components/Common/OurTable";
 import ourTableFixtures from "fixtures/ourTableFixtures";
 import { vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { convertOldStyleColumnsToNewStyle } from "main/components/Common/OurTableUtils";
 
 describe("OurTable tests", () => {
@@ -288,5 +289,66 @@ describe("OurTable tests", () => {
     expect(screen.getByTestId("plain-header-age").style.textAlign).toBe(
       "right",
     );
+  });
+
+  // ---- Issue #314 ----
+
+  test("hideLinks puts a small hide link over each listed column only, and it reports the column", async () => {
+    const onHide = vi.fn();
+    const columns = [
+      { Header: "Id", accessor: "id" },
+      { Header: "Name", accessor: "name" },
+    ];
+    render(
+      <OurTable
+        data={[{ id: 1, name: "Ann" }]}
+        columns={columns}
+        testid="hl"
+        hideLinks={{ choices: [{ id: "name", label: "Full Name" }], onHide }}
+      />,
+    );
+
+    expect(screen.queryByTestId("hl-header-id-hide")).not.toBeInTheDocument();
+    const link = screen.getByRole("button", { name: "Hide Full Name column" });
+    expect(link).toBe(screen.getByTestId("hl-header-name-hide"));
+    expect(link).toHaveTextContent("hide");
+    expect(link.style.position).toBe("absolute");
+    expect(link.style.right).toBe("0.25rem");
+    expect(link.style.fontSize).toBe("0.6rem");
+    expect(screen.getByTestId("hl-header-name").style.position).toBe(
+      "relative",
+    );
+    expect(screen.getByTestId("hl-header-id").style.position).toBe("");
+    // It sits outside the sortable heading, so clicking it only hides.
+    await userEvent.click(link);
+    expect(onHide).toHaveBeenCalledTimes(1);
+    expect(onHide).toHaveBeenCalledWith("name");
+  });
+
+  test("hideLinks keeps centred headings centred", () => {
+    render(
+      <OurTable
+        data={[{ name: "Ann" }]}
+        columns={[{ Header: "Name", accessor: "name" }]}
+        testid="hc"
+        centerHeaders
+        hideLinks={{
+          choices: [{ id: "name", label: "Name" }],
+          onHide: vi.fn(),
+        }}
+      />,
+    );
+    expect(screen.getByTestId("hc-header-name").style.textAlign).toBe("center");
+  });
+
+  test("no hideLinks, no hide links", () => {
+    render(
+      <OurTable
+        data={[{ name: "Ann" }]}
+        columns={[{ Header: "Name", accessor: "name" }]}
+        testid="nh"
+      />,
+    );
+    expect(screen.queryByTestId("nh-header-name-hide")).not.toBeInTheDocument();
   });
 });

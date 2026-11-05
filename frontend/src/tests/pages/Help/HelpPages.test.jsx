@@ -1411,6 +1411,18 @@ describe("Help pages (issue #140)", () => {
     expect(assignments).toHaveTextContent(
       "Assignments on a recruitment card opens a table with the same fields as the rankings CSV",
     );
+    const assignmentColumns = screen.getByTestId(
+      "HelpAdminsPage-assignment-columns",
+    );
+    expect(assignmentColumns).toHaveTextContent(
+      "The Columns menu above the table hides and shows columns while you work",
+    );
+    expect(assignmentColumns).toHaveTextContent(
+      "Each of those columns also has a small hide link at the top right of its heading",
+    );
+    expect(assignmentColumns).toHaveTextContent(
+      "Tentative Assignment is always shown, and is wide enough for a full lecture name.",
+    );
     expect(assignments).toHaveTextContent(
       "sorting by a lecture puts the ranked applicants first (in either direction) and the unranked ones after them.",
     );
@@ -1487,6 +1499,9 @@ describe("Help pages (issue #140)", () => {
       "the Columns menu above it lists every column but the course number, and unticking one hides it, heading, cells and totals alike, until you tick it again. Select All and Select None at the top of the menu show or hide every column at once.",
     );
     expect(columns).toHaveTextContent(
+      "Each of those columns also has a small hide link at the top right of its heading: one click hides that column without opening the menu, exactly as unticking it there does.",
+    );
+    expect(columns).toHaveTextContent(
       "sorting by course number follows the padded course id exactly as it is shown, so CMPSC 5A comes before CMPSC 130A.",
     );
     expect(
@@ -1500,6 +1515,9 @@ describe("Help pages (issue #140)", () => {
     expect(applicationColumns.id).toBe("application-columns");
     expect(applicationColumns).toHaveTextContent(
       "The table shows the id, View, Edit and Name first, then Submitted and the other answers, and takes only the width it needs.",
+    );
+    expect(applicationColumns).toHaveTextContent(
+      "or click the small hide link at the top right of a column's heading",
     );
     expect(applicationColumns).toHaveTextContent(
       "the columns the table has always had start shown and the rest start hidden, and the choice is kept for that recruitment, for all admins.",

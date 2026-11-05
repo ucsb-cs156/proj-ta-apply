@@ -192,6 +192,28 @@ public class AdminAssignmentsWebIT extends WebTestCase {
   }
 
   @Test
+  public void a_column_hidden_with_its_hide_link_stays_hidden_after_a_reload() throws Exception {
+    Recruitment recruitment = seedRecruitment("20264", RecruitmentType.TA);
+    seedApplicant(recruitment);
+    setupAdminUser();
+    goTo("/admin/recruitments/" + recruitment.getId() + "/assignments");
+    assertThat(page.getByTestId("AdminAssignmentsPage-table-header-major")).isVisible();
+
+    // The small "hide" link over the Major heading, found by its accessible name.
+    page.getByRole(
+            com.microsoft.playwright.options.AriaRole.BUTTON,
+            new com.microsoft.playwright.Page.GetByRoleOptions().setName("Hide Major column"))
+        .click();
+    assertThat(page.getByTestId("AdminAssignmentsPage-table-header-major")).not().isVisible();
+    assertThat(page.getByTestId("AdminAssignmentsPage-columns-toggle")).containsText("1 hidden");
+
+    // The choice is on the backend, so it survives a reload.
+    page.reload();
+    assertThat(page.getByTestId("AdminAssignmentsPage-table-header-email")).isVisible();
+    assertThat(page.getByTestId("AdminAssignmentsPage-table-header-major")).not().isVisible();
+  }
+
+  @Test
   public void the_admin_help_page_explains_simultaneous_editing() throws Exception {
     setupAdminUser();
     goTo("/help/admins");

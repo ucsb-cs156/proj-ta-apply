@@ -1,0 +1,33 @@
+import {
+  courseLabel,
+  identityLabel,
+  type Assignments,
+} from "main/utils/assignments";
+
+/** The Assignments table's key in the hidden-columns table (issue #314). */
+export const ASSIGNMENTS_TABLE_KEY = "recruitmentAssignments";
+
+/** The id of the Tentative Assignment column, which can never be hidden. */
+export const TENTATIVE_COLUMN_ID = "tentativeAssignment";
+
+/** The id of a lecture's column. */
+export const courseColumnId = (courseId: number): string =>
+  `course-${courseId}`;
+
+/**
+ * Every column an admin may hide on the Assignments page, in table order, with the label the
+ * Columns menu shows (issue #314): each of the applicant's identity columns and each lecture. The
+ * Tentative Assignment column is the point of the page, so it is not listed.
+ */
+export const assignmentColumnChoices = (
+  data: Pick<Assignments, "identityHeaders" | "courses">,
+): { id: string; label: string }[] => [
+  ...data.identityHeaders.map((header) => ({
+    id: header,
+    label: identityLabel(header),
+  })),
+  ...data.courses.map((course) => ({
+    id: courseColumnId(course.id),
+    label: courseLabel(course),
+  })),
+];

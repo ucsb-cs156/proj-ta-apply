@@ -286,4 +286,30 @@ describe("RecruitmentDraftApplicationsPage tests", () => {
     ).toBeInTheDocument();
     expect(screen.queryByTestId(`${prefix}-columns-permNumber`)).toBeNull();
   });
+
+  test("the hide link over a column hides it for both tables (issue #314)", async () => {
+    renderPage(1);
+    await screen.findByTestId(`${prefix}-drafts-cell-row-0-col-id-link`);
+
+    await userEvent.click(
+      screen.getByTestId(`${prefix}-drafts-header-major-hide`),
+    );
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter(
+          (r) => r.url === "/api/admin/hiddencolumns",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find((r) => r.url === "/api/admin/hiddencolumns")
+        .params,
+    ).toEqual({
+      tableKey: "recruitmentApplications",
+      recruitmentId: "1",
+      columnId: "major",
+      hidden: true,
+    });
+  });
 });

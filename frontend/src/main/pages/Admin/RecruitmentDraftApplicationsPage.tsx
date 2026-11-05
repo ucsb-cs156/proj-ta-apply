@@ -48,6 +48,10 @@ export default function RecruitmentDraftApplicationsPage(): React.JSX.Element {
   const draftList = Array.isArray(drafts) ? drafts : [];
   // Stryker restore all
 
+  const columnChoices = applicationColumnChoices(
+    recruitment?.type ?? "TA",
+    true,
+  );
   const { hiddenColumns, toggleColumn } = useHiddenApplicationColumns(
     recruitmentId,
     recruitment?.type,
@@ -102,10 +106,7 @@ export default function RecruitmentDraftApplicationsPage(): React.JSX.Element {
           <>
             <div className="mb-2">
               <ColumnVisibilityControl
-                choices={applicationColumnChoices(
-                  recruitment?.type ?? "TA",
-                  true,
-                )}
+                choices={columnChoices}
                 hidden={hiddenColumns}
                 onToggle={toggleColumn}
                 testIdPrefix="RecruitmentDraftApplicationsPage-columns"
@@ -116,6 +117,10 @@ export default function RecruitmentDraftApplicationsPage(): React.JSX.Element {
               draft
               type={recruitment?.type ?? "TA"}
               hiddenColumns={hiddenColumns}
+              hideLinks={{
+                choices: columnChoices,
+                onHide: (columnId) => toggleColumn(columnId, true),
+              }}
               testIdPrefix="RecruitmentDraftApplicationsPage-drafts"
             />
           </>

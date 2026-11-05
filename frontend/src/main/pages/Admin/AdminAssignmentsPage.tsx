@@ -8,6 +8,11 @@ import AssignmentsTable from "main/components/Assignments/AssignmentsTable";
 import CancelledApplicationsTable, {
   type CancelledApplication,
 } from "main/components/Applications/CancelledApplicationsTable";
+import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
+import {
+  ASSIGNMENTS_TABLE_KEY,
+  assignmentColumnChoices,
+} from "main/utils/assignmentColumns";
 import InterestLegend from "main/components/Common/InterestLegend";
 import type { Assignments } from "main/utils/assignments";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
@@ -76,6 +81,46 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
     [],
   );
 
+  // Issue #314: which columns the admin has hidden on this recruitment's table, kept on the
+  // backend so they stay hidden across visits and browsers, as on the Courses page.
+  // Stryker disable all : a shorter key still prefixes the same query; invalidation is tested
+  const hiddenColumnsKey = [
+    "/api/admin/hiddencolumns",
+    ASSIGNMENTS_TABLE_KEY,
+    recruitmentId,
+  ];
+  // Stryker restore all
+  const { data: hiddenColumnsData } = useBackend<string[]>(
+    hiddenColumnsKey,
+    {
+      // Stryker disable next-line all : GET is axios's default method
+      method: "GET",
+      url: "/api/admin/hiddencolumns",
+      params: { tableKey: ASSIGNMENTS_TABLE_KEY, recruitmentId },
+    },
+    // Stryker disable next-line all : don't test default value of empty list
+    [],
+  );
+  const hideColumnMutation = useBackendMutation<
+    { columnId: string; hidden: boolean },
+    string[]
+  >(
+    ({ columnId, hidden }) => ({
+      url: "/api/admin/hiddencolumns",
+      method: "PUT",
+      params: {
+        tableKey: ASSIGNMENTS_TABLE_KEY,
+        recruitmentId,
+        columnId,
+        hidden,
+      },
+    }),
+    {},
+    hiddenColumnsKey,
+  );
+  // Stryker disable next-line all : the query's initial data is an empty list, never undefined
+  const hiddenColumns = hiddenColumnsData ?? [];
+
   // The response is the whole page with the new counts, so it goes straight into the cache and
   // nothing has to be re-read.
   const assignMutation = useBackendMutation<
@@ -117,6 +162,7 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
     },
   );
 
+  const columnChoices = assignmentColumnChoices(page);
   const positions = `${page.type}s`;
   return (
     <BasicLayout>
@@ -161,8 +207,24 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           assigned so far.
         </p>
         <InterestLegend testIdPrefix="AdminAssignmentsPage-legend" />
+        <div className="mb-2">
+          <ColumnVisibilityControl
+            choices={columnChoices}
+            hidden={hiddenColumns}
+            onToggle={(columnId, hidden) =>
+              hideColumnMutation.mutate({ columnId, hidden })
+            }
+            testIdPrefix="AdminAssignmentsPage-columns"
+          />
+        </div>
         <AssignmentsTable
           data={page}
+          hiddenColumns={hiddenColumns}
+          hideLinks={{
+            choices: columnChoices,
+            onHide: (columnId) =>
+              hideColumnMutation.mutate({ columnId, hidden: true }),
+          }}
           onAssign={(applicationId, recruitmentCourseId) =>
             assignMutation.mutate({ applicationId, recruitmentCourseId })
           }

@@ -1,9 +1,13 @@
 import { Badge, Form } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
-import OurTable from "main/components/Common/OurTable";
+import OurTable, { type HideLinks } from "main/components/Common/OurTable";
 import InterestMark from "main/components/Common/InterestMark";
 import { interestDisplay } from "main/utils/interestDisplay";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
+import {
+  courseColumnId,
+  TENTATIVE_COLUMN_ID,
+} from "main/utils/assignmentColumns";
 import {
   assignedCourse,
   courseLabel,
@@ -21,6 +25,8 @@ type TentativeColumnMeta = {
   testIdPrefix: string;
   courses: AssignmentCourse[];
   onAssign: (applicationId: number, recruitmentCourseId: number | null) => void;
+  /** Wide enough for "CMPSC 156 (0100) - no longer offered" without wrapping (issue #314). */
+  style: { minWidth: string };
 };
 
 /**
@@ -143,6 +149,10 @@ function CourseRankCell({
 type AssignmentsTableProps = {
   data: Assignments;
   onAssign: (applicationId: number, recruitmentCourseId: number | null) => void;
+  /** Column ids the admin has hidden (issue #314); see assignmentColumns. */
+  hiddenColumns?: string[];
+  /** The "hide" links over the hideable columns' headings (issue #314). */
+  hideLinks?: HideLinks;
   testIdPrefix?: string;
 };
 
@@ -155,12 +165,16 @@ type AssignmentsTableProps = {
 export default function AssignmentsTable({
   data,
   onAssign,
+  // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
+  hiddenColumns = [],
+  hideLinks,
   testIdPrefix = "AssignmentsTable",
 }: AssignmentsTableProps): React.JSX.Element {
   const tentativeMeta: TentativeColumnMeta = {
     testIdPrefix,
     courses: data.courses,
     onAssign,
+    style: { minWidth: "20em" },
   };
   const columns: LegacyColumn[] = [
     ...data.identityHeaders.map((header): LegacyColumn => ({
@@ -169,7 +183,7 @@ export default function AssignmentsTable({
       accessorFn: (row: AssignmentRow) => row.identity[header],
     })),
     {
-      id: "tentativeAssignment",
+      id: TENTATIVE_COLUMN_ID,
       header: "Tentative Assignment",
       accessorFn: (row: AssignmentRow) => {
         const course = assignedCourse(row, data.courses);
@@ -179,7 +193,7 @@ export default function AssignmentsTable({
       meta: tentativeMeta,
     },
     ...data.courses.map((course): LegacyColumn => ({
-      id: `course-${course.id}`,
+      id: courseColumnId(course.id),
       header: <CourseHeader course={course} testIdPrefix={testIdPrefix} />,
       accessorFn: (row: AssignmentRow) => rankFor(row, course),
       // An unranked applicant sorts after every ranked one, ascending or descending. Rank 1 is
@@ -196,5 +210,15 @@ export default function AssignmentsTable({
       } satisfies CourseColumnMeta,
     })),
   ];
-  return <OurTable data={data.rows} columns={columns} testid={testIdPrefix} />;
+  return (
+    <OurTable
+      data={data.rows}
+      columns={columns}
+      testid={testIdPrefix}
+      columnVisibility={Object.fromEntries(
+        hiddenColumns.map((id) => [id, false]),
+      )}
+      hideLinks={hideLinks}
+    />
+  );
 }

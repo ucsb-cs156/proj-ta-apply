@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import type { Cell } from "@tanstack/react-table";
-import OurTable from "main/components/Common/OurTable";
+import OurTable, { type HideLinks } from "main/components/Common/OurTable";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import ApplicationOriginBadge from "main/components/Applications/ApplicationOriginBadge";
 import {
@@ -27,6 +27,8 @@ type AdminApplicationTableProps = {
   type: "TA" | "ULA";
   /** Column ids the admin has hidden (issue #189); see applicationColumns. */
   hiddenColumns?: string[];
+  /** The "hide" links over the hideable columns' headings (issue #314). */
+  hideLinks?: HideLinks;
   testIdPrefix?: string;
 };
 
@@ -65,6 +67,7 @@ export default function AdminApplicationTable({
   draft = false,
   // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
   hiddenColumns = [],
+  hideLinks,
   testIdPrefix = "AdminApplicationTable",
 }: AdminApplicationTableProps): React.JSX.Element {
   const editColumn: LegacyColumn = {
@@ -146,6 +149,7 @@ export default function AdminApplicationTable({
       columnVisibility={Object.fromEntries(
         hiddenColumns.map((id) => [id, false]),
       )}
+      hideLinks={hideLinks}
     />
   );
 }

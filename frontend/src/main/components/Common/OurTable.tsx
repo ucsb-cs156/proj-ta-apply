@@ -10,6 +10,7 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import { Button } from "react-bootstrap";
+import type { ColumnChoice } from "main/components/Common/ColumnVisibilityControl";
 import SortCaret from "main/components/Common/SortCaret";
 import {
   convertOldStyleColumnsToNewStyle,
@@ -21,6 +22,16 @@ type ColumnStyleMeta = { style?: CSSProperties };
 
 const styleOf = (meta: unknown): CSSProperties | undefined =>
   (meta as ColumnStyleMeta | undefined)?.style;
+
+/**
+ * Small "hide" links over the headings of the columns that can be hidden (issue #314): `choices`
+ * are the columns in the Columns menu, so a column outside it (an id, View or Edit column) gets no
+ * link, and `onHide` does what unticking the column in the menu does.
+ */
+export type HideLinks = {
+  choices: ColumnChoice[];
+  onHide: (columnId: string) => void;
+};
 
 type OurTableProps<T extends object> = {
   data: T[];
@@ -39,6 +50,8 @@ type OurTableProps<T extends object> = {
   columnVisibility?: VisibilityState;
   /** Centre every heading in its cell (issue #185); cells keep their own alignment. */
   centerHeaders?: boolean;
+  /** A "hide" link over each hideable column's heading (issue #314); none when absent. */
+  hideLinks?: HideLinks;
 };
 
 export default function OurTable<T extends object>({
@@ -49,6 +62,7 @@ export default function OurTable<T extends object>({
   fitContent = false,
   columnVisibility = {},
   centerHeaders = false,
+  hideLinks,
 }: OurTableProps<T>): React.JSX.Element {
   const newColumns = convertOldStyleColumnsToNewStyle(columns);
   const memoizedData = useMemo(() => data, [data]);
@@ -79,38 +93,64 @@ export default function OurTable<T extends object>({
             // Stryker disable next-line StringLiteral : React key property not exposed in dom
             key={`${testid}-header-group-${i}`}
           >
-            {headerGroup.headers.map((header) => (
-              <th
-                data-testid={`${testid}-header-${header.column.id}`}
-                key={`${testid}-header-${header.column.id}`}
-                colSpan={header.colSpan}
-                style={
-                  centerHeaders
-                    ? {
-                        ...styleOf(header.column.columnDef.meta),
-                        textAlign: "center",
-                      }
-                    : styleOf(header.column.columnDef.meta)
-                }
-              >
-                {header.isPlaceholder ? null : (
-                  <div
-                    // Add onClick handler for sorting if the column is sortable
-                    {...(header.column.getCanSort() && {
-                      onClick: header.column.getToggleSortingHandler(),
-                      style: { cursor: "pointer" }, // Add cursor style for visual cue
-                    })}
-                    data-testid={`${testid}-header-${header.column.id}-sort-header`}
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
-                    )}
-                    <SortCaret header={header} testId={testid} />
-                  </div>
-                )}
-              </th>
-            ))}
+            {headerGroup.headers.map((header) => {
+              const hideChoice = hideLinks?.choices.find(
+                (choice) => choice.id === header.column.id,
+              );
+              const thStyle = centerHeaders
+                ? {
+                    ...styleOf(header.column.columnDef.meta),
+                    textAlign: "center" as const,
+                  }
+                : styleOf(header.column.columnDef.meta);
+              return (
+                <th
+                  data-testid={`${testid}-header-${header.column.id}`}
+                  key={`${testid}-header-${header.column.id}`}
+                  colSpan={header.colSpan}
+                  style={
+                    hideChoice ? { ...thStyle, position: "relative" } : thStyle
+                  }
+                >
+                  {hideChoice && hideLinks && (
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 border-0 text-secondary"
+                      // Tucked into the cell's top-right corner so the row is no taller and the
+                      // heading and its sort caret keep their place.
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        right: "0.25rem",
+                        fontSize: "0.6rem",
+                        lineHeight: 1.2,
+                      }}
+                      aria-label={`Hide ${hideChoice.label} column`}
+                      onClick={() => hideLinks.onHide(hideChoice.id)}
+                      data-testid={`${testid}-header-${header.column.id}-hide`}
+                    >
+                      hide
+                    </button>
+                  )}
+                  {header.isPlaceholder ? null : (
+                    <div
+                      // Add onClick handler for sorting if the column is sortable
+                      {...(header.column.getCanSort() && {
+                        onClick: header.column.getToggleSortingHandler(),
+                        style: { cursor: "pointer" }, // Add cursor style for visual cue
+                      })}
+                      data-testid={`${testid}-header-${header.column.id}-sort-header`}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                      <SortCaret header={header} testId={testid} />
+                    </div>
+                  )}
+                </th>
+              );
+            })}
           </tr>
         ))}
       </thead>
