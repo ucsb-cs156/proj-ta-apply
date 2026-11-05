@@ -698,7 +698,14 @@ public class ApplicationsController extends ApiController {
     List<PriorCourseworkFields> rows =
         fields.priorCoursework() == null ? List.of() : fields.priorCoursework();
     int minimum = minimumCourses(type);
-    if (rows.size() < minimum) {
+    // Identical rows are saved as one (issue #334), so they count as one.
+    List<PriorCourseworkFields> distinct =
+        PriorCoursework.collapse(
+            rows,
+            row ->
+                PriorCoursework.key(
+                    row.ucsbCourse(), row.otherSchool(), row.courseNumber(), row.term()));
+    if (distinct.size() < minimum) {
       throw new IllegalArgumentException(
           "A %s application must list at least %d prior course%s"
               .formatted(type, minimum, minimum == 1 ? "" : "s"));
@@ -873,7 +880,10 @@ public class ApplicationsController extends ApiController {
         || languageExam == edu.ucsb.cs.taapply.enums.LanguageExamStatus.PASSED_F1_OR_J1_VISA;
   }
 
-  /** Fresh rows from the request, trimmed; replaces whatever the application had. */
+  /**
+   * Fresh rows from the request, trimmed; replaces whatever the application had. Identical courses
+   * are collapsed to one row (issue #334).
+   */
   static List<PriorCoursework> priorCourseworkFrom(ApplicationFields fields) {
     List<PriorCoursework> rows = new ArrayList<>();
     for (PriorCourseworkFields row : fields.priorCoursework()) {
@@ -887,7 +897,7 @@ public class ApplicationsController extends ApiController {
               .grade(blankToNull(row.grade()))
               .build());
     }
-    return rows;
+    return PriorCoursework.collapse(rows);
   }
 
   private static String blankToNull(String value) {

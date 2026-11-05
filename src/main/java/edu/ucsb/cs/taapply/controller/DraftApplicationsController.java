@@ -251,7 +251,10 @@ public class DraftApplicationsController extends ApiController {
     return levels;
   }
 
-  /** The rows as the form has them, kept as typed: a half-filled row is still worth keeping. */
+  /**
+   * The rows as the form has them, kept as typed: a half-filled row is still worth keeping. Rows
+   * for the same course are collapsed to one (issue #334).
+   */
   private static List<PriorCoursework> coursework(List<PriorCourseworkFields> sent) {
     List<PriorCoursework> rows = new ArrayList<>();
     if (sent != null) {
@@ -267,7 +270,7 @@ public class DraftApplicationsController extends ApiController {
                 .build());
       }
     }
-    return rows;
+    return PriorCoursework.collapse(rows);
   }
 
   /** Copies the form's fields as they are; never the person or the recruitment. */

@@ -5,9 +5,12 @@ import {
   schoolOf,
   canonicalTerm,
   normalizeTerm,
+  replaceCourse,
+  sameCourseKey,
   termOptions,
   termSortKey,
   withCatalogTitles,
+  upsertCourses,
   withNormalizedTerm,
   TERM_LEGEND,
   tooFewCoursesMessage,
@@ -192,5 +195,124 @@ describe("priorCoursework utils", () => {
 
   test("the legend names the four letters", () => {
     expect(TERM_LEGEND).toBe("F: Fall, W: Winter, S: Spring, M: Summer");
+  });
+
+  describe("no duplicate courses (issue #334)", () => {
+    const row = (over: Partial<PriorCourse> = {}): PriorCourse => ({
+      ucsbCourse: true,
+      otherSchool: null,
+      courseNumber: "CMPSC 156",
+      courseTitle: null,
+      term: "F25",
+      grade: "A",
+      ...over,
+    });
+
+    test("the key ignores case and spacing, and writes the term as it is saved", () => {
+      expect(sameCourseKey(row({ courseNumber: "cmpsc156" }))).toBe(
+        sameCourseKey(row()),
+      );
+      expect(sameCourseKey(row({ term: "Fall 2025" }))).toBe(
+        sameCourseKey(row()),
+      );
+      expect(sameCourseKey(row({ term: null }))).toBe(
+        sameCourseKey(row({ term: "  " })),
+      );
+      expect(sameCourseKey(row({ grade: "B", courseTitle: "x" }))).toBe(
+        sameCourseKey(row()),
+      );
+    });
+
+    test("the key tells apart number, term, school and UCSB", () => {
+      const other = row({ ucsbCourse: false, otherSchool: "De Anza" });
+      const keys = [
+        row(),
+        row({ courseNumber: "CMPSC 130A" }),
+        row({ term: "W26" }),
+        row({ term: null }),
+        other,
+        { ...other, otherSchool: "Foothill" },
+        { ...other, courseNumber: "CMPSC 130A" },
+        { ...other, term: "W26" },
+        { ...other, otherSchool: "UCSB" },
+        { ...other, otherSchool: null },
+      ].map(sameCourseKey);
+      expect(new Set(keys).size).toBe(keys.length);
+      expect(sameCourseKey({ ...other, otherSchool: " de  ANZA " })).toBe(
+        sameCourseKey(other),
+      );
+    });
+
+    test("the parts of the key cannot run together into a match", () => {
+      expect(
+        sameCourseKey(row({ courseNumber: "CMPSC 1", term: "5F" })),
+      ).not.toBe(sameCourseKey(row({ courseNumber: "CMPSC 15", term: "F" })));
+    });
+
+    test("upsert appends a course that is not listed", () => {
+      const list = [row()];
+      const added = row({ courseNumber: "CMPSC 8" });
+      expect(upsertCourses(list, [added])).toEqual([row(), added]);
+      expect(upsertCourses([], [added])).toEqual([added]);
+    });
+
+    test("upsert replaces a listed course in its place with the new answers", () => {
+      const list = [row(), row({ courseNumber: "CMPSC 8" })];
+      const updated = row({ courseNumber: "cmpsc 156", grade: "B" });
+      expect(upsertCourses(list, [updated])).toEqual([
+        updated,
+        row({ courseNumber: "CMPSC 8" }),
+      ]);
+    });
+
+    test("upsert keeps a retake in another term and another school's course", () => {
+      const list = [row()];
+      const retake = row({ term: "W26" });
+      const elsewhere = row({ ucsbCourse: false, otherSchool: "De Anza" });
+      expect(upsertCourses(list, [retake, elsewhere])).toEqual([
+        row(),
+        retake,
+        elsewhere,
+      ]);
+    });
+
+    test("upsert collapses rows that were already duplicated, and added rows that repeat", () => {
+      const list = [
+        row({ grade: "A" }),
+        row({ courseNumber: "CMPSC 8" }),
+        row({ grade: "C" }),
+      ];
+      expect(upsertCourses(list, [row({ grade: "B" })])).toEqual([
+        row({ grade: "B" }),
+        row({ courseNumber: "CMPSC 8" }),
+      ]);
+      expect(
+        upsertCourses([], [row({ grade: "A" }), row({ grade: "B" })]),
+      ).toEqual([row({ grade: "B" })]);
+    });
+
+    test("upsert with nothing added returns the same list", () => {
+      const list = [row()];
+      expect(upsertCourses(list, [])).toBe(list);
+    });
+
+    test("replace swaps the row at the index", () => {
+      const list = [row(), row({ courseNumber: "CMPSC 8" })];
+      const edited = row({ courseNumber: "CMPSC 8", grade: "B" });
+      expect(replaceCourse(list, 1, edited)).toEqual([row(), edited]);
+    });
+
+    test("replace drops another row that the edit made identical", () => {
+      const list = [
+        row(),
+        row({ courseNumber: "CMPSC 8" }),
+        row({ courseNumber: "CMPSC 16" }),
+      ];
+      const edited = row({ courseNumber: "CMPSC 156", grade: "B" });
+      expect(replaceCourse(list, 1, edited)).toEqual([
+        edited,
+        row({ courseNumber: "CMPSC 16" }),
+      ]);
+    });
   });
 });

@@ -80,6 +80,11 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
   private static final String STUDENT = "cgaucho@ucsb.edu";
   private static final String NEW_COURSE = "CMPSC 190";
 
+  /** Other courses to add, since adding a course already listed updates it (issue #334). */
+  private static final String SECOND_COURSE = "CMPSC 192";
+
+  private static final String THIRD_COURSE = "CMPSC 193";
+
   @Autowired NoticeVersionRepository noticeVersionRepository;
   @Autowired TaMajorRepository taMajorRepository;
   @Autowired TaTopicRepository taTopicRepository;
@@ -214,9 +219,13 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
   // ---- the four edits, through the coursework section of whichever page ----
 
   private static void add(Page p, String prefix) {
+    add(p, prefix, NEW_COURSE, "A");
+  }
+
+  private static void add(Page p, String prefix, String course, String grade) {
     p.getByTestId(prefix + "-coursework-add-button").click();
-    p.getByTestId(prefix + "-coursework-modal-courseNumber").fill(NEW_COURSE);
-    p.getByTestId(prefix + "-coursework-modal-grade").fill("A");
+    p.getByTestId(prefix + "-coursework-modal-courseNumber").fill(course);
+    p.getByTestId(prefix + "-coursework-modal-grade").fill(grade);
     p.getByTestId(prefix + "-coursework-modal-save").click();
     assertThat(p.getByTestId(prefix + "-coursework-modal")).not().isVisible();
   }
@@ -279,7 +288,7 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     if (firstSession) {
       // A brand new draft: everything is done in one sitting and saved once.
       add(p, prefix);
-      add(p, prefix);
+      add(p, prefix, SECOND_COURSE, "A");
       changeGrade(p, prefix, 0, "B+");
       changeTerm(p, prefix, 1, "Semester 1");
       delete(p, prefix, 0);
@@ -288,7 +297,7 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
       // application, which is the carry-over feature, so the count is relative.)
       eventually(where + " saved", () -> draftRows(id).size() == before + 1);
       List<PriorCoursework> rows = draftRows(id);
-      assertEquals(NEW_COURSE, rows.get(rows.size() - 1).getCourseNumber(), where);
+      assertEquals(SECOND_COURSE, rows.get(rows.size() - 1).getCourseNumber(), where);
       assertEquals("A", rows.get(rows.size() - 1).getGrade(), where);
       assertEquals(
           1,
@@ -298,10 +307,10 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     }
 
     // A saved draft: each edit on its own, saved and read back.
-    add(p, prefix);
+    add(p, prefix, THIRD_COURSE, "A");
     p.getByTestId(prefix + "-saveDraft").click();
     eventually(where + " add", () -> draftRows(id).size() == before + 1);
-    assertEquals(NEW_COURSE, draftRows(id).get(before).getCourseNumber(), where + " add");
+    assertEquals(THIRD_COURSE, draftRows(id).get(before).getCourseNumber(), where + " add");
 
     goTo(p, path);
     changeGrade(p, prefix, 0, "B+");
@@ -316,14 +325,13 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     assertEquals("B+", draftRows(id).get(0).getGrade(), where + " term kept the grade");
 
     goTo(p, path);
-    // The new draft's session left two of the added course, and this one a third.
-    long had = draftRows(id).stream().filter(c -> NEW_COURSE.equals(c.getCourseNumber())).count();
+    long had = draftRows(id).stream().filter(c -> THIRD_COURSE.equals(c.getCourseNumber())).count();
     delete(p, prefix, before);
     p.getByTestId(prefix + "-saveDraft").click();
     eventually(where + " delete", () -> draftRows(id).size() == before);
     assertEquals(
         had - 1,
-        draftRows(id).stream().filter(c -> NEW_COURSE.equals(c.getCourseNumber())).count(),
+        draftRows(id).stream().filter(c -> THIRD_COURSE.equals(c.getCourseNumber())).count(),
         where + " delete");
   }
 
@@ -396,6 +404,68 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     }
   }
 
+  /** How many rows of the application are this course, written exactly so. */
+  private long rowsOf(Long id, String course) {
+    return applicationRows(id).stream().filter(c -> course.equals(c.getCourseNumber())).count();
+  }
+
+  /**
+   * Issue #334, as the owner: adding a course already listed updates it, and the same course in
+   * another term is kept as a retake.
+   */
+  private void ownerCannotDuplicate(Page p, Application application) {
+    Long id = application.getId();
+    String prefix = "ApplicationPage";
+    goTo(p, "/applications/" + id);
+    add(p, prefix, "CMPSC 199", "A");
+    add(p, prefix, "cmpsc199", "B");
+    p.getByTestId(prefix + "-submit").click();
+    eventually("one row for a course added twice", () -> rowsOf(id, "cmpsc199") == 1);
+    assertEquals(0, rowsOf(id, "CMPSC 199"), "the later row is the one kept");
+    assertEquals(
+        "B",
+        applicationRows(id).stream()
+            .filter(c -> "cmpsc199".equals(c.getCourseNumber()))
+            .findFirst()
+            .orElseThrow()
+            .getGrade());
+
+    goTo(p, "/applications/" + id);
+    p.getByTestId(prefix + "-coursework-add-button").click();
+    p.getByTestId(prefix + "-coursework-modal-courseNumber").fill("CMPSC 199");
+    p.getByTestId(prefix + "-coursework-modal-freeText").check();
+    p.getByTestId(prefix + "-coursework-modal-termText").fill("Semester 7");
+    p.getByTestId(prefix + "-coursework-modal-save").click();
+    p.getByTestId(prefix + "-submit").click();
+    eventually(
+        "a retake is a second row", () -> rowsOf(id, "cmpsc199") + rowsOf(id, "CMPSC 199") == 2);
+  }
+
+  /**
+   * Issue #334, as the admin: an application that already holds two identical rows (from before)
+   * opens as it is, and saving it leaves one.
+   */
+  private void adminSavingCollapsesOldDuplicates(Page admin, Application application) {
+    Long id = application.getId();
+    Application stored = applicationRepository.findById(id).orElseThrow();
+    for (String grade : new String[] {"A", "B"}) {
+      stored
+          .getPriorCoursework()
+          .add(
+              PriorCoursework.builder().courseNumber("CMPSC 987").term("F20").grade(grade).build());
+    }
+    applicationRepository.save(stored);
+    assertEquals(2, rowsOf(id, "CMPSC 987"));
+
+    String prefix = "AdminApplicationEditPage";
+    goTo(admin, "/admin/applications/" + id + "/edit");
+    // Shown as they are: the form does not quietly drop either.
+    assertThat(admin.getByText("CMPSC 987")).hasCount(2);
+    changeGrade(admin, prefix, 0, "D");
+    admin.getByTestId(prefix + "-submit").click();
+    eventually("the old duplicates collapse", () -> rowsOf(id, "CMPSC 987") == 1);
+  }
+
   private List<AuditTrail> auditRows(Long id) {
     List<AuditTrail> rows = new java.util.ArrayList<>();
     rows.addAll(auditTrailRepository.findByTaApplicationIdOrderByIdAsc(id));
@@ -451,6 +521,7 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
         false,
         "B+",
         "Semester 1");
+    ownerCannotDuplicate(page, application);
 
     // The student's window leaves the application, or the admin's page would be covered by the
     // warning that the applicant has it open too (issue #302).
@@ -465,6 +536,7 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
         true,
         "C-",
         "Semester 2");
+    adminSavingCollapsesOldDuplicates(admin, application);
   }
 
   @Test
