@@ -357,6 +357,76 @@ describe("ApplyPage tests", () => {
     );
   });
 
+  /**
+   * Issue #307: which earlier application seeds a TA form depends on the form's type, which the
+   * server is told; and the form is not shown until the answer is in, since it reads its starting
+   * answers only once.
+   */
+  test("asks for the pre-fill for the recruitment's type, and fills the form from the answer", async () => {
+    axiosMock
+      .onGet("/api/recruitments/applicable")
+      .reply(200, [{ ...openUla, type: "TA" }]);
+    axiosMock
+      .onGet("/api/applications/prefill")
+      .reply(200, [{ firstName: "Seeded", major: "Computer Science" }]);
+
+    renderPage();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-firstName")).toHaveValue("Seeded"),
+    );
+    const requests = axiosMock.history.get.filter(
+      (r) => r.url === "/api/applications/prefill",
+    );
+    expect(requests).toHaveLength(1);
+    expect(requests[0].params).toEqual({ type: "TA" });
+  });
+
+  test("a seeded form keeps the choices, course interests and topic ratings that this recruitment also has", async () => {
+    axiosMock
+      .onGet("/api/recruitments/applicable")
+      .reply(200, [{ ...openUla, type: "TA" }]);
+    axiosMock.onGet("/api/applications/prefill").reply(200, [
+      {
+        firstName: "Seeded",
+        firstChoiceCourse: "CMPSC     8",
+        secondChoiceCourse: "CMPSC    24",
+        courseInterests: {
+          "CMPSC   156": "ENTHUSIASTIC",
+          "CMPSC    24": "WOULD_CONSIDER",
+        },
+        topicProficiencies: { JavaScript: 5, Python: 3 },
+      },
+    ]);
+
+    renderPage();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("ApplyPage-firstName")).toHaveValue("Seeded"),
+    );
+    expect(screen.getByTestId("ApplyPage-firstChoiceCourse")).toHaveValue(
+      "CMPSC     8",
+    );
+    expect(screen.getByTestId("ApplyPage-secondChoiceCourse")).toHaveValue("");
+    expect(
+      screen.getByTestId("ApplyPage-courseInterest-CMPSC-156-ENTHUSIASTIC"),
+    ).toBeChecked();
+    expect(screen.getByTestId("ApplyPage-topic-JavaScript-5")).toBeChecked();
+  });
+
+  test("a pre-fill that cannot be fetched is reported, and the form is still offered", async () => {
+    axiosMock.onGet("/api/applications/prefill").reply(500);
+
+    renderPage();
+
+    expect(await screen.findByTestId("ApplyPage-submit")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Error communicating with backend via GET on /api/applications/prefill",
+      ),
+    );
+  });
+
   /** Nothing to copy from, so the names come from the signed-in Google account. */
   test("a first-time applicant gets their name from their Google account", async () => {
     axiosMock.onGet("/api/currentUser").reply(200, {
