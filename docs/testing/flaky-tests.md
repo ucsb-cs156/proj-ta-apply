@@ -30,7 +30,7 @@ keeps one unlucky run from costing a whole job, but it is **not** silent:
 - `scripts/report-flaky-tests.sh` reads failsafe's reports, and for every test that failed and then
   passed it writes a table to the job summary and a `warning` annotation on the run ("Flaky test
   (passed on retry)"). The job is green, but the summary names the test: open an issue for it.
-- The `integration-artifacts` artifact of the run (kept 14 days, uploaded whether the job passed or
+- The `integration-artifacts-shard-N` artifact of the run's shard (kept 14 days, uploaded whether the job passed or
   failed) holds, for every failed attempt, a Playwright trace (`*.trace.zip`), a full-page
   screenshot (`*.png`), the page text and HTML, and the browser console and failed requests
   (`*.browser-log.txt`), plus the failsafe reports.
@@ -39,7 +39,7 @@ Look at a trace with `npx playwright show-trace <file>.trace.zip` (or upload it 
 <https://trace.playwright.dev>). The same files are written to `target/playwright-artifacts/` when
 a test fails locally.
 
-If the integration tests are ever split into parallel shards (issue #328), the shards must not make
+The integration tests run in parallel shards ([integration-shards.md](integration-shards.md)), which must not make
 a flake harder to find: each shard uploads its own artifact (`integration-artifacts-shard-N`), the
 flake report names the shard, and a flake in one shard is reported as such, not merged into a
 single green check.

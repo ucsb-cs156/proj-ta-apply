@@ -1,0 +1,15 @@
+{
+  "1": ["ApplicationsWebIT"],
+  "2": ["RecruitmentsWebIT", "PriorCourseworkMatrixWebIT", "QuartersWebIT", "OauthWebIT"],
+  "3": [
+    "AdminAssignmentsWebIT",
+    "CoursesWebIT",
+    "AppSettingsWebIT",
+    "BudgetWebIT",
+    "HomePageWebIT",
+    "AuditTrailWebIT",
+    "LegacyImportWebIT",
+    "SwaggerWebIT",
+    "HomePageRefreshWebIT"
+  ]
+}

@@ -101,9 +101,12 @@ The integration tests are in `src/test/java/edu/ucsb/cs/taapply/web/`:
 If an integration test passes on a rerun without a code change, it is flaky: open an issue for it
 right away, and fix or quarantine it; never rerun it silently. The job re-runs a failing test once,
 lists any test that needed that retry in the job summary, and uploads the Playwright trace and
-screenshot of every failed attempt as the `integration-artifacts` artifact. How to reproduce a race
+screenshot of every failed attempt as the `integration-artifacts-shard-N` artifact. How to reproduce a race
 locally (CPU load, CPU and network throttling) and how to write tests that do not race is in
 [docs/testing/flaky-tests.md](docs/testing/flaky-tests.md).
+
+The integration tests run in parallel CI shards; which class runs in which shard, and how to add a
+new integration test, is in [docs/testing/integration-shards.md](docs/testing/integration-shards.md).
 
 #### Wiremock development mode
 
