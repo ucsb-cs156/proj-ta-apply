@@ -41,7 +41,7 @@ export default defineConfig({
         branches: 60.0,
         functions: 75.0,
       },
-      reporter: ["html", "text-summary"],
+      reporter: ["html", "text-summary", "cobertura"],
     },
   },
 });

@@ -15,3 +15,21 @@ jobs:
       enable_typescript: true
     secrets:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-coverage-typescript:
+    needs: call-frontend-coverage
+    if: ${{ !cancelled() && needs.call-frontend-coverage.result == 'success' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      code-quality: write
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: vitest-coverage
+      - uses: actions/upload-code-coverage@v1
+        with:
+          file: cobertura-coverage.xml
+          language: TypeScript
+          label: code-coverage-agent
