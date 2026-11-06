@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/348-assignment-sort","number":354,"title":"Sort Tentative Assignment blank-first ascending, blank-last descending (#348)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/354"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/312-ranking-columns","number":353,"title":"Hide or show columns on the faculty ranking page (#312)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/353"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"fix/348-assignment-sort","number":354,"title":"Sort Tentative Assignment blank-first ascending, blank-last descending (#348)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/354"}]
