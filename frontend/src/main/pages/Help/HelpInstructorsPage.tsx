@@ -85,8 +85,12 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           edit saves immediately; clear an input to remove its rank. Watch the
           Saving, Saved, or Save failed message, and retry failed saves before
           leaving the page. Ties are allowed and save immediately, but after two
-          seconds tied ranks turn bright yellow with a warning. Use ties only
-          when you have absolutely no preference between those candidates.
+          seconds tied ranks turn bright yellow and a red warning appears
+          directly under the last row of each group of tied candidates, asking
+          whether you are sure you have no preference among them. If you sort by
+          another column, the rows of a group may be apart; the warning still
+          appears once per group, under its last row. Use ties only when you
+          have absolutely no preference between those candidates.
         </p>
         <p>
           Only instructors assigned to a section may edit its rankings while
