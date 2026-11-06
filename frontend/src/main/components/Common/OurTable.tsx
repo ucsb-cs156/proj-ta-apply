@@ -33,12 +33,12 @@ const KEYBOARD_RESIZE_CHANGE: Record<string, number> = {
 /**
  * A column marked `enableResizing: true`, with a `size`, has a set width and a drag handle (issue
  * #342). TanStack gives every column a default size of 150, so the size alone does not say.
+ */
 const isSized = <T,>(column: Column<T, unknown>): boolean =>
-const isSized = (column: Column<never, unknown>): boolean =>
   column.columnDef.enableResizing === true;
 
+/** The width a sized column is shown at: its size now, and never less than its minimum. */
 const sizedStyle = <T,>(column: Column<T, unknown>): CSSProperties => ({
-const sizedStyle = (column: Column<never, unknown>): CSSProperties => ({
   width: column.getSize(),
   minWidth: column.getSize(),
 });
