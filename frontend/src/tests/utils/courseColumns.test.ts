@@ -1,13 +1,110 @@
 import { describe, expect, test } from "vitest";
 import {
+  AdminOnlyColumns,
+  AllocationsRelatedColumns,
   columnChoices,
-  COURSES_TABLE_KEY,
+  courseColumnsStorageKey,
+  DEFAULT_VISIBLE_COLUMNS,
+  defaultHiddenColumns,
+  instructorColumnChoices,
   isSummerQuarter,
 } from "main/utils/courseColumns";
 
 describe("courseColumns", () => {
-  test("the table key", () => {
-    expect(COURSES_TABLE_KEY).toBe("recruitmentCourses");
+  test("the storage key names the recruitment", () => {
+    expect(courseColumnsStorageKey("7")).toBe(
+      "recruitmentCourses.hiddenColumns.7",
+    );
+    expect(courseColumnsStorageKey("8")).not.toBe(courseColumnsStorageKey("7"));
+  });
+
+  test("AllocationsRelatedColumns is the five planning columns", () => {
+    expect(AllocationsRelatedColumns).toEqual([
+      "enrollmentEstimate",
+      "allocation",
+      "unroundedAllocation",
+      "delta",
+      "ratio",
+    ]);
+  });
+
+  test("the default columns: course number (never hidden), instructor, enrolled, max and the allocation columns", () => {
+    expect(DEFAULT_VISIBLE_COLUMNS).toEqual([
+      "instructor",
+      "enrollment",
+      "maxEnroll",
+      "enrollmentEstimate",
+      "allocation",
+      "unroundedAllocation",
+      "delta",
+      "ratio",
+    ]);
+  });
+
+  test("every other column starts hidden, Rankings and Summer Session included", () => {
+    expect(defaultHiddenColumns()).toEqual([
+      "rankingCount",
+      "section",
+      "title",
+      "instructorEmail",
+      "days",
+      "time",
+      "room",
+      "status",
+      "summerSession",
+      "removed",
+    ]);
+  });
+
+  test("an instructor is offered no allocation columns unless they are shown to all faculty", () => {
+    const without = instructorColumnChoices(false, false).map((c) => c.id);
+    expect(without).toEqual([
+      "section",
+      "title",
+      "instructor",
+      "days",
+      "time",
+      "room",
+      "enrollment",
+      "maxEnroll",
+      "status",
+    ]);
+    const withAll = instructorColumnChoices(false, true).map((c) => c.id);
+    expect(withAll).toEqual([
+      "section",
+      "title",
+      "instructor",
+      "days",
+      "time",
+      "room",
+      "enrollment",
+      "maxEnroll",
+      "enrollmentEstimate",
+      "allocation",
+      "unroundedAllocation",
+      "delta",
+      "ratio",
+      "status",
+    ]);
+  });
+
+  test("an instructor never gets the admin-only columns, and Summer Session only in summer", () => {
+    expect(AdminOnlyColumns).toEqual([
+      "rankingCount",
+      "instructorEmail",
+      "removed",
+    ]);
+    expect(instructorColumnChoices(true, true).map((c) => c.id)).toContain(
+      "summerSession",
+    );
+    expect(instructorColumnChoices(false, true).map((c) => c.id)).not.toContain(
+      "summerSession",
+    );
+    for (const id of AdminOnlyColumns) {
+      expect(
+        instructorColumnChoices(true, true).map((c) => c.id),
+      ).not.toContain(id);
+    }
   });
 
   test("only a quarter ending in 3 is a summer quarter", () => {

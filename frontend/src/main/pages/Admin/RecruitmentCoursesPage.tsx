@@ -11,9 +11,12 @@ import HiringTargetPanel from "main/components/Recruitments/HiringTargetPanel";
 import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
 import {
   columnChoices,
-  COURSES_TABLE_KEY,
+  courseColumnsStorageKey,
+  defaultHiddenColumns,
   isSummerQuarter,
 } from "main/utils/courseColumns";
+import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
+import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import AllocationVisibilityPanel from "main/components/Recruitments/AllocationVisibilityPanel";
 import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
 import FakeAllocationsModal from "main/components/Recruitments/FakeAllocationsModal";
@@ -117,40 +120,12 @@ export default function RecruitmentCoursesPage({
     recruitment?.reviewStatus !== undefined &&
     recruitment.reviewStatus !== "NotStarted";
 
-  // Issue #185: which columns the admin has hidden on this recruitment's table, kept on the
-  // backend so they stay hidden across visits and browsers.
-  // Stryker disable next-line all : a shorter key still prefixes the same query; invalidation is tested
-  const hiddenColumnsKey = ["/api/admin/hiddencolumns", recruitmentId];
-  const { data: hiddenColumnsData } = useBackend<string[]>(
-    hiddenColumnsKey,
-    {
-      // Stryker disable next-line all : GET is axios's default method
-      method: "GET",
-      url: "/api/admin/hiddencolumns",
-      params: { tableKey: COURSES_TABLE_KEY, recruitmentId },
-    },
-    // Stryker disable next-line all : don't test default value of empty list
-    [],
+  // Issue #300: which columns are hidden is remembered in this browser, per recruitment, and
+  // shared by the view-only page and the edit page.
+  const { hiddenColumns, toggleColumn } = useStoredHiddenColumns(
+    courseColumnsStorageKey(recruitmentId),
+    defaultHiddenColumns(),
   );
-  const hideColumnMutation = useBackendMutation<
-    { columnId: string; hidden: boolean },
-    string[]
-  >(
-    ({ columnId, hidden }) => ({
-      url: "/api/admin/hiddencolumns",
-      method: "PUT",
-      params: {
-        tableKey: COURSES_TABLE_KEY,
-        recruitmentId,
-        columnId,
-        hidden,
-      },
-    }),
-    {},
-    hiddenColumnsKey,
-  );
-  // Stryker disable next-line all : the query's initial data is an empty list, never undefined
-  const hiddenColumns = hiddenColumnsData ?? [];
 
   // Issue #174: what the per-course allocations add up to. Removed rows are hidden by default
   // and never count, even when the toggle shows them.
@@ -417,23 +392,34 @@ export default function RecruitmentCoursesPage({
               Edit
             </Link>
             <span data-testid="RecruitmentCoursesPage-edit-text">
-              Edit estimated enrollments, and TA/ULA allocations
+              Click Edit to: change the number of TAs/ULAs expected to be hired;
+              set the expected enrollments for each course; set the number of
+              TAs/ULAs allocated to each course; adjust the visibility of these
+              allocations.
             </span>
           </p>
         )}
-        <p>
-          The courses in this recruitment: every lecture of a course flagged for
-          its type that is offered that quarter. Re-running Populate picks up
-          newly flagged courses and refreshes the offering details, leaves
-          removed courses out, and marks as stale any lecture it no longer finds
-          in the UCSB schedule or whose course is no longer flagged. Stale
-          lectures are hidden from applicants until a later Populate finds them
-          again; Remove them if they are not coming back. A cancelled lecture is
-          hidden from applicants too, and comes back by itself if the schedule
-          un-cancels it. A lecture can also be added by hand by its enroll code,
-          flagged course or not; Populate keeps refreshing it for as long as the
-          schedule lists it.
-        </p>
+        {edit ? (
+          <p>
+            The courses in this recruitment: every lecture of a course flagged
+            for its type that is offered that quarter. Re-running Populate picks
+            up newly flagged courses and refreshes the offering details, leaves
+            removed courses out, and marks as stale any lecture it no longer
+            finds in the UCSB schedule or whose course is no longer flagged.
+            Stale lectures are hidden from applicants until a later Populate
+            finds them again; Remove them if they are not coming back. A
+            cancelled lecture is hidden from applicants too, and comes back by
+            itself if the schedule un-cancels it. A lecture can also be added by
+            hand by its enroll code, flagged course or not; Populate keeps
+            refreshing it for as long as the schedule lists it.
+          </p>
+        ) : (
+          <p data-testid="RecruitmentCoursesPage-description">
+            Courses for which the department is planning to hire{" "}
+            {recruitment ? `${recruitment.type}s` : "TAs/ULAs"}
+            {recruitment ? ` for ${yyyyqToQyy(recruitment.quarter)}` : ""}.
+          </p>
+        )}
 
         {recruitment && (
           <>
@@ -636,9 +622,7 @@ export default function RecruitmentCoursesPage({
           <ColumnVisibilityControl
             choices={courseColumnChoices}
             hidden={hiddenColumns}
-            onToggle={(columnId, hidden) =>
-              hideColumnMutation.mutate({ columnId, hidden })
-            }
+            onToggle={toggleColumn}
             testIdPrefix="RecruitmentCoursesPage-columns"
           />
         </div>
@@ -649,8 +633,7 @@ export default function RecruitmentCoursesPage({
           hiddenColumns={hiddenColumns}
           hideLinks={{
             choices: courseColumnChoices,
-            onHide: (columnId) =>
-              hideColumnMutation.mutate({ columnId, hidden: true }),
+            onHide: (columnId) => toggleColumn(columnId, true),
           }}
           rankingSummaries={rankingSummaries ?? []}
           showRankings={showRankings}

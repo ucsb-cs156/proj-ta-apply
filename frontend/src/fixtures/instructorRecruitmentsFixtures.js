@@ -150,32 +150,93 @@ instructorRecruitmentsFixtures.candidateRankingPageWithAllocation = {
   },
 };
 
-/**
- * Every course's allocation, as /api/instructor/recruitments/1/allocations returns it once the admin
- * shows all allocations to all faculty (issue #224).
- */
-instructorRecruitmentsFixtures.allAllocations = [
+const courseRows = [
   {
     id: 4,
+    recruitmentId: 1,
     courseId: "CMPSC     8",
+    enrollCode: "07110",
     section: "0100",
+    title: "Introduction to Computer Science",
     instructor: "MIRZA D",
+    days: "T R",
+    time: "11:00 - 12:15",
+    room: "PHELP 1160",
+    enrollment: 150,
+    maxEnroll: 180,
+    status: "open",
+    summerSession: null,
+    removed: false,
     allocation: 1,
+    enrollmentEstimate: 160,
+    unroundedAllocation: 1.4,
   },
   {
     id: 2,
+    recruitmentId: 1,
     courseId: "CMPSC   156",
+    enrollCode: "07492",
     section: "0100",
+    title: "Advanced Applications Programming",
     instructor: "CONRAD P",
+    days: "M W",
+    time: "14:00 - 15:15",
+    room: "PHELP 3526",
+    enrollment: 120,
+    maxEnroll: 150,
+    status: "open",
+    summerSession: null,
+    removed: false,
     allocation: 2,
+    enrollmentEstimate: 130,
+    unroundedAllocation: 2.2,
   },
   {
     id: 3,
+    recruitmentId: 1,
     courseId: "CMPSC   156",
+    enrollCode: "07500",
     section: "0200",
+    title: "Advanced Applications Programming",
     instructor: "CONRAD P",
+    days: "T R",
+    time: "09:30 - 10:45",
+    room: "PHELP 3526",
+    enrollment: 80,
+    maxEnroll: 100,
+    status: "open",
+    summerSession: null,
+    removed: false,
     allocation: 3,
+    enrollmentEstimate: 90,
+    unroundedAllocation: 2.9,
   },
 ];
+
+/**
+ * What /api/instructor/recruitments/1/courses returns once the admin shows all courses'
+ * allocations to all faculty (issues #300 and #301): the allocation figures are in every row.
+ */
+instructorRecruitmentsFixtures.coursesWithAllocations = {
+  recruitmentId: 1,
+  quarter: "20261",
+  type: "TA",
+  allocationsShown: true,
+  courses: courseRows,
+};
+
+/**
+ * The same recruitment while the admin shows allocations to admins only (or to faculty for their
+ * own courses): the server leaves the three allocation fields out of the rows altogether.
+ */
+instructorRecruitmentsFixtures.coursesWithoutAllocations = {
+  recruitmentId: 1,
+  quarter: "20261",
+  type: "TA",
+  allocationsShown: false,
+  courses: courseRows.map(
+    ({ allocation, enrollmentEstimate, unroundedAllocation, ...rest }) => rest,
+  ),
+};
 
 export default instructorRecruitmentsFixtures;

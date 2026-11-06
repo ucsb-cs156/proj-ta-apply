@@ -184,4 +184,24 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/Draft application 21/)).toBeNull();
   });
+
+  test("the old /recruitments/:id/allocations link lands on the Courses page (issue #300)", async () => {
+    window.history.pushState({}, "", "/recruitments/1/allocations");
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.instructorUser);
+    axiosMock.onGet("/api/instructor/recruitments/1/courses").reply(200, {
+      recruitmentId: 1,
+      quarter: "20261",
+      type: "TA",
+      allocationsShown: false,
+      courses: [],
+    });
+    renderApp();
+
+    expect(
+      await screen.findByTestId("CoursesPage-description"),
+    ).toHaveTextContent("planning to hire TAs for W26");
+    expect(window.location.pathname).toBe("/recruitments/1/courses");
+  });
 });

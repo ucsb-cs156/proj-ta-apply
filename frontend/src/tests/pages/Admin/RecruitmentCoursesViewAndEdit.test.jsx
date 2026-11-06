@@ -69,7 +69,9 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     axiosMock
       .onGet("/api/systemInfo")
       .reply(200, systemInfoFixtures.showingNeither);
-    axiosMock.onGet("/api/admin/hiddencolumns").reply(200, []);
+    // Issue #300: every column but the defaults starts hidden; these tests want the Remove button.
+    localStorage.clear();
+    localStorage.setItem("recruitmentCourses.hiddenColumns.7", "[]");
     axiosMock.onPost("/api/recruitmentcourses/refresh").reply(200, notRemoved);
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
       {
@@ -97,10 +99,77 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     expect(edit).toHaveAttribute("href", "/admin/recruitments/7/courses/edit");
     expect(
       screen.getByTestId("RecruitmentCoursesPage-edit-text"),
-    ).toHaveTextContent("Edit estimated enrollments, and TA/ULA allocations");
+    ).toHaveTextContent(
+      "Click Edit to: change the number of TAs/ULAs expected to be hired; set the expected enrollments for each course; set the number of TAs/ULAs allocated to each course; adjust the visibility of these allocations.",
+    );
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     expect(heartbeats()).toHaveLength(0);
     expect(screen.queryByTestId("RecruitmentCoursesPage-view-link")).toBeNull();
+  });
+
+  test("the view-only page describes the courses as the ones the department plans to hire for", async () => {
+    renderAt("/admin/recruitments/7/courses");
+
+    const text = await screen.findByTestId(
+      "RecruitmentCoursesPage-description",
+    );
+    expect(text).toHaveTextContent(
+      /^Courses for which the department is planning to hire (TA|ULA)s for [WSMF]\d\d\.$/,
+    );
+    // Populate lives on the edit page, so the view page does not explain it.
+    expect(
+      screen.queryByText(/Re-running Populate picks up newly flagged/),
+    ).toBeNull();
+  });
+
+  test("the edit page keeps the Populate explanation", async () => {
+    renderAt("/admin/recruitments/7/courses/edit");
+
+    expect(
+      await screen.findByText(/Re-running Populate picks up newly flagged/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-description"),
+    ).toBeNull();
+  });
+
+  test("the view-only page waits for the recruitment before naming its type and quarter", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    renderAt("/admin/recruitments/7/courses");
+
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-description"),
+    ).toHaveTextContent(
+      /^Courses for which the department is planning to hire TAs\/ULAs\.$/,
+    );
+  });
+
+  test("both pages share one remembered choice of columns, default columns first", async () => {
+    localStorage.clear();
+    const view = renderAt("/admin/recruitments/7/courses");
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-header-instructor"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-header-room"),
+    ).toBeNull();
+
+    fireEvent.click(
+      screen.getByTestId("RecruitmentCoursesPage-columns-toggle"),
+    );
+    fireEvent.click(screen.getByTestId("RecruitmentCoursesPage-columns-room"));
+    await screen.findByTestId("RecruitmentCoursesPage-header-room");
+    view.unmount();
+
+    renderAt("/admin/recruitments/7/courses/edit");
+    await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-header-room"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-header-days"),
+    ).toBeNull();
   });
 
   test("the view-only page has nothing to edit", async () => {

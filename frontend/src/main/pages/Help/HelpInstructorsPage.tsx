@@ -51,9 +51,16 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           as the hiring target, and preferably the whole ranking target. If you
           have concerns about your course&apos;s target, raise them with the
           admin once you see it. Until the admin does, nothing about it is
-          shown. If the admin chooses to show all courses to all faculty, your
-          cards also offer <strong>All allocations</strong>, a read-only list of
-          every course&apos;s number; otherwise that page does not exist.
+          shown. Each course you teach also has a <strong>Courses</strong>{" "}
+          button, which opens it (click the course to see the button): the
+          read-only Courses page, listing every course of the recruitment with
+          its instructor, enrollment and meeting times. The{" "}
+          <strong>Columns</strong> menu above the table hides and shows columns,
+          and your choice is remembered in this browser. If the admin chooses to
+          show all courses to all faculty, the page also has the Enrollment
+          Estimate, Allocation, Unrounded Allocation, Delta and TA:student ratio
+          columns for every course; otherwise those columns are not there at
+          all. (The old All allocations page is now this one.)
         </p>
         <p>
           When faculty reviews are open, expand one of your listed courses and

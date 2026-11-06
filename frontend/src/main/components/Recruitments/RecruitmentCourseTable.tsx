@@ -235,6 +235,12 @@ type RecruitmentCourseTableProps = {
   hiddenColumns?: string[];
   /** The "hide" links over the hideable columns' headings (issue #314). */
   hideLinks?: HideLinks;
+  /**
+   * Column ids left out of the table altogether (issue #300), as opposed to hidden: an instructor's
+   * table has no allocation columns unless the admin shows them to all faculty. The page does not
+   * list them in its Columns menu either, so nothing can bring them back.
+   */
+  omitColumns?: readonly string[];
   testIdPrefix?: string;
   /**
    * The view-only page (issue #278): the figures are text, there is no Remove button, and nothing
@@ -258,6 +264,8 @@ export default function RecruitmentCourseTable({
   // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
   hiddenColumns = [],
   hideLinks,
+  // Stryker disable next-line all : an id that is no column's omits nothing, like the empty list
+  omitColumns = [],
   testIdPrefix = "RecruitmentCourseTable",
   readOnly = false,
   requestHeaders,
@@ -763,8 +771,9 @@ export default function RecruitmentCourseTable({
       columns={columns}
       testid={testIdPrefix}
       centerHeaders
+      // Omitted columns are switched off the same way, but nothing offers to bring them back.
       columnVisibility={Object.fromEntries(
-        hiddenColumns.map((id) => [id, false]),
+        [...hiddenColumns, ...omitColumns].map((id) => [id, false]),
       )}
       hideLinks={hideLinks}
     />

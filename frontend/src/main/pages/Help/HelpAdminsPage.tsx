@@ -343,15 +343,22 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <em>Show None</em> at the top of the menu show or hide every column at
           once. Each of those columns also has a small <strong>hide</strong>{" "}
           link at the top right of its heading: one click hides that column
-          without opening the menu, exactly as unticking it there does. The
-          choice is kept for that recruitment, so it is the same on your next
-          visit and for the other admins. The <strong>Summer Session</strong>{" "}
-          column appears only for a summer quarter. Headings are centred,
-          numbers are right-aligned, and sorting by course number follows the
-          padded course id exactly as it is shown, so CMPSC 5A comes before
-          CMPSC 130A. In the <strong>Email</strong> column, the copy icon copies
-          one address and <em>Not mapped</em> opens the Instructors page in a
-          new tab, where the catalog name can be given an email.
+          without opening the menu, exactly as unticking it there does. A
+          recruitment&apos;s table starts with only the Course Number,
+          Instructor, Enrolled, Max, Enrollment Estimate, Allocation, Unrounded
+          Allocation, Delta and TA:student ratio columns shown, on the view-only
+          page and the edit page alike; tick the others (Section, Title, Email,
+          Days, Time, Room, Status, and the Remove / Unremove button) in the
+          Columns menu when you need them. Your choice is kept in this browser,
+          for that recruitment and for both pages, so it is the same on your
+          next visit from the same browser; it is not shared with other admins
+          or other browsers. The <strong>Summer Session</strong> column appears
+          only for a summer quarter. Headings are centred, numbers are
+          right-aligned, and sorting by course number follows the padded course
+          id exactly as it is shown, so CMPSC 5A comes before CMPSC 130A. In the{" "}
+          <strong>Email</strong> column, the copy icon copies one address and{" "}
+          <em>Not mapped</em> opens the Instructors page in a new tab, where the
+          catalog name can be given an email.
         </p>
         <p id="hiring-target" data-testid="HelpAdminsPage-hiring-target">
           The top of that page is where the hiring is planned. Enter the{" "}
@@ -427,13 +434,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>Rankings Still Needed</strong>.{" "}
           <strong>Faculty see all courses</strong> goes further, for when the
           whole plan is public: every faculty member teaching in the recruitment
-          also gets an <em>All allocations</em> page listing every course&apos;s
-          number. Move off Admins only once the numbers are mostly final; you
-          can still change an allocation afterwards, and faculty see the change
-          immediately. Every change of state is recorded in the
-          recruitment&apos;s change history. Do this before opening faculty
-          reviews, so faculty know how many candidates to rank, and ask them to
-          raise any concerns about their targets then.
+          sees the enrollment estimate, allocation, unrounded allocation, delta
+          and TA:student ratio columns of every course on the read-only{" "}
+          <em>Courses</em> page that each of their courses offers. Under the
+          other two settings that page shows faculty no such columns at all: the
+          figures are not even sent to their browser. Move off Admins only once
+          the numbers are mostly final; you can still change an allocation
+          afterwards, and faculty see the change immediately. Every change of
+          state is recorded in the recruitment&apos;s change history. Do this
+          before opening faculty reviews, so faculty know how many candidates to
+          rank, and ask them to raise any concerns about their targets then.
         </p>
 
         <h2 className="my-3 h4" id="quarters">
@@ -935,12 +945,14 @@ export default function HelpAdminsPage(): React.JSX.Element {
           get when you open it: nothing on it can be changed, and any number of
           tabs or windows may show it, for you or for other admins, without any
           warning. Its <strong>Edit</strong> button, beside the words
-          &ldquo;Edit estimated enrollments, and TA/ULA allocations&rdquo;,
-          takes you to the <strong>edit page</strong>, where you can change the
-          estimated enrollments and the allocations, run Auto Allocate, and use
-          Populate and the other controls; it has a link back to the view-only
-          page. Only <em>one</em> tab or window should have a given
-          recruitment&apos;s edit page open at a time, and edit pages of
+          &ldquo;Click Edit to: change the number of TAs/ULAs expected to be
+          hired; set the expected enrollments for each course; set the number of
+          TAs/ULAs allocated to each course; adjust the visibility of these
+          allocations&rdquo;, takes you to the <strong>edit page</strong>, where
+          you can change the estimated enrollments and the allocations, run Auto
+          Allocate, and use Populate and the other controls; it has a link back
+          to the view-only page. Only <em>one</em> tab or window should have a
+          given recruitment&apos;s edit page open at a time, and edit pages of
           different recruitments never warn each other. If another admin, or
           another tab of yours, has the same edit page open, you get a warning
           that looks like this:

@@ -1,5 +1,6 @@
 package edu.ucsb.cs.taapply.controller;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
 import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
@@ -148,24 +149,72 @@ public class InstructorRecruitmentsController extends ApiController {
 
   /**
    * Whether this recruitment's allocations may reach the faculty who teach in it (issue #224):
-   * every state except ADMINS_ONLY. The instructor endpoints only ever return the signed-in
-   * instructor's own courses, so OWN_COURSES and ALL_COURSES differ only in the all-allocations
-   * view.
+   * every state except ADMINS_ONLY. The home page endpoints only ever return the signed-in
+   * instructor's own courses, so OWN_COURSES and ALL_COURSES differ only in the Courses page (issue
+   * #300), which shows every course and has the allocation figures only for ALL_COURSES.
    */
   static boolean allocationsVisible(Recruitment r) {
     return r.getAllocationVisibility() != AllocationVisibility.ADMINS_ONLY;
   }
 
-  /** One row of the all-allocations view faculty get once the admin shows them (issue #224). */
-  public static record AllocationRow(
-      Long id, String courseId, String section, String instructor, Integer allocation) {
-    static AllocationRow of(RecruitmentCourse course) {
-      return new AllocationRow(
+  /**
+   * The Courses page's read-only view of a recruitment (issues #300 and #301): its non-removed
+   * sections, and whether the allocation columns are part of them. {@code allocationsShown} is true
+   * for admins, and for instructors only while the admin shows every course's allocations to all
+   * faculty.
+   */
+  public static record CoursesView(
+      Long recruitmentId,
+      String quarter,
+      RecruitmentType type,
+      boolean allocationsShown,
+      List<CourseRow> courses) {}
+
+  /**
+   * One section on the Courses page. When the viewer may not see the allocation columns the three
+   * allocation figures are null, and {@code NON_NULL} leaves them out of the JSON altogether, so
+   * the numbers never leave the server (not blanked: absent). The record has no stale, manual or
+   * version fields, which concern only admins.
+   */
+  public static record CourseRow(
+      Long id,
+      Long recruitmentId,
+      String courseId,
+      String enrollCode,
+      String section,
+      String title,
+      String instructor,
+      String days,
+      String time,
+      String room,
+      Integer enrollment,
+      Integer maxEnroll,
+      String status,
+      String summerSession,
+      boolean removed,
+      @JsonInclude(JsonInclude.Include.NON_NULL) Integer allocation,
+      @JsonInclude(JsonInclude.Include.NON_NULL) Integer enrollmentEstimate,
+      @JsonInclude(JsonInclude.Include.NON_NULL) Double unroundedAllocation) {
+    static CourseRow of(RecruitmentCourse course, boolean withAllocations) {
+      return new CourseRow(
           course.getId(),
+          course.getRecruitmentId(),
           course.getCourseId(),
+          course.getEnrollCode(),
           course.getSection(),
+          course.getTitle(),
           course.getInstructor(),
-          course.getAllocation());
+          course.getDays(),
+          course.getTime(),
+          course.getRoom(),
+          course.getEnrollment(),
+          course.getMaxEnroll(),
+          course.getStatus(),
+          course.getSummerSession(),
+          course.isRemoved(),
+          withAllocations ? course.getAllocation() : null,
+          withAllocations ? course.getEnrollmentEstimate() : null,
+          withAllocations ? course.getUnroundedAllocation() : null);
     }
   }
 
@@ -335,27 +384,32 @@ public class InstructorRecruitmentsController extends ApiController {
   }
 
   @Operation(
-      summary = "Every course's allocation, for faculty, once the admin shows them all",
+      summary = "The recruitment's courses, read-only, for the Courses page",
       description =
-          "The recruitment's non-removed sections with their instructor and allocation (issue"
-              + " #224). Admins may always read it; instructors only while the admin shows all"
-              + " allocations to all faculty, otherwise 403.")
+          "The recruitment's non-removed sections, course id then section (issues #300 and #301)."
+              + " Admins get the allocation figures (enrollment estimate, allocation, unrounded"
+              + " allocation) always; instructors only while the admin shows all courses'"
+              + " allocations to all faculty. Otherwise those fields are not in the response at"
+              + " all.")
   @PreAuthorize("hasAnyRole('ROLE_INSTRUCTOR', 'ROLE_ADMIN')")
-  @GetMapping("/{recruitmentId}/allocations")
-  public List<AllocationRow> allocations(@PathVariable Long recruitmentId) {
+  @GetMapping("/{recruitmentId}/courses")
+  public CoursesView courses(@PathVariable Long recruitmentId) {
     Recruitment recruitment =
         recruitmentRepository
             .findById(recruitmentId)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
-    if (!isAdmin() && recruitment.getAllocationVisibility() != AllocationVisibility.ALL_COURSES) {
-      throw new ForbiddenException(
-          "The admin has not chosen to show this recruitment's allocations to all faculty.");
-    }
-    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
-        .filter(course -> !course.isRemoved())
-        .sorted(BY_COURSE_THEN_SECTION)
-        .map(AllocationRow::of)
-        .toList();
+    boolean withAllocations =
+        isAdmin() || recruitment.getAllocationVisibility() == AllocationVisibility.ALL_COURSES;
+    return new CoursesView(
+        recruitment.getId(),
+        recruitment.getQuarter(),
+        recruitment.getType(),
+        withAllocations,
+        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
+            .filter(course -> !course.isRemoved())
+            .sorted(BY_COURSE_THEN_SECTION)
+            .map(course -> CourseRow.of(course, withAllocations))
+            .toList());
   }
 
   /** Whether the signed-in user holds the admin role. */
