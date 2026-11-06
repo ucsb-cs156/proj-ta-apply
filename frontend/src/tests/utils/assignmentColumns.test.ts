@@ -40,11 +40,11 @@ describe("assignmentColumns (issue #314)", () => {
 });
 
 describe("compareTentativeAssignments (issue #348)", () => {
-  test("a blank sorts before any assignment, and equal blanks tie", () => {
-    expect(compareTentativeAssignments("", "CMPSC 8 (0100)")).toBeLessThan(0);
-    expect(compareTentativeAssignments("CMPSC 8 (0100)", "")).toBeGreaterThan(
+  test("a blank sorts after any assignment, and equal blanks tie", () => {
+    expect(compareTentativeAssignments("", "CMPSC 8 (0100)")).toBeGreaterThan(
       0,
     );
+    expect(compareTentativeAssignments("CMPSC 8 (0100)", "")).toBeLessThan(0);
     expect(compareTentativeAssignments("", "")).toBe(0);
   });
 

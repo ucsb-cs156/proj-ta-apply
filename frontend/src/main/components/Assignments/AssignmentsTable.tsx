@@ -194,7 +194,7 @@ export default function AssignmentsTable({
         const course = assignedCourse(row, data.courses);
         return course === null ? "" : courseLabel(course);
       },
-      // Blank rows first ascending, last descending (issue #348).
+      // Blank rows last ascending, first descending (issue #348).
       sortingFn: (a: Row<AssignmentRow>, b: Row<AssignmentRow>) =>
         compareTentativeAssignments(
           a.getValue<string>(TENTATIVE_COLUMN_ID),
