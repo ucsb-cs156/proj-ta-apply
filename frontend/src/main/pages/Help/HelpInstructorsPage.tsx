@@ -80,6 +80,18 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           sorts from first choice to second choice, enthusiastic, then would
           consider. Contact an admin if a course or ranking page is unavailable.
         </p>
+        <p data-testid="HelpInstructorsPage-ranking-columns">
+          The ranking table has a <strong>Columns</strong> menu, like the other
+          tables, to hide the columns you do not need: untick a column to hide
+          it and tick it again to bring it back, or use{" "}
+          <strong>Show All</strong> and <strong>Show None</strong>. Each column
+          heading also has a small <strong>hide</strong> link above it that
+          hides that column. The Ranking, First Name and Last Name columns
+          cannot be hidden, so you can always rank and see whom you are ranking.
+          Your choice is remembered in this browser for all the courses of the
+          recruitment (separately for TA and ULA recruitments). The warning
+          under tied rankings always spans whichever columns are showing.
+        </p>
         <p>
           Enter any integer from 1 through the number of candidates. Each valid
           edit saves immediately; clear an input to remove its rank. Watch the

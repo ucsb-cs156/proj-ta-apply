@@ -11,6 +11,7 @@ export default {
     editable: true,
     apiUrl: "/api/instructor/recruitments/1/courses/2/candidates",
     applicationUrl: "/recruitments/1/courses/2/applications",
+    columnsStorageKey: "candidateRanking.hiddenColumns.storybook.TA",
   },
   parameters: {
     msw: {
@@ -62,4 +63,39 @@ export const FirstQuarterCandidate = {
         : candidate,
     ),
   },
+};
+
+/** Issue #312: some columns hidden, as the instructor's browser remembers them. */
+export const SomeColumnsHidden = {
+  args: { columnsStorageKey: "candidateRanking.hiddenColumns.storybook.some" },
+  decorators: [
+    (Story) => {
+      localStorage.setItem(
+        "candidateRanking.hiddenColumns.storybook.some",
+        JSON.stringify(["email", "major"]),
+      );
+      return <Story />;
+    },
+  ],
+};
+
+/** Issue #312: with columns hidden the tied warning still spans the table. */
+export const TiedWithColumnsHidden = {
+  parameters: { chromatic: { delay: 2500 } },
+  args: {
+    columnsStorageKey: "candidateRanking.hiddenColumns.storybook.tied",
+    candidates: candidatesFixtures.map((candidate) => ({
+      ...candidate,
+      rank: 1,
+    })),
+  },
+  decorators: [
+    (Story) => {
+      localStorage.setItem(
+        "candidateRanking.hiddenColumns.storybook.tied",
+        JSON.stringify(["email", "major", "classLevel"]),
+      );
+      return <Story />;
+    },
+  ],
 };

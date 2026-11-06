@@ -21,6 +21,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import CandidateTable, {
   type Candidate,
 } from "main/components/Instructor/CandidateTable";
+import { candidateColumnsStorageKey } from "main/utils/candidateColumns";
 import { rankingAllocationNotice } from "main/utils/allocations";
 import { targetsColumns, type CourseTargets } from "main/utils/courseTargets";
 import {
@@ -345,6 +346,10 @@ export default function CandidateRankingPage(): React.JSX.Element {
                   key={`${candidatesUrl}?${showNotInterested}`}
                   candidates={candidates.data}
                   type={data.type}
+                  columnsStorageKey={candidateColumnsStorageKey(
+                    recruitmentId,
+                    data.type,
+                  )}
                   editable={data.canRank === true}
                   apiUrl={candidatesUrl}
                   applicationUrl={`/recruitments/${recruitmentId}/courses/${recruitmentCourseId}/applications`}

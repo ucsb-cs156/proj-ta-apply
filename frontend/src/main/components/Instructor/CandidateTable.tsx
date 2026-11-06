@@ -4,6 +4,9 @@ import axios from "axios";
 import { apiErrorMessage } from "main/utils/apiError";
 import InterestMark from "main/components/Common/InterestMark";
 import { WarningIcon } from "main/components/Common/Icons";
+import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
+import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
+import { candidateColumnChoices } from "main/utils/candidateColumns";
 import { gpaText } from "main/utils/applicationFields";
 import { interestDisplay } from "main/utils/interestDisplay";
 import {
@@ -50,6 +53,11 @@ type Props = {
    * candidates again and resolves to them, or to null if they could not be read.
    */
   onConflict?: () => Promise<Candidate[] | null>;
+  /**
+   * Where this browser remembers which columns the instructor has hidden (issue #312); see
+   * candidateColumnsStorageKey.
+   */
+  columnsStorageKey: string;
 };
 
 /** Whether a failed request was the server refusing a stale save (409 Conflict). */
@@ -100,6 +108,7 @@ export default function CandidateTable({
   applicationUrl,
   headers,
   onConflict,
+  columnsStorageKey,
 }: Props): React.JSX.Element {
   const [ranks, setRanks] = useState<Record<number, string>>(() =>
     Object.fromEntries(
@@ -245,6 +254,15 @@ export default function CandidateTable({
           { key: "videoLink" as const, label: "Video Link" },
         ]),
   ];
+  // Issue #312: the columns the instructor has hidden, remembered in this browser.
+  const { hiddenColumns, toggleColumn } = useStoredHiddenColumns(
+    columnsStorageKey,
+    [],
+  );
+  const choices = candidateColumnChoices(columns);
+  const shownColumns = columns.filter(
+    (column) => !hiddenColumns.includes(column.key),
+  );
   const valueOf = (candidate: Candidate, key: keyof Candidate) =>
     key === "rank" ? ranks[candidate.applicationId] : candidate[key];
   const defaultRank = (candidate: Candidate): number =>
@@ -315,6 +333,14 @@ export default function CandidateTable({
           Default Sort
         </Button>
       </OverlayTrigger>
+      <div className="mb-2 d-inline-block ms-2 align-top">
+        <ColumnVisibilityControl
+          choices={choices}
+          hidden={hiddenColumns}
+          onToggle={toggleColumn}
+          testIdPrefix="CandidateTable-columns"
+        />
+      </div>
       {!editable && <p>Rankings are read-only.</p>}
       {candidates.length === 0 ? (
         <p>No eligible candidates for this course.</p>
@@ -323,9 +349,10 @@ export default function CandidateTable({
           <table className="table">
             <thead>
               <tr>
-                {columns.map((column) => (
+                {shownColumns.map((column) => (
                   <th
                     key={column.key}
+                    style={{ position: "relative" }}
                     aria-sort={
                       sort?.key === column.key
                         ? sort.descending
@@ -334,6 +361,24 @@ export default function CandidateTable({
                         : "none"
                     }
                   >
+                    {choices.some((choice) => choice.id === column.key) && (
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 border-0 text-secondary"
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          right: "0.25rem",
+                          fontSize: "0.6rem",
+                          lineHeight: 1.2,
+                        }}
+                        aria-label={`Hide ${column.label} column`}
+                        onClick={() => toggleColumn(column.key, true)}
+                        data-testid={`CandidateTable-hide-${column.key}`}
+                      >
+                        hide
+                      </button>
+                    )}
                     <button
                       className="btn btn-link"
                       onClick={() =>
@@ -354,7 +399,7 @@ export default function CandidateTable({
               {sorted.map((candidate) => (
                 <Fragment key={candidate.applicationId}>
                   <tr>
-                    {columns.map((column) => (
+                    {shownColumns.map((column) => (
                       <td
                         key={column.key}
                         className={
@@ -491,7 +536,7 @@ export default function CandidateTable({
                       data-testid={`CandidateTable-tied-warning-${candidate.applicationId}`}
                     >
                       <td
-                        colSpan={columns.length}
+                        colSpan={shownColumns.length}
                         style={{ fontSize: "0.8em" }}
                       >
                         <p className="mb-0" role="alert">

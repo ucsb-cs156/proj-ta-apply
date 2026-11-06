@@ -9,6 +9,7 @@ import CandidateTable, {
 import candidatesFixtures from "fixtures/candidatesFixtures";
 
 const mock = new AxiosMockAdapter(axios);
+const KEY = "candidateRanking.hiddenColumns.1.TA";
 const apiUrl = "/api/instructor/recruitments/1/courses/2/candidates";
 const applicationUrl = "/recruitments/1/courses/2/applications";
 const taHeaders = [
@@ -39,10 +40,20 @@ function table(props = {}) {
       editable={true}
       apiUrl={apiUrl}
       applicationUrl={applicationUrl}
+      columnsStorageKey={KEY}
       {...props}
     />,
   );
 }
+// A heading's accessible name also holds its "Hide ... column" link, when it has one.
+const heading = (label) =>
+  screen.getByRole("columnheader", {
+    name: (name) => name === label || name.endsWith(` ${label}`),
+  });
+const headingLabels = () =>
+  screen
+    .getAllByRole("columnheader")
+    .map((header) => within(header).getAllByRole("button").at(-1).textContent);
 const input = (name = "Ada Lovelace") =>
   screen.getByRole("spinbutton", { name: `Ranking for ${name}` });
 const names = () =>
@@ -58,6 +69,7 @@ const settle = () =>
 
 describe("CandidateTable", () => {
   beforeEach(() => {
+    localStorage.clear();
     mock.reset();
     mock.resetHistory();
     mock.onPut().reply(200, { rank: 1, version: 4 });
@@ -73,9 +85,7 @@ describe("CandidateTable", () => {
     "%s has the exact type-specific ordered sortable columns and name links",
     (type, expected) => {
       table({ type });
-      expect(
-        screen.getAllByRole("columnheader").map((header) => header.textContent),
-      ).toEqual(expected);
+      expect(headingLabels()).toEqual(expected);
       expect(names()).toEqual(["Ada", "Grace", "Alan", "Katherine"]);
       for (const label of expected)
         expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
@@ -98,14 +108,16 @@ describe("CandidateTable", () => {
     table({ candidates: [...candidatesFixtures].reverse() });
     fireEvent.click(screen.getByRole("button", { name: "Course Preference" }));
     expect(names()).toEqual(["Ada", "Grace", "Alan", "Katherine"]);
-    expect(
-      screen.getByRole("columnheader", { name: "Course Preference" }),
-    ).toHaveAttribute("aria-sort", "ascending");
+    expect(heading("Course Preference")).toHaveAttribute(
+      "aria-sort",
+      "ascending",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Course Preference" }));
     expect(names()).toEqual(["Katherine", "Alan", "Grace", "Ada"]);
-    expect(
-      screen.getByRole("columnheader", { name: "Course Preference" }),
-    ).toHaveAttribute("aria-sort", "descending");
+    expect(heading("Course Preference")).toHaveAttribute(
+      "aria-sort",
+      "descending",
+    );
   });
 
   // Submission order is the order of the array: 1 F, 2 A, 3 B, 4 C, 5 D, 6 E.
@@ -170,9 +182,10 @@ describe("CandidateTable", () => {
   test("the first click on a column after the default sort is ascending", () => {
     table({ candidates: submitted });
     fireEvent.click(screen.getByRole("button", { name: "Course Preference" }));
-    expect(
-      screen.getByRole("columnheader", { name: "Course Preference" }),
-    ).toHaveAttribute("aria-sort", "ascending");
+    expect(heading("Course Preference")).toHaveAttribute(
+      "aria-sort",
+      "ascending",
+    );
   });
 
   test("Default Sort has a tooltip that explains the order", async () => {
@@ -217,10 +230,7 @@ describe("CandidateTable", () => {
     table();
     fireEvent.click(screen.getByRole("button", { name: label }));
     expect(names()).toEqual(expected);
-    expect(screen.getByRole("columnheader", { name: label })).toHaveAttribute(
-      "aria-sort",
-      "ascending",
-    );
+    expect(heading(label)).toHaveAttribute("aria-sort", "ascending");
     fireEvent.click(screen.getByRole("button", { name: label }));
     // Equal keys keep their stable source order.
     const descending =
@@ -1002,5 +1012,140 @@ describe("CandidateTable", () => {
     await settle();
     expect(mock.history.put).toHaveLength(3);
     expect(mock.history.put[2].params).toEqual({ version: 5 });
+  });
+
+  describe("hiding columns (issue #312)", () => {
+    const headerTexts = headingLabels;
+    const hideLabel = (label) => `Hide ${label} column`;
+
+    test("the Columns menu offers every column except Ranking and the names", async () => {
+      table();
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-columns-toggle"),
+      );
+      for (const id of [
+        "preference",
+        "email",
+        "major",
+        "classLevel",
+        "yearInProgram",
+        "graduationDate",
+      ])
+        expect(
+          screen.getByTestId(`CandidateTable-columns-${id}`),
+        ).toBeChecked();
+      for (const id of ["rank", "firstName", "lastName"])
+        expect(
+          screen.queryByTestId(`CandidateTable-columns-${id}`),
+        ).not.toBeInTheDocument();
+    });
+
+    test("only the hideable headings have a hide link", () => {
+      table();
+      for (const label of ["Ranking", "First Name", "Last Name"])
+        expect(
+          screen.queryByRole("button", { name: hideLabel(label) }),
+        ).not.toBeInTheDocument();
+      for (const label of taHeaders.filter(
+        (l) => !["Ranking", "First Name", "Last Name"].includes(l),
+      ))
+        expect(
+          screen.getByRole("button", { name: hideLabel(label) }),
+        ).toHaveTextContent("hide");
+    });
+
+    test("a hide link is tucked into the heading's top-right corner", () => {
+      table();
+      const link = screen.getByTestId("CandidateTable-hide-email");
+      expect(link.getAttribute("style")).toBe(
+        "position: absolute; top: 0px; right: 0.25rem; font-size: 0.6rem; line-height: 1.2;",
+      );
+      expect(link).toHaveAttribute("type", "button");
+      expect(link).toHaveClass("btn", "btn-link", "text-secondary");
+      expect(link.closest("th")).toHaveStyle({ position: "relative" });
+    });
+
+    test("a hide link hides its column, heading and cells, and it is remembered", async () => {
+      table();
+      await userEvent.click(screen.getByTestId("CandidateTable-hide-email"));
+      expect(headerTexts()).not.toContain("Email");
+      expect(headerTexts()).toHaveLength(taHeaders.length - 1);
+      expect(JSON.parse(localStorage.getItem(KEY))).toEqual(["email"]);
+      expect(screen.getAllByRole("row")[1].querySelectorAll("td")).toHaveLength(
+        taHeaders.length - 1,
+      );
+    });
+
+    test("a column unticked in the menu is hidden and ticking it brings it back", async () => {
+      table();
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-columns-toggle"),
+      );
+      await userEvent.click(screen.getByTestId("CandidateTable-columns-major"));
+      expect(headerTexts()).not.toContain("Major");
+      expect(
+        screen.getByTestId("CandidateTable-columns-toggle"),
+      ).toHaveTextContent("Columns (1 hidden)");
+      await userEvent.click(screen.getByTestId("CandidateTable-columns-major"));
+      expect(headerTexts()).toEqual(taHeaders);
+    });
+
+    test("Show None leaves Ranking and the names; Show All restores the rest", async () => {
+      table();
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-columns-toggle"),
+      );
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-columns-select-none"),
+      );
+      expect(headerTexts()).toEqual(["Ranking", "First Name", "Last Name"]);
+      expect(input()).toBeInTheDocument();
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-columns-select-all"),
+      );
+      expect(headerTexts()).toEqual(taHeaders);
+    });
+
+    test("the hidden columns are read from this browser's storage", () => {
+      localStorage.setItem(KEY, JSON.stringify(["email", "major"]));
+      table();
+      expect(headerTexts()).toEqual(
+        taHeaders.filter((h) => h !== "Email" && h !== "Major"),
+      );
+    });
+
+    test("nothing is stored until a column is changed, and other keys are not read", () => {
+      localStorage.setItem("other.key", JSON.stringify(["email"]));
+      table();
+      expect(headerTexts()).toEqual(taHeaders);
+      expect(localStorage.getItem(KEY)).toBeNull();
+    });
+
+    test("the tied warning spans exactly the visible columns", () => {
+      vi.useFakeTimers();
+      localStorage.setItem(
+        KEY,
+        JSON.stringify(["email", "major", "classLevel"]),
+      );
+      table();
+      fireEvent.change(input("Grace Hopper"), { target: { value: "1" } });
+      fireEvent.change(input(), { target: { value: "1" } });
+      act(() => vi.advanceTimersByTime(2000));
+      expect(
+        screen.getByText(/You have ranked multiple candidates/).closest("td"),
+      ).toHaveAttribute("colspan", "6");
+      fireEvent.click(screen.getByTestId("CandidateTable-hide-yearInProgram"));
+      expect(
+        screen.getByText(/You have ranked multiple candidates/).closest("td"),
+      ).toHaveAttribute("colspan", "5");
+    });
+
+    test("ULA columns can be hidden too", async () => {
+      table({ type: "ULA" });
+      await userEvent.click(
+        screen.getByTestId("CandidateTable-hide-videoLink"),
+      );
+      expect(headerTexts()).toEqual(ulaHeaders.slice(0, -1));
+    });
   });
 });

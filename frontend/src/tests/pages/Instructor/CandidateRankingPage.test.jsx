@@ -131,7 +131,7 @@ describe("CandidateRankingPage", () => {
     );
     expect((await screen.findAllByRole("table"))[0]).toBeInTheDocument();
     expect(
-      screen.getByRole("columnheader", { name: "Level (PhD/MS)" }),
+      screen.getByRole("columnheader", { name: /Level \(PhD\/MS\)$/ }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
   });
@@ -145,7 +145,7 @@ describe("CandidateRankingPage", () => {
     renderPage();
 
     expect(
-      await screen.findByRole("columnheader", { name: "GPA in Major" }),
+      await screen.findByRole("columnheader", { name: /GPA in Major$/ }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: /Your other/ }),
