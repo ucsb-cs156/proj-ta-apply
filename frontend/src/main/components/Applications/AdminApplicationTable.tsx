@@ -13,6 +13,7 @@ import {
   type ApplicationColumn,
   type ApplicationRow,
 } from "main/utils/applicationColumns";
+import { wideColumnProps } from "main/utils/columnWidths";
 
 type AdminApplicationTableProps = {
   /** Submitted applications, or drafts when `draft` is set. */
@@ -53,6 +54,8 @@ const toLegacyColumn = (column: ApplicationColumn): LegacyColumn => ({
   id: column.id,
   accessorFn: column.value,
   ...(column.shrink ? { meta: shrinkToContent } : {}),
+  // The long text columns are wide and resizable instead (issue #342).
+  ...wideColumnProps(column.id),
 });
 
 /**

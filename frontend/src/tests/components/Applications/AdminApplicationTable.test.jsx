@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { vi } from "vitest";
 import { MemoryRouter } from "react-router";
 
 import AdminApplicationTable from "main/components/Applications/AdminApplicationTable";
@@ -22,6 +23,100 @@ function renderTable(props = {}) {
     </MemoryRouter>,
   );
 }
+
+const WIDE = {
+  TA: [
+    "courseInterests",
+    "topicProficiencies",
+    "prevExperience",
+    "comments",
+    "postApplicationComments",
+    "adminComments",
+  ],
+  ULA: [
+    "courseInterests",
+    "topicProficiencies",
+    "interests",
+    "prevExperience",
+    "comments",
+    "postApplicationComments",
+    "adminComments",
+  ],
+};
+
+describe("AdminApplicationTable wide columns (issue #342)", () => {
+  test.each(["TA", "ULA"])(
+    "the %s long text columns are 400px wide, resizable, with a 200px minimum",
+    (type) => {
+      renderTable({ type, applications: [type === "TA" ? ta : ula] });
+      for (const id of WIDE[type]) {
+        const head = screen.getByTestId(`AdminApplicationTable-header-${id}`);
+        expect(head.style.width, id).toBe("400px");
+        expect(head.style.whiteSpace, id).toBe("");
+        expect(
+          screen.getByTestId(`AdminApplicationTable-cell-row-0-col-${id}`).style
+            .width,
+          id,
+        ).toBe("400px");
+        const handle = screen.getByTestId(
+          `AdminApplicationTable-header-${id}-resize`,
+        );
+        expect(handle).toHaveAttribute("aria-valuemin", "200");
+      }
+    },
+  );
+
+  test("the narrow columns keep shrinking to their content and have no handle", () => {
+    renderTable({ type: "ULA", applications: [ula] });
+    expect(
+      screen.getByTestId("AdminApplicationTable-header-major").style.width,
+    ).toBe("1%");
+    for (const id of ["id", "name", "major", "email", "cancelled"]) {
+      expect(
+        screen.queryByTestId(`AdminApplicationTable-header-${id}-resize`),
+      ).not.toBeInTheDocument();
+    }
+    // Interests exists only on the ULA form.
+    cleanup();
+    renderTable({ type: "TA" });
+    expect(
+      screen.queryByTestId("AdminApplicationTable-header-interests"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("a wide column can be resized from the keyboard, and its hide link still hides it", async () => {
+    const onHide = vi.fn();
+    renderTable({
+      hideLinks: {
+        choices: [{ id: "comments", label: "Anything Else" }],
+        onHide,
+      },
+    });
+    const handle = screen.getByRole("separator", {
+      name: "Resize Anything Else column",
+    });
+    handle.focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(
+      screen.getByTestId("AdminApplicationTable-header-comments").style.width,
+    ).toBe("420px");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Hide Anything Else column" }),
+    );
+    expect(onHide).toHaveBeenCalledWith("comments");
+  });
+
+  test("drafts have the same wide columns", () => {
+    renderTable({
+      draft: true,
+      applications: [draftApplicationsFixtures.adminSavedTaDraft],
+    });
+    expect(
+      screen.getByTestId("AdminApplicationTable-header-adminComments").style
+        .width,
+    ).toBe("400px");
+  });
+});
 
 describe("AdminApplicationTable tests", () => {
   /** Issue #189: id, View, Edit and Name first, then Submitted; the new columns start hidden. */
@@ -77,10 +172,10 @@ describe("AdminApplicationTable tests", () => {
     expect(
       screen.getByTestId("AdminApplicationTable-header-major").style.width,
     ).toBe("1%");
-    // Long free-text answers are the columns that may wrap.
+    // Long free-text answers are the columns that may wrap; they are wide (issue #342).
     expect(
       screen.getByTestId("AdminApplicationTable-header-comments").style.width,
-    ).toBe("");
+    ).toBe("400px");
   });
 
   test("View and Edit do not sort; the rest do", () => {

@@ -341,6 +341,232 @@ describe("OurTable tests", () => {
     expect(screen.getByTestId("hc-header-name").style.textAlign).toBe("center");
   });
 
+  // ---- Issue #342 ----
+
+  const wideColumns = [
+    { Header: "Id", accessor: "id" },
+    {
+      Header: "Notes",
+      accessor: "notes",
+      size: 400,
+      minSize: 200,
+      enableResizing: true,
+    },
+  ];
+
+  const renderWide = (props = {}) =>
+    render(
+      <OurTable
+        data={[{ id: 1, notes: "Long text" }]}
+        columns={wideColumns}
+        testid="w"
+        {...props}
+      />,
+    );
+
+  test("a column given a size is that wide in its heading and cells, and the others are untouched", () => {
+    renderWide();
+    const head = screen.getByTestId("w-header-notes");
+    expect(head.style.width).toBe("400px");
+    expect(head.style.minWidth).toBe("400px");
+    expect(head.style.position).toBe("relative");
+    const cell = screen.getByTestId("w-cell-row-0-col-notes");
+    expect(cell.style.width).toBe("400px");
+    expect(cell.style.minWidth).toBe("400px");
+    expect(screen.getByTestId("w-header-id").style.width).toBe("");
+    expect(screen.getByTestId("w-cell-row-0-col-id").style.width).toBe("");
+    expect(screen.queryByTestId("w-header-id-resize")).not.toBeInTheDocument();
+  });
+
+  test("the handle is a keyboard-focusable separator that describes the column's width", () => {
+    renderWide();
+    const handle = screen.getByRole("separator", {
+      name: "Resize Notes column",
+    });
+    expect(handle).toBe(screen.getByTestId("w-header-notes-resize"));
+    expect(handle).toHaveAttribute("aria-orientation", "vertical");
+    expect(handle).toHaveAttribute("aria-valuenow", "400");
+    expect(handle).toHaveAttribute("aria-valuemin", "200");
+    expect(handle).not.toHaveAttribute("aria-valuemax");
+    expect(handle).toHaveAttribute("tabindex", "0");
+    expect(handle.style.position).toBe("absolute");
+    expect(handle.style.right).toBe("0px");
+    expect(handle.style.cursor).toBe("col-resize");
+    expect(handle.style.width).toBe("6px");
+    expect(handle.style.userSelect).toBe("none");
+    expect(handle.style.touchAction).toBe("none");
+    expect(handle.style.borderRight).toBe("3px solid rgba(0, 0, 0, 0.15)");
+  });
+
+  test("a heading that is not text names its handle by the column id", () => {
+    renderWide({
+      columns: [
+        {
+          id: "notes",
+          header: <span>Notes</span>,
+          accessorKey: "notes",
+          size: 300,
+          enableResizing: true,
+        },
+      ],
+    });
+    expect(
+      screen.getByRole("separator", { name: "Resize notes column" }),
+    ).toBeInTheDocument();
+  });
+
+  test("dragging the handle widens and narrows the column, and never below its minimum", () => {
+    renderWide();
+    const handle = screen.getByTestId("w-header-notes-resize");
+    fireEvent.mouseDown(handle, { clientX: 500 });
+    expect(handle.style.borderRight).toBe("3px solid rgb(13, 110, 253)");
+    fireEvent.mouseMove(document, { clientX: 600 });
+    expect(screen.getByTestId("w-header-notes").style.width).toBe("500px");
+    expect(screen.getByTestId("w-cell-row-0-col-notes").style.width).toBe(
+      "500px",
+    );
+    fireEvent.mouseMove(document, { clientX: 200 });
+    expect(screen.getByTestId("w-header-notes").style.width).toBe("200px");
+    fireEvent.mouseMove(document, { clientX: 0 });
+    expect(screen.getByTestId("w-header-notes").style.width).toBe("200px");
+    fireEvent.mouseUp(document, { clientX: 0 });
+    expect(handle.style.borderRight).toBe("3px solid rgba(0, 0, 0, 0.15)");
+  });
+
+  test("there is no maximum width", () => {
+    renderWide();
+    const handle = screen.getByTestId("w-header-notes-resize");
+    fireEvent.mouseDown(handle, { clientX: 0 });
+    fireEvent.mouseMove(document, { clientX: 5000 });
+    expect(screen.getByTestId("w-header-notes").style.width).toBe("5400px");
+    fireEvent.mouseUp(document, { clientX: 5000 });
+  });
+
+  test("touching the handle starts a resize too", () => {
+    renderWide();
+    const handle = screen.getByTestId("w-header-notes-resize");
+    fireEvent.touchStart(handle, { touches: [{ clientX: 100 }] });
+    fireEvent.touchMove(document, { touches: [{ clientX: 160 }] });
+    expect(screen.getByTestId("w-header-notes").style.width).toBe("460px");
+    fireEvent.touchEnd(document, { touches: [{ clientX: 160 }] });
+  });
+
+  test("the arrow keys resize from the keyboard, to the minimum and no less, and other keys do nothing", async () => {
+    renderWide();
+    const handle = screen.getByTestId("w-header-notes-resize");
+    const width = () => screen.getByTestId("w-header-notes").style.width;
+    handle.focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(width()).toBe("420px");
+    expect(handle).toHaveAttribute("aria-valuenow", "420");
+    await userEvent.keyboard("{ArrowLeft}{ArrowLeft}");
+    expect(width()).toBe("380px");
+    await userEvent.keyboard("{Enter}{ArrowUp}");
+    expect(width()).toBe("380px");
+    for (let i = 0; i < 12; i++) {
+      await userEvent.keyboard("{ArrowLeft}");
+    }
+    expect(width()).toBe("200px");
+  });
+
+  test("arrow keys are consumed by the handle but other keys are left alone", () => {
+    renderWide();
+    const handle = screen.getByTestId("w-header-notes-resize");
+    // fireEvent returns false when the event's default was prevented.
+    expect(fireEvent.keyDown(handle, { key: "ArrowRight" })).toBe(false);
+    expect(fireEvent.keyDown(handle, { key: "ArrowLeft" })).toBe(false);
+    expect(fireEvent.keyDown(handle, { key: "Tab" })).toBe(true);
+    expect(screen.getByTestId("w-header-notes").style.width).toBe("400px");
+  });
+
+  test("a click on the handle does not reach the elements around the table", async () => {
+    const onClick = vi.fn();
+    render(
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <div onClick={onClick}>
+        <OurTable
+          data={[{ id: 1, notes: "x" }]}
+          columns={wideColumns}
+          testid="wb"
+        />
+      </div>,
+    );
+    await userEvent.click(screen.getByTestId("wb-header-notes-resize"));
+    expect(onClick).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByTestId("wb-header-notes-sort-header"));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  test("a click on the handle does not sort", async () => {
+    render(
+      <OurTable
+        data={[
+          { id: 1, notes: "b" },
+          { id: 2, notes: "a" },
+        ]}
+        columns={wideColumns}
+        testid="wc"
+      />,
+    );
+    await userEvent.click(screen.getByTestId("wc-header-notes-resize"));
+    expect(
+      [...screen.getByTestId("wc").querySelectorAll("tbody tr")].map(
+        (tr) => tr.textContent,
+      ),
+    ).toEqual(["1b", "2a"]);
+  });
+
+  test("the heading still sorts when clicked beside a handle", async () => {
+    render(
+      <OurTable
+        data={[
+          { id: 1, notes: "b" },
+          { id: 2, notes: "a" },
+        ]}
+        columns={wideColumns}
+        testid="ws"
+      />,
+    );
+    const first = () => screen.getByTestId("ws-cell-row-0-col-notes");
+    expect(first()).toHaveTextContent("b");
+    await userEvent.click(screen.getByTestId("ws-header-notes-sort-header"));
+    expect(
+      [...screen.getByTestId("ws").querySelectorAll("tbody tr")].map(
+        (tr) => tr.textContent,
+      ),
+    ).toEqual(["2a", "1b"]);
+  });
+
+  test("a resizable column's hide link keeps clear of the handle and still hides", async () => {
+    const onHide = vi.fn();
+    renderWide({
+      hideLinks: { choices: [{ id: "notes", label: "Notes" }], onHide },
+    });
+    const link = screen.getByTestId("w-header-notes-hide");
+    expect(link.style.right).toBe("0.6rem");
+    expect(link.style.position).toBe("absolute");
+    expect(screen.getByTestId("w-header-notes-resize")).toBeInTheDocument();
+    await userEvent.click(link);
+    expect(onHide).toHaveBeenCalledWith("notes");
+  });
+
+  test("a sized column keeps its width when its heading is centred", () => {
+    renderWide({ centerHeaders: true });
+    const head = screen.getByTestId("w-header-notes");
+    expect(head.style.textAlign).toBe("center");
+    expect(head.style.width).toBe("400px");
+  });
+
+  test("a column not marked enableResizing has neither a width nor a handle, whatever its size", () => {
+    renderWide({
+      columns: [{ Header: "Notes", accessor: "notes", size: 300 }],
+    });
+    expect(screen.getByTestId("w-header-notes").style.width).toBe("");
+    expect(
+      screen.queryByTestId("w-header-notes-resize"),
+    ).not.toBeInTheDocument();
+  });
+
   test("no hideLinks, no hide links", () => {
     render(
       <OurTable

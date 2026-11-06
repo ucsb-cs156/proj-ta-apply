@@ -4,6 +4,7 @@ import OurTable, { type HideLinks } from "main/components/Common/OurTable";
 import InterestMark from "main/components/Common/InterestMark";
 import { compareByRankThenPreference } from "main/utils/candidateOrder";
 import { interestDisplay } from "main/utils/interestDisplay";
+import { wideColumnProps } from "main/utils/columnWidths";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import {
   courseColumnId,
@@ -182,6 +183,8 @@ export default function AssignmentsTable({
       id: header,
       header: identityLabel(header),
       accessorFn: (row: AssignmentRow) => row.identity[header],
+      // A long free-text answer, should the rankings CSV carry one, is wide (issue #342).
+      ...wideColumnProps(header),
     })),
     {
       id: TENTATIVE_COLUMN_ID,

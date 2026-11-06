@@ -6,6 +6,7 @@ import {
   getSortedRowModel,
   useReactTable,
   type Cell,
+  type Column,
   type ColumnDef,
   type VisibilityState,
 } from "@tanstack/react-table";
@@ -22,6 +23,25 @@ type ColumnStyleMeta = { style?: CSSProperties };
 
 const styleOf = (meta: unknown): CSSProperties | undefined =>
   (meta as ColumnStyleMeta | undefined)?.style;
+
+/** How far an arrow key moves a column's edge, in pixels. */
+const KEYBOARD_RESIZE_CHANGE: Record<string, number> = {
+  ArrowRight: 20,
+  ArrowLeft: -20,
+};
+
+/**
+ * A column marked `enableResizing: true`, with a `size`, has a set width and a drag handle (issue
+ * #342). TanStack gives every column a default size of 150, so the size alone does not say.
+ */
+const isSized = <T,>(column: Column<T, unknown>): boolean =>
+  column.columnDef.enableResizing === true;
+
+/** The width a sized column is shown at: its size now, and never less than its minimum. */
+const sizedStyle = <T,>(column: Column<T, unknown>): CSSProperties => ({
+  width: column.getSize(),
+  minWidth: column.getSize(),
+});
 
 /**
  * Small "hide" links over the headings of the columns that can be hidden (issue #314): `choices`
@@ -78,8 +98,24 @@ export default function OurTable<T extends object>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     enableSorting,
+    // Only columns marked enableResizing get a handle (issue #342); the rest keep their width.
+    enableColumnResizing: true,
+    columnResizeMode: "onChange",
     state: { columnVisibility },
   });
+
+  /** Nudge a column by the keyboard, the alternative to dragging its handle. */
+  const resizeFromKeyboard = (
+    column: Column<T, unknown>,
+    event: React.KeyboardEvent,
+  ) => {
+    const change = KEYBOARD_RESIZE_CHANGE[event.key];
+    if (change === undefined) return;
+    event.preventDefault();
+    // getSize never goes below the column's minimum, so neither does a nudge from it.
+    const size = column.getSize() + change;
+    table.setColumnSizing((sizes) => ({ ...sizes, [column.id]: size }));
+  };
 
   return (
     <table
@@ -97,31 +133,40 @@ export default function OurTable<T extends object>({
               const hideChoice = hideLinks?.choices.find(
                 (choice) => choice.id === header.column.id,
               );
+              const resizable =
+                isSized(header.column) && header.column.getCanResize();
               const thStyle = centerHeaders
                 ? {
                     ...styleOf(header.column.columnDef.meta),
                     textAlign: "center" as const,
                   }
                 : styleOf(header.column.columnDef.meta);
+              const columnLabel =
+                typeof header.column.columnDef.header === "string"
+                  ? header.column.columnDef.header
+                  : header.column.id;
               return (
                 <th
                   data-testid={`${testid}-header-${header.column.id}`}
                   key={`${testid}-header-${header.column.id}`}
                   colSpan={header.colSpan}
-                  style={
-                    hideChoice ? { ...thStyle, position: "relative" } : thStyle
-                  }
+                  style={{
+                    ...thStyle,
+                    ...(isSized(header.column) && sizedStyle(header.column)),
+                    ...((hideChoice || resizable) && { position: "relative" }),
+                  }}
                 >
                   {hideChoice && hideLinks && (
                     <button
                       type="button"
                       className="btn btn-link p-0 border-0 text-secondary"
                       // Tucked into the cell's top-right corner so the row is no taller and the
-                      // heading and its sort caret keep their place.
+                      // heading and its sort caret keep their place. A resizable column keeps
+                      // its right edge, where the drag handle is, clear of the link.
                       style={{
                         position: "absolute",
                         top: 0,
-                        right: "0.25rem",
+                        right: resizable ? "0.6rem" : "0.25rem",
                         fontSize: "0.6rem",
                         lineHeight: 1.2,
                       }}
@@ -148,6 +193,39 @@ export default function OurTable<T extends object>({
                       <SortCaret header={header} testId={testid} />
                     </div>
                   )}
+                  {resizable && (
+                    <div
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label={`Resize ${columnLabel} column`}
+                      aria-valuenow={header.column.getSize()}
+                      aria-valuemin={header.column.columnDef.minSize}
+                      tabIndex={0}
+                      // A strip down the cell's right edge: drag it, or focus it and press the
+                      // left and right arrow keys. It sits beside the sort header, not in it,
+                      // so grabbing it never sorts.
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        width: "6px",
+                        cursor: "col-resize",
+                        userSelect: "none",
+                        touchAction: "none",
+                        borderRight: header.column.getIsResizing()
+                          ? "3px solid #0d6efd"
+                          : "3px solid rgba(0, 0, 0, 0.15)",
+                      }}
+                      onMouseDown={header.getResizeHandler()}
+                      onTouchStart={header.getResizeHandler()}
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) =>
+                        resizeFromKeyboard(header.column, event)
+                      }
+                      data-testid={`${testid}-header-${header.column.id}-resize`}
+                    />
+                  )}
                 </th>
               );
             })}
@@ -170,7 +248,10 @@ export default function OurTable<T extends object>({
                     data-testid={testId}
                     // Stryker disable next-line StringLiteral : React key property not exposed in dom
                     key={testId}
-                    style={styleOf(cell.column.columnDef.meta)}
+                    style={{
+                      ...styleOf(cell.column.columnDef.meta),
+                      ...(isSized(cell.column) && sizedStyle(cell.column)),
+                    }}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
@@ -192,6 +273,7 @@ export default function OurTable<T extends object>({
               {footerGroup.headers.map((header) => (
                 <th
                   data-testid={`${testid}-footer-${header.column.id}`}
+                  // Stryker disable next-line StringLiteral : React key property not exposed in dom
                   key={`${testid}-footer-${header.column.id}`}
                   colSpan={header.colSpan}
                   style={styleOf(header.column.columnDef.meta)}
