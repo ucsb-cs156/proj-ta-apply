@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
 import AllocationVisibilityModal from "main/components/Recruitments/AllocationVisibilityModal";
 import PublishAssignmentsModal from "main/components/Recruitments/PublishAssignmentsModal";
+import AdminBudgetCard from "main/components/Recruitments/AdminBudgetCard";
 import RecruitmentCardLayout from "main/components/Recruitments/RecruitmentCardLayout";
 import { useBackendMutation } from "main/utils/useBackend";
 import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
@@ -53,6 +54,38 @@ const latestOfType = (
   return ofType.sort(
     (a, b) => b.quarter.localeCompare(a.quarter) || b.id - a.id,
   )[0]?.id;
+};
+
+/**
+ * The recruitments grouped by quarter, the quarters in the order each first appears in the sorted
+ * list (so a quarter's budget card moves with it), each group keeping the sorted order within it.
+ * Each group also names the quarter's TA and ULA recruitment: the one with the highest id if
+ * there were ever more than one (the backend allows only one of each per quarter).
+ */
+type QuarterGroup = {
+  quarter: string;
+  items: { recruitment: Recruitment; index: number }[];
+  ta?: Recruitment;
+  ula?: Recruitment;
+};
+
+const groupByQuarter = (sorted: Recruitment[]): QuarterGroup[] => {
+  const groups = new Map<string, QuarterGroup>();
+  sorted.forEach((recruitment, index) => {
+    const group = groups.get(recruitment.quarter) ?? {
+      quarter: recruitment.quarter,
+      items: [],
+    };
+    group.items.push({ recruitment, index });
+    const field = recruitment.type === "TA" ? "ta" : "ula";
+    const current = group[field];
+    // Stryker disable next-line EqualityOperator : two recruitments never share an id, so > and >= agree
+    if (current === undefined || recruitment.id > current.id) {
+      group[field] = recruitment;
+    }
+    groups.set(recruitment.quarter, group);
+  });
+  return [...groups.values()];
 };
 
 type AdminRecruitmentCardProps = {
@@ -303,6 +336,7 @@ export default function RecruitmentCards({
     (reviewModal !== null &&
       (liveOf(reviewModal.recruitment) === undefined ||
         (reviewModal.mode === "open" &&
+          // Stryker disable next-line OptionalChaining : the line above already handled a recruitment that is gone, so it is defined here
           liveOf(reviewModal.recruitment)?.reviewStatus === "Open")));
   // Closed while rendering (the state is this component's own), and counted so that the effect
   // below, which only toasts, runs once for each time it happens.
@@ -353,20 +387,33 @@ export default function RecruitmentCards({
         </p>
       )}
 
-      {sorted.map((recruitment, index) => (
-        <AdminRecruitmentCard
-          key={recruitment.id}
-          recruitment={recruitment}
-          applicationCount={applicationCounts[recruitment.id] ?? 0}
-          defaultExpanded={
-            recruitment.id === latestTa || recruitment.id === latestUla
-          }
-          // Stryker disable next-line StringLiteral : any mode other than open edits the deadline, so an empty mode behaves the same
-          onChangeDeadline={(r) => openReviewModal(r, "editDeadline")}
-          onDeleteRequested={onDeleteRequested}
-          onAction={onStepAction}
-          testIdPrefix={`${testIdPrefix}-card-${index}`}
-        />
+      {groupByQuarter(sorted).map((group) => (
+        <div
+          key={group.quarter}
+          data-testid={`${testIdPrefix}-quarter-${group.quarter}`}
+        >
+          <AdminBudgetCard
+            quarter={group.quarter}
+            ta={group.ta}
+            ula={group.ula}
+            testIdPrefix={`${testIdPrefix}-budget`}
+          />
+          {group.items.map(({ recruitment, index }) => (
+            <AdminRecruitmentCard
+              key={recruitment.id}
+              recruitment={recruitment}
+              applicationCount={applicationCounts[recruitment.id] ?? 0}
+              defaultExpanded={
+                recruitment.id === latestTa || recruitment.id === latestUla
+              }
+              // Stryker disable next-line StringLiteral : any mode other than open edits the deadline, so an empty mode behaves the same
+              onChangeDeadline={(r) => openReviewModal(r, "editDeadline")}
+              onDeleteRequested={onDeleteRequested}
+              onAction={onStepAction}
+              testIdPrefix={`${testIdPrefix}-card-${index}`}
+            />
+          ))}
+        </div>
       ))}
       {visibilityRecruitment !== undefined && (
         <AllocationVisibilityModal

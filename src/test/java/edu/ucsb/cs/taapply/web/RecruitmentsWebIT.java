@@ -11,6 +11,7 @@ import com.microsoft.playwright.Locator;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.Course;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -141,6 +142,20 @@ public class RecruitmentsWebIT extends WebTestCase {
     Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
     waitFor(firstRow);
     assertThat(firstRow).isVisible();
+
+    // Issue #357: a QXX Budget card sits above the quarter's cards; only a TA recruitment exists,
+    // so TA allocations is live and ULA allocations is greyed out.
+    assertThat(
+            page.locator("[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-title']"))
+        .containsText("Budget");
+    assertThat(
+            page.locator(
+                "[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-ta-allocations']"))
+        .hasAttribute("href", Pattern.compile("/admin/recruitments/\\d+/courses/edit"));
+    assertThat(
+            page.locator(
+                "[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-ula-allocations']"))
+        .isDisabled();
 
     page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 

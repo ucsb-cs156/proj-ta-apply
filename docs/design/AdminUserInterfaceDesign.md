@@ -106,6 +106,17 @@ closed at, assignments published at) and stamp them
 from the existing endpoints. The backend computes the labels, done flags and link targets in one
 endpoint so the frontend only draws.
 
+## The QXX Budget card (issue #357)
+
+Above each quarter's recruitment card, or pair of cards when the quarter has both a TA and a ULA
+recruitment, the admin home page shows a lighter **QXX Budget** card (QXX from `yyyyqToQyy`, such
+as "W26 Budget") with three buttons: **Budget** (`/admin/budget/QXX`), **TA allocations** and
+**ULA allocations** (`/admin/recruitments/:id/courses/edit` for that quarter's TA or ULA
+recruitment; greyed out and disabled when there is none). The cards are grouped by quarter, in the
+order each quarter first appears in the sorted list, so the budget card moves with its quarter;
+sorting by anything other than Quarter therefore keeps a quarter's cards together instead of
+interleaving them. It prepares for the Combined Allocation page (issue #358).
+
 ## The new recruitment card layout
 
 The card becomes much wider to hold the diagram. From top to bottom:

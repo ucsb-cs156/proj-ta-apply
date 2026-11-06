@@ -1998,3 +1998,15 @@ describe("Help pages (issue #140)", () => {
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });
+
+describe("admin Help: the QXX Budget card (issue #357)", () => {
+  test("describes the card, its three buttons and the greyed-out allocations", async () => {
+    renderPage(<HelpAdminsPage />);
+    expect(await screen.findByText("QXX Budget")).toBeInTheDocument();
+    expect(screen.getByText("TA allocations")).toBeInTheDocument();
+    expect(screen.getByText("ULA allocations")).toBeInTheDocument();
+    expect(
+      screen.getByText(/greyed out when the quarter has no recruitment/),
+    ).toBeInTheDocument();
+  });
+});
