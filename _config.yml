@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: []
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/357-budget-card","number":362,"title":"Add QXX Budget card above each quarter's recruitments on the admin home page (#357)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/362"}]
