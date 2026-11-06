@@ -16,13 +16,22 @@ on:
     paths: [src/**, pom.xml, lombok.config, frontend/**]
 
 jobs:
-  build:
+  # The *WebIT classes run in parallel shards (issue #328). Which class runs in which shard is
+  # listed in src/test/resources/it-shards.json; ItShardAssignmentTests fails the normal build if a
+  # class is in no shard. How to add a shard or a class: docs/testing/integration-shards.md.
+  it-shard:
+    name: "Integration tests (shard ${{ matrix.shard }})"
     # Playwright misbehaves on Ubuntu versions not yet in its version mapping (e.g. ubuntu-26.04).
     # The PLAYWRIGHT_RUNS_ON organization/repository variable can pin the runner (e.g. ubuntu-24.04);
     # if it is not set, fall back to ubuntu-latest.
     runs-on: ${{ vars.PLAYWRIGHT_RUNS_ON || 'ubuntu-latest' }}
-    timeout-minutes: 20
-    
+    timeout-minutes: 15
+    strategy:
+      # One shard failing must not cancel the others: their results (and flake reports) are still wanted.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+
     steps:
     - uses: actions/checkout@v4
 
@@ -34,31 +43,60 @@ jobs:
          cache: 'maven'
          cache-dependency-path: 'pom.xml' 
 
+    - name: List the classes of this shard
+      id: classes
+      run: |
+        classes=$(jq -r --arg shard "${{ matrix.shard }}" '.[$shard] | join(",")' src/test/resources/it-shards.json)
+        if [ -z "$classes" ]; then
+          echo "::error::shard ${{ matrix.shard }} is not in src/test/resources/it-shards.json"
+          exit 1
+        fi
+        echo "classes=$classes" >> "$GITHUB_OUTPUT"
+        echo "Shard ${{ matrix.shard }} runs: $classes"
+
     # A failing test is re-run once (failsafe.rerunFailingTestsCount) so one unlucky run does not
     # cost the whole job, but a test that needed the retry is a flake, not a pass: the next steps
     # list it in the job summary and raise a warning, and docs/testing/flaky-tests.md says an issue
     # is opened for each. Never remove the "Report flaky tests" step without removing the retry.
-    - name: Run IT tests with maven
+    - name: Run IT tests with maven (shard ${{ matrix.shard }})
       run: |
         export WEBHOOK_SECRET=$(openssl rand -base64 32)
         INTEGRATION=true mvn -ntp -B test-compile failsafe:integration-test failsafe:verify \
-          -Dfailsafe.rerunFailingTestsCount=1
+          -Dfailsafe.rerunFailingTestsCount=1 \
+          -Dit.test='${{ steps.classes.outputs.classes }}'
 
     - name: Report flaky tests (passed on retry)
       if: always()
-      run: scripts/report-flaky-tests.sh target/failsafe-reports integration
+      run: scripts/report-flaky-tests.sh target/failsafe-reports "integration shard ${{ matrix.shard }}"
 
     # The trace (open it with `npx playwright show-trace`), screenshot, page text and browser log of
-    # every failed attempt, including attempts that passed on retry (issue #340). If the tests are
-    # ever split into shards (issue #328), name this artifact per shard, e.g.
-    # integration-artifacts-shard-${{ matrix.shard }}, so no shard's evidence overwrites another's.
+    # every failed attempt, including attempts that passed on retry (issue #340). Named per shard so
+    # no shard's evidence overwrites another's.
     - name: Upload Playwright artifacts and failsafe reports
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: integration-artifacts
+        name: integration-artifacts-shard-${{ matrix.shard }}
         path: |
           target/playwright-artifacts/
           target/failsafe-reports/
         if-no-files-found: ignore
         retention-days: 14
+
+  # Aggregate job. It keeps the job id and therefore the check name "build" that this workflow had
+  # before it was sharded, so anything that expects the check "build" (branch protection, the
+  # "enforce" job of 00-all-checks-pass.yml) keeps working. It fails if any shard failed or was
+  # cancelled, and it runs even then (always()), so the check is never left "skipped".
+  build:
+    needs: it-shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Fail unless every shard succeeded
+      run: |
+        echo "Result of the integration shards: ${{ needs.it-shard.result }}"
+        if [ "${{ needs.it-shard.result }}" != "success" ]; then
+          echo "::error::At least one integration shard did not succeed (failed, cancelled or skipped)."
+          exit 1
+        fi
