@@ -30,7 +30,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class LegacyImportWebIT extends WebTestCase {
 
   private void goTo(String path) {
-    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1" + path));
+    openPage(page, path);
   }
 
   private static final String LEGACY_CSV =

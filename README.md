@@ -96,6 +96,15 @@ The integration tests are in `src/test/java/edu/ucsb/cs/taapply/web/`:
 | `HomePageWebIT` | After login, the placeholder home page is visible |
 | `SwaggerWebIT` | The Swagger UI page loads correctly |
 
+#### Flaky integration tests
+
+If an integration test passes on a rerun without a code change, it is flaky: open an issue for it
+right away, and fix or quarantine it; never rerun it silently. The job re-runs a failing test once,
+lists any test that needed that retry in the job summary, and uploads the Playwright trace and
+screenshot of every failed attempt as the `integration-artifacts` artifact. How to reproduce a race
+locally (CPU load, CPU and network throttling) and how to write tests that do not race is in
+[docs/testing/flaky-tests.md](docs/testing/flaky-tests.md).
+
 #### Wiremock development mode
 
 To run the full app with WireMock replacing Google OAuth (useful for local frontend development

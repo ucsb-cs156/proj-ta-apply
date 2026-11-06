@@ -32,7 +32,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class CoursesWebIT extends WebTestCase {
 
   private void goToCoursesPage() {
-    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/admin/courses"));
+    openPage(page, "/admin/courses");
   }
 
   /** Stubs the curriculum search so every quarter returns the same two courses. */
@@ -85,7 +85,7 @@ public class CoursesWebIT extends WebTestCase {
     ulaBox.click();
     assertThat(ulaBox).isChecked();
 
-    page.reload();
+    reloadPage(page);
 
     assertThat(page.getByTestId("CoursesIndexPage-cell-row-0-col-needsUla-checkbox")).isChecked();
   }
@@ -102,7 +102,7 @@ public class CoursesWebIT extends WebTestCase {
     Locator firstRow = page.getByTestId("CoursesIndexPage-cell-row-0-col-courseId");
     for (int i = 0; i < 20 && !firstRow.isVisible(); i++) {
       page.waitForTimeout(500);
-      page.reload();
+      reloadPage(page);
     }
 
     // Course ids are normalized from the API's space-padded form, and sorted.
@@ -131,7 +131,7 @@ public class CoursesWebIT extends WebTestCase {
     Locator secondRow = page.getByTestId("CoursesIndexPage-cell-row-1-col-courseId");
     for (int i = 0; i < 20 && !secondRow.isVisible(); i++) {
       page.waitForTimeout(500);
-      page.reload();
+      reloadPage(page);
     }
 
     // CMPSC   156 sorts second; its title is refreshed but both flags survive.

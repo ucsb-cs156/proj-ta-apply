@@ -44,7 +44,7 @@ public class AdminAssignmentsWebIT extends WebTestCase {
   private static final String SELECT = "AdminAssignmentsPage-table-cell-row-0-tentative-select";
 
   private void goTo(String path) {
-    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1" + path));
+    openPage(page, path);
   }
 
   private Recruitment seedRecruitment(String quarter, RecruitmentType type) {
@@ -83,11 +83,12 @@ public class AdminAssignmentsWebIT extends WebTestCase {
   private com.microsoft.playwright.BrowserContext openSecondWindow(
       com.microsoft.playwright.Page[] holder) {
     com.microsoft.playwright.BrowserContext other =
-        browser.newContext(
+        newContext(
             new com.microsoft.playwright.Browser.NewContextOptions()
                 .setStorageState(page.context().storageState()));
-    holder[0] = other.newPage();
+    holder[0] = newPage(other);
     holder[0].navigate(page.url());
+    awaitSettled(holder[0]);
     return other;
   }
 
@@ -141,15 +142,16 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId("AdminAssignmentsPage-count")).isVisible();
 
     com.microsoft.playwright.BrowserContext other =
-        browser.newContext(
+        newContext(
             new com.microsoft.playwright.Browser.NewContextOptions()
                 .setStorageState(page.context().storageState()));
-    com.microsoft.playwright.Page otherPage = other.newPage();
+    com.microsoft.playwright.Page otherPage = newPage(other);
     otherPage.navigate(
         page.url()
             .replaceAll(
                 "(http://localhost:\\d+).*",
                 "$1/admin/recruitments/" + second.getId() + "/assignments"));
+    awaitSettled(otherPage);
     assertThat(otherPage.getByTestId("AdminAssignmentsPage-count")).isVisible();
 
     // Wait out several heartbeats of both windows, then check neither was warned.
@@ -208,7 +210,7 @@ public class AdminAssignmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId("AdminAssignmentsPage-columns-toggle")).containsText("1 hidden");
 
     // The choice is on the backend, so it survives a reload.
-    page.reload();
+    reloadPage(page);
     assertThat(page.getByTestId("AdminAssignmentsPage-table-header-email")).isVisible();
     assertThat(page.getByTestId("AdminAssignmentsPage-table-header-major")).not().isVisible();
   }

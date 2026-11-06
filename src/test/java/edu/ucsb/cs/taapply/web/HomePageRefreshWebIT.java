@@ -76,7 +76,7 @@ public class HomePageRefreshWebIT extends WebTestCase {
   private void waitFor(Locator locator) {
     for (int i = 0; i < 20 && !locator.isVisible(); i++) {
       page.waitForTimeout(500);
-      page.reload();
+      reloadPage(page);
     }
   }
 
@@ -92,7 +92,7 @@ public class HomePageRefreshWebIT extends WebTestCase {
     setupAdminUser();
     // The admin also teaches: give the same email an instructor row with the catalog name.
     instructors.save(Instructor.builder().email(ADMIN_EMAIL).catalogName("CONRAD P").build());
-    page.reload();
+    reloadPage(page);
 
     // Nothing to list yet in the instructor section.
     assertThat(page.getByTestId("HomePageLoggedIn-instructor-none"))

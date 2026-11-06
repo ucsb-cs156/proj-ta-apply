@@ -27,7 +27,7 @@ public class QuartersWebIT extends WebTestCase {
   @Autowired UCSBAPIQuarterRepository ucsbApiQuarterRepository;
 
   private void goToQuarters() {
-    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/admin/quarters"));
+    openPage(page, "/admin/quarters");
   }
 
   @Test

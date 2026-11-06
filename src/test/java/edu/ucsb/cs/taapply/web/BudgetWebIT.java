@@ -50,11 +50,12 @@ public class BudgetWebIT extends WebTestCase {
     assertThat(page.getByTestId(BANNER)).not().isVisible();
 
     com.microsoft.playwright.BrowserContext other =
-        browser.newContext(
+        newContext(
             new com.microsoft.playwright.Browser.NewContextOptions()
                 .setStorageState(page.context().storageState()));
-    com.microsoft.playwright.Page otherPage = other.newPage();
+    com.microsoft.playwright.Page otherPage = newPage(other);
     otherPage.navigate(page.url());
+    awaitSettled(otherPage);
     assertThat(otherPage.getByTestId("BudgetPage-bottom-line")).isVisible();
 
     var wait =
@@ -95,11 +96,12 @@ public class BudgetWebIT extends WebTestCase {
     assertThat(page.getByTestId("BudgetPage-bottom-line")).isVisible();
 
     com.microsoft.playwright.BrowserContext other =
-        browser.newContext(
+        newContext(
             new com.microsoft.playwright.Browser.NewContextOptions()
                 .setStorageState(page.context().storageState()));
-    com.microsoft.playwright.Page otherPage = other.newPage();
+    com.microsoft.playwright.Page otherPage = newPage(other);
     otherPage.navigate(page.url().replace("/F26", "/W27"));
+    awaitSettled(otherPage);
     assertThat(otherPage.getByTestId("BudgetPage-bottom-line")).isVisible();
 
     // Long enough for several heartbeats of both, with the integration settings (2 seconds).

@@ -134,7 +134,7 @@ public class ApplicationsWebIT extends WebTestCase {
   }
 
   private void goTo(String path) {
-    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1" + path));
+    openPage(page, path);
   }
 
   /**
@@ -308,7 +308,7 @@ public class ApplicationsWebIT extends WebTestCase {
     page.getByTestId("ApplicationPage-lastName").fill("Gaucho-Smith");
     page.getByTestId("ApplicationPage-submit").click();
 
-    page.reload();
+    reloadPage(page);
     assertThat(page.getByTestId("ApplicationPage-lastName")).hasValue("Gaucho-Smith");
   }
 
@@ -562,11 +562,12 @@ public class ApplicationsWebIT extends WebTestCase {
 
     // A second window, signed in as the same person, opens the same draft and saves it.
     com.microsoft.playwright.BrowserContext other =
-        browser.newContext(
+        newContext(
             new com.microsoft.playwright.Browser.NewContextOptions()
                 .setStorageState(page.context().storageState()));
-    com.microsoft.playwright.Page otherPage = other.newPage();
+    com.microsoft.playwright.Page otherPage = newPage(other);
     otherPage.navigate(page.url());
+    awaitSettled(otherPage);
     // The newer window is asked what to do (issue #284); this one carries on.
     otherPage.getByTestId("ApplyPage-multiple-tabs-modal-continue").click();
     otherPage.getByTestId("ApplyPage-comments").fill("From the second window");
@@ -619,11 +620,12 @@ public class ApplicationsWebIT extends WebTestCase {
 
     // A second window, signed in as the same person, opens the same draft.
     com.microsoft.playwright.BrowserContext other =
-        browser.newContext(
+        newContext(
             new com.microsoft.playwright.Browser.NewContextOptions()
                 .setStorageState(page.context().storageState()));
-    com.microsoft.playwright.Page otherPage = other.newPage();
+    com.microsoft.playwright.Page otherPage = newPage(other);
     otherPage.navigate(page.url());
+    awaitSettled(otherPage);
     assertThat(otherPage.getByTestId("ApplyPage-saveDraft")).isVisible();
 
     // Both are told, the first at its next heartbeat and the second at its first.
@@ -655,11 +657,12 @@ public class ApplicationsWebIT extends WebTestCase {
   /** A second window of the same person on the same draft; the newer of the two. */
   private com.microsoft.playwright.Page openSecondWindow() {
     com.microsoft.playwright.BrowserContext other =
-        browser.newContext(
+        newContext(
             new com.microsoft.playwright.Browser.NewContextOptions()
                 .setStorageState(page.context().storageState()));
-    com.microsoft.playwright.Page otherPage = other.newPage();
+    com.microsoft.playwright.Page otherPage = newPage(other);
     otherPage.navigate(page.url());
+    awaitSettled(otherPage);
     return otherPage;
   }
 
@@ -962,7 +965,7 @@ public class ApplicationsWebIT extends WebTestCase {
     stored.setPrimaryConsiderationDate(LocalDate.now().minusDays(1));
     recruitmentRepository.save(stored);
 
-    page.reload();
+    reloadPage(page);
     page.getByTestId(card + "view").click();
 
     // The whole form is still offered, and the comments box with it.
@@ -1407,13 +1410,16 @@ public class ApplicationsWebIT extends WebTestCase {
     edu.ucsb.cs.taapply.services.wiremock.WiremockServiceImpl.setupOauthMocks(
         wireMockServer, "admin@ucsb.edu");
     String base = page.url().replaceAll("(http://localhost:\\d+).*", "$1");
-    com.microsoft.playwright.BrowserContext adminContext = browser.newContext();
-    com.microsoft.playwright.Page adminPage = adminContext.newPage();
+    com.microsoft.playwright.BrowserContext adminContext =
+        newContext(new com.microsoft.playwright.Browser.NewContextOptions());
+    com.microsoft.playwright.Page adminPage = newPage(adminContext);
     adminPage.navigate(base + "/oauth2/authorization/my-oauth-provider");
     adminPage.locator("#username").fill("admin@ucsb.edu");
     adminPage.locator("#password").fill("password");
     adminPage.locator("#submit").click();
+    awaitSignedIn(adminPage);
     adminPage.navigate(base + path);
+    awaitSettled(adminPage);
     return adminPage;
   }
 

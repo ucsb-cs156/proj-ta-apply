@@ -172,8 +172,18 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     return applicationRepository.save(application);
   }
 
+  /** Opens the page and waits until it has settled; see {@link #awaitSettled(Page)}. */
   private void goTo(Page p, String path) {
-    p.navigate(p.url().replaceAll("(http://localhost:\\d+).*", "$1" + path));
+    openPage(p, path);
+  }
+
+  /**
+   * Opens a page with a coursework section and waits until the section has drawn its table, so the
+   * rows the test is about to click are the final ones, not a page still being filled in.
+   */
+  private void goToCoursework(Page p, String path, String prefix) {
+    goTo(p, path);
+    assertThat(p.getByTestId(prefix + "-coursework-table-cell-row-0-col-edit-button")).isVisible();
   }
 
   /** What the database holds, for the message of a failure. */
@@ -303,6 +313,7 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     }
     goTo(p, path);
     assertThat(p.getByTestId(prefix + "-saveDraft")).isVisible();
+    assertThat(p.getByTestId(prefix + "-coursework-count")).isVisible();
     // What the form shows: a new draft is only saved once something changes, and it may start with
     // the courses carried over from an earlier application.
     int before =
@@ -336,19 +347,19 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     eventually(where + " add", () -> draftRows(id).size() == before + 1);
     assertEquals(THIRD_COURSE, draftRows(id).get(before).getCourseNumber(), where + " add");
 
-    goTo(p, path);
+    goToCoursework(p, path, prefix);
     changeGrade(p, prefix, 0, "B+");
     p.getByTestId(prefix + "-saveDraft").click();
     eventually(where + " grade", () -> "B+".equals(draftRows(id).get(0).getGrade()));
     assertEquals(before + 1, draftRows(id).size(), where + " grade");
 
-    goTo(p, path);
+    goToCoursework(p, path, prefix);
     changeTerm(p, prefix, 0, "Semester 1");
     p.getByTestId(prefix + "-saveDraft").click();
     eventually(where + " term", () -> "Semester 1".equals(draftRows(id).get(0).getTerm()));
     assertEquals("B+", draftRows(id).get(0).getGrade(), where + " term kept the grade");
 
-    goTo(p, path);
+    goToCoursework(p, path, prefix);
     long had = draftRows(id).stream().filter(c -> THIRD_COURSE.equals(c.getCourseNumber())).count();
     delete(p, prefix, before);
     p.getByTestId(prefix + "-saveDraft").click();
@@ -381,12 +392,17 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     p.getByTestId(submitId).click();
     eventually(where + " add", () -> applicationRows(id).size() == before + 1);
     assertEquals(NEW_COURSE, applicationRows(id).get(before).getCourseNumber(), where + " add");
+    // The application is saved first and its audit rows after, so the row can be seen a moment
+    // before its audit trail can (issue #340).
+    if (audited) {
+      eventually(where + " add audit", () -> auditCount(id) >= 1);
+    }
     int audit = auditCount(id);
     if (audited) {
       assertEquals(1, audit, where + " add is one audit row");
     }
 
-    goTo(p, editPath);
+    goToCoursework(p, editPath, prefix);
     changeGrade(p, prefix, 0, grade);
     p.getByTestId(submitId).click();
     eventually(where + " grade", () -> grade.equals(applicationRows(id).get(0).getGrade()));
@@ -404,7 +420,7 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
               && !gone.getOldValue().contains("\"grade\":\"" + grade + "\""));
     }
 
-    goTo(p, editPath);
+    goToCoursework(p, editPath, prefix);
     changeTerm(p, prefix, 0, term);
     p.getByTestId(submitId).click();
     eventually(where + " term", () -> term.equals(applicationRows(id).get(0).getTerm()));
@@ -415,7 +431,7 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
       assertTrue(rows.get(rows.size() - 1).getNewValue().contains("\"term\":\"" + term + "\""));
     }
 
-    goTo(p, editPath);
+    goToCoursework(p, editPath, prefix);
     delete(p, prefix, before);
     p.getByTestId(submitId).click();
     eventually(where + " delete", () -> applicationRows(id).size() == before);
@@ -516,12 +532,14 @@ public class PriorCourseworkMatrixWebIT extends WebTestCase {
     }
     WiremockServiceImpl.setupOauthMocks(wireMockServer, "admin@ucsb.edu");
     String base = page.url().replaceAll("(http://localhost:\\d+).*", "$1");
-    BrowserContext adminContext = browser.newContext();
-    Page adminPage = adminContext.newPage();
+    BrowserContext adminContext =
+        newContext(new com.microsoft.playwright.Browser.NewContextOptions());
+    Page adminPage = newPage(adminContext);
     adminPage.navigate(base + "/oauth2/authorization/my-oauth-provider");
     adminPage.locator("#username").fill("admin@ucsb.edu");
     adminPage.locator("#password").fill("password");
     adminPage.locator("#submit").click();
+    awaitSignedIn(adminPage);
     return adminPage;
   }
 

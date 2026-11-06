@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Modal from "react-bootstrap/Modal";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import { useForm } from "react-hook-form";
@@ -97,10 +97,19 @@ export default function PriorCourseworkModal({
   } = useForm<PriorCourseFormFields>({ defaultValues: toFormFields(course) });
   // Stryker restore all
 
-  // The same modal serves every add and edit, so its fields are reset each time it opens.
+  // The row as the page last gave it. It is kept apart from the reset below because the page may
+  // hand over a new copy of the row at any time (the catalog arriving fills in a blank title), and
+  // that must not wipe what the applicant is typing (issue #340).
+  const latestCourse = useRef(course);
   useEffect(() => {
-    if (show) reset(toFormFields(course));
-  }, [show, course, reset]);
+    latestCourse.current = course;
+  });
+
+  // The same modal serves every add and edit, so its fields are reset each time it opens, and only
+  // then.
+  useEffect(() => {
+    if (show) reset(toFormFields(latestCourse.current));
+  }, [show, reset]);
 
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() returns a new function each render; React Compiler correctly skips memoizing this component
   const ucsbCourse = watch("ucsbCourse");

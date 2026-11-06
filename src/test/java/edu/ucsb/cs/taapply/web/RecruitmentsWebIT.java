@@ -34,7 +34,7 @@ public class RecruitmentsWebIT extends WebTestCase {
 
   /** The recruitments are on the admin's home page (issue #141). */
   private void goToRecruitments() {
-    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/"));
+    openPage(page, "/");
   }
 
   /** CMPSC 156 with two lectures, and CMPSC 130A which only wants a ULA. */
@@ -120,7 +120,7 @@ public class RecruitmentsWebIT extends WebTestCase {
   private void waitFor(Locator locator) {
     for (int i = 0; i < 20 && !locator.isVisible(); i++) {
       page.waitForTimeout(500);
-      page.reload();
+      reloadPage(page);
     }
   }
 
@@ -231,11 +231,12 @@ public class RecruitmentsWebIT extends WebTestCase {
     // A second window on the view-only page: no warning anywhere.
     String viewUrl = page.url();
     com.microsoft.playwright.BrowserContext other =
-        browser.newContext(
+        newContext(
             new com.microsoft.playwright.Browser.NewContextOptions()
                 .setStorageState(page.context().storageState()));
-    com.microsoft.playwright.Page otherPage = other.newPage();
+    com.microsoft.playwright.Page otherPage = newPage(other);
     otherPage.navigate(viewUrl);
+    awaitSettled(otherPage);
     assertThat(otherPage.getByTestId("RecruitmentCoursesPage-edit-button")).isVisible();
     page.waitForTimeout(5000);
     assertThat(page.getByTestId("RecruitmentCoursesPage-multiple-tabs")).not().isVisible();
