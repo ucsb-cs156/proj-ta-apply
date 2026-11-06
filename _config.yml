@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"is_bot":true,"login":"app/code-coverage-agent"},"headRefName":"code-coverage-agent/setup-code-coverage-reporting","number":365,"title":"[WIP] Add code coverage reporting to CI workflows","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/365"}]
+pull_requests: [{"author":{"is_bot":true,"login":"app/code-coverage-agent"},"headRefName":"code-coverage-agent/setup-code-coverage-reporting","number":365,"title":"Add Cobertura coverage reporting for frontend, upload to GitHub code coverage API","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/365"}]
