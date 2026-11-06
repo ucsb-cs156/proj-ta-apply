@@ -4,6 +4,7 @@ import AxiosMockAdapter from "axios-mock-adapter";
 import userEvent from "@testing-library/user-event";
 import CandidateTable, {
   DEFAULT_SORT_TOOLTIP,
+  TIED_WARNING,
 } from "main/components/Instructor/CandidateTable";
 import candidatesFixtures from "fixtures/candidatesFixtures";
 
@@ -479,27 +480,94 @@ describe("CandidateTable", () => {
     expect(JSON.parse(mock.history.put[0].data)).toEqual({ rank: 1 });
     const cells = [input().closest("td"), input("Grace Hopper").closest("td")];
     expect(
-      screen.queryByText(/You have tied rankings/),
+      screen.queryByText(/You have ranked multiple candidates/),
     ).not.toBeInTheDocument();
     expect(cells[0]).not.toHaveStyle({ backgroundColor: "#ffff00" });
     act(() => vi.advanceTimersByTime(1999));
     expect(
-      screen.queryByText(/You have tied rankings/),
+      screen.queryByText(/You have ranked multiple candidates/),
     ).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(1));
-    expect(screen.getByText(/You have tied rankings/).textContent).toBe(
-      "You have tied rankings. This is permitted, but please be absolutely sure that you really do have zero preference between the candidates you have given the same ranking. Rankings without ties make it easier to finalize assignments.",
+    const warning = screen.getByText(/You have ranked multiple candidates/);
+    expect(warning.textContent).toBe(
+      "You have ranked multiple candidates with the same rank.  Are you sure you have no preference among these candidates?",
     );
-    expect(screen.getByText("absolutely").tagName).toBe("EM");
+    expect(TIED_WARNING).toBe(warning.textContent);
+    expect(
+      screen.getByTestId(
+        `CandidateTable-tied-warning-${candidatesFixtures[1].applicationId}`,
+      ),
+    ).toContainElement(warning);
+    expect(warning).toHaveAttribute("role", "alert");
+    expect(warning.querySelector("svg")).toBeInTheDocument();
+    const cell = warning.closest("td");
+    expect(cell.getAttribute("style")).toBe("font-size: 0.8em;");
+    expect(cell).toHaveAttribute("colspan", "9");
+    expect(cell.closest("tr")).toHaveClass("text-danger");
+    // Directly under the last row of the tied group (Ada, then Grace by preference).
+    expect(cell.closest("tr").previousElementSibling).toBe(
+      cells[1].closest("tr"),
+    );
+    expect(cells[0].closest("tr").nextElementSibling).toBe(
+      cells[1].closest("tr"),
+    );
     cells.forEach((cell) =>
       expect(cell).toHaveStyle({ backgroundColor: "#ffff00" }),
     );
     fireEvent.change(input("Grace Hopper"), { target: { value: "" } });
     expect(
-      screen.queryByText(/You have tied rankings/),
+      screen.queryByText(/You have ranked multiple candidates/),
     ).not.toBeInTheDocument();
     cells.forEach((cell) =>
       expect(cell).not.toHaveStyle({ backgroundColor: "#ffff00" }),
+    );
+    await settle();
+  });
+
+  test("each group of tied rankings gets its own warning under its last row, wherever sorting puts it", async () => {
+    vi.useFakeTimers();
+    table();
+    // Ada 1, Grace 1; Alan 2, Katherine 2; Edsger unranked.
+    [
+      ["Grace Hopper", "1"],
+      ["Alan Turing", "2"],
+      ["Katherine Johnson", "2"],
+    ].forEach(([name, value]) =>
+      fireEvent.change(input(name), { target: { value } }),
+    );
+    act(() => vi.advanceTimersByTime(2000));
+    const warnings = () => screen.getAllByText(/You have ranked multiple/);
+    expect(warnings()).toHaveLength(2);
+    const rowOf = (name) => input(name).closest("tr");
+    expect(rowOf("Grace Hopper").nextElementSibling).toContainElement(
+      warnings()[0],
+    );
+    expect(rowOf("Katherine Johnson").nextElementSibling).toContainElement(
+      warnings()[1],
+    );
+    expect(rowOf("Ada Lovelace").nextElementSibling).toBe(
+      rowOf("Grace Hopper"),
+    );
+    // The last warning is the last row of the table.
+    expect(
+      rowOf("Katherine Johnson").nextElementSibling.nextElementSibling,
+    ).toBe(null);
+    // Sorted by last name the groups are no longer adjacent; still one warning per group,
+    // under the last row of each group in the displayed order.
+    fireEvent.click(screen.getByRole("button", { name: "Last Name" }));
+    expect(warnings()).toHaveLength(2);
+    // Order: Hopper, Johnson, Lovelace, Turing.
+    expect(rowOf("Alan Turing").nextElementSibling).toContainElement(
+      warnings()[1],
+    );
+    expect(rowOf("Ada Lovelace").nextElementSibling).toContainElement(
+      warnings()[0],
+    );
+    expect(rowOf("Grace Hopper").nextElementSibling).toBe(
+      rowOf("Katherine Johnson"),
+    );
+    expect(rowOf("Katherine Johnson").nextElementSibling).toBe(
+      rowOf("Ada Lovelace"),
     );
     await settle();
   });
@@ -516,14 +584,14 @@ describe("CandidateTable", () => {
     const { unmount } = table();
     act(() => vi.advanceTimersByTime(2000));
     expect(
-      screen.queryByText(/You have tied rankings/),
+      screen.queryByText(/You have ranked multiple candidates/),
     ).not.toBeInTheDocument();
     fireEvent.change(input("Grace Hopper"), { target: { value: "1" } });
     act(() => vi.advanceTimersByTime(1500));
     fireEvent.change(input("Alan Turing"), { target: { value: "1" } });
     act(() => vi.advanceTimersByTime(1999));
     expect(
-      screen.queryByText(/You have tied rankings/),
+      screen.queryByText(/You have ranked multiple candidates/),
     ).not.toBeInTheDocument();
     unmount();
     expect(vi.getTimerCount()).toBe(0);

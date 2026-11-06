@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import axios from "axios";
 import { apiErrorMessage } from "main/utils/apiError";
 import InterestMark from "main/components/Common/InterestMark";
+import { WarningIcon } from "main/components/Common/Icons";
 import { gpaText } from "main/utils/applicationFields";
 import { interestDisplay } from "main/utils/interestDisplay";
 import {
@@ -59,6 +60,10 @@ const isConflict = (error: unknown): boolean =>
 /** What a row says when its save was refused because the list changed under it (issue #279). */
 export const CONFLICT_MESSAGE =
   "Rankings for this course changed while you were editing; your change has not been saved.";
+
+/** Issue #311: the warning under the last row of each group of tied rankings. */
+export const TIED_WARNING =
+  "You have ranked multiple candidates with the same rank.  Are you sure you have no preference among these candidates?";
 
 // Strongest interest first; "Not Interested" candidates appear only when the instructor asks.
 const preferences = PREFERENCE_ORDER;
@@ -276,6 +281,16 @@ export default function CandidateTable({
     return sort.descending ? -comparison : comparison;
   });
 
+  // The warning for a group of tied rankings sits under the group's last row as the table is
+  // currently ordered. Under the default sort a group is contiguous, so that is directly under
+  // it; when the table is sorted by another column the rows of a group may be apart, and the
+  // warning still appears once per group, under the last of its rows.
+  const lastOfTie = new Map<number, number>();
+  sorted.forEach((candidate) => {
+    const rank = Number(ranks[candidate.applicationId]);
+    if (tied.includes(rank)) lastOfTie.set(rank, candidate.applicationId);
+  });
+
   return (
     <section aria-label="Eligible candidates">
       <h2>Candidates</h2>
@@ -337,145 +352,160 @@ export default function CandidateTable({
             </thead>
             <tbody>
               {sorted.map((candidate) => (
-                <tr key={candidate.applicationId}>
-                  {columns.map((column) => (
-                    <td
-                      key={column.key}
-                      className={column.key === "rank" ? "text-end" : undefined}
-                      style={
-                        column.key === "rank" &&
-                        tied.includes(Number(ranks[candidate.applicationId]))
-                          ? { backgroundColor: "#ffff00" }
-                          : column.key === "preference"
-                            ? {
-                                backgroundColor: interestDisplay(
-                                  candidate.preference,
-                                ).background,
-                              }
+                <Fragment key={candidate.applicationId}>
+                  <tr>
+                    {columns.map((column) => (
+                      <td
+                        key={column.key}
+                        className={
+                          column.key === "rank" ? "text-end" : undefined
+                        }
+                        style={
+                          column.key === "rank" &&
+                          tied.includes(Number(ranks[candidate.applicationId]))
+                            ? { backgroundColor: "#ffff00" }
+                            : column.key === "preference"
+                              ? {
+                                  backgroundColor: interestDisplay(
+                                    candidate.preference,
+                                  ).background,
+                                }
+                              : undefined
+                        }
+                        data-testid={
+                          column.key === "preference"
+                            ? `CandidateTable-preference-${candidate.applicationId}`
                             : undefined
-                      }
-                      data-testid={
-                        column.key === "preference"
-                          ? `CandidateTable-preference-${candidate.applicationId}`
-                          : undefined
-                      }
-                    >
-                      {column.key === "rank" ? (
-                        <>
-                          {editable ? (
-                            <input
-                              aria-label={`Ranking for ${candidate.firstName} ${candidate.lastName}`}
-                              type="number"
-                              min={1}
-                              max={candidates.length}
-                              step={1}
-                              value={ranks[candidate.applicationId]}
-                              onChange={(event) => {
-                                if (event.target.validity.badInput) {
-                                  revisions.current[candidate.applicationId] =
-                                    (revisions.current[
-                                      candidate.applicationId
-                                    ] ?? 0) + 1;
-                                  setStates((previous) => ({
-                                    ...previous,
-                                    [candidate.applicationId]: `Enter an integer from 1 through ${candidates.length}, or clear the rank.`,
-                                  }));
-                                } else {
+                        }
+                      >
+                        {column.key === "rank" ? (
+                          <>
+                            {editable ? (
+                              <input
+                                aria-label={`Ranking for ${candidate.firstName} ${candidate.lastName}`}
+                                type="number"
+                                min={1}
+                                max={candidates.length}
+                                step={1}
+                                value={ranks[candidate.applicationId]}
+                                onChange={(event) => {
+                                  if (event.target.validity.badInput) {
+                                    revisions.current[candidate.applicationId] =
+                                      (revisions.current[
+                                        candidate.applicationId
+                                      ] ?? 0) + 1;
+                                    setStates((previous) => ({
+                                      ...previous,
+                                      [candidate.applicationId]: `Enter an integer from 1 through ${candidates.length}, or clear the rank.`,
+                                    }));
+                                  } else {
+                                    save(
+                                      candidate.applicationId,
+                                      event.target.value,
+                                    );
+                                  }
+                                }}
+                              />
+                            ) : (
+                              ranks[candidate.applicationId]
+                            )}
+                            {states[candidate.applicationId] && (
+                              <span
+                                role={
+                                  states[candidate.applicationId] === "Saved" ||
+                                  states[candidate.applicationId] ===
+                                    "Saving..."
+                                    ? "status"
+                                    : "alert"
+                                }
+                              >
+                                {states[candidate.applicationId]}
+                              </span>
+                            )}
+                            {(states[candidate.applicationId]?.startsWith(
+                              "Save failed:",
+                            ) ||
+                              states[candidate.applicationId] ===
+                                CONFLICT_MESSAGE) && (
+                              <button
+                                onClick={() =>
                                   save(
                                     candidate.applicationId,
-                                    event.target.value,
-                                  );
+                                    ranks[candidate.applicationId],
+                                  )
                                 }
-                              }}
+                              >
+                                {states[candidate.applicationId] ===
+                                CONFLICT_MESSAGE
+                                  ? "Save again"
+                                  : "Retry"}
+                              </button>
+                            )}
+                          </>
+                        ) : column.key === "firstName" ||
+                          column.key === "lastName" ? (
+                          <a
+                            href={`${applicationUrl}/${candidate.applicationId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {candidate[column.key]}
+                          </a>
+                        ) : column.key === "videoLink" &&
+                          candidate.videoLink ? (
+                          <a
+                            href={candidate.videoLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-testid={`CandidateTable-video-${candidate.applicationId}`}
+                          >
+                            {candidate.videoLink}
+                          </a>
+                        ) : column.key === "preference" ? (
+                          <>
+                            <InterestMark
+                              preference={candidate.preference}
+                              testId={`CandidateTable-preference-${candidate.applicationId}-mark`}
                             />
+                            {candidate.preference}
+                          </>
+                        ) : column.key === "classLevel" ? (
+                          candidate.classLevel === "PHD" ? (
+                            "PhD"
                           ) : (
-                            ranks[candidate.applicationId]
-                          )}
-                          {states[candidate.applicationId] && (
-                            <span
-                              role={
-                                states[candidate.applicationId] === "Saved" ||
-                                states[candidate.applicationId] === "Saving..."
-                                  ? "status"
-                                  : "alert"
-                              }
-                            >
-                              {states[candidate.applicationId]}
-                            </span>
-                          )}
-                          {(states[candidate.applicationId]?.startsWith(
-                            "Save failed:",
-                          ) ||
-                            states[candidate.applicationId] ===
-                              CONFLICT_MESSAGE) && (
-                            <button
-                              onClick={() =>
-                                save(
-                                  candidate.applicationId,
-                                  ranks[candidate.applicationId],
-                                )
-                              }
-                            >
-                              {states[candidate.applicationId] ===
-                              CONFLICT_MESSAGE
-                                ? "Save again"
-                                : "Retry"}
-                            </button>
-                          )}
-                        </>
-                      ) : column.key === "firstName" ||
-                        column.key === "lastName" ? (
-                        <a
-                          href={`${applicationUrl}/${candidate.applicationId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {candidate[column.key]}
-                        </a>
-                      ) : column.key === "videoLink" && candidate.videoLink ? (
-                        <a
-                          href={candidate.videoLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          data-testid={`CandidateTable-video-${candidate.applicationId}`}
-                        >
-                          {candidate.videoLink}
-                        </a>
-                      ) : column.key === "preference" ? (
-                        <>
-                          <InterestMark
-                            preference={candidate.preference}
-                            testId={`CandidateTable-preference-${candidate.applicationId}-mark`}
-                          />
-                          {candidate.preference}
-                        </>
-                      ) : column.key === "classLevel" ? (
-                        candidate.classLevel === "PHD" ? (
-                          "PhD"
+                            candidate.classLevel
+                          )
+                        ) : column.key === "gpaMajor" ||
+                          column.key === "gpaOverall" ? (
+                          gpaText(candidate, candidate[column.key])
                         ) : (
-                          candidate.classLevel
-                        )
-                      ) : column.key === "gpaMajor" ||
-                        column.key === "gpaOverall" ? (
-                        gpaText(candidate, candidate[column.key])
-                      ) : (
-                        candidate[column.key]
-                      )}
-                    </td>
-                  ))}
-                </tr>
+                          candidate[column.key]
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                  {lastOfTie.get(Number(ranks[candidate.applicationId])) ===
+                    candidate.applicationId && (
+                    <tr
+                      className="text-danger"
+                      data-testid={`CandidateTable-tied-warning-${candidate.applicationId}`}
+                    >
+                      <td
+                        colSpan={columns.length}
+                        style={{ fontSize: "0.8em" }}
+                      >
+                        <p className="mb-0" role="alert">
+                          <WarningIcon className="me-1 align-text-bottom" />
+                          {TIED_WARNING}
+                        </p>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
         </div>
-      )}
-      {tied.length > 0 && (
-        <p role="alert">
-          You have tied rankings. This is permitted, but please be{" "}
-          <em>absolutely</em> sure that you really do have zero preference
-          between the candidates you have given the same ranking. Rankings
-          without ties make it easier to finalize assignments.
-        </p>
       )}
     </section>
   );

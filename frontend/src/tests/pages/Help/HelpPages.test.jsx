@@ -396,6 +396,13 @@ describe("Help pages (issue #140)", () => {
       screen.getByText(/Instructor/, { selector: "strong" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/CONRAD P/)).toBeInTheDocument();
+    // Issue #311: the tie warning sits under the tied rows, not under the table.
+    expect(
+      screen.getByText(
+        /a red warning appears directly under the last row of each group of tied candidates/,
+        { exact: false },
+      ),
+    ).toBeInTheDocument();
     // Issue #265: the ranking table opens in the default sort and has a button for it.
     expect(
       screen.getByText(/The table always opens in the default sort/, {

@@ -29,11 +29,25 @@ export const TA = {};
 export const ULA = { args: { type: "ULA" } };
 export const ReadOnly = { args: { editable: false } };
 export const Empty = { args: { candidates: [] } };
+// The yellow highlight and the warning under the tied rows appear two seconds after a tie is
+// made (issue #311), so Chromatic waits for them.
 export const Tied = {
+  parameters: { chromatic: { delay: 2500 } },
   args: {
     candidates: candidatesFixtures.map((candidate) => ({
       ...candidate,
       rank: 1,
+    })),
+  },
+};
+
+/** Issue #311: two groups of tied rankings, each with its own warning under its last row. */
+export const TwoTiedGroups = {
+  parameters: { chromatic: { delay: 2500 } },
+  args: {
+    candidates: candidatesFixtures.map((candidate, i) => ({
+      ...candidate,
+      rank: i < 2 ? 1 : i < 4 ? 2 : null,
     })),
   },
 };
