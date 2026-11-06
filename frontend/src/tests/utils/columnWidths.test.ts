@@ -1,3 +1,4 @@
+import { describe, expect, test } from "vitest";
 import {
   WIDE_COLUMN_DEFAULT_WIDTH,
   WIDE_COLUMN_IDS,

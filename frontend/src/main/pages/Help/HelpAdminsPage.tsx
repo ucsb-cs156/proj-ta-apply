@@ -611,14 +611,14 @@ export default function HelpAdminsPage(): React.JSX.Element {
               column&apos;s heading), which lists every answer on the form for
               that recruitment&apos;s type (TA or ULA); the columns the table
               has always had start shown and the rest start hidden, and the
-              choice is kept for that recruitment, for all admins. The long
-              text columns (Other Courses of Interest, Topic Proficiencies,
+              choice is kept for that recruitment, for all admins. The long text
+              columns (Other Courses of Interest, Topic Proficiencies,
               Interests, Previous Experience, Anything Else, Post-Application
               Comments and Admin Comments) are wide, 400 pixels to start with.
               Drag the thin bar at the right edge of such a heading to widen or
               narrow the column (never narrower than 200 pixels; there is no
-              upper limit), or tab to the bar and press the left and right
-              arrow keys. The widths last until you reload the page.
+              upper limit), or tab to the bar and press the left and right arrow
+              keys. The widths last until you reload the page.
             </span>
           </li>
           <li>
