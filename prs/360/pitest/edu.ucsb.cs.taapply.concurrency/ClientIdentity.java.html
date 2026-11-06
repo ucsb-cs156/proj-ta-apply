@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>ClientIdentity.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package edu.ucsb.cs.taapply.concurrency;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Who a client is, as the application tells the detector (issue #273): an opaque, stable key for</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * the person, and the label to show other people.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;The detector never looks inside either. It treats two clients with the same {@link #personKey}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * as the same person, and hands {@link #label} back as it is. The application decides what they</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * are; for the people of this application the key is the email address and the label is the email</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * address followed by the full name in parentheses, or the email address alone if there is no name.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;{@link #admin} says whether the person is an admin (issue #302). The detector does not act on</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * it; it hands it back with the label, for the client to choose its message by.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;A label that is blank becomes the key. A label longer than {@value #MAX_LABEL_LENGTH}</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * characters is cut short with an ellipsis, so that no one&#39;s name can swell a response.</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>public record ClientIdentity(String personKey, String label, boolean admin) {</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** The longest label that is kept, in characters (code points, so no character is split). */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static final int MAX_LABEL_LENGTH = 200;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  /** Someone who is not an admin. */</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public ClientIdentity(String personKey, String label) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    this(personKey, label, false);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  public ClientIdentity {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_29'/>
+29
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_29'>2</a>
+<span>
+1. &#60;init&#62; : negated conditional &rarr; KILLED<br/>
+2. &#60;init&#62; : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (personKey == null || personKey.isBlank()) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      throw new IllegalArgumentException(&#34;A person key is required&#34;);</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_32'/>
+32
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_32'>2</a>
+<span>
+1. &#60;init&#62; : negated conditional &rarr; KILLED<br/>
+2. &#60;init&#62; : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    if (label == null || label.isBlank()) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      label = personKey;</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_34'/>
+34
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_34'>2</a>
+<span>
+1. &#60;init&#62; : changed conditional boundary &rarr; KILLED<br/>
+2. &#60;init&#62; : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    } else if (label.codePointCount(0, label.length()) &#62; MAX_LABEL_LENGTH) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_35'/>
+35
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_35'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>      label = label.substring(0, label.offsetByCodePoints(0, MAX_LABEL_LENGTH - 1)) + &#34;&#8230;&#34;;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@68a48fac_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68a48fac_29'>29</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_29'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:it_keeps_the_key_and_the_label()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:it_keeps_the_key_and_the_label()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68a48fac_32'>32</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_32'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:it_keeps_the_key_and_the_label()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:it_keeps_the_key_and_the_label()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@68a48fac_34'>34</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@68a48fac_34'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:a_label_of_the_longest_length_is_kept_whole()]</span></span> changed conditional boundary &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:it_keeps_the_key_and_the_label()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:it_keeps_the_key_and_the_label()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:a_label_is_never_cut_in_the_middle_of_a_character()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:a_label_of_the_longest_length_is_kept_whole()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:a_label_one_longer_is_cut_short_with_an_ellipsis_to_the_longest_length()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:a_very_long_label_is_cut_short_too()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:a_person_is_not_an_admin_unless_said_to_be()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:clients_on_other_resources_do_not_count()] (1 ms)</li><li>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:people_are_in_order_of_label_ignoring_case()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:people_whose_labels_differ_only_in_case_are_still_in_a_fixed_order()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:others_are_told_whether_a_person_is_an_admin()] (0 ms)</li><li>edu.ucsb.cs.taapply.config.ConcurrencyConfigTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.config.ConcurrencyConfigTests]/[method:it_uses_the_real_clock()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.InMemoryClientActivityDetectorTests]/[method:a_client_seen_again_is_known_by_the_identity_it_last_gave()] (0 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_caller_who_may_not_open_the_budget_cannot_remove_anyone_by_saying_goodbye()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:leaving_needs_a_signed_in_user_and_removes_nobody()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests]/[method:an_allocation_can_be_set_back_to_zero()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests]/[method:admin_can_set_an_allocation()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests]/[method:an_estimate_of_zero_is_allowed_and_leaving_it_out_clears_it()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:a_caller_without_access_is_403_and_nothing_is_recorded_told_or_removed()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests]/[method:admin_auto_allocate_runs_the_service_and_returns_the_visible_rows_in_order()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests]/[method:admin_can_set_an_estimate()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_save_that_loses_the_race_to_another_is_a_409_too()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_save_with_a_stale_version_changes_nothing_and_is_a_409_with_the_current_summary()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:leaving_someone_elses_draft_is_forbidden_and_removes_nobody()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests]/[method:admin_can_fill_estimates_from_actual()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:saving_a_draft_for_a_deleted_recruitment_is_a_404()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:admin_can_set_all_three_lines_at_once_rounded_to_cents()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_heartbeat_for_someone_elses_draft_is_forbidden_names_no_one_and_records_nothing()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:a_heartbeat_that_names_no_client_finds_no_one_and_is_not_recorded()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_heartbeat_from_the_only_tab_finds_no_one_else()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:another_quarter_never_warns()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesControllerTests]/[method:admin_can_fill_estimates_from_max()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:an_admin_with_a_name_is_labelled_by_the_email_and_the_trimmed_name()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_save_with_the_current_version_is_applied()] (10 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:an_admin_sees_the_names_of_the_other_admins_on_the_same_quarter()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_heartbeat_that_names_no_client_finds_no_one_and_is_not_recorded()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:lines_not_given_keep_their_values()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_heartbeat_from_the_only_client_finds_no_one_else_and_says_how_often_to_beat()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:an_edit_that_carries_current_versions_is_accepted()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:auto_allocate_bumps_the_recruitments_bulk_version()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_user_with_a_name_is_labelled_by_the_email_and_the_name()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:leaving_the_section_out_clears_the_assignment_without_reading_courses()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:an_admin_with_no_name_or_a_blank_one_is_labelled_by_the_email_alone()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:an_admin_sees_the_other_admins_working_on_the_same_recruitment()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:an_admin_alone_sees_no_one_and_is_told_how_often_to_beat()] (1 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:an_admins_own_other_tab_is_marked_as_the_same_person()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:auto_allocate_counts_as_being_there()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:an_allocation_save_counts_as_being_there()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:an_edit_made_from_an_old_bulk_version_is_refused_and_says_to_reload_everything()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:other_people_on_the_same_resource_are_named_with_a_label_that_may_not_be_ascii()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:a_save_that_names_no_client_is_not_recorded()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:other_people_and_my_own_other_tab_are_all_listed_once_each()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:an_estimate_save_counts_as_being_there()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:an_allocation_edit_bumps_the_rows_version()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_tab_that_leaves_is_forgotten_at_once()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:leaving_without_naming_a_client_is_harmless()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:an_edit_made_from_an_old_row_version_is_refused_and_changes_nothing()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:filling_the_estimates_counts_as_being_there()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_heartbeat_changes_nothing()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:a_different_recruitment_never_warns()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:a_stale_assignment_is_409_with_the_current_page_and_nothing_is_saved()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:a_vanished_recruitment_after_saving_is_404()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_user_with_no_name_or_a_blank_one_is_labelled_by_the_email_alone()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:the_second_tab_is_told_it_arrived_last_and_the_first_is_not()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:a_tab_that_leaves_is_forgotten_at_once()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:saving_after_applications_close_is_refused()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_second_tab_of_the_same_user_is_named_as_the_same_person()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:an_admin_who_leaves_stops_being_counted_at_once()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:an_admin_sees_the_names_of_the_others_on_the_same_recruitment()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_tab_that_leaves_is_forgotten_at_once_by_the_other()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:the_owner_alone_finds_no_one_and_is_told_how_often_to_beat()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_newer_version_than_the_draft_has_is_also_refused()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:a_save_counts_as_being_there_for_the_others_heartbeats()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_with_an_older_version_is_refused_with_the_draft_as_it_now_stands()] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:an_admin_is_labelled_by_the_email_and_the_trimmed_name_or_the_email_alone()] (15 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_user_with_no_name_is_labelled_by_the_email_alone()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_is_refused_once_applications_are_closed()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_user_with_no_name_at_all_is_labelled_by_the_email_alone()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:an_admin_is_labelled_by_the_email_and_the_trimmed_name_or_the_email_alone()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_an_application_whose_recruitment_is_missing_is_a_404()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:admin_assigns_an_applicant_to_a_section_and_gets_the_new_page_back()] (11 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:another_students_goodbye_is_forbidden_and_removes_nobody()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#4] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#8] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:an_admin_is_told_that_the_student_has_the_application_open_and_is_no_admin()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#5] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_heartbeat_that_names_no_client_finds_no_one_and_is_not_recorded()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#7] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_cancelled_application_cannot_be_cancelled_edited_or_commented_on_again()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#6] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#1] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_with_a_grade_over_16_characters_is_a_bad_request_and_saves_nothing()] (12 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_heartbeat_without_a_client_id_records_nobody()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#3] (2 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[test-template:rejects_invalid_ranks(java.lang.String)]/[test-template-invocation:#2] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:another_students_heartbeat_is_forbidden_and_records_and_names_nobody()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:an_invalid_rank_does_not_use_up_a_version()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_race_with_a_draft_that_has_since_gone_is_not_hidden()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_admin_edit_made_from_an_old_version_is_refused_and_shows_the_application()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_stale_rank_edit_is_refused_with_the_current_version_and_changes_nothing()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_lone_tab_finds_no_one_and_is_told_how_often_to_beat()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:rejects_missing_rank_and_ineligible_or_other_recruitment_applications()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_edit_with_too_few_courses_is_refused_before_anything_is_saved()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_rank_edit_from_the_current_version_is_saved_and_returns_the_next_version()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:the_owner_and_an_admin_may_say_goodbye_and_it_takes_effect_at_once()] (10 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_admin_edit_with_a_grade_over_16_characters_is_a_bad_request()] (14 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_save_without_a_client_records_nobody()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_name_that_is_blank_is_left_out_of_the_label()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:two_instructors_of_a_co_taught_course_see_each_other_by_name()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_second_tab_of_the_same_instructor_is_named_as_the_same_person()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:the_first_quarter_box_is_saved_with_the_draft_and_cleared_when_unanswered()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:an_edit_made_from_an_old_version_is_refused_and_shows_the_application_as_it_is()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_stale_save_still_counts_as_being_there()] (3 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:an_admin_who_teaches_the_course_and_an_instructor_see_each_other()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_that_names_no_client_is_not_recorded()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_admin_save_that_names_its_client_is_recorded_as_an_admin()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_goodbye_names_the_course_it_leaves()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:an_instructor_of_another_course_gets_403_and_is_neither_recorded_nor_told_who_is_there()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:another_course_never_warns_even_for_the_same_instructor()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_goodbye_without_a_client_id_is_accepted_and_forgets_nobody()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_a_ta_application_also_requires_the_ta_answers()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:saving_an_almost_empty_form_is_allowed()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_goodbye_from_someone_with_no_access_forgets_nobody()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:null_level_answers_are_left_out()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_answers_exactly_as_before_with_no_warning_in_it()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_down_to_too_few_courses_is_refused()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_that_is_refused_as_stale_still_counts_as_being_there()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_tab_that_leaves_is_forgotten_at_once_by_the_other()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.BudgetControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.BudgetControllerTests]/[method:my_own_other_tab_is_marked_as_the_same_person()] (10 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:an_applicant_is_told_that_an_admin_has_the_application_open()] (21 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_save_that_names_its_client_counts_as_being_there_even_when_refused()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:a_save_counts_as_being_there_and_other_recruitments_never_warn()] (18 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:an_admin_who_teaches_the_course_ranks_like_any_instructor()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_a_ula_application_applies_the_same_rules()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_with_the_current_version_returns_the_draft_with_its_new_version()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RecruitmentCoursesConcurrencyTests]/[method:a_second_tab_of_the_same_admin_is_the_same_person_and_is_marked_as_an_admin()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:same_application_has_independent_section_rankings_in_the_api()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_that_loses_a_race_is_refused_with_the_draft_as_it_now_stands()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:saves_immediately_updates_existing_row_clears_and_permits_ties_past_deadline()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:a_save_counts_as_being_there_for_the_other_tabs_heartbeats()] (10 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminAssignmentsControllerTests]/[method:a_placement_that_loses_a_race_for_the_application_is_409_with_the_current_page()] (17 ms)</li><li>edu.ucsb.cs.taapply.controller.RankingWarningControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.RankingWarningControllerTests]/[method:a_save_that_names_its_client_counts_as_ranking_the_course()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_race_with_an_application_that_has_since_gone_is_not_hidden()] (11 ms)</li><li>edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.CandidateRankingsControllerTests]/[method:a_not_interested_applicant_can_be_ranked_and_read_but_a_cancelled_one_cannot()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_is_still_allowed_past_the_deadline_while_open()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_can_clear_the_availability_answers()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_save_that_names_no_client_records_nobody()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_replaces_the_topic_ratings()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:a_race_with_an_application_that_has_since_gone_is_not_hidden()] (14 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:an_edit_made_from_the_current_version_is_saved_and_returns_the_new_version()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_admin_save_that_names_no_client_records_nobody()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_replaces_the_prior_coursework()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:a_save_that_loses_a_race_is_a_conflict_too()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_admin_edit_from_the_current_version_is_saved_and_audited_from_what_was_saved()] (9 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_and_commenting_leave_out_the_admin_comments_but_keep_them_stored()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_admin_save_that_loses_a_race_is_a_conflict_too()] (13 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_replaces_the_course_interests()] (8 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_edit_that_changes_nothing_audits_nothing()] (13 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:a_ula_edit_is_audited_against_the_ula_application_id()] (6 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_replaces_the_interest_levels()] (5 ms)</li><li>edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.DraftApplicationsControllerTests]/[method:saving_copies_every_field_of_the_form_without_checking_any()] (7 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:editing_also_requires_agreement()] (23 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_admin_edit_is_saved_and_each_changed_field_is_audited()] (20 ms)</li><li>edu.ucsb.cs.taapply.controller.ApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.ApplicationsControllerTests]/[method:an_applicant_can_edit_their_own_application_before_the_deadline()] (4 ms)</li><li>edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.AdminApplicationsControllerTests]/[method:an_admin_edit_of_a_ula_application_needs_no_ula_answers_but_a_valid_perm_number()] (80 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#6] (54 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#5] (63 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#2] (94 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#7] (89 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#8] (158 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#3] (192 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#1] (145 ms)</li><li>edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests]/[test-template:every_edit_of_the_prior_coursework_is_saved_and_an_admin_s_is_audited(edu.ucsb.cs.taapply.enums.RecruitmentType, edu.ucsb.cs.taapply.controller.PriorCourseworkEditMatrixTests$Path)]/[test-template-invocation:#4] (195 ms)</li><li>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:a_missing_or_blank_label_becomes_the_key()] (0 ms)</li><li>edu.ucsb.cs.taapply.concurrency.ClientIdentityTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.concurrency.ClientIdentityTests]/[method:a_key_is_required()] (1 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>
