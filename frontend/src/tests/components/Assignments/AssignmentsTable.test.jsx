@@ -360,17 +360,37 @@ describe("AssignmentsTable tests (issue #179)", () => {
     ]);
     await userEvent.click(screen.getByTestId("T-header-lastName-sort-header"));
 
-    // Ada is in CMPSC 8, Grace and Alan in CMPSC 16, the blank applicant nowhere; text order.
+    // Ada is in CMPSC 8, Grace and Alan in CMPSC 16, the blank applicant nowhere; natural order, the blank last.
     await userEvent.click(
       screen.getByTestId("T-header-tentativeAssignment-sort-header"),
     );
+    expect(emailsInOrder("T")).toEqual([
+      "ada@ucsb.edu",
+      "grace@ucsb.edu",
+      "alan@ucsb.edu",
+      "blank@ucsb.edu",
+    ]);
+    // The dropdowns travel with their rows.
+    expect(selectValuesInOrder("T")).toEqual(["10", "20", "20", ""]);
+  });
+
+  test("Tentative Assignment sorts the blank rows last ascending and first descending (issue #348)", async () => {
+    render(
+      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="T" />,
+    );
+    const header = screen.getByTestId(
+      "T-header-tentativeAssignment-sort-header",
+    );
+    await userEvent.click(header);
+    expect(selectValuesInOrder("T")).toEqual(["10", "20", "20", ""]);
+    await userEvent.click(header);
+    // The blank row at the top, then the lectures in reverse; Grace and Alan tie and keep their order.
     expect(emailsInOrder("T")).toEqual([
       "blank@ucsb.edu",
       "grace@ucsb.edu",
       "alan@ucsb.edu",
       "ada@ucsb.edu",
     ]);
-    // The dropdowns travel with their rows.
     expect(selectValuesInOrder("T")).toEqual(["", "20", "20", "10"]);
   });
 
@@ -388,10 +408,10 @@ describe("AssignmentsTable tests (issue #179)", () => {
     await userEvent.click(
       screen.getByTestId("T-header-tentativeAssignment-sort-header"),
     );
-    // Descending: Ada's "CMPSC 8 (0100)" before the blank.
-    expect(emailsInOrder("T")).toEqual(["ada@ucsb.edu", "blank@ucsb.edu"]);
+    // Descending: the blank first, then Ada's "CMPSC 8 (0100)".
+    expect(emailsInOrder("T")).toEqual(["blank@ucsb.edu", "ada@ucsb.edu"]);
     // A choice no longer among the options shows as blank in the dropdown.
-    expect(selectValuesInOrder("T")).toEqual(["10", ""]);
+    expect(selectValuesInOrder("T")).toEqual(["", "10"]);
   });
 
   test("ULA page: its own identity columns and a null rank shown as blank; default test id", () => {

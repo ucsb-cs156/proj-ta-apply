@@ -44,3 +44,15 @@ export const courseColumnStatus = (
     id: courseColumnId(course.id),
     complete: course.assigned >= course.allocation,
   }));
+
+/**
+ * The Tentative Assignment column's order (issue #348), on the text its cells show: a blank (no
+ * tentative assignment) counts as greater than every assignment, and the assignments are in
+ * natural order, so "CMPSC 8" comes before "CMPSC 16". Ascending therefore lists the assigned rows
+ * first and the blank rows last; TanStack inverts this for descending, which lists the blank rows
+ * first and the assigned rows after them, in reverse. Rows that tie keep the order they came in.
+ */
+export const compareTentativeAssignments = (a: string, b: string): number => {
+  if (a === "" || b === "") return (a === "" ? 1 : 0) - (b === "" ? 1 : 0);
+  return a.localeCompare(b, "en", { numeric: true });
+};
