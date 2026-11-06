@@ -1,0 +1,14 @@
+.devcontainer/
+.github/
+docs/*
+!docs/legacy
+frontend/.storybook
+frontend/docs-index
+frontend/node_modules
+frontend/build
+frontend/coverage
+frontend/storybook-static
+target/
+*.md
+Dockerfile
+.dockerignore
