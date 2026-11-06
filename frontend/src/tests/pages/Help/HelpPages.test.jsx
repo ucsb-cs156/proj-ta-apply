@@ -411,6 +411,12 @@ describe("Help pages (issue #140)", () => {
     ).toHaveTextContent(
       "by your ranking (1 first, unranked last), then by course preference (first choice, second choice, enthusiastic, then would consider), then in the order the applications were submitted. The Default Sort button returns to it",
     );
+    // Issue #312: the ranking table's Columns menu and hide links.
+    expect(
+      screen.getByTestId("HelpInstructorsPage-ranking-columns"),
+    ).toHaveTextContent(
+      "The ranking table has a Columns menu, like the other tables, to hide the columns you do not need: untick a column to hide it and tick it again to bring it back, or use Show All and Show None. Each column heading also has a small hide link above it that hides that column. The Ranking, First Name and Last Name columns cannot be hidden, so you can always rank and see whom you are ranking. Your choice is remembered in this browser for all the courses of the recruitment (separately for TA and ULA recruitments). The warning under tied rankings always spans whichever columns are showing.",
+    );
     // Issue #178: what an instructor sees once allocations are shown.
     const allocations = screen.getByTestId("HelpInstructorsPage-allocations");
     expect(allocations).toHaveTextContent(
