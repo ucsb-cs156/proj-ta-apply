@@ -518,8 +518,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
           (collapsed to a one-line summary on older cards, expanded on the
           latest TA and ULA recruitments). Its boxes carry the lifecycle
           actions, and the card has Courses, Draft Applications and Applications
-          buttons:
+          buttons. Above each quarter&apos;s recruitment card, or pair of cards
+          when the quarter has both a TA and a ULA recruitment, is a{" "}
+          <strong>QXX Budget</strong> card (for example <em>W26 Budget</em>)
+          with three buttons: <strong>Budget</strong> opens that quarter&apos;s
+          Budget for Quarter page, and <strong>TA allocations</strong> and{" "}
+          <strong>ULA allocations</strong> open the Edit Courses (allocations)
+          page of that quarter&apos;s TA or ULA recruitment. An allocations
+          button is greyed out when the quarter has no recruitment of that type.
+          The budget card stays with its quarter when the cards are sorted, so
+          sorting by anything but quarter groups each quarter&apos;s cards
+          together.
         </p>
+        <p>The lifecycle actions in the diagram and on the card are:</p>
         <ul data-testid="HelpAdminsPage-recruitment-buttons">
           <li
             id="open-close-applications"

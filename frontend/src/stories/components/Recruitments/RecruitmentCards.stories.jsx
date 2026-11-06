@@ -62,3 +62,38 @@ LiveSteps.args = {
   applicationCounts: { 1: 15, 2: 1, 3: 0 },
   onDeleteRequested: () => {},
 };
+
+/** Issue #357: a QXX Budget card sits above each quarter's recruitments (here S26, then W26 with both). */
+export const BudgetCardsTwoQuarters = Template.bind({});
+BudgetCardsTwoQuarters.args = {
+  recruitments: recruitmentsFixtures.threeRecruitments,
+  applicationCounts: { 1: 15, 2: 1, 3: 0 },
+  onDeleteRequested: () => {},
+};
+
+/** A quarter with both a TA and a ULA recruitment: all three budget buttons are live. */
+export const BudgetCardBoth = Template.bind({});
+BudgetCardBoth.args = {
+  recruitments: recruitmentsFixtures.threeRecruitments.filter(
+    (r) => r.quarter === "20261",
+  ),
+  onDeleteRequested: () => {},
+};
+
+/** TA recruitment only: the ULA allocations button is greyed out. */
+export const BudgetCardTaOnly = Template.bind({});
+BudgetCardTaOnly.args = {
+  recruitments: recruitmentsFixtures.threeRecruitments.filter(
+    (r) => r.id === 3,
+  ),
+  onDeleteRequested: () => {},
+};
+
+/** ULA recruitment only: the TA allocations button is greyed out. */
+export const BudgetCardUlaOnly = Template.bind({});
+BudgetCardUlaOnly.args = {
+  recruitments: recruitmentsFixtures.threeRecruitments.filter(
+    (r) => r.id === 2,
+  ),
+  onDeleteRequested: () => {},
+};

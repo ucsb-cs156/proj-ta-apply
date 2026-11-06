@@ -350,13 +350,14 @@ describe("RecruitmentCards tests", () => {
 
     await userEvent.click(screen.getByTestId("Cards-sort-type"));
     expect(screen.getByTestId("Cards-sort-type")).toHaveTextContent("Type ▼");
-    expect(order()).toEqual(["W26 ULA", "S26 TA", "W26 TA"]);
+    // A quarter's cards stay together under its budget card: W26 (ULA, TA), then S26.
+    expect(order()).toEqual(["W26 ULA", "W26 TA", "S26 TA"]);
 
     await userEvent.click(screen.getByTestId("Cards-sort-actualClosingDate"));
     // Ascending: the blank dates first (ties in backend order), then the one real date.
     expect(order()).toEqual(["S26 TA", "W26 ULA", "W26 TA"]);
     await userEvent.click(screen.getByTestId("Cards-sort-actualClosingDate"));
-    expect(order()).toEqual(["W26 TA", "S26 TA", "W26 ULA"]);
+    expect(order()).toEqual(["W26 TA", "W26 ULA", "S26 TA"]);
   });
 
   test("sortRecruitments orders by the key, blanks first ascending, ties newest quarter then TA first", () => {
@@ -1493,6 +1494,32 @@ describe("RecruitmentCards confirmations when the list refreshes", () => {
 
     expect(screen.getByTestId("Cards-status-modal-yes")).toBeVisible();
     expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  test("the Open/Close Applications confirmation closes when its recruitment goes away", async () => {
+    const { refreshTo } = renderRefreshable();
+    await userEvent.click(await stepButton(2, 4));
+    expect(await screen.findByTestId("Cards-status-modal-yes")).toBeVisible();
+
+    refreshTo([s26Ta, w26Ta]);
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("Cards-status-modal-yes")).toBeNull(),
+    );
+    expect(mockToast).toHaveBeenCalledWith(STALE_CONFIRMATION_MESSAGE);
+  });
+
+  test("the Close Faculty Reviews confirmation closes when its recruitment goes away", async () => {
+    const { refreshTo } = renderRefreshable();
+    await userEvent.click(await stepButton(2, 6));
+    expect(await screen.findByTestId("Cards-close-reviews-yes")).toBeVisible();
+
+    refreshTo([s26Ta, w26Ta]);
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("Cards-close-reviews-yes")).toBeNull(),
+    );
+    expect(mockToast).toHaveBeenCalledWith(STALE_CONFIRMATION_MESSAGE);
   });
 
   test("Close Faculty Reviews closes when reviews were already closed", async () => {
