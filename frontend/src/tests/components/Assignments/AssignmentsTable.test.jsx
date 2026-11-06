@@ -366,12 +366,32 @@ describe("AssignmentsTable tests (issue #179)", () => {
     );
     expect(emailsInOrder("T")).toEqual([
       "blank@ucsb.edu",
+      "ada@ucsb.edu",
+      "grace@ucsb.edu",
+      "alan@ucsb.edu",
+    ]);
+    // The dropdowns travel with their rows.
+    expect(selectValuesInOrder("T")).toEqual(["", "10", "20", "20"]);
+  });
+
+  test("Tentative Assignment sorts the blank rows first ascending and last descending (issue #348)", async () => {
+    render(
+      <AssignmentsTable data={page} onAssign={vi.fn()} testIdPrefix="T" />,
+    );
+    const header = screen.getByTestId(
+      "T-header-tentativeAssignment-sort-header",
+    );
+    await userEvent.click(header);
+    expect(selectValuesInOrder("T")).toEqual(["", "10", "20", "20"]);
+    await userEvent.click(header);
+    // Assigned rows at the top, the lectures in reverse; Grace and Alan tie and keep their order.
+    expect(emailsInOrder("T")).toEqual([
       "grace@ucsb.edu",
       "alan@ucsb.edu",
       "ada@ucsb.edu",
+      "blank@ucsb.edu",
     ]);
-    // The dropdowns travel with their rows.
-    expect(selectValuesInOrder("T")).toEqual(["", "20", "20", "10"]);
+    expect(selectValuesInOrder("T")).toEqual(["20", "20", "10", ""]);
   });
 
   test("a row pencilled into a lecture no longer listed sorts as blank", async () => {

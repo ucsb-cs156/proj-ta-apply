@@ -7,6 +7,7 @@ import { interestDisplay } from "main/utils/interestDisplay";
 import { wideColumnProps } from "main/utils/columnWidths";
 import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import {
+  compareTentativeAssignments,
   courseColumnId,
   TENTATIVE_COLUMN_ID,
 } from "main/utils/assignmentColumns";
@@ -193,6 +194,12 @@ export default function AssignmentsTable({
         const course = assignedCourse(row, data.courses);
         return course === null ? "" : courseLabel(course);
       },
+      // Blank rows first ascending, last descending (issue #348).
+      sortingFn: (a: Row<AssignmentRow>, b: Row<AssignmentRow>) =>
+        compareTentativeAssignments(
+          a.getValue<string>(TENTATIVE_COLUMN_ID),
+          b.getValue<string>(TENTATIVE_COLUMN_ID),
+        ),
       cell: TentativeAssignmentCell,
       meta: tentativeMeta,
     },
