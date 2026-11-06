@@ -127,7 +127,7 @@ public class HomePageWebIT extends WebTestCase {
     // setupInstructorUser inserts the instructor row without a catalog name; assign one now.
     instructors.save(
         Instructor.builder().email("instructor@ucsb.edu").catalogName("CONRAD P").build());
-    page.reload();
+    reloadPage(page);
 
     String card = "HomePageLoggedIn-instructor-recruitments-card-" + recruitment.getId();
     assertThat(page.getByTestId(card + "-quarter")).containsText("W26");

@@ -357,6 +357,90 @@ describe("PriorCourseworkModal tests", () => {
     expect(screen.getByTestId("M-ucsbCourse")).toBeChecked();
   });
 
+  /**
+   * Issue #340: the form loads the course catalog after it is shown and, for a UCSB course with a
+   * blank title, fills the title in. That makes a new row object for the course being edited, and
+   * the dialog used to reset itself to the row, losing what was typed (or ticked) a moment before.
+   */
+  test("a new copy of the course arriving while the dialog is open keeps what was typed", async () => {
+    const user = userEvent.setup();
+    const course = { ...priorCourseworkFixtures.ucsbCourse, courseTitle: null };
+    const props = {
+      show: true,
+      onSave: vi.fn(),
+      onCancel: vi.fn(),
+      testIdPrefix: "M",
+    };
+    const { rerender } = render(
+      <PriorCourseworkModal {...props} course={course} />,
+    );
+
+    await user.click(screen.getByTestId("M-freeText"));
+    await user.clear(screen.getByTestId("M-termText"));
+    await user.type(screen.getByTestId("M-termText"), "Semester 1");
+    await user.clear(screen.getByTestId("M-grade"));
+    await user.type(screen.getByTestId("M-grade"), "B+");
+
+    rerender(
+      <PriorCourseworkModal
+        {...props}
+        course={{ ...course, courseTitle: "Advanced Topics" }}
+      />,
+    );
+
+    expect(screen.getByTestId("M-freeText")).toBeChecked();
+    expect(screen.getByTestId("M-termText")).toHaveValue("Semester 1");
+    expect(screen.getByTestId("M-grade")).toHaveValue("B+");
+    expect(screen.getByTestId("M-courseTitle")).toHaveValue("");
+  });
+
+  test("each box is named after the dialog, and its label points at it", () => {
+    renderModal();
+
+    for (const [name, label] of [
+      ["courseNumber", /Course Number/],
+      ["courseTitle", "Course Title"],
+      ["grade", "Grade"],
+    ]) {
+      expect(screen.getByTestId(`M-${name}`)).toHaveAttribute(
+        "id",
+        `M-${name}`,
+      );
+      expect(screen.getByLabelText(label)).toBe(
+        screen.getByTestId(`M-${name}`),
+      );
+    }
+  });
+
+  test("editing another row after a close starts from that row, not from the one before", async () => {
+    const props = {
+      onSave: vi.fn(),
+      onCancel: vi.fn(),
+      testIdPrefix: "M",
+    };
+    const { rerender } = render(
+      <PriorCourseworkModal
+        {...props}
+        show={true}
+        course={priorCourseworkFixtures.ucsbCourse}
+      />,
+    );
+    rerender(<PriorCourseworkModal {...props} show={false} course={null} />);
+    rerender(
+      <PriorCourseworkModal
+        {...props}
+        show={true}
+        course={priorCourseworkFixtures.elsewhere}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("M-courseNumber")).toHaveValue(
+        priorCourseworkFixtures.elsewhere.courseNumber,
+      ),
+    );
+  });
+
   test("uses PriorCourseworkModal as the default test id prefix", () => {
     render(
       <PriorCourseworkModal

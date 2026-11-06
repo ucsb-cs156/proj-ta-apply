@@ -27,7 +27,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class AppSettingsWebIT extends WebTestCase {
 
   private void goTo(String path) {
-    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1" + path));
+    openPage(page, path);
   }
 
   @Test
@@ -60,7 +60,7 @@ public class AppSettingsWebIT extends WebTestCase {
         .containsText("Computer Engineering");
 
     // It survives a reload, so it really was stored.
-    page.reload();
+    reloadPage(page);
     assertThat(page.getByTestId("TaAppSettingsPage-majors-table-cell-row-0-col-name"))
         .containsText("Computer Engineering");
 

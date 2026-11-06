@@ -35,7 +35,7 @@ public class AuditTrailWebIT extends WebTestCase {
   @Autowired AuditTrailRepository auditTrailRepository;
 
   private void goTo(String path) {
-    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1" + path));
+    openPage(page, path);
   }
 
   /**
