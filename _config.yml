@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/311-tied-rank-warning","number":352,"title":"Warn under each group of tied faculty rankings (#311)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/352"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/312-ranking-columns","number":353,"title":"Hide or show columns on the faculty ranking page (#312)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/353"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/311-tied-rank-warning","number":352,"title":"Warn under each group of tied faculty rankings (#311)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/352"}]
