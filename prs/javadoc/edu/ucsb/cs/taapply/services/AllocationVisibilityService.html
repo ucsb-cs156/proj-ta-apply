@@ -117,8 +117,8 @@ Developer Mode's fake allocations (issue #225) so both leave the same trail.</di
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#change(edu.ucsb.cs.taapply.entity.Recruitment,edu.ucsb.cs.taapply.enums.AllocationVisibility)" class="member-name-link">change</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
  <a href="../enums/AllocationVisibility.html" title="enum class in edu.ucsb.cs.taapply.enums">AllocationVisibility</a>&nbsp;visibility)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Sets the recruitment's allocation visibility, saving it and recording the change, in that
-order.</div>
+<div class="block">Sets the recruitment's allocation visibility, saving it and recording the change in one
+transaction (issue #377).</div>
 </div>
 </div>
 </div>
@@ -157,12 +157,11 @@ order.</div>
 <section class="detail" id="change(edu.ucsb.cs.taapply.entity.Recruitment,edu.ucsb.cs.taapply.enums.AllocationVisibility)">
 <h3>change</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@Transactional
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">change</span><wbr><span class="parameters">(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">change</span><wbr><span class="parameters">(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment,
  <a href="../enums/AllocationVisibility.html" title="enum class in edu.ucsb.cs.taapply.enums">AllocationVisibility</a>&nbsp;visibility)</span></div>
-<div class="block">Sets the recruitment's allocation visibility, saving it and recording the change, in that
-order. The first time visibility leaves ADMINS_ONLY the release time is stamped. Choosing the
-value the recruitment already has saves and records nothing.</div>
+<div class="block">Sets the recruitment's allocation visibility, saving it and recording the change in one
+transaction (issue #377). The first time visibility leaves ADMINS_ONLY the release time is
+stamped. Choosing the value the recruitment already has saves and records nothing.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the recruitment, with the new value</dd>

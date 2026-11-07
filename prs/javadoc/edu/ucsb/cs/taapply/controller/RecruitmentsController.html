@@ -96,7 +96,8 @@ loadScripts(document, 'script');</script>
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">RecruitmentsController</span>
 <span class="extends-implements">extends <a href="ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></span></div>
 <div class="block">Admin management of recruitments. Every creation, deletion and change of status or dates is
-recorded in the recruitment audit trail (issue #139) through <a href="../services/RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services"><code>RecruitmentAuditService</code></a>.</div>
+recorded in the recruitment audit trail (issue #139) through <a href="../services/RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services"><code>RecruitmentAuditService</code></a>,
+whose methods write the recruitment and its audit rows in one transaction (issue #377).</div>
 </div>
 </section>
 <section class="summary">
@@ -229,7 +230,6 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
 <h3>updateReviewStatus</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
-@Transactional
 @PutMapping("/reviewStatus")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">updateReviewStatus</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
@@ -245,7 +245,6 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
 <h3>updateFacultyRankingDeadline</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
-@Transactional
 @PutMapping("/facultyRankingDeadline")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">updateFacultyRankingDeadline</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
@@ -289,7 +288,6 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
 <h3>updateAllocationVisibility</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
-@Transactional
 @PutMapping("/allocationVisibility")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">updateAllocationVisibility</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,
@@ -303,6 +301,7 @@ recorded in the recruitment audit trail (issue #139) through <a href="../service
 <h3>updateAssignmentsPublished</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
+@Transactional
 @PutMapping("/assignmentsPublished")
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">updateAssignmentsPublished</span><wbr><span class="parameters">(@RequestParam
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id,

@@ -89,6 +89,13 @@ loadScripts(document, 'script');</script>
 recruitment as it is now, one row each, and returns the rows written (empty when nothing
 changed).</div>
 </div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">RecruitmentAuditService.</span><code><a href="../RecruitmentAuditService.html#saveAndRecordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">saveAndRecordChanges</a><wbr>(<a href="../RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a>&nbsp;before,
+ <a href="../../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;after)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Saves an edited recruitment and records every field that differs from the snapshot taken before
+the edit, in one transaction, and returns the rows written (empty when nothing changed).</div>
+</div>
 </div>
 </section>
 </li>

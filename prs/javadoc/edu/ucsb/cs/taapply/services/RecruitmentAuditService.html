@@ -65,6 +65,9 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#snapshot(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">snapshot(Recruitment)</a></li>
+<li><a href="#saveAndRecordCreated(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">saveAndRecordCreated(Recruitment)</a></li>
+<li><a href="#saveAndRecordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">saveAndRecordChanges(RecruitmentAuditService.Snapshot, Recruitment)</a></li>
+<li><a href="#deleteAndRecord(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">deleteAndRecord(Recruitment)</a></li>
 <li><a href="#recordCreated(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">recordCreated(Recruitment)</a></li>
 <li><a href="#recordDeleted(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">recordDeleted(Recruitment)</a></li>
 <li><a href="#recordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">recordChanges(RecruitmentAuditService.Snapshot, Recruitment)</a></li>
@@ -90,9 +93,12 @@ loadScripts(document, 'script');</script>
 created, a row when one is deleted, and a row per field that changed when one is edited, opened
 or closed. (The trail of an admin's changes to individual applications is <a href="ApplicationAuditService.html" title="class in edu.ucsb.cs.taapply.services"><code>ApplicationAuditService</code></a>.)
 
-<p>For an edit, the caller takes a <a href="#snapshot(edu.ucsb.cs.taapply.entity.Recruitment)"><code>snapshot(Recruitment)</code></a> before applying it and calls <a href="#recordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)"><code>recordChanges(RecruitmentAuditService.Snapshot, Recruitment)</code></a> with it afterwards; only the fields whose value differs get a row, so a request
-that changes nothing writes nothing. Creation and deletion get just their one row: the values a
-recruitment was created with are not also written as changes.</div>
+<p>Each change goes through one of <a href="#saveAndRecordCreated(edu.ucsb.cs.taapply.entity.Recruitment)"><code>saveAndRecordCreated(Recruitment)</code></a>, <a href="#saveAndRecordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)"><code>saveAndRecordChanges(RecruitmentAuditService.Snapshot, Recruitment)</code></a>
+and <a href="#deleteAndRecord(edu.ucsb.cs.taapply.entity.Recruitment)"><code>deleteAndRecord(Recruitment)</code></a>, which write the recruitment and its rows in one database
+transaction (issue #377): both are committed, or neither is. For an edit, the caller takes a
+<a href="#snapshot(edu.ucsb.cs.taapply.entity.Recruitment)"><code>snapshot(Recruitment)</code></a> before applying it and passes it in afterwards; only the fields whose value
+differs get a row, so a request that changes nothing writes nothing. Creation and deletion get
+just their one row: the values a recruitment was created with are not also written as changes.</div>
 </div>
 </section>
 <section class="summary">
@@ -138,27 +144,46 @@ recruitment was created with are not also written as changes.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#recordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordChanges</a><wbr>(<a href="RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a>&nbsp;before,
- <a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;after)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#deleteAndRecord(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">deleteAndRecord</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Records that the recruitment is being deleted and deletes it, in one transaction, and returns
+the row written.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#recordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordChanges</a><wbr>(<a href="RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a>&nbsp;before,
+ <a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;after)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Records every field whose value differs between the snapshot taken before an edit and the
 recruitment as it is now, one row each, and returns the rows written (empty when nothing
 changed).</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#recordCreated(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordCreated</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#recordCreated(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordCreated</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Records that the recruitment was just created, and returns the row written.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#recordDeleted(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordDeleted</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#recordDeleted(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordDeleted</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Records that the recruitment is about to be deleted, and returns the row written.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#snapshot(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">snapshot</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveAndRecordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">saveAndRecordChanges</a><wbr>(<a href="RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a>&nbsp;before,
+ <a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;after)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Saves an edited recruitment and records every field that differs from the snapshot taken before
+the edit, in one transaction, and returns the rows written (empty when nothing changed).</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveAndRecordCreated(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">saveAndRecordCreated</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Saves a new recruitment and records its creation, in one transaction, and returns the
+recruitment as saved (with its id).</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#snapshot(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">snapshot</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -201,6 +226,40 @@ changed).</div>
 </section>
 </li>
 <li>
+<section class="detail" id="saveAndRecordCreated(edu.ucsb.cs.taapply.entity.Recruitment)">
+<h3>saveAndRecordCreated</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@Transactional
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a></span>&nbsp;<span class="element-name">saveAndRecordCreated</span><wbr><span class="parameters">(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</span></div>
+<div class="block">Saves a new recruitment and records its creation, in one transaction, and returns the
+recruitment as saved (with its id).</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="saveAndRecordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)">
+<h3>saveAndRecordChanges</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@Transactional
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a>&gt;</span>&nbsp;<span class="element-name">saveAndRecordChanges</span><wbr><span class="parameters">(<a href="RecruitmentAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService.Snapshot</a>&nbsp;before,
+ <a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;after)</span></div>
+<div class="block">Saves an edited recruitment and records every field that differs from the snapshot taken before
+the edit, in one transaction, and returns the rows written (empty when nothing changed).</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="deleteAndRecord(edu.ucsb.cs.taapply.entity.Recruitment)">
+<h3>deleteAndRecord</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@Transactional
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></span>&nbsp;<span class="element-name">deleteAndRecord</span><wbr><span class="parameters">(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</span></div>
+<div class="block">Records that the recruitment is being deleted and deletes it, in one transaction, and returns
+the row written. The row survives the recruitment: it is the record that it existed.</div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="recordCreated(edu.ucsb.cs.taapply.entity.Recruitment)">
 <h3>recordCreated</h3>
 <div class="horizontal-scroll">
@@ -226,7 +285,8 @@ changed).</div>
  <a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;after)</span></div>
 <div class="block">Records every field whose value differs between the snapshot taken before an edit and the
 recruitment as it is now, one row each, and returns the rows written (empty when nothing
-changed).</div>
+changed). Writers go through <a href="#saveAndRecordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)"><code>saveAndRecordChanges(RecruitmentAuditService.Snapshot, Recruitment)</code></a>, which calls this inside the
+transaction that saves the recruitment.</div>
 </div>
 </section>
 </li>

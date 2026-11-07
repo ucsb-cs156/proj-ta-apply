@@ -857,8 +857,8 @@ stays on file for the admin's table and CSV.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AllocationVisibilityService.html#change(edu.ucsb.cs.taapply.entity.Recruitment,edu.ucsb.cs.taapply.enums.AllocationVisibility)" class="member-name-link">change(Recruitment, AllocationVisibility)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AllocationVisibilityService.html" title="class in edu.ucsb.cs.taapply.services">AllocationVisibilityService</a></dt>
 <dd>
-<div class="block">Sets the recruitment's allocation visibility, saving it and recording the change, in that
-order.</div>
+<div class="block">Sets the recruitment's allocation visibility, saving it and recording the change in one
+transaction (issue #377).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#changingMajor()" class="member-name-link">changingMajor()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
@@ -1213,6 +1213,11 @@ recruitment's courses, as the faculty would.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.html#deleteAdmin(java.lang.String)" class="member-name-link">deleteAdmin(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html#deleteAndRecord(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">deleteAndRecord(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService</a></dt>
+<dd>
+<div class="block">Records that the recruitment is being deleted and deletes it, in one transaction, and returns
+the row written.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/CoursesController.html#deleteCourse(java.lang.String)" class="member-name-link">deleteCourse(String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/CoursesController.html" title="class in edu.ucsb.cs.taapply.controller">CoursesController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/RecruitmentAuditTrail.html#DELETED" class="member-name-link">DELETED</a> - Static variable in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/RecruitmentAuditTrail.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentAuditTrail</a></dt>
@@ -3877,6 +3882,21 @@ effect without requiring re-login.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/NoticesController.html#save(edu.ucsb.cs.taapply.enums.RecruitmentType,edu.ucsb.cs.taapply.controller.NoticesController.NoticeContent)" class="member-name-link">save(RecruitmentType, NoticesController.NoticeContent)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html#saveAndRecord(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">saveAndRecord(ApplicationAuditService.Snapshot, Application, RecruitmentType)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService</a></dt>
+<dd>
+<div class="block">Saves the edited application and records every difference from the snapshot taken before the
+edit, in one database transaction, and returns the application as saved.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html#saveAndRecordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">saveAndRecordChanges(RecruitmentAuditService.Snapshot, Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService</a></dt>
+<dd>
+<div class="block">Saves an edited recruitment and records every field that differs from the snapshot taken before
+the edit, in one transaction, and returns the rows written (empty when nothing changed).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html#saveAndRecordCreated(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">saveAndRecordCreated(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService</a></dt>
+<dd>
+<div class="block">Saves a new recruitment and records its creation, in one transaction, and returns the
+recruitment as saved (with its id).</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#saveDraft(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">saveDraft(Long, Integer, String, ApplicationsController.ApplicationFields)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/startup/ScaffoldApplicationRunner.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.startup">ScaffoldApplicationRunner</a> - Class in <a href="edu/ucsb/cs/taapply/startup/package-summary.html">edu.ucsb.cs.taapply.startup</a></dt>
