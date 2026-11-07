@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BudgetController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.controller</a> &gt; <span class="el_source">BudgetController.java</span></div><h1>BudgetController.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.controller;
+
+import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
+import edu.ucsb.cs.taapply.concurrency.ClientIdentity;
+import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
+import edu.ucsb.cs.taapply.concurrency.Presence;
+import edu.ucsb.cs.taapply.entity.Budget;
+import edu.ucsb.cs.taapply.repository.BudgetRepository;
+import edu.ucsb.cs.taapply.services.BudgetService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * The Budget for Quarter page (issue #177): the quarters to choose from, and for one quarter the
+ * budget lines and everything derived from them. Planning figures, so none of it is audited.
+ */
+@Tag(name = &quot;Budget&quot;)
+@RequestMapping(&quot;/api/admin/budget&quot;)
+@RestController
+<span class="fc" id="L38">public class BudgetController extends ApiController {</span>
+
+  @Autowired BudgetService budgetService;
+  @Autowired BudgetRepository budgetRepository;
+  @Autowired ClientActivityDetector clientActivityDetector;
+
+  @Operation(
+      summary = &quot;The quarters that have a recruitment, most recent first&quot;,
+      description = &quot;Each says whether it has a TA recruitment and whether it has a ULA one.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;/quarters&quot;)
+  public List&lt;BudgetService.QuarterSummary&gt; quarters() {
+<span class="fc" id="L50">    return budgetService.quarters();</span>
+  }
+
+  @Operation(
+      summary = &quot;One quarter's budget and the figures derived from it&quot;,
+      description =
+          &quot;The budget row (created at zero on first read), each recruitment's hiring target, cost&quot;
+              + &quot; per position, allocation and enrollment totals, and the anticipated expenses,&quot;
+              + &quot; funds and bottom line. 404 when the quarter has no recruitment.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @GetMapping(&quot;&quot;)
+  public BudgetService.Summary summary(
+      @Parameter(name = &quot;quarter&quot;, description = &quot;YYYYQ, e.g. 20264&quot;) @RequestParam
+          String quarter) {
+<span class="fc" id="L64">    return budgetService.summary(quarter);</span>
+  }
+
+  @Operation(
+      summary = &quot;Set one or more of a quarter's budget lines&quot;,
+      description =
+          &quot;Any of the three may be given, and the conversionTAtoULA (issue #358, how many ULAs count&quot;
+              + &quot; as one TA on the Combined Allocation page; greater than zero, else 400); the&quot;
+              + &quot; others keep their values. Amounts are dollars and cents and must not be&quot;
+              + &quot; negative. Returns the quarter's summary with the new&quot;
+              + &quot; figures. The version is the one the page last saw (issue #277): if the budget&quot;
+              + &quot; has been saved since, by another tab or admin, nothing is changed and the answer&quot;
+              + &quot; is 409 Conflict with the summary as it now stands. Without a version the save&quot;
+              + &quot; is unconditional. A save that names its client (X-Client-Id) also tells the&quot;
+              + &quot; server this tab or window is working on the budget, for the multi-tab warning.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PutMapping(&quot;&quot;)
+  public ResponseEntity&lt;Object&gt; update(
+      @Parameter(name = &quot;quarter&quot;) @RequestParam String quarter,
+      @Parameter(name = &quot;version&quot;) @RequestParam(required = false) Integer version,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
+      @Parameter(name = &quot;unrestrictedBudget&quot;) @RequestParam(required = false)
+          BigDecimal unrestrictedBudget,
+      @Parameter(name = &quot;tasOnlyBudget&quot;) @RequestParam(required = false) BigDecimal tasOnlyBudget,
+      @Parameter(name = &quot;ulasOnlyBudget&quot;) @RequestParam(required = false) BigDecimal ulasOnlyBudget,
+      @Parameter(
+              name = &quot;conversionTAtoULA&quot;,
+              description = &quot;how many ULAs count as one TA; greater than zero&quot;)
+          @RequestParam(required = false)
+          Double conversionTAtoULA) {
+<span class="fc" id="L94">    requireNotNegative(&quot;unrestrictedBudget&quot;, unrestrictedBudget);</span>
+<span class="fc" id="L95">    requireNotNegative(&quot;tasOnlyBudget&quot;, tasOnlyBudget);</span>
+<span class="fc" id="L96">    requireNotNegative(&quot;ulasOnlyBudget&quot;, ulasOnlyBudget);</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">    if (conversionTAtoULA != null</span>
+<span class="fc bfc" id="L98" title="All 4 branches covered.">        &amp;&amp; !(conversionTAtoULA &gt; 0 &amp;&amp; Double.isFinite(conversionTAtoULA))) {</span>
+<span class="fc" id="L99">      throw new IllegalArgumentException(&quot;conversionTAtoULA must be greater than zero&quot;);</span>
+    }
+
+<span class="fc" id="L102">    Budget budget = budgetService.budgetFor(quarter);</span>
+<span class="fc" id="L103">    clientActivityDetector.note(resourceKey(quarter), clientId, identity());</span>
+<span class="fc bfc" id="L104" title="All 4 branches covered.">    if (version != null &amp;&amp; !version.equals(budget.getVersion())) {</span>
+<span class="fc" id="L105">      return conflict(quarter);</span>
+    }
+<span class="fc bfc" id="L107" title="All 2 branches covered.">    if (unrestrictedBudget != null) {</span>
+<span class="fc" id="L108">      budget.setUnrestrictedBudget(BudgetService.money(unrestrictedBudget));</span>
+    }
+<span class="fc bfc" id="L110" title="All 2 branches covered.">    if (tasOnlyBudget != null) {</span>
+<span class="fc" id="L111">      budget.setTasOnlyBudget(BudgetService.money(tasOnlyBudget));</span>
+    }
+<span class="fc bfc" id="L113" title="All 2 branches covered.">    if (ulasOnlyBudget != null) {</span>
+<span class="fc" id="L114">      budget.setUlasOnlyBudget(BudgetService.money(ulasOnlyBudget));</span>
+    }
+<span class="fc bfc" id="L116" title="All 2 branches covered.">    if (conversionTAtoULA != null) {</span>
+<span class="fc" id="L117">      budget.setConversionTAtoULA(conversionTAtoULA);</span>
+    }
+    try {
+<span class="fc" id="L120">      budgetRepository.save(budget);</span>
+<span class="fc" id="L121">    } catch (ObjectOptimisticLockingFailureException e) {</span>
+      // Another save got in between reading the budget and writing it.
+<span class="fc" id="L123">      return conflict(quarter);</span>
+<span class="fc" id="L124">    }</span>
+<span class="fc" id="L125">    return ResponseEntity.ok(budgetService.summary(quarter));</span>
+  }
+
+  @Operation(
+      summary =
+          &quot;Say that this tab or window still has the quarter's budget open, and learn who else does&quot;,
+      description =
+          &quot;Changes nothing about the budget. Tells the server this client (X-Client-Id) is still&quot;
+              + &quot; here, and answers with the other people who have the quarter's budget open (a&quot;
+              + &quot; label for each, and whether it is the same person in another tab or window) and&quot;
+              + &quot; how often to send this. Admins only; anyone else gets 403 and nothing is&quot;
+              + &quot; recorded or told. 404 when the quarter has no recruitment.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/heartbeat&quot;)
+  public Presence heartbeat(
+      @Parameter(name = &quot;quarter&quot;) @RequestParam String quarter,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+    // PreAuthorize has already refused everyone but admins, so nothing below runs for them.
+<span class="fc" id="L143">    budgetService.budgetFor(quarter);</span>
+<span class="fc" id="L144">    return clientActivityDetector.heartbeat(resourceKey(quarter), clientId, identity());</span>
+  }
+
+  @Operation(
+      summary = &quot;Say that this tab or window has left the quarter's budget&quot;,
+      description =
+          &quot;Sent when a tab or window is closed or moves away, so that the others stop being warned&quot;
+              + &quot; about it at once. Allowed to exactly those a heartbeat is (admins); anyone else&quot;
+              + &quot; gets 403 and nothing is removed. The answer is 204 whether or not the client was&quot;
+              + &quot; known.&quot;)
+  @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
+  @PostMapping(&quot;/leave&quot;)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void leave(
+      @Parameter(name = &quot;quarter&quot;) @RequestParam String quarter,
+      @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
+<span class="fc" id="L160">    clientActivityDetector.leave(resourceKey(quarter), clientId);</span>
+<span class="fc" id="L161">  }</span>
+
+  /** The detector's name for one quarter's budget. */
+  private static String resourceKey(String quarter) {
+<span class="fc" id="L165">    return &quot;budget:&quot; + quarter;</span>
+  }
+
+  /**
+   * Who the current user is to the detector: the shared identity, marked as an admin (issue #302).
+   */
+  private ClientIdentity identity() {
+<span class="fc" id="L172">    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);</span>
+  }
+
+  /** What a refused save tells the page: why, and the quarter as it now stands. */
+  private ResponseEntity&lt;Object&gt; conflict(String quarter) {
+<span class="fc" id="L177">    BudgetService.Summary current = budgetService.summary(quarter);</span>
+<span class="fc" id="L178">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L179">    body.put(</span>
+        &quot;message&quot;,
+        &quot;This budget was changed in another tab or window. Use theirs, or overwrite with yours.&quot;);
+<span class="fc" id="L182">    body.put(&quot;version&quot;, current.budget().getVersion());</span>
+<span class="fc" id="L183">    body.put(&quot;summary&quot;, current);</span>
+<span class="fc" id="L184">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
+  }
+
+  private static void requireNotNegative(String name, BigDecimal amount) {
+<span class="fc bfc" id="L188" title="All 4 branches covered.">    if (amount != null &amp;&amp; amount.signum() &lt; 0) {</span>
+<span class="fc" id="L189">      throw new IllegalArgumentException(&quot;%s must not be negative&quot;.formatted(name));</span>
+    }
+<span class="fc" id="L191">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
