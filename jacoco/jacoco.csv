@@ -25,7 +25,7 @@ taapply,edu.ucsb.cs.taapply.services,DeveloperModeService.Status,0,9,0,0,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RoleAssignmentService,0,89,0,14,0,17,0,13,0,6
 taapply,edu.ucsb.cs.taapply.services,MinimaxAllocator,0,54,0,6,0,9,0,4,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService,0,472,0,54,0,80,0,35,0,8
-taapply,edu.ucsb.cs.taapply.services,AllocationVisibilityService,0,39,0,6,0,11,0,5,0,2
+taapply,edu.ucsb.cs.taapply.services,AllocationVisibilityService,0,34,0,6,0,10,0,5,0,2
 taapply,edu.ucsb.cs.taapply.services,TaSeedFromUla,0,91,0,0,0,28,0,5,0,5
 taapply,edu.ucsb.cs.taapply.services,RecruitmentCoursesRefreshService.Offered,0,12,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,RecruitmentCoursesRefreshService,0,222,0,20,0,47,0,14,0,4
@@ -42,7 +42,7 @@ taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService.Link,0,9,0,0,0,1,0,
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService.CourseTargets,0,21,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,CourseTargetsService,0,140,0,8,0,28,0,14,0,10
 taapply,edu.ucsb.cs.taapply.services,NameListCsvService.UploadResult,0,9,0,0,0,1,0,1,0,1
-taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService,0,545,0,30,0,112,0,28,0,13
+taapply,edu.ucsb.cs.taapply.services,ApplicationAuditService,0,570,0,30,0,118,0,29,0,14
 taapply,edu.ucsb.cs.taapply.services,SystemInfoServiceImpl,0,102,0,4,0,25,0,5,0,3
 taapply,edu.ucsb.cs.taapply.services,LegacyUlaApplicationCsvService.Columns,0,179,0,22,0,26,0,15,0,4
 taapply,edu.ucsb.cs.taapply.services,LegacyApplicationCsvService,0,1460,0,180,0,305,0,122,0,32
@@ -55,7 +55,7 @@ taapply,edu.ucsb.cs.taapply.services,RecruitmentStepsService.Steps,0,12,0,0,0,1,
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.CourseSummary,0,27,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.services,JobUserProviderImpl,0,26,0,4,0,5,0,5,0,3
 taapply,edu.ucsb.cs.taapply.services,AssignmentsService.Assignments,0,21,0,0,0,1,0,1,0,1
-taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService,0,168,0,6,0,37,0,13,0,10
+taapply,edu.ucsb.cs.taapply.services,RecruitmentAuditService,0,200,0,6,0,45,0,16,0,13
 taapply,edu.ucsb.cs.taapply.services,RankingVersionService,0,62,0,8,0,16,0,8,0,4
 taapply,edu.ucsb.cs.taapply.services,ApplicationAccessService,0,48,0,12,0,7,0,11,0,5
 taapply,edu.ucsb.cs.taapply.migration,UtcToPacificTimestamps,0,391,0,32,0,86,0,31,0,15
@@ -85,7 +85,7 @@ taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController.Applicati
 taapply,edu.ucsb.cs.taapply.controller,ApplicantRecruitmentsController,0,323,0,26,0,77,0,36,0,23
 taapply,edu.ucsb.cs.taapply.controller,AppSettingsController.NameItem,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentStepsController,0,23,0,0,0,5,0,3,0,3
-taapply,edu.ucsb.cs.taapply.controller,RecruitmentsController,0,629,0,66,0,143,0,57,0,24
+taapply,edu.ucsb.cs.taapply.controller,RecruitmentsController,0,599,0,66,0,137,0,57,0,24
 taapply,edu.ucsb.cs.taapply.controller,DeveloperAllocationsController,0,20,0,2,0,4,0,3,0,2
 taapply,edu.ucsb.cs.taapply.controller,NoticesController.NoticeContent,0,6,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,AdminsController,0,124,0,2,0,24,0,10,0,9
@@ -103,7 +103,7 @@ taapply,edu.ucsb.cs.taapply.controller,HealthController,0,7,0,0,0,2,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController.PriorCourseworkFields,0,21,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,AuditTrailController.AuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,ApplicationsController,0,1624,0,192,0,362,0,156,0,60
-taapply,edu.ucsb.cs.taapply.controller,AdminApplicationsController,0,301,0,4,0,69,0,19,0,17
+taapply,edu.ucsb.cs.taapply.controller,AdminApplicationsController,0,288,0,4,0,67,0,19,0,17
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.CoursesView,0,18,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.Candidate,0,51,0,0,0,1,0,1,0,1
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentCoursesController,0,640,0,36,0,133,0,47,0,29

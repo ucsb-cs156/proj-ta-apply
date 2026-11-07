@@ -5,7 +5,6 @@ import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
 import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.entity.Application;
-import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
@@ -45,8 +44,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = &quot;AdminApplications&quot;)
 @RequestMapping(&quot;/api/admin/applications&quot;)
 @RestController
-<span class="fc" id="L48">@Slf4j</span>
-<span class="fc" id="L49">public class AdminApplicationsController extends ApiController {</span>
+<span class="fc" id="L47">@Slf4j</span>
+<span class="fc" id="L48">public class AdminApplicationsController extends ApiController {</span>
 
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
@@ -65,10 +64,10 @@ import org.springframework.web.multipart.MultipartFile;
   @GetMapping(&quot;/all&quot;)
   public List&lt;Application&gt; allForRecruitment(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc bfc" id="L68" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
-<span class="fc" id="L69">      throw new EntityNotFoundException(Recruitment.class, recruitmentId);</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">    if (!recruitmentRepository.existsById(recruitmentId)) {</span>
+<span class="fc" id="L68">      throw new EntityNotFoundException(Recruitment.class, recruitmentId);</span>
     }
-<span class="fc" id="L71">    return applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId);</span>
+<span class="fc" id="L70">    return applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId);</span>
   }
 
   @Operation(
@@ -82,20 +81,20 @@ import org.springframework.web.multipart.MultipartFile;
   @GetMapping(value = &quot;/csv&quot;, produces = &quot;text/csv&quot;)
   public ResponseEntity&lt;String&gt; downloadCsv(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
-<span class="fc" id="L85">    Recruitment recruitment =</span>
+<span class="fc" id="L84">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L87">            .findById(recruitmentId)</span>
-<span class="fc" id="L88">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc" id="L89">    String csv =</span>
-<span class="fc" id="L90">        applicationCsvService.write(</span>
-<span class="fc" id="L91">            recruitment.getType(),</span>
-<span class="fc" id="L92">            applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));</span>
-<span class="fc" id="L93">    return ResponseEntity.ok()</span>
-<span class="fc" id="L94">        .header(</span>
+<span class="fc" id="L86">            .findById(recruitmentId)</span>
+<span class="fc" id="L87">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L88">    String csv =</span>
+<span class="fc" id="L89">        applicationCsvService.write(</span>
+<span class="fc" id="L90">            recruitment.getType(),</span>
+<span class="fc" id="L91">            applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitmentId));</span>
+<span class="fc" id="L92">    return ResponseEntity.ok()</span>
+<span class="fc" id="L93">        .header(</span>
             HttpHeaders.CONTENT_DISPOSITION,
-<span class="fc" id="L96">            &quot;attachment; filename=\&quot;applications-%d.csv\&quot;&quot;.formatted(recruitmentId))</span>
-<span class="fc" id="L97">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;))</span>
-<span class="fc" id="L98">        .body(csv);</span>
+<span class="fc" id="L95">            &quot;attachment; filename=\&quot;applications-%d.csv\&quot;&quot;.formatted(recruitmentId))</span>
+<span class="fc" id="L96">        .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;))</span>
+<span class="fc" id="L97">        .body(csv);</span>
   }
 
   @Operation(
@@ -116,19 +115,19 @@ import org.springframework.web.multipart.MultipartFile;
           String quarter,
       @Parameter(name = &quot;file&quot;) @RequestParam(&quot;file&quot;) MultipartFile file)
       throws IOException, CsvException {
-<span class="fc" id="L119">    String yyyyq = LegacyApplicationCsvService.toYyyyq(quarter);</span>
-<span class="fc" id="L120">    Recruitment recruitment =</span>
+<span class="fc" id="L118">    String yyyyq = LegacyApplicationCsvService.toYyyyq(quarter);</span>
+<span class="fc" id="L119">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L122">            .findByQuarterAndType(yyyyq, RecruitmentType.TA)</span>
-<span class="fc" id="L123">            .orElseThrow(</span>
+<span class="fc" id="L121">            .findByQuarterAndType(yyyyq, RecruitmentType.TA)</span>
+<span class="fc" id="L122">            .orElseThrow(</span>
                 () -&gt;
-<span class="fc" id="L125">                    new IllegalArgumentException(</span>
+<span class="fc" id="L124">                    new IllegalArgumentException(</span>
                         (&quot;There is no TA recruitment for %s; create it under Admin &gt;&quot;
                                 + &quot; Recruitments first&quot;)
-<span class="fc" id="L128">                            .formatted(quarter.strip())));</span>
-<span class="fc" id="L129">    ImportResult result = legacyApplicationCsvService.upload(file, recruitment);</span>
-<span class="fc" id="L130">    log.info(&quot;Legacy CSV import into recruitment {}: {}&quot;, recruitment.getId(), result);</span>
-<span class="fc" id="L131">    return result;</span>
+<span class="fc" id="L127">                            .formatted(quarter.strip())));</span>
+<span class="fc" id="L128">    ImportResult result = legacyApplicationCsvService.upload(file, recruitment);</span>
+<span class="fc" id="L129">    log.info(&quot;Legacy CSV import into recruitment {}: {}&quot;, recruitment.getId(), result);</span>
+<span class="fc" id="L130">    return result;</span>
   }
 
   @Operation(
@@ -150,29 +149,29 @@ import org.springframework.web.multipart.MultipartFile;
           String quarter,
       @Parameter(name = &quot;file&quot;) @RequestParam(&quot;file&quot;) MultipartFile file)
       throws IOException, CsvException {
-<span class="fc" id="L153">    String yyyyq = LegacyApplicationCsvService.toYyyyq(quarter);</span>
-<span class="fc" id="L154">    Recruitment recruitment =</span>
+<span class="fc" id="L152">    String yyyyq = LegacyApplicationCsvService.toYyyyq(quarter);</span>
+<span class="fc" id="L153">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L156">            .findByQuarterAndType(yyyyq, RecruitmentType.ULA)</span>
-<span class="fc" id="L157">            .orElseThrow(</span>
+<span class="fc" id="L155">            .findByQuarterAndType(yyyyq, RecruitmentType.ULA)</span>
+<span class="fc" id="L156">            .orElseThrow(</span>
                 () -&gt;
-<span class="fc" id="L159">                    new IllegalArgumentException(</span>
+<span class="fc" id="L158">                    new IllegalArgumentException(</span>
                         (&quot;There is no ULA recruitment for %s; create it under Admin &gt;&quot;
                                 + &quot; Recruitments first&quot;)
-<span class="fc" id="L162">                            .formatted(quarter.strip())));</span>
-<span class="fc" id="L163">    LegacyUlaApplicationCsvService.ImportResult result =</span>
-<span class="fc" id="L164">        legacyUlaApplicationCsvService.upload(file, recruitment);</span>
-<span class="fc" id="L165">    log.info(&quot;ULA form CSV import into recruitment {}: {}&quot;, recruitment.getId(), result);</span>
-<span class="fc" id="L166">    return result;</span>
+<span class="fc" id="L161">                            .formatted(quarter.strip())));</span>
+<span class="fc" id="L162">    LegacyUlaApplicationCsvService.ImportResult result =</span>
+<span class="fc" id="L163">        legacyUlaApplicationCsvService.upload(file, recruitment);</span>
+<span class="fc" id="L164">    log.info(&quot;ULA form CSV import into recruitment {}: {}&quot;, recruitment.getId(), result);</span>
+<span class="fc" id="L165">    return result;</span>
   }
 
   @Operation(summary = &quot;One application, whoever it belongs to&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @GetMapping(&quot;&quot;)
   public Application getApplication(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
-<span class="fc" id="L173">    return applicationRepository</span>
-<span class="fc" id="L174">        .findById(id)</span>
-<span class="fc" id="L175">        .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L172">    return applicationRepository</span>
+<span class="fc" id="L173">        .findById(id)</span>
+<span class="fc" id="L174">        .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
   }
 
   @Operation(
@@ -195,40 +194,39 @@ import org.springframework.web.multipart.MultipartFile;
       @Parameter(name = &quot;version&quot;) @RequestParam Integer version,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
       @RequestBody ApplicationFields fields) {
-<span class="fc" id="L198">    Application application =</span>
+<span class="fc" id="L197">    Application application =</span>
         applicationRepository
-<span class="fc" id="L200">            .findById(id)</span>
-<span class="fc" id="L201">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
-<span class="fc" id="L202">    Recruitment recruitment =</span>
+<span class="fc" id="L199">            .findById(id)</span>
+<span class="fc" id="L200">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L201">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L204">            .findById(application.getRecruitmentId())</span>
-<span class="fc" id="L205">            .orElseThrow(</span>
+<span class="fc" id="L203">            .findById(application.getRecruitmentId())</span>
+<span class="fc" id="L204">            .orElseThrow(</span>
                 () -&gt;
-<span class="fc" id="L207">                    new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));</span>
+<span class="fc" id="L206">                    new EntityNotFoundException(Recruitment.class, application.getRecruitmentId()));</span>
     // Only admins reach this method, so this person is an admin to the detector.
-<span class="fc" id="L209">    clientActivityDetector.note(</span>
-<span class="fc" id="L210">        ApplicationsController.resourceKey(id),</span>
+<span class="fc" id="L208">    clientActivityDetector.note(</span>
+<span class="fc" id="L209">        ApplicationsController.resourceKey(id),</span>
         clientId,
-<span class="fc" id="L212">        ApplicationsController.identityOf(getCurrentUser().getUser(), true));</span>
-<span class="fc bfc" id="L213" title="All 2 branches covered.">    if (!version.equals(application.getVersion())) {</span>
-<span class="fc" id="L214">      return ApplicationsController.conflict(application, false);</span>
+<span class="fc" id="L211">        ApplicationsController.identityOf(getCurrentUser().getUser(), true));</span>
+<span class="fc bfc" id="L212" title="All 2 branches covered.">    if (!version.equals(application.getVersion())) {</span>
+<span class="fc" id="L213">      return ApplicationsController.conflict(application, false);</span>
     }
-<span class="fc" id="L216">    ApplicationsController.requireCoursework(recruitment.getType(), fields);</span>
-<span class="fc" id="L217">    ApplicationsController.requirePermNumberFormat(fields);</span>
+<span class="fc" id="L215">    ApplicationsController.requireCoursework(recruitment.getType(), fields);</span>
+<span class="fc" id="L216">    ApplicationsController.requirePermNumberFormat(fields);</span>
 
-<span class="fc" id="L219">    ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);</span>
-<span class="fc" id="L220">    ApplicationsController.apply(fields, application, recruitment.getType());</span>
+<span class="fc" id="L218">    ApplicationAuditService.Snapshot before = applicationAuditService.snapshot(application);</span>
+<span class="fc" id="L219">    ApplicationsController.apply(fields, application, recruitment.getType());</span>
     Application saved;
     try {
-<span class="fc" id="L223">      saved = applicationRepository.save(application);</span>
+      // The save and its audit rows are one transaction (issue #377).
+<span class="fc" id="L223">      saved = applicationAuditService.saveAndRecord(before, application, recruitment.getType());</span>
 <span class="fc" id="L224">    } catch (ObjectOptimisticLockingFailureException e) {</span>
       // Another save got in between reading the application and writing it.
 <span class="fc" id="L226">      return ApplicationsController.conflict(</span>
 <span class="fc" id="L227">          applicationRepository.findById(id).orElseThrow(() -&gt; e), false);</span>
 <span class="fc" id="L228">    }</span>
-<span class="fc" id="L229">    List&lt;AuditTrail&gt; changes = applicationAuditService.record(before, saved, recruitment.getType());</span>
-<span class="fc" id="L230">    log.info(&quot;Admin edited application {}: {} field(s) changed&quot;, id, changes.size());</span>
-<span class="fc" id="L231">    return ResponseEntity.ok(saved);</span>
+<span class="fc" id="L229">    return ResponseEntity.ok(saved);</span>
   }
 
   @Operation(
@@ -240,13 +238,13 @@ import org.springframework.web.multipart.MultipartFile;
   public Application updateAdminComments(
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;adminComments&quot;) @RequestParam String adminComments) {
-<span class="fc" id="L243">    Application application =</span>
+<span class="fc" id="L241">    Application application =</span>
         applicationRepository
-<span class="fc" id="L245">            .findById(id)</span>
-<span class="fc" id="L246">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
-<span class="fc" id="L247">    application.setAdminComments(adminComments);</span>
-<span class="fc" id="L248">    applicationRepository.save(application);</span>
-<span class="fc" id="L249">    return application;</span>
+<span class="fc" id="L243">            .findById(id)</span>
+<span class="fc" id="L244">            .orElseThrow(() -&gt; new EntityNotFoundException(Application.class, id));</span>
+<span class="fc" id="L245">    application.setAdminComments(adminComments);</span>
+<span class="fc" id="L246">    applicationRepository.save(application);</span>
+<span class="fc" id="L247">    return application;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -3,6 +3,7 @@
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
 import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Writes the audit trail of changes to recruitments themselves (issue #139): a row when one is
@@ -18,86 +20,122 @@ import org.springframework.stereotype.Service;
  * or closed. (The trail of an admin's changes to individual applications is {@link
  * ApplicationAuditService}.)
  *
- * &lt;p&gt;For an edit, the caller takes a {@link #snapshot} before applying it and calls {@link
- * #recordChanges} with it afterwards; only the fields whose value differs get a row, so a request
- * that changes nothing writes nothing. Creation and deletion get just their one row: the values a
- * recruitment was created with are not also written as changes.
+ * &lt;p&gt;Each change goes through one of {@link #saveAndRecordCreated}, {@link #saveAndRecordChanges}
+ * and {@link #deleteAndRecord}, which write the recruitment and its rows in one database
+ * transaction (issue #377): both are committed, or neither is. For an edit, the caller takes a
+ * {@link #snapshot} before applying it and passes it in afterwards; only the fields whose value
+ * differs get a row, so a request that changes nothing writes nothing. Creation and deletion get
+ * just their one row: the values a recruitment was created with are not also written as changes.
  */
 @Service
-<span class="fc" id="L27">public class RecruitmentAuditService {</span>
+<span class="fc" id="L31">public class RecruitmentAuditService {</span>
 
+  @Autowired private RecruitmentRepository recruitmentRepository;
   @Autowired private RecruitmentAuditTrailRepository repository;
 
   /** The fields a change is recorded for, in the order their rows are written. */
-<span class="fc" id="L32">  static final Map&lt;String, Function&lt;Recruitment, Object&gt;&gt; FIELDS = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L37">  static final Map&lt;String, Function&lt;Recruitment, Object&gt;&gt; FIELDS = new LinkedHashMap&lt;&gt;();</span>
 
   static {
-<span class="fc" id="L35">    FIELDS.put(&quot;applicationStatus&quot;, Recruitment::getApplicationStatus);</span>
-<span class="fc" id="L36">    FIELDS.put(&quot;tentativeOpeningDate&quot;, Recruitment::getTentativeOpeningDate);</span>
-<span class="fc" id="L37">    FIELDS.put(&quot;primaryConsiderationDate&quot;, Recruitment::getPrimaryConsiderationDate);</span>
-<span class="fc" id="L38">    FIELDS.put(&quot;actualOpeningDate&quot;, Recruitment::getActualOpeningDate);</span>
-<span class="fc" id="L39">    FIELDS.put(&quot;actualClosingDate&quot;, Recruitment::getActualClosingDate);</span>
-<span class="fc" id="L40">    FIELDS.put(&quot;reviewStatus&quot;, Recruitment::getReviewStatus);</span>
-<span class="fc" id="L41">    FIELDS.put(&quot;facultyReviewOpeningDate&quot;, Recruitment::getFacultyReviewOpeningDate);</span>
-<span class="fc" id="L42">    FIELDS.put(&quot;facultyRankingDeadline&quot;, Recruitment::getFacultyRankingDeadline);</span>
-<span class="fc" id="L43">    FIELDS.put(&quot;allocationVisibility&quot;, Recruitment::getAllocationVisibility);</span>
-<span class="fc" id="L44">    FIELDS.put(&quot;assignmentsPublished&quot;, Recruitment::getAssignmentsPublished);</span>
-<span class="fc" id="L45">  }</span>
+<span class="fc" id="L40">    FIELDS.put(&quot;applicationStatus&quot;, Recruitment::getApplicationStatus);</span>
+<span class="fc" id="L41">    FIELDS.put(&quot;tentativeOpeningDate&quot;, Recruitment::getTentativeOpeningDate);</span>
+<span class="fc" id="L42">    FIELDS.put(&quot;primaryConsiderationDate&quot;, Recruitment::getPrimaryConsiderationDate);</span>
+<span class="fc" id="L43">    FIELDS.put(&quot;actualOpeningDate&quot;, Recruitment::getActualOpeningDate);</span>
+<span class="fc" id="L44">    FIELDS.put(&quot;actualClosingDate&quot;, Recruitment::getActualClosingDate);</span>
+<span class="fc" id="L45">    FIELDS.put(&quot;reviewStatus&quot;, Recruitment::getReviewStatus);</span>
+<span class="fc" id="L46">    FIELDS.put(&quot;facultyReviewOpeningDate&quot;, Recruitment::getFacultyReviewOpeningDate);</span>
+<span class="fc" id="L47">    FIELDS.put(&quot;facultyRankingDeadline&quot;, Recruitment::getFacultyRankingDeadline);</span>
+<span class="fc" id="L48">    FIELDS.put(&quot;allocationVisibility&quot;, Recruitment::getAllocationVisibility);</span>
+<span class="fc" id="L49">    FIELDS.put(&quot;assignmentsPublished&quot;, Recruitment::getAssignmentsPublished);</span>
+<span class="fc" id="L50">  }</span>
 
   /** A recruitment's audited fields as strings, keyed by field name; a null field is null. */
-<span class="fc" id="L48">  public record Snapshot(Long recruitmentId, Map&lt;String, String&gt; fields) {}</span>
+<span class="fc" id="L53">  public record Snapshot(Long recruitmentId, Map&lt;String, String&gt; fields) {}</span>
 
   public Snapshot snapshot(Recruitment recruitment) {
-<span class="fc" id="L51">    Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L52">    FIELDS.forEach((name, getter) -&gt; fields.put(name, text(getter.apply(recruitment))));</span>
-<span class="fc" id="L53">    return new Snapshot(recruitment.getId(), fields);</span>
+<span class="fc" id="L56">    Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L57">    FIELDS.forEach((name, getter) -&gt; fields.put(name, text(getter.apply(recruitment))));</span>
+<span class="fc" id="L58">    return new Snapshot(recruitment.getId(), fields);</span>
+  }
+
+  /**
+   * Saves a new recruitment and records its creation, in one transaction, and returns the
+   * recruitment as saved (with its id).
+   */
+  @Transactional
+  public Recruitment saveAndRecordCreated(Recruitment recruitment) {
+<span class="fc" id="L67">    Recruitment saved = recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L68">    recordCreated(saved);</span>
+<span class="fc" id="L69">    return saved;</span>
+  }
+
+  /**
+   * Saves an edited recruitment and records every field that differs from the snapshot taken before
+   * the edit, in one transaction, and returns the rows written (empty when nothing changed).
+   */
+  @Transactional
+  public List&lt;RecruitmentAuditTrail&gt; saveAndRecordChanges(Snapshot before, Recruitment after) {
+<span class="fc" id="L78">    recruitmentRepository.save(after);</span>
+<span class="fc" id="L79">    return recordChanges(before, after);</span>
+  }
+
+  /**
+   * Records that the recruitment is being deleted and deletes it, in one transaction, and returns
+   * the row written. The row survives the recruitment: it is the record that it existed.
+   */
+  @Transactional
+  public RecruitmentAuditTrail deleteAndRecord(Recruitment recruitment) {
+<span class="fc" id="L88">    RecruitmentAuditTrail row = recordDeleted(recruitment);</span>
+<span class="fc" id="L89">    recruitmentRepository.delete(recruitment);</span>
+<span class="fc" id="L90">    return row;</span>
   }
 
   /** Records that the recruitment was just created, and returns the row written. */
   public RecruitmentAuditTrail recordCreated(Recruitment recruitment) {
-<span class="fc" id="L58">    return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.CREATED, null, null));</span>
+<span class="fc" id="L95">    return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.CREATED, null, null));</span>
   }
 
   /** Records that the recruitment is about to be deleted, and returns the row written. */
   public RecruitmentAuditTrail recordDeleted(Recruitment recruitment) {
-<span class="fc" id="L63">    return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.DELETED, null, null));</span>
+<span class="fc" id="L100">    return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.DELETED, null, null));</span>
   }
 
   /**
    * Records every field whose value differs between the snapshot taken before an edit and the
    * recruitment as it is now, one row each, and returns the rows written (empty when nothing
-   * changed).
+   * changed). Writers go through {@link #saveAndRecordChanges}, which calls this inside the
+   * transaction that saves the recruitment.
    */
   public List&lt;RecruitmentAuditTrail&gt; recordChanges(Snapshot before, Recruitment after) {
-<span class="fc" id="L72">    Snapshot now = snapshot(after);</span>
-<span class="fc" id="L73">    List&lt;RecruitmentAuditTrail&gt; changes = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L74">    before</span>
-<span class="fc" id="L75">        .fields()</span>
-<span class="fc" id="L76">        .forEach(</span>
+<span class="fc" id="L110">    Snapshot now = snapshot(after);</span>
+<span class="fc" id="L111">    List&lt;RecruitmentAuditTrail&gt; changes = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L112">    before</span>
+<span class="fc" id="L113">        .fields()</span>
+<span class="fc" id="L114">        .forEach(</span>
             (name, old) -&gt; {
-<span class="fc" id="L78">              String current = now.fields().get(name);</span>
-<span class="fc bfc" id="L79" title="All 2 branches covered.">              if (!Objects.equals(old, current)) {</span>
-<span class="fc" id="L80">                changes.add(row(before.recruitmentId(), name, old, current));</span>
+<span class="fc" id="L116">              String current = now.fields().get(name);</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">              if (!Objects.equals(old, current)) {</span>
+<span class="fc" id="L118">                changes.add(row(before.recruitmentId(), name, old, current));</span>
               }
-<span class="fc" id="L82">            });</span>
-<span class="fc bfc" id="L83" title="All 2 branches covered.">    if (!changes.isEmpty()) {</span>
-<span class="fc" id="L84">      repository.saveAll(changes);</span>
+<span class="fc" id="L120">            });</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">    if (!changes.isEmpty()) {</span>
+<span class="fc" id="L122">      repository.saveAll(changes);</span>
     }
-<span class="fc" id="L86">    return changes;</span>
+<span class="fc" id="L124">    return changes;</span>
   }
 
   private static RecruitmentAuditTrail row(
       Long recruitmentId, String whatChanged, String oldValue, String newValue) {
-<span class="fc" id="L91">    return RecruitmentAuditTrail.builder()</span>
-<span class="fc" id="L92">        .recruitmentId(recruitmentId)</span>
-<span class="fc" id="L93">        .whatChanged(whatChanged)</span>
-<span class="fc" id="L94">        .oldValue(oldValue)</span>
-<span class="fc" id="L95">        .newValue(newValue)</span>
-<span class="fc" id="L96">        .build();</span>
+<span class="fc" id="L129">    return RecruitmentAuditTrail.builder()</span>
+<span class="fc" id="L130">        .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L131">        .whatChanged(whatChanged)</span>
+<span class="fc" id="L132">        .oldValue(oldValue)</span>
+<span class="fc" id="L133">        .newValue(newValue)</span>
+<span class="fc" id="L134">        .build();</span>
   }
 
   private static String text(Object value) {
-<span class="fc bfc" id="L100" title="All 2 branches covered.">    return value == null ? null : String.valueOf(value);</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">    return value == null ? null : String.valueOf(value);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
