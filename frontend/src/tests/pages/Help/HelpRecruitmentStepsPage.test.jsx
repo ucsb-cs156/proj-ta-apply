@@ -151,7 +151,7 @@ describe("HelpRecruitmentStepsPage tests", () => {
     expect(
       screen.getByTestId("HelpRecruitmentStepsPage-footnote"),
     ).toHaveTextContent(
-      "* Allocation visibility has three settings: admins only (the default), each faculty member sees the allocations for the courses they teach, or all faculty see all allocations. Step 5 means moving off “admins only”; which of the other two to choose is up to the admin.",
+      "* Allocation visibility has two settings: admins only (the default), or each faculty member sees the allocations only for the courses they teach. Step 5 means moving off “admins only”.",
     );
     expect(
       screen.getByTestId("HelpRecruitmentStepsPage-feedback"),
@@ -209,7 +209,7 @@ describe("HelpRecruitmentStepsPage tests", () => {
       "Applicants can submit applications, and edit them until the primary consideration date.",
       "Set the hiring target on the Budget for Quarter page and give each course its share on the Combined Allocation page.",
       "Applicants can no longer submit or edit; every application is kept, and the recruitment can be opened again.",
-      "Choose who sees the allocations: admins only, each faculty member for their own courses, or all faculty for all courses.",
+      "Choose who sees the allocations: admins only, or each faculty member for their own courses.",
       "Faculty see the candidates for their courses and enter rankings, until the deadline you give.",
       "Faculty can no longer change their rankings; what they ranked is kept.",
       "Use the faculty rankings to tentatively assign candidates to the courses' slots.",

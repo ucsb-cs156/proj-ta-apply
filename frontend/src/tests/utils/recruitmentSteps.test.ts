@@ -197,11 +197,12 @@ describe("recruitmentSteps", () => {
     expect(LEGEND_SOFT).toBe(
       "soft prerequisite: the preferred order, not enforced",
     );
+    // Issue #366: two settings, not three.
     expect(FOOTNOTE_LINE_1).toBe(
-      "Allocation visibility has three settings: admins only (the default), each faculty member sees the allocations for the courses they teach,",
+      "Allocation visibility has two settings: admins only (the default), or each faculty member sees the allocations",
     );
     expect(FOOTNOTE_LINE_2).toBe(
-      'or all faculty see all allocations. Step 5 means moving off "admins only".',
+      'only for the courses they teach. Step 5 means moving off "admins only".',
     );
   });
 

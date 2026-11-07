@@ -67,11 +67,10 @@ export default function HelpRecruitmentStepsPage(): React.JSX.Element {
           releasing the hiring decisions.
         </p>
         <p data-testid="HelpRecruitmentStepsPage-footnote">
-          <strong>*</strong> Allocation visibility has three settings: admins
-          only (the default), each faculty member sees the allocations for the
-          courses they teach, or all faculty see all allocations. Step 5 means
-          moving off &ldquo;admins only&rdquo;; which of the other two to choose
-          is up to the admin.
+          <strong>*</strong> Allocation visibility has two settings: admins only
+          (the default), or each faculty member sees the allocations only for
+          the courses they teach. Step 5 means moving off &ldquo;admins
+          only&rdquo;.
         </p>
         <h2 className="my-3 h4">The steps</h2>
         <ol data-testid="HelpRecruitmentStepsPage-steps">

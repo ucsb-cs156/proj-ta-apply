@@ -459,7 +459,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           but an admin, <code>enrollmentEstimate</code>, <code>allocation</code>{" "}
           and <code>unroundedAllocation</code> are left out of the JSON unless
           the recruitment&apos;s allocation visibility is{" "}
-          <code>ALL_COURSES</code>, and the table omits the matching columns (
+          <code>ALL_COURSES</code> (a value that still exists in the backend but
+          is no longer selectable in the user interface, issue #366), and the
+          table omits the matching columns (
           <code>AllocationsRelatedColumns</code>) instead of hiding them. Since
           issue #358 the admin&apos;s own view-only and edit pages omit those
           five columns too (<code>omitColumns</code>, and{" "}

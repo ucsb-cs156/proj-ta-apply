@@ -111,7 +111,7 @@ describe("RecruitmentStepsDiagram tests", () => {
         "soft prerequisite: the preferred order, not enforced",
       );
       expect(screen.getByTestId("D-footnote")).toHaveTextContent(
-        '* Allocation visibility has three settings: admins only (the default), each faculty member sees the allocations for the courses they teach, or all faculty see all allocations. Step 5 means moving off "admins only".',
+        '* Allocation visibility has two settings: admins only (the default), or each faculty member sees the allocations only for the courses they teach. Step 5 means moving off "admins only".',
       );
       expect(screen.getByTestId("D-footnote")).toHaveAttribute("y", "352");
 

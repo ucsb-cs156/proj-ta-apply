@@ -430,7 +430,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
         >
           Who may see the allocations is one setting for the recruitment, shown
           under the hiring target as <em>Allocation visibility</em>; choose{" "}
-          <strong>Change</strong> to pick one of three states.{" "}
+          <strong>Change</strong> to pick one of two states.{" "}
           <strong>Admins only</strong> is where every recruitment starts: no
           faculty member sees any allocation.{" "}
           <strong>Faculty see their own courses</strong> is what{" "}
@@ -441,19 +441,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>Ranking Target</strong> (twice the allocation, but never more
           than the candidates who expressed interest in the course),{" "}
           <strong>Candidates Ranked</strong> so far and{" "}
-          <strong>Rankings Still Needed</strong>.{" "}
-          <strong>Faculty see all courses</strong> goes further, for when the
-          whole plan is public: every faculty member teaching in the recruitment
-          sees the enrollment estimate, allocation, unrounded allocation, delta
-          and TA:student ratio columns of every course on the read-only{" "}
-          <em>Courses</em> page that each of their courses offers. Under the
-          other two settings that page shows faculty no such columns at all: the
-          figures are not even sent to their browser. Move off Admins only once
-          the numbers are mostly final; you can still change an allocation
-          afterwards, and faculty see the change immediately. Every change of
-          state is recorded in the recruitment&apos;s change history. Do this
-          before opening faculty reviews, so faculty know how many candidates to
-          rank, and ask them to raise any concerns about their targets then.
+          <strong>Rankings Still Needed</strong>. The read-only <em>Courses</em>{" "}
+          page that each of their courses offers shows faculty no allocation
+          figures: those are not even sent to their browser. Move off Admins
+          only once the numbers are mostly final; you can still change an
+          allocation afterwards, and faculty see the change immediately. Every
+          change of state is recorded in the recruitment&apos;s change history.
+          Do this before opening faculty reviews, so faculty know how many
+          candidates to rank, and ask them to raise any concerns about their
+          targets then.
         </p>
 
         <h2 className="my-3 h4" id="quarters">
