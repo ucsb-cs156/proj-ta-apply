@@ -2,6 +2,7 @@
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.util.ArrayList;
@@ -26,36 +27,43 @@ import org.springframework.transaction.annotation.Transactional;
  * {@link #snapshot} before applying it and passes it in afterwards; only the fields whose value
  * differs get a row, so a request that changes nothing writes nothing. Creation and deletion get
  * just their one row: the values a recruitment was created with are not also written as changes.
+ *
+ * &lt;p&gt;Every row carries the email of the logged-in user who made the change (issue #337), read from
+ * {@link CurrentUserService} here rather than passed in by each caller, so every path that writes
+ * rows records it: the admin endpoints, {@link AllocationVisibilityService}, and Developer Mode's
+ * fake allocations. A row written with no user logged in (no path does so today) would carry null,
+ * as the rows from before the column existed do.
  */
 @Service
-<span class="fc" id="L31">public class RecruitmentAuditService {</span>
+<span class="fc" id="L38">public class RecruitmentAuditService {</span>
 
   @Autowired private RecruitmentRepository recruitmentRepository;
   @Autowired private RecruitmentAuditTrailRepository repository;
+  @Autowired private CurrentUserService currentUserService;
 
   /** The fields a change is recorded for, in the order their rows are written. */
-<span class="fc" id="L37">  static final Map&lt;String, Function&lt;Recruitment, Object&gt;&gt; FIELDS = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L45">  static final Map&lt;String, Function&lt;Recruitment, Object&gt;&gt; FIELDS = new LinkedHashMap&lt;&gt;();</span>
 
   static {
-<span class="fc" id="L40">    FIELDS.put(&quot;applicationStatus&quot;, Recruitment::getApplicationStatus);</span>
-<span class="fc" id="L41">    FIELDS.put(&quot;tentativeOpeningDate&quot;, Recruitment::getTentativeOpeningDate);</span>
-<span class="fc" id="L42">    FIELDS.put(&quot;primaryConsiderationDate&quot;, Recruitment::getPrimaryConsiderationDate);</span>
-<span class="fc" id="L43">    FIELDS.put(&quot;actualOpeningDate&quot;, Recruitment::getActualOpeningDate);</span>
-<span class="fc" id="L44">    FIELDS.put(&quot;actualClosingDate&quot;, Recruitment::getActualClosingDate);</span>
-<span class="fc" id="L45">    FIELDS.put(&quot;reviewStatus&quot;, Recruitment::getReviewStatus);</span>
-<span class="fc" id="L46">    FIELDS.put(&quot;facultyReviewOpeningDate&quot;, Recruitment::getFacultyReviewOpeningDate);</span>
-<span class="fc" id="L47">    FIELDS.put(&quot;facultyRankingDeadline&quot;, Recruitment::getFacultyRankingDeadline);</span>
-<span class="fc" id="L48">    FIELDS.put(&quot;allocationVisibility&quot;, Recruitment::getAllocationVisibility);</span>
-<span class="fc" id="L49">    FIELDS.put(&quot;assignmentsPublished&quot;, Recruitment::getAssignmentsPublished);</span>
-<span class="fc" id="L50">  }</span>
+<span class="fc" id="L48">    FIELDS.put(&quot;applicationStatus&quot;, Recruitment::getApplicationStatus);</span>
+<span class="fc" id="L49">    FIELDS.put(&quot;tentativeOpeningDate&quot;, Recruitment::getTentativeOpeningDate);</span>
+<span class="fc" id="L50">    FIELDS.put(&quot;primaryConsiderationDate&quot;, Recruitment::getPrimaryConsiderationDate);</span>
+<span class="fc" id="L51">    FIELDS.put(&quot;actualOpeningDate&quot;, Recruitment::getActualOpeningDate);</span>
+<span class="fc" id="L52">    FIELDS.put(&quot;actualClosingDate&quot;, Recruitment::getActualClosingDate);</span>
+<span class="fc" id="L53">    FIELDS.put(&quot;reviewStatus&quot;, Recruitment::getReviewStatus);</span>
+<span class="fc" id="L54">    FIELDS.put(&quot;facultyReviewOpeningDate&quot;, Recruitment::getFacultyReviewOpeningDate);</span>
+<span class="fc" id="L55">    FIELDS.put(&quot;facultyRankingDeadline&quot;, Recruitment::getFacultyRankingDeadline);</span>
+<span class="fc" id="L56">    FIELDS.put(&quot;allocationVisibility&quot;, Recruitment::getAllocationVisibility);</span>
+<span class="fc" id="L57">    FIELDS.put(&quot;assignmentsPublished&quot;, Recruitment::getAssignmentsPublished);</span>
+<span class="fc" id="L58">  }</span>
 
   /** A recruitment's audited fields as strings, keyed by field name; a null field is null. */
-<span class="fc" id="L53">  public record Snapshot(Long recruitmentId, Map&lt;String, String&gt; fields) {}</span>
+<span class="fc" id="L61">  public record Snapshot(Long recruitmentId, Map&lt;String, String&gt; fields) {}</span>
 
   public Snapshot snapshot(Recruitment recruitment) {
-<span class="fc" id="L56">    Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L57">    FIELDS.forEach((name, getter) -&gt; fields.put(name, text(getter.apply(recruitment))));</span>
-<span class="fc" id="L58">    return new Snapshot(recruitment.getId(), fields);</span>
+<span class="fc" id="L64">    Map&lt;String, String&gt; fields = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L65">    FIELDS.forEach((name, getter) -&gt; fields.put(name, text(getter.apply(recruitment))));</span>
+<span class="fc" id="L66">    return new Snapshot(recruitment.getId(), fields);</span>
   }
 
   /**
@@ -64,9 +72,9 @@ import org.springframework.transaction.annotation.Transactional;
    */
   @Transactional
   public Recruitment saveAndRecordCreated(Recruitment recruitment) {
-<span class="fc" id="L67">    Recruitment saved = recruitmentRepository.save(recruitment);</span>
-<span class="fc" id="L68">    recordCreated(saved);</span>
-<span class="fc" id="L69">    return saved;</span>
+<span class="fc" id="L75">    Recruitment saved = recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L76">    recordCreated(saved);</span>
+<span class="fc" id="L77">    return saved;</span>
   }
 
   /**
@@ -75,8 +83,8 @@ import org.springframework.transaction.annotation.Transactional;
    */
   @Transactional
   public List&lt;RecruitmentAuditTrail&gt; saveAndRecordChanges(Snapshot before, Recruitment after) {
-<span class="fc" id="L78">    recruitmentRepository.save(after);</span>
-<span class="fc" id="L79">    return recordChanges(before, after);</span>
+<span class="fc" id="L86">    recruitmentRepository.save(after);</span>
+<span class="fc" id="L87">    return recordChanges(before, after);</span>
   }
 
   /**
@@ -85,57 +93,73 @@ import org.springframework.transaction.annotation.Transactional;
    */
   @Transactional
   public RecruitmentAuditTrail deleteAndRecord(Recruitment recruitment) {
-<span class="fc" id="L88">    RecruitmentAuditTrail row = recordDeleted(recruitment);</span>
-<span class="fc" id="L89">    recruitmentRepository.delete(recruitment);</span>
-<span class="fc" id="L90">    return row;</span>
+<span class="fc" id="L96">    RecruitmentAuditTrail row = recordDeleted(recruitment);</span>
+<span class="fc" id="L97">    recruitmentRepository.delete(recruitment);</span>
+<span class="fc" id="L98">    return row;</span>
   }
 
-  /** Records that the recruitment was just created, and returns the row written. */
+  /**
+   * Records that the recruitment was just created, by the logged-in user, and returns the row
+   * written.
+   */
   public RecruitmentAuditTrail recordCreated(Recruitment recruitment) {
-<span class="fc" id="L95">    return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.CREATED, null, null));</span>
+<span class="fc" id="L106">    return repository.save(</span>
+<span class="fc" id="L107">        row(recruitment.getId(), RecruitmentAuditTrail.CREATED, null, null, editorEmail()));</span>
   }
 
-  /** Records that the recruitment is about to be deleted, and returns the row written. */
+  /**
+   * Records that the recruitment is about to be deleted, by the logged-in user, and returns the row
+   * written.
+   */
   public RecruitmentAuditTrail recordDeleted(Recruitment recruitment) {
-<span class="fc" id="L100">    return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.DELETED, null, null));</span>
+<span class="fc" id="L115">    return repository.save(</span>
+<span class="fc" id="L116">        row(recruitment.getId(), RecruitmentAuditTrail.DELETED, null, null, editorEmail()));</span>
   }
 
   /**
    * Records every field whose value differs between the snapshot taken before an edit and the
-   * recruitment as it is now, one row each, and returns the rows written (empty when nothing
-   * changed). Writers go through {@link #saveAndRecordChanges}, which calls this inside the
-   * transaction that saves the recruitment.
+   * recruitment as it is now, one row each naming the logged-in user as its editor, and returns the
+   * rows written (empty when nothing changed). Writers go through {@link #saveAndRecordChanges},
+   * which calls this inside the transaction that saves the recruitment.
    */
   public List&lt;RecruitmentAuditTrail&gt; recordChanges(Snapshot before, Recruitment after) {
-<span class="fc" id="L110">    Snapshot now = snapshot(after);</span>
-<span class="fc" id="L111">    List&lt;RecruitmentAuditTrail&gt; changes = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L112">    before</span>
-<span class="fc" id="L113">        .fields()</span>
-<span class="fc" id="L114">        .forEach(</span>
+<span class="fc" id="L126">    Snapshot now = snapshot(after);</span>
+<span class="fc" id="L127">    String editor = editorEmail();</span>
+<span class="fc" id="L128">    List&lt;RecruitmentAuditTrail&gt; changes = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L129">    before</span>
+<span class="fc" id="L130">        .fields()</span>
+<span class="fc" id="L131">        .forEach(</span>
             (name, old) -&gt; {
-<span class="fc" id="L116">              String current = now.fields().get(name);</span>
-<span class="fc bfc" id="L117" title="All 2 branches covered.">              if (!Objects.equals(old, current)) {</span>
-<span class="fc" id="L118">                changes.add(row(before.recruitmentId(), name, old, current));</span>
+<span class="fc" id="L133">              String current = now.fields().get(name);</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">              if (!Objects.equals(old, current)) {</span>
+<span class="fc" id="L135">                changes.add(row(before.recruitmentId(), name, old, current, editor));</span>
               }
-<span class="fc" id="L120">            });</span>
-<span class="fc bfc" id="L121" title="All 2 branches covered.">    if (!changes.isEmpty()) {</span>
-<span class="fc" id="L122">      repository.saveAll(changes);</span>
+<span class="fc" id="L137">            });</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">    if (!changes.isEmpty()) {</span>
+<span class="fc" id="L139">      repository.saveAll(changes);</span>
     }
-<span class="fc" id="L124">    return changes;</span>
+<span class="fc" id="L141">    return changes;</span>
+  }
+
+  /** The email of the logged-in user, who is the one making the change; null if there is none. */
+  private String editorEmail() {
+<span class="fc" id="L146">    User user = currentUserService.getUser();</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">    return user == null ? null : user.getEmail();</span>
   }
 
   private static RecruitmentAuditTrail row(
-      Long recruitmentId, String whatChanged, String oldValue, String newValue) {
-<span class="fc" id="L129">    return RecruitmentAuditTrail.builder()</span>
-<span class="fc" id="L130">        .recruitmentId(recruitmentId)</span>
-<span class="fc" id="L131">        .whatChanged(whatChanged)</span>
-<span class="fc" id="L132">        .oldValue(oldValue)</span>
-<span class="fc" id="L133">        .newValue(newValue)</span>
-<span class="fc" id="L134">        .build();</span>
+      Long recruitmentId, String whatChanged, String oldValue, String newValue, String editor) {
+<span class="fc" id="L152">    return RecruitmentAuditTrail.builder()</span>
+<span class="fc" id="L153">        .recruitmentId(recruitmentId)</span>
+<span class="fc" id="L154">        .whatChanged(whatChanged)</span>
+<span class="fc" id="L155">        .oldValue(oldValue)</span>
+<span class="fc" id="L156">        .newValue(newValue)</span>
+<span class="fc" id="L157">        .editorEmail(editor)</span>
+<span class="fc" id="L158">        .build();</span>
   }
 
   private static String text(Object value) {
-<span class="fc bfc" id="L138" title="All 2 branches covered.">    return value == null ? null : String.valueOf(value);</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">    return value == null ? null : String.valueOf(value);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

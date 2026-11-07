@@ -27,8 +27,9 @@ import lombok.NoArgsConstructor;
  * row. A null old value means the field was blank, or a row was added; a null new value means the
  * admin blanked an optional field, or deleted a row.
  *
- * &lt;p&gt;Nothing writes rows yet: the admin edit that will is a later feature. The table and its page
- * come first so that feature has somewhere to record what it does.
+ * &lt;p&gt;{@code editorEmail} is the email of the admin who made the change (issue #337, changeset 065),
+ * as text rather than a user id: it reads directly in the table, survives the user row being
+ * deleted, and needs no join. It is null on the rows written before the column existed.
  */
 @Data
 @AllArgsConstructor
@@ -59,10 +60,14 @@ public class AuditTrail {
   @Column(name = &quot;new_value&quot;, length = 4000)
   private String newValue;
 
+  /** The email of the admin who made the change; null on rows older than the column. */
+  @Column(name = &quot;editor_email&quot;)
+  private String editorEmail;
+
   /** Stamps the Pacific time at which the row is first saved (issue #293). */
   @PrePersist
   void stampEdited() {
-<span class="fc" id="L65">    editedAt = AppTime.now();</span>
-<span class="fc" id="L66">  }</span>
+<span class="fc" id="L70">    editedAt = AppTime.now();</span>
+<span class="fc" id="L71">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

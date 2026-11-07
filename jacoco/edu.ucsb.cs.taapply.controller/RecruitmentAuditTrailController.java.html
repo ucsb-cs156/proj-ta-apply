@@ -33,23 +33,24 @@ import org.springframework.web.bind.annotation.RestController;
 
   /** The columns the page may sort by: every column of the table. */
 <span class="fc" id="L35">  public static final Set&lt;String&gt; SORTABLE =</span>
-<span class="fc" id="L36">      Set.of(&quot;id&quot;, &quot;changedAt&quot;, &quot;recruitmentId&quot;, &quot;whatChanged&quot;, &quot;oldValue&quot;, &quot;newValue&quot;);</span>
+<span class="fc" id="L36">      Set.of(</span>
+          &quot;id&quot;, &quot;changedAt&quot;, &quot;recruitmentId&quot;, &quot;whatChanged&quot;, &quot;oldValue&quot;, &quot;newValue&quot;, &quot;editorEmail&quot;);
 
   /** One page of the trail, in the shape the Audit Trail and Users pages already consume. */
-<span class="fc" id="L39">  public static record RecruitmentAuditTrailPageDTO(</span>
+<span class="fc" id="L40">  public static record RecruitmentAuditTrailPageDTO(</span>
       List&lt;RecruitmentAuditTrail&gt; content,
       int number,
       int size,
       long totalElements,
       int totalPages) {
     public RecruitmentAuditTrailPageDTO(Page&lt;RecruitmentAuditTrail&gt; page) {
-<span class="fc" id="L46">      this(</span>
-<span class="fc" id="L47">          page.getContent(),</span>
-<span class="fc" id="L48">          page.getNumber(),</span>
-<span class="fc" id="L49">          page.getSize(),</span>
-<span class="fc" id="L50">          page.getTotalElements(),</span>
-<span class="fc" id="L51">          page.getTotalPages());</span>
-<span class="fc" id="L52">    }</span>
+<span class="fc" id="L47">      this(</span>
+<span class="fc" id="L48">          page.getContent(),</span>
+<span class="fc" id="L49">          page.getNumber(),</span>
+<span class="fc" id="L50">          page.getSize(),</span>
+<span class="fc" id="L51">          page.getTotalElements(),</span>
+<span class="fc" id="L52">          page.getTotalPages());</span>
+<span class="fc" id="L53">    }</span>
   }
 
   @Operation(
@@ -70,15 +71,15 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;direction&quot;, description = &quot;asc or desc&quot;)
           @RequestParam(defaultValue = &quot;desc&quot;)
           String direction) {
-<span class="fc bfc" id="L73" title="All 2 branches covered.">    if (!SORTABLE.contains(sort)) {</span>
-<span class="fc" id="L74">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    if (!SORTABLE.contains(sort)) {</span>
+<span class="fc" id="L75">      throw new IllegalArgumentException(</span>
           &quot;Cannot sort by %s (expected one of %s)&quot;
-<span class="fc" id="L76">              .formatted(sort, SORTABLE.stream().sorted().toList()));</span>
+<span class="fc" id="L77">              .formatted(sort, SORTABLE.stream().sorted().toList()));</span>
     }
-<span class="fc" id="L78">    Sort.Direction sortDirection = Sort.Direction.fromString(direction);</span>
-<span class="fc" id="L79">    return new RecruitmentAuditTrailPageDTO(</span>
-<span class="fc" id="L80">        recruitmentAuditTrailRepository.findByRecruitmentId(</span>
-<span class="fc" id="L81">            recruitmentId, PageRequest.of(page, size, Sort.by(sortDirection, sort))));</span>
+<span class="fc" id="L79">    Sort.Direction sortDirection = Sort.Direction.fromString(direction);</span>
+<span class="fc" id="L80">    return new RecruitmentAuditTrailPageDTO(</span>
+<span class="fc" id="L81">        recruitmentAuditTrailRepository.findByRecruitmentId(</span>
+<span class="fc" id="L82">            recruitmentId, PageRequest.of(page, size, Sort.by(sortDirection, sort))));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
