@@ -90,6 +90,8 @@ function BudgetForQuarter({
       <h1>Budget for {qyy}</h1>
       <p>
         <Link to="/admin/budget/selectQuarter">Choose another quarter</Link>
+        {" | "}
+        <Link to={`/admin/allocations/${qyy}`}>Combined allocations</Link>
       </p>
     </>
   );

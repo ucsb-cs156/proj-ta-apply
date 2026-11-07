@@ -4,6 +4,7 @@ import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { ADMIN_MENU_ENTRIES } from "main/utils/helpPages";
 import useScrollToHash from "main/utils/useScrollToHash";
 import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
+import { CONVERSION_FACTOR_EXPLANATION } from "main/utils/combinedAllocations";
 
 /** The warning as it looks when someone else is editing the same thing. */
 // Stryker disable next-line StringLiteral : the example name is fixed and is checked by the tests
@@ -38,7 +39,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Download Rankings CSV
         </h2>
         <p>
-          On a recruitment&apos;s Courses page,{" "}
+          On a recruitment&apos;s card on the home page, in the bottom row of
+          buttons and once faculty reviews have been opened,{" "}
           <strong>Download Rankings CSV</strong> saves that recruitment&apos;s
           faculty rankings as a spreadsheet-ready file. This is separate from{" "}
           <strong>Download Applications as CSV</strong> on its Applications
@@ -501,6 +503,90 @@ export default function HelpAdminsPage(): React.JSX.Element {
           history.
         </p>
 
+        <h2 className="my-3 h4" id="combined-allocations">
+          Combined Allocation page
+        </h2>
+        <p data-testid="HelpAdminsPage-combined-allocations">
+          <strong>/admin/allocations/QXX</strong> (for example{" "}
+          <em>/admin/allocations/W26</em>; the Budget for Quarter page links to
+          it) shows one quarter&apos;s TA and ULA allocations side by side. It
+          is the Edit Courses page of the two recruitments in one table, whose
+          rows are the courses of the TA recruitment and the ULA recruitment
+          together: a section that is in both recruitments is one row, found by
+          its enroll code, and a section that is in only one has blank cells for
+          the other type. The single <strong>Enrollment Estimate</strong> is the
+          higher of the two recruitments&apos; estimates for the section, and
+          every ratio on the page uses it. It is typed in the table like on the
+          Edit Courses page (saved a second after the last keystroke, an empty
+          box clears it), and what you type is saved to the section&apos;s
+          course row in <em>each</em> recruitment that has it, so the two agree.
+          For each type that has a recruitment the table has{" "}
+          <strong>Allocation</strong> (typed in, and saved, exactly as on the
+          Edit Courses page, for the recruitment of that type),{" "}
+          <strong>Unrounded Allocation</strong>, <strong>Delta</strong> and the{" "}
+          <strong>TA:student</strong> or <strong>ULA:student</strong> ratio, so
+          a quarter with only one recruitment shows only that type&apos;s
+          columns.
+        </p>
+        <p data-testid="HelpAdminsPage-combined-allocations-columns">
+          The table has the other columns of the Edit Courses page too:{" "}
+          <strong>TA Rankings</strong> and <strong>ULA Rankings</strong> (a type
+          has one only once its faculty reviews have been opened),{" "}
+          <strong>Section</strong>, <strong>Title</strong>,{" "}
+          <strong>Instructor</strong>, <strong>Email</strong> (with the copy
+          button), <strong>Days</strong>, <strong>Time</strong>,{" "}
+          <strong>Room</strong>, <strong>Enrolled</strong>, <strong>Max</strong>{" "}
+          and <strong>Status</strong>, and, for a summer quarter,{" "}
+          <strong>Summer Session</strong>. A totals row under the table shows{" "}
+          <strong>Total Course Count</strong> and the sums of Enrolled, Max,
+          Enrollment Estimate and each type&apos;s Allocation. A column that
+          starts with TA is not shown when the quarter has no TA recruitment,
+          and one that starts with ULA is not shown when it has no ULA
+          recruitment. For a section in both recruitments these describe the
+          same course, and the TA recruitment&apos;s row is used, or the ULA
+          recruitment&apos;s when there is none. <strong>Course Number</strong>{" "}
+          is on two lines and just wide enough for the longest UCSB course
+          number, 13 characters. Every heading except Course Number has a small{" "}
+          <em>hide</em> link, and the <strong>Columns</strong> menu has{" "}
+          <em>Show All</em>, <em>Show None</em> and a box for each column except
+          Course Number, which is always shown. Your choice is remembered in
+          this browser, separately for each quarter; until you make one,
+          Section, Title, Email, Days, Time, Room, Status and the rankings are
+          hidden, as on the Edit Courses page.
+        </p>
+        <p data-testid="HelpAdminsPage-combined-allocations-controls">
+          Above the table are the controls of the Edit Courses page.{" "}
+          <strong>Set enrollment estimates from: max, actual</strong> sets every
+          section&apos;s Enrollment Estimate from the UCSB API&apos;s maximum or
+          actual enrollment, in <em>every</em> recruitment of the quarter.{" "}
+          <strong>Auto assign TA allocations</strong> and{" "}
+          <strong>Auto assign ULA allocations</strong> (each only when the
+          quarter has that recruitment) allocate that recruitment&apos;s hiring
+          target across its courses by enrollment estimate, after asking you to
+          confirm, since it overwrites every allocation of that type and cannot
+          be undone.
+        </p>
+        <p data-testid="HelpAdminsPage-combined-allocations-both">
+          When the quarter has <em>both</em> a TA and a ULA recruitment, the
+          page also has, at the top, a table of <strong>Cost per TA</strong> and{" "}
+          <strong>Cost per ULA</strong> (each recruitment&apos;s average cost
+          per position, entered on the Budget for Quarter page) and{" "}
+          <strong>TA Cost/ULA Cost</strong>, their ratio, which is empty while
+          the cost per ULA is zero. Below it is the{" "}
+          <strong>Nominal TA to ULA conversion factor</strong>, which is 3 until
+          you change it. It must be greater than zero, and is saved as you type
+          it, with the same warning as the Budget page if someone else changed
+          it first.{" "}
+          <span data-testid="HelpAdminsPage-conversion-factor">
+            {CONVERSION_FACTOR_EXPLANATION}
+          </span>{" "}
+          It is used by the extra <strong>ASE:Student Ratio</strong> column, the
+          number of students per TA-equivalent: 1:N, where N is the enrollment
+          estimate divided by the TA allocation plus the ULA allocation divided
+          by the conversion factor. It is a dash when there is no estimate or
+          nothing is allocated.
+        </p>
+
         <h2 className="my-3 h4" id="recruitments">
           Recruitments
         </h2>
@@ -587,7 +673,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
             the recruitment as a spreadsheet, with the columns for its type (the
             layout is on the CSV formats page). The button is at the top of the
             Applications page; the rankings download,{" "}
-            <strong>Download Rankings CSV</strong>, is on the Courses page.
+            <strong>Download Rankings CSV</strong>, is on the recruitment&apos;s
+            card once faculty reviews have been opened.
           </li>
           <li
             id="draft-applications"

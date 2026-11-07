@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
+  COURSE_NUMBER_CHARACTERS,
+  COURSE_NUMBER_WIDTH,
   WIDE_COLUMN_DEFAULT_WIDTH,
   WIDE_COLUMN_IDS,
   WIDE_COLUMN_MAX_WIDTH,
@@ -40,5 +42,13 @@ describe("columnWidths (issue #342)", () => {
   test("any other column gets no options", () => {
     expect(isWideColumnId("email")).toBe(false);
     expect(wideColumnProps("email")).toEqual({});
+  });
+});
+
+describe("the course number column's width (issue #358)", () => {
+  test("is 13 characters, the width of the widest course number, XXXXXXX 999XX", () => {
+    expect("XXXXXXX 999XX").toHaveLength(13);
+    expect(COURSE_NUMBER_CHARACTERS).toBe(13);
+    expect(COURSE_NUMBER_WIDTH).toBe("13ch");
   });
 });

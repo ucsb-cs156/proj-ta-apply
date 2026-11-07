@@ -5,6 +5,8 @@ export type BudgetRow = {
   unrestrictedBudget: number;
   tasOnlyBudget: number;
   ulasOnlyBudget: number;
+  /** How many ULAs count as one TA on the Combined Allocation page (issue #358); 3 by default. */
+  conversionTAtoULA: number;
   /** How many times the budget has been saved; a save carries it so a stale one is refused. */
   version: number;
 };

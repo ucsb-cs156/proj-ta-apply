@@ -18,8 +18,15 @@ import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 import { Link } from "react-router";
 import { isSummerQuarter } from "main/utils/courseColumns";
-import { apiErrorMessage } from "main/utils/apiError";
-import { toast } from "react-toastify";
+import {
+  numeric,
+  shrinkToContent,
+  stacked,
+} from "main/components/Common/columnStyles";
+import {
+  replaceCourseInCache,
+  useAllocationSaves,
+} from "main/components/Recruitments/useAllocationSaves";
 
 export type RecruitmentCourse = {
   id: number;
@@ -187,18 +194,6 @@ const estimateRequest = (
   params: value === "" ? { id } : { id, enrollmentEstimate: Number(value) },
 });
 
-/**
- * A heading on two lines in a smaller font (80% of the other headings), so a column is no wider
- * than its values (issue #185). The space before the break keeps the heading's text whole for
- * screen readers and tests.
- */
-const stacked = (top: string, bottom: string): React.JSX.Element => (
-  <span style={{ fontSize: "80%" }}>
-    {top} <br />
-    {bottom}
-  </span>
-);
-
 /** Bootstrap's clipboard icon, for the copy control beside an email (issue #185). */
 const CopyIcon = (): React.JSX.Element => (
   <svg
@@ -215,10 +210,120 @@ const CopyIcon = (): React.JSX.Element => (
   </svg>
 );
 
-/** What a refused allocation save (409) carries. */
-type ConflictError = {
-  response?: { status?: number; data?: { course?: RecruitmentCourse } };
-};
+/**
+ * One row's ranking count, linking to the course's ranking page; a dash when the count is not
+ * known. Shared by the Recruitment Courses table and the Combined Allocation table (issue #358).
+ */
+export function RankingCountCell({
+  course,
+  rankingCount,
+  index,
+  testIdPrefix,
+}: {
+  course: Pick<RecruitmentCourse, "id" | "recruitmentId">;
+  rankingCount: number | null;
+  index: number;
+  testIdPrefix: string;
+}): React.JSX.Element {
+  if (rankingCount === null) {
+    return <span aria-label="Ranking count unavailable">—</span>;
+  }
+  return (
+    <Link
+      to={`/recruitments/${course.recruitmentId}/courses/${course.id}/ranking`}
+      data-testid={`${testIdPrefix}-cell-row-${index}-ranking-link`}
+    >
+      {rankingCount}
+    </Link>
+  );
+}
+
+/**
+ * One row's instructor email with its copy control, or the link to where the instructor's catalog
+ * name is mapped to one (issue #185). Shared with the Combined Allocation table (issue #358).
+ */
+export function InstructorEmailCell({
+  email,
+  index,
+  testIdPrefix,
+  onCopyEmail,
+}: {
+  email: string | null | undefined;
+  index: number;
+  testIdPrefix: string;
+  onCopyEmail: (email: string) => void;
+}): React.JSX.Element {
+  if (!isValidEmail(email)) {
+    // Straight to where the mapping is made, in a new tab so the table is not lost (#185).
+    return (
+      <a
+        href="/admin/instructors"
+        target="_blank"
+        rel="noreferrer"
+        title="Map this instructor's catalog name to an email on the Instructors page"
+        data-testid={`${testIdPrefix}-cell-row-${index}-unmapped`}
+      >
+        Not mapped
+      </a>
+    );
+  }
+  return (
+    <>
+      <span>{email}</span>
+      <Button
+        variant="link"
+        size="sm"
+        className="p-0 ms-2"
+        title="Copy"
+        aria-label={`Copy ${email}`}
+        onClick={() => onCopyEmail(email)}
+        data-testid={`${testIdPrefix}-cell-row-${index}-copy-email`}
+      >
+        <CopyIcon />
+      </Button>
+    </>
+  );
+}
+
+/**
+ * One row's status. A cancelled lecture is shown as a red badge, since applicants no longer see it
+ * (issue #123); a stale row keeps its last known status, with a warning beside it so the admin can
+ * decide whether to Remove it (issue #122). Shared with the Combined Allocation table (#358).
+ */
+export function StatusCell({
+  course,
+  index,
+  testIdPrefix,
+}: {
+  course: Pick<RecruitmentCourse, "status" | "stale">;
+  index: number;
+  testIdPrefix: string;
+}): React.JSX.Element {
+  return (
+    <>
+      {course.status === CANCELLED ? (
+        <Badge
+          bg="danger"
+          data-testid={`${testIdPrefix}-cell-row-${index}-cancelled`}
+        >
+          Cancelled
+        </Badge>
+      ) : (
+        course.status
+      )}
+      {course.stale && (
+        <Badge
+          bg="warning"
+          text="dark"
+          className="ms-2"
+          data-testid={`${testIdPrefix}-cell-row-${index}-stale`}
+        >
+          {STALE_LABEL}
+        </Badge>
+      )}
+    </>
+  );
+}
 
 type RecruitmentCourseTableProps = {
   courses: RecruitmentCourse[];
@@ -290,106 +395,13 @@ export default function RecruitmentCourseTable({
     ],
   );
 
-  // What is in each row's Allocation box while it has focus, by row id (issue #174); a row that
-  // is absent shows its stored value. Cleared on blur, so an invalid entry reverts and a saved
-  // one is simply the stored value again.
-  const [allocationDrafts, setAllocationDrafts] = useState<
-    Record<number, string>
-  >({});
-  // Put a saved row into every cached course list as soon as the backend answers, so the stored
-  // value is right the moment a box is left, not only after the refetch that follows.
+  // The Allocation boxes (issues #174, #278); their saving is shared with the Combined Allocation
+  // page (issue #358).
+  const { allocationDrafts, onAllocationChange, onAllocationBlur } =
+    useAllocationSaves(requestHeaders, allocationBulkVersion, includeRemoved);
   const queryClient = useQueryClient();
   const replaceInCache = (saved: RecruitmentCourse) =>
-    queryClient.setQueriesData<RecruitmentCourse[]>(
-      { queryKey: ["/api/recruitmentcourses/all"] },
-      // Stryker disable next-line all : the query's initial data is an empty list, never undefined
-      (old) => (old ?? []).map((c) => (c.id === saved.id ? saved : c)),
-    );
-  // Each allocation save carries the version the row had when the save was made (issue #278), so
-  // the saves of one box, one per keystroke, are sent one after the other, each with the version
-  // the one before it came back with. A refused save (409) ends the run: what was typed after it
-  // was made against numbers that are no longer there, so it is not sent.
-  const versions = useRef<Record<number, number>>({});
-  const allocationQueue = useRef<Promise<unknown>>(Promise.resolve());
-  const waiting = useRef(0);
-  const epoch = useRef(0);
-  const allocationMutation = useBackendMutation<
-    { id: number; allocation: number; expectedVersion?: number },
-    RecruitmentCourse
-  >(
-    ({ id, allocation, expectedVersion }) => ({
-      url: "/api/recruitmentcourses/allocation",
-      method: "PUT",
-      headers: requestHeaders,
-      params: {
-        id,
-        allocation,
-        expectedVersion,
-        expectedBulkVersion: allocationBulkVersion,
-      },
-    }),
-    {
-      onSuccess: (saved) => {
-        // Stryker disable next-line ConditionalExpression : an answer without a version leaves the row's own
-        if (saved.allocationVersion !== undefined) {
-          versions.current[saved.id] = saved.allocationVersion;
-        }
-        replaceInCache(saved);
-      },
-      onError: (error) => {
-        if ((error as ConflictError).response?.status !== 409) {
-          toast(`${error}`);
-          return;
-        }
-        // Stryker disable next-line AssignmentOperator : any change of the number ends the run
-        epoch.current += 1;
-        toast(apiErrorMessage(error));
-        setAllocationDrafts({});
-        // Stryker disable next-line OptionalChaining : a 409 always has a response
-        const body = (error as ConflictError).response?.data;
-        if (body?.course !== undefined) {
-          replaceInCache(body.course);
-        }
-        // After a bulk change every old number is suspect, so everything is read again.
-        queryClient.invalidateQueries({
-          queryKey: ["/api/recruitmentcourses/all"],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["/api/admin/recruitments/all"],
-        });
-      },
-    },
-    ["/api/recruitmentcourses/all", includeRemoved],
-  );
-  const onAllocationChange = (course: RecruitmentCourse, value: string) => {
-    setAllocationDrafts((previous) => ({ ...previous, [course.id]: value }));
-    if (isValidAllocation(value)) {
-      const myEpoch = epoch.current;
-      waiting.current += 1;
-      allocationQueue.current = allocationQueue.current
-        .then(() =>
-          myEpoch !== epoch.current
-            ? undefined
-            : allocationMutation.mutateAsync({
-                id: course.id,
-                allocation: Number(value),
-                expectedVersion:
-                  versions.current[course.id] ?? course.allocationVersion,
-              }),
-        )
-        .catch(() => undefined)
-        .finally(() => {
-          waiting.current -= 1;
-          // Between runs the versions come from the rows as last read, which may be newer.
-          if (waiting.current === 0) {
-            versions.current = {};
-          }
-        });
-    }
-  };
-  // Only the focused box can have a draft, since leaving a box clears it, so clearing them all
-  // on blur is the same as clearing the one.
-  const onAllocationBlur = () => setAllocationDrafts({});
+    replaceCourseInCache(queryClient, saved);
 
   // The Enrollment Estimate boxes (issue #175) save a second after the last keystroke rather than
   // on each one, since an estimate is usually several digits. A pending save is keyed by row id
@@ -459,13 +471,6 @@ export default function RecruitmentCourseTable({
   }, []);
   // Stryker restore all
 
-  const shrinkToContent = {
-    style: { width: "1%", whiteSpace: "nowrap" as const },
-  };
-  // Numbers line up on the right (issue #185); the ratio column stays left-aligned.
-  const numeric = {
-    style: { ...shrinkToContent.style, textAlign: "right" as const },
-  };
   const rankingSummaryByCourse = new Map(
     rankingSummaries.map((summary) => [summary.recruitmentCourseId, summary]),
   );
@@ -502,20 +507,14 @@ export default function RecruitmentCourseTable({
                 },
                 unknown
               >;
-            }) => {
-              const course = cell.row.original;
-              if (course.rankingCount === null) {
-                return <span aria-label="Ranking count unavailable">—</span>;
-              }
-              return (
-                <Link
-                  to={`/recruitments/${course.recruitmentId}/courses/${course.id}/ranking`}
-                  data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-ranking-link`}
-                >
-                  {course.rankingCount}
-                </Link>
-              );
-            },
+            }) => (
+              <RankingCountCell
+                course={cell.row.original}
+                rankingCount={cell.row.original.rankingCount}
+                index={cell.row.index}
+                testIdPrefix={testIdPrefix}
+              />
+            ),
           },
         ]
       : []),
@@ -569,36 +568,13 @@ export default function RecruitmentCourseTable({
           unknown
         >;
       }) => {
-        const email = cell.row.original.instructorEmail;
-        if (!isValidEmail(email)) {
-          // Straight to where the mapping is made, in a new tab so the table is not lost (#185).
-          return (
-            <a
-              href="/admin/instructors"
-              target="_blank"
-              rel="noreferrer"
-              title="Map this instructor's catalog name to an email on the Instructors page"
-              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-unmapped`}
-            >
-              Not mapped
-            </a>
-          );
-        }
         return (
-          <>
-            <span>{email}</span>
-            <Button
-              variant="link"
-              size="sm"
-              className="p-0 ms-2"
-              title="Copy"
-              aria-label={`Copy ${email}`}
-              onClick={() => onCopyEmail(email)}
-              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-copy-email`}
-            >
-              <CopyIcon />
-            </Button>
-          </>
+          <InstructorEmailCell
+            email={cell.row.original.instructorEmail}
+            index={cell.row.index}
+            testIdPrefix={testIdPrefix}
+            onCopyEmail={onCopyEmail}
+          />
         );
       },
     },
@@ -705,28 +681,11 @@ export default function RecruitmentCourseTable({
       // #123); a stale row keeps its last known status, with a warning beside it so the admin can
       // decide whether to Remove it (issue #122).
       cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => (
-        <>
-          {cell.row.original.status === CANCELLED ? (
-            <Badge
-              bg="danger"
-              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-cancelled`}
-            >
-              Cancelled
-            </Badge>
-          ) : (
-            cell.row.original.status
-          )}
-          {cell.row.original.stale && (
-            <Badge
-              bg="warning"
-              text="dark"
-              className="ms-2"
-              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-stale`}
-            >
-              {STALE_LABEL}
-            </Badge>
-          )}
-        </>
+        <StatusCell
+          course={cell.row.original}
+          index={cell.row.index}
+          testIdPrefix={testIdPrefix}
+        />
       ),
     },
     // Only a summer quarter's offerings carry a value, so the column exists only then (#185).

@@ -31,7 +31,7 @@ type RecruitmentCardLayoutProps = {
  * The admin recruitment card as docs/design/AdminUserInterfaceDesign.md lays it out: the header
  * with quarter, type and status badges; the dates panel with its Change button beside the Faculty
  * Ranking Deadline; the live Recruitment Steps diagram in its collapsible panel; and the two
- * remaining buttons, Courses and Applications. Everything the old card footer offered is reached
+ * remaining buttons, Courses, Draft Applications and Applications, and Download Rankings CSV once faculty rankings have been opened. Everything the old card footer offered is reached
  * through the diagram or has moved to the Courses and Applications pages. Designed in Storybook
  * first (issue #230); issue #233 puts it on the home page.
  */
@@ -158,6 +158,17 @@ export default function RecruitmentCardLayout({
         >
           Applications
         </Link>
+        {/* The faculty rankings exist only once the review has been opened (issue #358). */}
+        {recruitment.reviewStatus !== "NotStarted" && (
+          <a
+            className="btn btn-outline-primary"
+            href={`/api/admin/rankings/csv?recruitmentId=${recruitment.id}`}
+            download={`rankings-${recruitment.id}.csv`}
+            data-testid={id("rankings-csv-button")}
+          >
+            Download Rankings CSV
+          </a>
+        )}
       </Card.Footer>
     </Card>
   );

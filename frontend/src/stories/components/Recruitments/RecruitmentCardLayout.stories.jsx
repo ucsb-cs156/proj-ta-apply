@@ -58,6 +58,14 @@ export const TwoRecruitments = (args) => (
   </>
 );
 
+/** Faculty reviews not started: there are no rankings yet, so no Download Rankings CSV. */
+export const NoRankingsYet = Template.bind({});
+NoRankingsYet.args = {
+  recruitment: { ...taRecruitment, reviewStatus: "NotStarted" },
+  applicationCount: 15,
+  steps: recruitmentStepsFixtures.ulaFresh,
+};
+
 /** Published: every step done, the badge in the header. */
 export const Published = Template.bind({});
 Published.args = {

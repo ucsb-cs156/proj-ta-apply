@@ -537,17 +537,6 @@ export default function RecruitmentCoursesPage({
           </div>
         )}
 
-        <div className="mb-2">
-          <a
-            className="btn btn-outline-primary btn-sm"
-            href={`/api/admin/rankings/csv?recruitmentId=${recruitmentId}`}
-            download={`rankings-${recruitmentId}.csv`}
-            data-testid="RecruitmentCoursesPage-rankings-csv"
-          >
-            Download Rankings CSV
-          </a>
-        </div>
-
         {edit && recruitment && (
           <div className="mb-3">
             <OverlayTrigger

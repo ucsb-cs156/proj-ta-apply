@@ -115,7 +115,55 @@ as "W26 Budget") with three buttons: **Budget** (`/admin/budget/QXX`), **TA allo
 recruitment; greyed out and disabled when there is none). The cards are grouped by quarter, in the
 order each quarter first appears in the sorted list, so the budget card moves with its quarter;
 sorting by anything other than Quarter therefore keeps a quarter's cards together instead of
-interleaving them. It prepares for the Combined Allocation page (issue #358).
+interleaving them. It prepares for the Combined Allocation page (issue #358, below).
+
+## The Combined Allocation page (issue #358)
+
+`/admin/allocations/QXX` (for example `/admin/allocations/W26`; admins only) shows one quarter's TA
+and ULA allocations side by side. It is modelled on `/admin/recruitments/:id/courses/edit`, which
+stays as it is.
+
+- **Rows**: the union of the courses of the quarter's TA and ULA recruitments, one row per enroll
+  code (a course's two lectures are two rows; a section in both recruitments is one row). A
+  section in only one recruitment has blank cells for the other type.
+- **Enrollment Estimate**: one column, editable like the Courses page's box (saved a second after
+  the last keystroke, an empty box clears it). Today each recruitment's course row has its own
+  estimate; a section in both shows the higher of the two, and an edit is saved to the course row
+  of every recruitment that has the section so the two agree (until issue #363 gives a course one
+  value per quarter). All the ratios on the page use this one value.
+- **Columns per type**, only for a type that has a recruitment: Allocation (editable, through the
+  same endpoint and version checks as the Recruitment Courses page, against that type's
+  recruitment), Unrounded Allocation, Delta and TA:student (or ULA:student) ratio.
+- **The other columns of the Courses page** (follow-up to the first PR): TA Rankings and ULA
+  Rankings (a type's only once its faculty reviews are not `NotStarted`, linking to the course's
+  ranking page), Section, Title, Instructor, Email (with the copy widget), Days, Time, Room,
+  Enrolled, Max, Status and, for a summer quarter, Summer Session. A totals row under the table
+  has Total Course Count and the sums of Enrolled, Max, Enrollment Estimate and each type's
+  Allocation. A column starting with TA exists only when the quarter has a TA
+  recruitment, and likewise ULA. The descriptive columns are the same course for a section in both
+  recruitments: the TA row is used, the ULA row when there is no TA row. **Course Number** has a
+  stacked heading ("Course" over "Number") and a cell 13 characters wide (`13ch`, monospaced), the
+  width of the widest UCSB course number, `XXXXXXX 999XX`.
+- **Showing and hiding columns**: every heading except Course Number has the small "hide" link, and
+  a **Columns** menu has Show All, Show None and a box per column except Course Number, which is
+  always shown. The choice is kept per quarter in local storage (key
+  `combinedAllocations.hiddenColumns.QXX`). The default-visible columns are those of the Courses
+  page (Instructor, Enrolled, Max, Enrollment Estimate, and each type's Allocation, Unrounded
+  Allocation, Delta and ratio) plus the ASE:Student Ratio; the rankings, Section, Title, Email,
+  Days, Time, Room and Status start hidden.
+- **Controls** (as on the Edit Courses page): *Set enrollment estimates from: max, actual* (the
+  endpoint takes one recruitment, so it is called for each recruitment of the quarter), and
+  *Auto assign TA allocations* / *Auto assign ULA allocations* (each only when that recruitment
+  exists, with the same tooltip and confirmation modal). *Download Rankings CSV* is not on this
+  page: it is on each recruitment's card (below).
+- **Only when the quarter has both recruitments**: a table with no header row, *Cost per TA* and
+  *Cost per ULA* (each recruitment's average cost per position, entered on the Budget page) and
+  *TA Cost/ULA Cost* (empty when the cost per ULA is zero or either is unknown); the editable
+  **Nominal TA to ULA conversion factor** (the budget row's `conversionTAtoULA`, greater than
+  zero, 3 until set, saved on change with the budget's version check); and an **ASE:Student Ratio**
+  column, `1 : ( enrollmentEstimate / ( TA allocation + ULA allocation / conversionTAtoULA ) )`,
+  the students per TA-equivalent, shown as "1:N" with a dash when the denominator is zero or there
+  is no estimate.
 
 ## The new recruitment card layout
 
@@ -134,7 +182,9 @@ The card becomes much wider to hold the diagram. From top to bottom:
    - **Test Application** moves to the Applications page.
    - **Download CSV** moves to near the top of the Applications page and is renamed
      **Download Applications as CSV**.
-   - **Download Rankings CSV** moves to the Courses page.
+   - **Download Rankings CSV** moves to the Courses page (issue #234); since issue #358 it is back on
+     the card, as the last button of the footer, shown only once faculty reviews have been opened
+     (and no longer on the Courses page, which is to go away).
    - The lifecycle buttons (Open/Close Applications, Open/Close Faculty Reviews, Publish
      Assignments) are reached through the diagram's links; their confirmation modals are
      unchanged.

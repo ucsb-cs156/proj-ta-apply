@@ -16,6 +16,12 @@ type SavedOnChangeInputProps = {
   width?: string;
   /** Shown under the label, in small print, while the box is enabled. */
   hint?: string;
+  /** Said beside the box while what is typed in it is not valid. */
+  invalidMessage?: string;
+  /** Hover text (a tooltip) over the label and the box. */
+  title?: string;
+  /** The box on the same line, right after the label, instead of under it (issue #358). */
+  inline?: boolean;
 };
 
 /**
@@ -34,6 +40,9 @@ export default function SavedOnChangeInput({
   prefix,
   width = "10em",
   hint,
+  invalidMessage,
+  title,
+  inline = false,
 }: SavedOnChangeInputProps): React.JSX.Element {
   // What is in the box while it has focus; null means "show the stored value".
   const [draft, setDraft] = useState<string | null>(null);
@@ -46,7 +55,13 @@ export default function SavedOnChangeInput({
   };
 
   return (
-    <Form.Group className="mb-2" controlId={id}>
+    <Form.Group
+      className={
+        inline ? "mb-2 d-flex align-items-center gap-2 flex-wrap" : "mb-2"
+      }
+      controlId={id}
+      title={title}
+    >
       <Form.Label className="mb-0">{label}</Form.Label>
       <InputGroup size="sm" style={{ width }}>
         {prefix !== undefined && <InputGroup.Text>{prefix}</InputGroup.Text>}
@@ -60,6 +75,11 @@ export default function SavedOnChangeInput({
           onBlur={() => setDraft(null)}
           data-testid={id}
         />
+        {invalidMessage !== undefined && (
+          <Form.Control.Feedback type="invalid" data-testid={`${id}-invalid`}>
+            {invalidMessage}
+          </Form.Control.Feedback>
+        )}
       </InputGroup>
       {hint !== undefined && (
         <Form.Text className="text-muted" data-testid={`${id}-hint`}>

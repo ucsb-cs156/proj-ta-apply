@@ -1,0 +1,32 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "061-add-conversion-ta-to-ula-to-budgets",
+        "author": "pc",
+        "comment": "How many ULAs count as one TA on the Combined Allocation page, per quarter; 3 until an admin sets it, including for the rows that already exist (issue #358).",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "columnExists": { "tableName": "budgets", "columnName": "conversion_ta_to_ula" } } }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "budgets",
+              "columns": [
+                {
+                  "column": {
+                    "name": "conversion_ta_to_ula",
+                    "type": "DOUBLE",
+                    "defaultValueNumeric": 3,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

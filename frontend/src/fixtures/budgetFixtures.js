@@ -11,6 +11,7 @@ const budgetFixtures = {
     quarter: "20264",
     budget: {
       quarter: "20264",
+      conversionTAtoULA: 3,
       unrestrictedBudget: 100000.0,
       tasOnlyBudget: 20000.25,
       ulasOnlyBudget: 5000.0,
@@ -46,6 +47,7 @@ const budgetFixtures = {
     quarter: "20262",
     budget: {
       quarter: "20262",
+      conversionTAtoULA: 3,
       unrestrictedBudget: 0,
       tasOnlyBudget: 0,
       ulasOnlyBudget: 0,
@@ -72,6 +74,7 @@ const budgetFixtures = {
     quarter: "20261",
     budget: {
       quarter: "20261",
+      conversionTAtoULA: 3,
       unrestrictedBudget: 50000.0,
       tasOnlyBudget: 0,
       ulasOnlyBudget: 0,

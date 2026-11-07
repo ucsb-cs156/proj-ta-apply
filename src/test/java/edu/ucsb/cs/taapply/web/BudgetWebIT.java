@@ -4,13 +4,16 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
@@ -29,6 +32,74 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class BudgetWebIT extends WebTestCase {
 
   private static final String BANNER = "BudgetPage-multiple-tabs";
+
+  @Autowired BudgetRepository budgetRepository;
+
+  private Recruitment recruitmentWithOneCourse(RecruitmentType type) {
+    Recruitment recruitment =
+        recruitmentRepository.save(
+            Recruitment.builder()
+                .quarter("20264")
+                .type(type)
+                .applicationStatus(ApplicationStatus.CLOSED)
+                .tentativeOpeningDate(LocalDate.of(2026, 9, 1))
+                .primaryConsiderationDate(LocalDate.of(2026, 10, 1))
+                .build());
+    recruitmentCourseRepository.save(
+        RecruitmentCourse.builder()
+            .recruitmentId(recruitment.getId())
+            .courseId("CMPSC   156")
+            .section("0100")
+            .enrollCode("07492")
+            .title("ADV APP PROGRAM")
+            .enrollmentEstimate(100)
+            .removed(false)
+            .build());
+    return recruitment;
+  }
+
+  /** Issue #358: the Combined Allocation page, its conversion factor and an allocation edit. */
+  @Test
+  public void the_combined_allocation_page_saves_the_factor_and_an_allocation() throws Exception {
+    Recruitment ta = recruitmentWithOneCourse(RecruitmentType.TA);
+    recruitmentWithOneCourse(RecruitmentType.ULA);
+    setupAdminUser();
+    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/admin/allocations/F26"));
+
+    // Both recruitments: one row for the shared section, the cost table and the default factor.
+    assertThat(page.getByTestId("CombinedAllocationTable-header-aseRatio")).isVisible();
+    assertThat(page.getByTestId("CombinedAllocationsPage-costs-ta")).containsText("Cost per TA");
+    assertThat(page.getByTestId("CombinedAllocationsPage-conversionTAtoULA")).hasValue("3");
+    assertThat(page.getByTestId("CombinedAllocationTable-row-0")).isVisible();
+    assertThat(page.getByTestId("CombinedAllocationTable-row-1")).not().isVisible();
+
+    // A factor that is not greater than zero is refused and nothing is saved.
+    page.getByTestId("CombinedAllocationsPage-conversionTAtoULA").fill("0");
+    assertThat(page.getByTestId("CombinedAllocationsPage-conversionTAtoULA-invalid"))
+        .containsText("conversionTAtoULA must be greater than zero");
+
+    // A valid one is saved as it is typed, and kept across a reload.
+    page.getByTestId("CombinedAllocationsPage-conversionTAtoULA").fill("2");
+    page.getByTestId("CombinedAllocationTable-cell-row-0-TA-allocation").fill("4");
+    page.getByTestId("CombinedAllocationTable-cell-row-0-ULA-allocation").fill("2");
+    page.waitForTimeout(1500);
+    page.reload();
+    assertThat(page.getByTestId("CombinedAllocationsPage-conversionTAtoULA")).hasValue("2");
+    assertThat(page.getByTestId("CombinedAllocationTable-cell-row-0-TA-allocation")).hasValue("4");
+    assertThat(page.getByTestId("CombinedAllocationTable-cell-row-0-ULA-allocation")).hasValue("2");
+    // 4 + 2 / 2 = 5 TA-equivalents; 100 / 5
+    assertThat(page.getByTestId("CombinedAllocationTable-cell-row-0-col-aseRatio")).hasText("1:20");
+
+    // Section starts hidden; the Columns menu's Show All brings it (and the other columns) back.
+    assertThat(page.getByTestId("CombinedAllocationTable-header-section")).not().isVisible();
+    page.getByTestId("CombinedAllocationsPage-columns-toggle").click();
+    page.getByTestId("CombinedAllocationsPage-columns-select-all").click();
+    assertThat(page.getByTestId("CombinedAllocationTable-header-section")).isVisible();
+    org.junit.jupiter.api.Assertions.assertEquals(
+        2.0, budgetRepository.findById("20264").orElseThrow().getConversionTAtoULA());
+    org.junit.jupiter.api.Assertions.assertEquals(
+        4, recruitmentCourseRepository.findByRecruitmentId(ta.getId()).get(0).getAllocation());
+  }
 
   @Test
   public void a_second_window_on_the_same_quarter_is_warned_and_asked_and_the_first_is_not_asked()

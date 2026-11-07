@@ -217,9 +217,6 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     expect(
       screen.getByTestId("RecruitmentCoursesPage-show-removed"),
     ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("RecruitmentCoursesPage-rankings-csv"),
-    ).toBeInTheDocument();
   });
 
   test("the Edit button leads to the edit page", async () => {

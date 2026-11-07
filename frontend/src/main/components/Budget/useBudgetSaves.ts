@@ -7,8 +7,16 @@ import { shouldToastBackendError } from "main/utils/apiError";
 import { formatDollars } from "main/utils/currency";
 import type { BudgetSummary } from "main/components/Budget/budgetTypes";
 
+/**
+ * A figure of the quarter's budget row: the three money lines, and the TA to ULA conversion factor
+ * of the Combined Allocation page (issue #358), which is saved the same way, with the same version
+ * check.
+ */
 export type BudgetLine =
-  "unrestrictedBudget" | "tasOnlyBudget" | "ulasOnlyBudget";
+  | "unrestrictedBudget"
+  | "tasOnlyBudget"
+  | "ulasOnlyBudget"
+  | "conversionTAtoULA";
 export type Side = "ta" | "ula";
 /** A box on the page whose value is saved on its own: a budget line, or one recruitment's figure. */
 export type FieldKey = BudgetLine | `cost-${Side}` | `target-${Side}`;
@@ -22,6 +30,7 @@ const NAMES: Record<FieldKey, string> = {
   unrestrictedBudget: "unrestricted budget",
   tasOnlyBudget: "TAs-only budget",
   ulasOnlyBudget: "ULAs-only budget",
+  conversionTAtoULA: "TA to ULA conversion factor",
   "cost-ta": "average cost per TA",
   "cost-ula": "average cost per ULA",
   "target-ta": "TA hiring target",
@@ -59,9 +68,14 @@ const isConflict = (error: unknown): boolean =>
 const isLine = (field: FieldKey): field is BudgetLine => !field.includes("-");
 const isCost = (field: FieldKey): boolean => field.startsWith("cost-");
 
-/** A figure as it reads in a sentence: dollars for money, the plain number for a target. */
+/**
+ * A figure as it reads in a sentence: dollars for money, the plain number for a target or the
+ * conversion factor.
+ */
 const reads = (field: FieldKey, value: number | string): string =>
-  field.startsWith("target-") ? String(value) : formatDollars(Number(value));
+  field.startsWith("target-") || field === "conversionTAtoULA"
+    ? String(Number(value))
+    : formatDollars(Number(value));
 
 /** What the page remembers between renders; never read while rendering. */
 type Held = {

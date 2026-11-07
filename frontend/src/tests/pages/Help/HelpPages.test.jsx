@@ -260,7 +260,7 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByText(/This is separate from/, { exact: false }),
     ).toHaveTextContent(
-      "On a recruitment's Courses page, Download Rankings CSV saves that recruitment's faculty rankings as a spreadsheet-ready file. This is separate from Download Applications as CSV on its Applications page, which exports application answers.",
+      "On a recruitment's card on the home page, in the bottom row of buttons and once faculty reviews have been opened, Download Rankings CSV saves that recruitment's faculty rankings as a spreadsheet-ready file. This is separate from Download Applications as CSV on its Applications page, which exports application answers.",
     );
     expect(screen.getByText(/TA columns are/)).toHaveTextContent(
       /TA columns are first name, last name, email, major, class level, year in program and expected graduation/,
@@ -550,6 +550,76 @@ describe("Help pages (issue #140)", () => {
     );
     expect(
       heading.compareDocumentPosition(document.getElementById("recruitments")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("the admins page describes the Combined Allocation page, its columns and the conversion factor (issue #358)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const heading = document.getElementById("combined-allocations");
+    expect(heading.tagName).toBe("H2");
+    expect(heading).toHaveTextContent("Combined Allocation page");
+    const page = screen.getByTestId("HelpAdminsPage-combined-allocations");
+    expect(page).toHaveTextContent("/admin/allocations/QXX");
+    expect(page).toHaveTextContent(
+      "a section that is in both recruitments is one row, found by its enroll code",
+    );
+    expect(page).toHaveTextContent(
+      "the higher of the two recruitments' estimates for the section",
+    );
+    expect(page).toHaveTextContent(
+      "Allocation (typed in, and saved, exactly as on the Edit Courses page",
+    );
+    expect(page).toHaveTextContent("Unrounded Allocation");
+    expect(page).toHaveTextContent("Delta");
+    expect(page).toHaveTextContent("TA:student or ULA:student ratio");
+    const columns = screen.getByTestId(
+      "HelpAdminsPage-combined-allocations-columns",
+    );
+    ["TA Rankings", "ULA Rankings", "Email", "Status", "Max"].forEach((name) =>
+      expect(columns).toHaveTextContent(name),
+    );
+    expect(columns).toHaveTextContent(
+      "A column that starts with TA is not shown when the quarter has no TA recruitment, and one that starts with ULA is not shown when it has no ULA recruitment.",
+    );
+    expect(columns).toHaveTextContent(
+      "just wide enough for the longest UCSB course number, 13 characters",
+    );
+    expect(columns).toHaveTextContent("Summer Session");
+    expect(columns).toHaveTextContent("Total Course Count");
+    expect(page).toHaveTextContent(
+      "saved to the section's course row in each recruitment that has it, so the two agree",
+    );
+    expect(columns).toHaveTextContent("Show All, Show None");
+    expect(columns).toHaveTextContent(
+      "remembered in this browser, separately for each quarter",
+    );
+    const controls = screen.getByTestId(
+      "HelpAdminsPage-combined-allocations-controls",
+    );
+    expect(controls).toHaveTextContent(
+      "Set enrollment estimates from: max, actual sets every section's Enrollment Estimate",
+    );
+    expect(controls).toHaveTextContent("in every recruitment of the quarter");
+    expect(controls).toHaveTextContent("Auto assign TA allocations");
+    expect(controls).toHaveTextContent("Auto assign ULA allocations");
+    const both = screen.getByTestId("HelpAdminsPage-combined-allocations-both");
+    expect(both).toHaveTextContent("Cost per TA");
+    expect(both).toHaveTextContent("Cost per ULA");
+    expect(both).toHaveTextContent("TA Cost/ULA Cost");
+    expect(both).toHaveTextContent(
+      "Nominal TA to ULA conversion factor, which is 3 until you change it. It must be greater than zero",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-conversion-factor"),
+    ).toHaveTextContent(
+      "When computing overall ASE:Student ratio, how many ULAs count as 1 TA? You can set this to the ratio of their costs (computed above), or the ratio of the number of hours they put in (20 for TAs vs. 10 for ULAs) or whatever basis makes the most sense.",
+    );
+    expect(both).toHaveTextContent("ASE:Student Ratio");
+    expect(
+      document.getElementById("budget").compareDocumentPosition(heading) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
