@@ -144,14 +144,15 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertThat(firstRow).isVisible();
 
     // Issue #357: a QXX Budget card sits above the quarter's cards; only a TA recruitment exists,
-    // so TA allocations is live and ULA allocations is greyed out.
+    // so TA allocations is live and ULA allocations is greyed out. Since issue #358 the live
+    // button opens the quarter's Combined Allocation page.
     assertThat(
             page.locator("[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-title']"))
         .containsText("Budget");
     assertThat(
             page.locator(
                 "[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-ta-allocations']"))
-        .hasAttribute("href", Pattern.compile("/admin/recruitments/\\d+/courses/edit"));
+        .hasAttribute("href", Pattern.compile("/admin/allocations/[WSMF]\\d\\d"));
     assertThat(
             page.locator(
                 "[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-ula-allocations']"))
@@ -239,6 +240,11 @@ public class RecruitmentsWebIT extends WebTestCase {
     assertThat(page.getByTestId("RecruitmentCoursesPage-edit-text"))
         .containsText("Click Edit to: change the number of TAs/ULAs expected to be hired;");
     assertThat(page.getByTestId("RecruitmentCoursesPage-add")).not().isVisible();
+    // Issue #358: the budget columns left this page for the Combined Allocation page, which the
+    // page points to.
+    assertThat(page.getByTestId("RecruitmentCoursesPage-header-allocation")).not().isVisible();
+    assertThat(page.getByTestId("RecruitmentCoursesPage-combined-link"))
+        .hasAttribute("href", Pattern.compile("/admin/allocations/[WSMF]\\d\\d"));
     assertThat(page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-removed-button"))
         .not()
         .isVisible();

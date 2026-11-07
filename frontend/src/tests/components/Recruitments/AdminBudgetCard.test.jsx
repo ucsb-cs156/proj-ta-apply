@@ -24,12 +24,14 @@ describe("AdminBudgetCard", () => {
     const budget = screen.getByTestId("AdminBudgetCard-W26-budget");
     expect(budget).toHaveTextContent("Budget");
     expect(budget).toHaveAttribute("href", "/admin/budget/W26");
+    // Issue #358: both allocations buttons open the quarter's Combined Allocation page.
     const ta = screen.getByTestId("AdminBudgetCard-W26-ta-allocations");
     expect(ta).toHaveTextContent("TA allocations");
-    expect(ta).toHaveAttribute("href", "/admin/recruitments/1/courses/edit");
+    expect(ta).toHaveAttribute("href", "/admin/allocations/W26");
+    expect(ta).toHaveClass("btn-outline-primary");
     const ula = screen.getByTestId("AdminBudgetCard-W26-ula-allocations");
     expect(ula).toHaveTextContent("ULA allocations");
-    expect(ula).toHaveAttribute("href", "/admin/recruitments/2/courses/edit");
+    expect(ula).toHaveAttribute("href", "/admin/allocations/W26");
   });
 
   test("a missing recruitment's button is a greyed-out, disabled button with the same label", () => {
@@ -40,6 +42,10 @@ describe("AdminBudgetCard", () => {
     expect(ta).toHaveAttribute("aria-disabled", "true");
     expect(ta).toHaveClass("btn-outline-secondary");
     expect(ta.tagName).toBe("BUTTON");
+    // The one that exists still goes to the combined page, for its quarter.
+    expect(
+      screen.getByTestId("AdminBudgetCard-S26-ula-allocations"),
+    ).toHaveAttribute("href", "/admin/allocations/S26");
   });
 
   test("with neither, both allocation buttons are disabled", () => {

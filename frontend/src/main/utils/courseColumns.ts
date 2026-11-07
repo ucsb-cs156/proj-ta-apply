@@ -14,9 +14,11 @@ export const courseColumnsStorageKey = (
 
 /**
  * The columns that hold the planning figures (issue #300): Enrollment Estimate, Allocation,
- * Unrounded Allocation, Delta and TA:student ratio, by column id. Admins always see them; an
- * instructor's table has them only while the admin shows all courses' allocations to all faculty,
- * and otherwise does not have them at all, so they are not even offered in the Columns menu.
+ * Unrounded Allocation, Delta and TA:student ratio, by column id. An instructor's table has them
+ * only while the admin shows all courses' allocations to all faculty, and otherwise does not have
+ * them at all, so they are not even offered in the Columns menu. Since issue #358 the admin's
+ * Recruitment Courses pages leave them out too: they are budget figures, seen and edited for TAs
+ * and ULAs together on the Combined Allocation page, /admin/allocations/QXX.
  */
 export const AllocationsRelatedColumns: readonly string[] = [
   "enrollmentEstimate",
@@ -62,9 +64,11 @@ export const defaultHiddenColumns = (): string[] =>
     .filter((id) => !DEFAULT_VISIBLE_COLUMNS.includes(id));
 
 /**
- * Every column an admin may hide, by column id, with the label the Columns menu shows (issue
- * #185). The course number can never be hidden, so it is not listed. The Rankings column exists
- * only once faculty reviews have started, and Summer Session only for a summer quarter.
+ * Every column of the Recruitment Courses table but the course number, by column id, with the
+ * label the Columns menu shows (issue #185). The course number can never be hidden, so it is not
+ * listed. The Rankings column exists only once faculty reviews have started, and Summer Session
+ * only for a summer quarter. This is the full set; what a page offers is {@link adminColumnChoices}
+ * or {@link instructorColumnChoices}.
  */
 export const columnChoices = (
   showRankings: boolean,
@@ -89,6 +93,19 @@ export const columnChoices = (
   ...(summer ? [{ id: "summerSession", label: "Summer Session" }] : []),
   { id: "removed", label: "Remove / Unremove" },
 ];
+
+/**
+ * What an admin may hide on the Recruitment Courses pages (view-only and edit alike): every column
+ * but the course number and the {@link AllocationsRelatedColumns}, which those pages no longer have
+ * (issue #358): estimates and allocations are on the Combined Allocation page.
+ */
+export const adminColumnChoices = (
+  showRankings: boolean,
+  summer: boolean,
+): { id: string; label: string }[] =>
+  columnChoices(showRankings, summer).filter(
+    (choice) => !AllocationsRelatedColumns.includes(choice.id),
+  );
 
 /**
  * What an instructor may hide on the Courses page (issue #300): {@link columnChoices} without the

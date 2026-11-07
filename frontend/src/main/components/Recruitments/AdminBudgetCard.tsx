@@ -16,9 +16,10 @@ type AdminBudgetCardProps = {
 
 /**
  * The "QXX Budget" card the admin home page puts above each quarter's recruitment cards
- * (issue #357): a link to the quarter's Budget page and to the Edit Courses (allocations) page
- * of its TA and of its ULA recruitment. An allocations button is greyed out and does nothing
- * when the quarter has no recruitment of that type.
+ * (issue #357): a link to the quarter's Budget page, and a TA allocations and a ULA allocations
+ * button. Since issue #358 both of those open the quarter's Combined Allocation page,
+ * /admin/allocations/QXX, where the TA and ULA allocations are edited side by side; each is still
+ * greyed out and does nothing when the quarter has no recruitment of that type.
  */
 export default function AdminBudgetCard({
   quarter,
@@ -46,7 +47,7 @@ export default function AdminBudgetCard({
     ) : (
       <Link
         className="btn btn-outline-primary"
-        to={`/admin/recruitments/${target.id}/courses/edit`}
+        to={`/admin/allocations/${qyy}`}
         data-testid={id(suffix)}
       >
         {label}

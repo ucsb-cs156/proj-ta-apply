@@ -8,7 +8,10 @@ export default {
 
 const Template = (args) => <AdminBudgetCard {...args} />;
 
-/** Both a TA and a ULA recruitment: all three buttons are live. */
+/**
+ * Both a TA and a ULA recruitment: all three buttons are live. Since issue #358 TA allocations and
+ * ULA allocations both open the quarter's Combined Allocation page, /admin/allocations/QXX.
+ */
 export const Both = Template.bind({});
 Both.args = { quarter: "20261", ta: { id: 1 }, ula: { id: 2 } };
 

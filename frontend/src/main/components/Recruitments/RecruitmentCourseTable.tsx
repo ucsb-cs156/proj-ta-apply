@@ -1,19 +1,13 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import OurTable, { type HideLinks } from "main/components/Common/OurTable";
 import { useBackendMutation } from "main/utils/useBackend";
 import {
   allocationDelta,
   deltaDisplay,
-  ESTIMATE_SAVE_DELAY_MS,
-  isValidAllocation,
-  isValidEnrollmentEstimate,
   oneDecimal,
   ratioDisplay,
   unroundedTooltip,
 } from "main/utils/allocations";
-import { Badge, Button, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Badge, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 import { Link } from "react-router";
@@ -23,10 +17,6 @@ import {
   shrinkToContent,
   stacked,
 } from "main/components/Common/columnStyles";
-import {
-  replaceCourseInCache,
-  useAllocationSaves,
-} from "main/components/Recruitments/useAllocationSaves";
 
 export type RecruitmentCourse = {
   id: number;
@@ -81,118 +71,13 @@ export const STALE_LABEL = "Stale / not in API";
 /** The status the UCSB API reports for a cancelled section; applicants are not offered it. */
 export const CANCELLED = "cancelled";
 
-/** What the Allocation column's cells need, handed to them through the column's meta. */
-type AllocationColumnMeta = {
-  style: CSSProperties;
-  /** The view-only page shows the figure as text. */
-  readOnly: boolean;
-  testIdPrefix: string;
-  /** What is in each row's box while it has focus, by row id; an absent row shows its value. */
-  drafts: Record<number, string>;
-  onChange: (course: RecruitmentCourse, value: string) => void;
-  onBlur: () => void;
-};
-
 /**
- * One row's Allocation box (issue #174). Defined once, at module level, rather than inline in the
- * column list: TanStack renders a function cell as a component, so an inline closure would be a
- * new component type on every render and the box would be remounted, losing focus, each time a
- * keystroke updated the drafts. Saved as soon as a valid number is typed. A removed row keeps its
- * number but cannot be edited, and it is left out of the totals above the table.
+ * The Allocation and Enrollment Estimate columns are figures here, never boxes. Since issue #358 an
+ * admin edits them on the Combined Allocation page (/admin/allocations/QXX), through
+ * useAllocationSaves and useEstimateSaves; the admin's Recruitment Courses pages omit these
+ * columns altogether, and the only table that still shows them is the faculty Courses page (issue
+ * #300), which is read-only.
  */
-function AllocationCell({
-  cell,
-}: {
-  cell: Cell<RecruitmentCourse, unknown>;
-}): React.JSX.Element {
-  const meta = cell.column.columnDef.meta as AllocationColumnMeta;
-  const course = cell.row.original;
-  const draft = meta.drafts[course.id];
-  const value = draft ?? String(course.allocation ?? 0);
-  const testId = `${meta.testIdPrefix}-cell-row-${cell.row.index}-allocation`;
-  if (meta.readOnly) {
-    return <span data-testid={testId}>{value}</span>;
-  }
-  return (
-    <Form.Control
-      type="number"
-      min={0}
-      step={1}
-      size="sm"
-      style={{ width: "5em" }}
-      className="text-end"
-      aria-label={`Allocation for ${course.courseId} section ${course.section ?? ""}`}
-      value={value}
-      isInvalid={draft !== undefined && !isValidAllocation(draft)}
-      disabled={course.removed}
-      onChange={(e) => meta.onChange(course, e.target.value)}
-      onBlur={meta.onBlur}
-      data-testid={testId}
-    />
-  );
-}
-
-/** What the Enrollment Estimate column's cells need, handed to them through the column's meta. */
-type EstimateColumnMeta = {
-  style: CSSProperties;
-  /** The view-only page shows the figure as text. */
-  readOnly: boolean;
-  testIdPrefix: string;
-  drafts: Record<number, string>;
-  onChange: (course: RecruitmentCourse, value: string) => void;
-  onBlur: (course: RecruitmentCourse) => void;
-};
-
-/**
- * One row's Enrollment Estimate box (issue #175), a module-level component for the same reason as
- * AllocationCell. Saved a second after the last keystroke, or at once when the box is left; an
- * empty box clears the estimate.
- */
-function EnrollmentEstimateCell({
-  cell,
-}: {
-  cell: Cell<RecruitmentCourse, unknown>;
-}): React.JSX.Element {
-  const meta = cell.column.columnDef.meta as EstimateColumnMeta;
-  const course = cell.row.original;
-  const draft = meta.drafts[course.id];
-  // Stryker disable next-line StringLiteral : a number box shows any non-number as empty anyway
-  const value = draft ?? String(course.enrollmentEstimate ?? "");
-  const testId = `${meta.testIdPrefix}-cell-row-${cell.row.index}-enrollmentEstimate`;
-  if (meta.readOnly) {
-    return <span data-testid={testId}>{value}</span>;
-  }
-  return (
-    <Form.Control
-      type="number"
-      min={0}
-      step={1}
-      size="sm"
-      style={{ width: "6em" }}
-      className="text-end"
-      aria-label={`Enrollment estimate for ${course.courseId} section ${course.section ?? ""}`}
-      value={value}
-      isInvalid={draft !== undefined && !isValidEnrollmentEstimate(draft)}
-      disabled={course.removed}
-      onChange={(e) => meta.onChange(course, e.target.value)}
-      onBlur={() => meta.onBlur(course)}
-      data-testid={testId}
-    />
-  );
-}
-
-/** The request that saves one estimate; shared by the debounced save and the unmount flush. */
-const estimateRequest = (
-  id: number,
-  value: string,
-  headers?: Record<string, string>,
-) => ({
-  url: "/api/recruitmentcourses/enrollmentEstimate",
-  method: "PUT",
-  headers,
-  // Leaving the parameter out clears the estimate.
-  params: value === "" ? { id } : { id, enrollmentEstimate: Number(value) },
-});
 
 /** Bootstrap's clipboard icon, for the copy control beside an email (issue #185). */
 const CopyIcon = (): React.JSX.Element => (
@@ -347,20 +232,14 @@ type RecruitmentCourseTableProps = {
    */
   omitColumns?: readonly string[];
   testIdPrefix?: string;
-  /**
-   * The view-only page (issue #278): the figures are text, there is no Remove button, and nothing
-   * is saved.
-   */
+  /** The view-only page (issue #278) and the faculty page: there is no Remove button. */
   readOnly?: boolean;
-  /** Sent with every save, to name this tab to the multi-tab warning (issue #278). */
-  requestHeaders?: Record<string, string>;
-  /** The recruitment's Auto Allocate count, sent with each allocation edit (issue #278). */
-  allocationBulkVersion?: number;
 };
 
 export default function RecruitmentCourseTable({
   courses,
   type = "TA",
+  // Stryker disable next-line all : a summary that is no course's is never looked up, like the empty list
   rankingSummaries = [],
   showRankings = false,
   onCopyEmail = () => {},
@@ -373,8 +252,6 @@ export default function RecruitmentCourseTable({
   omitColumns = [],
   testIdPrefix = "RecruitmentCourseTable",
   readOnly = false,
-  requestHeaders,
-  allocationBulkVersion,
 }: RecruitmentCourseTableProps): React.JSX.Element {
   const objectToAxiosParams = (
     course: RecruitmentCourse,
@@ -395,95 +272,19 @@ export default function RecruitmentCourseTable({
     ],
   );
 
-  // The Allocation boxes (issues #174, #278); their saving is shared with the Combined Allocation
-  // page (issue #358).
-  const { allocationDrafts, onAllocationChange, onAllocationBlur } =
-    useAllocationSaves(requestHeaders, allocationBulkVersion, includeRemoved);
-  const queryClient = useQueryClient();
-  const replaceInCache = (saved: RecruitmentCourse) =>
-    replaceCourseInCache(queryClient, saved);
-
-  // The Enrollment Estimate boxes (issue #175) save a second after the last keystroke rather than
-  // on each one, since an estimate is usually several digits. A pending save is keyed by row id
-  // with the value it will send, so leaving the box, or the page, can send it at once instead.
-  const [estimateDrafts, setEstimateDrafts] = useState<Record<number, string>>(
-    {},
-  );
-  const pendingEstimates = useRef<
-    Record<number, { timer: ReturnType<typeof setTimeout>; value: string }>
-  >({});
-  const estimateMutation = useBackendMutation<
-    { id: number; value: string },
-    RecruitmentCourse
-  >(
-    ({ id, value }) => estimateRequest(id, value, requestHeaders),
-    { onSuccess: replaceInCache },
-    ["/api/recruitmentcourses/all", includeRemoved],
-  );
-  const cancelPendingEstimate = (id: number) => {
-    const pending = pendingEstimates.current[id];
-    if (pending !== undefined) {
-      clearTimeout(pending.timer);
-      delete pendingEstimates.current[id];
-    }
-    return pending;
-  };
-  const onEstimateChange = (course: RecruitmentCourse, value: string) => {
-    setEstimateDrafts((previous) => ({ ...previous, [course.id]: value }));
-    cancelPendingEstimate(course.id);
-    if (isValidEnrollmentEstimate(value)) {
-      pendingEstimates.current[course.id] = {
-        value,
-        timer: setTimeout(() => {
-          delete pendingEstimates.current[course.id];
-          estimateMutation.mutate({ id: course.id, value });
-        }, ESTIMATE_SAVE_DELAY_MS),
-      };
-    }
-  };
-  const onEstimateBlur = (course: RecruitmentCourse) => {
-    const pending = cancelPendingEstimate(course.id);
-    if (pending !== undefined) {
-      estimateMutation.mutate({ id: course.id, value: pending.value });
-    }
-    setEstimateDrafts({});
-  };
-  const headersRef = useRef(requestHeaders);
-  // Stryker disable next-line all : the headers never change during a test; the unmount flush is tested
-  useEffect(() => {
-    headersRef.current = requestHeaders;
-    // Stryker disable next-line ArrayDeclaration : the headers never change within a test
-  }, [requestHeaders]);
-  // Leaving the page within the second still saves: the pending requests are sent directly, since
-  // the component's mutation is gone with it. The ref's contents are mutated in place, never
-  // replaced, so the object captured here is the live one.
-  // Stryker disable all : any constant dependency list registers the flush once; the flush
-  // itself is tested
-  useEffect(() => {
-    const pending = pendingEstimates.current;
-    return () => {
-      Object.entries(pending).forEach(([id, { timer, value }]) => {
-        clearTimeout(timer);
-        delete pending[Number(id)];
-        void axios(estimateRequest(Number(id), value, headersRef.current));
-      });
-    };
-  }, []);
-  // Stryker restore all
-
   const rankingSummaryByCourse = new Map(
     rankingSummaries.map((summary) => [summary.recruitmentCourseId, summary]),
   );
+  // Anything but a list of courses (a failed read's answer, say) is shown as no courses.
+  const list = Array.isArray(courses) ? courses : [];
   // The totals row (issue #176) adds up the rows that count: removed ones are left out even
   // when the toggle shows them, as they are everywhere else on the page.
-  const counted = (Array.isArray(courses) ? courses : []).filter(
-    (course) => !course.removed,
-  );
+  const counted = list.filter((course) => !course.removed);
   const sumOf = (
     pick: (course: RecruitmentCourse) => number | null | undefined,
   ) => counted.reduce((sum, course) => sum + (pick(course) ?? 0), 0);
 
-  const rows = (Array.isArray(courses) ? courses : []).map((course) => ({
+  const rows = list.map((course) => ({
     ...course,
     rankingCount: rankingSummaryByCourse.get(course.id)?.rankingCount ?? null,
     instructorEmail:
@@ -597,28 +398,28 @@ export default function RecruitmentCourseTable({
       header: stacked("Enrollment", "Estimate"),
       accessorKey: "enrollmentEstimate",
       footer: String(sumOf((course) => course.enrollmentEstimate)),
-      meta: {
-        ...numeric,
-        testIdPrefix,
-        readOnly,
-        drafts: estimateDrafts,
-        onChange: onEstimateChange,
-        onBlur: onEstimateBlur,
-      } satisfies EstimateColumnMeta,
-      cell: EnrollmentEstimateCell,
+      meta: numeric,
+      // No estimate yet shows as nothing, not a zero (issue #175).
+      cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => (
+        <span
+          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-enrollmentEstimate`}
+        >
+          {cell.row.original.enrollmentEstimate ?? ""}
+        </span>
+      ),
     },
     {
       header: "Allocation",
       accessorKey: "allocation",
-      meta: {
-        ...numeric,
-        testIdPrefix,
-        readOnly,
-        drafts: allocationDrafts,
-        onChange: onAllocationChange,
-        onBlur: onAllocationBlur,
-      } satisfies AllocationColumnMeta,
-      cell: AllocationCell,
+      meta: numeric,
+      // A course that was never allocated has 0 positions (issue #174).
+      cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => (
+        <span
+          data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-allocation`}
+        >
+          {cell.row.original.allocation ?? 0}
+        </span>
+      ),
     },
     {
       header: (
@@ -702,9 +503,10 @@ export default function RecruitmentCourseTable({
       ? []
       : [
           {
+            // No heading: the button's own label says what it does. The cell reads the row itself,
+            // so the column needs no accessor.
             header: "",
             id: "removed",
-            accessorKey: "removed",
             meta: shrinkToContent,
             // The button's own label and colour say whether the row is removed, so no separate
             // status column is needed. Removed rows only appear when "show removed" is on.
@@ -726,7 +528,7 @@ export default function RecruitmentCourseTable({
 
   return (
     <OurTable
-      data={Array.isArray(courses) ? rows : []}
+      data={rows}
       columns={columns}
       testid={testIdPrefix}
       centerHeaders

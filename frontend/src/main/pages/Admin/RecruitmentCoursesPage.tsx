@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, Form, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import { Link, useNavigate, useParams } from "react-router";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import RecruitmentCourseTable, {
@@ -10,7 +10,8 @@ import RecruitmentCourseTable, {
 import HiringTargetPanel from "main/components/Recruitments/HiringTargetPanel";
 import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
 import {
-  columnChoices,
+  adminColumnChoices,
+  AllocationsRelatedColumns,
   courseColumnsStorageKey,
   defaultHiddenColumns,
   isSummerQuarter,
@@ -28,7 +29,6 @@ import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { useRefreshingBackend } from "main/utils/useRefreshingBackend";
 import { apiErrorMessage } from "main/utils/apiError";
-import { autoAssignTooltip } from "main/utils/allocations";
 import { toast } from "react-toastify";
 import {
   MultipleTabsBanner,
@@ -43,11 +43,18 @@ import {
  * it can be changed, it says nothing to the server about who has it open, and any number of tabs
  * may show it. It has an Edit button.
  *
- * The <b>edit page</b>, /admin/recruitments/:recruitmentId/courses/edit (`edit`), is the page as it
- * always was: estimated enrollments, allocations, Auto Allocate, Populate and the rest. Only one
- * tab or window should have a recruitment's edit page open, so it heartbeats under the key
- * `courses-edit:<recruitmentId>`, names itself in each save, and shows the shared warning, with a
- * question to the newest tab, when another has it open.
+ * The <b>edit page</b>, /admin/recruitments/:recruitmentId/courses/edit (`edit`), has the hiring
+ * target, Populate, Add by enroll code, Remove / Unremove, allocation visibility, Publish
+ * Assignments and the developer buttons. Only one tab or window should have a recruitment's edit
+ * page open, so it heartbeats under the key `courses-edit:<recruitmentId>` and shows the shared
+ * warning, with a question to the newest tab, when another has it open.
+ *
+ * Since issue #358 neither page has the budget columns (Enrollment Estimate, Allocation, Unrounded
+ * Allocation, Delta, TA:student / ULA:student ratio) or the controls that acted on them (Set
+ * enrollment estimates from max / actual, Auto assign allocations): they need to be seen for TAs
+ * and ULAs together, so they live on the Combined Allocation page, /admin/allocations/QXX, which
+ * both pages point to. The Combined Allocation page heartbeats under this page's key too, so the
+ * two warn each other.
  */
 export default function RecruitmentCoursesPage({
   edit = false,
@@ -67,7 +74,6 @@ export default function RecruitmentCoursesPage({
       ? `/api/recruitmentcourses/leave?recruitmentId=${recruitmentId}`
       : null,
   });
-  const requestHeaders = edit ? activity.headers : undefined;
 
   // Removed courses are hidden by default; the toggle is for operations and debugging, to see
   // what an earlier Populate left out.
@@ -78,6 +84,7 @@ export default function RecruitmentCoursesPage({
   const { data: courses } = useRefreshingBackend<RecruitmentCourse[]>(
     ["/api/recruitmentcourses/all", includeRemoved],
     {
+      // Stryker disable next-line StringLiteral : GET is axios's default method
       method: "GET",
       url: "/api/recruitmentcourses/all",
       params: { recruitmentId, includeRemoved },
@@ -96,10 +103,12 @@ export default function RecruitmentCoursesPage({
   // For the last-refreshed line (issue #124); every Populate stamps the recruitment.
   const { data: recruitments } = useRefreshingBackend<Recruitment[]>(
     ["/api/admin/recruitments/all"],
+    // Stryker disable next-line StringLiteral : GET is axios's default method
     { method: "GET", url: "/api/admin/recruitments/all" },
     // Stryker disable next-line all : don't test default value of empty list
     [],
   );
+  // Stryker disable next-line all : the query's initial data is an empty list, never undefined
   const recruitment = (recruitments ?? []).find(
     (r) => String(r.id) === String(recruitmentId),
   );
@@ -132,17 +141,22 @@ export default function RecruitmentCoursesPage({
       includeRemoved,
     ],
     {
+      // Stryker disable next-line StringLiteral : GET is axios's default method
       method: "GET",
       url: `/api/instructor/recruitments/${recruitmentId}/admin-course-rankings`,
       params: { includeRemoved },
     },
+    // Stryker disable next-line all : don't test default value of empty list
     [],
+    // Stryker disable next-line BooleanLiteral : whether a failed read toasts is not under test here
     true,
+    // Stryker disable next-line all : the route always carries a recruitment id, so the query is always enabled
     { enabled: Boolean(recruitmentId) },
   );
   const rankingSummaryByCourse = useMemo(
     () =>
       new Map(
+        // Stryker disable next-line all : the query's initial data is an empty list, never undefined
         (rankingSummaries ?? []).map((summary) => [
           summary.recruitmentCourseId,
           summary,
@@ -151,10 +165,12 @@ export default function RecruitmentCoursesPage({
     [rankingSummaries],
   );
 
-  const courseColumnChoices = columnChoices(
+  const courseColumnChoices = adminColumnChoices(
     showRankings,
     isSummerQuarter(recruitment?.quarter),
   );
+  // Issue #358: where the estimates and allocations went, once the quarter is known.
+  const quarterQyy = recruitment ? yyyyqToQyy(recruitment.quarter) : null;
 
   const copyToClipboard = async (value: string, successMessage: string) => {
     try {
@@ -168,16 +184,23 @@ export default function RecruitmentCoursesPage({
   };
 
   const zeroRankingEmails = useMemo(() => {
+    // Stryker disable next-line all : the query's initial data is an empty list, never undefined
     const emails = (courses ?? [])
+      .map((course) => rankingSummaryByCourse.get(course.id))
       .filter(
-        (course) => rankingSummaryByCourse.get(course.id)?.rankingCount === 0,
+        (summary): summary is RecruitmentCourseRankingSummary =>
+          summary?.rankingCount === 0,
       )
-      .map((course) => rankingSummaryByCourse.get(course.id)?.instructorEmail)
+      .map((summary) => summary.instructorEmail)
       .filter((email): email is string => isValidEmail(email));
+    // One address per person, whatever the case or spacing the mapping was typed with; the last
+    // spelling seen is the one copied.
     const unique = new Map<string, string>();
-    emails.forEach((email) =>
-      unique.set(email.trim().toLowerCase(), email.trim()),
-    );
+    emails.forEach((email) => {
+      const trimmed = email.trim();
+      // Stryker disable next-line MethodExpression : folding to upper case would dedupe the same way
+      unique.set(trimmed.toLowerCase(), trimmed);
+    });
     return [...unique.values()];
   }, [courses, rankingSummaryByCourse]);
 
@@ -234,47 +257,6 @@ export default function RecruitmentCoursesPage({
     refresh();
   }, [refresh]);
   // Stryker restore all
-
-  // Issue #175: every course's estimate from the API's max or actual enrollment in one step.
-  const fillEstimatesMutation = useBackendMutation<
-    "MAX" | "ACTUAL",
-    RecruitmentCourse[]
-  >(
-    (source) => ({
-      url: "/api/recruitmentcourses/enrollmentEstimates",
-      method: "PUT",
-      headers: requestHeaders,
-      params: { recruitmentId, source },
-    }),
-    {
-      onSuccess: (_rows, source) =>
-        toast(
-          `Enrollment estimates set from ${source === "MAX" ? "maximum" : "actual"} enrollment.`,
-        ),
-    },
-    ["/api/recruitmentcourses/all"],
-  );
-
-  // Issue #176: a first cut at the allocations from the enrollment estimates, behind a
-  // confirmation since it overwrites every allocation and cannot be undone.
-  const [showAutoAssign, setShowAutoAssign] = useState(false);
-  const autoAssignMutation = useBackendMutation<void, RecruitmentCourse[]>(
-    () => ({
-      url: "/api/recruitmentcourses/autoAllocate",
-      method: "POST",
-      headers: requestHeaders,
-      params: { recruitmentId },
-    }),
-    {
-      onSuccess: () => {
-        setShowAutoAssign(false);
-        toast("Allocations assigned from the enrollment estimates.");
-      },
-    },
-    // The recruitment carries the count that Auto Allocate moves.
-    // Stryker disable next-line all : cache invalidation is not observable from here
-    ["/api/recruitmentcourses/all", "/api/admin/recruitments/all"],
-  );
 
   // Issue #225: the developer-mode button, in the footer's developer slot (which shows only while
   // developer mode is on), opens the Fake Hiring Targets and Allocations modal.
@@ -380,9 +362,9 @@ export default function RecruitmentCoursesPage({
             </Link>
             <span data-testid="RecruitmentCoursesPage-edit-text">
               Click Edit to: change the number of TAs/ULAs expected to be hired;
-              set the expected enrollments for each course; set the number of
-              TAs/ULAs allocated to each course; adjust the visibility of these
-              allocations.
+              populate the course list, add a lecture by enroll code, or remove
+              one; adjust the visibility of the allocations; publish the
+              assignments.
             </span>
           </p>
         )}
@@ -405,6 +387,19 @@ export default function RecruitmentCoursesPage({
             Courses for which the department is planning to hire{" "}
             {recruitment ? `${recruitment.type}s` : "TAs/ULAs"}
             {recruitment ? ` for ${yyyyqToQyy(recruitment.quarter)}` : ""}.
+          </p>
+        )}
+        {quarterQyy !== null && (
+          <p data-testid="RecruitmentCoursesPage-combined-pointer">
+            Enrollment estimates and allocations are not on this page: they are
+            edited for TAs and ULAs together on the{" "}
+            <Link
+              to={`/admin/allocations/${quarterQyy}`}
+              data-testid="RecruitmentCoursesPage-combined-link"
+            >
+              Combined Allocation page for {quarterQyy}
+            </Link>
+            .
           </p>
         )}
 
@@ -497,97 +492,6 @@ export default function RecruitmentCoursesPage({
           />
         </div>
 
-        {edit && (
-          <div
-            className="mb-2"
-            data-testid="RecruitmentCoursesPage-fill-estimates"
-          >
-            Set enrollment estimates from:{" "}
-            <Button
-              variant="link"
-              className="p-0 align-baseline"
-              onClick={() => fillEstimatesMutation.mutate("MAX")}
-              data-testid="RecruitmentCoursesPage-fill-estimates-max"
-            >
-              max
-            </Button>
-            ,{" "}
-            <Button
-              variant="link"
-              className="p-0 align-baseline"
-              onClick={() => fillEstimatesMutation.mutate("ACTUAL")}
-              data-testid="RecruitmentCoursesPage-fill-estimates-actual"
-            >
-              actual
-            </Button>
-            .
-          </div>
-        )}
-
-        {edit && recruitment && (
-          <div className="mb-3">
-            <OverlayTrigger
-              placement="top"
-              overlay={
-                <Tooltip id="RecruitmentCoursesPage-auto-assign-tooltip">
-                  {autoAssignTooltip(
-                    recruitment.totalHiringTarget ?? 1,
-                    recruitment.type,
-                  )}
-                </Tooltip>
-              }
-            >
-              <Button
-                variant="outline-primary"
-                onClick={() => setShowAutoAssign(true)}
-                data-testid="RecruitmentCoursesPage-auto-assign"
-              >
-                Auto assign {recruitment.type} allocations
-              </Button>
-            </OverlayTrigger>
-          </div>
-        )}
-        {edit && (
-          <Modal
-            show={showAutoAssign}
-            onHide={() => setShowAutoAssign(false)}
-            centered
-            data-testid="RecruitmentCoursesPage-auto-assign-modal"
-          >
-            <Modal.Header closeButton>
-              <Modal.Title>Auto assign allocations</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <p>
-                You have requested an automatic allocation based on estimated
-                enrollment.
-              </p>
-              <p>
-                This will overwrite all values currently in the allocation
-                fields. This cannot be undone.
-              </p>
-              <p className="mb-0">Are you sure?</p>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="danger"
-                disabled={autoAssignMutation.isPending}
-                onClick={() => autoAssignMutation.mutate()}
-                data-testid="RecruitmentCoursesPage-auto-assign-confirm"
-              >
-                Yes, overwrite allocations
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => setShowAutoAssign(false)}
-                data-testid="RecruitmentCoursesPage-auto-assign-cancel"
-              >
-                No, keep my current allocations
-              </Button>
-            </Modal.Footer>
-          </Modal>
-        )}
-
         {rankingSummariesError && (
           <p role="alert">
             Unable to load ranking counts and instructor emails:{" "}
@@ -603,6 +507,7 @@ export default function RecruitmentCoursesPage({
           />
         </div>
         <RecruitmentCourseTable
+          // Stryker disable next-line all : the query's initial data is an empty list, never undefined
           courses={courses ?? []}
           type={recruitment?.type}
           quarter={recruitment?.quarter}
@@ -611,6 +516,7 @@ export default function RecruitmentCoursesPage({
             choices: courseColumnChoices,
             onHide: (columnId) => toggleColumn(columnId, true),
           }}
+          // Stryker disable next-line all : the query's initial data is an empty list, never undefined
           rankingSummaries={rankingSummaries ?? []}
           showRankings={showRankings}
           onCopyEmail={(email) =>
@@ -619,8 +525,8 @@ export default function RecruitmentCoursesPage({
           includeRemoved={includeRemoved}
           testIdPrefix="RecruitmentCoursesPage"
           readOnly={!edit}
-          requestHeaders={requestHeaders}
-          allocationBulkVersion={recruitment?.allocationBulkVersion}
+          // Issue #358: the budget columns are on the Combined Allocation page, not here.
+          omitColumns={AllocationsRelatedColumns}
         />
         {showRankings && (
           <div className="mb-3">

@@ -66,12 +66,13 @@ describe("RecruitmentCards budget cards", () => {
       "href",
       "/admin/budget/W26",
     );
+    // Issue #358: both allocations buttons open the quarter's Combined Allocation page.
     expect(
       screen.getByTestId("Cards-budget-W26-ta-allocations"),
-    ).toHaveAttribute("href", "/admin/recruitments/1/courses/edit");
+    ).toHaveAttribute("href", "/admin/allocations/W26");
     expect(
       screen.getByTestId("Cards-budget-W26-ula-allocations"),
-    ).toHaveAttribute("href", "/admin/recruitments/2/courses/edit");
+    ).toHaveAttribute("href", "/admin/allocations/W26");
   });
 
   test("a TA-only quarter greys out ULA allocations, which does not navigate", async () => {
@@ -85,7 +86,7 @@ describe("RecruitmentCards budget cards", () => {
     expect(screen.getByTestId("where")).toHaveTextContent("/");
     expect(
       screen.getByTestId("Cards-budget-S26-ta-allocations"),
-    ).toHaveAttribute("href", "/admin/recruitments/3/courses/edit");
+    ).toHaveAttribute("href", "/admin/allocations/S26");
   });
 
   test("a ULA-only quarter greys out TA allocations", () => {
@@ -105,23 +106,30 @@ describe("RecruitmentCards budget cards", () => {
     expect(screen.getByTestId("where")).toHaveTextContent("/admin/budget/S26");
   });
 
-  test("with more than one of a type in a quarter, the highest id is linked", () => {
+  test("with more than one of a type in a quarter, there is still one card and the button is live", () => {
     const a = { ...w26Ta, id: 7 };
     const b = { ...w26Ta, id: 9 };
     const c = { ...w26Ta, id: 8 };
     renderCards([a, b, c]);
+    expect(screen.getAllByText("W26 Budget")).toHaveLength(1);
     expect(
       screen.getByTestId("Cards-budget-W26-ta-allocations"),
-    ).toHaveAttribute("href", "/admin/recruitments/9/courses/edit");
+    ).toHaveAttribute("href", "/admin/allocations/W26");
+    expect(
+      screen.getByTestId("Cards-budget-W26-ula-allocations"),
+    ).toBeDisabled();
   });
 
-  test("the highest id wins whichever order they come in", () => {
+  test("whichever order they come in", () => {
     const a = { ...w26Ula, id: 7 };
     const b = { ...w26Ula, id: 9 };
     renderCards([b, a]);
     expect(
       screen.getByTestId("Cards-budget-W26-ula-allocations"),
-    ).toHaveAttribute("href", "/admin/recruitments/9/courses/edit");
+    ).toHaveAttribute("href", "/admin/allocations/W26");
+    expect(
+      screen.getByTestId("Cards-budget-W26-ta-allocations"),
+    ).toBeDisabled();
   });
 
   test("each quarter's cards are wrapped together", () => {
