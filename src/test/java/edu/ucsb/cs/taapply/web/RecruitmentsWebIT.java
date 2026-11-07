@@ -8,6 +8,7 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 
 import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.options.AriaRole;
 import edu.ucsb.cs.taapply.WebTestCase;
 import edu.ucsb.cs.taapply.entity.Course;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
@@ -213,6 +214,59 @@ public class RecruitmentsWebIT extends WebTestCase {
     page.getByTestId("RecruitmentCoursesPage-enrollCode").fill("07493");
     page.getByTestId("RecruitmentCoursesPage-add").click();
     assertThat(page.getByText("is section 0101, a discussion or lab")).isVisible();
+  }
+
+  /**
+   * Issue #366: the Allocation Visibility dialog offers two states, admins only and each faculty
+   * member's own courses, and no third one; saving the second is what the panel then reports.
+   */
+  @Test
+  public void the_allocation_visibility_dialog_offers_two_states_and_saves_the_choice()
+      throws Exception {
+    courseRepository.save(
+        Course.builder().courseId("CMPSC   156").title("ADV APP PROGRAM").needsTa(true).build());
+
+    stubOfferings();
+    setupAdminUser();
+    goToRecruitments();
+    createTaRecruitment();
+
+    Locator firstRow = page.getByTestId("HomePageLoggedIn-admin-card-0-quarter");
+    waitFor(firstRow);
+    page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
+
+    Locator firstCourse = page.getByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
+    waitFor(firstCourse);
+    openEditPage();
+    waitFor(firstCourse);
+
+    String panel = "RecruitmentCoursesPage-allocation-visibility";
+    assertThat(page.getByTestId(panel + "-message"))
+        .containsText("Allocation visibility: Admins only.");
+    page.getByTestId(panel + "-change").click();
+
+    Locator modal = page.getByTestId(panel + "-modal");
+    assertThat(modal).containsText("Who may see the allocations of this recruitment's courses?");
+    assertThat(modal.getByRole(AriaRole.RADIO)).hasCount(2);
+    assertThat(modal.getByTestId(panel + "-modal-ADMINS_ONLY")).isChecked();
+    assertThat(modal.getByLabel("Admins only. No faculty member sees any allocation.")).isVisible();
+    assertThat(
+            modal.getByLabel(
+                "Each faculty member sees the allocations only for the courses they teach."))
+        .isVisible();
+    assertThat(modal.getByTestId(panel + "-modal-ALL_COURSES")).hasCount(0);
+    assertThat(modal).not().containsText("all courses");
+    assertThat(modal)
+        .containsText(
+            "You can still change allocations afterwards; faculty see changes immediately.");
+
+    modal.getByTestId(panel + "-modal-OWN_COURSES").check();
+    modal.getByTestId(panel + "-modal-save").click();
+
+    assertThat(page.getByText("Allocation visibility is now: Faculty see their own courses."))
+        .isVisible();
+    assertThat(page.getByTestId(panel + "-message"))
+        .containsText("Allocation visibility: Faculty see their own courses.");
   }
 
   /**

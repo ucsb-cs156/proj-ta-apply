@@ -83,36 +83,49 @@ export const autoAssignTooltip = (
   `Automatically allocate the ${totalHiringTarget} ${type}s across courses based on enrollment`;
 
 /**
- * Issues #178 and #224: who may see a recruitment's allocations. One setting per recruitment with
- * three states, chosen in the Allocation Visibility modal on the Recruitment Courses page; there is
- * nothing about it on a course's row.
+ * Issues #178 and #224: who may see a recruitment's allocations. One setting per recruitment,
+ * chosen in the Allocation Visibility modal on the Recruitment Courses page; there is nothing about
+ * it on a course's row. The backend has three states; since issue #366 the modal offers only the
+ * first two, and ALL_COURSES stays here, hidden, so that offering it again is a one-line change
+ * (the backend cleanup is issue #369).
  */
 export type AllocationVisibility =
   "ADMINS_ONLY" | "OWN_COURSES" | "ALL_COURSES";
 
-export const ALLOCATION_VISIBILITY_OPTIONS: {
+export type AllocationVisibilityOption = {
   value: AllocationVisibility;
+  /** The short name, as the panel's message and the toast say it. */
   name: string;
-  explanation: string;
-}[] = [
+  /** The radio button's label in the Allocation Visibility modal. */
+  label: string;
+  /** True for a state the backend still has but the modal no longer offers (issue #366). */
+  hiddenInDialog?: boolean;
+};
+
+export const ALLOCATION_VISIBILITY_OPTIONS: AllocationVisibilityOption[] = [
   {
     value: "ADMINS_ONLY",
     name: "Admins only",
-    explanation: "No faculty member sees any allocation.",
+    label: "Admins only. No faculty member sees any allocation.",
   },
   {
     value: "OWN_COURSES",
     name: "Faculty see their own courses",
-    explanation:
-      "Each faculty member sees the allocations for the courses they teach. This is what Release Allocations to Faculty means.",
+    label:
+      "Each faculty member sees the allocations only for the courses they teach.",
   },
   {
     value: "ALL_COURSES",
     name: "Faculty see all courses",
-    explanation:
-      "Every faculty member teaching in this recruitment sees the allocations of all its courses.",
+    label:
+      "Faculty see all courses. Every faculty member teaching in this recruitment sees the allocations of all its courses.",
+    hiddenInDialog: true,
   },
 ];
+
+/** The states the Allocation Visibility modal offers: every option not hidden (issue #366). */
+export const SELECTABLE_ALLOCATION_VISIBILITY_OPTIONS: AllocationVisibilityOption[] =
+  ALLOCATION_VISIBILITY_OPTIONS.filter((option) => !option.hiddenInDialog);
 
 /** A recruitment's setting; one that has none yet (an older response) is admins only. */
 export const allocationVisibilityOf = (recruitment: {

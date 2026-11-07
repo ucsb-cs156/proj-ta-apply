@@ -56,11 +56,8 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           read-only Courses page, listing every course of the recruitment with
           its instructor, enrollment and meeting times. The{" "}
           <strong>Columns</strong> menu above the table hides and shows columns,
-          and your choice is remembered in this browser. If the admin chooses to
-          show all courses to all faculty, the page also has the Enrollment
-          Estimate, Allocation, Unrounded Allocation, Delta and TA:student ratio
-          columns for every course; otherwise those columns are not there at
-          all. (The old All allocations page is now this one.)
+          and your choice is remembered in this browser. (The old All
+          allocations page is now this one.)
         </p>
         <p>
           When faculty reviews are open, expand one of your listed courses and

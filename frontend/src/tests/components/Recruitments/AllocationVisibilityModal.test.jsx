@@ -49,7 +49,7 @@ describe("AllocationVisibilityModal tests", () => {
     axiosMock.onPut(URL).reply(200, {});
   });
 
-  test("offers the three states as radio buttons, each with its explanation, and the note", () => {
+  test("offers two states as radio buttons, each a sentence, and the note (issue #366)", () => {
     renderModal();
 
     expect(screen.getByText("Allocation Visibility")).toBeInTheDocument();
@@ -59,20 +59,22 @@ describe("AllocationVisibilityModal tests", () => {
       ),
     ).toBeInTheDocument();
     const radios = screen.getAllByRole("radio");
-    expect(radios).toHaveLength(3);
+    expect(radios).toHaveLength(2);
+    expect(radios[0]).toBe(screen.getByTestId("M-ADMINS_ONLY"));
+    expect(radios[1]).toBe(screen.getByTestId("M-OWN_COURSES"));
     expect(
       screen.getByTestId("M-ADMINS_ONLY").closest("div"),
     ).toHaveTextContent("Admins only. No faculty member sees any allocation.");
     expect(
-      screen.getByTestId("M-OWN_COURSES").closest("div"),
-    ).toHaveTextContent(
-      "Faculty see their own courses. Each faculty member sees the allocations for the courses they teach. This is what Release Allocations to Faculty means.",
-    );
+      screen.getByLabelText(
+        "Admins only. No faculty member sees any allocation.",
+      ),
+    ).toBe(screen.getByTestId("M-ADMINS_ONLY"));
     expect(
-      screen.getByTestId("M-ALL_COURSES").closest("div"),
-    ).toHaveTextContent(
-      "Faculty see all courses. Every faculty member teaching in this recruitment sees the allocations of all its courses.",
-    );
+      screen.getByLabelText(
+        "Each faculty member sees the allocations only for the courses they teach.",
+      ),
+    ).toBe(screen.getByTestId("M-OWN_COURSES"));
     expect(screen.getByTestId("M-note")).toHaveTextContent(
       "You can still change allocations afterwards; faculty see changes immediately.",
     );
@@ -80,30 +82,42 @@ describe("AllocationVisibilityModal tests", () => {
     expect(screen.getByTestId("M-save")).toHaveTextContent("Save");
   });
 
-  test("starts on the recruitment's current state", () => {
-    renderModal({ ...base, allocationVisibility: "OWN_COURSES" });
-    expect(screen.getByTestId("M-ADMINS_ONLY")).not.toBeChecked();
-    expect(screen.getByTestId("M-OWN_COURSES")).toBeChecked();
-    expect(screen.getByTestId("M-ALL_COURSES")).not.toBeChecked();
+  test("the third backend state, all courses, is nowhere in the dialog (issue #366)", () => {
+    renderModal();
+    expect(screen.queryByTestId("M-ALL_COURSES")).toBeNull();
+    expect(screen.queryByText(/all courses/i)).toBeNull();
+    expect(screen.queryByText(/all its courses/i)).toBeNull();
+    expect(screen.queryByText(/Faculty see their own courses/)).toBeNull();
+    expect(
+      screen.queryByText(/This is what Release Allocations to Faculty means/),
+    ).toBeNull();
+    expect(screen.getByTestId("M").querySelector("strong")).toBeNull();
+  });
+
+  test.each([
+    ["ADMINS_ONLY", "OWN_COURSES"],
+    ["OWN_COURSES", "ADMINS_ONLY"],
+  ])("starts on the recruitment's current state, %s", (current, other) => {
+    renderModal({ ...base, allocationVisibility: current });
+    expect(screen.getByTestId(`M-${current}`)).toBeChecked();
+    expect(screen.getByTestId(`M-${other}`)).not.toBeChecked();
   });
 
   test("a recruitment with no setting yet starts on admins only", () => {
     const { allocationVisibility: _omitted, ...without } = base;
     renderModal(without);
     expect(screen.getByTestId("M-ADMINS_ONLY")).toBeChecked();
+    expect(screen.getByTestId("M-OWN_COURSES")).not.toBeChecked();
   });
 
-  test("the radios form one group and each is labelled by its own explanation", () => {
+  test("the radios form one group", () => {
     renderModal();
-    ["ADMINS_ONLY", "OWN_COURSES", "ALL_COURSES"].forEach((value) => {
+    ["ADMINS_ONLY", "OWN_COURSES"].forEach((value) => {
       const radio = screen.getByTestId(`M-${value}`);
       expect(radio).toHaveAttribute("id", `M-${value}`);
       expect(radio).toHaveAttribute("name", "M-visibility");
       expect(radio).toHaveAttribute("type", "radio");
     });
-    expect(screen.getByLabelText(/^Faculty see all courses\./)).toBe(
-      screen.getByTestId("M-ALL_COURSES"),
-    );
   });
 
   test("reopening the modal starts again from the saved state, not from an abandoned choice", async () => {
@@ -120,14 +134,14 @@ describe("AllocationVisibilityModal tests", () => {
     );
     const { rerender } = render(element(true));
 
-    await userEvent.click(screen.getByTestId("M-ALL_COURSES"));
-    expect(screen.getByTestId("M-ALL_COURSES")).toBeChecked();
+    await userEvent.click(screen.getByTestId("M-ADMINS_ONLY"));
+    expect(screen.getByTestId("M-ADMINS_ONLY")).toBeChecked();
     rerender(element(false));
     await waitFor(() => expect(screen.queryByTestId("M")).toBeNull());
     rerender(element(true));
 
     expect(await screen.findByTestId("M-OWN_COURSES")).toBeChecked();
-    expect(screen.getByTestId("M-ALL_COURSES")).not.toBeChecked();
+    expect(screen.getByTestId("M-ADMINS_ONLY")).not.toBeChecked();
   });
 
   test("has a default test id prefix", () => {
@@ -148,12 +162,11 @@ describe("AllocationVisibilityModal tests", () => {
 
   test.each([
     ["OWN_COURSES", "Faculty see their own courses"],
-    ["ALL_COURSES", "Faculty see all courses"],
     ["ADMINS_ONLY", "Admins only"],
   ])(
     "choosing %s and saving sends the PUT, toasts, re-reads and closes",
     async (choice, name) => {
-      const start = choice === "ADMINS_ONLY" ? "ALL_COURSES" : "ADMINS_ONLY";
+      const start = choice === "ADMINS_ONLY" ? "OWN_COURSES" : "ADMINS_ONLY";
       const { onHide, invalidate } = renderModal({
         ...base,
         allocationVisibility: start,
@@ -196,7 +209,7 @@ describe("AllocationVisibilityModal tests", () => {
   test("Cancel and the close control send nothing and close", async () => {
     const { onHide } = renderModal();
 
-    await userEvent.click(screen.getByTestId("M-ALL_COURSES"));
+    await userEvent.click(screen.getByTestId("M-OWN_COURSES"));
     await userEvent.click(screen.getByTestId("M-cancel"));
     expect(onHide).toHaveBeenCalledTimes(1);
     await userEvent.click(screen.getByRole("button", { name: "Close" }));

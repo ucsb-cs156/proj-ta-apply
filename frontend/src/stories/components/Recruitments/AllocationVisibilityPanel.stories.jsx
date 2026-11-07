@@ -35,7 +35,10 @@ OwnCourses.args = {
   },
 };
 
-/** Every faculty member teaching in the recruitment sees every course's allocation. */
+/**
+ * A state the backend still has but the modal no longer offers (issue #366): the panel still names
+ * it, should an old row hold it.
+ */
 export const AllCourses = Template.bind({});
 AllCourses.args = {
   recruitment: {
@@ -44,7 +47,7 @@ AllCourses.args = {
   },
 };
 
-/** The modal itself, open on the middle state. */
+/** The modal itself, open on the second of its two options (issue #366). */
 export const ModalOpen = () => (
   <AllocationVisibilityModal
     recruitment={{

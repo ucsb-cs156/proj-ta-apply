@@ -29,7 +29,7 @@ export const STEP_EXPLANATIONS: {
   },
   {
     number: 5,
-    text: "Choose who sees the allocations: admins only, each faculty member for their own courses, or all faculty for all courses.",
+    text: "Choose who sees the allocations: admins only, or each faculty member for their own courses.",
     adminHref: "/help/admins#allocation-visibility",
   },
   {
