@@ -66,7 +66,7 @@ public class RecruitmentStepsControllerTests extends ControllerTestCase {
                     null,
                     "publishAssignments",
                     null,
-                    List.of(new Link("(see assignments)", "/admin/recruitments/7/courses")),
+                    List.of(new Link("View Assignments", "/recruitments/7/assignments")),
                     false,
                     null)));
     when(recruitmentStepsService.stepsFor(recruitment)).thenReturn(steps);
@@ -83,8 +83,8 @@ public class RecruitmentStepsControllerTests extends ControllerTestCase {
         "{\"recruitmentId\":7,\"type\":\"TA\",\"steps\":[{\"number\":1,\"done\":true,"
             + "\"label\":\"Created: 2026-08-20\"},{\"number\":9,\"done\":false,"
             + "\"label\":\"Not released yet\",\"action\":\"publishAssignments\","
-            + "\"links\":[{\"text\":\"(see assignments)\","
-            + "\"href\":\"/admin/recruitments/7/courses\"}],\"tentative\":false}]}",
+            + "\"links\":[{\"text\":\"View Assignments\","
+            + "\"href\":\"/recruitments/7/assignments\"}],\"tentative\":false}]}",
         response.getResponse().getContentAsString());
   }
 

@@ -44,12 +44,12 @@ export const STEP_EXPLANATIONS: {
   },
   {
     number: 8,
-    text: "Use the faculty rankings to tentatively assign candidates to the courses' slots.",
+    text: "Use the faculty rankings to tentatively assign candidates to the courses' slots, on the Make Assignments page.",
     adminHref: "/help/admins#assignments",
   },
   {
     number: 9,
-    text: "Publish the assignments to admins and faculty, and download the CSV for the financial office.",
+    text: "Publish the assignments to admins and faculty, who see them on the View Assignments page, and download the CSV for the financial office.",
     adminHref: "/help/admins#publish-assignments",
   },
 ];

@@ -34,7 +34,8 @@ export type RecruitmentStepStatus = {
   detail?: string;
   /**
    * The links under the box, one per line: "(see courses)", "(see applications)", "(see
-   * allocations)", "(see rankings)" and "(see assignments)" (issue #249).
+   * allocations)" and "(see rankings)" (issue #249); "Make Assignments" under step 8 and "View
+   * Assignments" under step 9 (issue #317).
    */
   links?: StepLink[];
   /** Step 9: hiring decisions are released but applications or faculty ranking were reopened. */

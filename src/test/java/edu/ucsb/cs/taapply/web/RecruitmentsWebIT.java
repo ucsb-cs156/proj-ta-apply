@@ -510,6 +510,78 @@ public class RecruitmentsWebIT extends WebTestCase {
         firstLine.startsWith("\"firstName\",\"lastName\",\"email\""), firstLine);
   }
 
+  /**
+   * Issue #317: the card's button row is Courses, Draft Applications, Applications, Make
+   * Assignments and View Assignments, and steps 8 and 9 of the diagram carry the same two names,
+   * each to its own page: the admin page where assignments are made, and the read-only page.
+   */
+  @Test
+  public void the_card_and_steps_8_and_9_tell_make_assignments_from_view_assignments()
+      throws Exception {
+    stubOfferings();
+    setupAdminUser();
+    goToRecruitments();
+    createTaRecruitment();
+
+    String card = "HomePageLoggedIn-admin-card-0-";
+    waitFor(page.getByTestId(card + "courses-button"));
+    Long id = recruitmentRepository.findAll().iterator().next().getId();
+
+    // The five buttons, in order, in one footer; reviews have not started, so no CSV button.
+    Locator footer = page.getByTestId(card + "courses-button").locator("..");
+    assertThat(footer.getByRole(AriaRole.LINK))
+        .hasText(
+            new String[] {
+              "Courses",
+              "Draft Applications",
+              "Applications",
+              "Make Assignments",
+              "View Assignments"
+            });
+    assertThat(page.getByTestId(card + "make-assignments-button"))
+        .hasAttribute("href", "/admin/recruitments/" + id + "/assignments");
+    assertThat(page.getByTestId(card + "view-assignments-button"))
+        .hasAttribute("href", "/recruitments/" + id + "/assignments");
+
+    // The diagram (expanded on the latest TA recruitment): step 8's title and link both open the
+    // admin page; step 9's link opens the read-only page while its title, before publishing, is
+    // the publish dialog.
+    String steps = card + "steps-steps-step-";
+    assertThat(page.getByTestId(steps + "8-link"))
+        .hasAttribute("href", "/admin/recruitments/" + id + "/assignments");
+    assertThat(page.getByTestId(steps + "8-link-0")).hasText("Make Assignments");
+    assertThat(page.getByTestId(steps + "8-link-0"))
+        .hasAttribute("href", "/admin/recruitments/" + id + "/assignments");
+    assertThat(page.getByTestId(steps + "9-link-0")).hasText("View Assignments");
+    assertThat(page.getByTestId(steps + "9-link-0"))
+        .hasAttribute("href", "/recruitments/" + id + "/assignments");
+    assertThat(page.getByTestId(steps + "9-action")).isVisible();
+    org.junit.jupiter.api.Assertions.assertEquals(0, page.getByTestId(steps + "9-link").count());
+    org.junit.jupiter.api.Assertions.assertEquals(0, page.getByText("(see assignments)").count());
+
+    // Make Assignments lands on the admin assignments page.
+    page.getByTestId(card + "make-assignments-button").click();
+    waitFor(page.getByTestId("AdminAssignmentsPage-count"));
+    assertThat(page.getByTestId("AdminAssignmentsPage-count")).isVisible();
+    org.junit.jupiter.api.Assertions.assertTrue(
+        page.url().endsWith("/admin/recruitments/" + id + "/assignments"), page.url());
+
+    // View Assignments lands on the read-only page, which says they are not published yet.
+    goToRecruitments();
+    waitFor(page.getByTestId(card + "view-assignments-button"));
+    page.getByTestId(card + "view-assignments-button").click();
+    waitFor(page.getByTestId("PublishedAssignmentsPage"));
+    assertThat(page.getByTestId("PublishedAssignmentsPage")).isVisible();
+    org.junit.jupiter.api.Assertions.assertTrue(
+        page.url().endsWith("/recruitments/" + id + "/assignments"), page.url());
+    // The page's query retries the 400 a few times before it shows the error, so allow for that.
+    assertThat(page.getByTestId("PublishedAssignmentsPage-error"))
+        .containsText(
+            "have not been published",
+            new com.microsoft.playwright.assertions.LocatorAssertions.ContainsTextOptions()
+                .setTimeout(30000));
+  }
+
   /** Issue #141: the recruitments live on the admin's home page, and the old page is gone. */
   @Test
   public void non_admin_sees_no_recruitments_and_the_old_page_is_gone() throws Exception {

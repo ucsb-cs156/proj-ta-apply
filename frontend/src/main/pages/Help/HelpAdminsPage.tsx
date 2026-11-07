@@ -148,8 +148,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           always shows the current ones, but it is best to wait until most are
           settled. Once published, the top of the Assignments page says so
           instead, with a link to the published page; the recruitment card shows
-          an <strong>Assignments Published</strong> badge and a{" "}
-          <strong>Published Assignments</strong> button (instructors see an{" "}
+          an <strong>Assignments Published</strong> badge beside its{" "}
+          <strong>View Assignments</strong> button (instructors see an{" "}
           <strong>Assignments</strong> button on their card), and publishing is
           written to the recruitment&apos;s change history. The page offers{" "}
           <em>One Row per course</em> (course number, instructor, instructor
@@ -670,15 +670,20 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <Link to="/help/recruitment-steps">Recruitment Steps</Link> diagram
           (collapsed to a one-line summary on older cards, expanded on the
           latest TA and ULA recruitments). Its boxes carry the lifecycle
-          actions, and the card has Courses, Draft Applications and Applications
-          buttons. In the diagram, step 3&apos;s <em>Allocations</em> and step
-          5&apos;s <em>(see allocations)</em> links open the quarter&apos;s{" "}
+          actions, and the card has Courses, Draft Applications, Applications,
+          Make Assignments and View Assignments buttons:{" "}
+          <strong>Make Assignments</strong> opens the page where candidates are
+          assigned to slots, and <strong>View Assignments</strong> the read-only
+          assignments page that admins and faculty share (it says the
+          assignments are not published yet until they are). In the diagram,
+          step 3&apos;s <em>Allocations</em> and step 5&apos;s{" "}
+          <em>(see allocations)</em> links open the quarter&apos;s{" "}
           <Link to="#combined-allocations">Combined Allocation page</Link>, and
-          the <em>(see assignments)</em> links of steps 8 and 9 open the
-          recruitment&apos;s assignments page. Above each quarter&apos;s
-          recruitment card, or pair of cards when the quarter has both a TA and
-          a ULA recruitment, is a <strong>QXX Budget</strong> card (for example{" "}
-          <em>W26 Budget</em>) with two buttons:{" "}
+          the same two assignment pages are under steps 8 and 9 as{" "}
+          <em>Make Assignments</em> and <em>View Assignments</em>. Above each
+          quarter&apos;s recruitment card, or pair of cards when the quarter has
+          both a TA and a ULA recruitment, is a <strong>QXX Budget</strong> card
+          (for example <em>W26 Budget</em>) with two buttons:{" "}
           <strong>Budget Planning</strong> opens that quarter&apos;s Budget for
           Quarter page, and one allocation button opens the quarter&apos;s
           Combined Allocation page, where the TA and ULA allocations are edited
@@ -811,14 +816,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <em>Tentative Assignment</em> dropdown on each row for pencilling
             the applicant into a lecture; the{" "}
             <a href="#assignments">Assignments</a> section below has the
-            details. The card reaches it from step 8 of the diagram.
+            details. The card&apos;s <strong>Make Assignments</strong> button
+            opens it, as does step 8 of the diagram.
           </li>
           <li>
-            <strong>Published Assignments.</strong> Shown once{" "}
-            <em>Publish Assignments</em> has been clicked at the top of the
-            Assignments page: the read-only assignments page that admins and
-            faculty share, with its two CSV downloads (see{" "}
-            <a href="#publish-assignments">publishing</a> above).
+            <strong>View Assignments.</strong> The read-only assignments page
+            that admins and faculty share, with its two CSV downloads (see{" "}
+            <a href="#publish-assignments">publishing</a> above). The
+            card&apos;s <strong>View Assignments</strong> button and step 9 of
+            the diagram open it; until <em>Publish Assignments</em> has been
+            clicked at the top of the Assignments page it says the assignments
+            are not published yet.
           </li>
           <li>
             <strong>Delete.</strong> Removes the recruitment, its course list

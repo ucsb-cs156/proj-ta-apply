@@ -218,6 +218,10 @@ describe("RecruitmentCardLayout tests", () => {
       expect(button.parentElement).toBe(
         screen.getByTestId("C-applications-button").parentElement,
       );
+      // It follows View Assignments (issue #317).
+      expect(button.previousElementSibling).toBe(
+        screen.getByTestId("C-view-assignments-button"),
+      );
     },
   );
 
@@ -230,16 +234,34 @@ describe("RecruitmentCardLayout tests", () => {
     expect(screen.queryByText(/Download/)).not.toBeInTheDocument();
   });
 
-  test("the footer has only Courses, Draft Applications and Applications, in that order", () => {
+  test("the footer has Courses, Draft Applications, Applications, Make Assignments and View Assignments, in that order", () => {
     renderCard({ recruitment: { ...ta, reviewStatus: "NotStarted" } });
 
     const footer = screen.getByTestId("C-courses-button").parentElement;
-    expect(within(footer).getAllByRole("link")).toHaveLength(3);
+    expect(within(footer).getAllByRole("link")).toHaveLength(5);
     expect(
       within(footer)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["Courses", "Draft Applications", "Applications"]);
+    ).toEqual([
+      "Courses",
+      "Draft Applications",
+      "Applications",
+      "Make Assignments",
+      "View Assignments",
+    ]);
+    // Issue #317: the two assignment pages, told apart by name, as steps 8 and 9 name them.
+    const make = screen.getByTestId("C-make-assignments-button");
+    expect(make).toHaveTextContent("Make Assignments");
+    expect(make).toHaveAttribute("href", "/admin/recruitments/1/assignments");
+    expect(make).toHaveClass("btn", "btn-outline-success");
+    expect(make.tagName).toBe("A");
+    const view = screen.getByTestId("C-view-assignments-button");
+    expect(view).toHaveTextContent("View Assignments");
+    expect(view).toHaveAttribute("href", "/recruitments/1/assignments");
+    expect(view).toHaveClass("btn", "btn-success");
+    expect(view.tagName).toBe("A");
+    expect(view).toBe(footer.lastElementChild);
     expect(screen.getByTestId("C-draft-applications-button")).toHaveAttribute(
       "href",
       "/admin/recruitments/1/draft-applications",

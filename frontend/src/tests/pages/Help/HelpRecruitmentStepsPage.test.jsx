@@ -212,14 +212,14 @@ describe("HelpRecruitmentStepsPage tests", () => {
       "Choose who sees the allocations: admins only, or each faculty member for their own courses.",
       "Faculty see the candidates for their courses and enter rankings, until the deadline you give.",
       "Faculty can no longer change their rankings; what they ranked is kept.",
-      "Use the faculty rankings to tentatively assign candidates to the courses' slots.",
-      "Publish the assignments to admins and faculty, and download the CSV for the financial office.",
+      "Use the faculty rankings to tentatively assign candidates to the courses' slots, on the Make Assignments page.",
+      "Publish the assignments to admins and faculty, who see them on the View Assignments page, and download the CSV for the financial office.",
     ]);
     // An instructor's list has no More link and no trailing space.
     expect(
       screen.getByTestId("HelpRecruitmentStepsPage-step-9").textContent,
     ).toBe(
-      "Release Hiring Decisions. Publish the assignments to admins and faculty, and download the CSV for the financial office.",
+      "Release Hiring Decisions. Publish the assignments to admins and faculty, who see them on the View Assignments page, and download the CSV for the financial office.",
     );
     // An instructor reads For Admins as plain text and For Instructors as a link.
     expect(
@@ -255,7 +255,7 @@ describe("HelpRecruitmentStepsPage tests", () => {
     expect(
       screen.getByTestId("HelpRecruitmentStepsPage-step-9").textContent,
     ).toBe(
-      "Release Hiring Decisions. Publish the assignments to admins and faculty, and download the CSV for the financial office. More",
+      "Release Hiring Decisions. Publish the assignments to admins and faculty, who see them on the View Assignments page, and download the CSV for the financial office. More",
     );
     const live = screen.getByTestId("HelpRecruitmentStepsPage-live");
     expect(live.textContent).toBe(
