@@ -403,8 +403,10 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <code>X-Client-Id</code> header, are made from the Combined Allocation
           page (next) under this same key. Only an admin may heartbeat, and the
           recruitment must exist, before anything is recorded. The version check
-          is not a JPA version, since the course refresh and the estimates also
-          write the row: a separate <code>allocation_version</code> column on{" "}
+          is not a JPA version, since the course refresh also writes the row
+          (and so did the estimates, until issue #363 moved them to{" "}
+          <code>budget_courses</code>): a separate{" "}
+          <code>allocation_version</code> column on{" "}
           <code>recruitment_courses</code> is counted by each allocation edit,
           and <code>allocation_bulk_version</code> on <code>recruitments</code>{" "}
           is counted by Auto Allocate. An allocation edit sends both as{" "}

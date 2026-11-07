@@ -134,10 +134,12 @@ Courses pages" below).
   code (a course's two lectures are two rows; a section in both recruitments is one row). A
   section in only one recruitment has blank cells for the other type.
 - **Enrollment Estimate**: one column, editable as the Courses page's box was (saved a second after
-  the last keystroke, an empty box clears it). Today each recruitment's course row has its own
-  estimate; a section in both shows the higher of the two, and an edit is saved to the course row
-  of every recruitment that has the section so the two agree (until issue #363 gives a course one
-  value per quarter). All the ratios on the page use this one value.
+  the last keystroke, an empty box clears it). Since issue #363 a section has one estimate per
+  quarter, a `budget_courses` row shared by the TA and ULA recruitments, so the two recruitments'
+  course rows always report the same value. (Before that each recruitment's course row had its own
+  estimate; the page showed the higher of the two and saved an edit to every recruitment's row so
+  they agreed. The frontend still does both, harmlessly, until a follow-up removes it.) All the
+  ratios on the page use this one value.
 - **Columns per type**, only for a type that has a recruitment: Allocation (editable, through the
   same endpoint and version checks as the Recruitment Courses page, against that type's
   recruitment), Unrounded Allocation, Delta and TA:student (or ULA:student) ratio.

@@ -23,12 +23,14 @@ import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.entities.Job;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +51,7 @@ public class PopulateRecruitmentCoursesJobTests {
   @Mock private CourseRepository courseRepository;
   @Mock private RecruitmentCourseRepository recruitmentCourseRepository;
   @Mock private RecruitmentRepository recruitmentRepository;
+  @Mock private BudgetCourseService budgetCourseService;
   @Mock private JobRateLimit jobRateLimit;
 
   private JobContext ctx;
@@ -70,8 +73,21 @@ public class PopulateRecruitmentCoursesJobTests {
         .courseRepository(courseRepository)
         .recruitmentCourseRepository(recruitmentCourseRepository)
         .recruitmentRepository(recruitmentRepository)
+        .budgetCourseService(budgetCourseService)
         .jobRateLimit(jobRateLimit)
         .build();
+  }
+
+  /** The rows and sections the run handed the quarter's cache (issue #363). */
+  private record Cached(List<RecruitmentCourse> rows, Map<String, UcsbSection> sections) {}
+
+  @SuppressWarnings("unchecked")
+  private Cached cached() {
+    ArgumentCaptor<List<RecruitmentCourse>> rows = ArgumentCaptor.forClass(List.class);
+    ArgumentCaptor<Map<String, UcsbSection>> sections = ArgumentCaptor.forClass(Map.class);
+    verify(budgetCourseService)
+        .refreshCache(org.mockito.ArgumentMatchers.eq("20261"), rows.capture(), sections.capture());
+    return new Cached(rows.getValue(), sections.getValue());
   }
 
   // ---- last refreshed (issue #124) ----
@@ -82,7 +98,8 @@ public class PopulateRecruitmentCoursesJobTests {
     when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
         .thenReturn(List.of(offering("CMPSC   156  ", section("07492", "0100", "CONRAD P"))));
     PopulateRecruitmentCoursesJob job = job(RecruitmentType.TA);
-    LocalDateTime before = LocalDateTime.now();
+    // The stamp is Pacific wall-clock time, whatever the JVM's zone is.
+    LocalDateTime before = edu.ucsb.cs.taapply.time.AppTime.now();
 
     job.accept(ctx);
 
@@ -554,11 +571,76 @@ public class PopulateRecruitmentCoursesJobTests {
         List.of("CONRAD P", "SOMEONE ELSE"),
         captor.getAllValues().stream().map(RecruitmentCourse::getInstructor).toList());
     assertEquals(
-        List.of(100, 60),
-        captor.getAllValues().stream().map(RecruitmentCourse::getEnrollment).toList());
-    assertEquals(
         List.of("07492", "07500"),
         captor.getAllValues().stream().map(RecruitmentCourse::getEnrollCode).toList());
+    // The enrollment figures are the quarter's (issue #363): cached, not written on the rows.
+    assertNull(captor.getAllValues().get(0).getEnrollment());
+    Cached cached = cached();
+    assertEquals(captor.getAllValues(), cached.rows());
+    assertEquals(100, cached.sections().get("07492").getEnrolledTotal());
+    assertEquals(60, cached.sections().get("07500").getEnrolledTotal());
+  }
+
+  /**
+   * Issue #363: the one fetch serves the whole quarter. Every lecture it returns, flagged course or
+   * not, goes to the cache, and so do the rows this run wrote (the flagged ones and the ones added
+   * by hand), so that each has its quarter row.
+   */
+  @Test
+  public void the_run_caches_the_quarters_figures_from_its_one_fetch() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    RecruitmentCourse byHand =
+        RecruitmentCourse.builder()
+            .id(5L)
+            .recruitmentId(7L)
+            .courseId("CMPSC   130A")
+            .enrollCode("07600")
+            .manuallyAdded(true)
+            .build();
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(byHand));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(
+            List.of(
+                offering("CMPSC   156  ", section("07492", "0100", "CONRAD P")),
+                offering("CMPSC   130A ", section("07600", "0100", "SOMEONE")),
+                offering("CMPSC     8  ", section("07700", "0100", "NOBODY"))));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    Cached cached = cached();
+    assertEquals(
+        List.of("07492", "07600"),
+        cached.rows().stream().map(RecruitmentCourse::getEnrollCode).toList());
+    assertEquals(3, cached.sections().size());
+    assertEquals(120, cached.sections().get("07700").getMaxEnroll());
+    assertTrue(
+        jobStarted
+            .getLog()
+            .contains("Cached the enrollment figures of 0 section(s) of quarter 20261"));
+  }
+
+  @Test
+  public void the_log_counts_the_sections_the_cache_got_figures_for() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", true, false)));
+    when(ucsbCurriculumService.getOfferings("CMPSC", "20261"))
+        .thenReturn(List.of(offering("CMPSC   156  ", section("07492", "0100", "CONRAD P"))));
+    when(budgetCourseService.refreshCache(any(), any(), any())).thenReturn(4);
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    assertTrue(
+        jobStarted
+            .getLog()
+            .contains("Cached the enrollment figures of 4 section(s) of quarter 20261"));
+  }
+
+  @Test
+  public void a_run_that_fetches_nothing_caches_nothing() throws Exception {
+    when(courseRepository.findAll()).thenReturn(List.of(course("CMPSC   156", false, false)));
+
+    job(RecruitmentType.TA).accept(ctx);
+
+    verify(budgetCourseService, never()).refreshCache(any(), any(), any());
   }
 
   /** Discussions and labs are not recruited for separately. */
@@ -673,7 +755,9 @@ public class PopulateRecruitmentCoursesJobTests {
     assertEquals("T R", row.getDays());
     assertEquals("14:00 - 15:15", row.getTime());
     assertEquals("PHELP 3526", row.getRoom());
-    assertEquals(120, row.getMaxEnroll());
+    // The enrollment figures are the quarter's, not the row's (issue #363).
+    assertNull(row.getMaxEnroll());
+    assertEquals(120, cached().sections().get(s.getEnrollCode()).getMaxEnroll());
     assertEquals("open", row.getStatus());
     assertEquals("A", row.getSummerSession());
   }

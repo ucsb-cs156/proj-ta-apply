@@ -617,8 +617,9 @@ Only admins can open the page, so the identity it records is marked `admin` by t
 `ApplicationsController.identityOf(user, true)` (as the Assignments, Budget and Edit Application
 pages do, #302), and the heartbeat's entries are `{label, samePerson, admin}`; the page does not act
 on the flag. The `version` of an application (`056-add-version-to-applications`) is not touched by a
-course, estimate or allocation save, which write only `recruitment_courses` and `recruitments` rows,
-so the two version checks cannot interact. The change adds no dates or times, so the Pacific-time
+course, estimate or allocation save, which write only `recruitment_courses`, `recruitments` and
+(since issue #363, for the estimates) `budget_courses` rows, so the two version checks cannot
+interact. The change adds no dates or times, so the Pacific-time
 rules (`AppTime`, `pacificTime.ts`) do not apply to it.
 
 This puts the scope principle to work: the warning is only ever about the screens that can change
@@ -626,8 +627,8 @@ something, so someone who is only reading, a common case, never sees it.
 
 **The version check stays as the safety net.** The warning is advice, and an admin can ignore it.
 Row-level for the cell edit: an `allocationVersion` column on `recruitment_courses`, a separate
-column so that the course refresh and the enrollment estimates, which also write the row, do not
-cause spurious conflicts. For the bulk operation, which changes every row at once, a counter on
+column so that the course refresh, which also writes the row (and the enrollment estimates, which
+did too until issue #363 moved them to `budget_courses`), does not cause spurious conflicts. For the bulk operation, which changes every row at once, a counter on
 `Recruitment` bumped by Auto Allocate and sent with every cell edit. A cell edit then fails if
 either the row's version or the recruitment's counter has moved.
 

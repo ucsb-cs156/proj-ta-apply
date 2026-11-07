@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -160,8 +161,6 @@ public class RecruitmentRepositoryTests {
             .days("T R")
             .time("2:00 PM - 3:15 PM")
             .room("PHELP 3526")
-            .enrollment(120)
-            .maxEnroll(150)
             .status("open")
             .summerSession("A")
             .build());
@@ -178,8 +177,10 @@ public class RecruitmentRepositoryTests {
     assertEquals("T R", found.getDays());
     assertEquals("2:00 PM - 3:15 PM", found.getTime());
     assertEquals("PHELP 3526", found.getRoom());
-    assertEquals(120, found.getEnrollment());
-    assertEquals(150, found.getMaxEnroll());
+    // The enrollment figures are not the row's since issue #363 (they are in budget_courses).
+    assertNull(found.getEnrollment());
+    assertNull(found.getMaxEnroll());
+    assertNull(found.getEnrollmentEstimate());
     assertEquals("open", found.getStatus());
     assertEquals("A", found.getSummerSession());
     assertFalse(found.isRemoved());
@@ -202,8 +203,6 @@ public class RecruitmentRepositoryTests {
             .enrollCode("07492")
             .section("0100")
             .instructor("CONRAD P")
-            .enrollment(120)
-            .maxEnroll(150)
             .build());
     recruitmentCourseRepository.save(
         RecruitmentCourse.builder()
@@ -212,8 +211,6 @@ public class RecruitmentRepositoryTests {
             .enrollCode("07500")
             .section("0200")
             .instructor("SOMEONE ELSE")
-            .enrollment(60)
-            .maxEnroll(80)
             .build());
     entityManager.flush();
 

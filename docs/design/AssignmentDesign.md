@@ -60,6 +60,15 @@ is to have updated values for maxEnroll and enrollment.
 
 Add a field to the Recruitment Course called "enrollmentEstimate".  
 
+> **As built since issue #363:** the enrollment estimate, and the cached `enrollment` and
+> `maxEnroll` figures, are no longer columns of `recruitment_courses`. They live once per section
+> per quarter in `budget_courses` (entity `BudgetCourse`, keyed on the quarter and the enroll code,
+> many rows to one `Budget`), because a section can be in both the TA and the ULA recruitment and
+> must have exactly one estimate. `RecruitmentCourse` still carries the three figures in its JSON,
+> as transient fields filled from that table by `BudgetCourseService.attach`, so the API shapes did
+> not change. Liquibase changeset `063-create-budget-courses.json` created the table, copied the data
+> in (the higher of two disagreeing estimates kept) and dropped the three columns.
+
 On the RecruitmentCourse view for the admins, make this field an integer that can be entered by the Admin.  Data values should be saved within 1-2 seconds
 of any change to any of the values.   
 

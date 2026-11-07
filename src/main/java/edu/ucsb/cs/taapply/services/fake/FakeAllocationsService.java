@@ -3,11 +3,13 @@ package edu.ucsb.cs.taapply.services.fake;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
+import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
 import edu.ucsb.cs.taapply.services.AllocationVisibilityService;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,7 @@ public class FakeAllocationsService {
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired AllocationService allocationService;
   @Autowired AllocationVisibilityService allocationVisibilityService;
+  @Autowired BudgetCourseService budgetCourseService;
 
   /**
    * Fakes the recruitment's hiring target and allocations.
@@ -70,13 +73,15 @@ public class FakeAllocationsService {
     recruitment.setAllocationBulkVersion(recruitment.getAllocationBulkVersion() + 1);
     recruitmentRepository.save(recruitment);
     if (estimates != Estimates.KEEP) {
-      for (RecruitmentCourse course : courses) {
-        Integer value = estimates == Estimates.MAX ? course.getMaxEnroll() : course.getEnrollment();
-        if (value != null) {
-          course.setEnrollmentEstimate(value);
-          recruitmentCourseRepository.save(course);
-        }
-      }
+      // The estimates are the quarter's (issue #363): a section with no figure keeps its estimate,
+      // and the other recruitment's shares move too.
+      budgetCourseService.fillEstimates(
+          recruitment.getQuarter(),
+          courses,
+          estimates == Estimates.MAX
+              ? EnrollmentEstimateSource.MAX
+              : EnrollmentEstimateSource.ACTUAL);
+      allocationService.recomputeQuarter(recruitment.getQuarter());
     }
     List<RecruitmentCourse> allocated = allocationService.autoAllocate(recruitment);
     if (setVisibility) {

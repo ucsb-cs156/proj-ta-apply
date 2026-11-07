@@ -24,6 +24,7 @@ import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AssignmentsService;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
@@ -81,9 +82,12 @@ public class InstructorRecruitmentsController extends ApiController {
   @Autowired DeveloperModeService developerModeService;
   @Autowired RankingVersionService rankingVersionService;
   @Autowired ClientActivityDetector clientActivityDetector;
+  @Autowired BudgetCourseService budgetCourseService;
 
   /**
-   * A recruitment as the admin's and student's cards know it, plus the instructor's courses.
+   * A recruitment as the admin's and student's cards know it, plus the instructor's courses (with
+   * the quarter's enrollment figures and estimate attached from {@code budget_courses}, issue
+   * #363).
    *
    * <p>A course's allocation reaches its instructor only once the admin has released it, or has
    * chosen to show all allocations to all faculty (issues #178 and #224). A course not yet released
@@ -306,6 +310,7 @@ public class InstructorRecruitmentsController extends ApiController {
             r -> {
               List<RecruitmentCourse> courses =
                   byRecruitment.get(r.getId()).stream().sorted(BY_COURSE_THEN_SECTION).toList();
+              budgetCourseService.attach(r.getQuarter(), courses);
               // The hiring figures leave the server only once the admin lets faculty see them.
               Map<Long, CourseTargets> targets =
                   allocationsVisible(r)
@@ -400,16 +405,18 @@ public class InstructorRecruitmentsController extends ApiController {
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, recruitmentId));
     boolean withAllocations =
         isAdmin() || recruitment.getAllocationVisibility() == AllocationVisibility.ALL_COURSES;
+    List<RecruitmentCourse> courses =
+        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
+            .filter(course -> !course.isRemoved())
+            .sorted(BY_COURSE_THEN_SECTION)
+            .toList();
+    budgetCourseService.attach(recruitment.getQuarter(), courses);
     return new CoursesView(
         recruitment.getId(),
         recruitment.getQuarter(),
         recruitment.getType(),
         withAllocations,
-        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
-            .filter(course -> !course.isRemoved())
-            .sorted(BY_COURSE_THEN_SECTION)
-            .map(course -> CourseRow.of(course, withAllocations))
-            .toList());
+        courses.stream().map(course -> CourseRow.of(course, withAllocations)).toList());
   }
 
   /** Whether the signed-in user holds the admin role. */
