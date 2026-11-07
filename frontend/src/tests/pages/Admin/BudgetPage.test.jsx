@@ -624,7 +624,15 @@ describe("BudgetPage tests", () => {
     axiosMock.onPut("/api/admin/budget").reply(() => {
       saves += 1;
       return saves === 1
-        ? [409, { message: "stale", version: 4, summary: theirs }]
+        ? [
+            409,
+            {
+              message: "stale",
+              version: 4,
+              conversionVersion: 1,
+              summary: theirs,
+            },
+          ]
         : [200, theirs];
     });
   }
@@ -736,6 +744,30 @@ describe("BudgetPage tests", () => {
     expect(puts("/api/admin/budget").map((r) => r.params.version)).toEqual([
       3, 4,
     ]);
+  });
+
+  test("a budget line carries the lines' version and never the factor's count, so a factor changed on the combined page is no conflict (issue #375)", async () => {
+    // Someone saved the conversion factor meanwhile: its count rose, the lines' version did not.
+    axiosMock.onPut("/api/admin/budget").reply(200, {
+      ...budgetFixtures.bothTypes,
+      budget: {
+        ...budgetFixtures.bothTypes.budget,
+        conversionTAtoULA: 2,
+        conversionVersion: 5,
+      },
+    });
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-tasOnlyBudget");
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "12");
+
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(2));
+    expect(puts("/api/admin/budget").map((r) => r.params)).toEqual([
+      { quarter: "20264", tasOnlyBudget: "1", version: 3 },
+      { quarter: "20264", tasOnlyBudget: "12", version: 3 },
+    ]);
+    expect(screen.queryByTestId(/^BudgetPage-conflict-/)).toBeNull();
   });
 
   test("a refused average cost shows what is stored, and Overwrite expects it", async () => {

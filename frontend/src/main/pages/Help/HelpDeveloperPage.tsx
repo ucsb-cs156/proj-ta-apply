@@ -430,9 +430,12 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           Allocate saves name the tab; the conversion factor save, which is{" "}
           <code>PUT /api/admin/budget</code>, does not, because the page does
           not heartbeat <code>budget:&lt;quarter&gt;</code>: that field is
-          guarded by the budget row&apos;s version check, and a save that named
-          a tab the Budget page never hears a heartbeat from would make that
-          page warn about a tab that is not there.
+          guarded by a version check of its own (the budget row&apos;s{" "}
+          <code>conversionVersion</code>, issue #375, counted apart from the{" "}
+          <code>version</code> of the three budget lines, so the two pages never
+          refuse each other&apos;s saves), and a save that named a tab the
+          Budget page never hears a heartbeat from would make that page warn
+          about a tab that is not there.
         </p>
         <p data-testid="HelpDeveloperPage-courses-columns">
           <strong>Which Courses columns show (issue #300).</strong> The

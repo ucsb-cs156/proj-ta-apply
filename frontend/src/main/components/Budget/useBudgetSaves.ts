@@ -5,12 +5,15 @@ import type { AxiosRequestConfig } from "axios";
 import { toast } from "react-toastify";
 import { shouldToastBackendError } from "main/utils/apiError";
 import { formatDollars } from "main/utils/currency";
-import type { BudgetSummary } from "main/components/Budget/budgetTypes";
+import type {
+  BudgetRow,
+  BudgetSummary,
+} from "main/components/Budget/budgetTypes";
 
 /**
  * A figure of the quarter's budget row: the three money lines, and the TA to ULA conversion factor
- * of the Combined Allocation page (issue #358), which is saved the same way, with the same version
- * check.
+ * of the Combined Allocation page (issue #358), which is saved the same way, with a version check
+ * of its own (issue #375).
  */
 export type BudgetLine =
   | "unrestrictedBudget"
@@ -81,6 +84,8 @@ const reads = (field: FieldKey, value: number | string): string =>
 type Held = {
   /** The version the next budget-line save carries; it only goes up. */
   version: number;
+  /** The one the next conversion-factor save carries (issue #375); it only goes up too. */
+  conversionVersion: number;
   /** The value each recruitment figure had when the page last knew it, for the next save. */
   expected: Partial<Record<FieldKey, string>>;
   recruitmentIds: Partial<Record<FieldKey, number>>;
@@ -95,7 +100,10 @@ type Held = {
  * Sends every save on the Budget page (issue #277) one after another, each carrying what the page
  * last knew so that the server can refuse it if someone else has changed the figure since.
  *
- * - The three budget lines carry the budget's version, which the server bumps on every save.
+ * - The three budget lines carry the budget's version, which the server bumps on every save of a
+ *   line; the conversion factor carries its own count, `conversionVersion`, bumped only by a save
+ *   of the factor (issue #375), so a change to the factor on the Combined Allocation page never
+ *   refuses a budget line on the Budget page, nor the other way round.
  * - A recruitment's average cost and its hiring target carry the value the page last saw
  *   (`expected`); the server applies the save only if that is still the stored value.
  *
@@ -112,6 +120,7 @@ export function useBudgetSaves(
   const queryClient = useQueryClient();
   const held = useRef<Held>({
     version: 0,
+    conversionVersion: 0,
     expected: {},
     recruitmentIds: {},
     conflicts: {},
@@ -121,16 +130,26 @@ export function useBudgetSaves(
   });
   const [conflicts, setConflicts] = useState<BudgetConflict[]>([]);
 
+  /** Takes each count from a summary, never back down. */
+  const learnCounts = (budget: BudgetRow) => {
+    const state = held.current;
+    state.version = Math.max(state.version, budget.version);
+    state.conversionVersion = Math.max(
+      state.conversionVersion,
+      budget.conversionVersion,
+    );
+  };
+
   // What the page knows starts from the first summary it gets for the quarter (the page is made
   // afresh for each quarter, so this never carries over from another). After that the
-  // version only goes up, and a recruitment's figure is only taken the first time, so that a
+  // counts only go up, and a recruitment's figure is only taken the first time, so that a
   // refetch that began before one of this page's own saves finished cannot take either back.
   useEffect(() => {
     if (!summary) {
       return;
     }
     const state = held.current;
-    state.version = Math.max(state.version, summary.budget.version);
+    learnCounts(summary.budget);
     // The first value seen for a figure is the one the next save expects.
     const learn = (key: FieldKey, value: string | undefined) => {
       if (!(key in state.expected)) {
@@ -159,10 +178,15 @@ export function useBudgetSaves(
   const request = (field: FieldKey, value: string): AxiosRequestConfig => {
     const state = held.current;
     if (isLine(field)) {
+      // Each figure carries the count that guards it, and only that one (issue #375).
+      const count =
+        field === "conversionTAtoULA"
+          ? { conversionVersion: state.conversionVersion }
+          : { version: state.version };
       return {
         method: "PUT",
         url: BUDGET_KEY,
-        params: { quarter: yyyyq, [field]: value, version: state.version },
+        params: { quarter: yyyyq, [field]: value, ...count },
         headers,
       };
     }
@@ -187,7 +211,7 @@ export function useBudgetSaves(
     const data = error.response.data;
     let current: number;
     if (isLine(field)) {
-      // The answer is the whole summary as it now stands: the page shows it, and its version is the one the next save carries.
+      // The answer is the whole summary as it now stands: the page shows it, and its counts are the ones the next saves carry.
       queryClient.setQueryData([BUDGET_KEY, yyyyq], data?.summary);
       current = data?.summary?.budget[field] ?? 0;
     } else {
@@ -215,10 +239,7 @@ export function useBudgetSaves(
         const response = await axios(request(field, value));
         if (isLine(field)) {
           queryClient.setQueryData([BUDGET_KEY, yyyyq], response.data);
-          state.version = Math.max(
-            state.version,
-            (response.data as BudgetSummary).budget.version,
-          );
+          learnCounts((response.data as BudgetSummary).budget);
         } else {
           state.expected[field] = value;
         }

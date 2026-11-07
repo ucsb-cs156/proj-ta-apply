@@ -396,7 +396,7 @@ mean something together.
 | Issue | Page | Scope | Resource key | Order |
 |---|---|---|---|---|
 | #273 | Application form draft | One applicant's draft for one recruitment | `draft:<draftId>` | first |
-| #277 | Budget | One quarter's budget (compare-and-set for a recruitment's average cost and hiring target) | `budget:<quarter>` | 2 |
+| #277 | Budget | One quarter's budget: the three budget lines under `version`; the TA to ULA conversion factor, edited on the Combined Allocation page, under its own `conversion_version` (#375), so the two pages never refuse each other's saves (compare-and-set for a recruitment's average cost and hiring target) | `budget:<quarter>` | 2 |
 | #278 | Courses allocations and estimated enrollments | The whole edit page for one recruitment | `courses-edit:<recruitmentId>` | 3 |
 | #279 | Faculty rankings | One recruitment course's ranking list | `ranking:<recruitmentCourseId>` | 4 |
 | #280 | Assignments | The whole assignments page for one recruitment | `assignments:<recruitmentId>` | 5 |
@@ -453,11 +453,27 @@ budget is now 45,000.00; you entered 40,000.00") and offers **Use theirs** and *
 Overwrite re-sends with the current version. Letting the user force the issue is reasonable here:
 one field, one number, and the user can see both.
 
-**As built (#277).** `budgets` has a `version` column (JPA `@Version`, migration 058).
+**As built (#277).** `budgets` has a `version` column (migration 058).
 `PUT /api/admin/budget` takes the `version` the page last saw and answers `409` with the quarter's
 summary as it now stands and its version; without a `version` the save is unconditional. The page
 sends each save one after another, with the version from the previous answer, and takes the version
-from a refused save, so a refusal updates the whole page to what is stored. Average cost and hiring
+from a refused save, so a refusal updates the whole page to what is stored.
+
+**The conversion factor is counted apart (#375).** The TA to ULA conversion factor
+(`conversionTAtoULA`, #358) lives on the same `budgets` row but is edited on the Combined Allocation
+page, and a single version for the row made the two pages refuse each other: an admin changing the
+factor on the combined page bumped the version, and the next budget-line save on the Budget page was
+a spurious `409`. So the row has two plain counters, neither a JPA `@Version`: `version` for the
+three lines and `conversion_version` for the factor (migration 062, 0 for existing rows). The
+controller adds one to `version` when a save gives any of the three lines, and one to
+`conversion_version` when it gives the factor; a save that gives neither counts nothing. The request
+may carry `version`, `conversionVersion`, both or neither, and each given one is compared only to its
+own counter; a stale one is `409` with the current summary and both counters in the body, whichever
+fields came with it. The read, compare and write are one step within the server process (the same
+lock as the compare-and-set below), which is enough for a single instance; that replaces the
+optimistic-lock failure JPA used to raise. `useBudgetSaves` carries `version` for a line and
+`conversionVersion` for the factor, and learns both from every summary it sees, never back down.
+Average cost and hiring
 target use compare-and-set: `PUT /api/admin/recruitments/avgCostPerPosition` and `/totalHiringTarget`
 take an optional `expected`, and answer `409` with the recruitment when the stored value is no
 longer that (a missing `expected` saves unconditionally, which is how a cost not yet entered is
@@ -646,8 +662,10 @@ edit pages, so "this page" would be wrong); *Leave this page* goes to the quarte
 `/admin/budget/QXX`. The allocation, estimate, fill-estimates and Auto Allocate saves name the tab
 in `X-Client-Id`, through `requestHeaders` on `CombinedAllocationTable` and on the page's two
 mutations. The conversion factor save, `PUT /api/admin/budget`, does **not**: the page does not
-heartbeat `budget:<quarter>`. The factor is a budget figure guarded by the budget row's version
-check (**Use theirs** / **Overwrite**), the Budget page and the combined page otherwise edit
+heartbeat `budget:<quarter>`. The factor is a budget figure guarded by a version check of its own,
+the budget row's `conversion_version` (#375; **Use theirs** / **Overwrite**), counted apart from the
+`version` of the three budget lines so that the two pages never refuse each other's saves; the
+Budget page and the combined page otherwise edit
 different things, and a save that named a tab under `budget:<quarter>` without a heartbeat would
 make the Budget page warn, for a window, about a tab that is not there. Heartbeating the budget key
 as well was considered and rejected for the same reason in reverse: every Budget page tab would

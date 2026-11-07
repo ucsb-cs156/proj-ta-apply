@@ -320,7 +320,7 @@ describe("CombinedAllocationsPage tests", () => {
     );
   });
 
-  test("a valid factor is saved as it is typed, with the budget's version", async () => {
+  test("a valid factor is saved as it is typed, with the factor's own count and not the lines' version (issue #375)", async () => {
     renderPage("F26");
     const box = await factorBox();
 
@@ -331,9 +331,38 @@ describe("CombinedAllocationsPage tests", () => {
     expect(budgetPuts()[0].params).toEqual({
       quarter: "20264",
       conversionTAtoULA: "2",
-      version: 3,
+      conversionVersion: 1,
     });
     expect(box).not.toHaveClass("is-invalid");
+  });
+
+  test("a factor save after a good one carries the count the good one answered with, even if a refetch is older (issue #375)", async () => {
+    // The lines' version rose too (someone saved a budget line): the factor save still carries only its own count.
+    axiosMock.onPut(BUDGET).reply(200, {
+      ...budgetFixtures.bothTypes,
+      budget: {
+        ...budgetFixtures.bothTypes.budget,
+        conversionTAtoULA: 2,
+        version: 9,
+        conversionVersion: 2,
+      },
+    });
+    renderPage("F26");
+    const box = await factorBox();
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "25");
+
+    await waitFor(() => expect(budgetPuts()).toHaveLength(2));
+    expect(budgetPuts().map((r) => r.params)).toEqual([
+      { quarter: "20264", conversionTAtoULA: "2", conversionVersion: 1 },
+      { quarter: "20264", conversionTAtoULA: "25", conversionVersion: 2 },
+    ]);
+    expect(
+      screen.queryByTestId(
+        "CombinedAllocationsPage-conflict-conversionTAtoULA",
+      ),
+    ).toBeNull();
   });
 
   test("the ratios follow the saved factor", async () => {
@@ -401,7 +430,7 @@ describe("CombinedAllocationsPage tests", () => {
       budget: {
         ...budgetFixtures.bothTypes.budget,
         conversionTAtoULA: 5,
-        version: 4,
+        conversionVersion: 2,
       },
     };
     const refuseFirstSave = () => {
@@ -414,7 +443,15 @@ describe("CombinedAllocationsPage tests", () => {
         saves += 1;
         stored = theirs;
         return saves === 1
-          ? [409, { message: "stale", version: 4, summary: theirs }]
+          ? [
+              409,
+              {
+                message: "stale",
+                version: 3,
+                conversionVersion: 2,
+                summary: theirs,
+              },
+            ]
           : [200, theirs];
       });
     };
@@ -467,7 +504,7 @@ describe("CombinedAllocationsPage tests", () => {
       expect(budgetPuts()).toHaveLength(1);
     });
 
-    test("Overwrite saves it again over theirs, with their version", async () => {
+    test("Overwrite saves it again over theirs, with their count of the factor", async () => {
       refuseFirstSave();
       renderPage("F26");
       const box = await factorBox();
@@ -487,7 +524,7 @@ describe("CombinedAllocationsPage tests", () => {
       expect(budgetPuts()[1].params).toEqual({
         quarter: "20264",
         conversionTAtoULA: "2",
-        version: 4,
+        conversionVersion: 2,
       });
       expect(
         screen.queryByTestId(

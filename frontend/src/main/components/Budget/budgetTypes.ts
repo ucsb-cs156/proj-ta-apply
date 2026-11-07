@@ -7,8 +7,14 @@ export type BudgetRow = {
   ulasOnlyBudget: number;
   /** How many ULAs count as one TA on the Combined Allocation page (issue #358); 3 by default. */
   conversionTAtoULA: number;
-  /** How many times the budget has been saved; a save carries it so a stale one is refused. */
+  /** How many times the three lines have been saved; a line save carries it so a stale one is refused. */
   version: number;
+  /**
+   * How many times the conversion factor has been saved (issue #375), counted apart from the lines
+   * so that the Budget page and the Combined Allocation page do not refuse each other's saves; a
+   * factor save carries it.
+   */
+  conversionVersion: number;
 };
 
 /** One recruitment's side of the budget; null in the summary when the quarter has none. */

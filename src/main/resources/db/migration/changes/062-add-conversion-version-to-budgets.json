@@ -1,0 +1,32 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "062-add-conversion-version-to-budgets",
+        "author": "pc",
+        "comment": "A version of its own for the TA to ULA conversion factor, so that a change to it on the Combined Allocation page no longer refuses a budget-line save on the Budget page, and the other way round (issue #375). 0 for the rows that already exist.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "columnExists": { "tableName": "budgets", "columnName": "conversion_version" } } }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "budgets",
+              "columns": [
+                {
+                  "column": {
+                    "name": "conversion_version",
+                    "type": "INT",
+                    "defaultValueNumeric": 0,
+                    "constraints": { "nullable": false }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

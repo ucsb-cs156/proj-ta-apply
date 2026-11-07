@@ -66,6 +66,37 @@ class BudgetPersistenceTests {
   }
 
   @Test
+  void a_budget_keeps_both_counts_and_starts_them_at_zero() {
+    budgets.save(Budget.builder().quarter("20264").build());
+    budgets.save(Budget.builder().quarter("20271").version(4).conversionVersion(2).build());
+    entityManager.flush();
+    entityManager.clear();
+
+    Budget fresh = budgets.findById("20264").orElseThrow();
+    assertEquals(0, fresh.getVersion());
+    assertEquals(0, fresh.getConversionVersion());
+    Budget counted = budgets.findById("20271").orElseThrow();
+    assertEquals(4, counted.getVersion());
+    assertEquals(2, counted.getConversionVersion());
+  }
+
+  @Test
+  void a_budget_row_that_existed_before_the_conversion_version_column_gets_zero() {
+    // The way the older code inserted a budget (issue #375): without the column.
+    entityManager
+        .getEntityManager()
+        .createNativeQuery(
+            "INSERT INTO budgets (quarter, unrestricted_budget, tas_only_budget,"
+                + " ulas_only_budget, conversion_ta_to_ula, version) VALUES ('20254', 1, 2, 3, 3, 7)")
+        .executeUpdate();
+    entityManager.clear();
+
+    Budget found = budgets.findById("20254").orElseThrow();
+    assertEquals(0, found.getConversionVersion());
+    assertEquals(7, found.getVersion());
+  }
+
+  @Test
   void a_recruitment_keeps_its_average_cost_per_position() {
     Recruitment saved =
         recruitments.save(
