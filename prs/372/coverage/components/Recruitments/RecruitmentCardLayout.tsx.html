@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>17/17</span>
+                <span class='fraction'>19/19</span>
             </div>
         
             
@@ -227,7 +227,18 @@
 <a name='L162'></a><a href='#L162'>162</a>
 <a name='L163'></a><a href='#L163'>163</a>
 <a name='L164'></a><a href='#L164'>164</a>
-<a name='L165'></a><a href='#L165'>165</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -275,10 +286,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">20055x</span>
-<span class="cline-any cline-yes">1020x</span>
-<span class="cline-any cline-yes">1020x</span>
-<span class="cline-any cline-yes">1020x</span>
+<span class="cline-any cline-yes">20854x</span>
+<span class="cline-any cline-yes">1026x</span>
+<span class="cline-any cline-yes">1026x</span>
+<span class="cline-any cline-yes">1026x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -326,7 +337,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4080x</span>
+<span class="cline-any cline-yes">4104x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -349,6 +360,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -424,7 +446,7 @@ type RecruitmentCardLayoutProps = {
  * The admin recruitment card as docs/design/AdminUserInterfaceDesign.md lays it out: the header
  * with quarter, type and status badges; the dates panel with its Change button beside the Faculty
  * Ranking Deadline; the live Recruitment Steps diagram in its collapsible panel; and the two
- * remaining buttons, Courses and Applications. Everything the old card footer offered is reached
+ * remaining buttons, Courses, Draft Applications and Applications, and Download Rankings CSV once faculty rankings have been opened. Everything the old card footer offered is reached
  * through the diagram or has moved to the Courses and Applications pages. Designed in Storybook
  * first (issue #230); issue #233 puts it on the home page.
  */
@@ -551,6 +573,17 @@ export default function RecruitmentCardLayout({
         &gt;
           Applications
         &lt;/Link&gt;
+        {/* The faculty rankings exist only once the review has been opened (issue #358). */}
+        {recruitment.reviewStatus !== "NotStarted" &amp;&amp; (
+          &lt;a
+            className="btn btn-outline-primary"
+            href={`/api/admin/rankings/csv?recruitmentId=${recruitment.id}`}
+            download={`rankings-${recruitment.id}.csv`}
+            data-testid={id("rankings-csv-button")}
+          &gt;
+            Download Rankings CSV
+          &lt;/a&gt;
+        )}
       &lt;/Card.Footer&gt;
     &lt;/Card&gt;
   );
@@ -562,7 +595,7 @@ export default function RecruitmentCardLayout({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-07T00:46:33.386Z
+                at 2026-11-07T02:03:35.691Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
