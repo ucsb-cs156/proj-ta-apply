@@ -114,3 +114,20 @@ AllColumns.parameters = {
     }),
   },
 };
+
+/** M26, a summer quarter (TA recruitment only): every column shown, with Summer Session. */
+export const SummerQuarter = Template.bind({});
+SummerQuarter.loaders = [
+  () => {
+    localStorage.setItem("combinedAllocations.hiddenColumns.M26", "[]");
+    return {};
+  },
+];
+SummerQuarter.parameters = {
+  reactRouter: { initialEntries: ["/admin/allocations/M26"] },
+  msw: {
+    handlers: handlers(budgetFixtures.taOnlyOverBudget, {
+      1: [{ ...taCourses[1], summerSession: "A" }],
+    }),
+  },
+};

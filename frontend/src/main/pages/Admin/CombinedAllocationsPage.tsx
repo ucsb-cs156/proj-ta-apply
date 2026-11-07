@@ -18,6 +18,7 @@ import {
   combinedColumnsStorageKey,
   defaultHiddenCombinedColumns,
 } from "main/utils/combinedColumns";
+import { isSummerQuarter } from "main/utils/courseColumns";
 import { autoAssignTooltip } from "main/utils/allocations";
 import { apiErrorMessage } from "main/utils/apiError";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
@@ -124,12 +125,13 @@ function CombinedAllocationsForQuarter({
   const showTaRankings = rankingsOpened(taId);
   const showUlaRankings = rankingsOpened(ulaId);
   const summaryQuery = (recruitmentId: number | undefined) => ({
-    // Stryker disable next-line all : the key only has to differ between the two recruitments, and it does by the id
+    // Stryker disable all : the key only has to differ between the two recruitments, and it does by the id
     key: [
       "/api/instructor/recruitments/admin-course-rankings",
       recruitmentId,
       false,
     ],
+    // Stryker restore all
     axios: {
       method: "GET" as const,
       url: `/api/instructor/recruitments/${recruitmentId}/admin-course-rankings`,
@@ -167,6 +169,7 @@ function CombinedAllocationsForQuarter({
   const columnChoices = combinedColumnChoices(
     { exists: taId !== undefined, showRankings: showTaRankings },
     { exists: ulaId !== undefined, showRankings: showUlaRankings },
+    isSummerQuarter(yyyyq),
   );
 
   const copyEmail = async (email: string) => {
@@ -492,6 +495,7 @@ function CombinedAllocationsForQuarter({
           showUlaRankings={showUlaRankings}
           onCopyEmail={copyEmail}
           hiddenColumns={hiddenColumns}
+          summer={isSummerQuarter(yyyyq)}
           hideLinks={{
             choices: columnChoices,
             onHide: (columnId) => toggleColumn(columnId, true),

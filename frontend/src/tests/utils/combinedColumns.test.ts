@@ -82,6 +82,19 @@ describe("combinedColumns (issue #358)", () => {
     ]);
   });
 
+  test("Summer Session is last, and only for a summer quarter", () => {
+    expect(ids(both, both)).not.toContain("summerSession");
+    const summer = combinedColumnChoices(both, both, true);
+    expect(summer[summer.length - 1]).toEqual({
+      id: "summerSession",
+      label: "Summer Session",
+    });
+    expect(summer.map((c) => c.id).slice(-2)).toEqual([
+      "status",
+      "summerSession",
+    ]);
+  });
+
   test("columns starting with TA or ULA need that recruitment", () => {
     const taOnly = ids(both, none);
     expect(taOnly.filter((id) => id.startsWith("ula"))).toEqual([]);
@@ -114,6 +127,7 @@ describe("combinedColumns (issue #358)", () => {
       "time",
       "room",
       "status",
+      "summerSession",
     ]);
     // Everything else the full menu has is visible.
     expect(

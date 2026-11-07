@@ -130,7 +130,7 @@ const combinedAllocationsFixtures = {
   ulaRankingSummaries: [
     {
       recruitmentCourseId: 11,
-      rankingCount: 9,
+      rankingCount: 3,
       instructorEmail: "other@ucsb.edu",
     },
     {

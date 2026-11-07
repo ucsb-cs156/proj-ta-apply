@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -9,7 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
 import axios from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
-import { describe, expect, test, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, test, vi, beforeEach } from "vitest";
 
 import CombinedAllocationTable from "main/components/Allocations/CombinedAllocationTable";
 import { combineCourses } from "main/utils/combinedAllocations";
@@ -132,6 +133,14 @@ const cell = (row, column) =>
   screen.getByTestId(`CombinedAllocationTable-cell-row-${row}-${column}`);
 const td = (row, column) =>
   screen.getByTestId(`CombinedAllocationTable-cell-row-${row}-col-${column}`);
+const estimateBox = (row) =>
+  screen.getByTestId(
+    `CombinedAllocationTable-cell-row-${row}-enrollmentEstimate`,
+  );
+const estimatePuts = () =>
+  axiosMock.history.put.filter(
+    (r) => r.url === "/api/recruitmentcourses/enrollmentEstimate",
+  );
 const puts = () =>
   axiosMock.history.put.filter(
     (r) => r.url === "/api/recruitmentcourses/allocation",
@@ -143,7 +152,12 @@ describe("CombinedAllocationTable tests", () => {
     axiosMock.reset();
     axiosMock.resetHistory();
     axiosMock.onPut("/api/recruitmentcourses/allocation").reply(200, {});
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimate")
+      .reply(200, {});
   });
+
+  afterEach(() => vi.useRealTimers());
 
   test("with both types: the TA columns, the ULA columns and the ASE:Student Ratio", () => {
     renderTable();
@@ -257,7 +271,7 @@ describe("CombinedAllocationTable tests", () => {
     renderTable();
 
     // Row 2 is CMPSC 156: estimate max(100, 80) = 100.
-    expect(td(2, "enrollmentEstimate")).toHaveTextContent("100");
+    expect(estimateBox(2)).toHaveValue(100);
     expect(cell(2, "TA-allocation")).toHaveValue(3);
     expect(cell(2, "ULA-allocation")).toHaveValue(6);
     expect(td(2, "taUnroundedAllocation")).toHaveTextContent("2.5");
@@ -600,7 +614,7 @@ describe("CombinedAllocationTable: the columns of the allocations pages (issue #
     const ulaLink = screen.getByTestId(
       "CombinedAllocationTable-ula-cell-row-2-ranking-link",
     );
-    expect(ulaLink).toHaveTextContent("9");
+    expect(ulaLink).toHaveTextContent("3");
     expect(ulaLink).toHaveAttribute(
       "href",
       "/recruitments/6/courses/11/ranking",
@@ -644,7 +658,7 @@ describe("CombinedAllocationTable: the columns of the allocations pages (issue #
   });
 
   // CMPSC 8 is only in the TA recruitment (6 rankings), CMPSC 24 only in the ULA one (7), CMPSC 156
-  // in both (4 and 9). A numeric column sorts descending first.
+  // in both (4 and 3). A numeric column sorts descending first.
   test.each([
     [
       "taRankingCount",
@@ -653,8 +667,8 @@ describe("CombinedAllocationTable: the columns of the allocations pages (issue #
     ],
     [
       "ulaRankingCount",
-      ["CMPSC 156", "CMPSC 24", "CMPSC 8"],
       ["CMPSC 24", "CMPSC 156", "CMPSC 8"],
+      ["CMPSC 156", "CMPSC 24", "CMPSC 8"],
     ],
   ])(
     "sorting by %s orders by the count, and a section of the other type goes last either way",
@@ -778,5 +792,346 @@ describe("CombinedAllocationTable: the columns of the allocations pages (issue #
       screen.getByTestId("CombinedAllocationTable-header-section-hide"),
     );
     expect(onHide).toHaveBeenCalledWith("section");
+  });
+});
+
+describe("CombinedAllocationTable: the Enrollment Estimate boxes, the totals and Summer Session (issue #358)", () => {
+  beforeEach(() => {
+    axiosMock.reset();
+    axiosMock.resetHistory();
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimate")
+      .reply(200, {});
+  });
+  afterEach(() => vi.useRealTimers());
+
+  // Rows: 0 is CMPSC 8 (TA course 2, estimate 60), 1 is CMPSC 24 (ULA course 12, no estimate),
+  // 2 is CMPSC 156 (TA course 1 and ULA course 11, estimates 100 and 80, shown 100).
+  const fx = fixtures;
+  const renderIt = (props = {}) =>
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <CombinedAllocationTable
+            courses={combineCourses(fx.taCourses, fx.ulaCourses)}
+            hasTa
+            hasUla
+            conversionFactor={3}
+            {...props}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+  test("each row has an Enrollment Estimate box with its value, labelled by its section", () => {
+    renderIt();
+
+    expect(estimateBox(0)).toHaveValue(60);
+    expect(estimateBox(2)).toHaveValue(100);
+    // No estimate yet shows as an empty box, not a zero.
+    expect(estimateBox(1)).toHaveValue(null);
+    expect(estimateBox(2)).toHaveAttribute(
+      "aria-label",
+      "Enrollment estimate for CMPSC   156 section 0100",
+    );
+    expect(estimateBox(2)).toHaveClass("form-control-sm", "text-end");
+    expect(estimateBox(2)).toHaveAttribute("min", "0");
+    expect(estimateBox(2)).toHaveAttribute("step", "1");
+    expect(estimateBox(2).style.width).toBe("6em");
+  });
+
+  test("a section with no section number is labelled with an empty one", () => {
+    const courses = combineCourses([{ ...fx.taCourses[1], section: null }], []);
+    renderIt({ courses, hasUla: false });
+
+    expect(estimateBox(0)).toHaveAttribute(
+      "aria-label",
+      "Enrollment estimate for CMPSC     8 section ",
+    );
+  });
+
+  test("an estimate is saved one second after the last keystroke, to the course row of each recruitment", async () => {
+    vi.useFakeTimers();
+    renderIt();
+    const box = estimateBox(2);
+
+    fireEvent.change(box, { target: { value: "15" } });
+    expect(box).toHaveValue(15);
+    expect(box).not.toHaveClass("is-invalid");
+    await act(() => vi.advanceTimersByTimeAsync(500));
+    // Typing again restarts the second.
+    fireEvent.change(box, { target: { value: "150" } });
+    await act(() => vi.advanceTimersByTimeAsync(999));
+    expect(estimatePuts()).toHaveLength(0);
+
+    await act(() => vi.advanceTimersByTimeAsync(1));
+
+    // CMPSC 156 is TA course 1 and ULA course 11: both are set, so the two agree.
+    expect(estimatePuts().map((r) => r.params)).toEqual([
+      { id: 1, enrollmentEstimate: 150 },
+      { id: 11, enrollmentEstimate: 150 },
+    ]);
+    expect(estimatePuts()[0].method).toBe("put");
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(estimatePuts()).toHaveLength(2);
+  });
+
+  test("a section in one recruitment is saved to that one row only", async () => {
+    vi.useFakeTimers();
+    renderIt();
+
+    fireEvent.change(estimateBox(0), { target: { value: "70" } });
+    fireEvent.change(estimateBox(1), { target: { value: "30" } });
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+
+    expect(estimatePuts().map((r) => r.params)).toEqual([
+      { id: 2, enrollmentEstimate: 70 },
+      { id: 12, enrollmentEstimate: 30 },
+    ]);
+  });
+
+  test("clearing the box clears the estimate: the parameter is left out", async () => {
+    vi.useFakeTimers();
+    renderIt();
+
+    fireEvent.change(estimateBox(0), { target: { value: "" } });
+    expect(estimateBox(0)).toHaveValue(null);
+    expect(estimateBox(0)).not.toHaveClass("is-invalid");
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+
+    expect(estimatePuts().map((r) => r.params)).toEqual([{ id: 2 }]);
+  });
+
+  test("leaving the box before the second sends the pending value at once, and only once", async () => {
+    vi.useFakeTimers();
+    renderIt();
+    const box = estimateBox(2);
+
+    fireEvent.change(box, { target: { value: "210" } });
+    await act(() => vi.advanceTimersByTimeAsync(300));
+    fireEvent.blur(box);
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    expect(estimatePuts().map((r) => r.params)).toEqual([
+      { id: 1, enrollmentEstimate: 210 },
+      { id: 11, enrollmentEstimate: 210 },
+    ]);
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(estimatePuts()).toHaveLength(2);
+  });
+
+  test("leaving the box after the save sends nothing more", async () => {
+    vi.useFakeTimers();
+    renderIt();
+    const box = estimateBox(0);
+
+    fireEvent.change(box, { target: { value: "210" } });
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+    expect(estimatePuts()).toHaveLength(1);
+    fireEvent.blur(box);
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+
+    expect(estimatePuts()).toHaveLength(1);
+  });
+
+  test("an invalid estimate is flagged, never sent, and reverts on blur", async () => {
+    vi.useFakeTimers();
+    renderIt();
+    const box = estimateBox(0);
+
+    fireEvent.change(box, { target: { value: "-1" } });
+    expect(box).toHaveClass("is-invalid");
+    fireEvent.change(box, { target: { value: "1.5" } });
+    expect(box).toHaveClass("is-invalid");
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(estimatePuts()).toHaveLength(0);
+
+    fireEvent.blur(box);
+
+    expect(box).toHaveValue(60);
+    expect(box).not.toHaveClass("is-invalid");
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(estimatePuts()).toHaveLength(0);
+  });
+
+  test("a valid entry then an invalid one sends nothing", async () => {
+    vi.useFakeTimers();
+    renderIt();
+    const box = estimateBox(0);
+
+    fireEvent.change(box, { target: { value: "14" } });
+    fireEvent.change(box, { target: { value: "14.5" } });
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    fireEvent.blur(box);
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+
+    expect(estimatePuts()).toHaveLength(0);
+  });
+
+  test("each section's estimate is pending on its own", async () => {
+    vi.useFakeTimers();
+    renderIt();
+
+    fireEvent.change(estimateBox(0), { target: { value: "10" } });
+    await act(() => vi.advanceTimersByTimeAsync(600));
+    fireEvent.change(estimateBox(1), { target: { value: "20" } });
+    await act(() => vi.advanceTimersByTimeAsync(400));
+
+    expect(estimatePuts().map((r) => r.params)).toEqual([
+      { id: 2, enrollmentEstimate: 10 },
+    ]);
+    await act(() => vi.advanceTimersByTimeAsync(600));
+    expect(estimatePuts().map((r) => r.params)).toEqual([
+      { id: 2, enrollmentEstimate: 10 },
+      { id: 12, enrollmentEstimate: 20 },
+    ]);
+  });
+
+  test("leaving the page within the second still sends the pending estimates, to every row", async () => {
+    vi.useFakeTimers();
+    const { unmount } = renderIt();
+
+    fireEvent.change(estimateBox(2), { target: { value: "10" } });
+    fireEvent.change(estimateBox(0), { target: { value: "" } });
+    await act(() => vi.advanceTimersByTimeAsync(200));
+    unmount();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    expect(estimatePuts().map((r) => r.params)).toEqual([
+      { id: 1, enrollmentEstimate: 10 },
+      { id: 11, enrollmentEstimate: 10 },
+      { id: 2 },
+    ]);
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(estimatePuts()).toHaveLength(3);
+  });
+
+  test("unmounting with nothing pending sends nothing", async () => {
+    vi.useFakeTimers();
+    const { unmount } = renderIt();
+    unmount();
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(estimatePuts()).toHaveLength(0);
+  });
+
+  test("a saved estimate goes straight into every cached course list", async () => {
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimate")
+      .reply((config) => [
+        200,
+        { ...fx.taCourses[1], id: config.params.id, enrollmentEstimate: 333 },
+      ]);
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(
+      ["/api/recruitmentcourses/all", 5],
+      [fx.taCourses[1]],
+    );
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CombinedAllocationTable
+            courses={combineCourses([fx.taCourses[1]], [])}
+            hasTa
+            hasUla={false}
+            conversionFactor={3}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.change(estimateBox(0), { target: { value: "333" } });
+    fireEvent.blur(estimateBox(0));
+
+    await waitFor(() =>
+      expect(
+        queryClient.getQueryData(["/api/recruitmentcourses/all", 5])[0]
+          .enrollmentEstimate,
+      ).toBe(333),
+    );
+  });
+
+  test("a failed save is toasted", async () => {
+    axiosMock.onPut("/api/recruitmentcourses/enrollmentEstimate").reply(500);
+    renderIt();
+
+    fireEvent.change(estimateBox(0), { target: { value: "5" } });
+    fireEvent.blur(estimateBox(0));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        "Error: Request failed with status code 500",
+      ),
+    );
+  });
+
+  test("a section whose rows are all removed has a disabled box", () => {
+    const courses = combineCourses([{ ...fx.taCourses[1], removed: true }], []);
+    renderIt({ courses, hasUla: false });
+
+    expect(estimateBox(0)).toBeDisabled();
+  });
+
+  test("a section with one row left has an enabled box", () => {
+    const courses = combineCourses(
+      [{ ...fx.taCourses[0], removed: true }],
+      [fx.ulaCourses[0]],
+    );
+    renderIt({ courses });
+
+    expect(estimateBox(0)).toBeEnabled();
+  });
+
+  test("the totals row: the sections counted and the sums of the columns that add up", () => {
+    renderIt();
+
+    const footer = (id) =>
+      screen.getByTestId(`CombinedAllocationTable-footer-${id}`);
+    expect(footer("courseId")).toHaveTextContent("Total Course Count: 3");
+    // Enrolled: CMPSC 156 90 (TA row), CMPSC 24 40, CMPSC 8 none.
+    expect(footer("enrollment")).toHaveTextContent(/^130$/);
+    expect(footer("maxEnroll")).toHaveTextContent(/^170$/);
+    // The estimates shown: 60 + none + 100.
+    expect(footer("enrollmentEstimate")).toHaveTextContent(/^160$/);
+    // TA allocations 3 + 0, ULA allocations 6 + 2.
+    expect(footer("taAllocation")).toHaveTextContent(/^3$/);
+    expect(footer("ulaAllocation")).toHaveTextContent(/^8$/);
+    expect(footer("section")).toBeEmptyDOMElement();
+  });
+
+  test("a hidden column's total goes with it", () => {
+    renderIt({ hiddenColumns: ["enrollment", "taAllocation"] });
+
+    expect(
+      screen.queryByTestId("CombinedAllocationTable-footer-enrollment"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("CombinedAllocationTable-footer-taAllocation"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("CombinedAllocationTable-footer-maxEnroll"),
+    ).toBeInTheDocument();
+  });
+
+  test("Summer Session is a column only for a summer quarter, taken from the TA row first", () => {
+    const { unmount } = renderIt();
+    expect(
+      screen.queryByTestId("CombinedAllocationTable-header-summerSession"),
+    ).toBeNull();
+    unmount();
+
+    const courses = combineCourses(
+      [{ ...fx.taCourses[0], summerSession: "A" }],
+      [{ ...fx.ulaCourses[0], summerSession: "B" }, fx.ulaCourses[1]],
+    );
+    renderIt({ summer: true, courses });
+
+    expect(
+      screen.getByTestId("CombinedAllocationTable-header-summerSession"),
+    ).toHaveTextContent("Summer Session");
+    expect(td(1, "summerSession")).toHaveTextContent("A");
+    // The column comes last, after Status.
+    const ids = headerIds();
+    expect(ids[ids.length - 1]).toBe("summerSession");
+    expect(ids[ids.length - 2]).toBe("status");
   });
 });

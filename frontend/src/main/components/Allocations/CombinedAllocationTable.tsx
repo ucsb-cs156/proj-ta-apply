@@ -9,6 +9,10 @@ import {
 } from "main/components/Common/columnStyles";
 import { useAllocationSaves } from "main/components/Recruitments/useAllocationSaves";
 import {
+  useEstimateSaves,
+  type EstimateTarget,
+} from "main/components/Recruitments/useEstimateSaves";
+import {
   InstructorEmailCell,
   RankingCountCell,
   StatusCell,
@@ -21,6 +25,7 @@ import {
   allocationDelta,
   deltaDisplay,
   isValidAllocation,
+  isValidEnrollmentEstimate,
   oneDecimal,
   ratioDisplay,
   unroundedTooltip,
@@ -81,6 +86,53 @@ function AllocationCell({
   );
 }
 
+/** What the Enrollment Estimate cells need, handed to them through the column's meta. */
+type EstimateMeta = {
+  style: CSSProperties;
+  testIdPrefix: string;
+  drafts: Record<string, string>;
+  onChange: (target: EstimateTarget, value: string) => void;
+  onBlur: (target: EstimateTarget) => void;
+};
+
+/**
+ * One section's Enrollment Estimate box, the box of the Recruitment Courses page (issue #175): saved
+ * a second after the last keystroke, or at once when the box is left; an empty box clears the
+ * estimate. The section's course rows of both recruitments are set to it (until issue #363 gives
+ * a course one estimate). A module level component, for the same reason as AllocationCell.
+ */
+function EnrollmentEstimateCell({
+  cell,
+}: {
+  cell: Cell<CombinedCourse, unknown>;
+}): React.JSX.Element {
+  const meta = cell.column.columnDef.meta as EstimateMeta;
+  const row = cell.row.original;
+  const rows = [row.ta, row.ula].filter(
+    (course): course is RecruitmentCourse => course !== undefined,
+  );
+  const target = { key: row.enrollCode, ids: rows.map((course) => course.id) };
+  const draft = meta.drafts[target.key];
+  return (
+    <Form.Control
+      type="number"
+      min={0}
+      step={1}
+      size="sm"
+      style={{ width: "6em" }}
+      className="text-end"
+      aria-label={`Enrollment estimate for ${row.courseId} section ${row.section ?? ""}`}
+      // Stryker disable next-line StringLiteral : a number box shows any non-number as empty anyway
+      value={draft ?? String(row.enrollmentEstimate ?? "")}
+      isInvalid={draft !== undefined && !isValidEnrollmentEstimate(draft)}
+      disabled={rows.every((course) => course.removed)}
+      onChange={(e) => meta.onChange(target, e.target.value)}
+      onBlur={() => meta.onBlur(target)}
+      data-testid={`${meta.testIdPrefix}-cell-row-${cell.row.index}-enrollmentEstimate`}
+    />
+  );
+}
+
 type CombinedAllocationTableProps = {
   courses: CombinedCourse[];
   hasTa: boolean;
@@ -100,6 +152,8 @@ type CombinedAllocationTableProps = {
   hiddenColumns?: string[];
   /** The "hide" links over the hideable columns' headings. */
   hideLinks?: HideLinks;
+  /** A summer quarter's offerings have a Summer Session; the column exists only then. */
+  summer?: boolean;
   testIdPrefix?: string;
 };
 
@@ -124,7 +178,9 @@ export default function CombinedAllocationTable({
   conversionFactor,
   taBulkVersion,
   ulaBulkVersion,
+  // Stryker disable next-line ArrayDeclaration : a course is looked up by its id in them, and nothing is found in a list of anything else
   taRankingSummaries = [],
+  // Stryker disable next-line ArrayDeclaration : a course is looked up by its id in them, and nothing is found in a list of anything else
   ulaRankingSummaries = [],
   showTaRankings = false,
   showUlaRankings = false,
@@ -132,12 +188,22 @@ export default function CombinedAllocationTable({
   // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
   hiddenColumns = [],
   hideLinks,
+  summer = false,
   testIdPrefix = "CombinedAllocationTable",
 }: CombinedAllocationTableProps): React.JSX.Element {
   // Stryker disable BooleanLiteral : the saves refresh the lists by each part of this key on its own, so whether removed courses are included makes no difference here
   const taSaves = useAllocationSaves(undefined, taBulkVersion, false);
   const ulaSaves = useAllocationSaves(undefined, ulaBulkVersion, false);
+  const { estimateDrafts, onEstimateChange, onEstimateBlur } = useEstimateSaves(
+    undefined,
+    false,
+  );
   // Stryker restore BooleanLiteral
+
+  // The totals row (as on the Recruitment Courses page): the sections counted, and the sums of the
+  // columns that add up. Each is shown under its column, and goes with it when it is hidden.
+  const sumOf = (pick: (course: CombinedCourse) => number | null | undefined) =>
+    String(courses.reduce((sum, course) => sum + (pick(course) ?? 0), 0));
 
   const typeColumns = (type: Type) => {
     const saves = type === "TA" ? taSaves : ulaSaves;
@@ -158,6 +224,7 @@ export default function CombinedAllocationTable({
           onBlur: saves.onAllocationBlur,
         } satisfies AllocationMeta,
         cell: AllocationCell,
+        footer: sumOf((course) => rowOf(course, type)?.allocation),
       },
       {
         header: (
@@ -274,6 +341,7 @@ export default function CombinedAllocationTable({
       header: stacked("Course", "Number"),
       accessorKey: "courseId",
       meta: shrinkToContent,
+      footer: `Total Course Count: ${courses.length}`,
       // The cell is as wide as the widest course number, "XXXXXXX 999XX", in its monospaced font.
       cell: ({ cell }: { cell: Cell<Row, unknown> }) => (
         <span
@@ -311,12 +379,30 @@ export default function CombinedAllocationTable({
     { header: "Days", accessorKey: "days", meta: shrinkToContent },
     { header: "Time", accessorKey: "time", meta: shrinkToContent },
     { header: "Room", accessorKey: "room", meta: shrinkToContent },
-    { header: "Enrolled", accessorKey: "enrollment", meta: numeric },
-    { header: "Max", accessorKey: "maxEnroll", meta: numeric },
+    {
+      header: "Enrolled",
+      accessorKey: "enrollment",
+      meta: numeric,
+      footer: sumOf((course) => course.enrollment),
+    },
+    {
+      header: "Max",
+      accessorKey: "maxEnroll",
+      meta: numeric,
+      footer: sumOf((course) => course.maxEnroll),
+    },
     {
       header: stacked("Enrollment", "Estimate"),
       accessorKey: "enrollmentEstimate",
-      meta: numeric,
+      footer: sumOf((course) => course.enrollmentEstimate),
+      meta: {
+        ...numeric,
+        testIdPrefix,
+        drafts: estimateDrafts,
+        onChange: onEstimateChange,
+        onBlur: onEstimateBlur,
+      } satisfies EstimateMeta,
+      cell: EnrollmentEstimateCell,
     },
     ...(hasTa ? typeColumns("TA") : []),
     ...(hasUla ? typeColumns("ULA") : []),
@@ -341,6 +427,16 @@ export default function CombinedAllocationTable({
         />
       ),
     },
+    // Only a summer quarter's offerings carry a value, so the column exists only then.
+    ...(summer
+      ? [
+          {
+            header: stacked("Summer", "Session"),
+            accessorKey: "summerSession",
+            meta: shrinkToContent,
+          },
+        ]
+      : []),
   ];
 
   // The ASE:Student ratio is part of the data, not computed by its column: TanStack keeps what a

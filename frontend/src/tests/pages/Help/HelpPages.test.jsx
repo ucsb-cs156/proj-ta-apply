@@ -587,6 +587,11 @@ describe("Help pages (issue #140)", () => {
     expect(columns).toHaveTextContent(
       "just wide enough for the longest UCSB course number, 13 characters",
     );
+    expect(columns).toHaveTextContent("Summer Session");
+    expect(columns).toHaveTextContent("Total Course Count");
+    expect(page).toHaveTextContent(
+      "saved to the section's course row in each recruitment that has it, so the two agree",
+    );
     expect(columns).toHaveTextContent("Show All, Show None");
     expect(columns).toHaveTextContent(
       "remembered in this browser, separately for each quarter",

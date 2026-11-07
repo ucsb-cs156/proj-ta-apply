@@ -23,12 +23,13 @@ export const typeColumnId = (
 /**
  * Every column that may be hidden, with the label of the Columns menu, in table order. The course
  * number is not listed: it is always shown. A column of a type (its name starts with TA or ULA)
- * exists only when the quarter has that recruitment, and its rankings column only once that
+ * exists only when the quarter has that recruitment, Summer Session only for a summer quarter, and a type's rankings column only once that
  * recruitment's faculty review has started, as on the Recruitment Courses page.
  */
 export const combinedColumnChoices = (
   ta: { exists: boolean; showRankings: boolean },
   ula: { exists: boolean; showRankings: boolean },
+  summer = false,
 ): ColumnChoice[] => {
   const typeChoices = (type: Type): ColumnChoice[] => [
     { id: typeColumnId(type, "allocation"), label: `${type} Allocation` },
@@ -62,6 +63,8 @@ export const combinedColumnChoices = (
       ? [{ id: "aseRatio", label: "ASE:Student Ratio" }]
       : []),
     { id: "status", label: "Status" },
+    // Only a summer quarter's offerings carry a value, so the column exists only then.
+    ...(summer ? [{ id: "summerSession", label: "Summer Session" }] : []),
   ];
 };
 
@@ -93,6 +96,7 @@ export const defaultHiddenCombinedColumns = (): string[] =>
   combinedColumnChoices(
     { exists: true, showRankings: true },
     { exists: true, showRankings: true },
+    true,
   )
     .map((choice) => choice.id)
     .filter((id) => !COMBINED_DEFAULT_VISIBLE_COLUMNS.includes(id));

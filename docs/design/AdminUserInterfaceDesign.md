@@ -126,8 +126,10 @@ stays as it is.
 - **Rows**: the union of the courses of the quarter's TA and ULA recruitments, one row per enroll
   code (a course's two lectures are two rows; a section in both recruitments is one row). A
   section in only one recruitment has blank cells for the other type.
-- **Enrollment Estimate**: one column, read-only. Today each recruitment's course row has its own
-  estimate; a section in both shows the higher of the two (until issue #363 gives a course one
+- **Enrollment Estimate**: one column, editable like the Courses page's box (saved a second after
+  the last keystroke, an empty box clears it). Today each recruitment's course row has its own
+  estimate; a section in both shows the higher of the two, and an edit is saved to the course row
+  of every recruitment that has the section so the two agree (until issue #363 gives a course one
   value per quarter). All the ratios on the page use this one value.
 - **Columns per type**, only for a type that has a recruitment: Allocation (editable, through the
   same endpoint and version checks as the Recruitment Courses page, against that type's
@@ -135,7 +137,9 @@ stays as it is.
 - **The other columns of the Courses page** (follow-up to the first PR): TA Rankings and ULA
   Rankings (a type's only once its faculty reviews are not `NotStarted`, linking to the course's
   ranking page), Section, Title, Instructor, Email (with the copy widget), Days, Time, Room,
-  Enrolled, Max and Status. A column starting with TA exists only when the quarter has a TA
+  Enrolled, Max, Status and, for a summer quarter, Summer Session. A totals row under the table
+  has Total Course Count and the sums of Enrolled, Max, Enrollment Estimate and each type's
+  Allocation. A column starting with TA exists only when the quarter has a TA
   recruitment, and likewise ULA. The descriptive columns are the same course for a section in both
   recruitments: the TA row is used, the ULA row when there is no TA row. **Course Number** has a
   stacked heading ("Course" over "Number") and a cell 13 characters wide (`13ch`, monospaced), the

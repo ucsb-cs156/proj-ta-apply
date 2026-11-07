@@ -74,6 +74,7 @@ export type CombinedCourse = {
   enrollment: number | null;
   maxEnroll: number | null;
   status: string | null;
+  summerSession: string | null;
   /** Set by Populate when the section was not found (issue #122). */
   stale?: boolean;
   /** The higher of the two recruitments' estimates; null when neither has one. */
@@ -121,6 +122,7 @@ export const combineCourses = (
       enrollment: details.enrollment,
       maxEnroll: details.maxEnroll,
       status: details.status,
+      summerSession: details.summerSession,
       stale: details.stale,
       enrollmentEstimate: higher(
         existing?.enrollmentEstimate,

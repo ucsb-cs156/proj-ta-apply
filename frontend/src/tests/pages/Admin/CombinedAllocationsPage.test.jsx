@@ -198,7 +198,11 @@ describe("CombinedAllocationsPage tests", () => {
       screen.getByTestId("CombinedAllocationTable-header-aseRatio"),
     ).toBeInTheDocument();
     expect(td(2, "aseRatio")).toHaveTextContent("1:20");
-    expect(td(2, "enrollmentEstimate")).toHaveTextContent("100");
+    expect(
+      screen.getByTestId(
+        "CombinedAllocationTable-cell-row-2-enrollmentEstimate",
+      ),
+    ).toHaveValue(100);
     expect(gets(COURSES).map((r) => r.params)).toEqual(
       expect.arrayContaining([
         { recruitmentId: 5, includeRemoved: false },
@@ -1039,12 +1043,12 @@ describe("CombinedAllocationsPage tests", () => {
         screen.getByTestId("CombinedAllocationsPage-columns-select-all"),
       );
 
-      // Row 2 is CMPSC 156 (TA 4, ULA 9); row 1 is CMPSC 24, ULA only (7).
+      // Row 2 is CMPSC 156 (TA 4, ULA 3); row 1 is CMPSC 24, ULA only (7).
       expect(
         await screen.findByTestId(
           "CombinedAllocationTable-ula-cell-row-2-ranking-link",
         ),
-      ).toHaveTextContent("9");
+      ).toHaveTextContent("3");
       expect(
         screen.getByTestId(
           "CombinedAllocationTable-ta-cell-row-2-ranking-link",
@@ -1118,6 +1122,64 @@ describe("CombinedAllocationsPage tests", () => {
         expect(
           screen.queryByTestId("CombinedAllocationsPage-auto-assign-modal"),
         ).not.toBeInTheDocument(),
+      );
+    });
+
+    test("a summer quarter (M26) has a Summer Session column in the menu and, once shown, in the table; other quarters do not", async () => {
+      axiosMock
+        .onGet(BUDGET, { params: { quarter: "20263" } })
+        .reply(200, budgetFixtures.taOnlyOverBudget);
+      const { unmount } = renderPage("F26");
+      await openColumns();
+      expect(
+        screen.queryByTestId("CombinedAllocationsPage-columns-summerSession"),
+      ).toBeNull();
+      unmount();
+
+      renderPage("M26");
+      await openColumns();
+      await userEvent.click(
+        await screen.findByTestId(
+          "CombinedAllocationsPage-columns-summerSession",
+        ),
+      );
+      expect(headerIds()).toContain("summerSession");
+    });
+
+    test("an estimate typed in the table is saved to the section's course rows of both recruitments", async () => {
+      axiosMock
+        .onPut("/api/recruitmentcourses/enrollmentEstimate")
+        .reply(200, {});
+      renderPage("F26");
+      const box = await screen.findByTestId(
+        "CombinedAllocationTable-cell-row-2-enrollmentEstimate",
+      );
+
+      await userEvent.clear(box);
+      await userEvent.type(box, "120");
+      await userEvent.tab();
+
+      await waitFor(() =>
+        expect(
+          axiosMock.history.put
+            .filter(
+              (r) => r.url === "/api/recruitmentcourses/enrollmentEstimate",
+            )
+            .map((r) => r.params),
+        ).toEqual([
+          { id: 1, enrollmentEstimate: 120 },
+          { id: 11, enrollmentEstimate: 120 },
+        ]),
+      );
+    });
+
+    test("the table has its totals row", async () => {
+      renderPage("F26");
+
+      await waitFor(() =>
+        expect(
+          screen.getByTestId("CombinedAllocationTable-footer-courseId"),
+        ).toHaveTextContent("Total Course Count: 3"),
       );
     });
 
