@@ -631,7 +631,10 @@ describe("Help pages (issue #140)", () => {
       "A column that starts with TA is not shown when the quarter has no TA recruitment, and one that starts with ULA is not shown when it has no ULA recruitment.",
     );
     expect(columns).toHaveTextContent(
-      "just wide enough for the longest UCSB course number, 13 characters",
+      "just wide enough for the longest CMPSC course number, 11 characters (such as CMPSC 190DD)",
+    );
+    expect(columns).toHaveTextContent(
+      "Each type's Allocation, Unrounded Allocation and Delta headings are stacked, TA or ULA over the other words in smaller type",
     );
     expect(columns).toHaveTextContent("Summer Session");
     expect(columns).toHaveTextContent("Total Course Count");
@@ -2227,6 +2230,61 @@ describe("Help pages (issue #140)", () => {
     renderPage(<HelpTaApplicantsPage />);
     await screen.findByRole("heading", { level: 1, name: "For TA Applicants" });
     expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  // Where the admins page's prose runs into an emphasised word, a link or a span on the next line of
+  // the source, the two are kept apart by an explicit space; without it the words would run
+  // together ("Course Numberis"). Each phrase here straddles one of those spaces.
+  test("the admins page's prose keeps its spaces around emphasised words, links and spans", async () => {
+    renderPage(<HelpAdminsPage />);
+    const page = await screen.findByTestId("HelpAdminsPage");
+
+    [
+      "applicant is, a Tentative Assignment dropdown,",
+      "heading shows its Allocation, how many",
+      "all at once; Show All Courses",
+      "lecture column, and Show Only Incomplete",
+      "bring it back. Tentative Assignment is",
+      "badge and a Published Assignments button",
+      "(instructors see an Assignments button on",
+      "The page offers One Row per",
+      "per course) and Download CSV (row",
+      "Assignments page say Tentative; part of",
+      "quarter: under Recruitments on your home",
+      "the leftmost Rankings column shows how",
+      "zero. The Email column uses the",
+      "one address, or Copy emails of",
+      "130A. In the Email column, the",
+      "one address and Not mapped opens",
+      "sees any allocation. Faculty see their",
+      "an x under TA and under",
+      "and the additional TAs only and",
+      "/admin/allocations/QXX (for example /admin/allocations/W26) is where",
+      "have been opened), Section, Title,",
+      "Section, Title, Instructor, Email (with",
+      "button), Days, Time, Room, Enrolled, Max",
+      "Room, Enrolled, Max and Status, and,",
+      "a summer quarter, Summer Session. A",
+      "the table shows Total Course Count",
+      "none. Course Number is on two",
+      "Columns menu has Show All, Show",
+      "of the quarter. Auto assign TA",
+      "TA allocations and Auto assign ULA",
+      "per TA and Cost per ULA",
+      "Quarter page) and TA Cost/ULA Cost,",
+      "it is the Nominal TA to",
+      "changed it first. When computing overall ASE:Student ratio",
+      "whatever basis makes the most sense. It is used by",
+      "is open (see Simultaneous Editing). While",
+      "card (for example W26 Budget) with",
+      "the rankings download, Download Rankings CSV,",
+      "goes into the Audit Trail. The table shows the id",
+      "shown from the Columns menu above",
+      "Show All or Show None at",
+      "a lecture; the Assignments section below",
+      "hiring targets. The TA to ULA",
+      "Use theirs or Overwrite. The factor",
+    ].forEach((phrase) => expect(page).toHaveTextContent(phrase));
   });
 });
 

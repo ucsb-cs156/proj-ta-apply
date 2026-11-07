@@ -91,7 +91,11 @@ const handlers = (
 
 const { taCourses, ulaCourses } = combinedAllocationsFixtures;
 
-/** F26: both recruitments: the costs, the conversion factor and the ASE:Student Ratio. */
+/**
+ * F26: both recruitments: the costs, the conversion factor and the ASE:Student Ratio. Each type's
+ * Allocation, Unrounded Allocation and Delta headings are stacked under the type (issue #383), and
+ * the course numbers are shown without the API's subject area padding, 11 characters at most.
+ */
 export const BothRecruitments = Template.bind({});
 BothRecruitments.parameters = {
   reactRouter: { initialEntries: ["/admin/allocations/F26"] },

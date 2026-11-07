@@ -45,14 +45,31 @@ export const wideColumnProps = (
     : {};
 
 /**
- * The widest UCSB course number is 13 characters including the space, "XXXXXXX 999XX" (issue #358):
- * a 7-letter subject area, a space and a 3-digit number with up to two letters.
+ * A course number as the Combined Allocation table shows it (issue #383): the subject area, one
+ * space, and the number with its digits right-justified in three columns, so the digits of
+ * "CMPSC   8" and "CMPSC 190DD" line up as they do in the UCSB API's padded form ("CMPSC     8",
+ * "CMPSC   190DD": an eight-column subject area field, then three digit columns and the letters).
+ * Only the subject area field's padding goes, which for CMPSC was three spaces no one needs; the
+ * unpadded "CMPSC 8" of the catalog comes out the same way.
  */
-export const COURSE_NUMBER_CHARACTERS = "XXXXXXX 999XX".length;
+export const compactCourseNumber = (courseId: string): string => {
+  const [subject, ...rest] = courseId.trim().split(/\s+/);
+  const number = rest.join(" ").replace(/^\d+/, (digits) => digits.padStart(3));
+  return number === "" ? subject : `${subject} ${number}`;
+};
+
+/**
+ * The widest course number the Combined Allocation table shows, "CMPSC 190DD": the subject area
+ * this app manages (CMPSC, `app.subjectArea`), a space, and a 3-digit number with up to two letters,
+ * in the form of {@link compactCourseNumber}: 11 characters. Until issue #383 the cell kept the
+ * API's padded form and was 13 (a 7-letter subject area field, a space, "999XX").
+ */
+export const COURSE_NUMBER_CHARACTERS = "CMPSC 190DD".length;
 
 /**
  * The width of a course number's cell contents: exactly {@link COURSE_NUMBER_CHARACTERS}
  * characters of the monospaced font it is shown in, so the column is just wide enough for the
- * widest course number, whether or not any course in the table has one that long.
+ * widest course number, whether or not any course in the table has one that long. (A longer
+ * subject area, if one were configured, widens the cell: it is a minimum, and the text never wraps.)
  */
 export const COURSE_NUMBER_WIDTH = `${COURSE_NUMBER_CHARACTERS}ch`;

@@ -6,6 +6,7 @@ import {
   numeric,
   shrinkToContent,
   stacked,
+  stackedLead,
 } from "main/components/Common/columnStyles";
 import { useAllocationSaves } from "main/components/Recruitments/useAllocationSaves";
 import {
@@ -19,7 +20,10 @@ import {
   type RecruitmentCourse,
   type RecruitmentCourseRankingSummary,
 } from "main/components/Recruitments/RecruitmentCourseTable";
-import { COURSE_NUMBER_WIDTH } from "main/utils/columnWidths";
+import {
+  COURSE_NUMBER_WIDTH,
+  compactCourseNumber,
+} from "main/utils/columnWidths";
 import { typeColumnId } from "main/utils/combinedColumns";
 import {
   allocationDelta,
@@ -211,9 +215,11 @@ export default function CombinedAllocationTable({
   const typeColumns = (type: Type) => {
     const saves = type === "TA" ? taSaves : ulaSaves;
     const key = type.toLowerCase();
+    // The type's headings are stacked under the type, "TA" over "Allocation" (issue #383), so the
+    // columns are no wider than their one widest word.
     return [
       {
-        header: `${type} Allocation`,
+        header: stackedLead(type, "Allocation"),
         id: `${key}Allocation`,
         accessorFn: (row: CombinedCourse) => rowOf(row, type)?.allocation,
         // A section the type does not have has nothing to sort by, so it goes last either way
@@ -243,7 +249,7 @@ export default function CombinedAllocationTable({
               style={{ textDecoration: "underline dotted" }}
               data-testid={`${testIdPrefix}-${key}-unrounded-heading`}
             >
-              {stacked(`${type} Unrounded`, "Allocation")}
+              {stackedLead(type, "Unrounded", "Allocation")}
             </span>
           </OverlayTrigger>
         ),
@@ -264,7 +270,7 @@ export default function CombinedAllocationTable({
         },
       },
       {
-        header: `${type} Delta`,
+        header: stackedLead(type, "Delta"),
         id: `${key}Delta`,
         accessorFn: (row: CombinedCourse) => {
           const course = rowOf(row, type);
@@ -345,7 +351,8 @@ export default function CombinedAllocationTable({
       accessorKey: "courseId",
       meta: shrinkToContent,
       footer: `Total Course Count: ${courses.length}`,
-      // The cell is as wide as the widest course number, "XXXXXXX 999XX", in its monospaced font.
+      // The cell is as wide as the widest course number, "CMPSC 190DD", in its monospaced font; the
+      // number is shown without the API's subject area padding, its digits still lined up (#383).
       cell: ({ cell }: { cell: Cell<Row, unknown> }) => (
         <span
           style={{
@@ -355,7 +362,7 @@ export default function CombinedAllocationTable({
             fontFamily: "monospace",
           }}
         >
-          {cell.row.original.courseId}
+          {compactCourseNumber(cell.row.original.courseId)}
         </span>
       ),
     },
