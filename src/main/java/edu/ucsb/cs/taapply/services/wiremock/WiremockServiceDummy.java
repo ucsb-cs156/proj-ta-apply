@@ -12,10 +12,12 @@ import org.springframework.stereotype.Service;
 @ConfigurationProperties
 public class WiremockServiceDummy extends WiremockService {
 
+  @Override
   public WireMockServer getWiremockServer() {
     return null;
   }
 
+  @Override
   public void init() {
     log.info("WiremockServiceDummy.init() called — no-op in non-wiremock profile");
   }

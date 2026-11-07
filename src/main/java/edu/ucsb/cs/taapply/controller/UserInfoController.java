@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class UserInfoController extends ApiController {
 
+  @Override
   @Operation(summary = "Get information about current user")
   @PreAuthorize("hasRole('ROLE_USER')")
   @GetMapping("")

@@ -15,6 +15,7 @@ public class MockGoogleSignInService extends OidcUserService implements GoogleSi
     return super.loadUser(userRequest);
   }
 
+  @Override
   public void signInUser(OidcUser oidcUser) {
     log.info("MockGoogleSignInService.signInUser called with oidcUser: {}", oidcUser);
   }
