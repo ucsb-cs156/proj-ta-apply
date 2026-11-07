@@ -181,11 +181,11 @@ describe("CombinedAllocationsPage tests", () => {
     ).toHaveTextContent("Cost per TA$12,000.00");
     expect(
       screen.getByTestId("CombinedAllocationsPage-costs-ula"),
-    ).toHaveTextContent("Cost per ULA$2,500.50");
-    // 12000 / 2500.5
+    ).toHaveTextContent("Cost per ULA$3,231.80");
+    // 12000 / 3231.80: the cost per ULA is the budget's rate times its hours (issue #388).
     expect(
       screen.getByTestId("CombinedAllocationsPage-costs-ratio"),
-    ).toHaveTextContent("TA Cost/ULA Cost4.80");
+    ).toHaveTextContent("TA Cost/ULA Cost3.71");
 
     expect(await factorBox()).toHaveValue("3");
     expect(screen.getByLabelText("Nominal TA to ULA conversion factor")).toBe(

@@ -37,7 +37,6 @@ import edu.ucsb.cs.taapply.services.AssignmentsService;
 import edu.ucsb.cs.taapply.services.DeveloperModeService;
 import edu.ucsb.cs.taapply.services.RecruitmentAuditService;
 import edu.ucsb.cs156.jobs.services.JobService;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -741,108 +740,16 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     verify(recruitmentAuditService, never()).deleteAndRecord(any());
   }
 
-  // ---- PUT /api/admin/recruitments/avgCostPerPosition (issue #177) ----
+  // ---- the cost per position moved to the Budget (issue #388) ----
 
+  @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void logged_out_users_cannot_change_the_cost_per_position() throws Exception {
+  public void the_cost_per_position_endpoint_is_gone() throws Exception {
     mockMvc
         .perform(
             put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=5")
                 .with(csrf()))
-        .andExpect(status().is(403));
-    verify(recruitmentRepository, never()).save(any());
-  }
-
-  @WithMockUser(roles = {"INSTRUCTOR"})
-  @Test
-  public void instructors_cannot_change_the_cost_per_position() throws Exception {
-    mockMvc
-        .perform(
-            put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=5")
-                .with(csrf()))
-        .andExpect(status().is(403));
-    verify(recruitmentRepository, never()).save(any());
-  }
-
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void a_new_recruitment_has_no_cost_per_position() {
-    assertNull(recruitment(1L, "20261", RecruitmentType.TA).getAvgCostPerPosition());
-  }
-
-  /** A planning figure: saved to the cent, returned, not audited, and no shares to recompute. */
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void admin_can_set_the_cost_per_position() throws Exception {
-    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
-    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
-
-    MvcResult response =
-        mockMvc
-            .perform(
-                put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=12345.675")
-                    .with(csrf()))
-            .andExpect(status().isOk())
-            .andReturn();
-
-    assertEquals(new BigDecimal("12345.68"), r.getAvgCostPerPosition());
-    verify(recruitmentRepository, times(1)).save(r);
-    verify(recruitmentAuditService, never()).snapshot(any());
-    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
-    verify(allocationService, never()).recompute(any());
-    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
-  }
-
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void a_cost_per_position_of_zero_is_allowed() throws Exception {
-    Recruitment r = recruitment(1L, "20261", RecruitmentType.ULA);
-    r.setAvgCostPerPosition(new BigDecimal("9.99"));
-    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
-
-    mockMvc
-        .perform(
-            put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=0")
-                .with(csrf()))
-        .andExpect(status().isOk());
-
-    assertEquals(new BigDecimal("0.00"), r.getAvgCostPerPosition());
-    verify(recruitmentRepository, times(1)).save(r);
-  }
-
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void a_negative_cost_per_position_is_a_400() throws Exception {
-    MvcResult response =
-        mockMvc
-            .perform(
-                put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=-0.01")
-                    .with(csrf()))
-            .andExpect(status().isBadRequest())
-            .andReturn();
-
-    assertEquals(
-        "avgCostPerPosition must not be negative", responseToJson(response).get("message"));
-    verify(recruitmentRepository, never()).findById(any());
-    verify(recruitmentRepository, never()).save(any());
-  }
-
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void setting_the_cost_of_an_unknown_recruitment_is_a_404() throws Exception {
-    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
-
-    MvcResult response =
-        mockMvc
-            .perform(
-                put("/api/admin/recruitments/avgCostPerPosition?id=99&avgCostPerPosition=5")
-                    .with(csrf()))
-            .andExpect(status().isNotFound())
-            .andReturn();
-
-    Map<String, Object> json = responseToJson(response);
-    assertEquals("EntityNotFoundException", json.get("type"));
-    assertEquals("Recruitment with id 99 not found", json.get("message"));
+        .andExpect(status().isNotFound());
     verify(recruitmentRepository, never()).save(any());
   }
 
@@ -1423,7 +1330,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     verify(assignmentsService, never()).anyAssigned(any());
   }
 
-  // ---- compare-and-set on the two budget figures (issue #277) ----
+  // ---- compare-and-set on the hiring target (issue #277; the cost moved to the Budget, #388) ----
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
@@ -1464,58 +1371,5 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(8, r.getTotalHiringTarget());
     verify(recruitmentRepository, never()).save(any());
     verify(allocationService, never()).recompute(any());
-  }
-
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void a_cost_save_that_expects_the_stored_value_to_the_cent_is_applied() throws Exception {
-    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
-    r.setAvgCostPerPosition(new BigDecimal("100.50"));
-    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
-
-    mockMvc
-        .perform(
-            put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=200&expected=100.5")
-                .with(csrf()))
-        .andExpect(status().isOk());
-
-    assertEquals(new BigDecimal("200.00"), r.getAvgCostPerPosition());
-  }
-
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void a_cost_save_that_expects_a_stale_value_is_a_409_and_changes_nothing()
-      throws Exception {
-    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
-    r.setAvgCostPerPosition(new BigDecimal("150.00"));
-    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
-
-    MvcResult response =
-        mockMvc
-            .perform(
-                put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=200&expected=100")
-                    .with(csrf()))
-            .andExpect(status().isConflict())
-            .andReturn();
-
-    assertEquals(
-        "The average cost per position was changed in another tab or window.",
-        responseToJson(response).get("message"));
-    assertEquals(new BigDecimal("150.00"), r.getAvgCostPerPosition());
-    verify(recruitmentRepository, never()).save(any());
-  }
-
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void a_cost_save_that_expects_a_value_when_none_is_stored_is_a_409() throws Exception {
-    Recruitment r = recruitment(1L, "20261", RecruitmentType.TA);
-    when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
-
-    mockMvc
-        .perform(
-            put("/api/admin/recruitments/avgCostPerPosition?id=1&avgCostPerPosition=200&expected=100")
-                .with(csrf()))
-        .andExpect(status().isConflict());
-    verify(recruitmentRepository, never()).save(any());
   }
 }

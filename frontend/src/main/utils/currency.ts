@@ -25,6 +25,13 @@ export const dollarsForInput = (amount: number | null | undefined): string =>
   amount == null ? "" : amount.toFixed(2);
 
 /**
+ * A stored amount as it is put in a box that shows whole numbers (issue #388): rounded to the
+ * nearest integer, half up, no sign or separators; empty when there is nothing stored.
+ */
+export const wholeForInput = (amount: number | null | undefined): string =>
+  amount == null ? "" : String(Math.round(amount));
+
+/**
  * The bottom line as the design shows it: red with a minus sign when negative, green with a plus
  * sign when positive, and plain black "$0.00" when zero (including anything that rounds to zero).
  */
