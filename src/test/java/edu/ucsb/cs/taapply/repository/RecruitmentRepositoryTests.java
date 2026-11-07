@@ -145,6 +145,51 @@ public class RecruitmentRepositoryTests {
     assertEquals(List.of("20263", "20262", "20261"), quarters);
   }
 
+  /** Issue #384: a new recruitment's hiring target is copied from this one, per type. */
+  @Test
+  public void the_most_recent_earlier_recruitment_of_a_type_is_found_by_quarter_order() {
+    Recruitment oldTa = recruitment("20261", RecruitmentType.TA);
+    oldTa.setTotalHiringTarget(5);
+    recruitmentRepository.save(oldTa);
+    Recruitment recentTa = recruitment("20264", RecruitmentType.TA);
+    recentTa.setTotalHiringTarget(12);
+    recruitmentRepository.save(recentTa);
+    Recruitment ula = recruitment("20262", RecruitmentType.ULA);
+    ula.setTotalHiringTarget(30);
+    recruitmentRepository.save(ula);
+    recruitmentRepository.save(recruitment("20271", RecruitmentType.TA));
+
+    // The TA target comes from the most recent earlier TA recruitment, skipping the ULA's quarter.
+    assertEquals(
+        12,
+        recruitmentRepository
+            .findFirstByQuarterLessThanAndTypeOrderByQuarterDesc("20271", RecruitmentType.TA)
+            .orElseThrow()
+            .getTotalHiringTarget());
+    // The ULA target from the ULA's, which is in an earlier quarter than the latest TA's.
+    assertEquals(
+        30,
+        recruitmentRepository
+            .findFirstByQuarterLessThanAndTypeOrderByQuarterDesc("20271", RecruitmentType.ULA)
+            .orElseThrow()
+            .getTotalHiringTarget());
+    // Strictly earlier: the quarter's own recruitment does not count.
+    assertEquals(
+        "20261",
+        recruitmentRepository
+            .findFirstByQuarterLessThanAndTypeOrderByQuarterDesc("20264", RecruitmentType.TA)
+            .orElseThrow()
+            .getQuarter());
+    assertFalse(
+        recruitmentRepository
+            .findFirstByQuarterLessThanAndTypeOrderByQuarterDesc("20261", RecruitmentType.TA)
+            .isPresent());
+    assertFalse(
+        recruitmentRepository
+            .findFirstByQuarterLessThanAndTypeOrderByQuarterDesc("20262", RecruitmentType.ULA)
+            .isPresent());
+  }
+
   /** Round-trips every column, including ones a database might object to, like "time". */
   @Test
   public void a_recruitment_course_round_trips_all_of_its_columns() {

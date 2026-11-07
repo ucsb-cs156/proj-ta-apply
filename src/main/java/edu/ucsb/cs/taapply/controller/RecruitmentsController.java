@@ -93,20 +93,26 @@ public class RecruitmentsController extends ApiController {
           String.format("A %s recruitment already exists for quarter %s", type, quarter));
     }
 
-    // The save and its audit row are one transaction (issue #377).
-    Recruitment recruitment =
-        recruitmentAuditService.saveAndRecordCreated(
-            Recruitment.builder()
-                .quarter(quarter)
-                .type(type)
-                .applicationStatus(ApplicationStatus.CLOSED)
-                .tentativeOpeningDate(tentativeOpeningDate)
-                .primaryConsiderationDate(primaryConsiderationDate)
-                .createdAt(AppTime.now())
-                .build());
+    Recruitment.RecruitmentBuilder recruitment =
+        Recruitment.builder()
+            .quarter(quarter)
+            .type(type)
+            .applicationStatus(ApplicationStatus.CLOSED)
+            .tentativeOpeningDate(tentativeOpeningDate)
+            .primaryConsiderationDate(primaryConsiderationDate)
+            .createdAt(AppTime.now());
+    // The hiring target starts as the one of the same type's recruitment in the most recent
+    // earlier quarter, if there is one (issue #384); otherwise the default. Whoever creates the
+    // recruitment, the Create Recruitment form or Developer Mode's auto-create, comes through here.
+    recruitmentRepository
+        .findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(quarter, type)
+        .ifPresent(previous -> recruitment.totalHiringTarget(previous.getTotalHiringTarget()));
 
-    jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));
-    return recruitment;
+    // The save and its audit row are one transaction (issue #377).
+    Recruitment saved = recruitmentAuditService.saveAndRecordCreated(recruitment.build());
+
+    jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(saved));
+    return saved;
   }
 
   @Operation(

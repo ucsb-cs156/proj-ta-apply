@@ -160,6 +160,93 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     verify(recruitmentAuditService, never()).saveAndRecordCreated(any());
   }
 
+  // ---- the hiring target of a new recruitment (issue #384) ----
+
+  private static Recruitment earlier(long id, String quarter, RecruitmentType type, int target) {
+    Recruitment recruitment = recruitment(id, quarter, type);
+    recruitment.setTotalHiringTarget(target);
+    return recruitment;
+  }
+
+  /**
+   * The Create Recruitment form: the new TA recruitment's target is the one of the TA recruitment
+   * in the most recent earlier quarter.
+   */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_new_recruitment_takes_the_hiring_target_of_its_types_most_recent_earlier_one()
+      throws Exception {
+    when(recruitmentRepository.findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(
+            "20261", RecruitmentType.TA))
+        .thenReturn(Optional.of(earlier(3L, "20254", RecruitmentType.TA, 12)));
+    Recruitment saved = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentAuditService.saveAndRecordCreated(any())).thenReturn(saved);
+    when(populateRecruitmentCoursesJobFactory.create(saved))
+        .thenReturn(PopulateRecruitmentCoursesJob.builder().build());
+
+    mockMvc.perform(post(CREATE_URL).with(csrf())).andExpect(status().isOk());
+
+    ArgumentCaptor<Recruitment> captor = ArgumentCaptor.forClass(Recruitment.class);
+    verify(recruitmentAuditService).saveAndRecordCreated(captor.capture());
+    assertEquals(12, captor.getValue().getTotalHiringTarget());
+    // Everything else is as for any new recruitment.
+    assertEquals("20261", captor.getValue().getQuarter());
+    assertEquals(ApplicationStatus.CLOSED, captor.getValue().getApplicationStatus());
+    verify(recruitmentRepository)
+        .findFirstByQuarterLessThanAndTypeOrderByQuarterDesc("20261", RecruitmentType.TA);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void with_no_earlier_recruitment_of_its_type_a_new_one_has_the_default_target()
+      throws Exception {
+    when(recruitmentRepository.findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(any(), any()))
+        .thenReturn(Optional.empty());
+    Recruitment saved = recruitment(1L, "20261", RecruitmentType.TA);
+    when(recruitmentAuditService.saveAndRecordCreated(any())).thenReturn(saved);
+    when(populateRecruitmentCoursesJobFactory.create(saved))
+        .thenReturn(PopulateRecruitmentCoursesJob.builder().build());
+
+    mockMvc.perform(post(CREATE_URL).with(csrf())).andExpect(status().isOk());
+
+    ArgumentCaptor<Recruitment> captor = ArgumentCaptor.forClass(Recruitment.class);
+    verify(recruitmentAuditService).saveAndRecordCreated(captor.capture());
+    assertEquals(1, captor.getValue().getTotalHiringTarget());
+  }
+
+  /**
+   * Developer Mode's auto-create posts a TA and then a ULA recruitment for the quarter to this same
+   * endpoint: each copies the target of its own type, from whichever earlier quarter last had one.
+   */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void auto_created_ta_and_ula_recruitments_each_copy_their_own_types_target()
+      throws Exception {
+    when(recruitmentRepository.findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(
+            "20261", RecruitmentType.TA))
+        .thenReturn(Optional.of(earlier(3L, "20254", RecruitmentType.TA, 12)));
+    when(recruitmentRepository.findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(
+            "20261", RecruitmentType.ULA))
+        .thenReturn(Optional.of(earlier(4L, "20252", RecruitmentType.ULA, 30)));
+    when(recruitmentAuditService.saveAndRecordCreated(any()))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(populateRecruitmentCoursesJobFactory.create(any()))
+        .thenReturn(PopulateRecruitmentCoursesJob.builder().build());
+
+    mockMvc.perform(post(CREATE_URL).with(csrf())).andExpect(status().isOk());
+    mockMvc
+        .perform(post(CREATE_URL.replace("type=TA", "type=ULA")).with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.totalHiringTarget").value(30));
+
+    ArgumentCaptor<Recruitment> captor = ArgumentCaptor.forClass(Recruitment.class);
+    verify(recruitmentAuditService, times(2)).saveAndRecordCreated(captor.capture());
+    assertEquals(RecruitmentType.TA, captor.getAllValues().get(0).getType());
+    assertEquals(12, captor.getAllValues().get(0).getTotalHiringTarget());
+    assertEquals(RecruitmentType.ULA, captor.getAllValues().get(1).getType());
+    assertEquals(30, captor.getAllValues().get(1).getTotalHiringTarget());
+  }
+
   // ---- list ----
 
   @WithMockUser(roles = {"ADMIN"})

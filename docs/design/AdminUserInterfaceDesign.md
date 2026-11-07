@@ -97,8 +97,10 @@ note **"Tentative; part of the hiring process has been reopened"** under its dat
 closed there is no note; the box also never says "Final", because a later reopening is always
 possible.
 
-The hiring target keeps its default of 1 (it is a divisor in the budget and ratio figures, so it is
-never null); the diagram therefore always shows `Hiring Target: n`.
+The hiring target is never null (it is a divisor in the budget and ratio figures), so the diagram
+always shows `Hiring Target: n`. It starts at 1, or, since issue #384, at the target of the same
+type's recruitment in the most recent earlier quarter when there is one (see "The budget of a new
+quarter" below).
 
 The dates for steps 1, 5, 7 and 9 are not stored today; the backend will store them (created
 at, allocations released at = the first time visibility left "admins only", faculty review
@@ -121,6 +123,25 @@ quarter has neither, which the home page never shows). The cards are grouped by
 quarter, in the order each quarter first appears in the sorted list, so the budget card moves with
 its quarter; sorting by anything other than Quarter therefore keeps a quarter's cards together
 instead of interleaving them.
+
+## The budget of a new quarter (issue #384)
+
+A quarter's `budgets` row is created the first time anything needs it, which since issue #363 is
+usually when a recruitment of the quarter first gets a course (Populate, Add by enroll code, or a
+removed course coming back), and otherwise when an admin first opens `/admin/budget/QXX`. Both
+paths go through one method, `BudgetCreationService.findOrCreate(quarter)`, so the row is built
+the same way whichever comes first: as a copy of the most recent earlier quarter's budget, the one
+with the largest `YYYYQ` smaller than the new quarter's (a summer with no budget is skipped). Copied
+are the three fund lines, the four cost and fund figures of #388 (`taCostPerQuarter`,
+`ulaRateDollarsPerHour`, `estimatedHoursPerULAPerQuarter`, `giftFundsForASEs`) and the conversion
+factor `conversionTAtoULA`; the two version counters are not, so the new row starts at 0 like any
+other. With no earlier budget on file the row has the defaults (zero lines, empty costs, factor 3).
+
+The hiring targets stay on the recruitments, so they are copied when a recruitment is created
+(`RecruitmentsController.postRecruitment`, which both the Create Recruitment form and Developer
+Mode's auto-create post to): the new TA recruitment's target is the TA recruitment's in the most
+recent earlier quarter that has one, the ULA's the ULA's, and 1 when there is none. Changing a
+later quarter's figures never touches the earlier quarter's.
 
 ## The Combined Allocation page (issue #358)
 

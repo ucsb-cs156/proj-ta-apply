@@ -52,9 +52,10 @@ public class BudgetController extends ApiController {
   @Operation(
       summary = "One quarter's budget and the figures derived from it",
       description =
-          "The budget row (created at zero on first read), each recruitment's hiring target, cost"
-              + " per position, allocation and enrollment totals, and the anticipated expenses,"
-              + " funds and bottom line. 404 when the quarter has no recruitment.")
+          "The budget row (created on first read as a copy of the most recent earlier quarter's,"
+              + " or at zero when there is none), each recruitment's hiring target, cost per"
+              + " position, allocation and enrollment totals, and the anticipated expenses, funds"
+              + " and bottom line. 404 when the quarter has no recruitment.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @GetMapping("")
   public BudgetService.Summary summary(
