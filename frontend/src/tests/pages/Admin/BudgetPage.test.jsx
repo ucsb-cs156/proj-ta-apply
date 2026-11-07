@@ -118,6 +118,9 @@ describe("BudgetPage tests", () => {
     expect(
       screen.getByRole("link", { name: "Combined allocations" }),
     ).toHaveAttribute("href", "/admin/allocations/F26");
+    expect(
+      screen.getByRole("link", { name: "Combined allocations" }).parentElement,
+    ).toHaveTextContent(/^Choose another quarter \| Combined allocations$/);
 
     await screen.findByTestId("BudgetPage-bottom-line");
     expect(screen.queryByTestId("BudgetPage-loading")).not.toBeInTheDocument();
@@ -129,13 +132,19 @@ describe("BudgetPage tests", () => {
     renderPage("F26");
     await screen.findByTestId("BudgetPage-bottom-line");
 
-    // Costs and funds, as entered, two decimals in the boxes.
+    // Costs and funds (issue #388): a six-column table, whole dollars in the boxes except the
+    // ULA hourly rate, and the computed cost per ULA, which are dollars and cents.
     expect(
       screen.getByRole("heading", { level: 2, name: "Costs and funds" }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
         /restricted lines \(TAs only, ULAs only\) are spent first/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /estimated cost per ULA per quarter is the ULA hourly rate times the estimated hours per ULA/,
       ),
     ).toBeInTheDocument();
     const moreLink = screen.getByRole("link", {
@@ -145,27 +154,104 @@ describe("BudgetPage tests", () => {
     expect(moreLink.parentElement).toHaveTextContent(
       "anything further comes from the unrestricted pool. More about these figures.",
     );
-    expect(
-      screen.getByLabelText("Total estimated average cost per TA:"),
-    ).toHaveValue("12000.00");
-    expect(
-      screen.getByLabelText("Total estimated average cost per ULA:"),
-    ).toHaveValue("2500.50");
-    expect(screen.getByTestId("BudgetPage-avgCost-ta")).not.toBeDisabled();
-    expect(screen.getByTestId("BudgetPage-avgCost-ula")).not.toBeDisabled();
+    const costsAndFunds = screen.getByTestId("BudgetPage-costs-funds");
+    const headers = within(costsAndFunds).getAllByRole("columnheader");
+    expect(headers.map((th) => th.textContent)).toEqual(["Costs", "", "Funds"]);
+    expect(headers[0]).toHaveAttribute("colspan", "3");
+    expect(headers[2]).toHaveAttribute("colspan", "2");
+    const rows = [...costsAndFunds.querySelectorAll("tbody tr")];
+    expect(rows.map((tr) => tr.getAttribute("data-testid"))).toEqual([
+      "BudgetPage-costs-funds-ta",
+      "BudgetPage-costs-funds-rate",
+      "BudgetPage-costs-funds-hours",
+      "BudgetPage-costs-funds-ulaCost",
+    ]);
+    // Six cells in every row: label, rate or hours, cost per quarter, spacer, label, amount.
+    rows.forEach((tr) => expect(tr.querySelectorAll("td")).toHaveLength(6));
+    rows.forEach((tr) => {
+      const cells = tr.querySelectorAll("td");
+      expect(cells[1]).toHaveClass("text-end");
+      expect(cells[2]).toHaveClass("text-end");
+      expect(cells[3]).toHaveClass("px-4");
+      expect(cells[3].textContent).toBe("");
+      expect(cells[5]).toHaveClass("text-end");
+    });
+
+    // Row 1: the cost per TA (whole dollars, in the third column) and the unrestricted line.
+    const taRow = screen.getByTestId("BudgetPage-costs-funds-ta");
+    const taCost = screen.getByLabelText(
+      "TA: Estimated cost per TA per quarter:",
+    );
+    expect(taCost).toBe(screen.getByTestId("BudgetPage-avgCost-ta"));
+    expect(taCost).toHaveValue("12000");
+    expect(taCost).not.toBeDisabled();
+    expect(taRow.querySelectorAll("td")[2]).toContainElement(taCost);
+    expect(taRow.querySelectorAll("td")[1].textContent).toBe("");
     expect(
       screen.queryByTestId("BudgetPage-avgCost-ta-hint"),
     ).not.toBeInTheDocument();
+    const unrestricted = screen.getByLabelText(
+      "Unrestricted temp subzero for quarter:",
+    );
+    expect(unrestricted).toBe(
+      screen.getByTestId("BudgetPage-unrestrictedBudget"),
+    );
+    expect(unrestricted).toHaveValue("100000");
+    expect(taRow.querySelectorAll("td")[5]).toContainElement(unrestricted);
+
+    // Row 2: the ULA hourly rate (cents, second column) and the TAs-only line.
+    const rateRow = screen.getByTestId("BudgetPage-costs-funds-rate");
+    const rate = screen.getByLabelText("ULA: Hourly rate:");
+    expect(rate).toBe(screen.getByTestId("BudgetPage-ulaRateDollarsPerHour"));
+    expect(rate).toHaveValue("29.38");
+    expect(rateRow.querySelectorAll("td")[1]).toContainElement(rate);
+    expect(rateRow.querySelectorAll("td")[2].textContent).toBe("");
     expect(
-      screen.getByLabelText('Total estimated "unrestricted" budget:'),
-    ).toHaveValue("100000.00");
+      screen.getByLabelText("Temp subzero for TAs only for quarter:"),
+    ).toHaveValue("20000");
+
+    // Row 3: the hours per ULA (whole, no dollar sign) and the ULAs-only line.
+    const hoursRow = screen.getByTestId("BudgetPage-costs-funds-hours");
+    const hours = screen.getByLabelText(
+      "ULA: Estimated hours per ULA per quarter:",
+    );
+    expect(hours).toBe(
+      screen.getByTestId("BudgetPage-estimatedHoursPerULAPerQuarter"),
+    );
+    expect(hours).toHaveValue("110");
+    expect(hoursRow.querySelectorAll("td")[1]).toContainElement(hours);
     expect(
-      screen.getByLabelText('Total estimated additional "TAs only" budget:'),
-    ).toHaveValue("20000.25");
+      within(hoursRow.querySelectorAll("td")[1]).queryByText("$"),
+    ).toBeNull();
+    expect(hoursRow.querySelectorAll("td")[2].textContent).toBe("");
     expect(
-      screen.getByLabelText('Total estimated additional "ULAs only" budget:'),
-    ).toHaveValue("5000.00");
-    expect(screen.getAllByText("$")).toHaveLength(5);
+      screen.getByLabelText("Temp subzero for ULAs only for quarter:"),
+    ).toHaveValue("5000");
+
+    // Row 4: the computed cost per ULA, not a box, and the other funds for ASEs.
+    const ulaCostRow = screen.getByTestId("BudgetPage-costs-funds-ulaCost");
+    expect(ulaCostRow.querySelectorAll("td")[0]).toHaveTextContent(
+      "ULA: Estimated cost per ULA per quarter:",
+    );
+    expect(ulaCostRow.querySelectorAll("td")[1].textContent).toBe("");
+    const ulaCost = screen.getByTestId("BudgetPage-ulaCost");
+    expect(ulaCostRow.querySelectorAll("td")[2]).toContainElement(ulaCost);
+    expect(ulaCost).toHaveTextContent("$3,231.80");
+    expect(ulaCost).toHaveClass("fw-bold");
+    expect(within(ulaCostRow).queryAllByRole("textbox")).toHaveLength(1);
+    const gift = screen.getByLabelText(
+      "Other funds available for ASEs (e.g. gift funds):",
+    );
+    expect(gift).toBe(screen.getByTestId("BudgetPage-giftFundsForASEs"));
+    expect(gift).toHaveValue("32200");
+    expect(ulaCostRow.querySelectorAll("td")[5]).toContainElement(gift);
+
+    // Seven boxes, a dollar sign before every one but the hours.
+    expect(within(costsAndFunds).getAllByRole("textbox")).toHaveLength(7);
+    expect(screen.getAllByText("$")).toHaveLength(6);
+    expect(
+      screen.queryByTestId("BudgetPage-avgCost-ula"),
+    ).not.toBeInTheDocument();
 
     // Hiring targets beside the allocations; both differ here.
     expect(
@@ -265,19 +351,24 @@ describe("BudgetPage tests", () => {
       "BudgetPage-expenses-ta",
       "BudgetPage-expenses-ula",
       "BudgetPage-expenses-blank",
+      "BudgetPage-expenses-blank-2",
       "BudgetPage-expenses-total",
     ]);
     expect(screen.getByTestId("BudgetPage-expenses-ta")).toHaveTextContent(
       "Total anticipated cost for TAs$96,000.00",
     );
+    // 10 ULAs at the computed $3,231.80.
     expect(screen.getByTestId("BudgetPage-expenses-ula")).toHaveTextContent(
-      "Total anticipated cost for ULAs$25,005.00",
+      "Total anticipated cost for ULAs$32,318.00",
     );
     expect(
       screen.getByTestId("BudgetPage-expenses-blank").textContent.trim(),
     ).toBe("");
+    expect(
+      screen.getByTestId("BudgetPage-expenses-blank-2").textContent.trim(),
+    ).toBe("");
     expect(screen.getByTestId("BudgetPage-expenses-total")).toHaveTextContent(
-      "Total anticipated expenses$121,005.00",
+      "Total anticipated expenses$128,318.00",
     );
     expect(screen.getByTestId("BudgetPage-expenses-total")).toHaveClass(
       "fw-bold",
@@ -292,8 +383,13 @@ describe("BudgetPage tests", () => {
       "BudgetPage-funds-tasOnly",
       "BudgetPage-funds-ulasOnly",
       "BudgetPage-funds-unrestricted",
+      "BudgetPage-funds-gift",
       "BudgetPage-funds-total",
     ]);
+    // The same number of rows on both sides, so the totals line up.
+    expect(expenses.querySelectorAll("tbody tr")).toHaveLength(
+      funds.querySelectorAll("tbody tr").length,
+    );
     expect(screen.getByTestId("BudgetPage-funds-tasOnly")).toHaveTextContent(
       "TAs only budget$20,000.25",
     );
@@ -303,19 +399,23 @@ describe("BudgetPage tests", () => {
     expect(
       screen.getByTestId("BudgetPage-funds-unrestricted"),
     ).toHaveTextContent("Unrestricted budget$100,000.00");
+    expect(screen.getByTestId("BudgetPage-funds-gift")).toHaveTextContent(
+      "Other funds available for ASEs$32,200.00",
+    );
     expect(screen.getByTestId("BudgetPage-funds-total")).toHaveTextContent(
-      "Total anticipated funds$125,000.25",
+      "Total anticipated funds$157,200.25",
     );
     expect(screen.getByTestId("BudgetPage-funds-total")).toHaveClass("fw-bold");
-    [...document.querySelectorAll("tbody td:nth-child(2)")]
+    [...expenses.querySelectorAll("tbody td:nth-child(2)")]
+      .concat([...funds.querySelectorAll("tbody td:nth-child(2)")])
       .filter((td) => td.textContent !== "")
       .forEach((td) => expect(td).toHaveClass("text-end"));
 
     const bottom = screen.getByTestId("BudgetPage-bottom-line");
-    expect(bottom).toHaveTextContent("+$3,995.25");
+    expect(bottom).toHaveTextContent("+$28,882.25");
     expect(bottom).toHaveClass("text-success");
     expect(bottom.parentElement).toHaveTextContent(
-      "Bottom line (funds minus expenses): +$3,995.25",
+      "Bottom line (funds minus expenses): +$28,882.25",
     );
   });
 
@@ -329,15 +429,22 @@ describe("BudgetPage tests", () => {
     expect(screen.getByTestId("BudgetPage-avgCost-ta-hint")).toHaveTextContent(
       "No TA recruitment for S26.",
     );
-    // No cost entered yet: an empty, enabled box.
-    const ulaCost = screen.getByTestId("BudgetPage-avgCost-ula");
-    expect(ulaCost).not.toBeDisabled();
-    expect(ulaCost).toHaveValue("");
-    expect(
-      screen.queryByTestId("BudgetPage-avgCost-ula-hint"),
-    ).not.toBeInTheDocument();
+    // Nothing entered yet (null): empty, enabled boxes, and no cost per ULA to show.
+    for (const id of [
+      "BudgetPage-ulaRateDollarsPerHour",
+      "BudgetPage-estimatedHoursPerULAPerQuarter",
+      "BudgetPage-giftFundsForASEs",
+    ]) {
+      expect(screen.getByTestId(id)).not.toBeDisabled();
+      expect(screen.getByTestId(id)).toHaveValue("");
+    }
+    expect(screen.getByTestId("BudgetPage-ulaCost")).toHaveTextContent("—");
     expect(screen.getByTestId("BudgetPage-unrestrictedBudget")).toHaveValue(
-      "0.00",
+      "0",
+    );
+    // Other funds not entered count as zero in the funds.
+    expect(screen.getByTestId("BudgetPage-funds-gift")).toHaveTextContent(
+      "Other funds available for ASEs$0.00",
     );
 
     expect(screen.getByTestId("BudgetPage-target-ta-none")).toHaveTextContent(
@@ -387,10 +494,20 @@ describe("BudgetPage tests", () => {
     renderPage("W26");
     await screen.findByTestId("BudgetPage-bottom-line");
 
-    expect(screen.getByTestId("BudgetPage-avgCost-ula")).toBeDisabled();
-    expect(screen.getByTestId("BudgetPage-avgCost-ula-hint")).toHaveTextContent(
-      "No ULA recruitment for W26.",
+    // The ULA rate and hours are the budget's, so they are there to enter without a ULA
+    // recruitment; with the rate alone there is no cost per ULA yet.
+    expect(screen.getByTestId("BudgetPage-ulaRateDollarsPerHour")).toHaveValue(
+      "29.38",
     );
+    expect(
+      screen.getByTestId("BudgetPage-estimatedHoursPerULAPerQuarter"),
+    ).toHaveValue("");
+    expect(screen.getByTestId("BudgetPage-ulaCost")).toHaveTextContent("—");
+    expect(screen.getByTestId("BudgetPage-giftFundsForASEs")).toHaveValue("0");
+    expect(screen.getByTestId("BudgetPage-funds-gift")).toHaveTextContent(
+      "Other funds available for ASEs$0.00",
+    );
+    expect(screen.getByTestId("BudgetPage-avgCost-ta")).toHaveValue("11000");
     expect(screen.getByTestId("BudgetPage-target-ula-none")).toHaveTextContent(
       "No ULA recruitment for W26.",
     );
@@ -443,25 +560,73 @@ describe("BudgetPage tests", () => {
     expect(puts("/api/admin/budget")).toHaveLength(0);
   });
 
-  test("typing a cost per ULA saves it against the ULA recruitment", async () => {
+  test("typing the ULA rate, the hours per ULA or the other funds saves it as a budget line under the lines' version (issue #388)", async () => {
     renderPage("F26");
-    const box = await screen.findByTestId("BudgetPage-avgCost-ula");
+    const rate = await screen.findByTestId("BudgetPage-ulaRateDollarsPerHour");
 
-    await userEvent.clear(box);
-    await userEvent.type(box, "9");
+    await userEvent.clear(rate);
+    await userEvent.type(rate, "29.38");
+    // "29." is not an amount, so it is not sent.
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(4));
+    expect(puts("/api/admin/budget").map((r) => r.params)).toEqual([
+      { quarter: "20264", ulaRateDollarsPerHour: "2", version: 3 },
+      { quarter: "20264", ulaRateDollarsPerHour: "29", version: 3 },
+      { quarter: "20264", ulaRateDollarsPerHour: "29.3", version: 3 },
+      { quarter: "20264", ulaRateDollarsPerHour: "29.38", version: 3 },
+    ]);
+
+    const hours = screen.getByTestId(
+      "BudgetPage-estimatedHoursPerULAPerQuarter",
+    );
+    await userEvent.clear(hours);
+    await userEvent.type(hours, "110");
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(7));
+    expect(puts("/api/admin/budget")[6].params).toEqual({
+      quarter: "20264",
+      estimatedHoursPerULAPerQuarter: "110",
+      version: 3,
+    });
+
+    const gift = screen.getByTestId("BudgetPage-giftFundsForASEs");
+    await userEvent.clear(gift);
+    await userEvent.type(gift, "5");
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(8));
+    expect(puts("/api/admin/budget")[7].params).toEqual({
+      quarter: "20264",
+      giftFundsForASEs: "5",
+      version: 3,
+    });
+    // None of them is a recruitment's figure.
+    expect(puts("/api/admin/recruitments/avgCostPerPosition")).toHaveLength(0);
+  });
+
+  test("the cost per ULA shown is the one the server computed, and follows a save", async () => {
+    const recomputed = {
+      ...budgetFixtures.bothTypes,
+      budget: {
+        ...budgetFixtures.bothTypes.budget,
+        estimatedHoursPerULAPerQuarter: 100,
+      },
+      estimatedCostPerULAPerQuarter: 2938,
+    };
+    axiosMock.onPut("/api/admin/budget").reply(200, recomputed);
+    laterReadsAre(recomputed);
+    renderPage("F26");
+    const hours = await screen.findByTestId(
+      "BudgetPage-estimatedHoursPerULAPerQuarter",
+    );
+    expect(screen.getByTestId("BudgetPage-ulaCost")).toHaveTextContent(
+      "$3,231.80",
+    );
+
+    await userEvent.clear(hours);
+    await userEvent.type(hours, "1");
 
     await waitFor(() =>
-      expect(puts("/api/admin/recruitments/avgCostPerPosition")).toHaveLength(
-        1,
+      expect(screen.getByTestId("BudgetPage-ulaCost")).toHaveTextContent(
+        "$2,938.00",
       ),
     );
-    expect(
-      puts("/api/admin/recruitments/avgCostPerPosition")[0].params,
-    ).toEqual({
-      id: 6,
-      avgCostPerPosition: "9",
-      expected: "2500.5",
-    });
   });
 
   test("typing a budget line saves just that line for the quarter", async () => {
@@ -482,25 +647,32 @@ describe("BudgetPage tests", () => {
       expect(budgetGets().length).toBeGreaterThan(getsBefore),
     );
 
-    // A third decimal is not an amount, so adding one sends nothing.
+    // The box shows whole dollars, but cents may be typed; a third decimal is not an amount, so
+    // adding one sends nothing.
     await userEvent.type(
       screen.getByTestId("BudgetPage-unrestrictedBudget"),
-      "1",
+      ".125",
     );
     expect(screen.getByTestId("BudgetPage-unrestrictedBudget")).toHaveValue(
-      "100000.001",
+      "100000.125",
     );
     expect(screen.getByTestId("BudgetPage-unrestrictedBudget")).toHaveClass(
       "is-invalid",
     );
-    expect(puts("/api/admin/budget")).toHaveLength(3);
+    // "100000." was not sent either; "100000.1" and "100000.12" were.
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(5));
+    expect(
+      puts("/api/admin/budget")
+        .slice(3)
+        .map((r) => r.params.unrestrictedBudget),
+    ).toEqual(["100000.1", "100000.12"]);
     await userEvent.clear(screen.getByTestId("BudgetPage-unrestrictedBudget"));
     await userEvent.type(
       screen.getByTestId("BudgetPage-unrestrictedBudget"),
       "1",
     );
-    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(4));
-    expect(puts("/api/admin/budget")[3].params).toEqual({
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(6));
+    expect(puts("/api/admin/budget")[5].params).toEqual({
       quarter: "20264",
       unrestrictedBudget: "1",
       version: 3,
@@ -508,8 +680,8 @@ describe("BudgetPage tests", () => {
 
     await userEvent.clear(screen.getByTestId("BudgetPage-ulasOnlyBudget"));
     await userEvent.type(screen.getByTestId("BudgetPage-ulasOnlyBudget"), "0");
-    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(5));
-    expect(puts("/api/admin/budget")[4].params).toEqual({
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(7));
+    expect(puts("/api/admin/budget")[6].params).toEqual({
       quarter: "20264",
       ulasOnlyBudget: "0",
       version: 3,
@@ -562,9 +734,15 @@ describe("BudgetPage tests", () => {
     await userEvent.clear(target);
     await userEvent.type(target, "0");
     expect(target).toHaveClass("is-invalid");
+    const rate = screen.getByTestId("BudgetPage-ulaRateDollarsPerHour");
+    await userEvent.clear(rate);
+    await userEvent.type(rate, "29.385");
+    expect(rate).toHaveClass("is-invalid");
     await userEvent.tab();
 
-    expect(cost).toHaveValue("12000.00");
+    // Whole dollars for the cost, cents for the rate, as stored.
+    expect(cost).toHaveValue("12000");
+    expect(rate).toHaveValue("29.38");
     expect(target).toHaveValue("8");
     // "1", "12", "12.3" and "12.34" were valid along the way; "12." and "12.345" were not.
     expect(
@@ -607,15 +785,20 @@ describe("BudgetPage tests", () => {
   const COST = "/api/admin/recruitments/avgCostPerPosition";
   const TARGET = "/api/admin/recruitments/totalHiringTarget";
 
-  /** The summary as another admin left it: a TAs-only budget of 45,000, at version 4. */
+  /**
+   * The summary as another admin left it: a TAs-only budget of 45,000 and 120 hours per ULA, at
+   * version 4.
+   */
   const theirs = {
     ...budgetFixtures.bothTypes,
     budget: {
       ...budgetFixtures.bothTypes.budget,
       tasOnlyBudget: 45000,
+      estimatedHoursPerULAPerQuarter: 120,
       version: 4,
     },
-    totalFunds: 170000,
+    estimatedCostPerULAPerQuarter: 3525.6,
+    totalFunds: 182200,
   };
 
   /** Refuses the first budget save as stale and takes every later one. */
@@ -665,9 +848,91 @@ describe("BudgetPage tests", () => {
       "TAs only budget$45,000.00",
     );
     expect(screen.getByTestId("BudgetPage-funds-total")).toHaveTextContent(
-      "$170,000.00",
+      "$182,200.00",
+    );
+    expect(screen.getByTestId("BudgetPage-ulaCost")).toHaveTextContent(
+      "$3,525.60",
     );
     expect(puts("/api/admin/budget")).toHaveLength(1);
+  });
+
+  test("a stale hours per ULA is refused in plain numbers, and Overwrite saves it against the version stored now (issue #388)", async () => {
+    refuseFirstBudgetSave();
+    renderPage("F26");
+    const box = await screen.findByTestId(
+      "BudgetPage-estimatedHoursPerULAPerQuarter",
+    );
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "4");
+
+    expect(
+      await screen.findByTestId(
+        "BudgetPage-conflict-estimatedHoursPerULAPerQuarter-message",
+      ),
+    ).toHaveTextContent(
+      "The estimated hours per ULA per quarter was changed in another tab or window. It is now 120; you entered 4.",
+    );
+    await userEvent.click(
+      screen.getByTestId(
+        "BudgetPage-conflict-estimatedHoursPerULAPerQuarter-overwrite",
+      ),
+    );
+
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(2));
+    expect(puts("/api/admin/budget")[1].params).toEqual({
+      quarter: "20264",
+      estimatedHoursPerULAPerQuarter: "4",
+      version: 4,
+    });
+  });
+
+  test("a stale ULA rate or other funds is refused in dollars and cents", async () => {
+    let saves = 0;
+    axiosMock.onPut("/api/admin/budget").reply(() => {
+      saves += 1;
+      return [
+        409,
+        {
+          message: "stale",
+          version: 4 + saves,
+          conversionVersion: 1,
+          summary: {
+            ...theirs,
+            budget: {
+              ...theirs.budget,
+              ulaRateDollarsPerHour: 30.5,
+              giftFundsForASEs: null,
+              version: 4 + saves,
+            },
+          },
+        },
+      ];
+    });
+    renderPage("F26");
+    const rate = await screen.findByTestId("BudgetPage-ulaRateDollarsPerHour");
+    await userEvent.clear(rate);
+    await userEvent.type(rate, "1");
+    const gift = screen.getByTestId("BudgetPage-giftFundsForASEs");
+    await userEvent.clear(gift);
+    await userEvent.type(gift, "2");
+
+    expect(
+      await screen.findByTestId(
+        "BudgetPage-conflict-ulaRateDollarsPerHour-message",
+      ),
+    ).toHaveTextContent(
+      "The ULA hourly rate was changed in another tab or window. It is now $30.50; you entered $1.00.",
+    );
+    // Other funds not entered on their side read as zero.
+    expect(
+      await screen.findByTestId("BudgetPage-conflict-giftFundsForASEs-message"),
+    ).toHaveTextContent(
+      "The other funds available for ASEs was changed in another tab or window. It is now $0.00; you entered $2.00.",
+    );
+    expect(screen.getByTestId("BudgetPage-ulaRateDollarsPerHour")).toHaveValue(
+      "30.50",
+    );
   });
 
   test("Use theirs drops what was typed and sends nothing", async () => {
@@ -789,7 +1054,7 @@ describe("BudgetPage tests", () => {
     expect(
       await screen.findByTestId("BudgetPage-conflict-cost-ta-message"),
     ).toHaveTextContent(
-      "The average cost per TA was changed in another tab or window. It is now $15,000.00; you entered $1.00.",
+      "The estimated cost per TA was changed in another tab or window. It is now $15,000.00; you entered $1.00.",
     );
 
     await userEvent.click(
@@ -839,12 +1104,20 @@ describe("BudgetPage tests", () => {
   });
 
   test("a figure that has no stored value yet is saved without an expected value", async () => {
-    renderPage("S26");
-    const box = await screen.findByTestId("BudgetPage-avgCost-ula");
+    axiosMock
+      .onGet("/api/admin/budget", { params: { quarter: "20264" } })
+      .reply(200, {
+        ...budgetFixtures.bothTypes,
+        ta: { ...budgetFixtures.bothTypes.ta, avgCostPerPosition: null },
+      });
+    renderPage("F26");
+    const box = await screen.findByTestId("BudgetPage-avgCost-ta");
+    expect(box).toHaveValue("");
 
     await userEvent.type(box, "5");
 
     await waitFor(() => expect(puts(COST)).toHaveLength(1));
+    expect(puts(COST)[0].params).toEqual({ id: 5, avgCostPerPosition: "5" });
     expect(puts(COST)[0].params.expected).toBeUndefined();
   });
 
@@ -997,22 +1270,18 @@ describe("BudgetPage tests", () => {
     const ulaTarget = screen.getByTestId("BudgetPage-target-ula-input");
     await userEvent.clear(ulaTarget);
     await userEvent.type(ulaTarget, "4");
-    const ulaCost = screen.getByTestId("BudgetPage-avgCost-ula");
-    await userEvent.clear(ulaCost);
-    await userEvent.type(ulaCost, "3");
     await userEvent.clear(cost);
     await userEvent.type(cost, "6");
 
     await waitFor(() => expect(puts(TARGET)).toHaveLength(2));
-    await waitFor(() => expect(puts(COST)).toHaveLength(3));
+    await waitFor(() => expect(puts(COST)).toHaveLength(2));
     expect(puts(TARGET).map((r) => [r.params.id, r.params.expected])).toEqual([
       [5, "8"],
       [6, "10"],
     ]);
-    // The first save of the first figure expected what was first seen; the next, what that save set.
+    // The first save of the figure expected what was first seen; the next, what that save set.
     expect(puts(COST).map((r) => [r.params.id, r.params.expected])).toEqual([
       [5, "12000"],
-      [6, "2500.5"],
       [5, "1"],
     ]);
   });
@@ -1042,8 +1311,22 @@ describe("BudgetPage tests", () => {
       ],
       ["BudgetPage-tasOnlyBudget", "tasOnlyBudget", "TAs-only budget"],
       ["BudgetPage-ulasOnlyBudget", "ulasOnlyBudget", "ULAs-only budget"],
-      ["BudgetPage-avgCost-ta", "cost-ta", "average cost per TA"],
-      ["BudgetPage-avgCost-ula", "cost-ula", "average cost per ULA"],
+      [
+        "BudgetPage-ulaRateDollarsPerHour",
+        "ulaRateDollarsPerHour",
+        "ULA hourly rate",
+      ],
+      [
+        "BudgetPage-estimatedHoursPerULAPerQuarter",
+        "estimatedHoursPerULAPerQuarter",
+        "estimated hours per ULA per quarter",
+      ],
+      [
+        "BudgetPage-giftFundsForASEs",
+        "giftFundsForASEs",
+        "other funds available for ASEs",
+      ],
+      ["BudgetPage-avgCost-ta", "cost-ta", "estimated cost per TA"],
       ["BudgetPage-target-ta-input", "target-ta", "TA hiring target"],
       ["BudgetPage-target-ula-input", "target-ula", "ULA hiring target"],
     ]) {

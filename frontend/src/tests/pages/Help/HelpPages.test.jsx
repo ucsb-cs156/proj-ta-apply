@@ -570,7 +570,14 @@ describe("Help pages (issue #140)", () => {
     const lines = screen.getByTestId("HelpAdminsPage-budget-lines");
     expect(lines.id).toBe("budget-lines");
     expect(lines).toHaveTextContent(
-      "Any of the three may include subzero money, gift money or both, and any of them may be zero in a given quarter. For planning, the restricted money is spent first",
+      "any of the three may be zero in a given quarter. The other funds available for ASEs, such as gift funds, are a fourth line, counted with the three in the total funds. For planning, the restricted money is spent first",
+    );
+    // Issue #388: the cost per ULA is computed, and the other funds count in the total.
+    expect(heading.nextElementSibling).toHaveTextContent(
+      "the estimated cost per ULA per quarter, which is not entered but computed, the rate times the hours",
+    );
+    expect(lines).toHaveTextContent(
+      "its estimated cost per position (for ULAs, the computed rate times hours), the funds are the four lines added",
     );
     expect(lines).toHaveTextContent(
       "the bottom line is funds minus expenses, shown green with a plus sign when there is money to spare, red with a minus sign when the plan is over budget, and black when it comes out even.",
@@ -1123,7 +1130,7 @@ describe("Help pages (issue #140)", () => {
       [...rows[5].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
       "Budget",
-      "One quarter's budget (compare-and-set for a recruitment's average cost and hiring target, keyed recruitment:<id>)",
+      "One quarter's budget (compare-and-set for a recruitment's cost per TA and hiring target, keyed recruitment:<id>)",
       "budget:<quarter>",
       "#290",
     ]);

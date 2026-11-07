@@ -38,6 +38,36 @@ describe("SavedOnChangeInput tests", () => {
     expect(screen.queryByTestId("Box-hint")).not.toBeInTheDocument();
   });
 
+  test("without a label there is no label element and no space under the group, and a label elsewhere names the box (issue #388)", () => {
+    const onSave = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <tr>
+            <td>
+              <label htmlFor="Box">In the cell:</label>
+            </td>
+            <td>
+              <SavedOnChangeInput
+                id="Box"
+                stored="12.00"
+                isValid={isValidDollars}
+                onSave={onSave}
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>,
+    );
+
+    const box = screen.getByLabelText("In the cell:");
+    expect(box).toBe(screen.getByTestId("Box"));
+    expect(document.querySelectorAll("label")).toHaveLength(1);
+    expect(box.parentElement.parentElement).toHaveClass("mb-0");
+    expect(box.parentElement.parentElement).not.toHaveClass("mb-2");
+    expect(box.parentElement.parentElement).not.toHaveClass("d-flex");
+  });
+
   test("has no prefix unless asked, and takes a width", () => {
     renderInput({ width: "6em" });
 

@@ -26,15 +26,18 @@ import {
   formatDollars,
   isValidDollars,
   overallRatioDisplay,
+  wholeForInput,
 } from "main/utils/currency";
 
 const TYPE_OF: Record<Side, "TA" | "ULA"> = { ta: "TA", ula: "ULA" };
 
 /**
- * Admin → Budget for Quarter → one quarter: /admin/budget/:qyy (issue #177). The average cost of a
- * TA and of a ULA, the three budget lines, the hiring targets of both recruitments beside what has
- * been allocated so far, the enrollment totals and ratios, and the anticipated expenses, funds and
- * bottom line. Every box saves as it is typed and the whole page recomputes from the backend.
+ * Admin → Budget for Quarter → one quarter: /admin/budget/:qyy (issue #177). The costs and funds
+ * table (issue #388): the estimated cost per TA, the ULA hourly rate and hours per quarter and their
+ * product, the estimated cost per ULA; the three temp subzero lines and the other funds for ASEs.
+ * Then the hiring targets of both recruitments beside what has been allocated so far, the
+ * enrollment totals and ratios, and the anticipated expenses, funds and bottom line. Every box saves
+ * as it is typed and the whole page recomputes from the backend.
  */
 export default function BudgetPage(): React.JSX.Element {
   const { qyy } = useParams();
@@ -109,36 +112,68 @@ function BudgetForQuarter({
 
   const side = (which: Side): BudgetSide | null => summary[which];
 
-  const costInput = (which: Side) => {
-    const type = TYPE_OF[which];
-    const s = side(which);
-    return (
-      <SavedOnChangeInput
-        id={`BudgetPage-avgCost-${which}`}
-        label={`Total estimated average cost per ${type}:`}
-        prefix="$"
-        stored={dollarsForInput(s?.avgCostPerPosition)}
-        isValid={isValidDollars}
-        disabled={s === null}
-        hint={s === null ? `No ${type} recruitment for ${qyy}.` : undefined}
-        onSave={(amount) => {
-          // Stryker disable next-line all : the box is disabled, so this cannot be reached
-          if (s === null) return;
-          save(`cost-${which}`, amount);
-        }}
-      />
-    );
-  };
+  // The estimated cost per TA is the TA recruitment's own figure; greyed out without one.
+  const taCost = side("ta");
+  const taCostInput = (
+    <SavedOnChangeInput
+      id="BudgetPage-avgCost-ta"
+      prefix="$"
+      stored={wholeForInput(taCost?.avgCostPerPosition)}
+      isValid={isValidDollars}
+      disabled={taCost === null}
+      hint={taCost === null ? `No TA recruitment for ${qyy}.` : undefined}
+      onSave={(amount) => {
+        // Stryker disable next-line all : the box is disabled, so this cannot be reached
+        if (taCost === null) return;
+        save("cost-ta", amount);
+      }}
+    />
+  );
 
-  const budgetInput = (line: BudgetLine, label: string) => (
+  /**
+   * A budget line's box (issue #388): whole dollars, except the ULA hourly rate, which is dollars
+   * and cents; the hours per ULA have no dollar sign.
+   */
+  const budgetInput = (line: BudgetLine) => (
     <SavedOnChangeInput
       id={`BudgetPage-${line}`}
-      label={label}
-      prefix="$"
-      stored={dollarsForInput(summary.budget[line])}
+      prefix={line === "estimatedHoursPerULAPerQuarter" ? undefined : "$"}
+      stored={
+        line === "ulaRateDollarsPerHour"
+          ? dollarsForInput(summary.budget[line])
+          : wholeForInput(summary.budget[line])
+      }
       isValid={isValidDollars}
       onSave={(amount) => save(line, amount)}
     />
+  );
+
+  /** The label of a box, in a cell of its own. */
+  const labelFor = (id: string, text: string) => (
+    <label htmlFor={id} className="mb-0">
+      {text}
+    </label>
+  );
+
+  const ulaCost = summary.estimatedCostPerULAPerQuarter;
+
+  /** One row of the costs and funds table: three cells of costs, a spacer, two of funds. */
+  const costsAndFundsRow = (
+    key: string,
+    costLabel: React.ReactNode,
+    rateOrHours: React.ReactNode,
+    costPerQuarter: React.ReactNode,
+    fundsLine: BudgetLine,
+    fundsLabel: string,
+  ) => (
+    <tr data-testid={`BudgetPage-costs-funds-${key}`}>
+      <td>{costLabel}</td>
+      <td className="text-end">{rateOrHours}</td>
+      <td className="text-end">{costPerQuarter}</td>
+      <td className="px-4"></td>
+      <td>{labelFor(`BudgetPage-${fundsLine}`, fundsLabel)}</td>
+      <td className="text-end">{budgetInput(fundsLine)}</td>
+    </tr>
   );
 
   const targetBlock = (which: Side) => {
@@ -279,32 +314,73 @@ function BudgetForQuarter({
         <>
           <h2 className="h4 mt-3">Costs and funds</h2>
           <p className="small">
-            The three budget lines may each include subzero and/or gift money,
-            and any of them may be zero in a given quarter. For planning, the
+            The estimated cost per ULA per quarter is the ULA hourly rate times
+            the estimated hours per ULA. Any of the three temp subzero lines may
+            be zero in a given quarter; other funds available for ASEs, such as
+            gift funds, count towards the total funds. For planning, the
             restricted lines (TAs only, ULAs only) are spent first and anything
             further comes from the unrestricted pool.{" "}
             <Link to="/help/admins#budget">More about these figures</Link>.
           </p>
-          <Row>
-            <Col md={6}>
-              {costInput("ta")}
-              {costInput("ula")}
-            </Col>
-            <Col md={6}>
-              {budgetInput(
+          <Table
+            size="sm"
+            borderless
+            className="w-auto align-middle"
+            data-testid="BudgetPage-costs-funds"
+          >
+            <thead>
+              <tr>
+                <th colSpan={3}>Costs</th>
+                <th className="px-4"></th>
+                <th colSpan={2}>Funds</th>
+              </tr>
+            </thead>
+            <tbody>
+              {costsAndFundsRow(
+                "ta",
+                labelFor(
+                  "BudgetPage-avgCost-ta",
+                  "TA: Estimated cost per TA per quarter:",
+                ),
+                null,
+                taCostInput,
                 "unrestrictedBudget",
-                'Total estimated "unrestricted" budget:',
+                "Unrestricted temp subzero for quarter:",
               )}
-              {budgetInput(
+              {costsAndFundsRow(
+                "rate",
+                labelFor(
+                  "BudgetPage-ulaRateDollarsPerHour",
+                  "ULA: Hourly rate:",
+                ),
+                budgetInput("ulaRateDollarsPerHour"),
+                null,
                 "tasOnlyBudget",
-                'Total estimated additional "TAs only" budget:',
+                "Temp subzero for TAs only for quarter:",
               )}
-              {budgetInput(
+              {costsAndFundsRow(
+                "hours",
+                labelFor(
+                  "BudgetPage-estimatedHoursPerULAPerQuarter",
+                  "ULA: Estimated hours per ULA per quarter:",
+                ),
+                budgetInput("estimatedHoursPerULAPerQuarter"),
+                null,
                 "ulasOnlyBudget",
-                'Total estimated additional "ULAs only" budget:',
+                "Temp subzero for ULAs only for quarter:",
               )}
-            </Col>
-          </Row>
+              {costsAndFundsRow(
+                "ulaCost",
+                "ULA: Estimated cost per ULA per quarter:",
+                null,
+                <span data-testid="BudgetPage-ulaCost" className="fw-bold">
+                  {ulaCost === null ? "—" : formatDollars(ulaCost)}
+                </span>,
+                "giftFundsForASEs",
+                "Other funds available for ASEs (e.g. gift funds):",
+              )}
+            </tbody>
+          </Table>
 
           <h2 className="h4 mt-3">Hiring targets</h2>
           <Row>
@@ -335,7 +411,12 @@ function BudgetForQuarter({
                 <tbody>
                   {costRow("ta")}
                   {costRow("ula")}
+                  {/* Two blank rows, so the totals line up with the funds' four lines (#388). */}
                   <tr data-testid="BudgetPage-expenses-blank">
+                    <td>&nbsp;</td>
+                    <td></td>
+                  </tr>
+                  <tr data-testid="BudgetPage-expenses-blank-2">
                     <td>&nbsp;</td>
                     <td></td>
                   </tr>
@@ -375,6 +456,12 @@ function BudgetForQuarter({
                     <td>Unrestricted budget</td>
                     <td className="text-end">
                       {formatDollars(summary.budget.unrestrictedBudget)}
+                    </td>
+                  </tr>
+                  <tr data-testid="BudgetPage-funds-gift">
+                    <td>Other funds available for ASEs</td>
+                    <td className="text-end">
+                      {formatDollars(summary.budget.giftFundsForASEs ?? 0)}
                     </td>
                   </tr>
                   <tr className="fw-bold" data-testid="BudgetPage-funds-total">

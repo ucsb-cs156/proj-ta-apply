@@ -11,18 +11,25 @@ import type {
 } from "main/components/Budget/budgetTypes";
 
 /**
- * A figure of the quarter's budget row: the three money lines, and the TA to ULA conversion factor
- * of the Combined Allocation page (issue #358), which is saved the same way, with a version check
- * of its own (issue #375).
+ * A figure of the quarter's budget row: the three subzero lines; the ULA hourly rate, the hours per
+ * ULA and the other funds for ASEs (issue #388), saved and counted the same way; and the TA to ULA
+ * conversion factor of the Combined Allocation page (issue #358), which is saved the same way, with
+ * a version check of its own (issue #375).
  */
 export type BudgetLine =
   | "unrestrictedBudget"
   | "tasOnlyBudget"
   | "ulasOnlyBudget"
+  | "ulaRateDollarsPerHour"
+  | "estimatedHoursPerULAPerQuarter"
+  | "giftFundsForASEs"
   | "conversionTAtoULA";
 export type Side = "ta" | "ula";
-/** A box on the page whose value is saved on its own: a budget line, or one recruitment's figure. */
-export type FieldKey = BudgetLine | `cost-${Side}` | `target-${Side}`;
+/**
+ * A box on the page whose value is saved on its own: a budget line, or one recruitment's figure.
+ * Only the TA recruitment has a cost of its own; the cost per ULA is computed (issue #388).
+ */
+export type FieldKey = BudgetLine | "cost-ta" | `target-${Side}`;
 
 /** The query key of the summary; every save on the page refreshes it. */
 export const BUDGET_KEY = "/api/admin/budget";
@@ -33,9 +40,11 @@ const NAMES: Record<FieldKey, string> = {
   unrestrictedBudget: "unrestricted budget",
   tasOnlyBudget: "TAs-only budget",
   ulasOnlyBudget: "ULAs-only budget",
+  ulaRateDollarsPerHour: "ULA hourly rate",
+  estimatedHoursPerULAPerQuarter: "estimated hours per ULA per quarter",
+  giftFundsForASEs: "other funds available for ASEs",
   conversionTAtoULA: "TA to ULA conversion factor",
-  "cost-ta": "average cost per TA",
-  "cost-ula": "average cost per ULA",
+  "cost-ta": "estimated cost per TA",
   "target-ta": "TA hiring target",
   "target-ula": "ULA hiring target",
 };
@@ -69,14 +78,16 @@ const isConflict = (error: unknown): boolean =>
   (error as Partial<Refusal>).response?.status === 409;
 
 const isLine = (field: FieldKey): field is BudgetLine => !field.includes("-");
-const isCost = (field: FieldKey): boolean => field.startsWith("cost-");
+const isCost = (field: FieldKey): boolean => field === "cost-ta";
 
 /**
- * A figure as it reads in a sentence: dollars for money, the plain number for a target or the
- * conversion factor.
+ * A figure as it reads in a sentence: dollars for money, the plain number for a target, the hours
+ * per ULA or the conversion factor.
  */
 const reads = (field: FieldKey, value: number | string): string =>
-  field.startsWith("target-") || field === "conversionTAtoULA"
+  field.startsWith("target-") ||
+  field === "conversionTAtoULA" ||
+  field === "estimatedHoursPerULAPerQuarter"
     ? String(Number(value))
     : formatDollars(Number(value));
 
@@ -100,12 +111,13 @@ type Held = {
  * Sends every save on the Budget page (issue #277) one after another, each carrying what the page
  * last knew so that the server can refuse it if someone else has changed the figure since.
  *
- * - The three budget lines carry the budget's version, which the server bumps on every save of a
- *   line; the conversion factor carries its own count, `conversionVersion`, bumped only by a save
- *   of the factor (issue #375), so a change to the factor on the Combined Allocation page never
- *   refuses a budget line on the Budget page, nor the other way round.
- * - A recruitment's average cost and its hiring target carry the value the page last saw
- *   (`expected`); the server applies the save only if that is still the stored value.
+ * - The budget lines (the three subzero lines, the ULA rate, the hours per ULA and the other funds)
+ *   carry the budget's version, which the server bumps on every save of a line; the conversion
+ *   factor carries its own count, `conversionVersion`, bumped only by a save of the factor (issue
+ *   #375), so a change to the factor on the Combined Allocation page never refuses a budget line on
+ *   the Budget page, nor the other way round.
+ * - The TA recruitment's cost per TA and either recruitment's hiring target carry the value the
+ *   page last saw (`expected`); the server applies the save only if that is still the stored value.
  *
  * A refused save changes nothing. It leaves a {@link BudgetConflict} saying what is stored now and
  * what the user entered. Further typing in that box is remembered but not sent, until the user
@@ -161,16 +173,20 @@ export function useBudgetSaves(
       if (row === null) {
         return;
       }
-      state.recruitmentIds[`cost-${side}`] = row.recruitmentId;
       state.recruitmentIds[`target-${side}`] = row.recruitmentId;
-      learn(
-        `cost-${side}`,
-        row.avgCostPerPosition === null
-          ? undefined
-          : String(row.avgCostPerPosition),
-      );
       learn(`target-${side}`, String(row.totalHiringTarget));
     });
+    // Only the TA recruitment has a stored cost; the ULA's is computed from the budget (#388).
+    const ta = summary.ta;
+    if (ta !== null) {
+      state.recruitmentIds["cost-ta"] = ta.recruitmentId;
+      learn(
+        "cost-ta",
+        ta.avgCostPerPosition === null
+          ? undefined
+          : String(ta.avgCostPerPosition),
+      );
+    }
   }, [summary]);
 
   const show = () => setConflicts(Object.values(held.current.conflicts));
@@ -213,6 +229,7 @@ export function useBudgetSaves(
     if (isLine(field)) {
       // The answer is the whole summary as it now stands: the page shows it, and its counts are the ones the next saves carry.
       queryClient.setQueryData([BUDGET_KEY, yyyyq], data?.summary);
+      // A line not yet entered (null) reads as zero, like a missing answer.
       current = data?.summary?.budget[field] ?? 0;
     } else {
       queryClient.invalidateQueries({ queryKey: [BUDGET_KEY] });

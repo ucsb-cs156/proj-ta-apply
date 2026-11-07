@@ -92,9 +92,12 @@ public class Recruitment {
   private Integer allocationBulkVersion = 0;
 
   /**
-   * The estimated average cost of one position of this recruitment's type, in dollars and cents
-   * (issue #177): per TA on a TA recruitment, per ULA on a ULA recruitment. Entered on the Budget
-   * for Quarter page; null until it has been. A planning figure, not audited.
+   * The estimated cost of one TA per quarter, in dollars and cents (issue #177), on a TA
+   * recruitment. Entered on the Budget for Quarter page; null until it has been. A planning figure,
+   * not audited. Since issue #388 the cost per ULA is not stored anywhere: the Budget page computes
+   * it from the quarter's {@link Budget#getUlaRateDollarsPerHour() ULA hourly rate} and {@link
+   * Budget#getEstimatedHoursPerULAPerQuarter() hours per ULA}, so on a ULA recruitment this column
+   * is no longer read.
    */
   @Column(name = "avg_cost_per_position", precision = 12, scale = 2)
   private BigDecimal avgCostPerPosition;

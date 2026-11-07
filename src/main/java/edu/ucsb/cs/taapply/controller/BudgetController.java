@@ -66,10 +66,13 @@ public class BudgetController extends ApiController {
   @Operation(
       summary = "Set one or more of a quarter's budget lines",
       description =
-          "Any of the three may be given, and the conversionTAtoULA (issue #358, how many ULAs count"
-              + " as one TA on the Combined Allocation page; greater than zero, else 400); the"
-              + " others keep their values. Amounts are dollars and cents and must not be"
-              + " negative. Returns the quarter's summary with the new figures. The budget lines"
+          "Any of the lines may be given: the three subzero lines, and (issue #388) the ULA hourly"
+              + " rate, the estimated hours per ULA per quarter and the other funds available for"
+              + " ASEs; and the conversionTAtoULA (issue #358, how many ULAs count as one TA on the"
+              + " Combined Allocation page; greater than zero, else 400); the others keep their"
+              + " values. Amounts are dollars and cents (the hours to two decimals) and must not be"
+              + " negative. Returns the quarter's summary with the new figures, including the"
+              + " estimated cost per ULA per quarter, the rate times the hours. The budget lines"
               + " and the conversion factor are counted apart (issues #277 and #375): version is"
               + " the budget's version the page last saw, and goes up by one on every save of a"
               + " line; conversionVersion is the factor's, and goes up by one on every save of the"
@@ -96,6 +99,19 @@ public class BudgetController extends ApiController {
           BigDecimal unrestrictedBudget,
       @Parameter(name = "tasOnlyBudget") @RequestParam(required = false) BigDecimal tasOnlyBudget,
       @Parameter(name = "ulasOnlyBudget") @RequestParam(required = false) BigDecimal ulasOnlyBudget,
+      @Parameter(name = "ulaRateDollarsPerHour", description = "what one ULA is paid per hour")
+          @RequestParam(required = false)
+          BigDecimal ulaRateDollarsPerHour,
+      @Parameter(
+              name = "estimatedHoursPerULAPerQuarter",
+              description = "how many hours one ULA is expected to work in the quarter")
+          @RequestParam(required = false)
+          BigDecimal estimatedHoursPerULAPerQuarter,
+      @Parameter(
+              name = "giftFundsForASEs",
+              description = "other funds available for ASEs, such as gift funds")
+          @RequestParam(required = false)
+          BigDecimal giftFundsForASEs,
       @Parameter(
               name = "conversionTAtoULA",
               description = "how many ULAs count as one TA; greater than zero")
@@ -104,6 +120,9 @@ public class BudgetController extends ApiController {
     requireNotNegative("unrestrictedBudget", unrestrictedBudget);
     requireNotNegative("tasOnlyBudget", tasOnlyBudget);
     requireNotNegative("ulasOnlyBudget", ulasOnlyBudget);
+    requireNotNegative("ulaRateDollarsPerHour", ulaRateDollarsPerHour);
+    requireNotNegative("estimatedHoursPerULAPerQuarter", estimatedHoursPerULAPerQuarter);
+    requireNotNegative("giftFundsForASEs", giftFundsForASEs);
     if (conversionTAtoULA != null
         && !(conversionTAtoULA > 0 && Double.isFinite(conversionTAtoULA))) {
       throw new IllegalArgumentException("conversionTAtoULA must be greater than zero");
@@ -129,6 +148,19 @@ public class BudgetController extends ApiController {
       }
       if (ulasOnlyBudget != null) {
         budget.setUlasOnlyBudget(BudgetService.money(ulasOnlyBudget));
+        linesChanged = true;
+      }
+      if (ulaRateDollarsPerHour != null) {
+        budget.setUlaRateDollarsPerHour(BudgetService.money(ulaRateDollarsPerHour));
+        linesChanged = true;
+      }
+      if (estimatedHoursPerULAPerQuarter != null) {
+        budget.setEstimatedHoursPerULAPerQuarter(
+            BudgetService.money(estimatedHoursPerULAPerQuarter));
+        linesChanged = true;
+      }
+      if (giftFundsForASEs != null) {
+        budget.setGiftFundsForASEs(BudgetService.money(giftFundsForASEs));
         linesChanged = true;
       }
       if (linesChanged) {

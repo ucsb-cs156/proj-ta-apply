@@ -4,7 +4,11 @@ import { Form, InputGroup } from "react-bootstrap";
 type SavedOnChangeInputProps = {
   /** The control id, also used as the test id. */
   id: string;
-  label: string;
+  /**
+   * The label over the box. Left out when the label is elsewhere, as in a table cell of its own
+   * (issue #388): then that `<label htmlFor={id}>` is the box's label.
+   */
+  label?: string;
   /** The stored value as it belongs in the box; what comes back on blur. */
   stored: string;
   isValid: (value: string) => boolean;
@@ -57,12 +61,16 @@ export default function SavedOnChangeInput({
   return (
     <Form.Group
       className={
-        inline ? "mb-2 d-flex align-items-center gap-2 flex-wrap" : "mb-2"
+        inline
+          ? "mb-2 d-flex align-items-center gap-2 flex-wrap"
+          : label === undefined
+            ? "mb-0"
+            : "mb-2"
       }
       controlId={id}
       title={title}
     >
-      <Form.Label className="mb-0">{label}</Form.Label>
+      {label !== undefined && <Form.Label className="mb-0">{label}</Form.Label>}
       <InputGroup size="sm" style={{ width }}>
         {prefix !== undefined && <InputGroup.Text>{prefix}</InputGroup.Text>}
         <Form.Control

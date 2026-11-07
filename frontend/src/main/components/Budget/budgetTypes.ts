@@ -5,9 +5,15 @@ export type BudgetRow = {
   unrestrictedBudget: number;
   tasOnlyBudget: number;
   ulasOnlyBudget: number;
+  /** What one ULA is paid per hour (issue #388); null until entered. */
+  ulaRateDollarsPerHour: number | null;
+  /** How many hours one ULA is expected to work in the quarter (issue #388); null until entered. */
+  estimatedHoursPerULAPerQuarter: number | null;
+  /** Other funds available for ASEs, such as gift funds (issue #388); null until entered. */
+  giftFundsForASEs: number | null;
   /** How many ULAs count as one TA on the Combined Allocation page (issue #358); 3 by default. */
   conversionTAtoULA: number;
-  /** How many times the three lines have been saved; a line save carries it so a stale one is refused. */
+  /** How many times the lines have been saved; a line save carries it so a stale one is refused. */
   version: number;
   /**
    * How many times the conversion factor has been saved (issue #375), counted apart from the lines
@@ -21,6 +27,10 @@ export type BudgetRow = {
 export type BudgetSide = {
   recruitmentId: number;
   totalHiringTarget: number;
+  /**
+   * The estimated cost of one position per quarter: the TA recruitment's own stored cost per TA;
+   * on the ULA side the budget's computed cost per ULA, its rate times its hours (issue #388).
+   */
   avgCostPerPosition: number | null;
   totalAllocation: number;
   totalEnrollmentEstimate: number;
@@ -36,7 +46,10 @@ export type BudgetSummary = {
   budget: BudgetRow;
   ta: BudgetSide | null;
   ula: BudgetSide | null;
+  /** The ULA hourly rate times the hours per ULA (issue #388); null until both are entered. */
+  estimatedCostPerULAPerQuarter: number | null;
   totalExpenses: number;
+  /** The three subzero lines and the other funds for ASEs added. */
   totalFunds: number;
   bottomLine: number;
 };

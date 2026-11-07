@@ -163,6 +163,15 @@ When the admin navigates to the /admin/budget/{qxx} page, they can enter/update 
 
 (1) avgCostPerTA: Total estimated average cost in dollars and cents per TA (store this on the TA recruitment; grey out if there is not TA recruitment for that quarter)
 (2) avgCostPerULA: Total estimated average cost in dollars and cents per ULA (store this on the ULA recruitment; grey out if there is not TA recruitment for that quarter)
+
+> **Superseded by #388 (2026-11-07).** The cost per ULA is no longer stored. The budget row holds
+> `ulaRateDollarsPerHour` and `estimatedHoursPerULAPerQuarter`, and the estimated cost per ULA per
+> quarter is their product, computed by the backend and shown read-only. The budget row also holds
+> `giftFundsForASEs`, other funds available for ASEs, counted with the three lines below in the
+> total funds. The page shows the costs and the funds as one six-column table (costs on the left,
+> funds on the right), with every amount as whole dollars except the hourly rate and the computed
+> cost per ULA, which show cents. Changeset 067 added the three columns; `avg_cost_per_position`
+> stays on `recruitments` for the cost per TA and is no longer read for ULA recruitments.
 (3) unrestrictedBudget: Total estimated "unrestricted" budget in dollars and cents (to be allocated among TAs and ULAs)
 (4) tasOnlyBudget: Total estimated additional "TAs only" budget in dollars and cents (to be used for TAs only)
 (5) ulasOnlyBudget: Total estimated additional "ULAs only" budget in dollars and cents (to be used for ULAs only)

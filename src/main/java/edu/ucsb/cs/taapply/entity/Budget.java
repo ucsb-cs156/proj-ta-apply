@@ -9,9 +9,11 @@ import lombok.*;
  * #177). One row per quarter, keyed on the quarter in YYYYQ form like {@link Recruitment#quarter},
  * created the first time an admin opens the quarter's budget page.
  *
- * <p>Any of the three lines may include subzero and/or gift money, and any may be zero in a given
- * quarter. For planning, the restricted lines are spent first and anything further comes from the
- * unrestricted pool. Planning figures: changes are not audited.
+ * <p>The three temp subzero lines may each be zero in a given quarter; other funds for ASEs, such
+ * as gift funds, are a line of their own (issue #388). For planning, the restricted lines are spent
+ * first and anything further comes from the unrestricted pool. The row also holds the ULA hourly
+ * rate and the estimated hours per ULA per quarter (issue #388), whose product is the estimated
+ * cost per ULA per quarter: computed, never stored. Planning figures: changes are not audited.
  */
 @Data
 @AllArgsConstructor
@@ -41,6 +43,25 @@ public class Budget {
   private BigDecimal ulasOnlyBudget = BigDecimal.ZERO;
 
   /**
+   * What one ULA is paid per hour, in dollars and cents (issue #388). Null until an admin enters
+   * it; with {@link #estimatedHoursPerULAPerQuarter} it gives the estimated cost per ULA per
+   * quarter.
+   */
+  @Column(name = "ula_rate_dollars_per_hour", precision = 12, scale = 2)
+  private BigDecimal ulaRateDollarsPerHour;
+
+  /** How many hours one ULA is expected to work in the quarter (issue #388). Null until entered. */
+  @Column(name = "estimated_hours_per_ula_per_quarter", precision = 12, scale = 2)
+  private BigDecimal estimatedHoursPerULAPerQuarter;
+
+  /**
+   * Other funds available for ASEs, such as gift funds, in dollars and cents (issue #388). Null
+   * until entered, and counted as zero in the total funds until then.
+   */
+  @Column(name = "gift_funds_for_ases", precision = 12, scale = 2)
+  private BigDecimal giftFundsForASEs;
+
+  /**
    * How many ULAs count as one TA when the Combined Allocation page computes the overall
    * ASE:Student ratio (issue #358). Greater than zero; 3 until an admin sets it.
    */
@@ -49,10 +70,11 @@ public class Budget {
   private Double conversionTAtoULA = DEFAULT_CONVERSION_TA_TO_ULA;
 
   /**
-   * How many times the three budget lines have been saved (issue #277). The controller compares it
-   * to the one the page last saw and adds one on every save of a line, so a save made from a stale
-   * copy of the Budget page is refused instead of silently overwriting another admin's change. A
-   * change to the conversion factor does not touch it (issue #375).
+   * How many times the budget lines have been saved (issue #277): the three subzero lines, and
+   * since issue #388 the ULA rate, the hours per ULA and the other funds too. The controller
+   * compares it to the one the page last saw and adds one on every save of a line, so a save made
+   * from a stale copy of the Budget page is refused instead of silently overwriting another admin's
+   * change. A change to the conversion factor does not touch it (issue #375).
    */
   @Column(nullable = false)
   @Builder.Default

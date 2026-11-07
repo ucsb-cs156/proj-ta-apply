@@ -1,0 +1,27 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "067-add-ula-rate-hours-and-gift-funds-to-budgets",
+        "author": "pc",
+        "comment": "The Budget page's costs and funds table (issue #388): the ULA hourly rate, the estimated hours per ULA per quarter and the other funds available for ASEs (gift funds), each nullable, in dollars and cents. The estimated cost per ULA per quarter is now their product, computed and never stored; the cost per ULA that used to be stored in recruitments.avg_cost_per_position (a column shared with the cost per TA) is no longer read for ULA recruitments, and no value is copied or computed from it (the maintainer re-enters the rate and the hours on the one open production budget). Additive only, so the rollback is the automatic one: the three columns are dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "columnExists": { "tableName": "budgets", "columnName": "ula_rate_dollars_per_hour" } } }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "budgets",
+              "columns": [
+                { "column": { "name": "ula_rate_dollars_per_hour", "type": "NUMERIC(12,2)" } },
+                { "column": { "name": "estimated_hours_per_ula_per_quarter", "type": "NUMERIC(12,2)" } },
+                { "column": { "name": "gift_funds_for_ases", "type": "NUMERIC(12,2)" } }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

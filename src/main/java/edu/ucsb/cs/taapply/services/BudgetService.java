@@ -21,8 +21,9 @@ import org.springframework.stereotype.Service;
 /**
  * The figures behind the Budget for Quarter page (issue #177): which quarters have recruitments,
  * and for one quarter the budget row, each recruitment's hiring target, cost, allocation and
- * enrollment totals, and the anticipated expenses, funds and bottom line. All money is in dollars
- * and cents, as {@link BigDecimal}s with two decimal places.
+ * enrollment totals, the estimated cost per ULA computed from the budget's rate and hours (issue
+ * #388), and the anticipated expenses, funds and bottom line. All money is in dollars and cents, as
+ * {@link BigDecimal}s with two decimal places.
  */
 @Service
 public class BudgetService {
@@ -38,6 +39,9 @@ public class BudgetService {
   /**
    * One recruitment's side of the budget.
    *
+   * @param avgCostPerPosition the estimated cost of one position per quarter: on the TA side the
+   *     recruitment's stored cost per TA; on the ULA side the budget's {@link #estimatedCostPerUla
+   *     computed cost per ULA} (issue #388); null while unknown
    * @param totalAllocation the sum of the allocations of its non-removed courses
    * @param totalEnrollmentEstimate the sum of their enrollment estimates (the quarter's, from
    *     {@code budget_courses}), a missing one counting as 0
@@ -60,8 +64,11 @@ public class BudgetService {
    * Everything the page shows for one quarter. {@code ta} or {@code ula} is null when the quarter
    * has no recruitment of that type.
    *
+   * @param estimatedCostPerULAPerQuarter the budget's ULA hourly rate times its hours per ULA, to
+   *     the cent (issue #388); null while either is not yet entered. Shown whether or not the
+   *     quarter has a ULA recruitment.
    * @param totalExpenses the two anticipated costs added
-   * @param totalFunds the budget's three lines added
+   * @param totalFunds the budget's three subzero lines and its other funds for ASEs added
    * @param bottomLine totalFunds minus totalExpenses
    */
   public record Summary(
@@ -69,6 +76,7 @@ public class BudgetService {
       Budget budget,
       Side ta,
       Side ula,
+      BigDecimal estimatedCostPerULAPerQuarter,
       BigDecimal totalExpenses,
       BigDecimal totalFunds,
       BigDecimal bottomLine) {}
@@ -113,23 +121,41 @@ public class BudgetService {
    */
   public Summary summary(String quarter) {
     Budget budget = budgetFor(quarter);
-    Side ta = sideFor(quarter, RecruitmentType.TA);
-    Side ula = sideFor(quarter, RecruitmentType.ULA);
+    Side ta = sideFor(quarter, RecruitmentType.TA, budget);
+    Side ula = sideFor(quarter, RecruitmentType.ULA, budget);
     BigDecimal totalExpenses = costOf(ta).add(costOf(ula));
     BigDecimal totalFunds =
         money(budget.getUnrestrictedBudget())
             .add(money(budget.getTasOnlyBudget()))
-            .add(money(budget.getUlasOnlyBudget()));
+            .add(money(budget.getUlasOnlyBudget()))
+            .add(money(orZero(budget.getGiftFundsForASEs())));
     return new Summary(
-        quarter, budget, ta, ula, totalExpenses, totalFunds, totalFunds.subtract(totalExpenses));
+        quarter,
+        budget,
+        ta,
+        ula,
+        estimatedCostPerUla(budget),
+        totalExpenses,
+        totalFunds,
+        totalFunds.subtract(totalExpenses));
   }
 
-  private Side sideFor(String quarter, RecruitmentType type) {
+  /**
+   * The estimated cost of one ULA for the quarter (issue #388): the budget's hourly rate times its
+   * estimated hours per ULA, to the cent; null while either has not been entered.
+   */
+  public static BigDecimal estimatedCostPerUla(Budget budget) {
+    BigDecimal rate = budget.getUlaRateDollarsPerHour();
+    BigDecimal hours = budget.getEstimatedHoursPerULAPerQuarter();
+    return rate == null || hours == null ? null : money(rate.multiply(hours));
+  }
+
+  private Side sideFor(String quarter, RecruitmentType type, Budget budget) {
     Optional<Recruitment> recruitment = recruitmentRepository.findByQuarterAndType(quarter, type);
-    return recruitment.map(this::side).orElse(null);
+    return recruitment.map(found -> side(found, budget)).orElse(null);
   }
 
-  private Side side(Recruitment recruitment) {
+  private Side side(Recruitment recruitment, Budget budget) {
     List<RecruitmentCourse> active =
         recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()
             .filter(row -> !row.isRemoved())
@@ -139,14 +165,20 @@ public class BudgetService {
     int totalAllocation = active.stream().mapToInt(RecruitmentCourse::getAllocation).sum();
     int totalEstimate = active.stream().mapToInt(BudgetService::estimateOf).sum();
     int target = recruitment.getTotalHiringTarget();
+    // The cost per ULA is computed from the budget (issue #388), the cost per TA is the TA
+    // recruitment's own.
+    BigDecimal perPosition =
+        recruitment.getType() == RecruitmentType.ULA
+            ? estimatedCostPerUla(budget)
+            : recruitment.getAvgCostPerPosition();
     BigDecimal cost =
-        recruitment.getAvgCostPerPosition() == null
+        perPosition == null
             ? money(BigDecimal.ZERO)
-            : money(recruitment.getAvgCostPerPosition().multiply(BigDecimal.valueOf(target)));
+            : money(perPosition.multiply(BigDecimal.valueOf(target)));
     return new Side(
         recruitment.getId(),
         target,
-        recruitment.getAvgCostPerPosition(),
+        perPosition,
         totalAllocation,
         totalEstimate,
         totalAllocation - target,
@@ -156,6 +188,10 @@ public class BudgetService {
 
   private static BigDecimal costOf(Side side) {
     return side == null ? money(BigDecimal.ZERO) : side.anticipatedCost();
+  }
+
+  private static BigDecimal orZero(BigDecimal amount) {
+    return amount == null ? BigDecimal.ZERO : amount;
   }
 
   private static int estimateOf(RecruitmentCourse row) {

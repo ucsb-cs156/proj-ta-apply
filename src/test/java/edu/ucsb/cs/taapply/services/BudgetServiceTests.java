@@ -66,11 +66,22 @@ public class BudgetServiceTests {
   }
 
   private static Budget budget(String unrestricted, String tas, String ulas) {
+    return budget(unrestricted, tas, ulas, null, null, null);
+  }
+
+  /**
+   * A budget with the issue #388 figures too; any of them may be null, as before they are entered.
+   */
+  private static Budget budget(
+      String unrestricted, String tas, String ulas, String rate, String hours, String gift) {
     return Budget.builder()
         .quarter(Q)
         .unrestrictedBudget(new BigDecimal(unrestricted))
         .tasOnlyBudget(new BigDecimal(tas))
         .ulasOnlyBudget(new BigDecimal(ulas))
+        .ulaRateDollarsPerHour(rate == null ? null : new BigDecimal(rate))
+        .estimatedHoursPerULAPerQuarter(hours == null ? null : new BigDecimal(hours))
+        .giftFundsForASEs(gift == null ? null : new BigDecimal(gift))
         .build();
   }
 
@@ -147,13 +158,15 @@ public class BudgetServiceTests {
   @Test
   public void summary_with_both_recruitments_adds_up_both_sides() {
     Recruitment ta = recruitment(5L, Q, RecruitmentType.TA, 8, "12000.00");
+    // A cost per ULA left on the ULA recruitment from before issue #388 counts for nothing: the
+    // cost per ULA is the budget's rate times its hours.
     Recruitment ula = recruitment(6L, Q, RecruitmentType.ULA, 10, "2500.50");
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.TA))
         .thenReturn(Optional.of(ta));
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.ULA))
         .thenReturn(Optional.of(ula));
     when(budgetRepository.findById(Q))
-        .thenReturn(Optional.of(budget("100000", "20000.25", "5000")));
+        .thenReturn(Optional.of(budget("100000", "20000.25", "5000", "29.38", "110", "32200.00")));
     // Removed rows and missing estimates: neither counts.
     when(recruitmentCourseRepository.findByRecruitmentId(5L))
         .thenReturn(
@@ -171,13 +184,90 @@ public class BudgetServiceTests {
     assertEquals(
         new Side(5L, 8, new BigDecimal("12000.00"), 9, 400, 1, 50.0, new BigDecimal("96000.00")),
         summary.ta());
+    // 29.38 × 110 = 3,231.80 per ULA; × 10 ULAs.
+    assertEquals(new BigDecimal("3231.80"), summary.estimatedCostPerULAPerQuarter());
     assertEquals(
-        new Side(6L, 10, new BigDecimal("2500.50"), 7, 400, -3, 40.0, new BigDecimal("25005.00")),
+        new Side(6L, 10, new BigDecimal("3231.80"), 7, 400, -3, 40.0, new BigDecimal("32318.00")),
         summary.ula());
-    assertEquals(new BigDecimal("121005.00"), summary.totalExpenses());
-    assertEquals(new BigDecimal("125000.25"), summary.totalFunds());
-    assertEquals(new BigDecimal("3995.25"), summary.bottomLine());
+    assertEquals(new BigDecimal("128318.00"), summary.totalExpenses());
+    // The three subzero lines and the other funds for ASEs.
+    assertEquals(new BigDecimal("157200.25"), summary.totalFunds());
+    assertEquals(new BigDecimal("28882.25"), summary.bottomLine());
     assertEquals(new BigDecimal("100000"), summary.budget().getUnrestrictedBudget());
+  }
+
+  // ---- the cost per ULA and the other funds (issue #388) ----
+
+  @Test
+  public void the_cost_per_ula_is_the_rate_times_the_hours_to_the_cent_rounding_half_up() {
+    // 10.005 × 3 = 30.015 → 30.02; the rate is stored to the cent, but the maths must not care.
+    assertEquals(
+        new BigDecimal("30.02"),
+        BudgetService.estimatedCostPerUla(budget("0", "0", "0", "10.005", "3", null)));
+    assertEquals(
+        new BigDecimal("3231.80"),
+        BudgetService.estimatedCostPerUla(budget("0", "0", "0", "29.38", "110", null)));
+    assertEquals(
+        new BigDecimal("0.00"),
+        BudgetService.estimatedCostPerUla(budget("0", "0", "0", "29.38", "0", null)));
+  }
+
+  @Test
+  public void the_cost_per_ula_is_unknown_until_both_the_rate_and_the_hours_are_entered() {
+    assertNull(BudgetService.estimatedCostPerUla(budget("0", "0", "0", null, "110", null)));
+    assertNull(BudgetService.estimatedCostPerUla(budget("0", "0", "0", "29.38", null, null)));
+    assertNull(BudgetService.estimatedCostPerUla(budget("0", "0", "0", null, null, null)));
+  }
+
+  @Test
+  public void a_ula_recruitment_costs_nothing_while_the_rate_or_the_hours_are_unknown() {
+    Recruitment ula = recruitment(6L, Q, RecruitmentType.ULA, 4, "2500.50");
+    when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.ULA))
+        .thenReturn(Optional.of(ula));
+    when(budgetRepository.findById(Q))
+        .thenReturn(Optional.of(budget("10", "20.5", "30.25", "29.38", null, "100")));
+    when(recruitmentCourseRepository.findByRecruitmentId(6L)).thenReturn(List.of());
+
+    Summary summary = service.summary(Q);
+
+    assertNull(summary.estimatedCostPerULAPerQuarter());
+    assertEquals(new Side(6L, 4, null, 0, 0, -4, null, new BigDecimal("0.00")), summary.ula());
+    assertEquals(new BigDecimal("0.00"), summary.totalExpenses());
+    // 10 + 20.5 + 30.25 + 100
+    assertEquals(new BigDecimal("160.75"), summary.totalFunds());
+    assertEquals(new BigDecimal("160.75"), summary.bottomLine());
+  }
+
+  @Test
+  public void the_cost_per_ula_is_computed_even_when_the_quarter_has_no_ula_recruitment() {
+    Recruitment ta = recruitment(5L, Q, RecruitmentType.TA, 3, "1000");
+    when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.TA))
+        .thenReturn(Optional.of(ta));
+    when(budgetRepository.findById(Q))
+        .thenReturn(Optional.of(budget("0", "0", "0", "29.38", "110", null)));
+    when(recruitmentCourseRepository.findByRecruitmentId(5L)).thenReturn(List.of());
+
+    Summary summary = service.summary(Q);
+
+    assertNull(summary.ula());
+    assertEquals(new BigDecimal("3231.80"), summary.estimatedCostPerULAPerQuarter());
+    // The TA side still uses the TA recruitment's own cost, never the budget's rate and hours.
+    assertEquals(new BigDecimal("1000"), summary.ta().avgCostPerPosition());
+    assertEquals(new BigDecimal("3000.00"), summary.ta().anticipatedCost());
+    // Other funds not yet entered count as zero.
+    assertEquals(new BigDecimal("0.00"), summary.totalFunds());
+  }
+
+  @Test
+  public void the_other_funds_for_ases_are_counted_to_the_cent() {
+    Recruitment ta = recruitment(5L, Q, RecruitmentType.TA, 1, null);
+    when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.TA))
+        .thenReturn(Optional.of(ta));
+    when(budgetRepository.findById(Q))
+        .thenReturn(Optional.of(budget("1", "2", "3", null, null, "0.005")));
+    when(recruitmentCourseRepository.findByRecruitmentId(5L)).thenReturn(List.of());
+
+    assertEquals(new BigDecimal("6.01"), service.summary(Q).totalFunds());
   }
 
   /** Issue #363: the estimates are the quarter's, read from budget_courses for the live rows. */
@@ -215,6 +305,7 @@ public class BudgetServiceTests {
     Summary summary = service.summary(Q);
 
     assertNull(summary.ula());
+    assertNull(summary.estimatedCostPerULAPerQuarter());
     assertEquals(
         new Side(5L, 3, new BigDecimal("1000"), 3, 90, 0, 30.0, new BigDecimal("3000.00")),
         summary.ta());
@@ -229,7 +320,7 @@ public class BudgetServiceTests {
   }
 
   @Test
-  public void summary_with_only_a_ula_recruitment_and_no_cost_yet_has_zero_expenses() {
+  public void summary_with_only_a_ula_recruitment_and_no_rate_or_hours_yet_has_zero_expenses() {
     Recruitment ula = recruitment(6L, Q, RecruitmentType.ULA, 4, null);
     when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.ULA))
         .thenReturn(Optional.of(ula));

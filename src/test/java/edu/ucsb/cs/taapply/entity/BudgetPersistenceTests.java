@@ -1,6 +1,7 @@
 package edu.ucsb.cs.taapply.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.BudgetRepository;
@@ -93,6 +94,48 @@ class BudgetPersistenceTests {
 
     Budget found = budgets.findById("20254").orElseThrow();
     assertEquals(0, found.getConversionVersion());
+    assertEquals(7, found.getVersion());
+  }
+
+  @Test
+  void a_budget_keeps_its_rate_hours_and_other_funds_to_the_cent_and_starts_them_empty() {
+    budgets.save(Budget.builder().quarter("20264").build());
+    budgets.save(
+        Budget.builder()
+            .quarter("20271")
+            .ulaRateDollarsPerHour(new BigDecimal("29.38"))
+            .estimatedHoursPerULAPerQuarter(new BigDecimal("110.50"))
+            .giftFundsForASEs(new BigDecimal("32200.01"))
+            .build());
+    entityManager.flush();
+    entityManager.clear();
+
+    Budget fresh = budgets.findById("20264").orElseThrow();
+    assertNull(fresh.getUlaRateDollarsPerHour());
+    assertNull(fresh.getEstimatedHoursPerULAPerQuarter());
+    assertNull(fresh.getGiftFundsForASEs());
+    Budget entered = budgets.findById("20271").orElseThrow();
+    assertEquals(new BigDecimal("29.38"), entered.getUlaRateDollarsPerHour());
+    assertEquals(new BigDecimal("110.50"), entered.getEstimatedHoursPerULAPerQuarter());
+    assertEquals(new BigDecimal("32200.01"), entered.getGiftFundsForASEs());
+  }
+
+  @Test
+  void a_budget_row_that_existed_before_the_rate_hours_and_other_funds_columns_has_none() {
+    // The way the older code inserted a budget (issue #388): without the three columns.
+    entityManager
+        .getEntityManager()
+        .createNativeQuery(
+            "INSERT INTO budgets (quarter, unrestricted_budget, tas_only_budget,"
+                + " ulas_only_budget, conversion_ta_to_ula, version, conversion_version)"
+                + " VALUES ('20254', 1, 2, 3, 3, 7, 1)")
+        .executeUpdate();
+    entityManager.clear();
+
+    Budget found = budgets.findById("20254").orElseThrow();
+    assertNull(found.getUlaRateDollarsPerHour());
+    assertNull(found.getEstimatedHoursPerULAPerQuarter());
+    assertNull(found.getGiftFundsForASEs());
     assertEquals(7, found.getVersion());
   }
 

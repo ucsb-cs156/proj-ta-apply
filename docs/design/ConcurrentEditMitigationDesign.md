@@ -396,7 +396,7 @@ mean something together.
 | Issue | Page | Scope | Resource key | Order |
 |---|---|---|---|---|
 | #273 | Application form draft | One applicant's draft for one recruitment | `draft:<draftId>` | first |
-| #277 | Budget | One quarter's budget: the three budget lines under `version`; the TA to ULA conversion factor, edited on the Combined Allocation page, under its own `conversion_version` (#375), so the two pages never refuse each other's saves (compare-and-set for a recruitment's average cost and hiring target) | `budget:<quarter>` | 2 |
+| #277 | Budget | One quarter's budget: the budget lines (the three subzero lines, and since #388 the ULA hourly rate, the hours per ULA and the other funds for ASEs) under `version`; the TA to ULA conversion factor, edited on the Combined Allocation page, under its own `conversion_version` (#375), so the two pages never refuse each other's saves (compare-and-set for the TA recruitment's cost per TA and a recruitment's hiring target) | `budget:<quarter>` | 2 |
 | #278 | Courses allocations and estimated enrollments | The whole edit page for one recruitment | `courses-edit:<recruitmentId>` | 3 |
 | #279 | Faculty rankings | One recruitment course's ranking list | `ranking:<recruitmentCourseId>` | 4 |
 | #280 | Assignments | The whole assignments page for one recruitment | `assignments:<recruitmentId>` | 5 |

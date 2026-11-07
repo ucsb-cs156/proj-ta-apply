@@ -201,11 +201,11 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <code>expected</code>) and the server applies it only if that is still
           the stored value; otherwise nothing changes and the answer is{" "}
           <code>409 Conflict</code> with the current value. The Budget page uses
-          a version for the budget&apos;s three lines and compare-and-set for a
-          recruitment&apos;s average cost and hiring target, which the
-          recruitment&apos;s row shares with many other pages. The page keeps
-          what the user typed, says what is stored now, and offers{" "}
-          <em>Use theirs</em> and <em>Overwrite</em>.
+          a version for the budget&apos;s lines and compare-and-set for the TA
+          recruitment&apos;s cost per TA and each recruitment&apos;s hiring
+          target, which the recruitment&apos;s row shares with many other pages.
+          The page keeps what the user typed, says what is stored now, and
+          offers <em>Use theirs</em> and <em>Overwrite</em>.
         </p>
         <p data-testid="HelpDeveloperPage-simultaneous-heartbeat">
           <strong>The client id and the heartbeat.</strong> Each tab makes a
@@ -782,7 +782,7 @@ export default function HelpDeveloperPage(): React.JSX.Element {
               <td>Budget</td>
               <td>
                 One quarter&apos;s budget (compare-and-set for a
-                recruitment&apos;s average cost and hiring target, keyed{" "}
+                recruitment&apos;s cost per TA and hiring target, keyed{" "}
                 <code>recruitment:&lt;id&gt;</code>)
               </td>
               <td>

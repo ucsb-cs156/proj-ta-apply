@@ -25,6 +25,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Issue #277: the Budget page warns when the same quarter is open twice, and asks the newer tab.
+ * Issue #388: its costs and funds table. Issue #358: the Combined Allocation page.
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
@@ -168,6 +169,61 @@ public class BudgetWebIT extends WebTestCase {
         new com.microsoft.playwright.assertions.LocatorAssertions.IsHiddenOptions()
             .setTimeout(30000);
     assertThat(page.getByTestId("CombinedAllocationsPage-multiple-tabs")).isHidden(gone);
+  }
+
+  /**
+   * Issue #388: the costs and funds table. The ULA hourly rate and hours per quarter are saved as
+   * budget lines, their product is shown as the cost per ULA, and the other funds for ASEs count in
+   * the total funds.
+   */
+  @Test
+  public void the_costs_and_funds_table_computes_the_cost_per_ula_and_counts_the_other_funds()
+      throws Exception {
+    recruitmentWithOneCourse(RecruitmentType.TA);
+    recruitmentWithOneCourse(RecruitmentType.ULA);
+    setupAdminUser();
+    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/admin/budget/F26"));
+    assertThat(page.getByTestId("BudgetPage-bottom-line")).isVisible();
+
+    // Nothing entered: empty boxes, no cost per ULA, every line at zero.
+    assertThat(page.getByTestId("BudgetPage-ulaRateDollarsPerHour")).hasValue("");
+    assertThat(page.getByTestId("BudgetPage-estimatedHoursPerULAPerQuarter")).hasValue("");
+    assertThat(page.getByTestId("BudgetPage-giftFundsForASEs")).hasValue("");
+    assertThat(page.getByTestId("BudgetPage-ulaCost")).hasText("—");
+    assertThat(page.getByTestId("BudgetPage-unrestrictedBudget")).hasValue("0");
+    assertThat(page.getByTestId("BudgetPage-funds-gift")).containsText("$0.00");
+
+    // The issue's figures: 29.38 × 110 = 3,231.80 per ULA.
+    page.getByTestId("BudgetPage-avgCost-ta").fill("13110");
+    page.getByTestId("BudgetPage-ulaRateDollarsPerHour").fill("29.38");
+    page.getByTestId("BudgetPage-estimatedHoursPerULAPerQuarter").fill("110");
+    page.getByTestId("BudgetPage-unrestrictedBudget").fill("699315");
+    page.getByTestId("BudgetPage-ulasOnlyBudget").fill("166667");
+    page.getByTestId("BudgetPage-giftFundsForASEs").fill("32200");
+    assertThat(page.getByTestId("BudgetPage-ulaCost")).hasText("$3,231.80");
+    // 699,315 + 0 + 166,667 + 32,200
+    assertThat(page.getByTestId("BudgetPage-funds-gift")).containsText("$32,200.00");
+    assertThat(page.getByTestId("BudgetPage-funds-total")).containsText("$898,182.00");
+    // The Combined Allocation page shows the computed cost per ULA too.
+    page.waitForTimeout(1000);
+    page.navigate(page.url().replace("/admin/budget/F26", "/admin/allocations/F26"));
+    assertThat(page.getByTestId("CombinedAllocationsPage-costs-ula")).containsText("$3,231.80");
+    assertThat(page.getByTestId("CombinedAllocationsPage-costs-ta")).containsText("$13,110.00");
+
+    // Kept across a reload: cents for the rate, whole dollars elsewhere.
+    page.navigate(page.url().replace("/admin/allocations/F26", "/admin/budget/F26"));
+    assertThat(page.getByTestId("BudgetPage-ulaRateDollarsPerHour")).hasValue("29.38");
+    assertThat(page.getByTestId("BudgetPage-estimatedHoursPerULAPerQuarter")).hasValue("110");
+    assertThat(page.getByTestId("BudgetPage-giftFundsForASEs")).hasValue("32200");
+    assertThat(page.getByTestId("BudgetPage-avgCost-ta")).hasValue("13110");
+    assertThat(page.getByTestId("BudgetPage-ulaCost")).hasText("$3,231.80");
+    Budget budget = budgetRepository.findById("20264").orElseThrow();
+    org.junit.jupiter.api.Assertions.assertEquals(
+        new java.math.BigDecimal("29.38"), budget.getUlaRateDollarsPerHour());
+    org.junit.jupiter.api.Assertions.assertEquals(
+        new java.math.BigDecimal("110.00"), budget.getEstimatedHoursPerULAPerQuarter());
+    org.junit.jupiter.api.Assertions.assertEquals(
+        new java.math.BigDecimal("32200.00"), budget.getGiftFundsForASEs());
   }
 
   @Test
