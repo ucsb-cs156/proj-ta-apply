@@ -1265,8 +1265,7 @@
 <a name='L1200'></a><a href='#L1200'>1200</a>
 <a name='L1201'></a><a href='#L1201'>1201</a>
 <a name='L1202'></a><a href='#L1202'>1202</a>
-<a name='L1203'></a><a href='#L1203'>1203</a>
-<a name='L1204'></a><a href='#L1204'>1204</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1203'></a><a href='#L1203'>1203</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1517,7 +1516,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">275x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2861,8 +2859,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Opening the page also refreshes every lecture&amp;apos;s enrollment and
           maximum enrollment from the UCSB schedule while you wait, so the
           figures you plan from are current; if the schedule cannot be reached,
-          the page says so and shows the stored figures. Your own estimate of
-          how many students each lecture will have, the{" "}
+          the page says so and shows the stored figures. The figures are kept
+          once per quarter, shared by the TA and ULA recruitments, and trusted
+          for 24 hours: when every one of them was checked within that time the
+          page shows them as they are and does not ask the schedule again. Your
+          own estimate of how many students each lecture will have, the{" "}
           &lt;strong&gt;Enrollment Estimate&lt;/strong&gt;, and the{" "}
           &lt;em&gt;Set enrollment estimates from: max, actual&lt;/em&gt; control that fills
           it from the schedule used to be on this page; they are on the{" "}
@@ -2898,7 +2899,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
         &gt;
           Who may see the allocations is one setting for the recruitment, shown
           under the hiring target as &lt;em&gt;Allocation visibility&lt;/em&gt;; choose{" "}
-          &lt;strong&gt;Change&lt;/strong&gt; to pick one of three states.{" "}
+          &lt;strong&gt;Change&lt;/strong&gt; to pick one of two states.{" "}
           &lt;strong&gt;Admins only&lt;/strong&gt; is where every recruitment starts: no
           faculty member sees any allocation.{" "}
           &lt;strong&gt;Faculty see their own courses&lt;/strong&gt; is what{" "}
@@ -2909,19 +2910,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           &lt;strong&gt;Ranking Target&lt;/strong&gt; (twice the allocation, but never more
           than the candidates who expressed interest in the course),{" "}
           &lt;strong&gt;Candidates Ranked&lt;/strong&gt; so far and{" "}
-          &lt;strong&gt;Rankings Still Needed&lt;/strong&gt;.{" "}
-          &lt;strong&gt;Faculty see all courses&lt;/strong&gt; goes further, for when the
-          whole plan is public: every faculty member teaching in the recruitment
-          sees the enrollment estimate, allocation, unrounded allocation, delta
-          and TA:student ratio columns of every course on the read-only{" "}
-          &lt;em&gt;Courses&lt;/em&gt; page that each of their courses offers. Under the
-          other two settings that page shows faculty no such columns at all: the
-          figures are not even sent to their browser. Move off Admins only once
-          the numbers are mostly final; you can still change an allocation
-          afterwards, and faculty see the change immediately. Every change of
-          state is recorded in the recruitment&amp;apos;s change history. Do this
-          before opening faculty reviews, so faculty know how many candidates to
-          rank, and ask them to raise any concerns about their targets then.
+          &lt;strong&gt;Rankings Still Needed&lt;/strong&gt;. The read-only &lt;em&gt;Courses&lt;/em&gt;{" "}
+          page that each of their courses offers shows faculty no allocation
+          figures: those are not even sent to their browser. Move off Admins
+          only once the numbers are mostly final; you can still change an
+          allocation afterwards, and faculty see the change immediately. Every
+          change of state is recorded in the recruitment&amp;apos;s change history.
+          Do this before opening faculty reviews, so faculty know how many
+          candidates to rank, and ask them to raise any concerns about their
+          targets then.
         &lt;/p&gt;
 &nbsp;
         &lt;h2 className="my-3 h4" id="quarters"&gt;
@@ -3002,17 +2999,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
           the TA recruitment and the ULA recruitment together: a section that is
           in both recruitments is one row, found by its enroll code, and a
           section that is in only one has blank cells for the other type. The
-          single &lt;strong&gt;Enrollment Estimate&lt;/strong&gt; is the higher of the two
-          recruitments&amp;apos; estimates for the section, and every ratio on the
-          page uses it. It is your own estimate of how many students the section
-          will have, the basis for allocating positions: type it in the table
-          and it is saved a second after the last keystroke, or at once when you
-          leave the box; an empty box clears it; and what you type is saved to
-          the section&amp;apos;s course row in &lt;em&gt;each&lt;/em&gt; recruitment that has
-          it, so the two agree. For each type that has a recruitment the table
-          has &lt;strong&gt;Allocation&lt;/strong&gt; (how many TAs or ULAs of that
-          recruitment the section gets; a whole number, saved as you type it,
-          against the recruitment of that type),{" "}
+          single &lt;strong&gt;Enrollment Estimate&lt;/strong&gt; is the section&amp;apos;s one
+          estimate for the quarter, kept once and shared by the TA and ULA
+          recruitments, and every ratio on the page uses it. It is your own
+          estimate of how many students the section will have, the basis for
+          allocating positions: type it in the table and it is saved a second
+          after the last keystroke, or at once when you leave the box; an empty
+          box clears it; and whichever recruitment&amp;apos;s row the page saves it
+          under, both recruitments see the same value. For each type that has a
+          recruitment the table has &lt;strong&gt;Allocation&lt;/strong&gt; (how many TAs or
+          ULAs of that recruitment the section gets; a whole number, saved as
+          you type it, against the recruitment of that type),{" "}
           &lt;strong&gt;Unrounded Allocation&lt;/strong&gt;, &lt;strong&gt;Delta&lt;/strong&gt; and the{" "}
           &lt;strong&gt;TA:student&lt;/strong&gt; or &lt;strong&gt;ULA:student&lt;/strong&gt; ratio, so
           a quarter with only one recruitment shows only that type&amp;apos;s
@@ -3679,7 +3676,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-07T07:06:40.156Z
+                at 2026-11-07T18:27:43.214Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
