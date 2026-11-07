@@ -3,11 +3,13 @@
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
+import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
 import edu.ucsb.cs.taapply.services.AllocationVisibilityService;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,13 +22,13 @@ import org.springframework.stereotype.Service;
  * allocations (the audited change an admin would make by hand).
  */
 @Service
-<span class="fc" id="L23">public class FakeAllocationsService {</span>
+<span class="fc" id="L25">public class FakeAllocationsService {</span>
 
   /** Where the enrollment estimates come from; KEEP leaves the ones already entered. */
-<span class="fc" id="L26">  public enum Estimates {</span>
-<span class="fc" id="L27">    MAX,</span>
-<span class="fc" id="L28">    ACTUAL,</span>
-<span class="fc" id="L29">    KEEP</span>
+<span class="fc" id="L28">  public enum Estimates {</span>
+<span class="fc" id="L29">    MAX,</span>
+<span class="fc" id="L30">    ACTUAL,</span>
+<span class="fc" id="L31">    KEEP</span>
   }
 
   /** The largest hiring target offered, as a multiple of the recruitment's courses. */
@@ -36,6 +38,7 @@ import org.springframework.stereotype.Service;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired AllocationService allocationService;
   @Autowired AllocationVisibilityService allocationVisibilityService;
+  @Autowired BudgetCourseService budgetCourseService;
 
   /**
    * Fakes the recruitment's hiring target and allocations.
@@ -49,40 +52,42 @@ import org.springframework.stereotype.Service;
    */
   public List&lt;RecruitmentCourse&gt; fake(
       Long recruitmentId, int hiringTarget, Estimates estimates, boolean setVisibility) {
-<span class="fc" id="L52">    Recruitment recruitment =</span>
+<span class="fc" id="L55">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L54">            .findById(recruitmentId)</span>
-<span class="fc" id="L55">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc" id="L56">    List&lt;RecruitmentCourse&gt; courses =</span>
-<span class="fc" id="L57">        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
-<span class="fc bfc" id="L58" title="All 2 branches covered.">            .filter(course -&gt; !course.isRemoved())</span>
-<span class="fc" id="L59">            .toList();</span>
-<span class="fc bfc" id="L60" title="All 2 branches covered.">    if (courses.isEmpty()) {</span>
-<span class="fc" id="L61">      throw new IllegalArgumentException(&quot;This recruitment has no courses to allocate to&quot;);</span>
+<span class="fc" id="L57">            .findById(recruitmentId)</span>
+<span class="fc" id="L58">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L59">    List&lt;RecruitmentCourse&gt; courses =</span>
+<span class="fc" id="L60">        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">            .filter(course -&gt; !course.isRemoved())</span>
+<span class="fc" id="L62">            .toList();</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">    if (courses.isEmpty()) {</span>
+<span class="fc" id="L64">      throw new IllegalArgumentException(&quot;This recruitment has no courses to allocate to&quot;);</span>
     }
-<span class="fc" id="L63">    int max = MAX_TARGET_PER_COURSE * courses.size();</span>
-<span class="fc bfc" id="L64" title="All 4 branches covered.">    if (hiringTarget &lt; 1 || hiringTarget &gt; max) {</span>
-<span class="fc" id="L65">      throw new IllegalArgumentException(&quot;hiringTarget must be between 1 and &quot; + max);</span>
+<span class="fc" id="L66">    int max = MAX_TARGET_PER_COURSE * courses.size();</span>
+<span class="fc bfc" id="L67" title="All 4 branches covered.">    if (hiringTarget &lt; 1 || hiringTarget &gt; max) {</span>
+<span class="fc" id="L68">      throw new IllegalArgumentException(&quot;hiringTarget must be between 1 and &quot; + max);</span>
     }
 
-<span class="fc" id="L68">    recruitment.setTotalHiringTarget(hiringTarget);</span>
+<span class="fc" id="L71">    recruitment.setTotalHiringTarget(hiringTarget);</span>
     // Every allocation is about to be overwritten, as by Auto Allocate (issue #278).
-<span class="fc" id="L70">    recruitment.setAllocationBulkVersion(recruitment.getAllocationBulkVersion() + 1);</span>
-<span class="fc" id="L71">    recruitmentRepository.save(recruitment);</span>
-<span class="fc bfc" id="L72" title="All 2 branches covered.">    if (estimates != Estimates.KEEP) {</span>
-<span class="fc bfc" id="L73" title="All 2 branches covered.">      for (RecruitmentCourse course : courses) {</span>
-<span class="fc bfc" id="L74" title="All 2 branches covered.">        Integer value = estimates == Estimates.MAX ? course.getMaxEnroll() : course.getEnrollment();</span>
-<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (value != null) {</span>
-<span class="fc" id="L76">          course.setEnrollmentEstimate(value);</span>
-<span class="fc" id="L77">          recruitmentCourseRepository.save(course);</span>
-        }
-<span class="fc" id="L79">      }</span>
+<span class="fc" id="L73">    recruitment.setAllocationBulkVersion(recruitment.getAllocationBulkVersion() + 1);</span>
+<span class="fc" id="L74">    recruitmentRepository.save(recruitment);</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">    if (estimates != Estimates.KEEP) {</span>
+      // The estimates are the quarter's (issue #363): a section with no figure keeps its estimate,
+      // and the other recruitment's shares move too.
+<span class="fc" id="L78">      budgetCourseService.fillEstimates(</span>
+<span class="fc" id="L79">          recruitment.getQuarter(),</span>
+          courses,
+<span class="fc bfc" id="L81" title="All 2 branches covered.">          estimates == Estimates.MAX</span>
+<span class="fc" id="L82">              ? EnrollmentEstimateSource.MAX</span>
+<span class="fc" id="L83">              : EnrollmentEstimateSource.ACTUAL);</span>
+<span class="fc" id="L84">      allocationService.recomputeQuarter(recruitment.getQuarter());</span>
     }
-<span class="fc" id="L81">    List&lt;RecruitmentCourse&gt; allocated = allocationService.autoAllocate(recruitment);</span>
-<span class="fc bfc" id="L82" title="All 2 branches covered.">    if (setVisibility) {</span>
-<span class="fc" id="L83">      allocationVisibilityService.change(recruitment, AllocationVisibility.OWN_COURSES);</span>
+<span class="fc" id="L86">    List&lt;RecruitmentCourse&gt; allocated = allocationService.autoAllocate(recruitment);</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">    if (setVisibility) {</span>
+<span class="fc" id="L88">      allocationVisibilityService.change(recruitment, AllocationVisibility.OWN_COURSES);</span>
     }
-<span class="fc" id="L85">    return allocated;</span>
+<span class="fc" id="L90">    return allocated;</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -14,6 +14,7 @@ import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import edu.ucsb.cs.taapply.services.RecruitmentCoursesRefreshService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,37 +38,42 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** The course list for one recruitment. */
+/**
+ * The course list for one recruitment. Every row it answers with carries the quarter's enrollment
+ * figures and estimate from {@code budget_courses} (issue #363), attached by {@link
+ * BudgetCourseService}, so the JSON is as it was when those were the row's own columns.
+ */
 @Tag(name = &quot;RecruitmentCourses&quot;)
 @RequestMapping(&quot;/api/recruitmentcourses&quot;)
 @RestController
-<span class="fc" id="L44">@Slf4j</span>
-<span class="fc" id="L45">public class RecruitmentCoursesController extends ApiController {</span>
+<span class="fc" id="L49">@Slf4j</span>
+<span class="fc" id="L50">public class RecruitmentCoursesController extends ApiController {</span>
 
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired UCSBCurriculumService ucsbCurriculumService;
   @Autowired RecruitmentCoursesRefreshService recruitmentCoursesRefreshService;
   @Autowired AllocationService allocationService;
+  @Autowired BudgetCourseService budgetCourseService;
   @Autowired ClientActivityDetector clientActivityDetector;
 
   /**
    * Who the current user is to the detector: the shared identity, marked as an admin (issue #302).
    */
   private ClientIdentity identity() {
-<span class="fc" id="L58">    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);</span>
+<span class="fc" id="L64">    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);</span>
   }
 
   /** The detector's name for one recruitment's Courses edit page. */
   private static String resourceKey(Long recruitmentId) {
-<span class="fc" id="L63">    return &quot;courses-edit:&quot; + recruitmentId;</span>
+<span class="fc" id="L69">    return &quot;courses-edit:&quot; + recruitmentId;</span>
   }
 
   /** The recruitment, or 404; asked before anything is recorded or told to anyone. */
   private Recruitment recruitment(Long recruitmentId) {
-<span class="fc" id="L68">    return recruitmentRepository</span>
-<span class="fc" id="L69">        .findById(recruitmentId)</span>
-<span class="fc" id="L70">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L74">    return recruitmentRepository</span>
+<span class="fc" id="L75">        .findById(recruitmentId)</span>
+<span class="fc" id="L76">        .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
   }
 
   @Operation(
@@ -86,8 +92,8 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
     // The role check has already passed, so that nobody else is recorded or told who is here.
-<span class="fc" id="L89">    recruitment(recruitmentId);</span>
-<span class="fc" id="L90">    return clientActivityDetector.heartbeat(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc" id="L95">    recruitment(recruitmentId);</span>
+<span class="fc" id="L96">    return clientActivityDetector.heartbeat(resourceKey(recruitmentId), clientId, identity());</span>
   }
 
   @Operation(
@@ -102,8 +108,8 @@ import org.springframework.web.bind.annotation.RestController;
   public void leave(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
-<span class="fc" id="L105">    clientActivityDetector.leave(resourceKey(recruitmentId), clientId);</span>
-<span class="fc" id="L106">  }</span>
+<span class="fc" id="L111">    clientActivityDetector.leave(resourceKey(recruitmentId), clientId);</span>
+<span class="fc" id="L112">  }</span>
 
   /**
    * Course id first, then section, so a course's several lectures sit together in order.
@@ -112,10 +118,10 @@ import org.springframework.web.bind.annotation.RestController;
    * code-unit comparison, and Postgres' default collation can treat spaces as negligible, which
    * would pass on H2 and reorder wrongly in production.
    */
-<span class="fc" id="L115">  private static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_THEN_SECTION =</span>
-<span class="fc" id="L116">      Comparator.comparing(RecruitmentCourse::getCourseId)</span>
-<span class="fc" id="L117">          .thenComparing(</span>
-<span class="fc" id="L118">              RecruitmentCourse::getSection, Comparator.nullsFirst(Comparator.naturalOrder()));</span>
+<span class="fc" id="L121">  private static final Comparator&lt;RecruitmentCourse&gt; BY_COURSE_THEN_SECTION =</span>
+<span class="fc" id="L122">      Comparator.comparing(RecruitmentCourse::getCourseId)</span>
+<span class="fc" id="L123">          .thenComparing(</span>
+<span class="fc" id="L124">              RecruitmentCourse::getSection, Comparator.nullsFirst(Comparator.naturalOrder()));</span>
 
   @Operation(
       summary = &quot;List the courses for a recruitment&quot;,
@@ -129,10 +135,16 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;includeRemoved&quot;) @RequestParam(defaultValue = &quot;false&quot;)
           boolean includeRemoved) {
 
-<span class="fc" id="L132">    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
-<span class="fc bfc" id="L133" title="All 4 branches covered.">        .filter(course -&gt; includeRemoved || !course.isRemoved())</span>
-<span class="fc" id="L134">        .sorted(BY_COURSE_THEN_SECTION)</span>
-<span class="fc" id="L135">        .toList();</span>
+<span class="fc" id="L138">    List&lt;RecruitmentCourse&gt; rows =</span>
+<span class="fc" id="L139">        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc bfc" id="L140" title="All 4 branches covered.">            .filter(course -&gt; includeRemoved || !course.isRemoved())</span>
+<span class="fc" id="L141">            .sorted(BY_COURSE_THEN_SECTION)</span>
+<span class="fc" id="L142">            .toList();</span>
+    // An unknown recruitment has no rows to attach anything to, and is an empty list as before.
+<span class="fc" id="L144">    recruitmentRepository</span>
+<span class="fc" id="L145">        .findById(recruitmentId)</span>
+<span class="fc" id="L146">        .ifPresent(recruitment -&gt; budgetCourseService.attach(recruitment.getQuarter(), rows));</span>
+<span class="fc" id="L147">    return rows;</span>
   }
 
   @Operation(
@@ -149,51 +161,53 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @Parameter(name = &quot;enrollCode&quot;, description = &quot;e.g. 07492&quot;) @RequestParam String enrollCode) {
 
-<span class="fc" id="L152">    Recruitment recruitment =</span>
+<span class="fc" id="L164">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L154">            .findById(recruitmentId)</span>
-<span class="fc" id="L155">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
-<span class="fc" id="L156">    String code = enrollCode.strip();</span>
+<span class="fc" id="L166">            .findById(recruitmentId)</span>
+<span class="fc" id="L167">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L168">    String code = enrollCode.strip();</span>
 
     UcsbCourseOffering offering;
     try {
-<span class="fc" id="L160">      offering = ucsbCurriculumService.getOffering(recruitment.getQuarter(), code);</span>
-<span class="fc" id="L161">    } catch (Exception e) {</span>
-<span class="fc" id="L162">      log.warn(&quot;Lookup of enroll code {} in {} failed&quot;, code, recruitment.getQuarter(), e);</span>
-<span class="fc" id="L163">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L172">      offering = ucsbCurriculumService.getOffering(recruitment.getQuarter(), code);</span>
+<span class="fc" id="L173">    } catch (Exception e) {</span>
+<span class="fc" id="L174">      log.warn(&quot;Lookup of enroll code {} in {} failed&quot;, code, recruitment.getQuarter(), e);</span>
+<span class="fc" id="L175">      throw new IllegalArgumentException(</span>
           &quot;The UCSB API has no section with enroll code %s in quarter %s&quot;
-<span class="fc" id="L165">              .formatted(code, recruitment.getQuarter()));</span>
-<span class="fc" id="L166">    }</span>
+<span class="fc" id="L177">              .formatted(code, recruitment.getQuarter()));</span>
+<span class="fc" id="L178">    }</span>
     UcsbSection section =
-<span class="fc bfc" id="L168" title="All 4 branches covered.">        (offering == null || offering.getClassSections() == null</span>
-<span class="fc" id="L169">                ? List.&lt;UcsbSection&gt;of()</span>
-<span class="fc" id="L170">                : offering.getClassSections())</span>
-<span class="fc" id="L171">            .stream()</span>
-<span class="fc" id="L172">                .filter(s -&gt; code.equals(s.getEnrollCode()))</span>
-<span class="fc" id="L173">                .findFirst()</span>
-<span class="fc" id="L174">                .orElseThrow(</span>
+<span class="fc bfc" id="L180" title="All 4 branches covered.">        (offering == null || offering.getClassSections() == null</span>
+<span class="fc" id="L181">                ? List.&lt;UcsbSection&gt;of()</span>
+<span class="fc" id="L182">                : offering.getClassSections())</span>
+<span class="fc" id="L183">            .stream()</span>
+<span class="fc" id="L184">                .filter(s -&gt; code.equals(s.getEnrollCode()))</span>
+<span class="fc" id="L185">                .findFirst()</span>
+<span class="fc" id="L186">                .orElseThrow(</span>
                     () -&gt;
-<span class="fc" id="L176">                        new IllegalArgumentException(</span>
+<span class="fc" id="L188">                        new IllegalArgumentException(</span>
                             &quot;The UCSB API has no section with enroll code %s in quarter %s&quot;
-<span class="fc" id="L178">                                .formatted(code, recruitment.getQuarter())));</span>
-<span class="fc bfc" id="L179" title="All 2 branches covered.">    if (!section.isPrimary()) {</span>
-<span class="fc" id="L180">      throw new IllegalArgumentException(</span>
+<span class="fc" id="L190">                                .formatted(code, recruitment.getQuarter())));</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">    if (!section.isPrimary()) {</span>
+<span class="fc" id="L192">      throw new IllegalArgumentException(</span>
           &quot;Enroll code %s is section %s, a discussion or lab; only lectures (section numbers&quot;
-<span class="fc" id="L182">                  .formatted(code, section.getSection())</span>
+<span class="fc" id="L194">                  .formatted(code, section.getSection())</span>
               + &quot; ending in 00) can be added&quot;);
     }
 
-<span class="fc" id="L186">    String courseId = UCSBCurriculumService.normalizeCourseId(offering.getCourseId());</span>
-<span class="fc" id="L187">    RecruitmentCourse row =</span>
+<span class="fc" id="L198">    String courseId = UCSBCurriculumService.normalizeCourseId(offering.getCourseId());</span>
+<span class="fc" id="L199">    RecruitmentCourse row =</span>
         recruitmentCourseRepository
-<span class="fc" id="L189">            .findByRecruitmentIdAndEnrollCode(recruitmentId, code)</span>
-<span class="fc" id="L190">            .orElseGet(() -&gt; RecruitmentCourse.builder().build());</span>
-<span class="fc" id="L191">    PopulateRecruitmentCoursesJob.applyOffering(row, recruitmentId, courseId, offering, section);</span>
-<span class="fc" id="L192">    row.setManuallyAdded(true);</span>
-<span class="fc" id="L193">    row.setRemoved(false);</span>
-<span class="fc" id="L194">    row.setStale(false);</span>
-<span class="fc" id="L195">    recruitmentCourseRepository.save(row);</span>
-<span class="fc" id="L196">    return row;</span>
+<span class="fc" id="L201">            .findByRecruitmentIdAndEnrollCode(recruitmentId, code)</span>
+<span class="fc" id="L202">            .orElseGet(() -&gt; RecruitmentCourse.builder().build());</span>
+<span class="fc" id="L203">    PopulateRecruitmentCoursesJob.applyOffering(row, recruitmentId, courseId, offering, section);</span>
+<span class="fc" id="L204">    row.setManuallyAdded(true);</span>
+<span class="fc" id="L205">    row.setRemoved(false);</span>
+<span class="fc" id="L206">    row.setStale(false);</span>
+<span class="fc" id="L207">    recruitmentCourseRepository.save(row);</span>
+    // The section's figures are the quarter's (issue #363): cached from this very answer.
+<span class="fc" id="L209">    row.attachFigures(budgetCourseService.cache(recruitment.getQuarter(), row, section));</span>
+<span class="fc" id="L210">    return row;</span>
   }
 
   @Operation(
@@ -201,31 +215,41 @@ import org.springframework.web.bind.annotation.RestController;
       description =
           &quot;Flags the row rather than deleting it, for two reasons: a later Populate must not add a&quot;
               + &quot; removed course straight back, and a removal made by mistake has to be reversible.&quot;
-              + &quot; Idempotent in both directions.&quot;)
+              + &quot; Idempotent in both directions. The section's quarter row (its enrollment estimate&quot;
+              + &quot; and cached figures, issue #363) is deleted once no recruitment of the quarter has&quot;
+              + &quot; the section any more, and created afresh, with an empty estimate, when one gets it&quot;
+              + &quot; back.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @PutMapping(&quot;/removed&quot;)
   public RecruitmentCourse setRemoved(
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;removed&quot;) @RequestParam boolean removed) {
 
-<span class="fc" id="L211">    RecruitmentCourse course =</span>
+<span class="fc" id="L228">    RecruitmentCourse course =</span>
         recruitmentCourseRepository
-<span class="fc" id="L213">            .findById(id)</span>
-<span class="fc" id="L214">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
+<span class="fc" id="L230">            .findById(id)</span>
+<span class="fc" id="L231">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
+<span class="fc" id="L232">    Recruitment recruitment = recruitmentOf(course);</span>
 
-<span class="fc" id="L216">    course.setRemoved(removed);</span>
-<span class="fc" id="L217">    recruitmentCourseRepository.save(course);</span>
+<span class="fc" id="L234">    course.setRemoved(removed);</span>
+<span class="fc" id="L235">    recruitmentCourseRepository.save(course);</span>
+<span class="fc bfc" id="L236" title="All 2 branches covered.">    if (removed) {</span>
+<span class="fc" id="L237">      budgetCourseService.dropIfUnused(recruitment.getQuarter(), course.getEnrollCode());</span>
+    } else {
+<span class="fc" id="L239">      budgetCourseService.ensure(recruitment.getQuarter(), course);</span>
+    }
     // A removed section leaves the total of the estimates, so every share changes (issue #176).
-<span class="fc" id="L219">    allocationService.recompute(recruitmentOf(course));</span>
-<span class="fc" id="L220">    return course;</span>
+<span class="fc" id="L242">    allocationService.recompute(recruitment);</span>
+<span class="fc" id="L243">    budgetCourseService.attach(recruitment.getQuarter(), course);</span>
+<span class="fc" id="L244">    return course;</span>
   }
 
   /** The recruitment a row belongs to; the row's foreign key makes it exist. */
   private Recruitment recruitmentOf(RecruitmentCourse course) {
-<span class="fc" id="L225">    return recruitmentRepository</span>
-<span class="fc" id="L226">        .findById(course.getRecruitmentId())</span>
-<span class="fc" id="L227">        .orElseThrow(</span>
-<span class="fc" id="L228">            () -&gt; new EntityNotFoundException(Recruitment.class, course.getRecruitmentId()));</span>
+<span class="fc" id="L249">    return recruitmentRepository</span>
+<span class="fc" id="L250">        .findById(course.getRecruitmentId())</span>
+<span class="fc" id="L251">        .orElseThrow(</span>
+<span class="fc" id="L252">            () -&gt; new EntityNotFoundException(Recruitment.class, course.getRecruitmentId()));</span>
   }
 
   @Operation(
@@ -248,41 +272,45 @@ import org.springframework.web.bind.annotation.RestController;
           Integer expectedBulkVersion,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
 
-<span class="fc bfc" id="L251" title="All 2 branches covered.">    if (allocation &lt; 0) {</span>
-<span class="fc" id="L252">      throw new IllegalArgumentException(&quot;allocation must not be negative&quot;);</span>
+<span class="fc bfc" id="L275" title="All 2 branches covered.">    if (allocation &lt; 0) {</span>
+<span class="fc" id="L276">      throw new IllegalArgumentException(&quot;allocation must not be negative&quot;);</span>
     }
 
-<span class="fc" id="L255">    RecruitmentCourse course =</span>
+<span class="fc" id="L279">    RecruitmentCourse course =</span>
         recruitmentCourseRepository
-<span class="fc" id="L257">            .findById(id)</span>
-<span class="fc" id="L258">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
-<span class="fc" id="L259">    clientActivityDetector.note(resourceKey(course.getRecruitmentId()), clientId, identity());</span>
-    // Only an edit that carries the bulk count needs the recruitment to check it against.
-<span class="fc bfc" id="L261" title="All 2 branches covered.">    Recruitment recruitment = expectedBulkVersion == null ? null : recruitmentOf(course);</span>
+<span class="fc" id="L281">            .findById(id)</span>
+<span class="fc" id="L282">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
+<span class="fc" id="L283">    clientActivityDetector.note(resourceKey(course.getRecruitmentId()), clientId, identity());</span>
+    // The recruitment names the quarter whose figures the answer carries (issue #363), and an edit
+    // that carries the bulk count is checked against its count.
+<span class="fc" id="L286">    Recruitment recruitment = recruitmentOf(course);</span>
+<span class="fc" id="L287">    budgetCourseService.attach(recruitment.getQuarter(), course);</span>
 
-<span class="fc bfc" id="L263" title="All 2 branches covered.">    boolean bulkMoved =</span>
-<span class="fc bfc" id="L264" title="All 2 branches covered.">        recruitment != null &amp;&amp; !expectedBulkVersion.equals(recruitment.getAllocationBulkVersion());</span>
-<span class="fc bfc" id="L265" title="All 2 branches covered.">    boolean rowMoved =</span>
-<span class="fc bfc" id="L266" title="All 2 branches covered.">        expectedVersion != null &amp;&amp; !expectedVersion.equals(course.getAllocationVersion());</span>
-<span class="fc bfc" id="L267" title="All 4 branches covered.">    if (bulkMoved || rowMoved) {</span>
-<span class="fc" id="L268">      Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L269">      body.put(</span>
+<span class="fc bfc" id="L289" title="All 2 branches covered.">    boolean bulkMoved =</span>
+        expectedBulkVersion != null
+<span class="fc bfc" id="L291" title="All 2 branches covered.">            &amp;&amp; !expectedBulkVersion.equals(recruitment.getAllocationBulkVersion());</span>
+<span class="fc bfc" id="L292" title="All 2 branches covered.">    boolean rowMoved =</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">        expectedVersion != null &amp;&amp; !expectedVersion.equals(course.getAllocationVersion());</span>
+<span class="fc bfc" id="L294" title="All 4 branches covered.">    if (bulkMoved || rowMoved) {</span>
+<span class="fc" id="L295">      Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L296">      body.put(</span>
           &quot;message&quot;,
-<span class="fc bfc" id="L271" title="All 2 branches covered.">          bulkMoved</span>
-<span class="fc" id="L272">              ? &quot;All the allocations were changed in another tab or window. Reload to see them.&quot;</span>
-<span class="fc" id="L273">              : &quot;This allocation was changed in another tab or window. Reload to see it.&quot;);</span>
-<span class="fc" id="L274">      body.put(&quot;reloadAll&quot;, bulkMoved);</span>
-<span class="fc" id="L275">      body.put(</span>
+<span class="fc bfc" id="L298" title="All 2 branches covered.">          bulkMoved</span>
+<span class="fc" id="L299">              ? &quot;All the allocations were changed in another tab or window. Reload to see them.&quot;</span>
+<span class="fc" id="L300">              : &quot;This allocation was changed in another tab or window. Reload to see it.&quot;);</span>
+<span class="fc" id="L301">      body.put(&quot;reloadAll&quot;, bulkMoved);</span>
+      // The count is answered only to an edit that sent one, as before.
+<span class="fc" id="L303">      body.put(</span>
           &quot;allocationBulkVersion&quot;,
-<span class="fc bfc" id="L277" title="All 2 branches covered.">          recruitment == null ? null : recruitment.getAllocationBulkVersion());</span>
-<span class="fc" id="L278">      body.put(&quot;course&quot;, course);</span>
-<span class="fc" id="L279">      return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
+<span class="fc bfc" id="L305" title="All 2 branches covered.">          expectedBulkVersion == null ? null : recruitment.getAllocationBulkVersion());</span>
+<span class="fc" id="L306">      body.put(&quot;course&quot;, course);</span>
+<span class="fc" id="L307">      return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
     }
 
-<span class="fc" id="L282">    course.setAllocation(allocation);</span>
-<span class="fc" id="L283">    course.setAllocationVersion(course.getAllocationVersion() + 1);</span>
-<span class="fc" id="L284">    recruitmentCourseRepository.save(course);</span>
-<span class="fc" id="L285">    return ResponseEntity.ok(course);</span>
+<span class="fc" id="L310">    course.setAllocation(allocation);</span>
+<span class="fc" id="L311">    course.setAllocationVersion(course.getAllocationVersion() + 1);</span>
+<span class="fc" id="L312">    recruitmentCourseRepository.save(course);</span>
+<span class="fc" id="L313">    return ResponseEntity.ok(course);</span>
   }
 
   @Operation(
@@ -291,23 +319,25 @@ import org.springframework.web.bind.annotation.RestController;
           &quot;Rewrites the offering details (enrollment, max enrollment, instructor, times) of every&quot;
               + &quot; course still in the API, while the caller waits, and returns the current list&quot;
               + &quot; without removed rows (issue #175). Unlike Populate it adds no rows and marks&quot;
-              + &quot; nothing stale. 404 for an unknown recruitment; 502 if the API cannot be reached,&quot;
-              + &quot; in which case nothing is changed.&quot;)
+              + &quot; nothing stale. The enrollment figures are the quarter's and are cached for 24&quot;
+              + &quot; hours (issue #363): when every course's figures were checked within that time the&quot;
+              + &quot; API is not called and the list is returned as it is. 404 for an unknown&quot;
+              + &quot; recruitment; 502 if the API cannot be reached, in which case nothing is changed.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @PostMapping(&quot;/refresh&quot;)
   public List&lt;RecruitmentCourse&gt; refresh(
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId) {
 
-<span class="fc" id="L301">    Recruitment recruitment =</span>
+<span class="fc" id="L331">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L303">            .findById(recruitmentId)</span>
-<span class="fc" id="L304">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
+<span class="fc" id="L333">            .findById(recruitmentId)</span>
+<span class="fc" id="L334">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, recruitmentId));</span>
 
-<span class="fc" id="L306">    int refreshed = recruitmentCoursesRefreshService.refresh(recruitment);</span>
-<span class="fc" id="L307">    log.info(&quot;Refreshed {} course(s) of recruitment {}&quot;, refreshed, recruitmentId);</span>
+<span class="fc" id="L336">    int refreshed = recruitmentCoursesRefreshService.refresh(recruitment);</span>
+<span class="fc" id="L337">    log.info(&quot;Refreshed {} course(s) of recruitment {}&quot;, refreshed, recruitmentId);</span>
     // Also fills in the share of any row Populate has added since the last change (issue #176).
-<span class="fc" id="L309">    allocationService.recompute(recruitment);</span>
-<span class="fc" id="L310">    return allForRecruitment(recruitmentId, false);</span>
+<span class="fc" id="L339">    allocationService.recompute(recruitment);</span>
+<span class="fc" id="L340">    return allForRecruitment(recruitmentId, false);</span>
   }
 
   @Operation(
@@ -315,7 +345,10 @@ import org.springframework.web.bind.annotation.RestController;
       description =
           &quot;The admin's estimate of how many students the section will have, the basis for&quot;
               + &quot; allocating positions (issue #175). Must not be negative; leave the value out to&quot;
-              + &quot; clear it. A planning figure: not recorded in the audit trail.&quot;)
+              + &quot; clear it. The estimate is the section's for the whole quarter (issue #363): set&quot;
+              + &quot; through either recruitment's row, it is the one both recruitments see, and both&quot;
+              + &quot; recruitments' shares are recomputed. A planning figure: not recorded in the audit&quot;
+              + &quot; trail.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @PutMapping(&quot;/enrollmentEstimate&quot;)
   public RecruitmentCourse setEnrollmentEstimate(
@@ -324,20 +357,21 @@ import org.springframework.web.bind.annotation.RestController;
           Integer enrollmentEstimate,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
 
-<span class="fc bfc" id="L327" title="All 4 branches covered.">    if (enrollmentEstimate != null &amp;&amp; enrollmentEstimate &lt; 0) {</span>
-<span class="fc" id="L328">      throw new IllegalArgumentException(&quot;enrollmentEstimate must not be negative&quot;);</span>
+<span class="fc bfc" id="L360" title="All 4 branches covered.">    if (enrollmentEstimate != null &amp;&amp; enrollmentEstimate &lt; 0) {</span>
+<span class="fc" id="L361">      throw new IllegalArgumentException(&quot;enrollmentEstimate must not be negative&quot;);</span>
     }
 
-<span class="fc" id="L331">    RecruitmentCourse course =</span>
+<span class="fc" id="L364">    RecruitmentCourse course =</span>
         recruitmentCourseRepository
-<span class="fc" id="L333">            .findById(id)</span>
-<span class="fc" id="L334">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
+<span class="fc" id="L366">            .findById(id)</span>
+<span class="fc" id="L367">            .orElseThrow(() -&gt; new EntityNotFoundException(RecruitmentCourse.class, id));</span>
 
-<span class="fc" id="L336">    clientActivityDetector.note(resourceKey(course.getRecruitmentId()), clientId, identity());</span>
-<span class="fc" id="L337">    course.setEnrollmentEstimate(enrollmentEstimate);</span>
-<span class="fc" id="L338">    recruitmentCourseRepository.save(course);</span>
-<span class="fc" id="L339">    allocationService.recompute(recruitmentOf(course));</span>
-<span class="fc" id="L340">    return course;</span>
+<span class="fc" id="L369">    clientActivityDetector.note(resourceKey(course.getRecruitmentId()), clientId, identity());</span>
+<span class="fc" id="L370">    Recruitment recruitment = recruitmentOf(course);</span>
+<span class="fc" id="L371">    course.attachFigures(</span>
+<span class="fc" id="L372">        budgetCourseService.setEstimate(recruitment.getQuarter(), course, enrollmentEstimate));</span>
+<span class="fc" id="L373">    allocationService.recomputeQuarter(recruitment.getQuarter());</span>
+<span class="fc" id="L374">    return course;</span>
   }
 
   @Operation(
@@ -345,8 +379,10 @@ import org.springframework.web.bind.annotation.RestController;
       description =
           &quot;Copies maxEnroll (source=MAX) or enrollment (source=ACTUAL) into the enrollment&quot;
               + &quot; estimate of every non-removed row of the recruitment in one step (issue #175). A&quot;
-              + &quot; row whose source figure is null keeps its estimate. Returns the current list&quot;
-              + &quot; without removed rows. 404 for an unknown recruitment.&quot;)
+              + &quot; row whose source figure is null keeps its estimate. The estimates are the&quot;
+              + &quot; quarter's (issue #363), so the other recruitment sees them too and both&quot;
+              + &quot; recruitments' shares are recomputed. Returns the current list without removed&quot;
+              + &quot; rows. 404 for an unknown recruitment.&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @PutMapping(&quot;/enrollmentEstimates&quot;)
   public List&lt;RecruitmentCourse&gt; setEnrollmentEstimates(
@@ -354,22 +390,16 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;source&quot;) @RequestParam EnrollmentEstimateSource source,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
 
-<span class="fc" id="L357">    Recruitment recruitment = recruitment(recruitmentId);</span>
-<span class="fc" id="L358">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc" id="L393">    Recruitment recruitment = recruitment(recruitmentId);</span>
+<span class="fc" id="L394">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
 
-<span class="fc bfc" id="L360" title="All 2 branches covered.">    for (RecruitmentCourse row : recruitmentCourseRepository.findByRecruitmentId(recruitmentId)) {</span>
-<span class="fc bfc" id="L361" title="All 2 branches covered.">      if (row.isRemoved()) {</span>
-<span class="fc" id="L362">        continue;</span>
-      }
-      Integer value =
-<span class="fc bfc" id="L365" title="All 2 branches covered.">          source == EnrollmentEstimateSource.MAX ? row.getMaxEnroll() : row.getEnrollment();</span>
-<span class="fc bfc" id="L366" title="All 2 branches covered.">      if (value != null) {</span>
-<span class="fc" id="L367">        row.setEnrollmentEstimate(value);</span>
-<span class="fc" id="L368">        recruitmentCourseRepository.save(row);</span>
-      }
-<span class="fc" id="L370">    }</span>
-<span class="fc" id="L371">    allocationService.recompute(recruitment);</span>
-<span class="fc" id="L372">    return allForRecruitment(recruitmentId, false);</span>
+<span class="fc" id="L396">    List&lt;RecruitmentCourse&gt; active =</span>
+<span class="fc" id="L397">        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()</span>
+<span class="fc bfc" id="L398" title="All 2 branches covered.">            .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L399">            .toList();</span>
+<span class="fc" id="L400">    budgetCourseService.fillEstimates(recruitment.getQuarter(), active, source);</span>
+<span class="fc" id="L401">    allocationService.recomputeQuarter(recruitment.getQuarter());</span>
+<span class="fc" id="L402">    return allForRecruitment(recruitmentId, false);</span>
   }
 
   @Operation(
@@ -387,14 +417,14 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;recruitmentId&quot;) @RequestParam Long recruitmentId,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
 
-<span class="fc" id="L390">    Recruitment recruitment = recruitment(recruitmentId);</span>
-<span class="fc" id="L391">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
+<span class="fc" id="L420">    Recruitment recruitment = recruitment(recruitmentId);</span>
+<span class="fc" id="L421">    clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());</span>
 
-<span class="fc" id="L393">    allocationService.autoAllocate(recruitment);</span>
+<span class="fc" id="L423">    allocationService.autoAllocate(recruitment);</span>
     // Every allocation has moved, so edits made against the old numbers must be refused.
-<span class="fc" id="L395">    recruitment.setAllocationBulkVersion(recruitment.getAllocationBulkVersion() + 1);</span>
-<span class="fc" id="L396">    recruitmentRepository.save(recruitment);</span>
-<span class="fc" id="L397">    return allForRecruitment(recruitmentId, false);</span>
+<span class="fc" id="L425">    recruitment.setAllocationBulkVersion(recruitment.getAllocationBulkVersion() + 1);</span>
+<span class="fc" id="L426">    recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L427">    return allForRecruitment(recruitmentId, false);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

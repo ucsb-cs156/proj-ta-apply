@@ -9,6 +9,7 @@ import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.time.AppTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,66 +26,97 @@ import org.springframework.stereotype.Service;
  * details of rows that already exist and are still in the API. It adds no rows, marks nothing
  * stale, and leaves the admin's own fields (removed, allocation, enrollment estimate) alone. The
  * job remains the way to pick up new courses; this is just a fresher read of the ones on file.
+ *
+ * &lt;p&gt;The enrollment figures live once per quarter in {@code budget_courses} (issue #363), checked
+ * against the API by every fetch of the quarter's offerings. This refresh is the one that happens
+ * on every page opening, so it is the one gated by the figures' time to live ({@link
+ * BudgetCourseService#TTL}): when every figure the page shows was checked within it, the API is not
+ * called at all. The one call it does make serves the whole quarter: every section of the quarter
+ * on file, in whichever recruitment, gets its figures from it.
  */
 @Service
-<span class="fc" id="L30">@Slf4j</span>
-<span class="fc" id="L31">public class RecruitmentCoursesRefreshService {</span>
+<span class="fc" id="L38">@Slf4j</span>
+<span class="fc" id="L39">public class RecruitmentCoursesRefreshService {</span>
 
   @Autowired UCSBCurriculumService ucsbCurriculumService;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired BudgetCourseService budgetCourseService;
 
   @Value(&quot;${app.subjectArea:CMPSC}&quot;)
   String subjectArea;
 
   /** A lecture in the quarter's offerings, with the course it belongs to. */
-<span class="fc" id="L41">  private record Offered(String courseId, UcsbCourseOffering offering, UcsbSection section) {}</span>
+<span class="fc" id="L50">  private record Offered(String courseId, UcsbCourseOffering offering, UcsbSection section) {}</span>
 
   /**
    * Rewrites the offering details of every non-removed row whose enroll code the API still lists,
-   * stamps the recruitment as refreshed, and returns how many rows it rewrote.
+   * caches the quarter's enrollment figures, stamps the recruitment as refreshed, and returns how
+   * many rows it rewrote. Does nothing, and returns 0, when the figures of every non-removed row
+   * are younger than the time to live: the API is not called and the recruitment is not stamped.
    *
    * @throws UpstreamApiException if the API call fails; nothing is changed in that case
    */
   public int refresh(Recruitment recruitment) {
+<span class="fc" id="L61">    List&lt;RecruitmentCourse&gt; onFile =</span>
+<span class="fc" id="L62">        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">            .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L64">            .toList();</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    if (budgetCourseService.isFresh(recruitment.getQuarter(), onFile)) {</span>
+<span class="fc" id="L66">      log.info(</span>
+          &quot;Recruitment {}: the enrollment figures of {} were all checked within the last {} hours;&quot;
+              + &quot; the UCSB API is not called&quot;,
+<span class="fc" id="L69">          recruitment.getId(),</span>
+<span class="fc" id="L70">          recruitment.getQuarter(),</span>
+<span class="fc" id="L71">          BudgetCourseService.TTL.toHours());</span>
+<span class="fc" id="L72">      return 0;</span>
+    }
+
     List&lt;UcsbCourseOffering&gt; offerings;
     try {
-<span class="fc" id="L52">      offerings = ucsbCurriculumService.getOfferings(subjectArea, recruitment.getQuarter());</span>
-<span class="fc" id="L53">    } catch (Exception e) {</span>
-<span class="fc" id="L54">      log.warn(&quot;Refresh of recruitment {} from the UCSB API failed&quot;, recruitment.getId(), e);</span>
-<span class="fc" id="L55">      throw new UpstreamApiException(</span>
+<span class="fc" id="L77">      offerings = ucsbCurriculumService.getOfferings(subjectArea, recruitment.getQuarter());</span>
+<span class="fc" id="L78">    } catch (Exception e) {</span>
+<span class="fc" id="L79">      log.warn(&quot;Refresh of recruitment {} from the UCSB API failed&quot;, recruitment.getId(), e);</span>
+<span class="fc" id="L80">      throw new UpstreamApiException(</span>
           &quot;The UCSB API could not be reached; the stored enrollment figures were kept.&quot;, e);
-<span class="fc" id="L57">    }</span>
+<span class="fc" id="L82">    }</span>
 
-<span class="fc" id="L59">    Map&lt;String, Offered&gt; offered = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L60" title="All 2 branches covered.">    for (UcsbCourseOffering offering : offerings) {</span>
-<span class="fc" id="L61">      String courseId = UCSBCurriculumService.normalizeCourseId(offering.getCourseId());</span>
-<span class="fc bfc" id="L62" title="All 4 branches covered.">      if (courseId == null || offering.getClassSections() == null) {</span>
-<span class="fc" id="L63">        continue;</span>
+<span class="fc" id="L84">    Map&lt;String, Offered&gt; offered = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L85">    Map&lt;String, UcsbSection&gt; sections = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">    for (UcsbCourseOffering offering : offerings) {</span>
+<span class="fc" id="L87">      String courseId = UCSBCurriculumService.normalizeCourseId(offering.getCourseId());</span>
+<span class="fc bfc" id="L88" title="All 4 branches covered.">      if (courseId == null || offering.getClassSections() == null) {</span>
+<span class="fc" id="L89">        continue;</span>
       }
-<span class="fc bfc" id="L65" title="All 2 branches covered.">      for (UcsbSection section : offering.getClassSections()) {</span>
-<span class="fc bfc" id="L66" title="All 4 branches covered.">        if (section.isPrimary() &amp;&amp; section.getEnrollCode() != null) {</span>
-<span class="fc" id="L67">          offered.put(section.getEnrollCode(), new Offered(courseId, offering, section));</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">      for (UcsbSection section : offering.getClassSections()) {</span>
+<span class="fc bfc" id="L92" title="All 4 branches covered.">        if (section.isPrimary() &amp;&amp; section.getEnrollCode() != null) {</span>
+<span class="fc" id="L93">          offered.put(section.getEnrollCode(), new Offered(courseId, offering, section));</span>
+<span class="fc" id="L94">          sections.put(section.getEnrollCode(), section);</span>
         }
-<span class="fc" id="L69">      }</span>
-<span class="fc" id="L70">    }</span>
+<span class="fc" id="L96">      }</span>
+<span class="fc" id="L97">    }</span>
 
-<span class="fc" id="L72">    int refreshed = 0;</span>
-    for (RecruitmentCourse row :
-<span class="fc bfc" id="L74" title="All 2 branches covered.">        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId())) {</span>
-<span class="fc" id="L75">      Offered found = offered.get(row.getEnrollCode());</span>
-<span class="fc bfc" id="L76" title="All 4 branches covered.">      if (row.isRemoved() || found == null) {</span>
-<span class="fc" id="L77">        continue;</span>
+<span class="fc" id="L99">    List&lt;RecruitmentCourse&gt; refreshed = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">    for (RecruitmentCourse row : onFile) {</span>
+<span class="fc" id="L101">      Offered found = offered.get(row.getEnrollCode());</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">      if (found == null) {</span>
+<span class="fc" id="L103">        continue;</span>
       }
-<span class="fc" id="L79">      PopulateRecruitmentCoursesJob.applyOffering(</span>
-<span class="fc" id="L80">          row, recruitment.getId(), found.courseId(), found.offering(), found.section());</span>
-<span class="fc" id="L81">      recruitmentCourseRepository.save(row);</span>
-<span class="fc" id="L82">      refreshed++;</span>
-<span class="fc" id="L83">    }</span>
+<span class="fc" id="L105">      PopulateRecruitmentCoursesJob.applyOffering(</span>
+<span class="fc" id="L106">          row, recruitment.getId(), found.courseId(), found.offering(), found.section());</span>
+<span class="fc" id="L107">      recruitmentCourseRepository.save(row);</span>
+<span class="fc" id="L108">      refreshed.add(row);</span>
+<span class="fc" id="L109">    }</span>
+<span class="fc" id="L110">    int cached = budgetCourseService.refreshCache(recruitment.getQuarter(), refreshed, sections);</span>
+<span class="fc" id="L111">    log.info(</span>
+        &quot;Recruitment {}: cached the enrollment figures of {} section(s) of {}&quot;,
+<span class="fc" id="L113">        recruitment.getId(),</span>
+<span class="fc" id="L114">        cached,</span>
+<span class="fc" id="L115">        recruitment.getQuarter());</span>
 
-<span class="fc" id="L85">    recruitment.setLastPopulatedAt(AppTime.now());</span>
-<span class="fc" id="L86">    recruitmentRepository.save(recruitment);</span>
-<span class="fc" id="L87">    return refreshed;</span>
+<span class="fc" id="L117">    recruitment.setLastPopulatedAt(AppTime.now());</span>
+<span class="fc" id="L118">    recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L119">    return refreshed.size();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
