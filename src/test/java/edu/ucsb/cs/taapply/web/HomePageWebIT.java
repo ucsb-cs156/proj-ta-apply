@@ -136,7 +136,8 @@ public class HomePageWebIT extends WebTestCase {
     // Issue #364: the card is the quarter's, and its header is the quarter alone.
     String card = "HomePageLoggedIn-instructor-recruitments-quarter-20261";
     assertThat(page.getByTestId(card + "-quarter")).hasText("W26");
-    assertThat(page.getByTestId(card + "-card").locator(".card-header")).hasText("W26");
+    // The quarter card's own header (the nested TA card has one too).
+    assertThat(page.getByTestId(card + "-card").locator(":scope > .card-header")).hasText("W26");
     String course = card + "-course-" + mine.getId();
     String header = course + "-header";
     assertThat(page.getByTestId(header)).containsText("CMPSC   156");
