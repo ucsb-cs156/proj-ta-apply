@@ -29,6 +29,7 @@ public class GoogleSignInServiceImpl extends OidcUserService implements GoogleSi
     return processSignIn(oidcUser);
   }
 
+  @Override
   public void signInUser(OidcUser oidcUser) {
     processSignIn(oidcUser);
   }

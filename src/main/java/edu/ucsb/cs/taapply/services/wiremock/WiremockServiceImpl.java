@@ -26,6 +26,7 @@ public class WiremockServiceImpl extends WiremockService {
 
   WireMockServer wireMockServer;
 
+  @Override
   public WireMockServer getWiremockServer() {
     return wireMockServer;
   }
@@ -100,6 +101,7 @@ public class WiremockServiceImpl extends WiremockService {
                     .withBody("{{{jwks}}}")));
   }
 
+  @Override
   public void init() {
     log.info("WiremockServiceImpl.init() called");
     WireMockServer server =
