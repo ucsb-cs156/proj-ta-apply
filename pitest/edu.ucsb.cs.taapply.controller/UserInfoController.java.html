@@ -234,7 +234,7 @@
 </span>
 </span>
 </td>
-<td class=''><pre><span  class=''>  @Operation(summary = &#34;Get information about current user&#34;)</span></pre></td></tr>
+<td class=''><pre><span  class=''>  @Override</span></pre></td></tr>
 
 <tr>
 <td class='na'>
@@ -248,7 +248,7 @@
 </span>
 </span>
 </td>
-<td class=''><pre><span  class=''>  @PreAuthorize(&#34;hasRole(&#39;ROLE_USER&#39;)&#34;)</span></pre></td></tr>
+<td class=''><pre><span  class=''>  @Operation(summary = &#34;Get information about current user&#34;)</span></pre></td></tr>
 
 <tr>
 <td class='na'>
@@ -262,7 +262,7 @@
 </span>
 </span>
 </td>
-<td class=''><pre><span  class=''>  @GetMapping(&#34;&#34;)</span></pre></td></tr>
+<td class=''><pre><span  class=''>  @PreAuthorize(&#34;hasRole(&#39;ROLE_USER&#39;)&#34;)</span></pre></td></tr>
 
 <tr>
 <td class='na'>
@@ -276,16 +276,30 @@
 </span>
 </span>
 </td>
+<td class=''><pre><span  class=''>  @GetMapping(&#34;&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@42d0a255_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@42d0a255_20'></a>
+<span>
+</span>
+</span>
+</td>
 <td class=''><pre><span  class=''>  public CurrentUser getCurrentUser() {</span></pre></td></tr>
 
 <tr>
 <td class='covered'>
-<a name='org.pitest.mutationtest.report.html.SourceFile@42d0a255_20'/>
-20
+<a name='org.pitest.mutationtest.report.html.SourceFile@42d0a255_21'/>
+21
 </td>
 <td class='killed'>
 <span class='pop'>
-<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@42d0a255_20'>1</a>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@42d0a255_21'>1</a>
 <span>
 1. getCurrentUser : replaced return value with null for edu/ucsb/cs/taapply/controller/UserInfoController::getCurrentUser &rarr; KILLED<br/>
 
@@ -293,20 +307,6 @@
 </span>
 </td>
 <td class='covered'><pre><span  class='killed'>    return super.getCurrentUser();</span></pre></td></tr>
-
-<tr>
-<td class='na'>
-<a name='org.pitest.mutationtest.report.html.SourceFile@42d0a255_21'/>
-21
-</td>
-<td class=''>
-<span class='pop'>
-<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@42d0a255_21'></a>
-<span>
-</span>
-</span>
-</td>
-<td class=''><pre><span  class=''>  }</span></pre></td></tr>
 
 <tr>
 <td class='na'>
@@ -320,6 +320,20 @@
 </span>
 </span>
 </td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@42d0a255_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@42d0a255_23'></a>
+<span>
+</span>
+</span>
+</td>
 <td class=''><pre><span  class=''>}</span></pre></td></tr>
 
 
@@ -327,11 +341,11 @@
 <tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
 
 <tr>
-<td><a href='#org.pitest.mutationtest.report.html.SourceFile@42d0a255_20'>20</a></td> 
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@42d0a255_21'>21</a></td> 
 <td></td>
 <td>
 
-<a name='grouporg.pitest.mutationtest.report.html.SourceFile@42d0a255_20'/> 
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@42d0a255_21'/> 
 
 <p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>getCurrentUser<br/><b>Killed by : </b>edu.ucsb.cs.taapply.UserInfoControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.UserInfoControllerTests]/[method:getCurrentUserWhenAuthenticatedReturns200()]</span></span> replaced return value with null for edu/ucsb/cs/taapply/controller/UserInfoController::getCurrentUser &rarr; KILLED</span>
 </div> 
@@ -359,7 +373,7 @@
 
 <h2>Tests examined</h2>
 <ul>
-<li>edu.ucsb.cs.taapply.UserInfoControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.UserInfoControllerTests]/[method:getCurrentUserWhenAuthenticatedReturns200()] (29 ms)</li>
+<li>edu.ucsb.cs.taapply.UserInfoControllerTests.[engine:junit-jupiter]/[class:edu.ucsb.cs.taapply.UserInfoControllerTests]/[method:getCurrentUserWhenAuthenticatedReturns200()] (28 ms)</li>
 </ul>
 
 <br/>
