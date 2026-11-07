@@ -11,9 +11,8 @@ classes assigned to it, so the check's wall-clock time is that of the slowest sh
 - `.github/workflows/41-integration.yml` has a matrix job `it-shard` (one run per shard). Each run
   reads its classes from that file and runs
   `mvn test-compile failsafe:integration-test failsafe:verify -Dit.test=<its classes>`, then the
-  flaky-test report and the artifact upload (`integration-artifacts-shard-N`). Every shard keeps the
-  one-shot retry and the flake report together (see [flaky-tests.md](flaky-tests.md)); the report
-  names the shard.
+  artifact upload (`integration-artifacts-shard-N`). A failing test is not retried (see
+  [flaky-tests.md](flaky-tests.md)); it fails its shard on the first try.
 - A final job `build` (needs: all shards, `if: always()`) fails unless every shard succeeded. It
   has the job id `build`, the name the workflow's single job had before the split, so the check
   name `build` that other workflows or branch protection may require is unchanged. The shard jobs
