@@ -235,6 +235,20 @@ allocations)" link go to `/admin/allocations/QXX`, and steps 8 and 9's "(see ass
 to `/recruitments/:id/assignments` (they went to the Courses edit page and the view-only Courses
 page before).
 
+### The leftmost headings of the Recruitment Courses table (issue #386)
+
+On both Recruitment Courses pages (and on the faculty Courses page, which uses the same
+`RecruitmentCourseTable`), the ranking-count column's heading is **Faculty Rankings**, on two lines
+("Faculty" over "Rankings") in the smaller heading font that the other stacked headings use (80%,
+`stacked()` in `columnStyles.tsx`); the Columns menu and its "hide" link still call the column
+"Rankings". The **Course Number** heading is stacked the same way ("Course" over "Number"), as on
+the Combined Allocation page, and the column is about a fifth narrower than it was. Its width is set
+by the widest thing in it, which was its one-line totals footer, "Total Course Count: n", not the
+heading or any course number; so that footer is now stacked too ("Total Course Count:" over the
+number, in the same 80% font), and the cell holds the course number in an inline block exactly
+`COURSE_NUMBER_WIDTH` (`13ch`, monospaced) wide, the width of the widest UCSB course number, the same
+cell as the Combined Allocation table's. The course numbers themselves keep their full size.
+
 ## The new recruitment card layout
 
 The card becomes much wider to hold the diagram. From top to bottom:

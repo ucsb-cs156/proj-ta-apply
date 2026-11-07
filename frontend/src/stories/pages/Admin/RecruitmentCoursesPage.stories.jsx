@@ -113,6 +113,21 @@ Editing.parameters = {
   },
 };
 
+/**
+ * The edit page with every column shown (the Columns menu's Show All), so the leftmost headings are
+ * in view: Faculty Rankings and Course Number, each on two lines in the smaller font, and the
+ * narrower Course Number column with its stacked totals footer (issue #386). The stored choice of
+ * columns is set before the page renders.
+ */
+export const EditingAllColumns = EditTemplate.bind({});
+EditingAllColumns.loaders = [
+  () => {
+    localStorage.setItem("recruitmentCourses.hiddenColumns.7", "[]");
+    return {};
+  },
+];
+EditingAllColumns.parameters = Editing.parameters;
+
 /** Another admin has the same edit page open: the banner names them. This is the older tab. */
 export const EditingWithAnotherAdmin = EditTemplate.bind({});
 EditingWithAnotherAdmin.parameters = {

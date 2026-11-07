@@ -12,6 +12,7 @@ import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 import { Link } from "react-router";
 import { isSummerQuarter } from "main/utils/courseColumns";
+import { COURSE_NUMBER_WIDTH } from "main/utils/columnWidths";
 import {
   numeric,
   shrinkToContent,
@@ -295,7 +296,9 @@ export default function RecruitmentCourseTable({
     ...(showRankings
       ? [
           {
-            header: "Rankings",
+            // Two lines in the smaller heading font (issue #386), so the column is no wider than
+            // its counts.
+            header: stacked("Faculty", "Rankings"),
             accessorKey: "rankingCount",
             meta: numeric,
             cell: ({
@@ -320,17 +323,28 @@ export default function RecruitmentCourseTable({
         ]
       : []),
     {
-      header: "Course Number",
+      // Issue #386: the column is about a fifth narrower than it was. Its width is set by the
+      // widest thing in it, which was the one-line totals footer, not the heading or a course
+      // number; so the heading and the footer are both on two lines in the smaller font, and the
+      // cell is exactly as wide as the widest course number, as on the Combined Allocation page.
+      header: stacked("Course", "Number"),
       accessorKey: "courseId",
       meta: shrinkToContent,
       // Sort the padded id exactly as stored and shown, code unit by code unit, so "CMPSC     5A"
       // comes before "CMPSC   130A"; TanStack's default would split digits from letters (#185).
       sortingFn: "textCaseSensitive" as const,
-      footer: `Total Course Count: ${counted.length}`,
+      footer: stacked("Total Course Count:", String(counted.length)),
       // Padded and monospaced, exactly as Admin/Courses renders it, so the sort order is legible.
       cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => (
         <>
-          <span style={{ whiteSpace: "pre", fontFamily: "monospace" }}>
+          <span
+            style={{
+              display: "inline-block",
+              minWidth: COURSE_NUMBER_WIDTH,
+              whiteSpace: "pre",
+              fontFamily: "monospace",
+            }}
+          >
             {cell.row.original.courseId}
           </span>
           {cell.row.original.manuallyAdded && (
