@@ -555,6 +555,11 @@ describe("Help pages (issue #140)", () => {
         /where the hiring for the quarter is planned holistically/,
       ),
     ).toBeInTheDocument();
+    // Issue #358, part 3: the hiring targets are entered here; the allocations are adjusted on the
+    // Combined Allocation page.
+    expect(heading.nextElementSibling).toHaveTextContent(
+      "The hiring targets of both recruitments are entered here (or at the top of each recruitment's Courses edit page), beside what has been allocated to courses so far; when the two do not agree, the page says so and links to that recruitment's Courses page. The allocations themselves are adjusted on the Combined Allocation page, which the Combined allocations link at the top of the Budget page opens.",
+    );
     const lines = screen.getByTestId("HelpAdminsPage-budget-lines");
     expect(lines.id).toBe("budget-lines");
     expect(lines).toHaveTextContent(
@@ -590,13 +595,15 @@ describe("Help pages (issue #140)", () => {
     expect(page).toHaveTextContent(
       "Allocation (how many TAs or ULAs of that recruitment the section gets; a whole number, saved as you type it, against the recruitment of that type)",
     );
-    expect(page).toHaveTextContent("Unrounded Allocation");
+    expect(page).toHaveTextContent(
+      "against the recruitment of that type), Unrounded Allocation, Delta and the TA:student or ULA:student ratio, so a quarter with only one recruitment shows only that type's columns.",
+    );
     // Issue #358, part 3: the guide columns are explained here now, not in the Courses section.
     const guide = screen.getByTestId(
       "HelpAdminsPage-combined-allocations-guide",
     );
     expect(guide).toHaveTextContent(
-      "Unrounded Allocation is how many positions each section would get if positions could be split into fractions and were shared out by enrollment estimate alone (hover its heading for the note); Delta is that share minus the allocation, green with a plus sign when a section is owed positions and red when it has more than its share; and the TA:student (or ULA:student) ratio is the estimated students per position, 1:N, a dash when there is no estimate or no positions.",
+      "Those three columns guide the allocation of each type: Unrounded Allocation is how many positions each section would get if positions could be split into fractions and were shared out by enrollment estimate alone (hover its heading for the note); Delta is that share minus the allocation, green with a plus sign when a section is owed positions and red when it has more than its share; and the TA:student (or ULA:student) ratio is the estimated students per position, 1:N, a dash when there is no estimate or no positions.",
     );
     expect(page.nextElementSibling).toBe(guide);
     expect(page).toHaveTextContent("Delta");
@@ -606,6 +613,9 @@ describe("Help pages (issue #140)", () => {
     );
     ["TA Rankings", "ULA Rankings", "Email", "Status", "Max"].forEach((name) =>
       expect(columns).toHaveTextContent(name),
+    );
+    expect(columns).toHaveTextContent(
+      "The table also has the descriptive columns of the Courses pages: TA Rankings and ULA Rankings",
     );
     expect(columns).toHaveTextContent(
       "A column that starts with TA is not shown when the quarter has no TA recruitment, and one that starts with ULA is not shown when it has no ULA recruitment.",
@@ -795,6 +805,10 @@ describe("Help pages (issue #140)", () => {
     );
     expect(text).toHaveTextContent(
       "enrollmentEstimate, allocation and unroundedAllocation are left out of the JSON unless the recruitment's allocation visibility is ALL_COURSES",
+    );
+    // Issue #358, part 3: the admin's own pages omit them too.
+    expect(text).toHaveTextContent(
+      "Since issue #358 the admin's own view-only and edit pages omit those five columns too (omitColumns, and adminColumnChoices leaves them out of the Columns menu): the admin edits them on the Combined Allocation page, and the faculty Courses page is the only table that still shows them, as text.",
     );
   });
 
@@ -1419,6 +1433,9 @@ describe("Help pages (issue #140)", () => {
       "use the view-only page in as many tabs as you like",
     );
     expect(meaning).toHaveTextContent(
+      "If you go on and change an allocation on the combined page, the system refuses a change made from a copy that is out of date, tells you, and reads the numbers again; whatever you typed there is lost. The tab or window opened last also asks the same question as for rankings",
+    );
+    expect(meaning).toHaveTextContent(
       "there Leave this page takes you to the view-only Courses page",
     );
     expect(intro).toHaveTextContent(
@@ -1879,6 +1896,10 @@ describe("Help pages (issue #140)", () => {
     ].map((li) => li.textContent);
     expect(buttons[0]).toMatch(
       /^Open Applications \/ Close Applications\. Recruitments do not open/,
+    );
+    // Issue #358, part 3: the Courses item points to the Combined Allocation page.
+    expect(buttons[2]).toMatch(
+      /the page says when the list was last refreshed\. Enrollment estimates and allocations are not on this page: it points to the Combined Allocation page, where they are edited for TAs and ULAs together\.$/,
     );
     expect(buttons[0]).toMatch(
       /primary consideration date\. Closing keeps every application on file, and a closed recruitment can be opened again\. Each button first asks/,
