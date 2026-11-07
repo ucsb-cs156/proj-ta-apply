@@ -138,7 +138,16 @@ function expectRankingSimultaneousEditingSection(page, intro) {
   const coursesMeaning = screen.queryByTestId(
     `${page}-simultaneous-editing-courses-meaning`,
   );
-  expect((coursesMeaning ?? after).nextElementSibling).toBe(
+  // Issue #358: then the Combined Allocation page, a paragraph, its picture and a paragraph.
+  const combinedMeaning = screen.queryByTestId(
+    `${page}-simultaneous-editing-combined-meaning`,
+  );
+  if (coursesMeaning !== null) {
+    expect(coursesMeaning.nextElementSibling).toBe(
+      screen.getByTestId(`${page}-simultaneous-editing-combined`),
+    );
+  }
+  expect((combinedMeaning ?? after).nextElementSibling).toBe(
     screen.getByTestId(`${page}-simultaneous-editing-todo`),
   );
 }
@@ -687,6 +696,10 @@ describe("Help pages (issue #140)", () => {
     expect(fake).toHaveTextContent(
       "A checkbox, ticked by default, also sets allocation visibility to Faculty see their own courses, recorded in the change history like any other visibility change.",
     );
+    // Issue #358: the same button on the Combined Allocation page, for both recruitments.
+    expect(fake).toHaveTextContent(
+      "The footer of the Combined Allocation page (/admin/allocations/QXX) has the same button for the whole quarter: its modal has a hiring target box for each of the quarter's recruitments that has a course (TA hiring target, ULA hiring target), and one click does the above for both, with the same estimate source and visibility choice.",
+    );
     expect(
       autoCreate.compareDocumentPosition(fake) &
         Node.DOCUMENT_POSITION_FOLLOWING,
@@ -704,6 +717,9 @@ describe("Help pages (issue #140)", () => {
     );
     expect(rankings).toHaveTextContent(
       "Courses that already have rankings are never changed.",
+    );
+    expect(rankings).toHaveTextContent(
+      "The Combined Allocation page's footer has the same button for the whole quarter: one click launches a job for each of the quarter's recruitments whose faculty review is Open and which has a course; when only one of the two qualifies the modal says which, and that the other is left alone. The button is disabled while neither qualifies.",
     );
     expect(
       fake.compareDocumentPosition(rankings) & Node.DOCUMENT_POSITION_FOLLOWING,
@@ -969,7 +985,7 @@ describe("Help pages (issue #140)", () => {
       [...table.querySelectorAll("thead th")].map((th) => th.textContent),
     ).toEqual(["Page", "Scope", "Key", "PR"]);
     const rows = [...table.querySelectorAll("tbody tr")];
-    expect(rows).toHaveLength(8);
+    expect(rows).toHaveLength(9);
     expect(
       [...rows[0].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
@@ -1074,19 +1090,43 @@ describe("Help pages (issue #140)", () => {
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/288",
     );
+    // Issue #358: the Combined Allocation page, under the edit pages' keys.
+    expect(
+      [...rows[7].querySelectorAll("td")].map((td) =>
+        td.textContent.replace(/\s+/g, " "),
+      ),
+    ).toEqual([
+      "Combined Allocation page (allocations and estimates of both recruitments of a quarter)",
+      "The Courses edit page of every recruitment of the quarter: one heartbeat per recruitment under that page's key, with one client id, so the combined page and the edit pages warn each other",
+      "courses-edit:<recruitmentId> (one per recruitment)",
+      "#373",
+    ]);
+    expect(rows[7].querySelector("a")).toHaveAttribute(
+      "href",
+      "https://github.com/ucsb-cs156/proj-ta-apply/pull/373",
+    );
     // Issue #282: also a refresh, so no key.
     expect(
-      [...rows[7].querySelectorAll("td")].map((td) => td.textContent),
+      [...rows[8].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
       "Instructors page and the view-only Courses page",
       "Background refresh plus a refetch after each save; no warning, no version check, no detector",
       "None (refresh, not a key)",
       "#291",
     ]);
-    expect(rows[7].querySelector("a")).toHaveAttribute(
+    expect(rows[8].querySelector("a")).toHaveAttribute(
       "href",
       "https://github.com/ucsb-cs156/proj-ta-apply/pull/291",
     );
+    // Issue #358: the Combined Allocation page's paragraph follows the Courses pages'.
+    const combined = text("combined");
+    expect(combined.replace(/\s+/g, " ")).toBe(
+      "The Combined Allocation page (issue #358). /admin/allocations/QXX edits the same allocations and estimates as the Courses edit pages of the quarter's TA and ULA recruitments, so it has no key of its own: it heartbeats POST /api/recruitmentcourses/heartbeat?recruitmentId= once for each recruitment of the quarter (two heartbeats when it has both), under that page's key courses-edit:<recruitmentId>, with one X-Client-Id for both (useClientActivity takes a clientId to share), and says goodbye at /leave for each. So the combined page and the edit pages warn each other about the same allocations. The two answers are put together by mergeStandings: everyone named by either, each person once; the tab is the newest only if both say so, so of two tabs that share a recruitment only the later one is asked and none waits on another that waits on it; and the arrival is the later of the two. The banner and the modal use the noun \"quarter's allocations\"; Leave this page goes to the quarter's Budget page. The allocation, estimate, fill-estimates and Auto Allocate saves name the tab; the conversion factor save, which is PUT /api/admin/budget, does not, because the page does not heartbeat budget:<quarter>: that field is guarded by the budget row's version check, and a save that named a tab the Budget page never hears a heartbeat from would make that page warn about a tab that is not there.",
+    );
+    expect(
+      screen.getByTestId("HelpDeveloperPage-simultaneous-courses")
+        .nextElementSibling,
+    ).toBe(screen.getByTestId("HelpDeveloperPage-simultaneous-combined"));
     const courses = text("courses");
     expect(courses.replace(/\s+/g, " ")).toBe(
       `The Courses pages. A recruitment's Courses page is split in two. The view-only page (/admin/recruitments/:id/courses) is the default, edits nothing, and neither heartbeats nor warns. The edit page (/admin/recruitments/:id/courses/edit) heartbeats POST /api/recruitmentcourses/heartbeat?recruitmentId=, says goodbye at /leave, names itself in the X-Client-Id header of the allocation, estimate and Auto Allocate saves, and shows the banner and the modal with the noun "page"; Leave this page goes to the view-only page. Only an admin may heartbeat, and the recruitment must exist, before anything is recorded. The version check is not a JPA version, since the course refresh and the estimates also write the row: a separate allocation_version column on recruitment_courses is counted by each allocation edit, and allocation_bulk_version on recruitments is counted by Auto Allocate. An allocation edit sends both as expectedVersion and expectedBulkVersion and gets 409 when either moved; after a bulk conflict the page reads everything again.`,
@@ -1366,7 +1406,66 @@ describe("Help pages (issue #140)", () => {
     ).toHaveLength(1);
     expect(intro.nextElementSibling).toBe(example);
     expect(example.nextElementSibling).toBe(meaning);
+    expect(meaning.nextElementSibling).toBe(
+      screen.getByTestId(`${page}-combined`),
+    );
+  });
+
+  test("the admin section describes the Combined Allocation page's warning, shared with the edit pages (issue #358)", async () => {
+    renderPage(<HelpAdminsPage />);
+    const page = "HelpAdminsPage-simultaneous-editing";
+    const intro = await screen.findByTestId(`${page}-combined`);
+    expect(intro).toHaveTextContent(
+      "The Combined Allocation page. The Combined Allocation page edits the same allocations and estimates as the edit pages of the quarter's TA and ULA recruitments, so it counts as having both of those edit pages open.",
+    );
+    expect(intro).toHaveTextContent(
+      "or the edit page of either of its recruitments, you get a warning that looks like this, and so do they:",
+    );
+    expect(
+      within(intro).getByRole("link", { name: "Combined Allocation page" }),
+    ).toHaveAttribute("href", "/#combined-allocations");
+    const example = screen.getByTestId(`${page}-combined-example`);
+    expect(example).toHaveTextContent(
+      "phtcon@ucsb.edu (Phill Conrad) is also editing this quarter's allocations. We recommend that only one admin edits this page at a time.",
+    );
+    expect(example).toHaveClass("alert", "alert-warning");
+    expect(screen.queryByRole("alert")).toBeNull();
+    const meaning = screen.getByTestId(`${page}-combined-meaning`);
+    expect(meaning).toHaveTextContent(
+      "It names everyone who has either recruitment's allocations open, each person once.",
+    );
+    expect(meaning).toHaveTextContent(
+      "on this page Leave this page takes you to the quarter's Budget page",
+    );
+    expect(meaning).toHaveTextContent(
+      "The Nominal TA to ULA conversion factor is a budget figure, not an allocation, and is guarded the Budget page's way instead",
+    );
+    expect(meaning).toHaveTextContent(
+      "Having the Budget page open does not by itself cause this warning, nor does the combined page cause the Budget page's.",
+    );
+    expect(intro.nextElementSibling).toBe(example);
+    expect(example.nextElementSibling).toBe(meaning);
     expect(meaning.nextElementSibling).toBe(screen.getByTestId(`${page}-todo`));
+    // The page's own section points here, and at the developer buttons.
+    const warning = screen.getByTestId(
+      "HelpAdminsPage-combined-allocations-warning",
+    );
+    expect(warning).toHaveTextContent(
+      "Only one tab or window should edit a quarter's allocations at a time; the page warns when another one, or either recruitment's Edit Courses page, is open",
+    );
+    expect(warning).toHaveTextContent(
+      "its footer has the Edit Courses page's fake data buttons, acting on both recruitments at once; see Developer Mode on the developer help page.",
+    );
+    expect(
+      within(warning).getByRole("link", { name: "Simultaneous Editing" }),
+    ).toHaveAttribute("href", "/#simultaneous-editing");
+    expect(
+      within(warning).getByRole("link", { name: "Developer Mode" }),
+    ).toHaveAttribute("href", "/help/developer#developer-mode");
+    expect(
+      screen.getByTestId("HelpAdminsPage-combined-allocations-both")
+        .nextElementSibling,
+    ).toBe(warning);
   });
 
   test("the developer page starts with a table of every Developer menu option linking to its section (issue #266)", async () => {
