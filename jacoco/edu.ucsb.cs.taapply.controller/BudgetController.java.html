@@ -66,10 +66,13 @@ import org.springframework.web.bind.annotation.RestController;
   @Operation(
       summary = &quot;Set one or more of a quarter's budget lines&quot;,
       description =
-          &quot;Any of the three may be given, and the conversionTAtoULA (issue #358, how many ULAs count&quot;
-              + &quot; as one TA on the Combined Allocation page; greater than zero, else 400); the&quot;
-              + &quot; others keep their values. Amounts are dollars and cents and must not be&quot;
-              + &quot; negative. Returns the quarter's summary with the new figures. The budget lines&quot;
+          &quot;Any of the lines may be given: the three subzero lines, and (issue #388) the estimated&quot;
+              + &quot; cost per TA per quarter, the ULA hourly rate, the estimated hours per ULA per&quot;
+              + &quot; quarter and the other funds available for ASEs; and the conversionTAtoULA (issue #358, how many ULAs count as one TA on the&quot;
+              + &quot; Combined Allocation page; greater than zero, else 400); the others keep their&quot;
+              + &quot; values. Amounts are dollars and cents (the hours to two decimals) and must not be&quot;
+              + &quot; negative. Returns the quarter's summary with the new figures, including the&quot;
+              + &quot; estimated cost per ULA per quarter, the rate times the hours. The budget lines&quot;
               + &quot; and the conversion factor are counted apart (issues #277 and #375): version is&quot;
               + &quot; the budget's version the page last saw, and goes up by one on every save of a&quot;
               + &quot; line; conversionVersion is the factor's, and goes up by one on every save of the&quot;
@@ -96,51 +99,88 @@ import org.springframework.web.bind.annotation.RestController;
           BigDecimal unrestrictedBudget,
       @Parameter(name = &quot;tasOnlyBudget&quot;) @RequestParam(required = false) BigDecimal tasOnlyBudget,
       @Parameter(name = &quot;ulasOnlyBudget&quot;) @RequestParam(required = false) BigDecimal ulasOnlyBudget,
+      @Parameter(name = &quot;taCostPerQuarter&quot;, description = &quot;the estimated cost of one TA&quot;)
+          @RequestParam(required = false)
+          BigDecimal taCostPerQuarter,
+      @Parameter(name = &quot;ulaRateDollarsPerHour&quot;, description = &quot;what one ULA is paid per hour&quot;)
+          @RequestParam(required = false)
+          BigDecimal ulaRateDollarsPerHour,
+      @Parameter(
+              name = &quot;estimatedHoursPerULAPerQuarter&quot;,
+              description = &quot;how many hours one ULA is expected to work in the quarter&quot;)
+          @RequestParam(required = false)
+          BigDecimal estimatedHoursPerULAPerQuarter,
+      @Parameter(
+              name = &quot;giftFundsForASEs&quot;,
+              description = &quot;other funds available for ASEs, such as gift funds&quot;)
+          @RequestParam(required = false)
+          BigDecimal giftFundsForASEs,
       @Parameter(
               name = &quot;conversionTAtoULA&quot;,
               description = &quot;how many ULAs count as one TA; greater than zero&quot;)
           @RequestParam(required = false)
           Double conversionTAtoULA) {
-<span class="fc" id="L104">    requireNotNegative(&quot;unrestrictedBudget&quot;, unrestrictedBudget);</span>
-<span class="fc" id="L105">    requireNotNegative(&quot;tasOnlyBudget&quot;, tasOnlyBudget);</span>
-<span class="fc" id="L106">    requireNotNegative(&quot;ulasOnlyBudget&quot;, ulasOnlyBudget);</span>
-<span class="fc bfc" id="L107" title="All 2 branches covered.">    if (conversionTAtoULA != null</span>
-<span class="fc bfc" id="L108" title="All 4 branches covered.">        &amp;&amp; !(conversionTAtoULA &gt; 0 &amp;&amp; Double.isFinite(conversionTAtoULA))) {</span>
-<span class="fc" id="L109">      throw new IllegalArgumentException(&quot;conversionTAtoULA must be greater than zero&quot;);</span>
+<span class="fc" id="L123">    requireNotNegative(&quot;unrestrictedBudget&quot;, unrestrictedBudget);</span>
+<span class="fc" id="L124">    requireNotNegative(&quot;tasOnlyBudget&quot;, tasOnlyBudget);</span>
+<span class="fc" id="L125">    requireNotNegative(&quot;ulasOnlyBudget&quot;, ulasOnlyBudget);</span>
+<span class="fc" id="L126">    requireNotNegative(&quot;taCostPerQuarter&quot;, taCostPerQuarter);</span>
+<span class="fc" id="L127">    requireNotNegative(&quot;ulaRateDollarsPerHour&quot;, ulaRateDollarsPerHour);</span>
+<span class="fc" id="L128">    requireNotNegative(&quot;estimatedHoursPerULAPerQuarter&quot;, estimatedHoursPerULAPerQuarter);</span>
+<span class="fc" id="L129">    requireNotNegative(&quot;giftFundsForASEs&quot;, giftFundsForASEs);</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">    if (conversionTAtoULA != null</span>
+<span class="fc bfc" id="L131" title="All 4 branches covered.">        &amp;&amp; !(conversionTAtoULA &gt; 0 &amp;&amp; Double.isFinite(conversionTAtoULA))) {</span>
+<span class="fc" id="L132">      throw new IllegalArgumentException(&quot;conversionTAtoULA must be greater than zero&quot;);</span>
     }
 
-<span class="fc" id="L112">    synchronized (COMPARE_AND_SET) {</span>
-<span class="fc" id="L113">      Budget budget = budgetService.budgetFor(quarter);</span>
-<span class="fc" id="L114">      clientActivityDetector.note(resourceKey(quarter), clientId, identity());</span>
-<span class="fc bfc" id="L115" title="All 4 branches covered.">      if (version != null &amp;&amp; !version.equals(budget.getVersion())) {</span>
-<span class="fc" id="L116">        return conflict(quarter);</span>
+<span class="fc" id="L135">    synchronized (COMPARE_AND_SET) {</span>
+<span class="fc" id="L136">      Budget budget = budgetService.budgetFor(quarter);</span>
+<span class="fc" id="L137">      clientActivityDetector.note(resourceKey(quarter), clientId, identity());</span>
+<span class="fc bfc" id="L138" title="All 4 branches covered.">      if (version != null &amp;&amp; !version.equals(budget.getVersion())) {</span>
+<span class="fc" id="L139">        return conflict(quarter);</span>
       }
-<span class="fc bfc" id="L118" title="All 4 branches covered.">      if (conversionVersion != null &amp;&amp; !conversionVersion.equals(budget.getConversionVersion())) {</span>
-<span class="fc" id="L119">        return conflict(quarter);</span>
+<span class="fc bfc" id="L141" title="All 4 branches covered.">      if (conversionVersion != null &amp;&amp; !conversionVersion.equals(budget.getConversionVersion())) {</span>
+<span class="fc" id="L142">        return conflict(quarter);</span>
       }
-<span class="fc" id="L121">      boolean linesChanged = false;</span>
-<span class="fc bfc" id="L122" title="All 2 branches covered.">      if (unrestrictedBudget != null) {</span>
-<span class="fc" id="L123">        budget.setUnrestrictedBudget(BudgetService.money(unrestrictedBudget));</span>
-<span class="fc" id="L124">        linesChanged = true;</span>
+<span class="fc" id="L144">      boolean linesChanged = false;</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">      if (unrestrictedBudget != null) {</span>
+<span class="fc" id="L146">        budget.setUnrestrictedBudget(BudgetService.money(unrestrictedBudget));</span>
+<span class="fc" id="L147">        linesChanged = true;</span>
       }
-<span class="fc bfc" id="L126" title="All 2 branches covered.">      if (tasOnlyBudget != null) {</span>
-<span class="fc" id="L127">        budget.setTasOnlyBudget(BudgetService.money(tasOnlyBudget));</span>
-<span class="fc" id="L128">        linesChanged = true;</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">      if (tasOnlyBudget != null) {</span>
+<span class="fc" id="L150">        budget.setTasOnlyBudget(BudgetService.money(tasOnlyBudget));</span>
+<span class="fc" id="L151">        linesChanged = true;</span>
       }
-<span class="fc bfc" id="L130" title="All 2 branches covered.">      if (ulasOnlyBudget != null) {</span>
-<span class="fc" id="L131">        budget.setUlasOnlyBudget(BudgetService.money(ulasOnlyBudget));</span>
-<span class="fc" id="L132">        linesChanged = true;</span>
+<span class="fc bfc" id="L153" title="All 2 branches covered.">      if (ulasOnlyBudget != null) {</span>
+<span class="fc" id="L154">        budget.setUlasOnlyBudget(BudgetService.money(ulasOnlyBudget));</span>
+<span class="fc" id="L155">        linesChanged = true;</span>
       }
-<span class="fc bfc" id="L134" title="All 2 branches covered.">      if (linesChanged) {</span>
-<span class="fc" id="L135">        budget.setVersion(budget.getVersion() + 1);</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">      if (taCostPerQuarter != null) {</span>
+<span class="fc" id="L158">        budget.setTaCostPerQuarter(BudgetService.money(taCostPerQuarter));</span>
+<span class="fc" id="L159">        linesChanged = true;</span>
       }
-<span class="fc bfc" id="L137" title="All 2 branches covered.">      if (conversionTAtoULA != null) {</span>
-<span class="fc" id="L138">        budget.setConversionTAtoULA(conversionTAtoULA);</span>
-<span class="fc" id="L139">        budget.setConversionVersion(budget.getConversionVersion() + 1);</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">      if (ulaRateDollarsPerHour != null) {</span>
+<span class="fc" id="L162">        budget.setUlaRateDollarsPerHour(BudgetService.money(ulaRateDollarsPerHour));</span>
+<span class="fc" id="L163">        linesChanged = true;</span>
       }
-<span class="fc" id="L141">      budgetRepository.save(budget);</span>
-<span class="fc" id="L142">    }</span>
-<span class="fc" id="L143">    return ResponseEntity.ok(budgetService.summary(quarter));</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">      if (estimatedHoursPerULAPerQuarter != null) {</span>
+<span class="fc" id="L166">        budget.setEstimatedHoursPerULAPerQuarter(</span>
+<span class="fc" id="L167">            BudgetService.money(estimatedHoursPerULAPerQuarter));</span>
+<span class="fc" id="L168">        linesChanged = true;</span>
+      }
+<span class="fc bfc" id="L170" title="All 2 branches covered.">      if (giftFundsForASEs != null) {</span>
+<span class="fc" id="L171">        budget.setGiftFundsForASEs(BudgetService.money(giftFundsForASEs));</span>
+<span class="fc" id="L172">        linesChanged = true;</span>
+      }
+<span class="fc bfc" id="L174" title="All 2 branches covered.">      if (linesChanged) {</span>
+<span class="fc" id="L175">        budget.setVersion(budget.getVersion() + 1);</span>
+      }
+<span class="fc bfc" id="L177" title="All 2 branches covered.">      if (conversionTAtoULA != null) {</span>
+<span class="fc" id="L178">        budget.setConversionTAtoULA(conversionTAtoULA);</span>
+<span class="fc" id="L179">        budget.setConversionVersion(budget.getConversionVersion() + 1);</span>
+      }
+<span class="fc" id="L181">      budgetRepository.save(budget);</span>
+<span class="fc" id="L182">    }</span>
+<span class="fc" id="L183">    return ResponseEntity.ok(budgetService.summary(quarter));</span>
   }
 
   /**
@@ -150,7 +190,7 @@ import org.springframework.web.bind.annotation.RestController;
    * of issue #270), so that is enough, as it is for the compare-and-set in {@link
    * RecruitmentsController}.
    */
-<span class="fc" id="L153">  private static final Object COMPARE_AND_SET = new Object();</span>
+<span class="fc" id="L193">  private static final Object COMPARE_AND_SET = new Object();</span>
 
   @Operation(
       summary =
@@ -167,8 +207,8 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;quarter&quot;) @RequestParam String quarter,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
     // PreAuthorize has already refused everyone but admins, so nothing below runs for them.
-<span class="fc" id="L170">    budgetService.budgetFor(quarter);</span>
-<span class="fc" id="L171">    return clientActivityDetector.heartbeat(resourceKey(quarter), clientId, identity());</span>
+<span class="fc" id="L210">    budgetService.budgetFor(quarter);</span>
+<span class="fc" id="L211">    return clientActivityDetector.heartbeat(resourceKey(quarter), clientId, identity());</span>
   }
 
   @Operation(
@@ -184,38 +224,38 @@ import org.springframework.web.bind.annotation.RestController;
   public void leave(
       @Parameter(name = &quot;quarter&quot;) @RequestParam String quarter,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId) {
-<span class="fc" id="L187">    clientActivityDetector.leave(resourceKey(quarter), clientId);</span>
-<span class="fc" id="L188">  }</span>
+<span class="fc" id="L227">    clientActivityDetector.leave(resourceKey(quarter), clientId);</span>
+<span class="fc" id="L228">  }</span>
 
   /** The detector's name for one quarter's budget. */
   private static String resourceKey(String quarter) {
-<span class="fc" id="L192">    return &quot;budget:&quot; + quarter;</span>
+<span class="fc" id="L232">    return &quot;budget:&quot; + quarter;</span>
   }
 
   /**
    * Who the current user is to the detector: the shared identity, marked as an admin (issue #302).
    */
   private ClientIdentity identity() {
-<span class="fc" id="L199">    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);</span>
+<span class="fc" id="L239">    return ApplicationsController.identityOf(getCurrentUser().getUser(), true);</span>
   }
 
   /** What a refused save tells the page: why, and the quarter as it now stands. */
   private ResponseEntity&lt;Object&gt; conflict(String quarter) {
-<span class="fc" id="L204">    BudgetService.Summary current = budgetService.summary(quarter);</span>
-<span class="fc" id="L205">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L206">    body.put(</span>
+<span class="fc" id="L244">    BudgetService.Summary current = budgetService.summary(quarter);</span>
+<span class="fc" id="L245">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L246">    body.put(</span>
         &quot;message&quot;,
         &quot;This budget was changed in another tab or window. Use theirs, or overwrite with yours.&quot;);
-<span class="fc" id="L209">    body.put(&quot;version&quot;, current.budget().getVersion());</span>
-<span class="fc" id="L210">    body.put(&quot;conversionVersion&quot;, current.budget().getConversionVersion());</span>
-<span class="fc" id="L211">    body.put(&quot;summary&quot;, current);</span>
-<span class="fc" id="L212">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
+<span class="fc" id="L249">    body.put(&quot;version&quot;, current.budget().getVersion());</span>
+<span class="fc" id="L250">    body.put(&quot;conversionVersion&quot;, current.budget().getConversionVersion());</span>
+<span class="fc" id="L251">    body.put(&quot;summary&quot;, current);</span>
+<span class="fc" id="L252">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
   }
 
   private static void requireNotNegative(String name, BigDecimal amount) {
-<span class="fc bfc" id="L216" title="All 4 branches covered.">    if (amount != null &amp;&amp; amount.signum() &lt; 0) {</span>
-<span class="fc" id="L217">      throw new IllegalArgumentException(&quot;%s must not be negative&quot;.formatted(name));</span>
+<span class="fc bfc" id="L256" title="All 4 branches covered.">    if (amount != null &amp;&amp; amount.signum() &lt; 0) {</span>
+<span class="fc" id="L257">      throw new IllegalArgumentException(&quot;%s must not be negative&quot;.formatted(name));</span>
     }
-<span class="fc" id="L219">  }</span>
+<span class="fc" id="L259">  }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
