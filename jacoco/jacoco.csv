@@ -110,7 +110,7 @@ taapply,edu.ucsb.cs.taapply.controller,AppSettingsController,0,395,0,26,0,67,0,3
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController,0,60,0,2,0,11,0,4,0,3
 taapply,edu.ucsb.cs.taapply.controller,InstructorRecruitmentsController.RankingScope,0,31,0,4,0,2,0,4,0,2
 taapply,edu.ucsb.cs.taapply.controller,SystemInfoController,0,7,0,0,0,2,0,2,0,2
-taapply,edu.ucsb.cs.taapply.controller,BudgetController,0,159,0,14,0,36,0,17,0,10
+taapply,edu.ucsb.cs.taapply.controller,BudgetController,0,180,0,22,0,41,0,21,0,10
 taapply,edu.ucsb.cs.taapply.controller,RecruitmentAuditTrailController.RecruitmentAuditTrailPageDTO,0,31,0,0,0,8,0,2,0,2
 taapply,edu.ucsb.cs.taapply.controller,DeveloperModeController,0,12,0,0,0,3,0,3,0,3
 taapply,edu.ucsb.cs.taapply.controller,InstructorsController.InstructorDTO,0,34,0,0,0,7,0,2,0,2
