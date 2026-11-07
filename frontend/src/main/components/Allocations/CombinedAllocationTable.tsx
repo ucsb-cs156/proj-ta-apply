@@ -1,14 +1,22 @@
 import { useMemo, type CSSProperties } from "react";
 import type { Cell } from "@tanstack/react-table";
 import { Form, OverlayTrigger, Tooltip } from "react-bootstrap";
-import OurTable from "main/components/Common/OurTable";
+import OurTable, { type HideLinks } from "main/components/Common/OurTable";
 import {
   numeric,
   shrinkToContent,
   stacked,
 } from "main/components/Common/columnStyles";
 import { useAllocationSaves } from "main/components/Recruitments/useAllocationSaves";
-import type { RecruitmentCourse } from "main/components/Recruitments/RecruitmentCourseTable";
+import {
+  InstructorEmailCell,
+  RankingCountCell,
+  StatusCell,
+  type RecruitmentCourse,
+  type RecruitmentCourseRankingSummary,
+} from "main/components/Recruitments/RecruitmentCourseTable";
+import { COURSE_NUMBER_WIDTH } from "main/utils/columnWidths";
+import { typeColumnId } from "main/utils/combinedColumns";
 import {
   allocationDelta,
   deltaDisplay,
@@ -81,7 +89,26 @@ type CombinedAllocationTableProps = {
   conversionFactor: number;
   taBulkVersion?: number;
   ulaBulkVersion?: number;
+  /** Each type's ranking counts and instructor emails, by course; they come with the review. */
+  taRankingSummaries?: RecruitmentCourseRankingSummary[];
+  ulaRankingSummaries?: RecruitmentCourseRankingSummary[];
+  /** Whether that type's faculty rankings have been opened; its Rankings column exists only then. */
+  showTaRankings?: boolean;
+  showUlaRankings?: boolean;
+  onCopyEmail?: (email: string) => void;
+  /** Column ids the admin has hidden; the Course Number column can never be hidden. */
+  hiddenColumns?: string[];
+  /** The "hide" links over the hideable columns' headings. */
+  hideLinks?: HideLinks;
   testIdPrefix?: string;
+};
+
+/** What one row of the table holds besides the course: its figures that come from elsewhere. */
+type Row = CombinedCourse & {
+  aseRatio: string;
+  taRankingCount: number | null;
+  ulaRankingCount: number | null;
+  instructorEmail: string | null;
 };
 
 /**
@@ -97,6 +124,14 @@ export default function CombinedAllocationTable({
   conversionFactor,
   taBulkVersion,
   ulaBulkVersion,
+  taRankingSummaries = [],
+  ulaRankingSummaries = [],
+  showTaRankings = false,
+  showUlaRankings = false,
+  onCopyEmail = () => {},
+  // Stryker disable next-line all : an id that is no column's hides nothing, like the empty list
+  hiddenColumns = [],
+  hideLinks,
   testIdPrefix = "CombinedAllocationTable",
 }: CombinedAllocationTableProps): React.JSX.Element {
   // Stryker disable BooleanLiteral : the saves refresh the lists by each part of this key on its own, so whether removed courses are included makes no difference here
@@ -200,13 +235,55 @@ export default function CombinedAllocationTable({
     ];
   };
 
+  const rankingColumn = (type: Type) => ({
+    header: `${type} Rankings`,
+    id: typeColumnId(type, "rankingCount"),
+    // A section the type does not have has nothing to sort by, so it goes last either way
+    accessorFn: (row: Row) =>
+      rowOf(row, type) === undefined
+        ? undefined
+        : type === "TA"
+          ? row.taRankingCount
+          : row.ulaRankingCount,
+    sortUndefined: "last" as const,
+    meta: numeric,
+    cell: ({ cell }: { cell: Cell<Row, unknown> }) => {
+      const course = rowOf(cell.row.original, type);
+      if (course === undefined) {
+        return null;
+      }
+      return (
+        <RankingCountCell
+          course={course}
+          rankingCount={
+            type === "TA"
+              ? cell.row.original.taRankingCount
+              : cell.row.original.ulaRankingCount
+          }
+          index={cell.row.index}
+          testIdPrefix={`${testIdPrefix}-${type.toLowerCase()}`}
+        />
+      );
+    },
+  });
+
   const columns = [
+    ...(hasTa && showTaRankings ? [rankingColumn("TA")] : []),
+    ...(hasUla && showUlaRankings ? [rankingColumn("ULA")] : []),
     {
-      header: "Course Number",
+      header: stacked("Course", "Number"),
       accessorKey: "courseId",
       meta: shrinkToContent,
-      cell: ({ cell }: { cell: Cell<CombinedCourse, unknown> }) => (
-        <span style={{ whiteSpace: "pre", fontFamily: "monospace" }}>
+      // The cell is as wide as the widest course number, "XXXXXXX 999XX", in its monospaced font.
+      cell: ({ cell }: { cell: Cell<Row, unknown> }) => (
+        <span
+          style={{
+            display: "inline-block",
+            minWidth: COURSE_NUMBER_WIDTH,
+            whiteSpace: "pre",
+            fontFamily: "monospace",
+          }}
+        >
           {cell.row.original.courseId}
         </span>
       ),
@@ -218,6 +295,24 @@ export default function CombinedAllocationTable({
       meta: { style: { width: "100%" } },
     },
     { header: "Instructor", accessorKey: "instructor", meta: shrinkToContent },
+    {
+      header: "Email",
+      accessorKey: "instructorEmail",
+      meta: shrinkToContent,
+      cell: ({ cell }: { cell: Cell<Row, unknown> }) => (
+        <InstructorEmailCell
+          email={cell.row.original.instructorEmail}
+          index={cell.row.index}
+          testIdPrefix={testIdPrefix}
+          onCopyEmail={onCopyEmail}
+        />
+      ),
+    },
+    { header: "Days", accessorKey: "days", meta: shrinkToContent },
+    { header: "Time", accessorKey: "time", meta: shrinkToContent },
+    { header: "Room", accessorKey: "room", meta: shrinkToContent },
+    { header: "Enrolled", accessorKey: "enrollment", meta: numeric },
+    { header: "Max", accessorKey: "maxEnroll", meta: numeric },
     {
       header: stacked("Enrollment", "Estimate"),
       accessorKey: "enrollmentEstimate",
@@ -234,14 +329,32 @@ export default function CombinedAllocationTable({
           },
         ]
       : []),
+    {
+      header: "Status",
+      accessorKey: "status",
+      meta: shrinkToContent,
+      cell: ({ cell }: { cell: Cell<Row, unknown> }) => (
+        <StatusCell
+          course={cell.row.original}
+          index={cell.row.index}
+          testIdPrefix={testIdPrefix}
+        />
+      ),
+    },
   ];
 
   // The ASE:Student ratio is part of the data, not computed by its column: TanStack keeps what a
   // column's accessor returned for as long as the data is the same, so a ratio computed there
   // would not follow the conversion factor.
-  const rows = useMemo(
-    () =>
-      courses.map((course) => ({
+  const rows: Row[] = useMemo(() => {
+    const summaryOf = (
+      summaries: RecruitmentCourseRankingSummary[],
+      course: RecruitmentCourse | undefined,
+    ) => summaries.find((s) => s.recruitmentCourseId === course?.id);
+    return courses.map((course) => {
+      const taSummary = summaryOf(taRankingSummaries, course.ta);
+      const ulaSummary = summaryOf(ulaRankingSummaries, course.ula);
+      return {
         ...course,
         aseRatio: aseRatioDisplay(
           course.ta?.allocation,
@@ -249,9 +362,14 @@ export default function CombinedAllocationTable({
           course.enrollmentEstimate,
           conversionFactor,
         ),
-      })),
-    [courses, conversionFactor],
-  );
+        taRankingCount: taSummary?.rankingCount ?? null,
+        ulaRankingCount: ulaSummary?.rankingCount ?? null,
+        // As for the other details of a section in both recruitments: the TA row's first.
+        instructorEmail:
+          taSummary?.instructorEmail ?? ulaSummary?.instructorEmail ?? null,
+      };
+    });
+  }, [courses, conversionFactor, taRankingSummaries, ulaRankingSummaries]);
 
   return (
     <OurTable
@@ -259,6 +377,10 @@ export default function CombinedAllocationTable({
       columns={columns}
       testid={testIdPrefix}
       centerHeaders
+      columnVisibility={Object.fromEntries(
+        hiddenColumns.map((id) => [id, false]),
+      )}
+      hideLinks={hideLinks}
     />
   );
 }

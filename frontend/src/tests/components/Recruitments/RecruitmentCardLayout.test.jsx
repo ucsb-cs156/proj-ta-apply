@@ -200,8 +200,38 @@ describe("RecruitmentCardLayout tests", () => {
     ).not.toBeInTheDocument();
   });
 
+  test.each(["Open", "Closed"])(
+    "Download Rankings CSV ends the footer once faculty reviews are %s",
+    (reviewStatus) => {
+      renderCard({ recruitment: { ...ta, id: 4, reviewStatus } });
+
+      const button = screen.getByTestId("C-rankings-csv-button");
+      expect(button).toHaveTextContent("Download Rankings CSV");
+      expect(button.tagName).toBe("A");
+      expect(button).toHaveAttribute(
+        "href",
+        "/api/admin/rankings/csv?recruitmentId=4",
+      );
+      expect(button).toHaveAttribute("download", "rankings-4.csv");
+      expect(button).toHaveClass("btn", "btn-outline-primary");
+      expect(button).toBe(button.parentElement.lastElementChild);
+      expect(button.parentElement).toBe(
+        screen.getByTestId("C-applications-button").parentElement,
+      );
+    },
+  );
+
+  test("there is no Download Rankings CSV before faculty reviews have started", () => {
+    renderCard({ recruitment: { ...ta, reviewStatus: "NotStarted" } });
+
+    expect(
+      screen.queryByTestId("C-rankings-csv-button"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Download/)).not.toBeInTheDocument();
+  });
+
   test("the footer has only Courses, Draft Applications and Applications, in that order", () => {
-    renderCard();
+    renderCard({ recruitment: { ...ta, reviewStatus: "NotStarted" } });
 
     const footer = screen.getByTestId("C-courses-button").parentElement;
     expect(within(footer).getAllByRole("link")).toHaveLength(3);

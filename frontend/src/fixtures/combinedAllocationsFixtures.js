@@ -25,6 +25,11 @@ const combinedAllocationsFixtures = {
       section: "0100",
       title: "Advanced Applications",
       instructor: "CONRAD P",
+      days: "M W",
+      time: "9:30 AM - 10:45 AM",
+      room: "PHELP 1448",
+      enrollment: 90,
+      maxEnroll: 120,
       allocation: 3,
       allocationVersion: 4,
       enrollmentEstimate: 100,
@@ -69,6 +74,12 @@ const combinedAllocationsFixtures = {
       section: "0100",
       title: "Data Structures",
       instructor: "WIZARD W",
+      days: "T R",
+      time: "2:00 PM - 3:15 PM",
+      room: "HFH 1104",
+      enrollment: 40,
+      maxEnroll: 50,
+      status: "cancelled",
       allocation: 2,
       allocationVersion: 1,
       enrollmentEstimate: null,
@@ -77,10 +88,56 @@ const combinedAllocationsFixtures = {
   ],
   /** /api/admin/recruitments/all, for the Auto Allocate counts. */
   recruitments: [
-    { id: 5, quarter: "20264", type: "TA", allocationBulkVersion: 7 },
-    { id: 6, quarter: "20264", type: "ULA", allocationBulkVersion: 8 },
-    { id: 3, quarter: "20262", type: "ULA", allocationBulkVersion: 1 },
-    { id: 1, quarter: "20261", type: "TA", allocationBulkVersion: 0 },
+    {
+      id: 5,
+      quarter: "20264",
+      type: "TA",
+      allocationBulkVersion: 7,
+      reviewStatus: "Open",
+    },
+    {
+      id: 6,
+      quarter: "20264",
+      type: "ULA",
+      allocationBulkVersion: 8,
+      reviewStatus: "NotStarted",
+    },
+    {
+      id: 3,
+      quarter: "20262",
+      type: "ULA",
+      allocationBulkVersion: 1,
+      reviewStatus: "Closed",
+    },
+    {
+      id: 1,
+      quarter: "20261",
+      type: "TA",
+      allocationBulkVersion: 0,
+      reviewStatus: "NotStarted",
+    },
+  ],
+  /** The TA recruitment's ranking counts and instructor emails, by course id. */
+  taRankingSummaries: [
+    {
+      recruitmentCourseId: 1,
+      rankingCount: 4,
+      instructorEmail: "pconrad@ucsb.edu",
+    },
+    { recruitmentCourseId: 2, rankingCount: 6, instructorEmail: null },
+  ],
+  /** The ULA recruitment's: CMPSC 24 (only in the ULA recruitment) has an email of its own. */
+  ulaRankingSummaries: [
+    {
+      recruitmentCourseId: 11,
+      rankingCount: 9,
+      instructorEmail: "other@ucsb.edu",
+    },
+    {
+      recruitmentCourseId: 12,
+      rankingCount: 7,
+      instructorEmail: "wizard@ucsb.edu",
+    },
   ],
 };
 

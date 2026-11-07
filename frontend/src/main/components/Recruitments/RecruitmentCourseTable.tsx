@@ -210,6 +210,121 @@ const CopyIcon = (): React.JSX.Element => (
   </svg>
 );
 
+/**
+ * One row's ranking count, linking to the course's ranking page; a dash when the count is not
+ * known. Shared by the Recruitment Courses table and the Combined Allocation table (issue #358).
+ */
+export function RankingCountCell({
+  course,
+  rankingCount,
+  index,
+  testIdPrefix,
+}: {
+  course: Pick<RecruitmentCourse, "id" | "recruitmentId">;
+  rankingCount: number | null;
+  index: number;
+  testIdPrefix: string;
+}): React.JSX.Element {
+  if (rankingCount === null) {
+    return <span aria-label="Ranking count unavailable">—</span>;
+  }
+  return (
+    <Link
+      to={`/recruitments/${course.recruitmentId}/courses/${course.id}/ranking`}
+      data-testid={`${testIdPrefix}-cell-row-${index}-ranking-link`}
+    >
+      {rankingCount}
+    </Link>
+  );
+}
+
+/**
+ * One row's instructor email with its copy control, or the link to where the instructor's catalog
+ * name is mapped to one (issue #185). Shared with the Combined Allocation table (issue #358).
+ */
+export function InstructorEmailCell({
+  email,
+  index,
+  testIdPrefix,
+  onCopyEmail,
+}: {
+  email: string | null | undefined;
+  index: number;
+  testIdPrefix: string;
+  onCopyEmail: (email: string) => void;
+}): React.JSX.Element {
+  if (!isValidEmail(email)) {
+    // Straight to where the mapping is made, in a new tab so the table is not lost (#185).
+    return (
+      <a
+        href="/admin/instructors"
+        target="_blank"
+        rel="noreferrer"
+        title="Map this instructor's catalog name to an email on the Instructors page"
+        data-testid={`${testIdPrefix}-cell-row-${index}-unmapped`}
+      >
+        Not mapped
+      </a>
+    );
+  }
+  return (
+    <>
+      <span>{email}</span>
+      <Button
+        variant="link"
+        size="sm"
+        className="p-0 ms-2"
+        title="Copy"
+        aria-label={`Copy ${email}`}
+        onClick={() => onCopyEmail(email)}
+        data-testid={`${testIdPrefix}-cell-row-${index}-copy-email`}
+      >
+        <CopyIcon />
+      </Button>
+    </>
+  );
+}
+
+/**
+ * One row's status. A cancelled lecture is shown as a red badge, since applicants no longer see it
+ * (issue #123); a stale row keeps its last known status, with a warning beside it so the admin can
+ * decide whether to Remove it (issue #122). Shared with the Combined Allocation table (#358).
+ */
+export function StatusCell({
+  course,
+  index,
+  testIdPrefix,
+}: {
+  course: Pick<RecruitmentCourse, "status" | "stale">;
+  index: number;
+  testIdPrefix: string;
+}): React.JSX.Element {
+  return (
+    <>
+      {course.status === CANCELLED ? (
+        <Badge
+          bg="danger"
+          data-testid={`${testIdPrefix}-cell-row-${index}-cancelled`}
+        >
+          Cancelled
+        </Badge>
+      ) : (
+        course.status
+      )}
+      {course.stale && (
+        <Badge
+          bg="warning"
+          text="dark"
+          className="ms-2"
+          data-testid={`${testIdPrefix}-cell-row-${index}-stale`}
+        >
+          {STALE_LABEL}
+        </Badge>
+      )}
+    </>
+  );
+}
+
 type RecruitmentCourseTableProps = {
   courses: RecruitmentCourse[];
   /** The recruitment's type, for the headings and tooltips that name it (issue #176). */
@@ -392,20 +507,14 @@ export default function RecruitmentCourseTable({
                 },
                 unknown
               >;
-            }) => {
-              const course = cell.row.original;
-              if (course.rankingCount === null) {
-                return <span aria-label="Ranking count unavailable">—</span>;
-              }
-              return (
-                <Link
-                  to={`/recruitments/${course.recruitmentId}/courses/${course.id}/ranking`}
-                  data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-ranking-link`}
-                >
-                  {course.rankingCount}
-                </Link>
-              );
-            },
+            }) => (
+              <RankingCountCell
+                course={cell.row.original}
+                rankingCount={cell.row.original.rankingCount}
+                index={cell.row.index}
+                testIdPrefix={testIdPrefix}
+              />
+            ),
           },
         ]
       : []),
@@ -459,36 +568,13 @@ export default function RecruitmentCourseTable({
           unknown
         >;
       }) => {
-        const email = cell.row.original.instructorEmail;
-        if (!isValidEmail(email)) {
-          // Straight to where the mapping is made, in a new tab so the table is not lost (#185).
-          return (
-            <a
-              href="/admin/instructors"
-              target="_blank"
-              rel="noreferrer"
-              title="Map this instructor's catalog name to an email on the Instructors page"
-              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-unmapped`}
-            >
-              Not mapped
-            </a>
-          );
-        }
         return (
-          <>
-            <span>{email}</span>
-            <Button
-              variant="link"
-              size="sm"
-              className="p-0 ms-2"
-              title="Copy"
-              aria-label={`Copy ${email}`}
-              onClick={() => onCopyEmail(email)}
-              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-copy-email`}
-            >
-              <CopyIcon />
-            </Button>
-          </>
+          <InstructorEmailCell
+            email={cell.row.original.instructorEmail}
+            index={cell.row.index}
+            testIdPrefix={testIdPrefix}
+            onCopyEmail={onCopyEmail}
+          />
         );
       },
     },
@@ -595,28 +681,11 @@ export default function RecruitmentCourseTable({
       // #123); a stale row keeps its last known status, with a warning beside it so the admin can
       // decide whether to Remove it (issue #122).
       cell: ({ cell }: { cell: Cell<RecruitmentCourse, unknown> }) => (
-        <>
-          {cell.row.original.status === CANCELLED ? (
-            <Badge
-              bg="danger"
-              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-cancelled`}
-            >
-              Cancelled
-            </Badge>
-          ) : (
-            cell.row.original.status
-          )}
-          {cell.row.original.stale && (
-            <Badge
-              bg="warning"
-              text="dark"
-              className="ms-2"
-              data-testid={`${testIdPrefix}-cell-row-${cell.row.index}-stale`}
-            >
-              {STALE_LABEL}
-            </Badge>
-          )}
-        </>
+        <StatusCell
+          course={cell.row.original}
+          index={cell.row.index}
+          testIdPrefix={testIdPrefix}
+        />
       ),
     },
     // Only a summer quarter's offerings carry a value, so the column exists only then (#185).

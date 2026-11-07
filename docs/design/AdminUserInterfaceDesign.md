@@ -132,6 +132,26 @@ stays as it is.
 - **Columns per type**, only for a type that has a recruitment: Allocation (editable, through the
   same endpoint and version checks as the Recruitment Courses page, against that type's
   recruitment), Unrounded Allocation, Delta and TA:student (or ULA:student) ratio.
+- **The other columns of the Courses page** (follow-up to the first PR): TA Rankings and ULA
+  Rankings (a type's only once its faculty reviews are not `NotStarted`, linking to the course's
+  ranking page), Section, Title, Instructor, Email (with the copy widget), Days, Time, Room,
+  Enrolled, Max and Status. A column starting with TA exists only when the quarter has a TA
+  recruitment, and likewise ULA. The descriptive columns are the same course for a section in both
+  recruitments: the TA row is used, the ULA row when there is no TA row. **Course Number** has a
+  stacked heading ("Course" over "Number") and a cell 13 characters wide (`13ch`, monospaced), the
+  width of the widest UCSB course number, `XXXXXXX 999XX`.
+- **Showing and hiding columns**: every heading except Course Number has the small "hide" link, and
+  a **Columns** menu has Show All, Show None and a box per column except Course Number, which is
+  always shown. The choice is kept per quarter in local storage (key
+  `combinedAllocations.hiddenColumns.QXX`). The default-visible columns are those of the Courses
+  page (Instructor, Enrolled, Max, Enrollment Estimate, and each type's Allocation, Unrounded
+  Allocation, Delta and ratio) plus the ASE:Student Ratio; the rankings, Section, Title, Email,
+  Days, Time, Room and Status start hidden.
+- **Controls** (as on the Edit Courses page): *Set enrollment estimates from: max, actual* (the
+  endpoint takes one recruitment, so it is called for each recruitment of the quarter), and
+  *Auto assign TA allocations* / *Auto assign ULA allocations* (each only when that recruitment
+  exists, with the same tooltip and confirmation modal). *Download Rankings CSV* is not on this
+  page: it is on each recruitment's card (below).
 - **Only when the quarter has both recruitments**: a table with no header row, *Cost per TA* and
   *Cost per ULA* (each recruitment's average cost per position, entered on the Budget page) and
   *TA Cost/ULA Cost* (empty when the cost per ULA is zero or either is unknown); the editable
@@ -158,7 +178,9 @@ The card becomes much wider to hold the diagram. From top to bottom:
    - **Test Application** moves to the Applications page.
    - **Download CSV** moves to near the top of the Applications page and is renamed
      **Download Applications as CSV**.
-   - **Download Rankings CSV** moves to the Courses page.
+   - **Download Rankings CSV** moves to the Courses page (issue #234); since issue #358 it is back on
+     the card, as the last button of the footer, shown only once faculty reviews have been opened
+     (and no longer on the Courses page, which is to go away).
    - The lifecycle buttons (Open/Close Applications, Open/Close Faculty Reviews, Publish
      Assignments) are reached through the diagram's links; their confirmation modals are
      unchanged.

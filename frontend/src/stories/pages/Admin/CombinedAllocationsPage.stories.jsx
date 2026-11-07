@@ -42,6 +42,23 @@ const handlers = (summary, coursesByRecruitment) => [
     HttpResponse.json(combinedAllocationsFixtures.recruitments),
   ),
   http.put("/api/recruitmentcourses/allocation", () => HttpResponse.json({})),
+  http.get(
+    "/api/instructor/recruitments/:id/admin-course-rankings",
+    ({ params }) =>
+      HttpResponse.json(
+        params.id === "5"
+          ? combinedAllocationsFixtures.taRankingSummaries
+          : params.id === "6"
+            ? combinedAllocationsFixtures.ulaRankingSummaries
+            : [],
+      ),
+  ),
+  http.put("/api/recruitmentcourses/enrollmentEstimates", () =>
+    HttpResponse.json([]),
+  ),
+  http.post("/api/recruitmentcourses/autoAllocate", () =>
+    HttpResponse.json([]),
+  ),
 ];
 
 const { taCourses, ulaCourses } = combinedAllocationsFixtures;
@@ -73,5 +90,27 @@ UlaOnly.parameters = {
   reactRouter: { initialEntries: ["/admin/allocations/S26"] },
   msw: {
     handlers: handlers(budgetFixtures.ulaOnly, { 3: [ulaCourses[1]] }),
+  },
+};
+
+/**
+ * F26 with every column shown (the Columns menu's Show All): the TA rankings (open in F26), the
+ * descriptive columns with the copy-email widget, and the status. The stored choice is set before
+ * the page renders.
+ */
+export const AllColumns = Template.bind({});
+AllColumns.loaders = [
+  () => {
+    localStorage.setItem("combinedAllocations.hiddenColumns.F26", "[]");
+    return {};
+  },
+];
+AllColumns.parameters = {
+  reactRouter: { initialEntries: ["/admin/allocations/F26"] },
+  msw: {
+    handlers: handlers(budgetFixtures.bothTypes, {
+      5: taCourses,
+      6: ulaCourses,
+    }),
   },
 };

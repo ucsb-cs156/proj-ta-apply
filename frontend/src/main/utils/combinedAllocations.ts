@@ -68,6 +68,14 @@ export type CombinedCourse = {
   section: string | null;
   title: string | null;
   instructor: string | null;
+  days: string | null;
+  time: string | null;
+  room: string | null;
+  enrollment: number | null;
+  maxEnroll: number | null;
+  status: string | null;
+  /** Set by Populate when the section was not found (issue #122). */
+  stale?: boolean;
   /** The higher of the two recruitments' estimates; null when neither has one. */
   enrollmentEstimate: number | null;
   ta?: RecruitmentCourse;
@@ -90,7 +98,7 @@ const compare = (a: string | null, b: string | null): number =>
 /**
  * The union of a quarter's TA and ULA courses (issue #358), one row per enroll code (so two
  * lectures of a course are two rows, and a section in both recruitments is one), in course id then
- * section order. Details come from the TA row when there is one. The enrollment estimate is the
+ * section order. Details (title, instructor, days, time, room, enrollment, status) come from the TA row when there is one, and from the ULA row otherwise: a section in both recruitments is the same course. The enrollment estimate is the
  * higher of the two recruitments' (they may disagree until issue #363 gives a course one).
  */
 export const combineCourses = (
@@ -107,6 +115,13 @@ export const combineCourses = (
       section: details.section,
       title: details.title,
       instructor: details.instructor,
+      days: details.days,
+      time: details.time,
+      room: details.room,
+      enrollment: details.enrollment,
+      maxEnroll: details.maxEnroll,
+      status: details.status,
+      stale: details.stale,
       enrollmentEstimate: higher(
         existing?.enrollmentEstimate,
         course.enrollmentEstimate,

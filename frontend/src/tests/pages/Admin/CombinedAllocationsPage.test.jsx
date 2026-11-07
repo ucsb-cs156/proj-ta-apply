@@ -61,6 +61,7 @@ const td = (row, column) =>
 
 describe("CombinedAllocationsPage tests", () => {
   beforeEach(() => {
+    localStorage.clear();
     mockToast.mockClear();
     axiosMock.reset();
     axiosMock.resetHistory();
@@ -97,6 +98,20 @@ describe("CombinedAllocationsPage tests", () => {
     axiosMock
       .onGet("/api/admin/recruitments/all")
       .reply(200, combinedAllocationsFixtures.recruitments);
+    const summaries = (id) =>
+      `/api/instructor/recruitments/${id}/admin-course-rankings`;
+    axiosMock
+      .onGet(summaries(5))
+      .reply(200, combinedAllocationsFixtures.taRankingSummaries);
+    axiosMock
+      .onGet(summaries(6))
+      .reply(200, combinedAllocationsFixtures.ulaRankingSummaries);
+    axiosMock.onGet(summaries(3)).reply(200, []);
+    axiosMock.onGet(summaries(1)).reply(200, []);
+    axiosMock
+      .onPut("/api/recruitmentcourses/enrollmentEstimates")
+      .reply(200, []);
+    axiosMock.onPost("/api/recruitmentcourses/autoAllocate").reply(200, []);
     axiosMock.onPut(BUDGET).reply(200, budgetFixtures.bothTypes);
     axiosMock.onPut("/api/recruitmentcourses/allocation").reply(200, {});
   });
@@ -272,7 +287,7 @@ describe("CombinedAllocationsPage tests", () => {
       { recruitmentId: 3, includeRemoved: false },
     ]);
     // Only the ULA recruitment's one course: nothing is made of the TA list that is not read.
-    await screen.findByText("Data Structures");
+    await screen.findByText("CMPSC 24");
     expect(screen.getAllByTestId(/^CombinedAllocationTable-row-/)).toHaveLength(
       1,
     );
@@ -295,7 +310,7 @@ describe("CombinedAllocationsPage tests", () => {
     expect(gets(COURSES).map((r) => r.params)).toEqual([
       { recruitmentId: 1, includeRemoved: false },
     ]);
-    await screen.findByText("Intro");
+    await screen.findByText("CMPSC 8");
     expect(screen.getAllByTestId(/^CombinedAllocationTable-row-/)).toHaveLength(
       1,
     );
@@ -586,5 +601,564 @@ describe("CombinedAllocationsPage tests", () => {
         "Error communicating with backend via GET on /api/admin/recruitments/all",
       ),
     );
+  });
+
+  describe("the follow-up criteria of issue #358", () => {
+    const headerIds = () =>
+      screen
+        .getAllByTestId(/^CombinedAllocationTable-header-[A-Za-z]+$/)
+        .map((e) =>
+          e
+            .getAttribute("data-testid")
+            .replace("CombinedAllocationTable-header-", ""),
+        );
+    const openColumns = async () => {
+      await userEvent.click(
+        await screen.findByTestId("CombinedAllocationsPage-columns-toggle"),
+      );
+    };
+
+    test("the conversion factor box is on the line of its label", async () => {
+      renderPage("F26");
+      const box = await factorBox();
+
+      const group = box.closest("[title]");
+      expect(group).toHaveClass("d-flex", "align-items-center");
+      expect(group.firstElementChild).toHaveTextContent(
+        "Nominal TA to ULA conversion factor",
+      );
+      expect(group.firstElementChild.nextElementSibling).toContainElement(box);
+    });
+
+    test("the Budget page's boxes keep the label above the box", async () => {
+      // The inline layout is the combined page's alone: the shared box is stacked by default.
+      const { default: SavedOnChangeInput } =
+        await import("main/components/Budget/SavedOnChangeInput");
+      render(
+        <SavedOnChangeInput
+          id="x"
+          label="L"
+          stored="1"
+          isValid={() => true}
+          onSave={() => {}}
+        />,
+      );
+      expect(screen.getByTestId("x").closest(".mb-2")).not.toHaveClass(
+        "d-flex",
+      );
+    });
+
+    test("by default Section, Title, Email, Days, Time, Room, Status and the rankings are hidden", async () => {
+      renderPage("F26");
+      await screen.findByTestId("CombinedAllocationTable");
+
+      expect(headerIds()).toEqual([
+        "courseId",
+        "instructor",
+        "enrollment",
+        "maxEnroll",
+        "enrollmentEstimate",
+        "taAllocation",
+        "taUnroundedAllocation",
+        "taDelta",
+        "taRatio",
+        "ulaAllocation",
+        "ulaUnroundedAllocation",
+        "ulaDelta",
+        "ulaRatio",
+        "aseRatio",
+      ]);
+    });
+
+    test("the Columns menu has Show All, Show None and a box for every column but Course Number", async () => {
+      renderPage("F26");
+      await openColumns();
+
+      expect(
+        screen.getByTestId("CombinedAllocationsPage-columns-select-all"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("CombinedAllocationsPage-columns-select-none"),
+      ).toBeInTheDocument();
+      // TA rankings are open in F26, ULA rankings are not started.
+      expect(
+        screen.getByTestId("CombinedAllocationsPage-columns-taRankingCount"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("CombinedAllocationsPage-columns-ulaRankingCount"),
+      ).toBeNull();
+      expect(
+        screen.queryByTestId("CombinedAllocationsPage-columns-courseId"),
+      ).toBeNull();
+      expect(screen.getAllByRole("checkbox").map((box) => box.id)).toHaveLength(
+        21,
+      );
+    });
+
+    test("Show All shows every column, including the rankings that exist", async () => {
+      renderPage("F26");
+      await openColumns();
+
+      await userEvent.click(
+        screen.getByTestId("CombinedAllocationsPage-columns-select-all"),
+      );
+
+      expect(headerIds()).toEqual([
+        "taRankingCount",
+        "courseId",
+        "section",
+        "title",
+        "instructor",
+        "instructorEmail",
+        "days",
+        "time",
+        "room",
+        "enrollment",
+        "maxEnroll",
+        "enrollmentEstimate",
+        "taAllocation",
+        "taUnroundedAllocation",
+        "taDelta",
+        "taRatio",
+        "ulaAllocation",
+        "ulaUnroundedAllocation",
+        "ulaDelta",
+        "ulaRatio",
+        "aseRatio",
+        "status",
+      ]);
+      // The TA ranking counts and instructor emails come from the recruitment's summaries.
+      expect(
+        await screen.findByTestId(
+          "CombinedAllocationTable-ta-cell-row-2-ranking-link",
+        ),
+      ).toHaveTextContent("4");
+      expect(td(2, "instructorEmail")).toHaveTextContent("pconrad@ucsb.edu");
+    });
+
+    test("Show None leaves only Course Number, and a box brings a column back", async () => {
+      renderPage("F26");
+      await openColumns();
+
+      await userEvent.click(
+        screen.getByTestId("CombinedAllocationsPage-columns-select-none"),
+      );
+      expect(headerIds()).toEqual(["courseId"]);
+
+      await userEvent.click(
+        screen.getByTestId("CombinedAllocationsPage-columns-title"),
+      );
+      expect(headerIds()).toEqual(["courseId", "title"]);
+    });
+
+    test("hiding a column from its heading unticks it; Course Number has no such link", async () => {
+      renderPage("F26");
+      await screen.findByTestId("CombinedAllocationTable");
+
+      expect(
+        screen.queryByTestId("CombinedAllocationTable-header-courseId-hide"),
+      ).toBeNull();
+      await userEvent.click(
+        screen.getByTestId("CombinedAllocationTable-header-instructor-hide"),
+      );
+
+      expect(headerIds()).not.toContain("instructor");
+      await openColumns();
+      expect(
+        screen.getByTestId("CombinedAllocationsPage-columns-instructor"),
+      ).not.toBeChecked();
+    });
+
+    test("the choice is kept per quarter in local storage, under its own key", async () => {
+      renderPage("F26");
+      await screen.findByTestId("CombinedAllocationTable");
+      expect(
+        localStorage.getItem("combinedAllocations.hiddenColumns.F26"),
+      ).toBeNull();
+
+      await userEvent.click(
+        screen.getByTestId("CombinedAllocationTable-header-instructor-hide"),
+      );
+
+      const stored = JSON.parse(
+        localStorage.getItem("combinedAllocations.hiddenColumns.F26"),
+      );
+      expect(stored).toContain("instructor");
+      expect(stored).toContain("section");
+      expect(
+        localStorage.getItem("combinedAllocations.hiddenColumns.W26"),
+      ).toBeNull();
+    });
+
+    test("a stored choice is applied when the page opens", async () => {
+      localStorage.setItem(
+        "combinedAllocations.hiddenColumns.F26",
+        JSON.stringify(["instructor"]),
+      );
+      renderPage("F26");
+      await screen.findByTestId("CombinedAllocationTable");
+
+      expect(headerIds()).toContain("section");
+      expect(headerIds()).not.toContain("instructor");
+    });
+
+    test("the TA-only quarter's menu has no ULA, ASE or ULA rankings choices", async () => {
+      renderPage("W26");
+      await openColumns();
+
+      expect(
+        screen.queryByTestId("CombinedAllocationsPage-columns-ulaAllocation"),
+      ).toBeNull();
+      expect(
+        screen.queryByTestId("CombinedAllocationsPage-columns-aseRatio"),
+      ).toBeNull();
+      expect(
+        screen.getByTestId("CombinedAllocationsPage-columns-taAllocation"),
+      ).toBeInTheDocument();
+    });
+
+    test("the ULA-only quarter's menu offers the ULA rankings, as its reviews are Closed", async () => {
+      renderPage("S26");
+      await openColumns();
+
+      expect(
+        screen.getByTestId("CombinedAllocationsPage-columns-ulaRankingCount"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("CombinedAllocationsPage-columns-taAllocation"),
+      ).toBeNull();
+    });
+
+    test("set enrollment estimates from max or actual acts on every recruitment of the quarter", async () => {
+      renderPage("F26");
+
+      await userEvent.click(
+        await screen.findByTestId("CombinedAllocationsPage-fill-estimates-max"),
+      );
+
+      await waitFor(() =>
+        expect(
+          axiosMock.history.put
+            .filter(
+              (r) => r.url === "/api/recruitmentcourses/enrollmentEstimates",
+            )
+            .map((r) => r.params),
+        ).toEqual([
+          { recruitmentId: 5, source: "MAX" },
+          { recruitmentId: 6, source: "MAX" },
+        ]),
+      );
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          "Enrollment estimates set from maximum enrollment.",
+        ),
+      );
+
+      axiosMock.resetHistory();
+      await userEvent.click(
+        screen.getByTestId("CombinedAllocationsPage-fill-estimates-actual"),
+      );
+      await waitFor(() =>
+        expect(axiosMock.history.put.map((r) => r.params.source)).toEqual([
+          "ACTUAL",
+          "ACTUAL",
+        ]),
+      );
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          "Enrollment estimates set from actual enrollment.",
+        ),
+      );
+    });
+
+    test("with one recruitment the estimates are set for that one only", async () => {
+      renderPage("W26");
+
+      await userEvent.click(
+        await screen.findByTestId("CombinedAllocationsPage-fill-estimates-max"),
+      );
+
+      await waitFor(() =>
+        expect(axiosMock.history.put.map((r) => r.params)).toEqual([
+          { recruitmentId: 1, source: "MAX" },
+        ]),
+      );
+    });
+
+    test("a failed estimates call is toasted", async () => {
+      axiosMock.onPut("/api/recruitmentcourses/enrollmentEstimates").reply(500);
+      renderPage("F26");
+
+      await userEvent.click(
+        await screen.findByTestId("CombinedAllocationsPage-fill-estimates-max"),
+      );
+
+      await waitFor(() => expect(mockToast).toHaveBeenCalled());
+    });
+
+    test("each type's Auto assign button has the allocations page's tooltip", async () => {
+      renderPage("F26");
+
+      const ta = await screen.findByTestId(
+        "CombinedAllocationsPage-auto-assign-TA",
+      );
+      expect(ta).toHaveTextContent("Auto assign TA allocations");
+      expect(ta).toHaveClass("btn-outline-primary");
+      await userEvent.hover(ta);
+      expect(await screen.findByRole("tooltip")).toHaveTextContent(
+        "Automatically allocate the 8 TAs across courses based on enrollment",
+      );
+      await userEvent.unhover(ta);
+
+      const ula = screen.getByTestId("CombinedAllocationsPage-auto-assign-ULA");
+      expect(ula).toHaveTextContent("Auto assign ULA allocations");
+      await userEvent.hover(ula);
+      await waitFor(() =>
+        expect(screen.getByRole("tooltip")).toHaveTextContent(
+          "Automatically allocate the 10 ULAs across courses based on enrollment",
+        ),
+      );
+    });
+
+    test("a quarter with one recruitment has only that type's Auto assign button", async () => {
+      renderPage("W26");
+
+      await screen.findByTestId("CombinedAllocationsPage-auto-assign-TA");
+      expect(
+        screen.queryByTestId("CombinedAllocationsPage-auto-assign-ULA"),
+      ).toBeNull();
+    });
+
+    test("Auto assign asks first, and confirming allocates that type's recruitment", async () => {
+      renderPage("F26");
+
+      await userEvent.click(
+        await screen.findByTestId("CombinedAllocationsPage-auto-assign-ULA"),
+      );
+      const modal = await screen.findByTestId(
+        "CombinedAllocationsPage-auto-assign-modal",
+      );
+      expect(modal).toHaveTextContent("Auto assign ULA allocations");
+      expect(modal).toHaveTextContent(
+        "This will overwrite all values currently in the ULA allocation fields. This cannot be undone.",
+      );
+      expect(modal).toHaveTextContent("Are you sure?");
+      expect(
+        axiosMock.history.post.filter(
+          (r) => r.url === "/api/recruitmentcourses/autoAllocate",
+        ),
+      ).toHaveLength(0);
+
+      await userEvent.click(
+        screen.getByTestId("CombinedAllocationsPage-auto-assign-confirm"),
+      );
+
+      await waitFor(() =>
+        expect(
+          axiosMock.history.post
+            .filter((r) => r.url === "/api/recruitmentcourses/autoAllocate")
+            .map((r) => r.params),
+        ).toEqual([{ recruitmentId: 6 }]),
+      );
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          "Allocations assigned from the enrollment estimates.",
+        ),
+      );
+      await waitFor(() =>
+        expect(
+          screen.queryByTestId("CombinedAllocationsPage-auto-assign-modal"),
+        ).not.toBeInTheDocument(),
+      );
+    });
+
+    test("confirming for TA allocates the TA recruitment", async () => {
+      renderPage("F26");
+
+      await userEvent.click(
+        await screen.findByTestId("CombinedAllocationsPage-auto-assign-TA"),
+      );
+      await userEvent.click(
+        await screen.findByTestId(
+          "CombinedAllocationsPage-auto-assign-confirm",
+        ),
+      );
+
+      await waitFor(() =>
+        expect(axiosMock.history.post.map((r) => r.params)).toEqual([
+          { recruitmentId: 5 },
+        ]),
+      );
+    });
+
+    test("No, keep my current allocations closes the modal and sends nothing", async () => {
+      renderPage("F26");
+
+      await userEvent.click(
+        await screen.findByTestId("CombinedAllocationsPage-auto-assign-TA"),
+      );
+      await userEvent.click(
+        await screen.findByTestId("CombinedAllocationsPage-auto-assign-cancel"),
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.queryByTestId("CombinedAllocationsPage-auto-assign-modal"),
+        ).not.toBeInTheDocument(),
+      );
+      expect(axiosMock.history.post).toHaveLength(0);
+    });
+
+    const summariesUrl = (id) =>
+      `/api/instructor/recruitments/${id}/admin-course-rankings`;
+
+    test("no rankings column is offered while the recruitments are not known", async () => {
+      axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+      renderPage("F26");
+      await openColumns();
+
+      expect(
+        screen.queryByTestId("CombinedAllocationsPage-columns-taRankingCount"),
+      ).toBeNull();
+      expect(
+        screen.queryByTestId("CombinedAllocationsPage-columns-ulaRankingCount"),
+      ).toBeNull();
+    });
+
+    test("each type's rankings come from its own recruitment's summaries, not including removed courses", async () => {
+      axiosMock.onGet("/api/admin/recruitments/all").reply(
+        200,
+        combinedAllocationsFixtures.recruitments.map((r) => ({
+          ...r,
+          reviewStatus: "Open",
+        })),
+      );
+      renderPage("F26");
+      await openColumns();
+      await userEvent.click(
+        screen.getByTestId("CombinedAllocationsPage-columns-select-all"),
+      );
+
+      // Row 2 is CMPSC 156 (TA 4, ULA 9); row 1 is CMPSC 24, ULA only (7).
+      expect(
+        await screen.findByTestId(
+          "CombinedAllocationTable-ula-cell-row-2-ranking-link",
+        ),
+      ).toHaveTextContent("9");
+      expect(
+        screen.getByTestId(
+          "CombinedAllocationTable-ta-cell-row-2-ranking-link",
+        ),
+      ).toHaveTextContent("4");
+      expect(
+        screen.getByTestId(
+          "CombinedAllocationTable-ula-cell-row-1-ranking-link",
+        ),
+      ).toHaveTextContent("7");
+      expect(gets(summariesUrl(5)).map((r) => r.params)).toEqual([
+        { includeRemoved: false },
+      ]);
+      expect(gets(summariesUrl(6)).map((r) => r.params)).toEqual([
+        { includeRemoved: false },
+      ]);
+    });
+
+    test.each([
+      ["S26", 3],
+      ["W26", 1],
+    ])(
+      "%s, with one recruitment, reads that recruitment's summaries only",
+      async (qyy, id) => {
+        renderPage(qyy);
+        await screen.findByTestId("CombinedAllocationTable");
+
+        await waitFor(() => expect(gets(summariesUrl(id))).toHaveLength(1));
+        expect(
+          axiosMock.history.get.filter((r) => r.url.includes("undefined")),
+        ).toHaveLength(0);
+      },
+    );
+
+    test("ranking summaries that cannot be read are not toasted", async () => {
+      axiosMock.onGet(summariesUrl(5)).reply(500);
+      axiosMock.onGet(summariesUrl(6)).reply(500);
+      renderPage("F26");
+      await screen.findByTestId("CombinedAllocationTable");
+      await waitFor(() => expect(gets(summariesUrl(6))).toHaveLength(1));
+
+      expect(mockToast).not.toHaveBeenCalled();
+    });
+
+    test("the estimates control reads as the allocations page's, and Auto assign's tooltip has its own id", async () => {
+      renderPage("F26");
+
+      expect(
+        await screen.findByTestId("CombinedAllocationsPage-fill-estimates"),
+      ).toHaveTextContent("Set enrollment estimates from: max, actual.");
+      await userEvent.hover(
+        screen.getByTestId("CombinedAllocationsPage-auto-assign-TA"),
+      );
+      expect(await screen.findByRole("tooltip")).toHaveAttribute(
+        "id",
+        "CombinedAllocationsPage-auto-assign-TA-tooltip",
+      );
+    });
+
+    test("the modal's close button closes it", async () => {
+      renderPage("F26");
+
+      await userEvent.click(
+        await screen.findByTestId("CombinedAllocationsPage-auto-assign-TA"),
+      );
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Close" }),
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.queryByTestId("CombinedAllocationsPage-auto-assign-modal"),
+        ).not.toBeInTheDocument(),
+      );
+    });
+
+    test("the page has no Download Rankings CSV: it is on the recruitment cards", async () => {
+      renderPage("F26");
+      await screen.findByTestId("CombinedAllocationTable");
+
+      expect(screen.queryByText(/Download/)).not.toBeInTheDocument();
+    });
+
+    test("copying an email copies it and says so; a refused copy says that", async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "clipboard", {
+        value: { writeText },
+        configurable: true,
+      });
+      renderPage("F26");
+      await openColumns();
+      await userEvent.click(
+        screen.getByTestId("CombinedAllocationsPage-columns-select-all"),
+      );
+
+      await userEvent.click(
+        await screen.findByTestId(
+          "CombinedAllocationTable-cell-row-2-copy-email",
+        ),
+      );
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith("Email copied to clipboard."),
+      );
+      expect(writeText).toHaveBeenCalledWith("pconrad@ucsb.edu");
+
+      writeText.mockRejectedValue(new Error("no"));
+      await userEvent.click(
+        screen.getByTestId("CombinedAllocationTable-cell-row-2-copy-email"),
+      );
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          "Unable to copy to clipboard. Check your browser clipboard permissions.",
+        ),
+      );
+    });
   });
 });

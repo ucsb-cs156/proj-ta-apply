@@ -126,6 +126,43 @@ describe("aseRatioDisplay: students per TA-equivalent", () => {
   });
 });
 
+describe("combineCourses: the descriptive columns (issue #358)", () => {
+  const details = {
+    days: "M W",
+    time: "9:30 AM",
+    room: "PHELP 1",
+    enrollment: 90,
+    maxEnroll: 120,
+    status: "open",
+    stale: true,
+  };
+
+  test("a section in both recruitments takes its details from the TA row", () => {
+    const rows = combineCourses(
+      [course(1, 10, details)],
+      [
+        course(2, 20, {
+          days: "T R",
+          time: "1 PM",
+          room: "HFH 1",
+          enrollment: 1,
+          maxEnroll: 2,
+          status: "cancelled",
+          stale: false,
+        }),
+      ],
+    );
+
+    expect(rows[0]).toMatchObject(details);
+  });
+
+  test("a ULA-only section takes them from the ULA row", () => {
+    const rows = combineCourses([], [course(2, 20, details)]);
+
+    expect(rows[0]).toMatchObject(details);
+  });
+});
+
 describe("combineCourses: the union of the two recruitments by enroll code", () => {
   test("a section in both recruitments is one row, with both of its rows", () => {
     const ta = course(1, 10, { allocation: 2 });

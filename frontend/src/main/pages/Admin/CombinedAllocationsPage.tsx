@@ -1,6 +1,25 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
-import { Alert, Button, Table } from "react-bootstrap";
+import {
+  Alert,
+  Button,
+  Modal,
+  OverlayTrigger,
+  Table,
+  Tooltip,
+} from "react-bootstrap";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import { toast } from "react-toastify";
+import ColumnVisibilityControl from "main/components/Common/ColumnVisibilityControl";
+import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
+import {
+  combinedColumnChoices,
+  combinedColumnsStorageKey,
+  defaultHiddenCombinedColumns,
+} from "main/utils/combinedColumns";
+import { autoAssignTooltip } from "main/utils/allocations";
+import { apiErrorMessage } from "main/utils/apiError";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import CombinedAllocationTable from "main/components/Allocations/CombinedAllocationTable";
 import SavedOnChangeInput from "main/components/Budget/SavedOnChangeInput";
@@ -9,9 +28,12 @@ import {
   BUDGET_KEY,
   useBudgetSaves,
 } from "main/components/Budget/useBudgetSaves";
-import type { RecruitmentCourse } from "main/components/Recruitments/RecruitmentCourseTable";
+import type {
+  RecruitmentCourse,
+  RecruitmentCourseRankingSummary,
+} from "main/components/Recruitments/RecruitmentCourseTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
-import { useBackend } from "main/utils/useBackend";
+import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { qyyToYyyyq } from "main/utils/quarterUtilities";
 import { formatDollars } from "main/utils/currency";
 import {
@@ -91,6 +113,125 @@ function CombinedAllocationsForQuarter({
   const bulkVersionOf = (id: number | undefined) =>
     // Stryker disable next-line OptionalChaining : the initial data is a list, never undefined
     recruitments?.find((r) => r.id === id)?.allocationBulkVersion;
+
+  // Whether each type's faculty rankings have been opened: its Rankings column exists only then,
+  // as on the recruitment's own page.
+  const rankingsOpened = (id: number | undefined) => {
+    // Stryker disable next-line OptionalChaining : the initial data is a list, never undefined
+    const status = recruitments?.find((r) => r.id === id)?.reviewStatus;
+    return status !== undefined && status !== "NotStarted";
+  };
+  const showTaRankings = rankingsOpened(taId);
+  const showUlaRankings = rankingsOpened(ulaId);
+  const summaryQuery = (recruitmentId: number | undefined) => ({
+    // Stryker disable next-line all : the key only has to differ between the two recruitments, and it does by the id
+    key: [
+      "/api/instructor/recruitments/admin-course-rankings",
+      recruitmentId,
+      false,
+    ],
+    axios: {
+      method: "GET" as const,
+      url: `/api/instructor/recruitments/${recruitmentId}/admin-course-rankings`,
+      params: { includeRemoved: false },
+    },
+  });
+  const taSummaryQuery = summaryQuery(taId);
+  const ulaSummaryQuery = summaryQuery(ulaId);
+  const { data: taRankingSummaries } = useBackend<
+    RecruitmentCourseRankingSummary[]
+  >(
+    taSummaryQuery.key,
+    taSummaryQuery.axios,
+    // Stryker disable next-line ArrayDeclaration : the initial data is only what shows until the answer arrives, and nothing is looked up in it by then
+    [],
+    true,
+    { enabled: taId !== undefined },
+  );
+  const { data: ulaRankingSummaries } = useBackend<
+    RecruitmentCourseRankingSummary[]
+  >(
+    ulaSummaryQuery.key,
+    ulaSummaryQuery.axios,
+    // Stryker disable next-line ArrayDeclaration : the initial data is only what shows until the answer arrives, and nothing is looked up in it by then
+    [],
+    true,
+    { enabled: ulaId !== undefined },
+  );
+
+  // Which columns are hidden is remembered in this browser, per quarter.
+  const { hiddenColumns, toggleColumn } = useStoredHiddenColumns(
+    combinedColumnsStorageKey(qyy),
+    defaultHiddenCombinedColumns(),
+  );
+  const columnChoices = combinedColumnChoices(
+    { exists: taId !== undefined, showRankings: showTaRankings },
+    { exists: ulaId !== undefined, showRankings: showUlaRankings },
+  );
+
+  const copyEmail = async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      toast("Email copied to clipboard.");
+    } catch {
+      toast(
+        "Unable to copy to clipboard. Check your browser clipboard permissions.",
+      );
+    }
+  };
+
+  // The enrollment estimates of every recruitment of the quarter from the API's max or actual
+  // enrollment in one step; the endpoint takes one recruitment, so it is called for each.
+  const queryClient = useQueryClient();
+  const fillEstimatesMutation = useMutation<unknown, unknown, "MAX" | "ACTUAL">(
+    {
+      mutationFn: (source) =>
+        Promise.all(
+          [taId, ulaId]
+            .filter((id) => id !== undefined)
+            .map((recruitmentId) =>
+              axios({
+                url: "/api/recruitmentcourses/enrollmentEstimates",
+                method: "PUT",
+                params: { recruitmentId, source },
+              }),
+            ),
+        ),
+      onSuccess: (_rows, source) =>
+        toast(
+          `Enrollment estimates set from ${source === "MAX" ? "maximum" : "actual"} enrollment.`,
+        ),
+      onError: (error) => toast(apiErrorMessage(error)),
+      // Stryker disable all : cache invalidation is not observable from here
+      onSettled: () =>
+        queryClient.invalidateQueries({
+          queryKey: ["/api/recruitmentcourses/all"],
+        }),
+      // Stryker restore all
+    },
+  );
+
+  // A first cut at one type's allocations from the enrollment estimates, behind a confirmation
+  // since it overwrites every allocation of that type and cannot be undone.
+  const [autoAssignType, setAutoAssignType] = useState<"TA" | "ULA" | null>(
+    null,
+  );
+  const autoAssignMutation = useBackendMutation<"TA" | "ULA", unknown>(
+    (type) => ({
+      url: "/api/recruitmentcourses/autoAllocate",
+      method: "POST",
+      params: { recruitmentId: type === "TA" ? taId : ulaId },
+    }),
+    {
+      onSuccess: () => {
+        setAutoAssignType(null);
+        toast("Allocations assigned from the enrollment estimates.");
+      },
+    },
+    // The recruitment carries the count that Auto Allocate moves.
+    // Stryker disable next-line all : cache invalidation is not observable from here
+    ["/api/recruitmentcourses/all", "/api/admin/recruitments/all"],
+  );
 
   const courses = useMemo(
     // Stryker disable next-line ArrayDeclaration : the initial data is a list, never undefined
@@ -223,10 +364,119 @@ function CombinedAllocationsForQuarter({
               isValid={isValidConversionFactor}
               invalidMessage={CONVERSION_FACTOR_INVALID_MESSAGE}
               width="10em"
+              inline
               onSave={(factor) => save("conversionTAtoULA", factor)}
             />
           </>
         )}
+        <div
+          className="mb-2"
+          data-testid="CombinedAllocationsPage-fill-estimates"
+        >
+          Set enrollment estimates from:{" "}
+          <Button
+            variant="link"
+            className="p-0 align-baseline"
+            onClick={() => fillEstimatesMutation.mutate("MAX")}
+            data-testid="CombinedAllocationsPage-fill-estimates-max"
+          >
+            max
+          </Button>
+          ,{" "}
+          <Button
+            variant="link"
+            className="p-0 align-baseline"
+            onClick={() => fillEstimatesMutation.mutate("ACTUAL")}
+            data-testid="CombinedAllocationsPage-fill-estimates-actual"
+          >
+            actual
+          </Button>
+          .
+        </div>
+        <div className="mb-2 d-flex gap-2">
+          {(
+            [
+              ["TA", ta],
+              ["ULA", ula],
+            ] as const
+          ).map(
+            ([type, side]) =>
+              side !== null && (
+                <OverlayTrigger
+                  key={type}
+                  placement="top"
+                  overlay={
+                    <Tooltip
+                      id={`CombinedAllocationsPage-auto-assign-${type}-tooltip`}
+                    >
+                      {autoAssignTooltip(side.totalHiringTarget ?? 1, type)}
+                    </Tooltip>
+                  }
+                >
+                  <Button
+                    variant="outline-primary"
+                    onClick={() => setAutoAssignType(type)}
+                    data-testid={`CombinedAllocationsPage-auto-assign-${type}`}
+                  >
+                    Auto assign {type} allocations
+                  </Button>
+                </OverlayTrigger>
+              ),
+          )}
+        </div>
+        <Modal
+          show={autoAssignType !== null}
+          onHide={() => setAutoAssignType(null)}
+          centered
+          data-testid="CombinedAllocationsPage-auto-assign-modal"
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>
+              {/* Stryker disable next-line StringLiteral : the title is only seen while the modal fades out */}
+              Auto assign {autoAssignType ?? ""} allocations
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>
+              You have requested an automatic allocation based on estimated
+              enrollment.
+            </p>
+            <p>
+              This will overwrite all values currently in the {autoAssignType}{" "}
+              allocation fields. This cannot be undone.
+            </p>
+            <p className="mb-0">Are you sure?</p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="danger"
+              disabled={autoAssignMutation.isPending}
+              // Stryker disable next-line ConditionalExpression : the button is only shown while a type is chosen
+              onClick={() =>
+                autoAssignType !== null &&
+                autoAssignMutation.mutate(autoAssignType)
+              }
+              data-testid="CombinedAllocationsPage-auto-assign-confirm"
+            >
+              Yes, overwrite allocations
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setAutoAssignType(null)}
+              data-testid="CombinedAllocationsPage-auto-assign-cancel"
+            >
+              No, keep my current allocations
+            </Button>
+          </Modal.Footer>
+        </Modal>
+        <div className="mb-2">
+          <ColumnVisibilityControl
+            choices={columnChoices}
+            hidden={hiddenColumns}
+            onToggle={toggleColumn}
+            testIdPrefix="CombinedAllocationsPage-columns"
+          />
+        </div>
         <CombinedAllocationTable
           courses={courses}
           hasTa={ta !== null}
@@ -234,6 +484,18 @@ function CombinedAllocationsForQuarter({
           conversionFactor={summary.budget.conversionTAtoULA}
           taBulkVersion={bulkVersionOf(taId)}
           ulaBulkVersion={bulkVersionOf(ulaId)}
+          // Stryker disable next-line ArrayDeclaration : the data is a list, never undefined
+          taRankingSummaries={taRankingSummaries ?? []}
+          // Stryker disable next-line ArrayDeclaration : the data is a list, never undefined
+          ulaRankingSummaries={ulaRankingSummaries ?? []}
+          showTaRankings={showTaRankings}
+          showUlaRankings={showUlaRankings}
+          onCopyEmail={copyEmail}
+          hiddenColumns={hiddenColumns}
+          hideLinks={{
+            choices: columnChoices,
+            onHide: (columnId) => toggleColumn(columnId, true),
+          }}
         />
       </div>
     </BasicLayout>

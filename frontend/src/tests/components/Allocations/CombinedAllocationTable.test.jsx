@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
 import axios from "axios";
@@ -7,6 +13,9 @@ import { describe, expect, test, vi, beforeEach } from "vitest";
 
 import CombinedAllocationTable from "main/components/Allocations/CombinedAllocationTable";
 import { combineCourses } from "main/utils/combinedAllocations";
+import { combinedColumnChoices } from "main/utils/combinedColumns";
+import fixtures from "fixtures/combinedAllocationsFixtures";
+import { MemoryRouter } from "react-router";
 
 const mockToast = vi.fn();
 vi.mock("react-toastify", async (importOriginal) => ({
@@ -144,6 +153,12 @@ describe("CombinedAllocationTable tests", () => {
       "section",
       "title",
       "instructor",
+      "instructorEmail",
+      "days",
+      "time",
+      "room",
+      "enrollment",
+      "maxEnroll",
       "enrollmentEstimate",
       "taAllocation",
       "taUnroundedAllocation",
@@ -154,6 +169,7 @@ describe("CombinedAllocationTable tests", () => {
       "ulaDelta",
       "ulaRatio",
       "aseRatio",
+      "status",
     ]);
     expect(screen.getByText("TA Allocation")).toBeInTheDocument();
     expect(screen.getByText("TA Delta")).toBeInTheDocument();
@@ -188,11 +204,18 @@ describe("CombinedAllocationTable tests", () => {
       "section",
       "title",
       "instructor",
+      "instructorEmail",
+      "days",
+      "time",
+      "room",
+      "enrollment",
+      "maxEnroll",
       "enrollmentEstimate",
       "taAllocation",
       "taUnroundedAllocation",
       "taDelta",
       "taRatio",
+      "status",
     ]);
   });
 
@@ -204,11 +227,18 @@ describe("CombinedAllocationTable tests", () => {
       "section",
       "title",
       "instructor",
+      "instructorEmail",
+      "days",
+      "time",
+      "room",
+      "enrollment",
+      "maxEnroll",
       "enrollmentEstimate",
       "ulaAllocation",
       "ulaUnroundedAllocation",
       "ulaDelta",
       "ulaRatio",
+      "status",
     ]);
   });
 
@@ -504,5 +534,249 @@ describe("CombinedAllocationTable tests", () => {
     await sortBy(id);
 
     expect(courseOrder()).toEqual(expected);
+  });
+});
+
+describe("CombinedAllocationTable: the columns of the allocations pages (issue #358)", () => {
+  const fx = fixtures;
+  function renderFull(props = {}) {
+    return render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <CombinedAllocationTable
+            courses={combineCourses(fx.taCourses, fx.ulaCourses)}
+            hasTa
+            hasUla
+            conversionFactor={3}
+            taRankingSummaries={fx.taRankingSummaries}
+            ulaRankingSummaries={fx.ulaRankingSummaries}
+            {...props}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  test("the rankings columns come first, each only when its type has them", () => {
+    renderFull({ showTaRankings: true, showUlaRankings: true });
+    expect(headerIds().slice(0, 3)).toEqual([
+      "taRankingCount",
+      "ulaRankingCount",
+      "courseId",
+    ]);
+    expect(
+      screen.getByTestId("CombinedAllocationTable-header-taRankingCount"),
+    ).toHaveTextContent("TA Rankings");
+    expect(
+      screen.getByTestId("CombinedAllocationTable-header-ulaRankingCount"),
+    ).toHaveTextContent("ULA Rankings");
+  });
+
+  test("no rankings column without the rankings opened or without the recruitment", () => {
+    const { unmount } = renderFull({ showTaRankings: false });
+    expect(headerIds()).not.toContain("taRankingCount");
+    expect(headerIds()).not.toContain("ulaRankingCount");
+    unmount();
+
+    renderFull({
+      hasTa: false,
+      courses: combineCourses([], fx.ulaCourses),
+      showTaRankings: true,
+      showUlaRankings: true,
+    });
+    expect(headerIds()).not.toContain("taRankingCount");
+    expect(headerIds()).toContain("ulaRankingCount");
+  });
+
+  test("a rankings cell links to the course's ranking page; a section of the other type has none", () => {
+    renderFull({ showTaRankings: true, showUlaRankings: true });
+
+    // Row 2 is CMPSC 156 (TA course 1, ULA course 11).
+    const taLink = screen.getByTestId(
+      "CombinedAllocationTable-ta-cell-row-2-ranking-link",
+    );
+    expect(taLink).toHaveTextContent("4");
+    expect(taLink).toHaveAttribute("href", "/recruitments/5/courses/1/ranking");
+    const ulaLink = screen.getByTestId(
+      "CombinedAllocationTable-ula-cell-row-2-ranking-link",
+    );
+    expect(ulaLink).toHaveTextContent("9");
+    expect(ulaLink).toHaveAttribute(
+      "href",
+      "/recruitments/6/courses/11/ranking",
+    );
+    // Row 0 is CMPSC 8, TA only, and the ULA cell is empty.
+    expect(
+      screen.getByTestId("CombinedAllocationTable-ta-cell-row-0-ranking-link"),
+    ).toHaveTextContent("6");
+    expect(td(0, "ulaRankingCount")).toBeEmptyDOMElement();
+  });
+
+  test("a course without a count shows a dash", () => {
+    // Neither list of summaries is given: nothing is known about any course.
+    renderFull({
+      showTaRankings: true,
+      taRankingSummaries: undefined,
+      ulaRankingSummaries: undefined,
+    });
+    expect(
+      within(td(0, "taRankingCount")).getByLabelText(
+        "Ranking count unavailable",
+      ),
+    ).toHaveTextContent("—");
+  });
+
+  test("the headings of the descriptive columns", () => {
+    renderFull();
+
+    const heading = (id) =>
+      screen.getByTestId(`CombinedAllocationTable-header-${id}`);
+    expect(heading("section")).toHaveTextContent("Section");
+    expect(heading("title")).toHaveTextContent("Title");
+    expect(heading("instructor")).toHaveTextContent("Instructor");
+    expect(heading("instructorEmail")).toHaveTextContent("Email");
+    expect(heading("days")).toHaveTextContent("Days");
+    expect(heading("time")).toHaveTextContent("Time");
+    expect(heading("room")).toHaveTextContent("Room");
+    expect(heading("enrollment")).toHaveTextContent("Enrolled");
+    expect(heading("maxEnroll")).toHaveTextContent("Max");
+    expect(heading("status")).toHaveTextContent("Status");
+  });
+
+  // CMPSC 8 is only in the TA recruitment (6 rankings), CMPSC 24 only in the ULA one (7), CMPSC 156
+  // in both (4 and 9). A numeric column sorts descending first.
+  test.each([
+    [
+      "taRankingCount",
+      ["CMPSC 8", "CMPSC 156", "CMPSC 24"],
+      ["CMPSC 156", "CMPSC 8", "CMPSC 24"],
+    ],
+    [
+      "ulaRankingCount",
+      ["CMPSC 156", "CMPSC 24", "CMPSC 8"],
+      ["CMPSC 24", "CMPSC 156", "CMPSC 8"],
+    ],
+  ])(
+    "sorting by %s orders by the count, and a section of the other type goes last either way",
+    async (id, descending, ascending) => {
+      renderFull({ showTaRankings: true, showUlaRankings: true });
+      const order = () =>
+        screen
+          .getAllByTestId(/^CombinedAllocationTable-cell-row-\d+-col-courseId$/)
+          .map((e) => e.textContent.replace(/\s+/g, " "));
+      const sortHeader = screen.getByTestId(
+        `CombinedAllocationTable-header-${id}-sort-header`,
+      );
+
+      await userEvent.click(sortHeader);
+      expect(order()).toEqual(descending);
+
+      await userEvent.click(sortHeader);
+      expect(order()).toEqual(ascending);
+    },
+  );
+
+  test("the descriptive columns come from the TA row, and from the ULA row for a ULA-only section", () => {
+    renderFull();
+
+    // CMPSC 156 is in both; the ULA row has no days, room or counts, the TA row does.
+    expect(td(2, "days")).toHaveTextContent("M W");
+    expect(td(2, "time")).toHaveTextContent("9:30 AM - 10:45 AM");
+    expect(td(2, "room")).toHaveTextContent("PHELP 1448");
+    expect(td(2, "enrollment")).toHaveTextContent("90");
+    expect(td(2, "maxEnroll")).toHaveTextContent("120");
+    expect(td(2, "status")).toHaveTextContent("open");
+    // CMPSC 24 is in the ULA recruitment only.
+    expect(td(1, "days")).toHaveTextContent("T R");
+    expect(td(1, "room")).toHaveTextContent("HFH 1104");
+    expect(td(1, "enrollment")).toHaveTextContent("40");
+    expect(td(1, "maxEnroll")).toHaveTextContent("50");
+  });
+
+  test("a cancelled section has the red badge, as on the allocations page", () => {
+    renderFull();
+
+    expect(
+      screen.getByTestId("CombinedAllocationTable-cell-row-1-cancelled"),
+    ).toHaveTextContent("Cancelled");
+  });
+
+  test("the email is the TA row's, else the ULA row's, with the copy widget; unmapped links to the instructors page", async () => {
+    const onCopyEmail = vi.fn();
+    renderFull({ onCopyEmail });
+
+    expect(td(2, "instructorEmail")).toHaveTextContent("pconrad@ucsb.edu");
+    expect(td(1, "instructorEmail")).toHaveTextContent("wizard@ucsb.edu");
+    await userEvent.click(
+      screen.getByTestId("CombinedAllocationTable-cell-row-1-copy-email"),
+    );
+    expect(onCopyEmail).toHaveBeenCalledWith("wizard@ucsb.edu");
+    expect(
+      screen.getByRole("button", { name: "Copy pconrad@ucsb.edu" }),
+    ).toBeInTheDocument();
+    // CMPSC 8 has no email.
+    expect(
+      screen.getByTestId("CombinedAllocationTable-cell-row-0-unmapped"),
+    ).toHaveAttribute("href", "/admin/instructors");
+  });
+
+  test("hiddenColumns leaves the columns out, and Course Number is never one of them", () => {
+    renderFull({ hiddenColumns: ["section", "title", "taDelta", "status"] });
+
+    const ids = headerIds();
+    ["section", "title", "taDelta", "status"].forEach((id) =>
+      expect(ids).not.toContain(id),
+    );
+    expect(ids).toContain("courseId");
+    expect(ids).toContain("instructor");
+  });
+
+  test("the Course Number heading is stacked and its cell is 13 characters wide", () => {
+    renderFull();
+
+    const heading = screen.getByTestId(
+      "CombinedAllocationTable-header-courseId",
+    );
+    expect(heading.querySelector("br")).not.toBeNull();
+    expect(heading).toHaveTextContent("Course Number");
+    expect(heading.querySelector("span").getAttribute("style")).toContain(
+      "font-size: 80%",
+    );
+    const cellText = td(2, "courseId").querySelector("span");
+    const style = cellText.getAttribute("style");
+    expect(style).toContain("min-width: 13ch");
+    expect(style).toContain("font-family: monospace");
+    expect(style).toContain("display: inline-block");
+  });
+
+  test("with the hide links, every heading but Course Number has one that hides it", async () => {
+    const onHide = vi.fn();
+    renderFull({
+      showTaRankings: true,
+      showUlaRankings: true,
+      hideLinks: {
+        choices: combinedColumnChoices(
+          { exists: true, showRankings: true },
+          { exists: true, showRankings: true },
+        ),
+        onHide,
+      },
+    });
+
+    const ids = headerIds();
+    ids
+      .filter((id) => id !== "courseId")
+      .forEach((id) =>
+        expect(
+          screen.getByTestId(`CombinedAllocationTable-header-${id}-hide`),
+        ).toBeInTheDocument(),
+      );
+    expect(
+      screen.queryByTestId("CombinedAllocationTable-header-courseId-hide"),
+    ).toBeNull();
+    await userEvent.click(
+      screen.getByTestId("CombinedAllocationTable-header-section-hide"),
+    );
+    expect(onHide).toHaveBeenCalledWith("section");
   });
 });

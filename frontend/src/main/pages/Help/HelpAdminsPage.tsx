@@ -39,7 +39,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Download Rankings CSV
         </h2>
         <p>
-          On a recruitment&apos;s Courses page,{" "}
+          On a recruitment&apos;s card on the home page, in the bottom row of
+          buttons and once faculty reviews have been opened,{" "}
           <strong>Download Rankings CSV</strong> saves that recruitment&apos;s
           faculty rankings as a spreadsheet-ready file. This is separate from{" "}
           <strong>Download Applications as CSV</strong> on its Applications
@@ -523,6 +524,41 @@ export default function HelpAdminsPage(): React.JSX.Element {
           ratio, so a quarter with only one recruitment shows only that
           type&apos;s columns.
         </p>
+        <p data-testid="HelpAdminsPage-combined-allocations-columns">
+          The table has the other columns of the Edit Courses page too:{" "}
+          <strong>TA Rankings</strong> and <strong>ULA Rankings</strong> (a type
+          has one only once its faculty reviews have been opened),{" "}
+          <strong>Section</strong>, <strong>Title</strong>,{" "}
+          <strong>Instructor</strong>, <strong>Email</strong> (with the copy
+          button), <strong>Days</strong>, <strong>Time</strong>,{" "}
+          <strong>Room</strong>, <strong>Enrolled</strong>, <strong>Max</strong>{" "}
+          and <strong>Status</strong>. A column that starts with TA is not shown
+          when the quarter has no TA recruitment, and one that starts with ULA
+          is not shown when it has no ULA recruitment. For a section in both
+          recruitments these describe the same course, and the TA
+          recruitment&apos;s row is used, or the ULA recruitment&apos;s when
+          there is none. <strong>Course Number</strong> is on two lines and just
+          wide enough for the longest UCSB course number, 13 characters. Every
+          heading except Course Number has a small <em>hide</em> link, and the{" "}
+          <strong>Columns</strong> menu has <em>Show All</em>,{" "}
+          <em>Show None</em> and a box for each column except Course Number,
+          which is always shown. Your choice is remembered in this browser,
+          separately for each quarter; until you make one, Section, Title,
+          Email, Days, Time, Room, Status and the rankings are hidden, as on the
+          Edit Courses page.
+        </p>
+        <p data-testid="HelpAdminsPage-combined-allocations-controls">
+          Above the table are the controls of the Edit Courses page.{" "}
+          <strong>Set enrollment estimates from: max, actual</strong> sets every
+          section&apos;s Enrollment Estimate from the UCSB API&apos;s maximum or
+          actual enrollment, in <em>every</em> recruitment of the quarter.{" "}
+          <strong>Auto assign TA allocations</strong> and{" "}
+          <strong>Auto assign ULA allocations</strong> (each only when the
+          quarter has that recruitment) allocate that recruitment&apos;s hiring
+          target across its courses by enrollment estimate, after asking you to
+          confirm, since it overwrites every allocation of that type and cannot
+          be undone.
+        </p>
         <p data-testid="HelpAdminsPage-combined-allocations-both">
           When the quarter has <em>both</em> a TA and a ULA recruitment, the
           page also has, at the top, a table of <strong>Cost per TA</strong> and{" "}
@@ -630,7 +666,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
             the recruitment as a spreadsheet, with the columns for its type (the
             layout is on the CSV formats page). The button is at the top of the
             Applications page; the rankings download,{" "}
-            <strong>Download Rankings CSV</strong>, is on the Courses page.
+            <strong>Download Rankings CSV</strong>, is on the recruitment&apos;s
+            card once faculty reviews have been opened.
           </li>
           <li
             id="draft-applications"

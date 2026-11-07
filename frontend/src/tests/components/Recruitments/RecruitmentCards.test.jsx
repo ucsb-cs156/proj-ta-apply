@@ -560,7 +560,7 @@ describe("RecruitmentCards tests", () => {
   });
 
   test("the footer has just the Courses, Draft Applications and Applications buttons, in that order, leading to that recruitment's pages", () => {
-    renderCards();
+    renderCards(three.map((r) => ({ ...r, reviewStatus: "NotStarted" })));
     // Card 2 is id 2.
     const courses = screen.getByTestId("Cards-card-2-courses-button");
     expect(courses).toHaveTextContent("Courses");
@@ -601,7 +601,6 @@ describe("RecruitmentCards tests", () => {
       "review-status-button",
       "test-button",
       "csv-button",
-      "rankings-csv-button",
       "review-button",
       "assignments-button",
       "published-assignments-button",
@@ -610,6 +609,21 @@ describe("RecruitmentCards tests", () => {
         screen.queryByTestId(`Cards-card-2-${suffix}`),
       ).not.toBeInTheDocument(),
     );
+  });
+
+  test("only the cards of recruitments whose faculty reviews have started have Download Rankings CSV, for that recruitment", () => {
+    renderCards();
+
+    // Card 0 is id 3 (reviews not started), card 1 is id 1 (closed), card 2 is id 2 (open).
+    expect(
+      screen.queryByTestId("Cards-card-0-rankings-csv-button"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("Cards-card-1-rankings-csv-button"),
+    ).toHaveAttribute("href", "/api/admin/rankings/csv?recruitmentId=1");
+    expect(
+      screen.getByTestId("Cards-card-2-rankings-csv-button"),
+    ).toHaveAttribute("href", "/api/admin/rankings/csv?recruitmentId=2");
   });
 
   test("opening reviews requires and submits a deadline; canceling does not save", async () => {

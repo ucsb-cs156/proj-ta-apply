@@ -417,16 +417,24 @@ public class RecruitmentsWebIT extends WebTestCase {
     org.junit.jupiter.api.Assertions.assertTrue(firstLine.contains("\"classLevel\""), firstLine);
   }
 
-  /** Issue #234: the Courses page hands the browser the faculty rankings file. */
+  /** Issues #234, #358: the recruitment card hands the browser the faculty rankings file. */
   @Test
-  public void the_courses_page_downloads_the_recruitment_s_rankings() throws Exception {
+  public void the_recruitment_card_downloads_the_recruitment_s_rankings() throws Exception {
     stubOfferings();
     setupAdminUser();
     goToRecruitments();
     createTaRecruitment();
 
-    page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
-    Locator csvButton = page.getByTestId("RecruitmentCoursesPage-rankings-csv");
+    // The button is on the card once faculty reviews have been opened (issue #358).
+    waitFor(page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button"));
+    org.junit.jupiter.api.Assertions.assertEquals(
+        0, page.getByTestId("HomePageLoggedIn-admin-card-0-rankings-csv-button").count());
+    edu.ucsb.cs.taapply.entity.Recruitment created =
+        recruitmentRepository.findAll().iterator().next();
+    created.setReviewStatus("Open");
+    recruitmentRepository.save(created);
+    goToRecruitments();
+    Locator csvButton = page.getByTestId("HomePageLoggedIn-admin-card-0-rankings-csv-button");
     waitFor(csvButton);
     assertThat(csvButton).containsText("Download Rankings CSV");
 

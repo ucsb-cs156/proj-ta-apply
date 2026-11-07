@@ -260,7 +260,7 @@ describe("Help pages (issue #140)", () => {
     expect(
       screen.getByText(/This is separate from/, { exact: false }),
     ).toHaveTextContent(
-      "On a recruitment's Courses page, Download Rankings CSV saves that recruitment's faculty rankings as a spreadsheet-ready file. This is separate from Download Applications as CSV on its Applications page, which exports application answers.",
+      "On a recruitment's card on the home page, in the bottom row of buttons and once faculty reviews have been opened, Download Rankings CSV saves that recruitment's faculty rankings as a spreadsheet-ready file. This is separate from Download Applications as CSV on its Applications page, which exports application answers.",
     );
     expect(screen.getByText(/TA columns are/)).toHaveTextContent(
       /TA columns are first name, last name, email, major, class level, year in program and expected graduation/,
@@ -575,6 +575,31 @@ describe("Help pages (issue #140)", () => {
     expect(page).toHaveTextContent("Unrounded Allocation");
     expect(page).toHaveTextContent("Delta");
     expect(page).toHaveTextContent("TA:student or ULA:student ratio");
+    const columns = screen.getByTestId(
+      "HelpAdminsPage-combined-allocations-columns",
+    );
+    ["TA Rankings", "ULA Rankings", "Email", "Status", "Max"].forEach((name) =>
+      expect(columns).toHaveTextContent(name),
+    );
+    expect(columns).toHaveTextContent(
+      "A column that starts with TA is not shown when the quarter has no TA recruitment, and one that starts with ULA is not shown when it has no ULA recruitment.",
+    );
+    expect(columns).toHaveTextContent(
+      "just wide enough for the longest UCSB course number, 13 characters",
+    );
+    expect(columns).toHaveTextContent("Show All, Show None");
+    expect(columns).toHaveTextContent(
+      "remembered in this browser, separately for each quarter",
+    );
+    const controls = screen.getByTestId(
+      "HelpAdminsPage-combined-allocations-controls",
+    );
+    expect(controls).toHaveTextContent(
+      "Set enrollment estimates from: max, actual sets every section's Enrollment Estimate",
+    );
+    expect(controls).toHaveTextContent("in every recruitment of the quarter");
+    expect(controls).toHaveTextContent("Auto assign TA allocations");
+    expect(controls).toHaveTextContent("Auto assign ULA allocations");
     const both = screen.getByTestId("HelpAdminsPage-combined-allocations-both");
     expect(both).toHaveTextContent("Cost per TA");
     expect(both).toHaveTextContent("Cost per ULA");

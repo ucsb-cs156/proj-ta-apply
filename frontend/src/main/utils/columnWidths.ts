@@ -43,3 +43,16 @@ export const wideColumnProps = (
         enableResizing: true,
       }
     : {};
+
+/**
+ * The widest UCSB course number is 13 characters including the space, "XXXXXXX 999XX" (issue #358):
+ * a 7-letter subject area, a space and a 3-digit number with up to two letters.
+ */
+export const COURSE_NUMBER_CHARACTERS = "XXXXXXX 999XX".length;
+
+/**
+ * The width of a course number's cell contents: exactly {@link COURSE_NUMBER_CHARACTERS}
+ * characters of the monospaced font it is shown in, so the column is just wide enough for the
+ * widest course number, whether or not any course in the table has one that long.
+ */
+export const COURSE_NUMBER_WIDTH = `${COURSE_NUMBER_CHARACTERS}ch`;

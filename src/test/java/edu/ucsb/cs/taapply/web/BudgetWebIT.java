@@ -89,6 +89,12 @@ public class BudgetWebIT extends WebTestCase {
     assertThat(page.getByTestId("CombinedAllocationTable-cell-row-0-ULA-allocation")).hasValue("2");
     // 4 + 2 / 2 = 5 TA-equivalents; 100 / 5
     assertThat(page.getByTestId("CombinedAllocationTable-cell-row-0-col-aseRatio")).hasText("1:20");
+
+    // Section starts hidden; the Columns menu's Show All brings it (and the other columns) back.
+    assertThat(page.getByTestId("CombinedAllocationTable-header-section")).not().isVisible();
+    page.getByTestId("CombinedAllocationsPage-columns-toggle").click();
+    page.getByTestId("CombinedAllocationsPage-columns-select-all").click();
+    assertThat(page.getByTestId("CombinedAllocationTable-header-section")).isVisible();
     org.junit.jupiter.api.Assertions.assertEquals(
         2.0, budgetRepository.findById("20264").orElseThrow().getConversionTAtoULA());
     org.junit.jupiter.api.Assertions.assertEquals(
