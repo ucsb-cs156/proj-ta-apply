@@ -95,6 +95,22 @@ Published.parameters = {
   },
 };
 
+/**
+ * Issue #355: nine lectures, with two sections each of CMPSC 8 and CMPSC 190DD. The lecture
+ * headings, the Tentative Assignment dropdown and the Columns menu name them "  5A", "  8   (0100)",
+ * " 16", "130A", "190DD (0200)": no CMPSC, the digits aligned, the section only where a course has
+ * two. Each lecture column is as wide as "190DD (0100)", and so is the dropdown.
+ */
+export const ManyCourses = Template.bind({});
+ManyCourses.parameters = {
+  msw: {
+    handlers: handlers(
+      assignmentsFixtures.taPageManyCourses,
+      assignmentsFixtures.taPageManyCourses,
+    ),
+  },
+};
+
 export const NoApplicants = Template.bind({});
 NoApplicants.parameters = {
   reactRouter: { initialEntries: ["/admin/recruitments/7/assignments"] },

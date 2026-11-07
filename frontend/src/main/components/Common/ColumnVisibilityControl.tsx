@@ -1,6 +1,15 @@
 import { Dropdown, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 
-export type ColumnChoice = { id: string; label: string };
+export type ColumnChoice = {
+  id: string;
+  label: string;
+  /**
+   * Show the label in a monospace font with its spaces kept, for labels padded to line up (the
+   * Assignments page's lectures, issue #355). The label itself stays plain text for the "hide"
+   * links' accessible names.
+   */
+  monospace?: boolean;
+};
 
 /** A per-course column and whether its course has met its hiring target (assigned >= target). */
 export type CourseColumn = { id: string; complete: boolean };
@@ -129,7 +138,19 @@ export default function ColumnVisibilityControl({
             <Form.Check
               type="checkbox"
               id={`${testIdPrefix}-${choice.id}`}
-              label={choice.label}
+              label={
+                choice.monospace ? (
+                  <span
+                    className="font-monospace"
+                    style={{ whiteSpace: "pre" }}
+                    data-testid={`${testIdPrefix}-${choice.id}-label`}
+                  >
+                    {choice.label}
+                  </span>
+                ) : (
+                  choice.label
+                )
+              }
               checked={!hidden.includes(choice.id)}
               onChange={(e) => onToggle(choice.id, !e.target.checked)}
               data-testid={`${testIdPrefix}-${choice.id}`}

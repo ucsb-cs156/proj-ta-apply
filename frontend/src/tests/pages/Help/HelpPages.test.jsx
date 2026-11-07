@@ -1672,6 +1672,10 @@ describe("Help pages (issue #140)", () => {
     expect(assignments).toHaveTextContent(
       "Assignments on a recruitment card opens a table with the same fields as the rankings CSV",
     );
+    // Issue #355: how the page names a lecture.
+    expect(assignments).toHaveTextContent(
+      "A lecture is named by its course number alone (16, 5A), with the section added only when the recruitment has more than one section of that course (8 (0100), 8 (0200)), as in the rankings CSV; the headings, the dropdown and the Columns menu all use these names, in a fixed-width font with the numbers lined up.",
+    );
     const assignmentColumns = screen.getByTestId(
       "HelpAdminsPage-assignment-columns",
     );
