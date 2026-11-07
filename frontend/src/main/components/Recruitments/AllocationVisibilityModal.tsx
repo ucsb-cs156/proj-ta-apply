@@ -9,7 +9,7 @@ import {
 } from "main/utils/recruitmentSteps";
 import {
   ALLOCATION_VISIBILITY_NOTE,
-  ALLOCATION_VISIBILITY_OPTIONS,
+  SELECTABLE_ALLOCATION_VISIBILITY_OPTIONS,
   allocationVisibilityOf,
   allocationVisibilityToast,
   type AllocationVisibility,
@@ -23,10 +23,11 @@ type AllocationVisibilityModalProps = {
 };
 
 /**
- * Chooses who may see a recruitment's allocations (issues #178 and #224): three radio buttons,
- * each explained in a sentence. Save sends the choice, which the backend records in the
- * recruitment's audit trail, then re-reads the recruitment list and closes; Cancel sends nothing.
- * Used from the Recruitment Courses page, and from the admin card's diagram later (issue #233).
+ * Chooses who may see a recruitment's allocations (issues #178 and #224): one radio button per
+ * selectable state, each a sentence; since issue #366 that is two, the backend's third state being
+ * hidden in allocations.ts. Save sends the choice, which the backend records in the recruitment's
+ * audit trail, then re-reads the recruitment list and closes; Cancel sends nothing. Used from the
+ * Recruitment Courses page, and from the admin card's diagram later (issue #233).
  */
 export default function AllocationVisibilityModal({
   recruitment,
@@ -66,7 +67,7 @@ export default function AllocationVisibilityModal({
       <Modal.Body>
         <p>Who may see the allocations of this recruitment&apos;s courses?</p>
         <Form>
-          {ALLOCATION_VISIBILITY_OPTIONS.map((option) => (
+          {SELECTABLE_ALLOCATION_VISIBILITY_OPTIONS.map((option) => (
             <Form.Check
               key={option.value}
               type="radio"
@@ -75,11 +76,7 @@ export default function AllocationVisibilityModal({
               className="mb-2"
               checked={selected === option.value}
               onChange={() => setSelected(option.value)}
-              label={
-                <>
-                  <strong>{option.name}.</strong> {option.explanation}
-                </>
-              }
+              label={option.label}
               data-testid={`${testIdPrefix}-${option.value}`}
             />
           ))}

@@ -1,0 +1,21 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "064-all-courses-allocation-visibility-becomes-own-courses",
+        "author": "pc",
+        "comment": "The Allocation Visibility dialog no longer offers Faculty see all courses (issue #366), so every recruitment whose allocation_visibility is ALL_COURSES becomes OWN_COURSES, Faculty see their own courses: only QA deployments hold the value, production never has. A one-way data change: nothing records which rows were changed, so the rollback is a no-op and the backend's ALL_COURSES value stays until the cleanup of issue #369.",
+        "changes": [
+          {
+            "update": {
+              "tableName": "recruitments",
+              "columns": [{ "column": { "name": "allocation_visibility", "value": "OWN_COURSES" } }],
+              "where": "allocation_visibility = 'ALL_COURSES'"
+            }
+          }
+        ],
+        "rollback": []
+      }
+    }
+  ]
+}

@@ -432,8 +432,10 @@ describe("Help pages (issue #140)", () => {
       "Once an admin lets faculty see the allocations, each of your courses shows a small table, both on the card and at the top of its ranking page: the Hiring Target (how many TAs or ULAs were allocated to the course), the Ranking Target (how many candidates you are asked to rank: twice the hiring target, or every interested candidate if there are fewer), Candidates Ranked so far and Rankings Still Needed.",
     );
     expect(allocations).toHaveTextContent(
-      "If you have concerns about your course's target, raise them with the admin once you see it. Until the admin does, nothing about it is shown. Each course you teach also has a Courses button, which opens it (click the course to see the button): the read-only Courses page, listing every course of the recruitment with its instructor, enrollment and meeting times. The Columns menu above the table hides and shows columns, and your choice is remembered in this browser. If the admin chooses to show all courses to all faculty, the page also has the Enrollment Estimate, Allocation, Unrounded Allocation, Delta and TA:student ratio columns for every course; otherwise those columns are not there at all. (The old All allocations page is now this one.)",
+      "If you have concerns about your course's target, raise them with the admin once you see it. Until the admin does, nothing about it is shown. Each course you teach also has a Courses button, which opens it (click the course to see the button): the read-only Courses page, listing every course of the recruitment with its instructor, enrollment and meeting times. The Columns menu above the table hides and shows columns, and your choice is remembered in this browser. (The old All allocations page is now this one.)",
     );
+    // Issue #366: the all-courses setting is no longer offered, so it is no longer described.
+    expect(allocations).not.toHaveTextContent(/all courses to all faculty/);
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
     // Issue #199: interest colours, the not-interested opt-in and cancelled applications.
     const interest = screen.getByTestId("HelpInstructorsPage-interest");
@@ -809,7 +811,7 @@ describe("Help pages (issue #140)", () => {
       "GET /api/instructor/recruitments/:id/courses",
     );
     expect(text).toHaveTextContent(
-      "enrollmentEstimate, allocation and unroundedAllocation are left out of the JSON unless the recruitment's allocation visibility is ALL_COURSES",
+      "enrollmentEstimate, allocation and unroundedAllocation are left out of the JSON unless the recruitment's allocation visibility is ALL_COURSES (a value that still exists in the backend but is no longer selectable in the user interface, issue #366), and the table omits the matching columns (AllocationsRelatedColumns) instead of hiding them.",
     );
     // Issue #358, part 3: the admin's own pages omit them too.
     expect(text).toHaveTextContent(
@@ -1857,14 +1859,17 @@ describe("Help pages (issue #140)", () => {
     );
     expect(visibility.id).toBe("allocation-visibility");
     expect(visibility).toHaveTextContent(
-      "Who may see the allocations is one setting for the recruitment, shown under the hiring target as Allocation visibility; choose Change to pick one of three states. Admins only is where every recruitment starts: no faculty member sees any allocation.",
+      "Who may see the allocations is one setting for the recruitment, shown under the hiring target as Allocation visibility; choose Change to pick one of two states. Admins only is where every recruitment starts: no faculty member sees any allocation.",
     );
     expect(visibility).toHaveTextContent(
       "Faculty see their own courses is what Release Allocations to Faculty means: each faculty member sees the allocations for the courses they teach, as a small table on their home page card and at the top of each ranking page: the Hiring Target (the allocation), the Ranking Target (twice the allocation, but never more than the candidates who expressed interest in the course), Candidates Ranked so far and Rankings Still Needed.",
     );
+    // Issue #366: the third state is no longer described.
     expect(visibility).toHaveTextContent(
-      "Faculty see all courses goes further, for when the whole plan is public: every faculty member teaching in the recruitment sees the enrollment estimate, allocation, unrounded allocation, delta and TA:student ratio columns of every course on the read-only Courses page that each of their courses offers. Under the other two settings that page shows faculty no such columns at all: the figures are not even sent to their browser. Move off Admins only once the numbers are mostly final; you can still change an allocation afterwards, and faculty see the change immediately. Every change of state is recorded in the recruitment's change history.",
+      "The read-only Courses page that each of their courses offers shows faculty no allocation figures: those are not even sent to their browser. Move off Admins only once the numbers are mostly final; you can still change an allocation afterwards, and faculty see the change immediately. Every change of state is recorded in the recruitment's change history.",
     );
+    expect(visibility).not.toHaveTextContent(/all courses/i);
+    expect(visibility).not.toHaveTextContent(/three/);
     expect(
       auto.compareDocumentPosition(visibility) &
         Node.DOCUMENT_POSITION_FOLLOWING,

@@ -12,6 +12,7 @@ import {
   OVER_ALLOCATED_MESSAGE,
   ALLOCATION_VISIBILITY_NOTE,
   ALLOCATION_VISIBILITY_OPTIONS,
+  SELECTABLE_ALLOCATION_VISIBILITY_OPTIONS,
   allocationVisibilityName,
   allocationVisibilityOf,
   allocationVisibilityToast,
@@ -150,29 +151,47 @@ describe("allocations utilities", () => {
 
   // ---- issue #178 ----
 
-  test("the three allocation visibility states and their plain-language explanations", () => {
+  test("the three allocation visibility states, their names and their dialog labels", () => {
     expect(ALLOCATION_VISIBILITY_OPTIONS).toEqual([
       {
         value: "ADMINS_ONLY",
         name: "Admins only",
-        explanation: "No faculty member sees any allocation.",
+        label: "Admins only. No faculty member sees any allocation.",
       },
       {
         value: "OWN_COURSES",
         name: "Faculty see their own courses",
-        explanation:
-          "Each faculty member sees the allocations for the courses they teach. This is what Release Allocations to Faculty means.",
+        label:
+          "Each faculty member sees the allocations only for the courses they teach.",
       },
       {
         value: "ALL_COURSES",
         name: "Faculty see all courses",
-        explanation:
-          "Every faculty member teaching in this recruitment sees the allocations of all its courses.",
+        label:
+          "Faculty see all courses. Every faculty member teaching in this recruitment sees the allocations of all its courses.",
+        hiddenInDialog: true,
       },
     ]);
     expect(ALLOCATION_VISIBILITY_NOTE).toBe(
       "You can still change allocations afterwards; faculty see changes immediately.",
     );
+  });
+
+  // ---- issue #366 ----
+
+  test("the modal offers only the states not hidden: admins only and own courses, in that order", () => {
+    expect(SELECTABLE_ALLOCATION_VISIBILITY_OPTIONS).toEqual([
+      ALLOCATION_VISIBILITY_OPTIONS[0],
+      ALLOCATION_VISIBILITY_OPTIONS[1],
+    ]);
+    expect(
+      SELECTABLE_ALLOCATION_VISIBILITY_OPTIONS.map((option) => option.value),
+    ).toEqual(["ADMINS_ONLY", "OWN_COURSES"]);
+    expect(
+      SELECTABLE_ALLOCATION_VISIBILITY_OPTIONS.some(
+        (option) => option.hiddenInDialog,
+      ),
+    ).toBe(false);
   });
 
   test("a recruitment's visibility defaults to admins only, and each state has its name and toast", () => {

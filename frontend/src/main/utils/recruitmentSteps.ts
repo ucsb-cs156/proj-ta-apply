@@ -114,9 +114,9 @@ export const LEGEND_HARD = "hard prerequisite: must happen first";
 export const LEGEND_SOFT =
   "soft prerequisite: the preferred order, not enforced";
 export const FOOTNOTE_LINE_1 =
-  "Allocation visibility has three settings: admins only (the default), each faculty member sees the allocations for the courses they teach,";
+  "Allocation visibility has two settings: admins only (the default), or each faculty member sees the allocations";
 export const FOOTNOTE_LINE_2 =
-  'or all faculty see all allocations. Step 5 means moving off "admins only".';
+  'only for the courses they teach. Step 5 means moving off "admins only".';
 
 // The generator's constants.
 export const FONT_SIZE = 13;
