@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
 import axios from "axios";
@@ -110,16 +116,50 @@ describe("Courses view-only and edit pages (issue #278)", () => {
   test("the view-only page describes the courses as the ones the department plans to hire for", async () => {
     renderAt("/admin/recruitments/7/courses");
 
+    // Issue #320: the wording, exactly; recruitment 7 is a ULA recruitment.
     const text = await screen.findByTestId(
       "RecruitmentCoursesPage-description",
     );
     expect(text).toHaveTextContent(
-      /^Courses for which the department is planning to hire (TA|ULA)s for [WSMF]\d\d\.$/,
+      /^These are the courses for which the department plans to hire ULAs\.$/,
     );
-    // Populate lives on the edit page, so the view page does not explain it.
+    // The long explanation of Populate is gone (issue #358); in its place, where to put a missing
+    // course right: the admin Courses page.
     expect(
       screen.queryByText(/Re-running Populate picks up newly flagged/),
     ).toBeNull();
+    const hint = screen.getByTestId("RecruitmentCoursesPage-populate-hint");
+    expect(hint).toHaveTextContent(
+      /^If courses do not appear, please go to the Courses page and click Populate\.$/,
+    );
+    const link = screen.getByTestId("RecruitmentCoursesPage-courses-link");
+    expect(link).toHaveTextContent(/^Courses$/);
+    expect(link).toHaveAttribute("href", "/admin/courses");
+    expect(hint.contains(link)).toBe(true);
+    expect(hint.querySelector("em")).toHaveTextContent(/^Populate$/);
+    // The description comes first, then the hint, then the pointer to the combined page.
+    const pointer = screen.getByTestId(
+      "RecruitmentCoursesPage-combined-pointer",
+    );
+    expect(
+      text.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      hint.compareDocumentPosition(pointer) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("the title names the quarter and the type on both pages (issue #320)", async () => {
+    renderAt("/admin/recruitments/7/courses");
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-title"),
+    ).toHaveTextContent(/^W26 ULA Courses$/);
+    cleanup();
+
+    renderAt("/admin/recruitments/7/courses/edit");
+    expect(
+      await screen.findByTestId("RecruitmentCoursesPage-title"),
+    ).toHaveTextContent(/^W26 ULA Courses$/);
   });
 
   test("the edit page has no explanatory paragraph, description or pointer (issue #358)", async () => {
@@ -144,8 +184,11 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     expect(
       await screen.findByTestId("RecruitmentCoursesPage-description"),
     ).toHaveTextContent(
-      /^Courses for which the department is planning to hire TAs\/ULAs\.$/,
+      /^These are the courses for which the department plans to hire TAs\/ULAs\.$/,
     );
+    expect(
+      screen.getByTestId("RecruitmentCoursesPage-title"),
+    ).toHaveTextContent(/^Recruitment Courses$/);
   });
 
   test("both pages share one remembered choice of columns, default columns first", async () => {
@@ -206,12 +249,17 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     ]) {
       expect(screen.queryByTestId(`RecruitmentCoursesPage-${id}`)).toBeNull();
     }
-    // The hiring target is text, but still shown.
+    // The hiring target is text (a table row, issue #320), but still shown.
     expect(
       await screen.findByTestId(
+        "RecruitmentCoursesPage-hiring-target-totalHiringTarget-value",
+      ),
+    ).toHaveTextContent(/^10$/);
+    expect(
+      screen.queryByTestId(
         "RecruitmentCoursesPage-hiring-target-totalHiringTarget",
       ),
-    ).toHaveTextContent("expected to be hired: 10");
+    ).toBeNull();
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-multiple-tabs"),
     ).toBeNull();
