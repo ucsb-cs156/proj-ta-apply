@@ -636,7 +636,7 @@ describe("Help pages (issue #140)", () => {
       "HelpAdminsPage-combined-allocations-controls",
     );
     expect(controls).toHaveTextContent(
-      "Set enrollment estimates from: max, actual sets every section's Enrollment Estimate",
+      "Above the table are two controls. Set enrollment estimates from: max, actual sets every section's Enrollment Estimate",
     );
     expect(controls).toHaveTextContent("in every recruitment of the quarter");
     expect(controls).toHaveTextContent("Auto assign TA allocations");
