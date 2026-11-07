@@ -33,8 +33,9 @@ const TYPE_OF: Record<Side, "TA" | "ULA"> = { ta: "TA", ula: "ULA" };
 
 /**
  * Admin → Budget for Quarter → one quarter: /admin/budget/:qyy (issue #177). The costs and funds
- * table (issue #388): the estimated cost per TA, the ULA hourly rate and hours per quarter and their
- * product, the estimated cost per ULA; the three temp subzero lines and the other funds for ASEs.
+ * table (issue #388), every figure of it the quarter's budget row: the estimated cost per TA, the
+ * ULA hourly rate and hours per quarter and their product, the estimated cost per ULA; the three
+ * temp subzero lines and the other funds for ASEs.
  * Then the hiring targets of both recruitments beside what has been allocated so far, the
  * enrollment totals and ratios, and the anticipated expenses, funds and bottom line. Every box saves
  * as it is typed and the whole page recomputes from the backend.
@@ -112,27 +113,10 @@ function BudgetForQuarter({
 
   const side = (which: Side): BudgetSide | null => summary[which];
 
-  // The estimated cost per TA is the TA recruitment's own figure; greyed out without one.
-  const taCost = side("ta");
-  const taCostInput = (
-    <SavedOnChangeInput
-      id="BudgetPage-avgCost-ta"
-      prefix="$"
-      stored={wholeForInput(taCost?.avgCostPerPosition)}
-      isValid={isValidDollars}
-      disabled={taCost === null}
-      hint={taCost === null ? `No TA recruitment for ${qyy}.` : undefined}
-      onSave={(amount) => {
-        // Stryker disable next-line all : the box is disabled, so this cannot be reached
-        if (taCost === null) return;
-        save("cost-ta", amount);
-      }}
-    />
-  );
-
   /**
    * A budget line's box (issue #388): whole dollars, except the ULA hourly rate, which is dollars
-   * and cents; the hours per ULA have no dollar sign.
+   * and cents; the hours per ULA have no dollar sign. The cost per TA is a budget line too, so it
+   * is there to enter whether or not the quarter has a TA recruitment.
    */
   const budgetInput = (line: BudgetLine) => (
     <SavedOnChangeInput
@@ -339,11 +323,11 @@ function BudgetForQuarter({
               {costsAndFundsRow(
                 "ta",
                 labelFor(
-                  "BudgetPage-avgCost-ta",
+                  "BudgetPage-taCostPerQuarter",
                   "TA: Estimated cost per TA per quarter:",
                 ),
                 null,
-                taCostInput,
+                budgetInput("taCostPerQuarter"),
                 "unrestrictedBudget",
                 "Unrestricted temp subzero for quarter:",
               )}

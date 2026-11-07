@@ -39,9 +39,9 @@ public class BudgetService {
   /**
    * One recruitment's side of the budget.
    *
-   * @param avgCostPerPosition the estimated cost of one position per quarter: on the TA side the
-   *     recruitment's stored cost per TA; on the ULA side the budget's {@link #estimatedCostPerUla
-   *     computed cost per ULA} (issue #388); null while unknown
+   * @param avgCostPerPosition the estimated cost of one position per quarter, from the budget
+   *     (issue #388): on the TA side its cost per TA as entered; on the ULA side its {@link
+   *     #estimatedCostPerUla computed cost per ULA}; null while unknown
    * @param totalAllocation the sum of the allocations of its non-removed courses
    * @param totalEnrollmentEstimate the sum of their enrollment estimates (the quarter's, from
    *     {@code budget_courses}), a missing one counting as 0
@@ -165,12 +165,12 @@ public class BudgetService {
     int totalAllocation = active.stream().mapToInt(RecruitmentCourse::getAllocation).sum();
     int totalEstimate = active.stream().mapToInt(BudgetService::estimateOf).sum();
     int target = recruitment.getTotalHiringTarget();
-    // The cost per ULA is computed from the budget (issue #388), the cost per TA is the TA
-    // recruitment's own.
+    // Both costs are the budget's (issue #388): the cost per TA as entered, the cost per ULA
+    // computed from the rate and the hours.
     BigDecimal perPosition =
         recruitment.getType() == RecruitmentType.ULA
             ? estimatedCostPerUla(budget)
-            : recruitment.getAvgCostPerPosition();
+            : budget.getTaCostPerQuarter();
     BigDecimal cost =
         perPosition == null
             ? money(BigDecimal.ZERO)

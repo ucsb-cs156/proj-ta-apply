@@ -5,6 +5,8 @@ export type BudgetRow = {
   unrestrictedBudget: number;
   tasOnlyBudget: number;
   ulasOnlyBudget: number;
+  /** The estimated cost of one TA for the quarter (issue #388); null until entered. */
+  taCostPerQuarter: number | null;
   /** What one ULA is paid per hour (issue #388); null until entered. */
   ulaRateDollarsPerHour: number | null;
   /** How many hours one ULA is expected to work in the quarter (issue #388); null until entered. */
@@ -28,8 +30,8 @@ export type BudgetSide = {
   recruitmentId: number;
   totalHiringTarget: number;
   /**
-   * The estimated cost of one position per quarter: the TA recruitment's own stored cost per TA;
-   * on the ULA side the budget's computed cost per ULA, its rate times its hours (issue #388).
+   * The estimated cost of one position per quarter, from the budget (issue #388): its cost per TA
+   * as entered on the TA side; on the ULA side its computed cost per ULA, rate times hours.
    */
   avgCostPerPosition: number | null;
   totalAllocation: number;

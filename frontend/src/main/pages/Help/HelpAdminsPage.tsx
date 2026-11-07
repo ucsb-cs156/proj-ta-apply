@@ -1118,8 +1118,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           stored. Choose <strong>Use theirs</strong> to keep what is stored and
           drop what you typed, or <strong>Overwrite</strong> to save what you
           typed over it. This applies to the budget lines (the three temp
-          subzero lines, the ULA hourly rate, the hours per ULA and the other
-          funds for ASEs), the estimated cost per TA, and the two hiring
+          subzero lines, the estimated cost per TA, the ULA hourly rate, the
+          hours per ULA and the other funds for ASEs) and the two hiring
           targets. The <strong>TA to ULA conversion factor</strong>, which is
           changed on the Combined Allocation page, is counted separately from
           the three budget lines: a change to it there never refuses a budget

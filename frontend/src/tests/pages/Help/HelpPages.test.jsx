@@ -1130,7 +1130,7 @@ describe("Help pages (issue #140)", () => {
       [...rows[5].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
       "Budget",
-      "One quarter's budget (compare-and-set for a recruitment's cost per TA and hiring target, keyed recruitment:<id>)",
+      "One quarter's budget (compare-and-set for a recruitment's hiring target, keyed recruitment:<id>)",
       "budget:<quarter>",
       "#290",
     ]);

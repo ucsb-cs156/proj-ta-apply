@@ -186,6 +186,7 @@ public class BudgetWebIT extends WebTestCase {
     assertThat(page.getByTestId("BudgetPage-bottom-line")).isVisible();
 
     // Nothing entered: empty boxes, no cost per ULA, every line at zero.
+    assertThat(page.getByTestId("BudgetPage-taCostPerQuarter")).hasValue("");
     assertThat(page.getByTestId("BudgetPage-ulaRateDollarsPerHour")).hasValue("");
     assertThat(page.getByTestId("BudgetPage-estimatedHoursPerULAPerQuarter")).hasValue("");
     assertThat(page.getByTestId("BudgetPage-giftFundsForASEs")).hasValue("");
@@ -194,7 +195,7 @@ public class BudgetWebIT extends WebTestCase {
     assertThat(page.getByTestId("BudgetPage-funds-gift")).containsText("$0.00");
 
     // The issue's figures: 29.38 × 110 = 3,231.80 per ULA.
-    page.getByTestId("BudgetPage-avgCost-ta").fill("13110");
+    page.getByTestId("BudgetPage-taCostPerQuarter").fill("13110");
     page.getByTestId("BudgetPage-ulaRateDollarsPerHour").fill("29.38");
     page.getByTestId("BudgetPage-estimatedHoursPerULAPerQuarter").fill("110");
     page.getByTestId("BudgetPage-unrestrictedBudget").fill("699315");
@@ -215,9 +216,12 @@ public class BudgetWebIT extends WebTestCase {
     assertThat(page.getByTestId("BudgetPage-ulaRateDollarsPerHour")).hasValue("29.38");
     assertThat(page.getByTestId("BudgetPage-estimatedHoursPerULAPerQuarter")).hasValue("110");
     assertThat(page.getByTestId("BudgetPage-giftFundsForASEs")).hasValue("32200");
-    assertThat(page.getByTestId("BudgetPage-avgCost-ta")).hasValue("13110");
+    assertThat(page.getByTestId("BudgetPage-taCostPerQuarter")).hasValue("13110");
     assertThat(page.getByTestId("BudgetPage-ulaCost")).hasText("$3,231.80");
+    // Every cost is the budget's (issue #388), none the recruitments'.
     Budget budget = budgetRepository.findById("20264").orElseThrow();
+    org.junit.jupiter.api.Assertions.assertEquals(
+        new java.math.BigDecimal("13110.00"), budget.getTaCostPerQuarter());
     org.junit.jupiter.api.Assertions.assertEquals(
         new java.math.BigDecimal("29.38"), budget.getUlaRateDollarsPerHour());
     org.junit.jupiter.api.Assertions.assertEquals(

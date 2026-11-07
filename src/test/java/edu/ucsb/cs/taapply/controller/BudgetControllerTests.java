@@ -281,8 +281,9 @@ public class BudgetControllerTests extends ControllerTestCase {
   // ---- the ULA rate, the hours per ULA and the other funds (issue #388) ----
 
   @Test
-  public void a_new_budget_has_no_rate_hours_or_other_funds_yet() {
+  public void a_new_budget_has_no_costs_rate_hours_or_other_funds_yet() {
     Budget budget = budget("0", "0", "0");
+    assertEquals(null, budget.getTaCostPerQuarter());
     assertEquals(null, budget.getUlaRateDollarsPerHour());
     assertEquals(null, budget.getEstimatedHoursPerULAPerQuarter());
     assertEquals(null, budget.getGiftFundsForASEs());
@@ -300,13 +301,15 @@ public class BudgetControllerTests extends ControllerTestCase {
     MvcResult response =
         mockMvc
             .perform(
-                put("/api/admin/budget?quarter=20264&ulaRateDollarsPerHour=29.375"
+                put("/api/admin/budget?quarter=20264&taCostPerQuarter=13110.004"
+                        + "&ulaRateDollarsPerHour=29.375"
                         + "&estimatedHoursPerULAPerQuarter=110&giftFundsForASEs=32200.5")
                     .with(csrf()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.estimatedCostPerULAPerQuarter").value(3231.80))
             .andReturn();
 
+    assertEquals(new BigDecimal("13110.00"), budget.getTaCostPerQuarter());
     assertEquals(new BigDecimal("29.38"), budget.getUlaRateDollarsPerHour());
     assertEquals(new BigDecimal("110.00"), budget.getEstimatedHoursPerULAPerQuarter());
     assertEquals(new BigDecimal("32200.50"), budget.getGiftFundsForASEs());
@@ -367,7 +370,11 @@ public class BudgetControllerTests extends ControllerTestCase {
   public void a_negative_rate_hours_or_other_funds_is_a_400_and_nothing_is_read_or_saved()
       throws Exception {
     for (String field :
-        List.of("ulaRateDollarsPerHour", "estimatedHoursPerULAPerQuarter", "giftFundsForASEs")) {
+        List.of(
+            "taCostPerQuarter",
+            "ulaRateDollarsPerHour",
+            "estimatedHoursPerULAPerQuarter",
+            "giftFundsForASEs")) {
       MvcResult response =
           mockMvc
               .perform(
@@ -386,7 +393,11 @@ public class BudgetControllerTests extends ControllerTestCase {
   public void the_rate_the_hours_and_the_other_funds_are_lines_counted_under_version()
       throws Exception {
     for (String line :
-        List.of("ulaRateDollarsPerHour", "estimatedHoursPerULAPerQuarter", "giftFundsForASEs")) {
+        List.of(
+            "taCostPerQuarter",
+            "ulaRateDollarsPerHour",
+            "estimatedHoursPerULAPerQuarter",
+            "giftFundsForASEs")) {
       Budget budget = versioned(5, 2);
       when(budgetService.budgetFor(Q)).thenReturn(budget);
       when(budgetService.summary(Q)).thenReturn(summary(budget));
@@ -415,11 +426,12 @@ public class BudgetControllerTests extends ControllerTestCase {
 
     mockMvc
         .perform(
-            put("/api/admin/budget?quarter=20264&version=4&ulaRateDollarsPerHour=1"
-                    + "&estimatedHoursPerULAPerQuarter=2&giftFundsForASEs=3")
+            put("/api/admin/budget?quarter=20264&version=4&taCostPerQuarter=0"
+                    + "&ulaRateDollarsPerHour=1&estimatedHoursPerULAPerQuarter=2&giftFundsForASEs=3")
                 .with(csrf()))
         .andExpect(status().isConflict());
 
+    assertEquals(null, budget.getTaCostPerQuarter());
     assertEquals(null, budget.getUlaRateDollarsPerHour());
     assertEquals(null, budget.getEstimatedHoursPerULAPerQuarter());
     assertEquals(null, budget.getGiftFundsForASEs());
@@ -431,6 +443,7 @@ public class BudgetControllerTests extends ControllerTestCase {
   public void the_summary_carries_the_rate_the_hours_the_other_funds_and_the_computed_cost()
       throws Exception {
     Budget budget = budget("1000.00", "0.00", "0.00");
+    budget.setTaCostPerQuarter(new BigDecimal("13110.00"));
     budget.setUlaRateDollarsPerHour(new BigDecimal("29.38"));
     budget.setEstimatedHoursPerULAPerQuarter(new BigDecimal("110.00"));
     budget.setGiftFundsForASEs(new BigDecimal("32200.00"));
@@ -439,6 +452,7 @@ public class BudgetControllerTests extends ControllerTestCase {
     mockMvc
         .perform(get("/api/admin/budget?quarter=20264"))
         .andExpect(status().isOk())
+        .andExpect(jsonPath("$.budget.taCostPerQuarter").value(13110.00))
         .andExpect(jsonPath("$.budget.ulaRateDollarsPerHour").value(29.38))
         .andExpect(jsonPath("$.budget.estimatedHoursPerULAPerQuarter").value(110.00))
         .andExpect(jsonPath("$.budget.giftFundsForASEs").value(32200.00))

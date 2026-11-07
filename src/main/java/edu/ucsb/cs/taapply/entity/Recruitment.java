@@ -4,7 +4,6 @@ import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.*;
@@ -90,17 +89,6 @@ public class Recruitment {
   @Column(name = "allocation_bulk_version", nullable = false)
   @Builder.Default
   private Integer allocationBulkVersion = 0;
-
-  /**
-   * The estimated cost of one TA per quarter, in dollars and cents (issue #177), on a TA
-   * recruitment. Entered on the Budget for Quarter page; null until it has been. A planning figure,
-   * not audited. Since issue #388 the cost per ULA is not stored anywhere: the Budget page computes
-   * it from the quarter's {@link Budget#getUlaRateDollarsPerHour() ULA hourly rate} and {@link
-   * Budget#getEstimatedHoursPerULAPerQuarter() hours per ULA}, so on a ULA recruitment this column
-   * is no longer read.
-   */
-  @Column(name = "avg_cost_per_position", precision = 12, scale = 2)
-  private BigDecimal avgCostPerPosition;
 
   /**
    * Who may see the allocations of this recruitment's courses (issue #224): admins only (the

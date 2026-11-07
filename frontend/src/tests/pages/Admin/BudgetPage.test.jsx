@@ -72,9 +72,6 @@ describe("BudgetPage tests", () => {
       .onGet("/api/admin/budget", { params: { quarter: "20261" } })
       .reply(200, budgetFixtures.taOnlyOverBudget);
     axiosMock.onPut("/api/admin/budget").reply(200, budgetFixtures.bothTypes);
-    axiosMock
-      .onPut("/api/admin/recruitments/avgCostPerPosition")
-      .reply(200, {});
     axiosMock.onPut("/api/admin/recruitments/totalHiringTarget").reply(200, {});
   });
 
@@ -182,13 +179,13 @@ describe("BudgetPage tests", () => {
     const taCost = screen.getByLabelText(
       "TA: Estimated cost per TA per quarter:",
     );
-    expect(taCost).toBe(screen.getByTestId("BudgetPage-avgCost-ta"));
+    expect(taCost).toBe(screen.getByTestId("BudgetPage-taCostPerQuarter"));
     expect(taCost).toHaveValue("12000");
     expect(taCost).not.toBeDisabled();
     expect(taRow.querySelectorAll("td")[2]).toContainElement(taCost);
     expect(taRow.querySelectorAll("td")[1].textContent).toBe("");
     expect(
-      screen.queryByTestId("BudgetPage-avgCost-ta-hint"),
+      screen.queryByTestId("BudgetPage-taCostPerQuarter-hint"),
     ).not.toBeInTheDocument();
     const unrestricted = screen.getByLabelText(
       "Unrestricted temp subzero for quarter:",
@@ -419,18 +416,14 @@ describe("BudgetPage tests", () => {
     );
   });
 
-  test("a quarter with only a ULA recruitment greys out the TA figures", async () => {
+  test("a quarter with only a ULA recruitment has no TA target, but every cost is still the budget's to enter", async () => {
     renderPage("S26");
     await screen.findByTestId("BudgetPage-bottom-line");
 
-    const taCost = screen.getByTestId("BudgetPage-avgCost-ta");
-    expect(taCost).toBeDisabled();
-    expect(taCost).toHaveValue("");
-    expect(screen.getByTestId("BudgetPage-avgCost-ta-hint")).toHaveTextContent(
-      "No TA recruitment for S26.",
-    );
-    // Nothing entered yet (null): empty, enabled boxes, and no cost per ULA to show.
+    // Nothing entered yet (null): empty, enabled boxes, and no cost per ULA to show. The cost per
+    // TA is the budget's (issue #388), so it is not greyed out without a TA recruitment.
     for (const id of [
+      "BudgetPage-taCostPerQuarter",
       "BudgetPage-ulaRateDollarsPerHour",
       "BudgetPage-estimatedHoursPerULAPerQuarter",
       "BudgetPage-giftFundsForASEs",
@@ -507,7 +500,9 @@ describe("BudgetPage tests", () => {
     expect(screen.getByTestId("BudgetPage-funds-gift")).toHaveTextContent(
       "Other funds available for ASEs$0.00",
     );
-    expect(screen.getByTestId("BudgetPage-avgCost-ta")).toHaveValue("11000");
+    expect(screen.getByTestId("BudgetPage-taCostPerQuarter")).toHaveValue(
+      "11000",
+    );
     expect(screen.getByTestId("BudgetPage-target-ula-none")).toHaveTextContent(
       "No ULA recruitment for W26.",
     );
@@ -531,33 +526,30 @@ describe("BudgetPage tests", () => {
     expect(bottom).toHaveClass("text-danger");
   });
 
-  test("typing a cost per TA saves it and re-reads the summary", async () => {
+  test("typing a cost per TA saves it as a budget line under the lines' version (issue #388) and re-reads the summary", async () => {
     renderPage("F26");
-    const box = await screen.findByTestId("BudgetPage-avgCost-ta");
+    const box = await screen.findByTestId("BudgetPage-taCostPerQuarter");
     const getsBefore = budgetGets().length;
 
     await userEvent.clear(box);
     await userEvent.type(box, "13000.5");
 
-    await waitFor(() =>
-      expect(puts("/api/admin/recruitments/avgCostPerPosition")).toHaveLength(
-        6,
-      ),
-    );
-    expect(
-      puts("/api/admin/recruitments/avgCostPerPosition").map((r) => r.params),
-    ).toEqual([
-      { id: 5, avgCostPerPosition: "1", expected: "12000" },
-      { id: 5, avgCostPerPosition: "13", expected: "1" },
-      { id: 5, avgCostPerPosition: "130", expected: "13" },
-      { id: 5, avgCostPerPosition: "1300", expected: "130" },
-      { id: 5, avgCostPerPosition: "13000", expected: "1300" },
-      { id: 5, avgCostPerPosition: "13000.5", expected: "13000" },
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(6));
+    expect(puts("/api/admin/budget").map((r) => r.params)).toEqual([
+      { quarter: "20264", taCostPerQuarter: "1", version: 3 },
+      { quarter: "20264", taCostPerQuarter: "13", version: 3 },
+      { quarter: "20264", taCostPerQuarter: "130", version: 3 },
+      { quarter: "20264", taCostPerQuarter: "1300", version: 3 },
+      { quarter: "20264", taCostPerQuarter: "13000", version: 3 },
+      { quarter: "20264", taCostPerQuarter: "13000.5", version: 3 },
     ]);
     await waitFor(() =>
       expect(budgetGets().length).toBeGreaterThan(getsBefore),
     );
-    expect(puts("/api/admin/budget")).toHaveLength(0);
+    // Nothing is saved on the recruitment any more.
+    expect(axiosMock.history.put.map((r) => r.url)).toEqual(
+      Array(6).fill("/api/admin/budget"),
+    );
   });
 
   test("typing the ULA rate, the hours per ULA or the other funds saves it as a budget line under the lines' version (issue #388)", async () => {
@@ -725,7 +717,7 @@ describe("BudgetPage tests", () => {
 
   test("invalid entries are never sent and revert on blur", async () => {
     renderPage("F26");
-    const cost = await screen.findByTestId("BudgetPage-avgCost-ta");
+    const cost = await screen.findByTestId("BudgetPage-taCostPerQuarter");
 
     await userEvent.clear(cost);
     await userEvent.type(cost, "12.345");
@@ -744,12 +736,13 @@ describe("BudgetPage tests", () => {
     expect(cost).toHaveValue("12000");
     expect(rate).toHaveValue("29.38");
     expect(target).toHaveValue("8");
-    // "1", "12", "12.3" and "12.34" were valid along the way; "12." and "12.345" were not.
+    // "1", "12", "12.3" and "12.34" were valid along the way; "12." and "12.345" were not; likewise
+    // for the rate, where "29." and "29.385" were not.
     expect(
-      puts("/api/admin/recruitments/avgCostPerPosition").map(
-        (r) => r.params.avgCostPerPosition,
+      puts("/api/admin/budget").map(
+        (r) => r.params.taCostPerQuarter ?? r.params.ulaRateDollarsPerHour,
       ),
-    ).toEqual(["1", "12", "12.3", "12.34"]);
+    ).toEqual(["1", "12", "12.3", "12.34", "2", "29", "29.3", "29.38"]);
     expect(puts("/api/admin/recruitments/totalHiringTarget")).toHaveLength(0);
   });
 
@@ -782,7 +775,6 @@ describe("BudgetPage tests", () => {
 
   // ---- the version check and compare-and-set (issue #277) ----
 
-  const COST = "/api/admin/recruitments/avgCostPerPosition";
   const TARGET = "/api/admin/recruitments/totalHiringTarget";
 
   /**
@@ -1035,39 +1027,32 @@ describe("BudgetPage tests", () => {
     expect(screen.queryByTestId(/^BudgetPage-conflict-/)).toBeNull();
   });
 
-  test("a refused average cost shows what is stored, and Overwrite expects it", async () => {
-    let saves = 0;
-    axiosMock.onPut(COST).reply(() => {
-      saves += 1;
-      return saves === 1
-        ? [
-            409,
-            { message: "stale", recruitment: { avgCostPerPosition: 15000 } },
-          ]
-        : [200, {}];
-    });
+  test("a refused cost per TA shows what is stored in dollars, and Overwrite saves it against the version stored now", async () => {
+    refuseFirstBudgetSave();
     renderPage("F26");
-    const box = await screen.findByTestId("BudgetPage-avgCost-ta");
+    const box = await screen.findByTestId("BudgetPage-taCostPerQuarter");
     await userEvent.clear(box);
     await userEvent.type(box, "1");
 
     expect(
-      await screen.findByTestId("BudgetPage-conflict-cost-ta-message"),
+      await screen.findByTestId("BudgetPage-conflict-taCostPerQuarter-message"),
     ).toHaveTextContent(
-      "The estimated cost per TA was changed in another tab or window. It is now $15,000.00; you entered $1.00.",
+      "The estimated cost per TA was changed in another tab or window. It is now $12,000.00; you entered $1.00.",
     );
 
     await userEvent.click(
-      screen.getByTestId("BudgetPage-conflict-cost-ta-overwrite"),
+      screen.getByTestId("BudgetPage-conflict-taCostPerQuarter-overwrite"),
     );
 
-    await waitFor(() => expect(puts(COST)).toHaveLength(2));
-    expect(puts(COST)[1].params).toEqual({
-      id: 5,
-      avgCostPerPosition: "1",
-      expected: "15000",
+    await waitFor(() => expect(puts("/api/admin/budget")).toHaveLength(2));
+    expect(puts("/api/admin/budget")[1].params).toEqual({
+      quarter: "20264",
+      taCostPerQuarter: "1",
+      version: 4,
     });
-    expect(screen.queryByTestId("BudgetPage-conflict-cost-ta")).toBeNull();
+    expect(
+      screen.queryByTestId("BudgetPage-conflict-taCostPerQuarter"),
+    ).toBeNull();
   });
 
   test("a refused hiring target says so in plain numbers, and Use theirs expects the stored value next", async () => {
@@ -1103,38 +1088,13 @@ describe("BudgetPage tests", () => {
     });
   });
 
-  test("a figure that has no stored value yet is saved without an expected value", async () => {
-    axiosMock
-      .onGet("/api/admin/budget", { params: { quarter: "20264" } })
-      .reply(200, {
-        ...budgetFixtures.bothTypes,
-        ta: { ...budgetFixtures.bothTypes.ta, avgCostPerPosition: null },
-      });
-    renderPage("F26");
-    const box = await screen.findByTestId("BudgetPage-avgCost-ta");
-    expect(box).toHaveValue("");
-
-    await userEvent.type(box, "5");
-
-    await waitFor(() => expect(puts(COST)).toHaveLength(1));
-    expect(puts(COST)[0].params).toEqual({ id: 5, avgCostPerPosition: "5" });
-    expect(puts(COST)[0].params.expected).toBeUndefined();
-  });
-
   test("a refusal with a missing answer is shown as zero rather than breaking the page", async () => {
-    axiosMock.onPut(COST).reply(409, {});
     axiosMock.onPut(TARGET).reply(409, {});
     renderPage("F26");
-    const cost = await screen.findByTestId("BudgetPage-avgCost-ta");
-    await userEvent.clear(cost);
-    await userEvent.type(cost, "1");
-    const target = screen.getByTestId("BudgetPage-target-ta-input");
+    const target = await screen.findByTestId("BudgetPage-target-ta-input");
     await userEvent.clear(target);
     await userEvent.type(target, "1");
 
-    expect(
-      await screen.findByTestId("BudgetPage-conflict-cost-ta-message"),
-    ).toHaveTextContent("It is now $0.00;");
     expect(
       await screen.findByTestId("BudgetPage-conflict-target-ta-message"),
     ).toHaveTextContent("It is now 0;");
@@ -1216,7 +1176,7 @@ describe("BudgetPage tests", () => {
 
   test("a save re-reads the budget and nothing else", async () => {
     renderPage("F26");
-    const box = await screen.findByTestId("BudgetPage-avgCost-ta");
+    const box = await screen.findByTestId("BudgetPage-taCostPerQuarter");
     const before = budgetGets().length;
 
     await userEvent.clear(box);
@@ -1228,16 +1188,16 @@ describe("BudgetPage tests", () => {
 
   test("a refused figure re-reads the budget and nothing else", async () => {
     axiosMock
-      .onPut(COST)
-      .reply(409, { recruitment: { avgCostPerPosition: 15000 } });
+      .onPut(TARGET)
+      .reply(409, { recruitment: { totalHiringTarget: 9 } });
     renderPage("F26");
-    const box = await screen.findByTestId("BudgetPage-avgCost-ta");
+    const box = await screen.findByTestId("BudgetPage-target-ta-input");
     const before = budgetGets().length;
 
     await userEvent.clear(box);
     await userEvent.type(box, "1");
 
-    await screen.findByTestId("BudgetPage-conflict-cost-ta");
+    await screen.findByTestId("BudgetPage-conflict-target-ta");
     await waitFor(() => expect(budgetGets().length).toBeGreaterThan(before));
     expect(userGets()).toHaveLength(1);
   });
@@ -1245,44 +1205,30 @@ describe("BudgetPage tests", () => {
   test("a figure changed by a re-read is still compared with the value first seen", async () => {
     laterReadsAre({
       ...budgetFixtures.bothTypes,
-      ta: {
-        ...budgetFixtures.bothTypes.ta,
-        avgCostPerPosition: 77,
-        totalHiringTarget: 5,
-      },
-      ula: {
-        ...budgetFixtures.bothTypes.ula,
-        avgCostPerPosition: 1,
-        totalHiringTarget: 11,
-      },
+      ta: { ...budgetFixtures.bothTypes.ta, totalHiringTarget: 5 },
+      ula: { ...budgetFixtures.bothTypes.ula, totalHiringTarget: 11 },
     });
     renderPage("F26");
-    const cost = await screen.findByTestId("BudgetPage-avgCost-ta");
-    await userEvent.clear(cost);
-    await userEvent.type(cost, "1");
-    await waitFor(() =>
-      expect(screen.getByTestId("BudgetPage-target-ta-input")).toHaveValue("5"),
-    );
-
-    const taTarget = screen.getByTestId("BudgetPage-target-ta-input");
+    const taTarget = await screen.findByTestId("BudgetPage-target-ta-input");
     await userEvent.clear(taTarget);
     await userEvent.type(taTarget, "9");
+    await userEvent.tab();
+    // The save brought a re-read, which shows another value once the box loses focus...
+    await waitFor(() => expect(taTarget).toHaveValue("5"));
+
     const ulaTarget = screen.getByTestId("BudgetPage-target-ula-input");
     await userEvent.clear(ulaTarget);
     await userEvent.type(ulaTarget, "4");
-    await userEvent.clear(cost);
-    await userEvent.type(cost, "6");
+    await userEvent.clear(taTarget);
+    await userEvent.type(taTarget, "6");
 
-    await waitFor(() => expect(puts(TARGET)).toHaveLength(2));
-    await waitFor(() => expect(puts(COST)).toHaveLength(2));
+    await waitFor(() => expect(puts(TARGET)).toHaveLength(3));
+    // ...but the first save of each figure expected what was first seen, and the next what that
+    // save set, never what the re-read showed.
     expect(puts(TARGET).map((r) => [r.params.id, r.params.expected])).toEqual([
       [5, "8"],
       [6, "10"],
-    ]);
-    // The first save of the figure expected what was first seen; the next, what that save set.
-    expect(puts(COST).map((r) => [r.params.id, r.params.expected])).toEqual([
-      [5, "12000"],
-      [5, "1"],
+      [5, "9"],
     ]);
   });
 
@@ -1300,7 +1246,6 @@ describe("BudgetPage tests", () => {
 
   test("a refusal with no answer at all is still shown, as zero, naming the figure", async () => {
     axiosMock.onPut("/api/admin/budget").reply(409);
-    axiosMock.onPut(COST).reply(409);
     axiosMock.onPut(TARGET).reply(409);
     renderPage("F26");
     for (const [id, field, name] of [
@@ -1326,7 +1271,11 @@ describe("BudgetPage tests", () => {
         "giftFundsForASEs",
         "other funds available for ASEs",
       ],
-      ["BudgetPage-avgCost-ta", "cost-ta", "estimated cost per TA"],
+      [
+        "BudgetPage-taCostPerQuarter",
+        "taCostPerQuarter",
+        "estimated cost per TA",
+      ],
       ["BudgetPage-target-ta-input", "target-ta", "TA hiring target"],
       ["BudgetPage-target-ula-input", "target-ula", "ULA hiring target"],
     ]) {

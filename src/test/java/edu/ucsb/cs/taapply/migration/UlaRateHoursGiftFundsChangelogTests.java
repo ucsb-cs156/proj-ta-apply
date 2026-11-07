@@ -27,9 +27,9 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Changeset 067 (issue #388) run by Liquibase over the schema as it was, with rows in it, the way
- * production will meet it: the budget row gets the three new columns, empty, and nothing else
- * changes (the recruitments' stored costs per position are left as they are); and its rollback
- * drops the columns.
+ * production will meet it: the budget row gets the four new columns, empty, the recruitments lose
+ * their cost per position column and nothing else changes; and its rollback drops the four columns
+ * and brings the recruitments column back, empty.
  */
 public class UlaRateHoursGiftFundsChangelogTests {
 
@@ -123,7 +123,8 @@ public class UlaRateHoursGiftFundsChangelogTests {
   }
 
   @Test
-  public void the_budget_gets_the_three_columns_empty_and_the_rest_is_as_it_was() throws Exception {
+  public void the_budget_gets_the_four_columns_empty_and_the_recruitments_lose_their_cost()
+      throws Exception {
     upToTheChangeset();
     sql(
         "INSERT INTO budgets (quarter, unrestricted_budget, tas_only_budget, ulas_only_budget,"
@@ -147,13 +148,14 @@ public class UlaRateHoursGiftFundsChangelogTests {
     assertEquals(2.5, ((Number) budget("conversion_ta_to_ula")).doubleValue());
     assertEquals(4, ((Number) budget("version")).intValue());
     assertEquals(1, ((Number) budget("conversion_version")).intValue());
-    // The recruitments' stored costs are untouched: the one on a ULA recruitment is simply no
-    // longer read (the backend computes the cost per ULA from the budget's rate and hours).
-    assertEquals(2500.5, ((Number) cost("20264", "ULA")).doubleValue());
-    assertEquals(2400, ((Number) cost("20262", "ULA")).intValue());
-    assertEquals(13110, ((Number) cost("20264", "TA")).intValue());
-    assertNull(cost("20261", "TA"));
+    // The recruitments' stored costs are gone with their column; the rows stay.
+    assertThrows(SQLException.class, () -> cost("20264", "TA"));
     assertEquals(4L, ((Number) one("SELECT COUNT(*) FROM recruitments")).longValue());
+    assertEquals(
+        2L,
+        ((Number) one("SELECT COUNT(*) FROM recruitments WHERE quarter = '20264'")).longValue());
+    // The budget's cost per TA starts empty too: the maintainer re-enters it, nothing copies it.
+    assertNull(budget("ta_cost_per_quarter"));
     // The columns take dollars and cents.
     sql(
         "UPDATE budgets SET ula_rate_dollars_per_hour = 29.38,"
@@ -169,7 +171,7 @@ public class UlaRateHoursGiftFundsChangelogTests {
   }
 
   @Test
-  public void the_rollback_drops_the_three_columns_and_the_changeset_can_run_again()
+  public void the_rollback_drops_the_four_columns_restores_the_recruitments_one_and_can_run_again()
       throws Exception {
     upToTheChangeset();
     sql("INSERT INTO budgets (quarter, unrestricted_budget) VALUES ('20264', 500)");
@@ -183,8 +185,10 @@ public class UlaRateHoursGiftFundsChangelogTests {
     assertThrows(
         SQLException.class, () -> rows("SELECT estimated_hours_per_ula_per_quarter FROM budgets"));
     assertThrows(SQLException.class, () -> rows("SELECT gift_funds_for_ases FROM budgets"));
+    assertThrows(SQLException.class, () -> rows("SELECT ta_cost_per_quarter FROM budgets"));
     assertEquals(500, ((Number) budget("unrestricted_budget")).intValue());
-    assertEquals(2500.5, ((Number) cost("20264", "ULA")).doubleValue());
+    // The recruitments column is back, empty: nothing recorded what it held.
+    assertNull(cost("20264", "ULA"));
 
     liquibase.update(1, "");
     assertNull(budget("gift_funds_for_ases"));
@@ -195,10 +199,12 @@ public class UlaRateHoursGiftFundsChangelogTests {
     liquibase.update("");
 
     sql(
-        "INSERT INTO budgets (quarter, ula_rate_dollars_per_hour,"
+        "INSERT INTO budgets (quarter, ta_cost_per_quarter, ula_rate_dollars_per_hour,"
             + " estimated_hours_per_ula_per_quarter, gift_funds_for_ases)"
-            + " VALUES ('20264', 29.38, 110, 32200)");
+            + " VALUES ('20264', 13110, 29.38, 110, 32200)");
+    assertEquals(13110, ((Number) budget("ta_cost_per_quarter")).intValue());
     assertEquals(29.38, ((Number) budget("ula_rate_dollars_per_hour")).doubleValue());
+    assertThrows(SQLException.class, () -> rows("SELECT avg_cost_per_position FROM recruitments"));
     assertEquals(0, liquibase.listUnrunChangeSets(new Contexts(), new LabelExpression()).size());
   }
 }

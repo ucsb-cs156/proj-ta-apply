@@ -66,9 +66,9 @@ public class BudgetController extends ApiController {
   @Operation(
       summary = "Set one or more of a quarter's budget lines",
       description =
-          "Any of the lines may be given: the three subzero lines, and (issue #388) the ULA hourly"
-              + " rate, the estimated hours per ULA per quarter and the other funds available for"
-              + " ASEs; and the conversionTAtoULA (issue #358, how many ULAs count as one TA on the"
+          "Any of the lines may be given: the three subzero lines, and (issue #388) the estimated"
+              + " cost per TA per quarter, the ULA hourly rate, the estimated hours per ULA per"
+              + " quarter and the other funds available for ASEs; and the conversionTAtoULA (issue #358, how many ULAs count as one TA on the"
               + " Combined Allocation page; greater than zero, else 400); the others keep their"
               + " values. Amounts are dollars and cents (the hours to two decimals) and must not be"
               + " negative. Returns the quarter's summary with the new figures, including the"
@@ -99,6 +99,9 @@ public class BudgetController extends ApiController {
           BigDecimal unrestrictedBudget,
       @Parameter(name = "tasOnlyBudget") @RequestParam(required = false) BigDecimal tasOnlyBudget,
       @Parameter(name = "ulasOnlyBudget") @RequestParam(required = false) BigDecimal ulasOnlyBudget,
+      @Parameter(name = "taCostPerQuarter", description = "the estimated cost of one TA")
+          @RequestParam(required = false)
+          BigDecimal taCostPerQuarter,
       @Parameter(name = "ulaRateDollarsPerHour", description = "what one ULA is paid per hour")
           @RequestParam(required = false)
           BigDecimal ulaRateDollarsPerHour,
@@ -120,6 +123,7 @@ public class BudgetController extends ApiController {
     requireNotNegative("unrestrictedBudget", unrestrictedBudget);
     requireNotNegative("tasOnlyBudget", tasOnlyBudget);
     requireNotNegative("ulasOnlyBudget", ulasOnlyBudget);
+    requireNotNegative("taCostPerQuarter", taCostPerQuarter);
     requireNotNegative("ulaRateDollarsPerHour", ulaRateDollarsPerHour);
     requireNotNegative("estimatedHoursPerULAPerQuarter", estimatedHoursPerULAPerQuarter);
     requireNotNegative("giftFundsForASEs", giftFundsForASEs);
@@ -148,6 +152,10 @@ public class BudgetController extends ApiController {
       }
       if (ulasOnlyBudget != null) {
         budget.setUlasOnlyBudget(BudgetService.money(ulasOnlyBudget));
+        linesChanged = true;
+      }
+      if (taCostPerQuarter != null) {
+        budget.setTaCostPerQuarter(BudgetService.money(taCostPerQuarter));
         linesChanged = true;
       }
       if (ulaRateDollarsPerHour != null) {

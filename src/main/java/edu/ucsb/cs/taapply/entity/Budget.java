@@ -11,9 +11,11 @@ import lombok.*;
  *
  * <p>The three temp subzero lines may each be zero in a given quarter; other funds for ASEs, such
  * as gift funds, are a line of their own (issue #388). For planning, the restricted lines are spent
- * first and anything further comes from the unrestricted pool. The row also holds the ULA hourly
- * rate and the estimated hours per ULA per quarter (issue #388), whose product is the estimated
- * cost per ULA per quarter: computed, never stored. Planning figures: changes are not audited.
+ * first and anything further comes from the unrestricted pool. The row also holds the estimated
+ * cost per TA per quarter, the ULA hourly rate and the estimated hours per ULA per quarter (issue
+ * #388), the last two's product being the estimated cost per ULA per quarter: computed, never
+ * stored. Every planning figure but the hiring targets lives here, so that issue #384 can copy a
+ * quarter's budget from the last one. Planning figures: changes are not audited.
  */
 @Data
 @AllArgsConstructor
@@ -41,6 +43,13 @@ public class Budget {
   @Column(name = "ulas_only_budget", nullable = false, precision = 12, scale = 2)
   @Builder.Default
   private BigDecimal ulasOnlyBudget = BigDecimal.ZERO;
+
+  /**
+   * The estimated cost of one TA for the quarter, in dollars and cents (issue #388; before it, the
+   * TA recruitment's avgCostPerPosition, issue #177). Null until an admin enters it.
+   */
+  @Column(name = "ta_cost_per_quarter", precision = 12, scale = 2)
+  private BigDecimal taCostPerQuarter;
 
   /**
    * What one ULA is paid per hour, in dollars and cents (issue #388). Null until an admin enters

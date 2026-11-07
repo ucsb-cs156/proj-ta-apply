@@ -22,8 +22,6 @@ import edu.ucsb.cs156.jobs.services.JobService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -235,45 +233,6 @@ public class RecruitmentsController extends ApiController {
     body.put("message", "The %s was changed in another tab or window.".formatted(what));
     body.put("recruitment", current);
     return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-  }
-
-  @Operation(
-      summary = "Set the estimated average cost of one TA or ULA",
-      description =
-          "In dollars and cents, per TA on a TA recruitment and per ULA on a ULA recruitment, for"
-              + " the Budget for Quarter page (issue #177). Must not be negative. A planning"
-              + " figure: not recorded in the audit trail. If expected (the value the page last"
-              + " saw) is given and the stored value is no longer that, nothing is changed and the"
-              + " answer is 409 Conflict with the recruitment as it now stands (issue #277).")
-  @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @PutMapping("/avgCostPerPosition")
-  public ResponseEntity<Object> updateAvgCostPerPosition(
-      @Parameter(name = "id") @RequestParam Long id,
-      @Parameter(name = "avgCostPerPosition") @RequestParam BigDecimal avgCostPerPosition,
-      @Parameter(name = "expected") @RequestParam(required = false) BigDecimal expected) {
-
-    if (avgCostPerPosition.signum() < 0) {
-      throw new IllegalArgumentException("avgCostPerPosition must not be negative");
-    }
-
-    Recruitment recruitment =
-        recruitmentRepository
-            .findById(id)
-            .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
-
-    synchronized (COMPARE_AND_SET) {
-      if (expected != null && !sameMoney(expected, recruitment.getAvgCostPerPosition())) {
-        return staleValue(recruitment, "average cost per position");
-      }
-      recruitment.setAvgCostPerPosition(avgCostPerPosition.setScale(2, RoundingMode.HALF_UP));
-      recruitmentRepository.save(recruitment);
-    }
-    return ResponseEntity.ok(recruitment);
-  }
-
-  /** Whether the stored cost (null while unknown) is the one the page saw, to the cent. */
-  private static boolean sameMoney(BigDecimal expected, BigDecimal stored) {
-    return stored != null && expected.setScale(2, RoundingMode.HALF_UP).compareTo(stored) == 0;
   }
 
   @Operation(

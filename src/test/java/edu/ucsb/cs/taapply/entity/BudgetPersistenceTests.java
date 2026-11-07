@@ -3,11 +3,8 @@ package edu.ucsb.cs.taapply.entity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.BudgetRepository;
-import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -15,13 +12,12 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-/** The budgets table and the cost column round-trip through the Liquibase schema (issue #177). */
+/** The budgets table round-trips through the Liquibase schema (issues #177 and #388). */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 class BudgetPersistenceTests {
   @Autowired BudgetRepository budgets;
-  @Autowired RecruitmentRepository recruitments;
   @Autowired TestEntityManager entityManager;
 
   @Test
@@ -98,11 +94,12 @@ class BudgetPersistenceTests {
   }
 
   @Test
-  void a_budget_keeps_its_rate_hours_and_other_funds_to_the_cent_and_starts_them_empty() {
+  void a_budget_keeps_its_costs_rate_hours_and_other_funds_to_the_cent_and_starts_them_empty() {
     budgets.save(Budget.builder().quarter("20264").build());
     budgets.save(
         Budget.builder()
             .quarter("20271")
+            .taCostPerQuarter(new BigDecimal("13110.00"))
             .ulaRateDollarsPerHour(new BigDecimal("29.38"))
             .estimatedHoursPerULAPerQuarter(new BigDecimal("110.50"))
             .giftFundsForASEs(new BigDecimal("32200.01"))
@@ -111,18 +108,20 @@ class BudgetPersistenceTests {
     entityManager.clear();
 
     Budget fresh = budgets.findById("20264").orElseThrow();
+    assertNull(fresh.getTaCostPerQuarter());
     assertNull(fresh.getUlaRateDollarsPerHour());
     assertNull(fresh.getEstimatedHoursPerULAPerQuarter());
     assertNull(fresh.getGiftFundsForASEs());
     Budget entered = budgets.findById("20271").orElseThrow();
+    assertEquals(new BigDecimal("13110.00"), entered.getTaCostPerQuarter());
     assertEquals(new BigDecimal("29.38"), entered.getUlaRateDollarsPerHour());
     assertEquals(new BigDecimal("110.50"), entered.getEstimatedHoursPerULAPerQuarter());
     assertEquals(new BigDecimal("32200.01"), entered.getGiftFundsForASEs());
   }
 
   @Test
-  void a_budget_row_that_existed_before_the_rate_hours_and_other_funds_columns_has_none() {
-    // The way the older code inserted a budget (issue #388): without the three columns.
+  void a_budget_row_that_existed_before_the_costs_rate_hours_and_other_funds_columns_has_none() {
+    // The way the older code inserted a budget (issue #388): without the four columns.
     entityManager
         .getEntityManager()
         .createNativeQuery(
@@ -133,27 +132,10 @@ class BudgetPersistenceTests {
     entityManager.clear();
 
     Budget found = budgets.findById("20254").orElseThrow();
+    assertNull(found.getTaCostPerQuarter());
     assertNull(found.getUlaRateDollarsPerHour());
     assertNull(found.getEstimatedHoursPerULAPerQuarter());
     assertNull(found.getGiftFundsForASEs());
     assertEquals(7, found.getVersion());
-  }
-
-  @Test
-  void a_recruitment_keeps_its_average_cost_per_position() {
-    Recruitment saved =
-        recruitments.save(
-            Recruitment.builder()
-                .quarter("20264")
-                .type(RecruitmentType.TA)
-                .tentativeOpeningDate(LocalDate.of(2026, 9, 1))
-                .primaryConsiderationDate(LocalDate.of(2026, 9, 15))
-                .avgCostPerPosition(new BigDecimal("12345.67"))
-                .build());
-    entityManager.flush();
-    entityManager.clear();
-
-    Recruitment found = recruitments.findById(saved.getId()).orElseThrow();
-    assertEquals(new BigDecimal("12345.67"), found.getAvgCostPerPosition());
   }
 }
