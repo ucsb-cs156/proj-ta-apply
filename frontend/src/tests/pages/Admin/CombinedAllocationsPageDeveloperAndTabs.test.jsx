@@ -98,6 +98,12 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
       .onGet(BUDGET, { params: { quarter: "20261" } })
       .reply(200, budgetFixtures.taOnlyOverBudget);
     axiosMock
+      .onGet(BUDGET, { params: { quarter: "20262" } })
+      .reply(200, budgetFixtures.ulaOnly);
+    axiosMock
+      .onGet(COURSES, { params: { recruitmentId: 3, includeRemoved: false } })
+      .reply(200, [combinedAllocationsFixtures.ulaCourses[1]]);
+    axiosMock
       .onGet(COURSES, { params: { recruitmentId: 5, includeRemoved: false } })
       .reply(200, combinedAllocationsFixtures.taCourses);
     axiosMock
@@ -323,7 +329,9 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  test("with one recruitment, the missing one has no say: the newest tab is asked", async () => {
+  test("with one recruitment, the missing one has no say: the newest tab is asked, and leaving says goodbye for the one only", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({});
+    vi.stubGlobal("fetch", fetchMock);
     heartbeatAnswers({
       1: {
         others: [phill],
@@ -335,6 +343,32 @@ describe("CombinedAllocationsPage: multi-tab warning and developer fake data (is
     renderPage("W26");
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByTestId("CombinedAllocationsPage-multiple-tabs-modal-leave"),
+    );
+    expect(await screen.findByTestId("budget-page")).toBeInTheDocument();
+    const goodbyes = fetchMock.mock.calls.map(([url]) => url);
+    expect(goodbyes.length).toBeGreaterThan(0);
+    goodbyes.forEach((url) =>
+      expect(url).toBe("/api/recruitmentcourses/leave?recruitmentId=1"),
+    );
+  });
+
+  test("with only a ULA recruitment, the absent TA one has no say either", async () => {
+    heartbeatAnswers({
+      3: {
+        others: [phill],
+        heartbeatSeconds: 20,
+        newest: true,
+        arrivedAtMillis: 1000,
+      },
+    });
+    renderPage("S26");
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(heartbeats().map((r) => r.url)).toEqual([
+      `${HEARTBEAT}?recruitmentId=3`,
+    ]);
   });
 
   test("Leave this page says goodbye for both recruitments and goes to the quarter's Budget page", async () => {

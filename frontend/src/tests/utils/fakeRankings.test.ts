@@ -37,5 +37,10 @@ describe("fakeRankings", () => {
     expect(fakeRankingsNote(["ULA"], ["TA"])).toBe(
       "Only the ULA recruitment's faculty review is Open with courses to rank, so only its courses get rankings; the TA recruitment is left alone.",
     );
+    // There are only two types, so one is acting and one is skipped; the sentence nonetheless
+    // joins whatever it is given, with "and".
+    expect(fakeRankingsNote(["TA", "ULA"], ["X", "Y"])).toBe(
+      "Only the TA and ULA recruitment's faculty review is Open with courses to rank, so only its courses get rankings; the X and Y recruitment is left alone.",
+    );
   });
 });

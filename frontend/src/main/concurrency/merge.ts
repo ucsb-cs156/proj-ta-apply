@@ -23,13 +23,14 @@ export type Standing = {
  * hears from the server, and its silence would otherwise count as "not the newest".
  */
 export function mergeStandings(standings: Standing[]): Standing {
+  // A Map keeps the position of a key that is set again, so the first standing's order holds and
+  // a person named twice is one entry, whichever of their (equal) entries is kept.
   const people = new Map<string, OtherClient>();
   standings.forEach((standing) =>
     standing.others.forEach((other) => {
+      // Stryker disable next-line EqualityOperator : the flag only has to tell an admin from a non-admin within the key, which it does either way round
       const key = `${other.samePerson}|${other.admin === true}|${other.label}`;
-      if (!people.has(key)) {
-        people.set(key, other);
-      }
+      people.set(key, other);
     }),
   );
   return {
