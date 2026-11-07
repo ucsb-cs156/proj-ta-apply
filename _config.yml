@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/366-release-dialog-two-options","number":382,"title":"Release-allocations dialog: two options; QA data moved off ALL_COURSES (closes #366)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/382"}]
+pull_requests: []
