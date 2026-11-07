@@ -9,16 +9,20 @@ export default {
 const Template = (args) => <AdminBudgetCard {...args} />;
 
 /**
- * Both a TA and a ULA recruitment: all three buttons are live. Since issue #358 TA allocations and
- * ULA allocations both open the quarter's Combined Allocation page, /admin/allocations/QXX.
+ * Both a TA and a ULA recruitment: Budget Planning and "Allocate TA and ULA slots to Courses",
+ * which opens the quarter's Combined Allocation page, /admin/allocations/QXX (issue #358).
  */
 export const Both = Template.bind({});
 Both.args = { quarter: "20261", ta: { id: 1 }, ula: { id: 2 } };
 
-/** No ULA recruitment: ULA allocations is greyed out. */
+/** Only a TA recruitment: the button says "Allocate TA slots to Courses". */
 export const TaOnly = Template.bind({});
 TaOnly.args = { quarter: "20262", ta: { id: 3 } };
 
-/** No TA recruitment: TA allocations is greyed out. */
+/** Only a ULA recruitment: the button says "Allocate ULA slots to Courses". */
 export const UlaOnly = Template.bind({});
 UlaOnly.args = { quarter: "20261", ula: { id: 2 } };
+
+/** Neither (the home page never shows this): the button is greyed out. */
+export const Neither = Template.bind({});
+Neither.args = { quarter: "20264" };

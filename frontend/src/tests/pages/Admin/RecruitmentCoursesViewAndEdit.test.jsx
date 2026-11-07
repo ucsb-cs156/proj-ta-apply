@@ -100,7 +100,7 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     expect(
       screen.getByTestId("RecruitmentCoursesPage-edit-text"),
     ).toHaveTextContent(
-      "Click Edit to: change the number of TAs/ULAs expected to be hired; populate the course list, add a lecture by enroll code, or remove one; adjust the visibility of the allocations; publish the assignments.",
+      "Click Edit to: populate the course list, add a lecture by enroll code, remove a course, or release allocations to faculty.",
     );
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     expect(heartbeats()).toHaveLength(0);
@@ -122,14 +122,18 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     ).toBeNull();
   });
 
-  test("the edit page keeps the Populate explanation", async () => {
+  test("the edit page has no explanatory paragraph, description or pointer (issue #358)", async () => {
     renderAt("/admin/recruitments/7/courses/edit");
 
+    await screen.findByTestId("RecruitmentCoursesPage-populate");
     expect(
-      await screen.findByText(/Re-running Populate picks up newly flagged/),
-    ).toBeInTheDocument();
+      screen.queryByText(/Re-running Populate picks up newly flagged/),
+    ).toBeNull();
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-description"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-combined-pointer"),
     ).toBeNull();
   });
 
@@ -248,10 +252,16 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     for (const id of ["fill-estimates", "auto-assign"]) {
       expect(screen.queryByTestId(`RecruitmentCoursesPage-${id}`)).toBeNull();
     }
-    expect(screen.queryAllByRole("spinbutton")).toHaveLength(1); // the hiring target
+    // Issue #358 follow-up: no hiring target box (the Budget page has it), no pointer, and the
+    // Publish Assignments panel is on the Assignments page.
+    expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
     expect(
-      screen.getByTestId("RecruitmentCoursesPage-combined-link"),
-    ).toHaveAttribute("href", "/admin/allocations/W26");
+      screen.queryByTestId("RecruitmentCoursesPage-hiring-target"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-combined-link"),
+    ).toBeNull();
+    expect(screen.queryByTestId("RecruitmentCoursesPage-publish")).toBeNull();
     expect(
       screen.getByTestId(
         "RecruitmentCoursesPage-cell-row-0-col-removed-button",

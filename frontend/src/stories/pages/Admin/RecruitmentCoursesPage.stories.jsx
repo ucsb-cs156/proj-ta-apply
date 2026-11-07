@@ -91,8 +91,9 @@ export const Default = Template.bind({});
 const EditTemplate = () => <RecruitmentCoursesPage edit />;
 
 /**
- * The edit page, alone: the hiring target box, Populate, Add by enroll code, Remove, the visibility
- * and publish panels and the link back to the view-only page.
+ * The edit page, alone: Populate, Add by enroll code, Remove, the allocation visibility panel and
+ * the link back to the view-only page. The hiring target is on the Budget page and the Publish
+ * Assignments panel on the Assignments page (issue #358).
  */
 export const Editing = EditTemplate.bind({});
 Editing.parameters = {

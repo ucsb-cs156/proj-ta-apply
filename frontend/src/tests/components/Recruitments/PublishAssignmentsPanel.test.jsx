@@ -64,7 +64,7 @@ describe("PublishAssignmentsPanel tests", () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByTestId("PublishAssignmentsPanel")).toHaveClass("mt-4");
+    expect(screen.getByTestId("PublishAssignmentsPanel")).toHaveClass("my-3");
     const button = screen.getByTestId("PublishAssignmentsPanel-button");
     expect(button).toHaveTextContent("Publish Assignments");
     expect(button).toHaveClass("btn-outline-dark");
@@ -307,7 +307,7 @@ describe("PublishAssignmentsPanel tests", () => {
     expect(line).toHaveTextContent(
       "Assignments are published. Open the assignments page.",
     );
-    expect(line).toHaveClass("mt-4");
+    expect(line).toHaveClass("my-3");
     expect(
       within(line).getByRole("link", { name: "Open the assignments page" }),
     ).toHaveAttribute("href", "/recruitments/1/assignments");

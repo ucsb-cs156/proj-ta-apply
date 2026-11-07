@@ -143,20 +143,19 @@ public class RecruitmentsWebIT extends WebTestCase {
     waitFor(firstRow);
     assertThat(firstRow).isVisible();
 
-    // Issue #357: a QXX Budget card sits above the quarter's cards; only a TA recruitment exists,
-    // so TA allocations is live and ULA allocations is greyed out. Since issue #358 the live
-    // button opens the quarter's Combined Allocation page.
+    // Issue #357: a QXX Budget card sits above the quarter's cards. Since issue #358 it has Budget
+    // Planning and one allocation button, labelled by the quarter's recruitments (only a TA one
+    // exists here), which opens the quarter's Combined Allocation page.
     assertThat(
             page.locator("[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-title']"))
         .containsText("Budget");
     assertThat(
-            page.locator(
-                "[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-ta-allocations']"))
-        .hasAttribute("href", Pattern.compile("/admin/allocations/[WSMF]\\d\\d"));
-    assertThat(
-            page.locator(
-                "[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-ula-allocations']"))
-        .isDisabled();
+            page.locator("[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-budget']"))
+        .containsText("Budget Planning");
+    Locator allocate =
+        page.locator("[data-testid^='HomePageLoggedIn-admin-budget-'][data-testid$='-allocate']");
+    assertThat(allocate).containsText("Allocate TA slots to Courses");
+    assertThat(allocate).hasAttribute("href", Pattern.compile("/admin/allocations/[WSMF]\\d\\d"));
 
     page.getByTestId("HomePageLoggedIn-admin-card-0-courses-button").click();
 
@@ -238,7 +237,7 @@ public class RecruitmentsWebIT extends WebTestCase {
     waitFor(firstCourse);
     // View-only: the Edit button and its words, and nothing to change.
     assertThat(page.getByTestId("RecruitmentCoursesPage-edit-text"))
-        .containsText("Click Edit to: change the number of TAs/ULAs expected to be hired;");
+        .containsText("Click Edit to: populate the course list, add a lecture by enroll code,");
     assertThat(page.getByTestId("RecruitmentCoursesPage-add")).not().isVisible();
     // Issue #358: the budget columns left this page for the Combined Allocation page, which the
     // page points to.

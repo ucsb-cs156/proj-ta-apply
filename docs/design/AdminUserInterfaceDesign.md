@@ -67,13 +67,13 @@ with three additions:
 |---|---|---|---|
 | 1 | `Created: {date the recruitment was created}`; just `Created` for an old recruitment whose date was never recorded | always | under the box, a line **n courses** and a link **(see courses)** → the Courses page |
 | 2 | `Opened: {actualOpeningDate}` once opened; before that `Tentative: {tentativeOpeningDate}` | actualOpeningDate is set | the Open Applications modal; under the box, a line **n draft applications** and a link **(see draft applications)** → the Draft Applications page |
-| 3 | `Hiring Target: {n}` (the target is never unset: it defaults to 1, which is obviously wrong in practice and signals that action is needed) | the allocations add up to the target | the word **Budget** → the Budget for Quarter page for the recruitment's quarter; the word **Allocations** → the Recruitment Courses page; the two words are set well apart (two ordinary lines of text apart, not one), so it is plain that they are two separate links |
+| 3 | `Hiring Target: {n}` (the target is never unset: it defaults to 1, which is obviously wrong in practice and signals that action is needed) | the allocations add up to the target | the word **Budget** → the Budget for Quarter page for the recruitment's quarter; the word **Allocations** → the quarter's Combined Allocation page, `/admin/allocations/QXX` (issue #358; it was the Recruitment Courses edit page); the two words are set well apart (two ordinary lines of text apart, not one), so it is plain that they are two separate links |
 | 4 | `Closed: {actualClosingDate}` once closed; before that `Prim. Consid: {primaryConsiderationDate}` | actualClosingDate is set and applications are closed | the Close Applications modal; under the box, a line **n applications** and a link **(see applications)** → the Applications page |
-| 5 | `Released: {date}` or `Not released yet` | visibility is not "admins only" | the Allocation Visibility modal (three radio options); and a separate link **(see allocations)** → the Courses page |
+| 5 | `Released: {date}` or `Not released yet` | visibility is not "admins only" | the Allocation Visibility modal (three radio options); and a separate link **(see allocations)** → the quarter's Combined Allocation page (issue #358; it was the Courses page) |
 | 6 | `Opened: {date faculty rankings opened}` or `Not opened yet` | faculty review opening date set | the Open Faculty Rankings modal; and a separate link **(see rankings)** → the Courses page, the same as under step 7 |
 | 7 | `Closed: {date faculty rankings closed}`; before that `Deadline: {facultyRankingDeadline}` if a deadline is set, else `Not closed yet` | reviews closed after having been open | the Close Faculty Rankings modal; and a separate link **(see rankings)** → the Courses page |
-| 8 | `Still to assign: n` while tentative assignments < target; `Assignment complete` otherwise | assignments ≥ target | the Assignments page; and a separate link **(see assignments)** → the Courses page, the same as under step 9 |
-| 9 | `Released: {date hiring decisions released}` or `Not released yet`, followed by the reopening note below when it applies | assignments published | before publishing, the Release Assignments (publish) modal; after publishing, the published Assignments page; and a separate link **(see assignments)** → the Courses page |
+| 8 | `Still to assign: n` while tentative assignments < target; `Assignment complete` otherwise | assignments ≥ target | the Assignments page; and a separate link **(see assignments)** → the recruitment's assignments page, `/recruitments/:id/assignments` (issue #358; it was the Courses page), the same as under step 9 |
+| 9 | `Released: {date hiring decisions released}` or `Not released yet`, followed by the reopening note below when it applies | assignments published | before publishing, the Release Assignments (publish) modal; after publishing, the published Assignments page; and a separate link **(see assignments)** → the recruitment's assignments page (issue #358) |
 
 The counts and links under the boxes come from the same steps endpoint as the labels. **n courses**
 counts the recruitment's courses that have not been removed. **n draft applications** (step 2) counts the recruitment's draft applications, the same number as the card's draft button. **n applications** (step 4) counts the real,
@@ -110,11 +110,14 @@ endpoint so the frontend only draws.
 
 Above each quarter's recruitment card, or pair of cards when the quarter has both a TA and a ULA
 recruitment, the admin home page shows a lighter **QXX Budget** card (QXX from `yyyyqToQyy`, such
-as "W26 Budget") with three buttons: **Budget** (`/admin/budget/QXX`), **TA allocations** and
-**ULA allocations**. Since issue #358 (part 3) both allocations buttons go to the quarter's
-Combined Allocation page, `/admin/allocations/QXX` (before that, to
-`/admin/recruitments/:id/courses/edit` of that quarter's TA or ULA recruitment); each is still
-greyed out and disabled when the quarter has no recruitment of that type. The cards are grouped by
+as "W26 Budget") with two buttons since issue #358 (part 3): **Budget Planning**
+(`/admin/budget/QXX`; it was labelled **Budget**) and one allocation button to the quarter's
+Combined Allocation page, `/admin/allocations/QXX`, labelled by the recruitments the quarter has:
+**Allocate TA slots to Courses**, **Allocate ULA slots to Courses** or **Allocate TA and ULA slots
+to Courses** (before part 3 there were two buttons, **TA allocations** and **ULA allocations**, to
+`/admin/recruitments/:id/courses/edit` of that quarter's TA or ULA recruitment, each greyed out
+when the quarter had no recruitment of that type; the single button is greyed out only when the
+quarter has neither, which the home page never shows). The cards are grouped by
 quarter, in the order each quarter first appears in the sorted list, so the budget card moves with
 its quarter; sorting by anything other than Quarter therefore keeps a quarter's cards together
 instead of interleaving them.
@@ -191,11 +194,11 @@ Courses pages" below).
 
 The TA/ULA Recruitment Courses pages (`/admin/recruitments/:id/courses` and its `/edit` form) are
 not being phased out; they keep Populate, Add by enroll code, Remove / Unremove, Show removed
-courses, the UCSB refresh and the last-refreshed line, the hiring target, allocation visibility and
-Publish Assignments panels, Copy emails of faculty with zero rankings, the Summer Session column,
-the multi-tab edit warning, the developer buttons, and the totals footer for what remains (Total
-Course Count, Enrolled, Max). What left them, because they are budget features that need to be seen
-for TAs and ULAs together:
+courses, the UCSB refresh and the last-refreshed line, the allocation visibility panel, Copy emails
+of faculty with zero rankings, the Summer Session column, the multi-tab edit warning, the developer
+buttons, and the totals footer for what remains (Total Course Count, Enrolled, Max); the view-only
+page also keeps the read-only hiring target block and the pointer to the combined page. What left
+them, because they are budget features that need to be seen for TAs and ULAs together:
 
 - the columns **Enrollment Estimate, Allocation, Unrounded Allocation, Delta** and the
   **TA:student / ULA:student ratio** (`AllocationsRelatedColumns`), which both pages now pass to
@@ -203,10 +206,17 @@ for TAs and ULAs together:
 - the controls **Set enrollment estimates from: max, actual** and **Auto assign allocations** (with
   its tooltip and confirmation modal), which only acted on those columns.
 
-Both pages carry a pointer sentence linking to `/admin/allocations/QXX` for the recruitment's
-quarter. The view-only page's Edit text now reads "Click Edit to: change the number of TAs/ULAs
-expected to be hired; populate the course list, add a lecture by enroll code, or remove one; adjust
-the visibility of the allocations; publish the assignments." `RecruitmentCourseTable` kept the five
+After the maintainer's review of part 3 (issue #358, items 19-28): the view-only page's Edit text
+reads "Click Edit to: populate the course list, add a lecture by enroll code, remove a course, or
+release allocations to faculty."; the edit page lost its explanatory paragraph about Populate, the
+pointer sentence, the hiring-target block ("Total number of TAs expected to be hired", "Allocated so
+far", "left to assign"; the target is entered on the Budget page) and the whole Publish Assignments
+panel, which is now at the top of `/admin/recruitments/:id/assignments`, where the assignments are
+made (the button until published, then "Assignments are published. Open the assignments page."; the
+recruitment card's step 9 still opens the same modal); the zero-rankings message reads "None of the
+rows with zero rankings have an email address available". The view-only page keeps its pointer
+sentence linking to `/admin/allocations/QXX` for the recruitment's quarter and its read-only hiring
+target. `RecruitmentCourseTable` kept the five
 columns as read-only text for the faculty Courses page (issue #300: instructors see them while the
 admin shows all courses' allocations to all faculty), and lost its own editing code for them (the
 estimate and allocation boxes and the `requestHeaders` / `allocationBulkVersion` props); the shared
@@ -214,8 +224,11 @@ estimate and allocation boxes and the `requestHeaders` / `allocationBulkVersion`
 page still heartbeats under `courses-edit:<recruitmentId>`, because the combined page heartbeats
 under the same key and the two warn each other. The Budget page keeps its "TA/ULA Recruitment
 Courses page" links (shown when the allocations do not add up to the target) and its "Combined
-allocations" header link; the recruitment cards' "Courses" button is unchanged; the Recruitment
-Steps diagram's "(see allocations)" link still lands on the view-only Courses page.
+allocations" header link; the recruitment cards' "Courses" button is unchanged. In the Recruitment
+Steps diagram (`RecruitmentStepsService`), step 3's "Allocations" title link and step 5's "(see
+allocations)" link go to `/admin/allocations/QXX`, and steps 8 and 9's "(see assignments)" links go
+to `/recruitments/:id/assignments` (they went to the Courses edit page and the view-only Courses
+page before).
 
 ## The new recruitment card layout
 

@@ -1,10 +1,4 @@
-import {
-  cleanup,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -443,7 +437,9 @@ describe("RecruitmentCoursesPage tests", () => {
     expect(button).toBeDisabled();
     expect(
       screen.getByTestId("RecruitmentCoursesPage-no-zero-ranking-emails"),
-    ).toHaveTextContent("No mapped faculty email addresses are available.");
+    ).toHaveTextContent(
+      "None of the rows with zero rankings have an email address available",
+    );
     expect(mockClipboardWriteText).not.toHaveBeenCalled();
   });
 
@@ -514,19 +510,19 @@ describe("RecruitmentCoursesPage tests", () => {
     );
   };
 
-  // ---- hiring target and allocations (issue #174) ----
+  // ---- hiring target and allocations (issue #174), read-only on the view page since #358 ----
 
-  test("shows the hiring target above the refresh line, with the visible allocations added up", async () => {
-    renderPage();
+  test("the view page shows the hiring target above the refresh line, with the visible allocations added up", async () => {
+    renderPage({ edit: false });
 
     const box = await screen.findByTestId(
       "RecruitmentCoursesPage-hiring-target-totalHiringTarget",
     );
     // Recruitment 7 is a ULA recruitment expecting 6; the three visible rows allocate 2 + 3 + 1.
-    expect(box).toHaveValue(6);
-    expect(
-      screen.getByLabelText("Total number of ULAs expected to be hired:"),
-    ).toBe(box);
+    expect(box).toHaveTextContent(
+      "Total number of ULAs expected to be hired: 6",
+    );
+    expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
     await waitFor(() =>
       expect(
         screen.getByTestId("RecruitmentCoursesPage-hiring-target-allocated"),
@@ -550,7 +546,7 @@ describe("RecruitmentCoursesPage tests", () => {
 
   test("the panel waits for the recruitment", async () => {
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
-    renderPage();
+    renderPage({ edit: false });
 
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     expect(
@@ -566,7 +562,7 @@ describe("RecruitmentCoursesPage tests", () => {
         totalHiringTarget: 4,
       },
     ]);
-    renderPage();
+    renderPage({ edit: false });
 
     expect(
       await screen.findByTestId("RecruitmentCoursesPage-hiring-target-over"),
@@ -579,7 +575,7 @@ describe("RecruitmentCoursesPage tests", () => {
   });
 
   test("removed rows do not count toward the allocation, even when shown", async () => {
-    renderPage();
+    renderPage({ edit: false });
     await screen.findByTestId("RecruitmentCoursesPage-hiring-target-allocated");
 
     await userEvent.click(
@@ -589,9 +585,9 @@ describe("RecruitmentCoursesPage tests", () => {
     // The removed row (allocation 1) appears, but the sum stays 6.
     expect(
       await screen.findByTestId(
-        "RecruitmentCoursesPage-cell-row-3-col-removed-button",
+        "RecruitmentCoursesPage-cell-row-3-col-courseId",
       ),
-    ).toHaveTextContent("Unremove");
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId("RecruitmentCoursesPage-hiring-target-allocated"),
     ).toHaveTextContent("Allocated so far: 6");
@@ -606,7 +602,7 @@ describe("RecruitmentCoursesPage tests", () => {
         200,
         notRemoved.map(({ allocation: _omitted, ...course }) => course),
       );
-    renderPage();
+    renderPage({ edit: false });
 
     await waitFor(() =>
       expect(
@@ -615,32 +611,27 @@ describe("RecruitmentCoursesPage tests", () => {
     );
   });
 
-  test("typing a hiring target saves it and re-reads the recruitment", async () => {
+  test("the edit page has no hiring target, description, pointer or Publish Assignments panel (issue #358)", async () => {
     renderPage();
-    const box = await screen.findByTestId(
-      "RecruitmentCoursesPage-hiring-target-totalHiringTarget",
-    );
-    await afterRefresh();
-    const before = getsOf("/api/admin/recruitments/all");
+    await screen.findByTestId("RecruitmentCoursesPage-populate");
+    await screen.findByTestId("RecruitmentCoursesPage-allocation-visibility");
 
-    await userEvent.clear(box);
-    await userEvent.type(box, "9");
-
-    await waitFor(() =>
-      expect(
-        axiosMock.history.put.filter(
-          (r) => r.url === "/api/admin/recruitments/totalHiringTarget",
-        ),
-      ).toHaveLength(1),
-    );
-    expect(
-      axiosMock.history.put.find(
-        (r) => r.url === "/api/admin/recruitments/totalHiringTarget",
-      ).params,
-    ).toEqual({ id: 7, totalHiringTarget: 9 });
-    await waitFor(() =>
-      expect(getsOf("/api/admin/recruitments/all")).toBeGreaterThan(before),
-    );
+    for (const id of [
+      "hiring-target",
+      "hiring-target-totalHiringTarget",
+      "description",
+      "combined-pointer",
+      "combined-link",
+      "publish",
+      "publish-button",
+      "publish-published",
+    ]) {
+      expect(screen.queryByTestId(`RecruitmentCoursesPage-${id}`)).toBeNull();
+    }
+    expect(screen.queryByText(/Re-running Populate picks up/)).toBeNull();
+    expect(screen.queryByText(/expected to be hired/)).toBeNull();
+    expect(screen.queryByText("Publish Assignments")).toBeNull();
+    expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
   });
 
   // ---- refresh on open (issue #175) ----
@@ -910,10 +901,10 @@ describe("RecruitmentCoursesPage tests", () => {
     expect(
       screen.getByTestId("RecruitmentCoursesPage-allocation-visibility-change"),
     ).toHaveTextContent("Change");
-    const hiring = screen.getByTestId("RecruitmentCoursesPage-hiring-target");
+    // Issue #358: the hiring target is no longer on the edit page; the panel is above the refresh line.
     expect(
-      hiring.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+      screen.queryByTestId("RecruitmentCoursesPage-hiring-target"),
+    ).toBeNull();
     const refreshed = screen.getByTestId(
       "RecruitmentCoursesPage-last-refreshed",
     );
@@ -1222,106 +1213,6 @@ describe("RecruitmentCoursesPage tests", () => {
     ).toBeInTheDocument();
   });
 
-  // Issue #180: publishing the assignments from the very bottom of the page.
-  test("the Publish Assignments modal says why it cannot publish while ranking is open (issue #237)", async () => {
-    renderPage();
-
-    await userEvent.click(
-      await screen.findByTestId("RecruitmentCoursesPage-publish-button"),
-    );
-
-    expect(
-      await screen.findByTestId("RecruitmentCoursesPage-publish-refusal"),
-    ).toHaveTextContent(
-      "Close Faculty Ranking before releasing hiring decisions.",
-    );
-    expect(
-      screen.getByTestId("RecruitmentCoursesPage-publish-confirm"),
-    ).toBeDisabled();
-  });
-
-  test("the Publish Assignments panel is the last thing on the page and publishes recruitment 7", async () => {
-    axiosMock
-      .onPut("/api/admin/recruitments/assignmentsPublished")
-      .reply(200, {});
-    // Faculty ranking and applications are closed, so releasing is not blocked (issue #237).
-    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
-      {
-        ...recruitmentsFixtures.threeRecruitments[1],
-        id: 7,
-        reviewStatus: "Closed",
-        applicationStatus: "CLOSED",
-      },
-    ]);
-    renderPage();
-
-    const button = await screen.findByTestId(
-      "RecruitmentCoursesPage-publish-button",
-    );
-    expect(button).toHaveTextContent("Publish Assignments");
-    const panel = screen.getByTestId("RecruitmentCoursesPage-publish");
-    expect(panel.nextElementSibling).toBeNull();
-    const table = document.querySelector("table");
-    expect(panel.parentElement).toContainElement(table);
-    expect(
-      table.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-
-    await userEvent.click(button);
-    const modal = await screen.findByTestId(
-      "RecruitmentCoursesPage-publish-modal",
-    );
-    expect(modal).toHaveTextContent("information about the ULAs hired");
-    const recruitmentGets = () =>
-      axiosMock.history.get.filter(
-        (r) => r.url === "/api/admin/recruitments/all",
-      ).length;
-    const before = recruitmentGets();
-    await userEvent.click(
-      screen.getByTestId("RecruitmentCoursesPage-publish-confirm"),
-    );
-
-    await waitFor(() =>
-      expect(
-        axiosMock.history.put.filter(
-          (r) => r.url === "/api/admin/recruitments/assignmentsPublished",
-        ),
-      ).toHaveLength(1),
-    );
-    expect(
-      axiosMock.history.put.find(
-        (r) => r.url === "/api/admin/recruitments/assignmentsPublished",
-      ).params,
-    ).toEqual({ id: 7, published: true });
-    await waitFor(() =>
-      expect(mockToast).toHaveBeenCalledWith("Assignments published."),
-    );
-    await waitFor(() => expect(recruitmentGets()).toBeGreaterThan(before));
-  });
-
-  test("once published the page says so instead of offering the button", async () => {
-    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [
-      {
-        ...recruitmentsFixtures.threeRecruitments[1],
-        id: 7,
-        assignmentsPublished: true,
-      },
-    ]);
-    renderPage();
-
-    const line = await screen.findByTestId(
-      "RecruitmentCoursesPage-publish-published",
-    );
-    expect(line).toHaveTextContent("Assignments are published.");
-    expect(within(line).getByRole("link")).toHaveAttribute(
-      "href",
-      "/recruitments/7/assignments",
-    );
-    expect(
-      screen.queryByTestId("RecruitmentCoursesPage-publish-button"),
-    ).not.toBeInTheDocument();
-  });
-
   /** Issue #225: Developer Mode's Fake Hiring Targets and Allocations, in the footer. */
   test("with developer mode on, the footer button opens the modal sized to the non-removed courses", async () => {
     axiosMock
@@ -1572,7 +1463,7 @@ describe("RecruitmentCoursesPage tests", () => {
       .reply(200, { available: true, on: false });
     renderPage();
 
-    await screen.findByTestId("RecruitmentCoursesPage-publish-button");
+    await screen.findByTestId("RecruitmentCoursesPage-populate");
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-fake-rankings"),
     ).not.toBeInTheDocument();
@@ -1584,7 +1475,7 @@ describe("RecruitmentCoursesPage tests", () => {
       .reply(200, { available: true, on: false });
     renderPage();
 
-    await screen.findByTestId("RecruitmentCoursesPage-publish-button");
+    await screen.findByTestId("RecruitmentCoursesPage-populate");
     await waitFor(() =>
       expect(
         axiosMock.history.get.filter((r) => r.url === "/api/developerMode")
@@ -1617,7 +1508,13 @@ describe("RecruitmentCoursesPage tests", () => {
       await screen.findByTestId(
         "RecruitmentCoursesPage-cell-row-0-col-courseId",
       );
-      await screen.findByTestId("RecruitmentCoursesPage-hiring-target");
+      if (edit) {
+        await screen.findByTestId(
+          "RecruitmentCoursesPage-allocation-visibility",
+        );
+      } else {
+        await screen.findByTestId("RecruitmentCoursesPage-hiring-target");
+      }
 
       for (const id of [
         "enrollmentEstimate",
@@ -1684,7 +1581,14 @@ describe("RecruitmentCoursesPage tests", () => {
         screen.getByTestId("RecruitmentCoursesPage-columns-removed"),
       ).toBeInTheDocument();
 
-      // Where they went: the pointer names the recruitment's quarter.
+      // Where they went: the view page's pointer names the recruitment's quarter. The edit page
+      // has no pointer (issue #358 follow-up).
+      if (edit) {
+        expect(
+          screen.queryByTestId("RecruitmentCoursesPage-combined-pointer"),
+        ).toBeNull();
+        return;
+      }
       const pointer = screen.getByTestId(
         "RecruitmentCoursesPage-combined-pointer",
       );
@@ -1706,7 +1610,7 @@ describe("RecruitmentCoursesPage tests", () => {
 
   test("the pointer waits for the recruitment, whose quarter it needs", async () => {
     axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
-    renderPage();
+    renderPage({ edit: false });
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
 
     expect(
@@ -1722,7 +1626,7 @@ describe("RecruitmentCoursesPage tests", () => {
         quarter: "20263",
       },
     ]);
-    renderPage();
+    renderPage({ edit: false });
 
     expect(
       await screen.findByTestId("RecruitmentCoursesPage-combined-link"),

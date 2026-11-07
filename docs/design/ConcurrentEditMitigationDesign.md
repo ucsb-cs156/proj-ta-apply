@@ -545,6 +545,9 @@ Links from elsewhere: the "Courses" button on each recruitment card, and the ste
 "(see courses)", "(see rankings)", "(see assignments)" and "(see allocations)" land on the
 view-only page; the steps diagram's step 3 "Allocations" link and the Budget page's "Adjust them on
 the ... Recruitment Courses page" link, which are for changing allocations, land on the edit page.
+(Since #358 the diagram's "Allocations" and "(see allocations)" links go to the Combined Allocation
+page and "(see assignments)" to the recruitment's assignments page; the Budget page's link is
+unchanged.)
 The Help text for admins and the Developer Help table describe both pages.
 
 **Page text, columns and faculty (#300, which merged #301).** The view-only page's description is

@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -781,5 +787,153 @@ describe("AdminAssignmentsPage tests (issue #179)", () => {
     );
     await waitFor(() => expect(hiddenColumnPuts().length).toBeGreaterThan(0));
     expect(putSummary()).toContainEqual(["course-20", true]);
+  });
+});
+
+/** Issue #358: the Publish Assignments panel moved here from the bottom of the Courses edit page. */
+describe("AdminAssignmentsPage: publishing the assignments (issue #358)", () => {
+  const closed = {
+    ...recruitmentsFixtures.threeRecruitments[0],
+    id: 7,
+    applicationStatus: "CLOSED",
+    reviewStatus: "Closed",
+  };
+
+  beforeEach(() => {
+    mockToast.mockClear();
+    axiosMock.reset();
+    axiosMock.resetHistory();
+    axiosMock
+      .onGet("/api/currentUser")
+      .reply(200, apiCurrentUserFixtures.adminUser);
+    axiosMock
+      .onGet("/api/systemInfo")
+      .reply(200, systemInfoFixtures.showingNeither);
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, [closed]);
+    axiosMock
+      .onGet("/api/admin/assignments")
+      .reply(200, assignmentsFixtures.taPage);
+    axiosMock
+      .onGet("/api/admin/assignments/cancelled")
+      .reply(200, cancelledApplicationsFixtures.two);
+    axiosMock.onGet("/api/admin/hiddencolumns").reply(200, []);
+    axiosMock
+      .onPut("/api/admin/recruitments/assignmentsPublished")
+      .reply(200, { ...closed, assignmentsPublished: true });
+  });
+
+  test("the Publish Assignments button is at the top, under the heading and above the explanation, until published", async () => {
+    renderPage();
+
+    const button = await screen.findByTestId(
+      "AdminAssignmentsPage-publish-button",
+    );
+    expect(button).toHaveTextContent("Publish Assignments");
+    const heading = screen.getByRole("heading", { level: 1 });
+    const intro = screen.getByTestId("AdminAssignmentsPage-intro");
+    const panel = screen.getByTestId("AdminAssignmentsPage-publish");
+    expect(
+      heading.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      panel.compareDocumentPosition(intro) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      screen.queryByTestId("AdminAssignmentsPage-publish-published"),
+    ).toBeNull();
+  });
+
+  test("confirming publishes recruitment 7 and re-reads the recruitments", async () => {
+    renderPage();
+    await userEvent.click(
+      await screen.findByTestId("AdminAssignmentsPage-publish-button"),
+    );
+    const modal = await screen.findByTestId(
+      "AdminAssignmentsPage-publish-modal",
+    );
+    expect(modal).toHaveTextContent("Publish Assignments");
+    const before = axiosMock.history.get.filter(
+      (r) => r.url === "/api/admin/recruitments/all",
+    ).length;
+
+    await userEvent.click(
+      screen.getByTestId("AdminAssignmentsPage-publish-confirm"),
+    );
+
+    await waitFor(() =>
+      expect(
+        axiosMock.history.put.filter(
+          (r) => r.url === "/api/admin/recruitments/assignmentsPublished",
+        ),
+      ).toHaveLength(1),
+    );
+    expect(
+      axiosMock.history.put.find(
+        (r) => r.url === "/api/admin/recruitments/assignmentsPublished",
+      ).params,
+    ).toEqual({ id: 7, published: true });
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith("Assignments published."),
+    );
+    await waitFor(() =>
+      expect(
+        axiosMock.history.get.filter(
+          (r) => r.url === "/api/admin/recruitments/all",
+        ).length,
+      ).toBeGreaterThan(before),
+    );
+  });
+
+  test("the modal says why it cannot publish while ranking is open (issue #237)", async () => {
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, [{ ...closed, reviewStatus: "Open" }]);
+    renderPage();
+    await userEvent.click(
+      await screen.findByTestId("AdminAssignmentsPage-publish-button"),
+    );
+
+    expect(
+      await screen.findByTestId("AdminAssignmentsPage-publish-refusal"),
+    ).toHaveTextContent(
+      "Close Faculty Ranking before releasing hiring decisions.",
+    );
+    expect(
+      screen.getByTestId("AdminAssignmentsPage-publish-confirm"),
+    ).toBeDisabled();
+  });
+
+  test("once published the page says so at the top, with a link to the published page, instead of the button", async () => {
+    axiosMock
+      .onGet("/api/admin/recruitments/all")
+      .reply(200, [{ ...closed, assignmentsPublished: true }]);
+    renderPage();
+
+    const line = await screen.findByTestId(
+      "AdminAssignmentsPage-publish-published",
+    );
+    expect(line).toHaveTextContent(
+      "Assignments are published. Open the assignments page.",
+    );
+    expect(
+      within(line).getByRole("link", { name: "Open the assignments page" }),
+    ).toHaveAttribute("href", "/recruitments/7/assignments");
+    const intro = screen.getByTestId("AdminAssignmentsPage-intro");
+    expect(
+      line.compareDocumentPosition(intro) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      screen.queryByTestId("AdminAssignmentsPage-publish-button"),
+    ).toBeNull();
+  });
+
+  test("nothing about publishing until the recruitment is known", async () => {
+    axiosMock.onGet("/api/admin/recruitments/all").reply(200, []);
+    renderPage();
+    await screen.findByTestId("AdminAssignmentsPage-intro");
+    expect(screen.queryByTestId("AdminAssignmentsPage-publish")).toBeNull();
+    expect(
+      screen.queryByTestId("AdminAssignmentsPage-publish-published"),
+    ).toBeNull();
   });
 });

@@ -71,7 +71,7 @@ const stepsFor = (recruitment) => ({
         { text: "Budget", href: "/admin/budget/W26" },
         {
           text: "Allocations",
-          href: `/admin/recruitments/${recruitment.id}/courses`,
+          href: "/admin/allocations/W26",
         },
       ],
     },
@@ -96,7 +96,7 @@ const stepsFor = (recruitment) => ({
       links: [
         {
           text: "(see allocations)",
-          href: `/admin/recruitments/${recruitment.id}/courses`,
+          href: "/admin/allocations/W26",
         },
       ],
     },
@@ -132,7 +132,7 @@ const stepsFor = (recruitment) => ({
       links: [
         {
           text: "(see assignments)",
-          href: `/admin/recruitments/${recruitment.id}/courses`,
+          href: `/recruitments/${recruitment.id}/assignments`,
         },
       ],
     },
@@ -144,7 +144,7 @@ const stepsFor = (recruitment) => ({
       links: [
         {
           text: "(see assignments)",
-          href: `/admin/recruitments/${recruitment.id}/courses`,
+          href: `/recruitments/${recruitment.id}/assignments`,
         },
       ],
     },
@@ -1346,11 +1346,12 @@ describe("RecruitmentCards tests", () => {
     );
     expect(screen.getByTestId("where")).toHaveTextContent("/admin/budget/W26");
 
+    // Issue #358: Allocations opens the quarter's Combined Allocation page.
     await userEvent.click(
       screen.getByTestId("Cards-card-1-steps-steps-step-3-link-Allocations"),
     );
     expect(screen.getByTestId("where")).toHaveTextContent(
-      "/admin/recruitments/1/courses",
+      "/admin/allocations/W26",
     );
 
     await userEvent.click(
@@ -1361,13 +1362,14 @@ describe("RecruitmentCards tests", () => {
     );
 
     for (const [step, path] of [
-      [1, "courses"],
-      [2, "applications"],
-      [4, "applications"],
-      [5, "courses"],
-      [6, "courses"],
-      [7, "courses"],
-      [8, "courses"],
+      [1, "/admin/recruitments/1/courses"],
+      [2, "/admin/recruitments/1/applications"],
+      [4, "/admin/recruitments/1/applications"],
+      [5, "/admin/allocations/W26"],
+      [6, "/admin/recruitments/1/courses"],
+      [7, "/admin/recruitments/1/courses"],
+      [8, "/recruitments/1/assignments"],
+      [9, "/recruitments/1/assignments"],
     ]) {
       // Back to a different page first, so each click is seen to move.
       await userEvent.click(
@@ -1379,16 +1381,8 @@ describe("RecruitmentCards tests", () => {
       await userEvent.click(
         screen.getByTestId(`Cards-card-1-steps-steps-step-${step}-link-0`),
       );
-      expect(screen.getByTestId("where")).toHaveTextContent(
-        `/admin/recruitments/1/${path}`,
-      );
+      expect(screen.getByTestId("where")).toHaveTextContent(path);
     }
-    await userEvent.click(
-      screen.getByTestId("Cards-card-1-steps-steps-step-9-link-0"),
-    );
-    expect(screen.getByTestId("where")).toHaveTextContent(
-      "/admin/recruitments/1/courses",
-    );
     // Following links changes nothing on the backend.
     expect(axiosMock.history.put).toHaveLength(0);
   });

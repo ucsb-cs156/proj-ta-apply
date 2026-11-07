@@ -137,19 +137,21 @@ export default function HelpAdminsPage(): React.JSX.Element {
           id="publish-assignments"
           data-testid="HelpAdminsPage-publish-assignments"
         >
-          When the tentative assignments are close to final, the very bottom of
-          the recruitment&apos;s <strong>Courses</strong> page has{" "}
-          <strong>Publish Assignments</strong>. It asks you to confirm:
-          publishing creates a read-only <strong>Assignments</strong> page for
-          admins and faculty, with every course and the TAs (or ULAs) assigned
-          to each, and unlocks CSV downloads of the same table to hand to the
-          financial office for hiring paperwork. Assignments can still be
-          changed afterwards, and the page always shows the current ones, but it
-          is best to wait until most are settled. Once published, the
-          recruitment card shows an <strong>Assignments Published</strong> badge
-          and a <strong>Published Assignments</strong> button (instructors see
-          an <strong>Assignments</strong> button on their card), and publishing
-          is written to the recruitment&apos;s change history. The page offers{" "}
+          When the tentative assignments are close to final, the top of the
+          recruitment&apos;s <strong>Assignments</strong> page, where the
+          assignments are made, has <strong>Publish Assignments</strong>. It
+          asks you to confirm: publishing creates a read-only{" "}
+          <strong>Assignments</strong> page for admins and faculty, with every
+          course and the TAs (or ULAs) assigned to each, and unlocks CSV
+          downloads of the same table to hand to the financial office for hiring
+          paperwork. Assignments can still be changed afterwards, and the page
+          always shows the current ones, but it is best to wait until most are
+          settled. Once published, the top of the Assignments page says so
+          instead, with a link to the published page; the recruitment card shows
+          an <strong>Assignments Published</strong> badge and a{" "}
+          <strong>Published Assignments</strong> button (instructors see an{" "}
+          <strong>Assignments</strong> button on their card), and publishing is
+          written to the recruitment&apos;s change history. The page offers{" "}
           <em>One Row per course</em> (course number, instructor, instructor
           email, then one column per assigned TA or ULA as &ldquo;First Last
           (email)&rdquo;) or <em>One Row per TA/ULA</em> (name, email, course,
@@ -367,19 +369,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
           catalog name can be given an email.
         </p>
         <p id="hiring-target" data-testid="HelpAdminsPage-hiring-target">
-          The top of the edit page has the hiring target. Enter the{" "}
-          <strong>total number of TAs (or ULAs) expected to be hired</strong>;
-          it is saved as you type, must be at least 1, and an entry that is not
-          a whole number is dropped when you leave the box. The same target is
-          entered on the <Link to="#budget">Budget for Quarter</Link> page,
-          beside the money. Each lecture&apos;s share of it, its{" "}
+          The hiring target, the{" "}
+          <strong>total number of TAs (or ULAs) expected to be hired</strong>,
+          is entered on the <Link to="#budget">Budget for Quarter</Link> page,
+          beside the money; it must be at least 1. The view-only Courses page
+          shows it, read-only, with a running count of how many positions are
+          allocated so far and how many are left to assign, and warns when the
+          allocations add up to more than the target; the edit page does not
+          show it. Each lecture&apos;s share of it, its{" "}
           <strong>Allocation</strong>, is given on the{" "}
-          <Link to="#combined-allocations">Combined Allocation page</Link>, not
-          here. Under the total, the page keeps a running count of how many
-          positions are allocated so far and how many are left to assign, and
-          warns when the allocations add up to more than the target. Removed
-          lectures keep their number but do not count. These are planning
-          figures: changes to them are not recorded in the change history.
+          <Link to="#combined-allocations">Combined Allocation page</Link>.
+          Removed lectures keep their number but do not count. These are
+          planning figures: changes to them are not recorded in the change
+          history.
         </p>
         <p
           id="enrollment-estimates"
@@ -405,13 +407,19 @@ export default function HelpAdminsPage(): React.JSX.Element {
           what left the Courses pages is: the Enrollment Estimate, Allocation,
           Unrounded Allocation, Delta and TA:student / ULA:student ratio
           columns, <em>Set enrollment estimates from: max, actual</em>, and{" "}
-          <em>Auto assign allocations</em>. Everything else stays: Populate, Add
-          by enroll code, Remove / Unremove and Show removed courses, the
-          refresh from the UCSB schedule and the last-refreshed line, the hiring
-          target, allocation visibility and Publish Assignments panels, Copy
-          emails of faculty with zero rankings, the Summer Session column, the
-          warning about other tabs, the developer buttons, and the totals row
-          with its Total Course Count and the sums of Enrolled and Max.
+          <em>Auto assign allocations</em>; and from the edit page alone, the
+          hiring target block (the target is entered on the Budget for Quarter
+          page), the paragraph explaining Populate, and the{" "}
+          <em>Publish Assignments</em> panel, which is now at the top of the
+          recruitment&apos;s Assignments page. Everything else stays: Populate,
+          Add by enroll code, Remove / Unremove and Show removed courses, the
+          refresh from the UCSB schedule and the last-refreshed line, the
+          allocation visibility panel, Copy emails of faculty with zero
+          rankings, the Summer Session column, the warning about other tabs, the
+          developer buttons, and the totals row with its Total Course Count and
+          the sums of Enrolled and Max; the view-only page also keeps the
+          read-only hiring target and the pointer to the Combined Allocation
+          page.
         </p>
         <p
           id="allocation-visibility"
@@ -475,11 +483,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
           one ULA, and the three budget lines; every box is saved as you type,
           and an entry that is not an amount in dollars and cents is dropped
           when you leave it. The <strong>hiring targets</strong> of both
-          recruitments are entered here (or at the top of each
-          recruitment&apos;s Courses edit page), beside what has been allocated
-          to courses so far; when the two do not agree, the page says so and
-          links to that recruitment&apos;s Courses page. The allocations
-          themselves are adjusted on the{" "}
+          recruitments are entered here, beside what has been allocated to
+          courses so far; when the two do not agree, the page says so and links
+          to that recruitment&apos;s Courses page. The allocations themselves
+          are adjusted on the{" "}
           <Link to="#combined-allocations">Combined Allocation page</Link>,
           which the <em>Combined allocations</em> link at the top of the Budget
           page opens. The enrollment totals and ratios are over each
@@ -511,11 +518,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>/admin/allocations/QXX</strong> (for example{" "}
           <em>/admin/allocations/W26</em>) is where a quarter&apos;s enrollment
           estimates and its TA and ULA allocations are edited, side by side. You
-          reach it from the <strong>TA allocations</strong> and{" "}
-          <strong>ULA allocations</strong> buttons of the quarter&apos;s QXX
-          Budget card on your home page, from the <em>Combined allocations</em>{" "}
-          link at the top of the Budget for Quarter page, and from the pointer
-          on each recruitment&apos;s Courses page. Its rows are the courses of
+          reach it from the{" "}
+          <strong>Allocate TA and ULA slots to Courses</strong> button of the
+          quarter&apos;s QXX Budget card on your home page (
+          <strong>Allocate TA slots to Courses</strong> or{" "}
+          <strong>Allocate ULA slots to Courses</strong> when the quarter has
+          one recruitment), from the <em>Allocations</em> link of step 3 and the{" "}
+          <em>(see allocations)</em> link of step 5 of each recruitment
+          card&apos;s diagram, from the <em>Combined allocations</em> link at
+          the top of the Budget for Quarter page, and from the pointer on each
+          recruitment&apos;s view-only Courses page. Its rows are the courses of
           the TA recruitment and the ULA recruitment together: a section that is
           in both recruitments is one row, found by its enroll code, and a
           section that is in only one has blank cells for the other type. The
@@ -601,8 +613,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
           it up or down based on the particular needs of specific courses and
           other relevant factors. The <strong>total hiring target</strong> of
           each recruitment is not entered here: it is on the{" "}
-          <Link to="#budget">Budget for Quarter</Link> page (and at the top of
-          the recruitment&apos;s Courses edit page).
+          <Link to="#budget">Budget for Quarter</Link> page.
         </p>
         <p data-testid="HelpAdminsPage-combined-allocations-both">
           When the quarter has <em>both</em> a TA and a ULA recruitment, the
@@ -652,19 +663,23 @@ export default function HelpAdminsPage(): React.JSX.Element {
           (collapsed to a one-line summary on older cards, expanded on the
           latest TA and ULA recruitments). Its boxes carry the lifecycle
           actions, and the card has Courses, Draft Applications and Applications
-          buttons. Above each quarter&apos;s recruitment card, or pair of cards
-          when the quarter has both a TA and a ULA recruitment, is a{" "}
-          <strong>QXX Budget</strong> card (for example <em>W26 Budget</em>)
-          with three buttons: <strong>Budget</strong> opens that quarter&apos;s
-          Budget for Quarter page, and <strong>TA allocations</strong> and{" "}
-          <strong>ULA allocations</strong> both open the quarter&apos;s{" "}
-          <Link to="#combined-allocations">Combined Allocation page</Link>,
-          where the TA and ULA allocations are edited side by side. An
-          allocations button is greyed out when the quarter has no recruitment
-          of that type, so the card also shows which recruitments the quarter
-          has. The budget card stays with its quarter when the cards are sorted,
-          so sorting by anything but quarter groups each quarter&apos;s cards
-          together.
+          buttons. In the diagram, step 3&apos;s <em>Allocations</em> and step
+          5&apos;s <em>(see allocations)</em> links open the quarter&apos;s{" "}
+          <Link to="#combined-allocations">Combined Allocation page</Link>, and
+          the <em>(see assignments)</em> links of steps 8 and 9 open the
+          recruitment&apos;s assignments page. Above each quarter&apos;s
+          recruitment card, or pair of cards when the quarter has both a TA and
+          a ULA recruitment, is a <strong>QXX Budget</strong> card (for example{" "}
+          <em>W26 Budget</em>) with two buttons:{" "}
+          <strong>Budget Planning</strong> opens that quarter&apos;s Budget for
+          Quarter page, and one allocation button opens the quarter&apos;s
+          Combined Allocation page, where the TA and ULA allocations are edited
+          side by side; its label says which recruitments the quarter has:{" "}
+          <strong>Allocate TA slots to Courses</strong>,{" "}
+          <strong>Allocate ULA slots to Courses</strong> or{" "}
+          <strong>Allocate TA and ULA slots to Courses</strong>. The budget card
+          stays with its quarter when the cards are sorted, so sorting by
+          anything but quarter groups each quarter&apos;s cards together.
         </p>
         <p>The lifecycle actions in the diagram and on the card are:</p>
         <ul data-testid="HelpAdminsPage-recruitment-buttons">
@@ -792,9 +807,9 @@ export default function HelpAdminsPage(): React.JSX.Element {
           </li>
           <li>
             <strong>Published Assignments.</strong> Shown once{" "}
-            <em>Publish Assignments</em> has been clicked at the bottom of the
-            Courses page: the read-only assignments page that admins and faculty
-            share, with its two CSV downloads (see{" "}
+            <em>Publish Assignments</em> has been clicked at the top of the
+            Assignments page: the read-only assignments page that admins and
+            faculty share, with its two CSV downloads (see{" "}
             <a href="#publish-assignments">publishing</a> above).
           </li>
           <li>
@@ -1103,18 +1118,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
           get when you open it: nothing on it can be changed, and any number of
           tabs or windows may show it, for you or for other admins, without any
           warning. Its <strong>Edit</strong> button, beside the words
-          &ldquo;Click Edit to: change the number of TAs/ULAs expected to be
-          hired; populate the course list, add a lecture by enroll code, or
-          remove one; adjust the visibility of the allocations; publish the
-          assignments&rdquo;, takes you to the <strong>edit page</strong>, where
-          you can change the hiring target and use Populate and the other
-          controls; it has a link back to the view-only page. The estimated
-          enrollments and the allocations are edited on the Combined Allocation
-          page, which counts as a tab of this edit page (below). Only{" "}
-          <em>one</em> tab or window should have a given recruitment&apos;s edit
-          page open at a time, and edit pages of different recruitments never
-          warn each other. If another admin, or another tab of yours, has the
-          same edit page open, you get a warning that looks like this:
+          &ldquo;Click Edit to: populate the course list, add a lecture by
+          enroll code, remove a course, or release allocations to
+          faculty&rdquo;, takes you to the <strong>edit page</strong>, where you
+          use Populate and the other controls; it has a link back to the
+          view-only page. The estimated enrollments and the allocations are
+          edited on the Combined Allocation page, which counts as a tab of this
+          edit page (below). Only <em>one</em> tab or window should have a given
+          recruitment&apos;s edit page open at a time, and edit pages of
+          different recruitments never warn each other. If another admin, or
+          another tab of yours, has the same edit page open, you get a warning
+          that looks like this:
         </p>
         <MultipleTabsBanner
           others={EXAMPLE_OTHERS}
@@ -1124,18 +1138,18 @@ export default function HelpAdminsPage(): React.JSX.Element {
           testId="HelpAdminsPage-simultaneous-editing-courses-example"
         />
         <p data-testid="HelpAdminsPage-simultaneous-editing-courses-meaning">
-          The hiring target, the course list and the allocations only make sense
-          together, so a copy that is out of date can leave a total that no
-          longer matches the hiring target; that is why the edit page and the
-          Combined Allocation page warn about each other. If you go on and
-          change an allocation on the combined page, the system refuses a change
-          made from a copy that is out of date, tells you, and reads the numbers
-          again; whatever you typed there is lost. The tab or window opened{" "}
-          <em>last</em> also asks the same question as for rankings, and says
-          &ldquo;already has&rdquo; instead of &ldquo;is also editing&rdquo;;
-          there <strong>Leave this page</strong> takes you to the view-only
-          Courses page. To look at the numbers without risk, use the view-only
-          page in as many tabs as you like.
+          The course list and the allocations only make sense together, so a
+          copy that is out of date can leave a total that no longer matches the
+          hiring target; that is why the edit page and the Combined Allocation
+          page warn about each other. If you go on and change an allocation on
+          the combined page, the system refuses a change made from a copy that
+          is out of date, tells you, and reads the numbers again; whatever you
+          typed there is lost. The tab or window opened <em>last</em> also asks
+          the same question as for rankings, and says &ldquo;already has&rdquo;
+          instead of &ldquo;is also editing&rdquo;; there{" "}
+          <strong>Leave this page</strong> takes you to the view-only Courses
+          page. To look at the numbers without risk, use the view-only page in
+          as many tabs as you like.
         </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-combined">
           <strong>The Combined Allocation page.</strong> The{" "}

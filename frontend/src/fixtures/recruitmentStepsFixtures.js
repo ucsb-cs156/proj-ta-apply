@@ -10,7 +10,7 @@ const courses = (id) => `/admin/recruitments/${id}/courses`;
  * The lines under the boxes (issue #249): the counts and links the backend adds to each step. A
  * recruitment has four courses; it has twelve applications and three drafts once step 2 is done.
  */
-const withUnderBoxLines = (id, steps) => {
+const withUnderBoxLines = (id, steps, qyy = "W26") => {
   const applications = steps.find((s) => s.number === 2).done
     ? "12 applications"
     : "0 applications";
@@ -30,15 +30,22 @@ const withUnderBoxLines = (id, steps) => {
     },
   ];
   const seeCourses = (text) => [{ text, href: courses(id) }];
+  const seeAssignments = [
+    { text: "(see assignments)", href: `/recruitments/${id}/assignments` },
+  ];
   const underBox = {
     1: { detail: "4 courses", links: seeCourses("(see courses)") },
     2: { detail: drafts, links: seeDrafts },
     4: { detail: applications, links: seeApplications },
-    5: { links: seeCourses("(see allocations)") },
+    // Issue #358: the allocations are on the Combined Allocation page, the assignments on the
+    // assignments page.
+    5: {
+      links: [{ text: "(see allocations)", href: `/admin/allocations/${qyy}` }],
+    },
     6: { links: seeCourses("(see rankings)") },
     7: { links: seeCourses("(see rankings)") },
-    8: { links: seeCourses("(see assignments)") },
-    9: { links: seeCourses("(see assignments)") },
+    8: { links: seeAssignments },
+    9: { links: seeAssignments },
   };
   return steps.map((step) => ({ ...step, ...underBox[step.number] }));
 };
@@ -59,7 +66,7 @@ const freshSteps = (id, qyy) =>
       label: "Hiring Target: 1",
       titleLinks: [
         { text: "Budget", href: `/admin/budget/${qyy}` },
-        { text: "Allocations", href: courses(id) },
+        { text: "Allocations", href: `/admin/allocations/${qyy}` },
       ],
     },
     {
@@ -135,7 +142,7 @@ const allocated = withSteps(applicationsClosed, [
     label: "Hiring Target: 8",
     titleLinks: [
       { text: "Budget", href: "/admin/budget/W26" },
-      { text: "Allocations", href: courses(1) },
+      { text: "Allocations", href: "/admin/allocations/W26" },
     ],
   },
   {

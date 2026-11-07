@@ -396,8 +396,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           says goodbye at <code>/leave</code>, and shows the banner and the
           modal with the noun &quot;page&quot;; <em>Leave this page</em> goes to
           the view-only page. Since issue #358 the edit page keeps Populate, Add
-          by enroll code, Remove, the hiring target, allocation visibility and
-          publishing, none of which name the tab; the allocation, estimate,
+          by enroll code, Remove and allocation visibility, none of which name
+          the tab (the hiring target is on the Budget page and Publish
+          Assignments on the Assignments page); the allocation, estimate,
           fill-estimates and Auto Allocate saves, which name the tab in the{" "}
           <code>X-Client-Id</code> header, are made from the Combined Allocation
           page (next) under this same key. Only an admin may heartbeat, and the
@@ -792,10 +793,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
             </tr>
             <tr data-testid="HelpDeveloperPage-simultaneous-row-courses-edit">
               <td>
-                Courses edit page (Populate, Remove, hiring target, visibility,
-                publishing; the allocations and estimated enrollments are edited
-                under this key from the Combined Allocation page); the view-only
-                page never warns
+                Courses edit page (Populate, Remove, visibility; the allocations
+                and estimated enrollments are edited under this key from the
+                Combined Allocation page); the view-only page never warns
               </td>
               <td>The whole edit page for one recruitment</td>
               <td>

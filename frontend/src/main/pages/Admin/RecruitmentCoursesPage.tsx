@@ -19,7 +19,6 @@ import {
 import { useStoredHiddenColumns } from "main/utils/useStoredHiddenColumns";
 import { yyyyqToQyy } from "main/utils/quarterUtilities";
 import AllocationVisibilityPanel from "main/components/Recruitments/AllocationVisibilityPanel";
-import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
 import FakeAllocationsModal from "main/components/Recruitments/FakeAllocationsModal";
 import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
 import { canCreateFakeRankings } from "main/utils/fakeRankings";
@@ -361,35 +360,21 @@ export default function RecruitmentCoursesPage({
               Edit
             </Link>
             <span data-testid="RecruitmentCoursesPage-edit-text">
-              Click Edit to: change the number of TAs/ULAs expected to be hired;
-              populate the course list, add a lecture by enroll code, or remove
-              one; adjust the visibility of the allocations; publish the
-              assignments.
+              Click Edit to: populate the course list, add a lecture by enroll
+              code, remove a course, or release allocations to faculty.
             </span>
           </p>
         )}
-        {edit ? (
-          <p>
-            The courses in this recruitment: every lecture of a course flagged
-            for its type that is offered that quarter. Re-running Populate picks
-            up newly flagged courses and refreshes the offering details, leaves
-            removed courses out, and marks as stale any lecture it no longer
-            finds in the UCSB schedule or whose course is no longer flagged.
-            Stale lectures are hidden from applicants until a later Populate
-            finds them again; Remove them if they are not coming back. A
-            cancelled lecture is hidden from applicants too, and comes back by
-            itself if the schedule un-cancels it. A lecture can also be added by
-            hand by its enroll code, flagged course or not; Populate keeps
-            refreshing it for as long as the schedule lists it.
-          </p>
-        ) : (
+        {/* The edit page is the controls and the table alone (issue #358): no description, no
+            pointer and no hiring target, which is entered on the Budget page. */}
+        {!edit && (
           <p data-testid="RecruitmentCoursesPage-description">
             Courses for which the department is planning to hire{" "}
             {recruitment ? `${recruitment.type}s` : "TAs/ULAs"}
             {recruitment ? ` for ${yyyyqToQyy(recruitment.quarter)}` : ""}.
           </p>
         )}
-        {quarterQyy !== null && (
+        {!edit && quarterQyy !== null && (
           <p data-testid="RecruitmentCoursesPage-combined-pointer">
             Enrollment estimates and allocations are not on this page: they are
             edited for TAs and ULAs together on the{" "}
@@ -403,21 +388,19 @@ export default function RecruitmentCoursesPage({
           </p>
         )}
 
-        {recruitment && (
-          <>
-            <HiringTargetPanel
-              recruitment={recruitment}
-              allocatedSoFar={allocatedSoFar}
-              testIdPrefix="RecruitmentCoursesPage-hiring-target"
-              readOnly={!edit}
-            />
-            {edit && (
-              <AllocationVisibilityPanel
-                recruitment={recruitment}
-                testIdPrefix="RecruitmentCoursesPage-allocation-visibility"
-              />
-            )}
-          </>
+        {!edit && recruitment && (
+          <HiringTargetPanel
+            recruitment={recruitment}
+            allocatedSoFar={allocatedSoFar}
+            testIdPrefix="RecruitmentCoursesPage-hiring-target"
+            readOnly
+          />
+        )}
+        {edit && recruitment && (
+          <AllocationVisibilityPanel
+            recruitment={recruitment}
+            testIdPrefix="RecruitmentCoursesPage-allocation-visibility"
+          />
         )}
 
         <p data-testid="RecruitmentCoursesPage-last-refreshed">
@@ -547,16 +530,11 @@ export default function RecruitmentCoursesPage({
                 className="ms-2"
                 data-testid="RecruitmentCoursesPage-no-zero-ranking-emails"
               >
-                No mapped faculty email addresses are available.
+                None of the rows with zero rankings have an email address
+                available
               </span>
             )}
           </div>
-        )}
-        {edit && recruitment && (
-          <PublishAssignmentsPanel
-            recruitment={recruitment}
-            testIdPrefix="RecruitmentCoursesPage-publish"
-          />
         )}
         {edit && showFakeAllocations && (
           <FakeAllocationsModal

@@ -69,6 +69,32 @@ UlaRecruitment.parameters = {
   },
 };
 
+/**
+ * Issue #358: the Publish Assignments panel is at the top of this page. Here the assignments are
+ * already published, so the line and its link to the published page show instead of the button.
+ */
+export const Published = Template.bind({});
+Published.parameters = {
+  reactRouter: { initialEntries: ["/admin/recruitments/7/assignments"] },
+  msw: {
+    handlers: [
+      http.get("/api/admin/recruitments/all", () =>
+        HttpResponse.json([
+          {
+            ...recruitmentsFixtures.threeRecruitments[0],
+            id: 7,
+            assignmentsPublished: true,
+          },
+        ]),
+      ),
+      ...handlers(
+        assignmentsFixtures.taPage,
+        assignmentsFixtures.taPageAfterMove,
+      ),
+    ],
+  },
+};
+
 export const NoApplicants = Template.bind({});
 NoApplicants.parameters = {
   reactRouter: { initialEntries: ["/admin/recruitments/7/assignments"] },

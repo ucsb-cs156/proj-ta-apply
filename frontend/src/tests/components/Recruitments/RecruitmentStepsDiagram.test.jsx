@@ -349,10 +349,8 @@ describe("RecruitmentStepsDiagram tests", () => {
       const allocations = screen.getByTestId("D-step-3-link-Allocations");
       expect(budget).toHaveAttribute("href", "/admin/budget/W26");
       expect(budget).toHaveTextContent("Budget");
-      expect(allocations).toHaveAttribute(
-        "href",
-        "/admin/recruitments/1/courses",
-      );
+      // Issue #358: Allocations opens the quarter's Combined Allocation page.
+      expect(allocations).toHaveAttribute("href", "/admin/allocations/W26");
       expect(allocations).toHaveTextContent("Allocations");
       expect(budget.style.textDecoration).toBe("underline");
       expect(budget.style.fill).toMatch(/#0d6efd|rgb\(13, 110, 253\)/);
@@ -362,9 +360,7 @@ describe("RecruitmentStepsDiagram tests", () => {
       await userEvent.click(budget);
       expect(onNavigate).toHaveBeenLastCalledWith("/admin/budget/W26");
       await userEvent.click(allocations);
-      expect(onNavigate).toHaveBeenLastCalledWith(
-        "/admin/recruitments/1/courses",
-      );
+      expect(onNavigate).toHaveBeenLastCalledWith("/admin/allocations/W26");
       expect(screen.queryByTestId("D-step-3-link")).not.toBeInTheDocument();
     });
 
@@ -391,9 +387,10 @@ describe("RecruitmentStepsDiagram tests", () => {
       );
       const assignments = screen.getByTestId("D-step-9-link-0");
       expect(assignments).toHaveTextContent("(see assignments)");
+      // Issue #358: the assignments are on the assignments page.
       await userEvent.click(assignments);
       expect(onNavigate).toHaveBeenLastCalledWith(
-        "/admin/recruitments/1/courses",
+        "/recruitments/1/assignments",
       );
     });
 
@@ -474,9 +471,7 @@ describe("RecruitmentStepsDiagram tests", () => {
       expect(link).toHaveTextContent("(see allocations)");
       expect(screen.queryByTestId("D-step-5-detail")).not.toBeInTheDocument();
       await userEvent.click(link);
-      expect(onNavigate).toHaveBeenLastCalledWith(
-        "/admin/recruitments/1/courses",
-      );
+      expect(onNavigate).toHaveBeenLastCalledWith("/admin/allocations/W26");
       expect(screen.queryByTestId("D-step-3-link-0")).not.toBeInTheDocument();
       expect(screen.queryByTestId("D-step-3-detail")).not.toBeInTheDocument();
     });
