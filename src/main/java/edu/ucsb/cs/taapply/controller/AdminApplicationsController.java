@@ -5,7 +5,6 @@ import edu.ucsb.cs.taapply.concurrency.ClientActivityDetector;
 import edu.ucsb.cs.taapply.concurrency.ConcurrencyHeaders;
 import edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields;
 import edu.ucsb.cs.taapply.entity.Application;
-import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
@@ -220,14 +219,13 @@ public class AdminApplicationsController extends ApiController {
     ApplicationsController.apply(fields, application, recruitment.getType());
     Application saved;
     try {
-      saved = applicationRepository.save(application);
+      // The save and its audit rows are one transaction (issue #377).
+      saved = applicationAuditService.saveAndRecord(before, application, recruitment.getType());
     } catch (ObjectOptimisticLockingFailureException e) {
       // Another save got in between reading the application and writing it.
       return ApplicationsController.conflict(
           applicationRepository.findById(id).orElseThrow(() -> e), false);
     }
-    List<AuditTrail> changes = applicationAuditService.record(before, saved, recruitment.getType());
-    log.info("Admin edited application {}: {} field(s) changed", id, changes.size());
     return ResponseEntity.ok(saved);
   }
 

@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
-import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -28,7 +27,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 public class AllocationVisibilityServiceTests {
 
   @Autowired AllocationVisibilityService service;
-  @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentAuditService recruitmentAuditService;
 
   private static Recruitment recruitment(AllocationVisibility visibility) {
@@ -40,7 +38,10 @@ public class AllocationVisibilityServiceTests {
         .build();
   }
 
-  /** Each change is saved and then recorded in the audit trail, in that order. */
+  /**
+   * Each change is snapshotted, then saved and recorded in the audit trail together (one
+   * transaction, issue #377).
+   */
   private void assertChange(AllocationVisibility from, AllocationVisibility to) {
     Recruitment r = recruitment(from);
     RecruitmentAuditService.Snapshot before =
@@ -50,10 +51,9 @@ public class AllocationVisibilityServiceTests {
     assertSame(r, service.change(r, to));
 
     assertEquals(to, r.getAllocationVisibility());
-    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
+    InOrder inOrder = inOrder(recruitmentAuditService);
     inOrder.verify(recruitmentAuditService).snapshot(r);
-    inOrder.verify(recruitmentRepository).save(r);
-    inOrder.verify(recruitmentAuditService).recordChanges(before, r);
+    inOrder.verify(recruitmentAuditService).saveAndRecordChanges(before, r);
   }
 
   @Test
@@ -110,8 +110,7 @@ public class AllocationVisibilityServiceTests {
     assertSame(r, service.change(r, AllocationVisibility.OWN_COURSES));
 
     assertEquals(AllocationVisibility.OWN_COURSES, r.getAllocationVisibility());
-    verify(recruitmentRepository, never()).save(any());
     verify(recruitmentAuditService, never()).snapshot(any());
-    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 }

@@ -47,7 +47,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Admin management of recruitments. Every creation, deletion and change of status or dates is
- * recorded in the recruitment audit trail (issue #139) through {@link RecruitmentAuditService}.
+ * recorded in the recruitment audit trail (issue #139) through {@link RecruitmentAuditService},
+ * whose methods write the recruitment and its audit rows in one transaction (issue #377).
  */
 @Tag(name = "Recruitments")
 @RequestMapping("/api/admin/recruitments")
@@ -94,8 +95,9 @@ public class RecruitmentsController extends ApiController {
           String.format("A %s recruitment already exists for quarter %s", type, quarter));
     }
 
+    // The save and its audit row are one transaction (issue #377).
     Recruitment recruitment =
-        recruitmentRepository.save(
+        recruitmentAuditService.saveAndRecordCreated(
             Recruitment.builder()
                 .quarter(quarter)
                 .type(type)
@@ -104,7 +106,6 @@ public class RecruitmentsController extends ApiController {
                 .primaryConsiderationDate(primaryConsiderationDate)
                 .createdAt(AppTime.now())
                 .build());
-    recruitmentAuditService.recordCreated(recruitment);
 
     jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));
     return recruitment;
@@ -116,7 +117,6 @@ public class RecruitmentsController extends ApiController {
           "Opening requires a facultyRankingDeadline. The first opening stamps"
               + " facultyReviewOpeningDate; later openings preserve that original date.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @Transactional
   @PutMapping("/reviewStatus")
   public Recruitment updateReviewStatus(
       @Parameter(name = "id") @RequestParam Long id,
@@ -161,14 +161,12 @@ public class RecruitmentsController extends ApiController {
       recruitment.setFacultyReviewClosedAt(AppTime.now());
     }
 
-    recruitmentRepository.save(recruitment);
-    recruitmentAuditService.recordChanges(before, recruitment);
+    recruitmentAuditService.saveAndRecordChanges(before, recruitment);
     return recruitment;
   }
 
   @Operation(summary = "Change the faculty ranking deadline for a recruitment")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @Transactional
   @PutMapping("/facultyRankingDeadline")
   public Recruitment updateFacultyRankingDeadline(
       @Parameter(name = "id") @RequestParam Long id,
@@ -187,8 +185,7 @@ public class RecruitmentsController extends ApiController {
 
     RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);
     recruitment.setFacultyRankingDeadline(facultyRankingDeadline);
-    recruitmentRepository.save(recruitment);
-    recruitmentAuditService.recordChanges(before, recruitment);
+    recruitmentAuditService.saveAndRecordChanges(before, recruitment);
     return recruitment;
   }
 
@@ -289,7 +286,6 @@ public class RecruitmentsController extends ApiController {
               + " recorded in the recruitment audit trail; choosing the current value changes"
               + " nothing. 400 for any other value.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
-  @Transactional
   @PutMapping("/allocationVisibility")
   public Recruitment updateAllocationVisibility(
       @Parameter(name = "id") @RequestParam Long id,
@@ -313,6 +309,8 @@ public class RecruitmentsController extends ApiController {
               + " refused. Recorded in the audit trail. Setting the value already stored changes"
               + " and records nothing.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
+  // Transactional so the version bump below joins the transaction of the save and its audit rows.
+  @Transactional
   @PutMapping("/assignmentsPublished")
   public Recruitment updateAssignmentsPublished(
       @Parameter(name = "id") @RequestParam Long id,
@@ -340,9 +338,8 @@ public class RecruitmentsController extends ApiController {
     if (published) {
       recruitment.setAssignmentsPublishedAt(AppTime.now());
     }
-    recruitmentRepository.save(recruitment);
+    recruitmentAuditService.saveAndRecordChanges(before, recruitment);
     recruitmentRepository.bumpAssignmentsVersion(id);
-    recruitmentAuditService.recordChanges(before, recruitment);
     return recruitment;
   }
 
@@ -386,8 +383,7 @@ public class RecruitmentsController extends ApiController {
     }
     recruitment.setApplicationStatus(status);
 
-    recruitmentRepository.save(recruitment);
-    recruitmentAuditService.recordChanges(before, recruitment);
+    recruitmentAuditService.saveAndRecordChanges(before, recruitment);
     return recruitment;
   }
 
@@ -430,8 +426,7 @@ public class RecruitmentsController extends ApiController {
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(Recruitment.class, id));
 
-    recruitmentAuditService.recordDeleted(recruitment);
-    recruitmentRepository.delete(recruitment);
+    recruitmentAuditService.deleteAndRecord(recruitment);
     return genericMessage("Recruitment with id %s deleted".formatted(id));
   }
 }

@@ -358,6 +358,12 @@ Admins can edit a student's application, and every change is recorded in the aud
   an interest level, a course interest) is recorded as the JSON of the whole row: a row that
   disappeared with a null new value, a row that appeared with a null old value. The form rebuilds
   the prior course rows on every save, so an edited course shows as one row removed and one added.
+* The save of the application and the write of its audit rows are one database transaction
+  (issue #377): `ApplicationAuditService.saveAndRecord` does both, so a change is never committed
+  without its rows, and rows are never left behind for a change that failed. The recruitment audit
+  trail (issue #139) works the same way through `RecruitmentAuditService.saveAndRecordCreated`,
+  `saveAndRecordChanges` and `deleteAndRecord`; controllers call those rather than saving and then
+  auditing. Issue #337 (the editor's email on every row) builds on this single place.
 * The read-only view of an application ends with an **Audit Trail** section listing that
   application's rows, oldest first, from `GET /api/admin/audittrail/application?type=&id=`.
 

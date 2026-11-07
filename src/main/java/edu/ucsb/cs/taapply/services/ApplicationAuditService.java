@@ -5,6 +5,7 @@ import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.AuditTrailRepository;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -15,25 +16,31 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Writes the audit trail for an admin's edit of a student's application: one row per field whose
  * value changed, with the value before and after as strings. (Changes to a recruitment itself are
  * written by {@link RecruitmentAuditService} to a table of their own.)
  *
- * <p>The caller takes a {@link #snapshot} before applying the edit and calls {@link #record} with
- * it afterwards. A snapshot is the application's answers as strings, keyed by field name: the plain
- * fields one entry each, and each row of the join tables (a prior course, a topic rating, an
- * interest level, a course interest) as the JSON of that row. Rows are compared as a set, so a row
- * that disappeared is recorded with a null new value, and a row that appeared with a null old
- * value; a prior course that was edited therefore shows as one row removed and one added, since the
- * form rebuilds those rows on every save and they carry no identity across it.
+ * <p>The caller takes a {@link #snapshot} before applying the edit and calls {@link #saveAndRecord}
+ * with it afterwards, which saves the application and writes the rows in one database transaction
+ * (issue #377): either the edit and its trail are both committed, or neither is. A snapshot is the
+ * application's answers as strings, keyed by field name: the plain fields one entry each, and each
+ * row of the join tables (a prior course, a topic rating, an interest level, a course interest) as
+ * the JSON of that row. Rows are compared as a set, so a row that disappeared is recorded with a
+ * null new value, and a row that appeared with a null old value; a prior course that was edited
+ * therefore shows as one row removed and one added, since the form rebuilds those rows on every
+ * save and they carry no identity across it.
  */
 @Service
+@Slf4j
 public class ApplicationAuditService {
 
+  @Autowired private ApplicationRepository applicationRepository;
   @Autowired private AuditTrailRepository auditTrailRepository;
   @Autowired private ObjectMapper objectMapper;
 
@@ -110,8 +117,27 @@ public class ApplicationAuditService {
   }
 
   /**
+   * Saves the edited application and records every difference from the snapshot taken before the
+   * edit, in one database transaction, and returns the application as saved. If either write fails,
+   * both are rolled back: no edit without its audit rows, no audit rows for an edit that did not
+   * happen (issue #377). Issue #337 will add the editor here, next to the rows it writes.
+   *
+   * <p>A save that loses a race with another save throws {@code
+   * ObjectOptimisticLockingFailureException} out of here, as it did when the caller saved itself.
+   */
+  @Transactional
+  public Application saveAndRecord(Snapshot before, Application application, RecruitmentType type) {
+    Application saved = applicationRepository.save(application);
+    List<AuditTrail> changes = record(before, saved, type);
+    log.info(
+        "Admin edited application {}: {} field(s) changed", application.getId(), changes.size());
+    return saved;
+  }
+
+  /**
    * Records every difference between the snapshot taken before the edit and the application as it
-   * is now, and returns the rows written (empty when nothing changed).
+   * is now, and returns the rows written (empty when nothing changed). Writers go through {@link
+   * #saveAndRecord}, which calls this inside the transaction that saves the application.
    */
   public List<AuditTrail> record(Snapshot before, Application after, RecruitmentType type) {
     Snapshot now = snapshot(after);
