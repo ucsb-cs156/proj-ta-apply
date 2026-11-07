@@ -19,7 +19,7 @@ export const STEP_EXPLANATIONS: {
   },
   {
     number: 3,
-    text: "Set the hiring target and give each course its share on the Courses page, checking the money on the Budget for Quarter page.",
+    text: "Set the hiring target on the Budget for Quarter page and give each course its share on the Combined Allocation page.",
     adminHref: "/help/admins#budget",
   },
   {

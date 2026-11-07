@@ -111,22 +111,26 @@ endpoint so the frontend only draws.
 Above each quarter's recruitment card, or pair of cards when the quarter has both a TA and a ULA
 recruitment, the admin home page shows a lighter **QXX Budget** card (QXX from `yyyyqToQyy`, such
 as "W26 Budget") with three buttons: **Budget** (`/admin/budget/QXX`), **TA allocations** and
-**ULA allocations** (`/admin/recruitments/:id/courses/edit` for that quarter's TA or ULA
-recruitment; greyed out and disabled when there is none). The cards are grouped by quarter, in the
-order each quarter first appears in the sorted list, so the budget card moves with its quarter;
-sorting by anything other than Quarter therefore keeps a quarter's cards together instead of
-interleaving them. It prepares for the Combined Allocation page (issue #358, below).
+**ULA allocations**. Since issue #358 (part 3) both allocations buttons go to the quarter's
+Combined Allocation page, `/admin/allocations/QXX` (before that, to
+`/admin/recruitments/:id/courses/edit` of that quarter's TA or ULA recruitment); each is still
+greyed out and disabled when the quarter has no recruitment of that type. The cards are grouped by
+quarter, in the order each quarter first appears in the sorted list, so the budget card moves with
+its quarter; sorting by anything other than Quarter therefore keeps a quarter's cards together
+instead of interleaving them.
 
 ## The Combined Allocation page (issue #358)
 
 `/admin/allocations/QXX` (for example `/admin/allocations/W26`; admins only) shows one quarter's TA
-and ULA allocations side by side. It is modelled on `/admin/recruitments/:id/courses/edit`, which
-stays as it is.
+and ULA allocations side by side, and since part 3 of the issue it is the only place an admin edits
+enrollment estimates and allocations. It was modelled on `/admin/recruitments/:id/courses/edit`,
+which keeps everything but the budget columns and their controls (see "What left the Recruitment
+Courses pages" below).
 
 - **Rows**: the union of the courses of the quarter's TA and ULA recruitments, one row per enroll
   code (a course's two lectures are two rows; a section in both recruitments is one row). A
   section in only one recruitment has blank cells for the other type.
-- **Enrollment Estimate**: one column, editable like the Courses page's box (saved a second after
+- **Enrollment Estimate**: one column, editable as the Courses page's box was (saved a second after
   the last keystroke, an empty box clears it). Today each recruitment's course row has its own
   estimate; a section in both shows the higher of the two, and an edit is saved to the course row
   of every recruitment that has the section so the two agree (until issue #363 gives a course one
@@ -151,7 +155,7 @@ stays as it is.
   page (Instructor, Enrolled, Max, Enrollment Estimate, and each type's Allocation, Unrounded
   Allocation, Delta and ratio) plus the ASE:Student Ratio; the rankings, Section, Title, Email,
   Days, Time, Room and Status start hidden.
-- **Controls** (as on the Edit Courses page): *Set enrollment estimates from: max, actual* (the
+- **Controls** (as the Edit Courses page had them until part 3): *Set enrollment estimates from: max, actual* (the
   endpoint takes one recruitment, so it is called for each recruitment of the quarter), and
   *Auto assign TA allocations* / *Auto assign ULA allocations* (each only when that recruitment
   exists, with the same tooltip and confirmation modal). *Download Rankings CSV* is not on this
@@ -183,6 +187,36 @@ stays as it is.
   the students per TA-equivalent, shown as "1:N" with a dash when the denominator is zero or there
   is no estimate.
 
+### What left the Recruitment Courses pages (issue #358, part 3)
+
+The TA/ULA Recruitment Courses pages (`/admin/recruitments/:id/courses` and its `/edit` form) are
+not being phased out; they keep Populate, Add by enroll code, Remove / Unremove, Show removed
+courses, the UCSB refresh and the last-refreshed line, the hiring target, allocation visibility and
+Publish Assignments panels, Copy emails of faculty with zero rankings, the Summer Session column,
+the multi-tab edit warning, the developer buttons, and the totals footer for what remains (Total
+Course Count, Enrolled, Max). What left them, because they are budget features that need to be seen
+for TAs and ULAs together:
+
+- the columns **Enrollment Estimate, Allocation, Unrounded Allocation, Delta** and the
+  **TA:student / ULA:student ratio** (`AllocationsRelatedColumns`), which both pages now pass to
+  the table's `omitColumns` and which `adminColumnChoices` leaves out of the Columns menu;
+- the controls **Set enrollment estimates from: max, actual** and **Auto assign allocations** (with
+  its tooltip and confirmation modal), which only acted on those columns.
+
+Both pages carry a pointer sentence linking to `/admin/allocations/QXX` for the recruitment's
+quarter. The view-only page's Edit text now reads "Click Edit to: change the number of TAs/ULAs
+expected to be hired; populate the course list, add a lecture by enroll code, or remove one; adjust
+the visibility of the allocations; publish the assignments." `RecruitmentCourseTable` kept the five
+columns as read-only text for the faculty Courses page (issue #300: instructors see them while the
+admin shows all courses' allocations to all faculty), and lost its own editing code for them (the
+estimate and allocation boxes and the `requestHeaders` / `allocationBulkVersion` props); the shared
+`useAllocationSaves` and `useEstimateSaves` hooks are used by the combined table only. The edit
+page still heartbeats under `courses-edit:<recruitmentId>`, because the combined page heartbeats
+under the same key and the two warn each other. The Budget page keeps its "TA/ULA Recruitment
+Courses page" links (shown when the allocations do not add up to the target) and its "Combined
+allocations" header link; the recruitment cards' "Courses" button is unchanged; the Recruitment
+Steps diagram's "(see allocations)" link still lands on the view-only Courses page.
+
 ## The new recruitment card layout
 
 The card becomes much wider to hold the diagram. From top to bottom:
@@ -202,7 +236,7 @@ The card becomes much wider to hold the diagram. From top to bottom:
      **Download Applications as CSV**.
    - **Download Rankings CSV** moves to the Courses page (issue #234); since issue #358 it is back on
      the card, as the last button of the footer, shown only once faculty reviews have been opened
-     (and no longer on the Courses page, which is to go away).
+     (and no longer on the Courses page, which stays but without the budget columns; see above).
    - The lifecycle buttons (Open/Close Applications, Open/Close Faculty Reviews, Publish
      Assignments) are reached through the diagram's links; their confirmation modals are
      unchanged.

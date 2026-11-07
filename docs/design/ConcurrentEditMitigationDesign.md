@@ -570,6 +570,22 @@ courses"; under "Admins only" and "Faculty see their own courses" the server lea
 are not offered in the Columns menu either. Admins always get them. The faculty page has no
 heartbeat and no warning: it reads, and cannot edit.
 
+**The budget columns leave the Courses pages (#358, part 3).** The Combined Allocation page
+(`/admin/allocations/QXX`, see `AdminUserInterfaceDesign.md`) took over the editing of the
+enrollment estimates and the allocations for a quarter's TA and ULA recruitments together, so the
+five `AllocationsRelatedColumns` and the two controls that acted on them (the estimate fill and
+Auto assign) are no longer on either Courses page (`omitColumns`, `adminColumnChoices`), and
+`RecruitmentCourseTable` lost its estimate and allocation boxes (the figures stay as text for the
+faculty page). The edit page still heartbeats under `courses-edit:<recruitmentId>` and shows the
+banner and modal: the combined page heartbeats under that same key, so the two warn each other, and
+Populate, Remove and the hiring target still change what the combined page shows. The saves that
+name the tab in `X-Client-Id` (allocation, estimate, fill-estimates, Auto Allocate) are now all
+made from the combined page; the edit page's own saves (hiring target, visibility, Populate,
+Remove, publish) name no tab, as before. The Edit button's text is now "Click Edit to: change the
+number of TAs/ULAs expected to be hired; populate the course list, add a lecture by enroll code, or
+remove one; adjust the visibility of the allocations; publish the assignments." Both pages start
+with the Course Number, Instructor, Enrolled and Max columns and hide the rest.
+
 The wording is the shared one (#298), with nothing local to the page (`audience="admin"` on the
 banner and the modal, and `newest` passed to the banner):
 
@@ -959,7 +975,7 @@ Instructors page and the Courses (catalog) page refresh as described above.
   after the person is done. The cell is a module-level component with its settings in a context:
   the table renders a `cell` function as a component, so one made anew on every render of the
   table would be remounted on every render, which would drop the focus and the dropdown with it.
-- The enrollment estimate and allocation boxes (on the edit page, which does not refresh in the background) show their own draft while they have focus
+- The enrollment estimate and allocation boxes (since #358 on the Combined Allocation page, which does not refresh in the background; before that on the Courses edit page) show their own draft while they have focus
   (from the saves added in #174 and #175), so a refresh updates every other row and the stored
   value, never the box being typed in.
 - A CSV being chosen lives in the upload form's own state, which a refresh does not touch.

@@ -220,8 +220,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           </li>
           <li>
             <strong>Afterwards:</strong> <em>Close Applications</em>, plan the
-            hiring on the <strong>Courses</strong> and{" "}
-            <strong>Budget for Quarter</strong> pages, release each
+            hiring on the <strong>Budget for Quarter</strong> and{" "}
+            <strong>Combined Allocation</strong> pages, release each
             lecture&apos;s allocation to its instructor, then{" "}
             <em>Open Faculty Reviews</em>. The recruitment and its applications
             stay on file; past recruitments tell applicants when the last round
@@ -347,14 +347,18 @@ export default function HelpAdminsPage(): React.JSX.Element {
           link at the top right of its heading: one click hides that column
           without opening the menu, exactly as unticking it there does. A
           recruitment&apos;s table starts with only the Course Number,
-          Instructor, Enrolled, Max, Enrollment Estimate, Allocation, Unrounded
-          Allocation, Delta and TA:student ratio columns shown, on the view-only
-          page and the edit page alike; tick the others (Section, Title, Email,
-          Days, Time, Room, Status, and the Remove / Unremove button) in the
-          Columns menu when you need them. Your choice is kept in this browser,
-          for that recruitment and for both pages, so it is the same on your
-          next visit from the same browser; it is not shared with other admins
-          or other browsers. The <strong>Summer Session</strong> column appears
+          Instructor, Enrolled and Max columns shown, on the view-only page and
+          the edit page alike; tick the others (Rankings once reviews have
+          started, Section, Title, Email, Days, Time, Room, Status, and the
+          Remove / Unremove button) in the Columns menu when you need them. The
+          budget columns (Enrollment Estimate, Allocation, Unrounded Allocation,
+          Delta and the TA:student or ULA:student ratio) are not on these pages
+          and not in their Columns menu: they are on the{" "}
+          <Link to="#combined-allocations">Combined Allocation page</Link>,
+          which both pages point to. Your choice is kept in this browser, for
+          that recruitment and for both pages, so it is the same on your next
+          visit from the same browser; it is not shared with other admins or
+          other browsers. The <strong>Summer Session</strong> column appears
           only for a summer quarter. Headings are centred, numbers are
           right-aligned, and sorting by course number follows the padded course
           id exactly as it is shown, so CMPSC 5A comes before CMPSC 130A. In the{" "}
@@ -363,12 +367,15 @@ export default function HelpAdminsPage(): React.JSX.Element {
           catalog name can be given an email.
         </p>
         <p id="hiring-target" data-testid="HelpAdminsPage-hiring-target">
-          The top of that page is where the hiring is planned. Enter the{" "}
+          The top of the edit page has the hiring target. Enter the{" "}
           <strong>total number of TAs (or ULAs) expected to be hired</strong>;
           it is saved as you type, must be at least 1, and an entry that is not
-          a whole number is dropped when you leave the box. Then give each
-          lecture its share in the <strong>Allocation</strong> column, saved the
-          same way. Under the total, the page keeps a running count of how many
+          a whole number is dropped when you leave the box. The same target is
+          entered on the <Link to="#budget">Budget for Quarter</Link> page,
+          beside the money. Each lecture&apos;s share of it, its{" "}
+          <strong>Allocation</strong>, is given on the{" "}
+          <Link to="#combined-allocations">Combined Allocation page</Link>, not
+          here. Under the total, the page keeps a running count of how many
           positions are allocated so far and how many are left to assign, and
           warns when the allocations add up to more than the target. Removed
           lectures keep their number but do not count. These are planning
@@ -381,40 +388,30 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Opening the page also refreshes every lecture&apos;s enrollment and
           maximum enrollment from the UCSB schedule while you wait, so the
           figures you plan from are current; if the schedule cannot be reached,
-          the page says so and shows the stored figures. The{" "}
-          <strong>Enrollment Estimate</strong> column is your own estimate of
-          how many students each lecture will have, the basis for allocating
-          positions. It is saved a second after you stop typing, or at once when
-          you leave the box; an empty box means no estimate. To start from the
-          schedule&apos;s figures, use{" "}
-          <em>Set enrollment estimates from: max</em> or <em>actual</em>, which
-          fills every lecture&apos;s estimate from its maximum or current
-          enrollment in one step.
+          the page says so and shows the stored figures. Your own estimate of
+          how many students each lecture will have, the{" "}
+          <strong>Enrollment Estimate</strong>, and the{" "}
+          <em>Set enrollment estimates from: max, actual</em> control that fills
+          it from the schedule used to be on this page; they are on the{" "}
+          <Link to="#combined-allocations">Combined Allocation page</Link> now,
+          where the estimate is shared by the quarter&apos;s TA and ULA
+          recruitments.
         </p>
         <p id="auto-assign" data-testid="HelpAdminsPage-auto-assign">
-          The table ends with a totals row, and three columns guide the
-          allocation: <strong>Unrounded Allocation</strong> is how many
-          positions each lecture would get if positions could be split into
-          fractions and were shared out by enrollment estimate alone;{" "}
-          <strong>Delta</strong> is that share minus the allocation, green with
-          a plus sign when a lecture is owed positions and red when it has more
-          than its share; and the <strong>TA:student ratio</strong> is the
-          estimated students per position. <em>Auto assign TA allocations</em>{" "}
-          (or ULA) fills the Allocation column from those shares, after a
-          warning that it overwrites every allocation. When there are at least
-          as many positions as lectures, every lecture gets at least one, and
-          the rest are given out one at a time to the lecture furthest under its
-          share, so that the biggest gap between any lecture&apos;s allocation
-          and its share is as small as it can be. When there are fewer positions
-          than lectures, each lecture gets its share rounded, then positions are
-          taken from the lectures furthest over their share, or given to those
-          furthest under it, one at a time until the total is exactly the hiring
-          target. The purpose of this feature is to give admins a way to make a
-          first-cut allocation based on enrollment, as close to fair as the
-          numbers allow; it should not necessarily be considered the final
-          allocation. Admins have the flexibility to adjust it up or down based
-          on the particular needs of specific courses and other relevant
-          factors.
+          <em>Auto assign TA allocations</em> (or ULA), and the{" "}
+          <strong>Unrounded Allocation</strong>, <strong>Delta</strong> and{" "}
+          <strong>TA:student ratio</strong> columns that guided it, have moved
+          to the Combined Allocation page too, where they are explained. In all,
+          what left the Courses pages is: the Enrollment Estimate, Allocation,
+          Unrounded Allocation, Delta and TA:student / ULA:student ratio
+          columns, <em>Set enrollment estimates from: max, actual</em>, and{" "}
+          <em>Auto assign allocations</em>. Everything else stays: Populate, Add
+          by enroll code, Remove / Unremove and Show removed courses, the
+          refresh from the UCSB schedule and the last-refreshed line, the hiring
+          target, allocation visibility and Publish Assignments panels, Copy
+          emails of faculty with zero rankings, the Summer Session column, the
+          warning about other tabs, the developer buttons, and the totals row
+          with its Total Course Count and the sums of Enrolled and Max.
         </p>
         <p
           id="allocation-visibility"
@@ -477,12 +474,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           the money available. Enter the estimated average cost of one TA and of
           one ULA, and the three budget lines; every box is saved as you type,
           and an entry that is not an amount in dollars and cents is dropped
-          when you leave it. The hiring targets of both recruitments can be
-          changed here too, beside what has been allocated to courses so far;
-          when the two do not agree, the page says so and links to the
-          Recruitment Courses page, where the allocations are adjusted. The
-          enrollment totals and ratios are over each recruitment&apos;s own
-          courses, which may differ between TAs and ULAs.
+          when you leave it. The <strong>hiring targets</strong> of both
+          recruitments are entered here (or at the top of each
+          recruitment&apos;s Courses edit page), beside what has been allocated
+          to courses so far; when the two do not agree, the page says so and
+          links to that recruitment&apos;s Courses page. The allocations
+          themselves are adjusted on the{" "}
+          <Link to="#combined-allocations">Combined Allocation page</Link>,
+          which the <em>Combined allocations</em> link at the top of the Budget
+          page opens. The enrollment totals and ratios are over each
+          recruitment&apos;s own courses, which may differ between TAs and ULAs.
         </p>
         <p id="budget-lines" data-testid="HelpAdminsPage-budget-lines">
           The three budget lines are the <strong>unrestricted</strong> budget,
@@ -508,28 +509,46 @@ export default function HelpAdminsPage(): React.JSX.Element {
         </h2>
         <p data-testid="HelpAdminsPage-combined-allocations">
           <strong>/admin/allocations/QXX</strong> (for example{" "}
-          <em>/admin/allocations/W26</em>; the Budget for Quarter page links to
-          it) shows one quarter&apos;s TA and ULA allocations side by side. It
-          is the Edit Courses page of the two recruitments in one table, whose
-          rows are the courses of the TA recruitment and the ULA recruitment
-          together: a section that is in both recruitments is one row, found by
-          its enroll code, and a section that is in only one has blank cells for
-          the other type. The single <strong>Enrollment Estimate</strong> is the
-          higher of the two recruitments&apos; estimates for the section, and
-          every ratio on the page uses it. It is typed in the table like on the
-          Edit Courses page (saved a second after the last keystroke, an empty
-          box clears it), and what you type is saved to the section&apos;s
-          course row in <em>each</em> recruitment that has it, so the two agree.
-          For each type that has a recruitment the table has{" "}
-          <strong>Allocation</strong> (typed in, and saved, exactly as on the
-          Edit Courses page, for the recruitment of that type),{" "}
+          <em>/admin/allocations/W26</em>) is where a quarter&apos;s enrollment
+          estimates and its TA and ULA allocations are edited, side by side. You
+          reach it from the <strong>TA allocations</strong> and{" "}
+          <strong>ULA allocations</strong> buttons of the quarter&apos;s QXX
+          Budget card on your home page, from the <em>Combined allocations</em>{" "}
+          link at the top of the Budget for Quarter page, and from the pointer
+          on each recruitment&apos;s Courses page. Its rows are the courses of
+          the TA recruitment and the ULA recruitment together: a section that is
+          in both recruitments is one row, found by its enroll code, and a
+          section that is in only one has blank cells for the other type. The
+          single <strong>Enrollment Estimate</strong> is the higher of the two
+          recruitments&apos; estimates for the section, and every ratio on the
+          page uses it. It is your own estimate of how many students the section
+          will have, the basis for allocating positions: type it in the table
+          and it is saved a second after the last keystroke, or at once when you
+          leave the box; an empty box clears it; and what you type is saved to
+          the section&apos;s course row in <em>each</em> recruitment that has
+          it, so the two agree. For each type that has a recruitment the table
+          has <strong>Allocation</strong> (how many TAs or ULAs of that
+          recruitment the section gets; a whole number, saved as you type it,
+          against the recruitment of that type),{" "}
           <strong>Unrounded Allocation</strong>, <strong>Delta</strong> and the{" "}
           <strong>TA:student</strong> or <strong>ULA:student</strong> ratio, so
           a quarter with only one recruitment shows only that type&apos;s
           columns.
         </p>
+        <p data-testid="HelpAdminsPage-combined-allocations-guide">
+          Those three columns guide the allocation of each type:{" "}
+          <strong>Unrounded Allocation</strong> is how many positions each
+          section would get if positions could be split into fractions and were
+          shared out by enrollment estimate alone (hover its heading for the
+          note); <strong>Delta</strong> is that share minus the allocation,
+          green with a plus sign when a section is owed positions and red when
+          it has more than its share; and the <strong>TA:student</strong> (or{" "}
+          <strong>ULA:student</strong>) <strong>ratio</strong> is the estimated
+          students per position, 1:N, a dash when there is no estimate or no
+          positions.
+        </p>
         <p data-testid="HelpAdminsPage-combined-allocations-columns">
-          The table has the other columns of the Edit Courses page too:{" "}
+          The table also has the descriptive columns of the Courses pages:{" "}
           <strong>TA Rankings</strong> and <strong>ULA Rankings</strong> (a type
           has one only once its faculty reviews have been opened),{" "}
           <strong>Section</strong>, <strong>Title</strong>,{" "}
@@ -552,19 +571,38 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Course Number, which is always shown. Your choice is remembered in
           this browser, separately for each quarter; until you make one,
           Section, Title, Email, Days, Time, Room, Status and the rankings are
-          hidden, as on the Edit Courses page.
+          hidden.
         </p>
         <p data-testid="HelpAdminsPage-combined-allocations-controls">
-          Above the table are the controls of the Edit Courses page.{" "}
+          Above the table are two controls.{" "}
           <strong>Set enrollment estimates from: max, actual</strong> sets every
           section&apos;s Enrollment Estimate from the UCSB API&apos;s maximum or
           actual enrollment, in <em>every</em> recruitment of the quarter.{" "}
           <strong>Auto assign TA allocations</strong> and{" "}
           <strong>Auto assign ULA allocations</strong> (each only when the
-          quarter has that recruitment) allocate that recruitment&apos;s hiring
-          target across its courses by enrollment estimate, after asking you to
-          confirm, since it overwrites every allocation of that type and cannot
-          be undone.
+          quarter has that recruitment; hover one for its note,{" "}
+          <em>
+            Automatically allocate the N TAs across courses based on enrollment
+          </em>
+          ) allocate that recruitment&apos;s hiring target across its courses by
+          enrollment estimate, after asking you to confirm, since it overwrites
+          every allocation of that type and cannot be undone. When there are at
+          least as many positions as sections, every section gets at least one,
+          and the rest are given out one at a time to the section furthest under
+          its share, so that the biggest gap between any section&apos;s
+          allocation and its share is as small as it can be. When there are
+          fewer positions than sections, each section gets its share rounded,
+          then positions are taken from the sections furthest over their share,
+          or given to those furthest under it, one at a time until the total is
+          exactly the hiring target. The purpose of this feature is to give
+          admins a way to make a first-cut allocation based on enrollment, as
+          close to fair as the numbers allow; it should not necessarily be
+          considered the final allocation. Admins have the flexibility to adjust
+          it up or down based on the particular needs of specific courses and
+          other relevant factors. The <strong>total hiring target</strong> of
+          each recruitment is not entered here: it is on the{" "}
+          <Link to="#budget">Budget for Quarter</Link> page (and at the top of
+          the recruitment&apos;s Courses edit page).
         </p>
         <p data-testid="HelpAdminsPage-combined-allocations-both">
           When the quarter has <em>both</em> a TA and a ULA recruitment, the
@@ -619,11 +657,13 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>QXX Budget</strong> card (for example <em>W26 Budget</em>)
           with three buttons: <strong>Budget</strong> opens that quarter&apos;s
           Budget for Quarter page, and <strong>TA allocations</strong> and{" "}
-          <strong>ULA allocations</strong> open the Edit Courses (allocations)
-          page of that quarter&apos;s TA or ULA recruitment. An allocations
-          button is greyed out when the quarter has no recruitment of that type.
-          The budget card stays with its quarter when the cards are sorted, so
-          sorting by anything but quarter groups each quarter&apos;s cards
+          <strong>ULA allocations</strong> both open the quarter&apos;s{" "}
+          <Link to="#combined-allocations">Combined Allocation page</Link>,
+          where the TA and ULA allocations are edited side by side. An
+          allocations button is greyed out when the quarter has no recruitment
+          of that type, so the card also shows which recruitments the quarter
+          has. The budget card stays with its quarter when the cards are sorted,
+          so sorting by anything but quarter groups each quarter&apos;s cards
           together.
         </p>
         <p>The lifecycle actions in the diagram and on the card are:</p>
@@ -669,7 +709,10 @@ export default function HelpAdminsPage(): React.JSX.Element {
             later Populate will not put it back), and the toggle shows removed
             rows so one can be restored. Open, upcoming and recently closed
             recruitments are also refreshed automatically every night, and the
-            page says when the list was last refreshed.
+            page says when the list was last refreshed. Enrollment estimates and
+            allocations are not on this page: it points to the{" "}
+            <Link to="#combined-allocations">Combined Allocation page</Link>,
+            where they are edited for TAs and ULAs together.
           </li>
           <li>
             <strong>Test Application.</strong> The form exactly as an applicant
@@ -1061,16 +1104,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
           tabs or windows may show it, for you or for other admins, without any
           warning. Its <strong>Edit</strong> button, beside the words
           &ldquo;Click Edit to: change the number of TAs/ULAs expected to be
-          hired; set the expected enrollments for each course; set the number of
-          TAs/ULAs allocated to each course; adjust the visibility of these
-          allocations&rdquo;, takes you to the <strong>edit page</strong>, where
-          you can change the estimated enrollments and the allocations, run Auto
-          Allocate, and use Populate and the other controls; it has a link back
-          to the view-only page. Only <em>one</em> tab or window should have a
-          given recruitment&apos;s edit page open at a time, and edit pages of
-          different recruitments never warn each other. If another admin, or
-          another tab of yours, has the same edit page open, you get a warning
-          that looks like this:
+          hired; populate the course list, add a lecture by enroll code, or
+          remove one; adjust the visibility of the allocations; publish the
+          assignments&rdquo;, takes you to the <strong>edit page</strong>, where
+          you can change the hiring target and use Populate and the other
+          controls; it has a link back to the view-only page. The estimated
+          enrollments and the allocations are edited on the Combined Allocation
+          page, which counts as a tab of this edit page (below). Only{" "}
+          <em>one</em> tab or window should have a given recruitment&apos;s edit
+          page open at a time, and edit pages of different recruitments never
+          warn each other. If another admin, or another tab of yours, has the
+          same edit page open, you get a warning that looks like this:
         </p>
         <MultipleTabsBanner
           others={EXAMPLE_OTHERS}
@@ -1080,16 +1124,18 @@ export default function HelpAdminsPage(): React.JSX.Element {
           testId="HelpAdminsPage-simultaneous-editing-courses-example"
         />
         <p data-testid="HelpAdminsPage-simultaneous-editing-courses-meaning">
-          The allocations only make sense together, so a copy that is out of
-          date can leave a total that no longer matches the hiring target. If
-          you go on, the system refuses a change made from a copy that is out of
-          date, tells you, and reads the numbers again; whatever you typed there
-          is lost. The tab or window opened <em>last</em> also asks the same
-          question as for rankings, and says &ldquo;already has&rdquo; instead
-          of &ldquo;is also editing&rdquo;; there{" "}
-          <strong>Leave this page</strong> takes you to the view-only Courses
-          page. To look at the numbers without risk, use the view-only page in
-          as many tabs as you like.
+          The hiring target, the course list and the allocations only make sense
+          together, so a copy that is out of date can leave a total that no
+          longer matches the hiring target; that is why the edit page and the
+          Combined Allocation page warn about each other. If you go on and
+          change an allocation on the combined page, the system refuses a change
+          made from a copy that is out of date, tells you, and reads the numbers
+          again; whatever you typed there is lost. The tab or window opened{" "}
+          <em>last</em> also asks the same question as for rankings, and says
+          &ldquo;already has&rdquo; instead of &ldquo;is also editing&rdquo;;
+          there <strong>Leave this page</strong> takes you to the view-only
+          Courses page. To look at the numbers without risk, use the view-only
+          page in as many tabs as you like.
         </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-combined">
           <strong>The Combined Allocation page.</strong> The{" "}
