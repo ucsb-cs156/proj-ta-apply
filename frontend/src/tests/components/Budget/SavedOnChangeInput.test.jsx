@@ -109,4 +109,37 @@ describe("SavedOnChangeInput tests", () => {
     expect(screen.getByTestId("Box-hint")).toHaveTextContent("Per quarter.");
     expect(screen.getByTestId("Box")).toHaveValue("12.00");
   });
+
+  test("an invalid message is shown by the box, and the box is flagged when what is typed is invalid", async () => {
+    renderInput({ invalidMessage: "Must be dollars and cents." });
+    const box = screen.getByTestId("Box");
+    expect(screen.getByTestId("Box-invalid")).toHaveTextContent(
+      "Must be dollars and cents.",
+    );
+    expect(screen.getByTestId("Box-invalid")).toHaveClass("invalid-feedback");
+
+    await userEvent.clear(box);
+    await userEvent.type(box, "x");
+
+    expect(box).toHaveClass("is-invalid");
+  });
+
+  test("has no invalid message unless given one, and no tooltip", () => {
+    renderInput();
+
+    expect(screen.queryByTestId("Box-invalid")).toBeNull();
+    expect(document.querySelector("[title]")).toBeNull();
+  });
+
+  test("a title is a tooltip over the label and the box", () => {
+    renderInput({ title: "What this is." });
+
+    expect(screen.getByTestId("Box").closest("[title]")).toHaveAttribute(
+      "title",
+      "What this is.",
+    );
+    expect(screen.getByText("Amount:").closest("[title]")).toBe(
+      screen.getByTestId("Box").closest("[title]"),
+    );
+  });
 });

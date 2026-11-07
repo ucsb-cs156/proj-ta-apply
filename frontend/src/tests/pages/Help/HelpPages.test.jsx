@@ -554,6 +554,46 @@ describe("Help pages (issue #140)", () => {
     ).toBeTruthy();
   });
 
+  test("the admins page describes the Combined Allocation page, its columns and the conversion factor (issue #358)", async () => {
+    renderPage(<HelpAdminsPage />);
+    await screen.findByRole("heading", { level: 1, name: "For Admins" });
+
+    const heading = document.getElementById("combined-allocations");
+    expect(heading.tagName).toBe("H2");
+    expect(heading).toHaveTextContent("Combined Allocation page");
+    const page = screen.getByTestId("HelpAdminsPage-combined-allocations");
+    expect(page).toHaveTextContent("/admin/allocations/QXX");
+    expect(page).toHaveTextContent(
+      "a section that is in both recruitments is one row, found by its enroll code",
+    );
+    expect(page).toHaveTextContent(
+      "the higher of the two recruitments' estimates for the section",
+    );
+    expect(page).toHaveTextContent(
+      "Allocation (typed in, and saved, exactly as on the Edit Courses page",
+    );
+    expect(page).toHaveTextContent("Unrounded Allocation");
+    expect(page).toHaveTextContent("Delta");
+    expect(page).toHaveTextContent("TA:student or ULA:student ratio");
+    const both = screen.getByTestId("HelpAdminsPage-combined-allocations-both");
+    expect(both).toHaveTextContent("Cost per TA");
+    expect(both).toHaveTextContent("Cost per ULA");
+    expect(both).toHaveTextContent("TA Cost/ULA Cost");
+    expect(both).toHaveTextContent(
+      "Nominal TA to ULA conversion factor, which is 3 until you change it. It must be greater than zero",
+    );
+    expect(
+      screen.getByTestId("HelpAdminsPage-conversion-factor"),
+    ).toHaveTextContent(
+      "When computing overall ASE:Student ratio, how many ULAs count as 1 TA? You can set this to the ratio of their costs (computed above), or the ratio of the number of hours they put in (20 for TAs vs. 10 for ULAs) or whatever basis makes the most sense.",
+    );
+    expect(both).toHaveTextContent("ASE:Student Ratio");
+    expect(
+      document.getElementById("budget").compareDocumentPosition(heading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   test("the developer page explains the Developer Mode switch (issue #217, moved by #266)", async () => {
     renderPage(<HelpDeveloperPage />);
     await screen.findByRole("heading", { level: 1, name: "For Developers" });

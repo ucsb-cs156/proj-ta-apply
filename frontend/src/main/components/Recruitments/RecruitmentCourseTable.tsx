@@ -18,8 +18,15 @@ import type { Cell } from "@tanstack/react-table";
 import type { AxiosRequestConfig } from "axios";
 import { Link } from "react-router";
 import { isSummerQuarter } from "main/utils/courseColumns";
-import { apiErrorMessage } from "main/utils/apiError";
-import { toast } from "react-toastify";
+import {
+  numeric,
+  shrinkToContent,
+  stacked,
+} from "main/components/Common/columnStyles";
+import {
+  replaceCourseInCache,
+  useAllocationSaves,
+} from "main/components/Recruitments/useAllocationSaves";
 
 export type RecruitmentCourse = {
   id: number;
@@ -187,18 +194,6 @@ const estimateRequest = (
   params: value === "" ? { id } : { id, enrollmentEstimate: Number(value) },
 });
 
-/**
- * A heading on two lines in a smaller font (80% of the other headings), so a column is no wider
- * than its values (issue #185). The space before the break keeps the heading's text whole for
- * screen readers and tests.
- */
-const stacked = (top: string, bottom: string): React.JSX.Element => (
-  <span style={{ fontSize: "80%" }}>
-    {top} <br />
-    {bottom}
-  </span>
-);
-
 /** Bootstrap's clipboard icon, for the copy control beside an email (issue #185). */
 const CopyIcon = (): React.JSX.Element => (
   <svg
@@ -214,11 +209,6 @@ const CopyIcon = (): React.JSX.Element => (
     <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
   </svg>
 );
-
-/** What a refused allocation save (409) carries. */
-type ConflictError = {
-  response?: { status?: number; data?: { course?: RecruitmentCourse } };
-};
 
 type RecruitmentCourseTableProps = {
   courses: RecruitmentCourse[];
@@ -290,106 +280,13 @@ export default function RecruitmentCourseTable({
     ],
   );
 
-  // What is in each row's Allocation box while it has focus, by row id (issue #174); a row that
-  // is absent shows its stored value. Cleared on blur, so an invalid entry reverts and a saved
-  // one is simply the stored value again.
-  const [allocationDrafts, setAllocationDrafts] = useState<
-    Record<number, string>
-  >({});
-  // Put a saved row into every cached course list as soon as the backend answers, so the stored
-  // value is right the moment a box is left, not only after the refetch that follows.
+  // The Allocation boxes (issues #174, #278); their saving is shared with the Combined Allocation
+  // page (issue #358).
+  const { allocationDrafts, onAllocationChange, onAllocationBlur } =
+    useAllocationSaves(requestHeaders, allocationBulkVersion, includeRemoved);
   const queryClient = useQueryClient();
   const replaceInCache = (saved: RecruitmentCourse) =>
-    queryClient.setQueriesData<RecruitmentCourse[]>(
-      { queryKey: ["/api/recruitmentcourses/all"] },
-      // Stryker disable next-line all : the query's initial data is an empty list, never undefined
-      (old) => (old ?? []).map((c) => (c.id === saved.id ? saved : c)),
-    );
-  // Each allocation save carries the version the row had when the save was made (issue #278), so
-  // the saves of one box, one per keystroke, are sent one after the other, each with the version
-  // the one before it came back with. A refused save (409) ends the run: what was typed after it
-  // was made against numbers that are no longer there, so it is not sent.
-  const versions = useRef<Record<number, number>>({});
-  const allocationQueue = useRef<Promise<unknown>>(Promise.resolve());
-  const waiting = useRef(0);
-  const epoch = useRef(0);
-  const allocationMutation = useBackendMutation<
-    { id: number; allocation: number; expectedVersion?: number },
-    RecruitmentCourse
-  >(
-    ({ id, allocation, expectedVersion }) => ({
-      url: "/api/recruitmentcourses/allocation",
-      method: "PUT",
-      headers: requestHeaders,
-      params: {
-        id,
-        allocation,
-        expectedVersion,
-        expectedBulkVersion: allocationBulkVersion,
-      },
-    }),
-    {
-      onSuccess: (saved) => {
-        // Stryker disable next-line ConditionalExpression : an answer without a version leaves the row's own
-        if (saved.allocationVersion !== undefined) {
-          versions.current[saved.id] = saved.allocationVersion;
-        }
-        replaceInCache(saved);
-      },
-      onError: (error) => {
-        if ((error as ConflictError).response?.status !== 409) {
-          toast(`${error}`);
-          return;
-        }
-        // Stryker disable next-line AssignmentOperator : any change of the number ends the run
-        epoch.current += 1;
-        toast(apiErrorMessage(error));
-        setAllocationDrafts({});
-        // Stryker disable next-line OptionalChaining : a 409 always has a response
-        const body = (error as ConflictError).response?.data;
-        if (body?.course !== undefined) {
-          replaceInCache(body.course);
-        }
-        // After a bulk change every old number is suspect, so everything is read again.
-        queryClient.invalidateQueries({
-          queryKey: ["/api/recruitmentcourses/all"],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["/api/admin/recruitments/all"],
-        });
-      },
-    },
-    ["/api/recruitmentcourses/all", includeRemoved],
-  );
-  const onAllocationChange = (course: RecruitmentCourse, value: string) => {
-    setAllocationDrafts((previous) => ({ ...previous, [course.id]: value }));
-    if (isValidAllocation(value)) {
-      const myEpoch = epoch.current;
-      waiting.current += 1;
-      allocationQueue.current = allocationQueue.current
-        .then(() =>
-          myEpoch !== epoch.current
-            ? undefined
-            : allocationMutation.mutateAsync({
-                id: course.id,
-                allocation: Number(value),
-                expectedVersion:
-                  versions.current[course.id] ?? course.allocationVersion,
-              }),
-        )
-        .catch(() => undefined)
-        .finally(() => {
-          waiting.current -= 1;
-          // Between runs the versions come from the rows as last read, which may be newer.
-          if (waiting.current === 0) {
-            versions.current = {};
-          }
-        });
-    }
-  };
-  // Only the focused box can have a draft, since leaving a box clears it, so clearing them all
-  // on blur is the same as clearing the one.
-  const onAllocationBlur = () => setAllocationDrafts({});
+    replaceCourseInCache(queryClient, saved);
 
   // The Enrollment Estimate boxes (issue #175) save a second after the last keystroke rather than
   // on each one, since an estimate is usually several digits. A pending save is keyed by row id
@@ -459,13 +356,6 @@ export default function RecruitmentCourseTable({
   }, []);
   // Stryker restore all
 
-  const shrinkToContent = {
-    style: { width: "1%", whiteSpace: "nowrap" as const },
-  };
-  // Numbers line up on the right (issue #185); the ratio column stays left-aligned.
-  const numeric = {
-    style: { ...shrinkToContent.style, textAlign: "right" as const },
-  };
   const rankingSummaryByCourse = new Map(
     rankingSummaries.map((summary) => [summary.recruitmentCourseId, summary]),
   );

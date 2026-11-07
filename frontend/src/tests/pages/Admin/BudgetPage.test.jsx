@@ -115,6 +115,9 @@ describe("BudgetPage tests", () => {
     expect(
       screen.getByRole("link", { name: "Choose another quarter" }),
     ).toHaveAttribute("href", "/admin/budget/selectQuarter");
+    expect(
+      screen.getByRole("link", { name: "Combined allocations" }),
+    ).toHaveAttribute("href", "/admin/allocations/F26");
 
     await screen.findByTestId("BudgetPage-bottom-line");
     expect(screen.queryByTestId("BudgetPage-loading")).not.toBeInTheDocument();

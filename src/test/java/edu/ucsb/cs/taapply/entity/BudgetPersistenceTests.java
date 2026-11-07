@@ -41,6 +41,31 @@ class BudgetPersistenceTests {
   }
 
   @Test
+  void a_budget_keeps_its_conversion_factor_and_defaults_to_three() {
+    budgets.save(Budget.builder().quarter("20264").build());
+    budgets.save(Budget.builder().quarter("20271").conversionTAtoULA(2.5).build());
+    entityManager.flush();
+    entityManager.clear();
+
+    assertEquals(3.0, budgets.findById("20264").orElseThrow().getConversionTAtoULA());
+    assertEquals(2.5, budgets.findById("20271").orElseThrow().getConversionTAtoULA());
+  }
+
+  @Test
+  void a_budget_row_that_existed_before_the_column_gets_three() {
+    // The way the older code inserted a budget: without the column.
+    entityManager
+        .getEntityManager()
+        .createNativeQuery(
+            "INSERT INTO budgets (quarter, unrestricted_budget, tas_only_budget,"
+                + " ulas_only_budget, version) VALUES ('20254', 1, 2, 3, 0)")
+        .executeUpdate();
+    entityManager.clear();
+
+    assertEquals(3.0, budgets.findById("20254").orElseThrow().getConversionTAtoULA());
+  }
+
+  @Test
   void a_recruitment_keeps_its_average_cost_per_position() {
     Recruitment saved =
         recruitments.save(

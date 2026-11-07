@@ -4,6 +4,7 @@ import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { ADMIN_MENU_ENTRIES } from "main/utils/helpPages";
 import useScrollToHash from "main/utils/useScrollToHash";
 import MultipleTabsBanner from "main/concurrency/MultipleTabsBanner";
+import { CONVERSION_FACTOR_EXPLANATION } from "main/utils/combinedAllocations";
 
 /** The warning as it looks when someone else is editing the same thing. */
 // Stryker disable next-line StringLiteral : the example name is fixed and is checked by the tests
@@ -499,6 +500,48 @@ export default function HelpAdminsPage(): React.JSX.Element {
           budget, and black when it comes out even. All of these are planning
           figures, shown in dollars and cents and not recorded in the change
           history.
+        </p>
+
+        <h2 className="my-3 h4" id="combined-allocations">
+          Combined Allocation page
+        </h2>
+        <p data-testid="HelpAdminsPage-combined-allocations">
+          <strong>/admin/allocations/QXX</strong> (for example{" "}
+          <em>/admin/allocations/W26</em>; the Budget for Quarter page links to
+          it) shows one quarter&apos;s TA and ULA allocations side by side. It
+          is the Edit Courses page of the two recruitments in one table, whose
+          rows are the courses of the TA recruitment and the ULA recruitment
+          together: a section that is in both recruitments is one row, found by
+          its enroll code, and a section that is in only one has blank cells for
+          the other type. The single <strong>Enrollment Estimate</strong> is the
+          higher of the two recruitments&apos; estimates for the section, and
+          every ratio on the page uses it. For each type that has a recruitment
+          the table has <strong>Allocation</strong> (typed in, and saved,
+          exactly as on the Edit Courses page, for the recruitment of that
+          type), <strong>Unrounded Allocation</strong>, <strong>Delta</strong>{" "}
+          and the <strong>TA:student</strong> or <strong>ULA:student</strong>{" "}
+          ratio, so a quarter with only one recruitment shows only that
+          type&apos;s columns.
+        </p>
+        <p data-testid="HelpAdminsPage-combined-allocations-both">
+          When the quarter has <em>both</em> a TA and a ULA recruitment, the
+          page also has, at the top, a table of <strong>Cost per TA</strong> and{" "}
+          <strong>Cost per ULA</strong> (each recruitment&apos;s average cost
+          per position, entered on the Budget for Quarter page) and{" "}
+          <strong>TA Cost/ULA Cost</strong>, their ratio, which is empty while
+          the cost per ULA is zero. Below it is the{" "}
+          <strong>Nominal TA to ULA conversion factor</strong>, which is 3 until
+          you change it. It must be greater than zero, and is saved as you type
+          it, with the same warning as the Budget page if someone else changed
+          it first.{" "}
+          <span data-testid="HelpAdminsPage-conversion-factor">
+            {CONVERSION_FACTOR_EXPLANATION}
+          </span>{" "}
+          It is used by the extra <strong>ASE:Student Ratio</strong> column, the
+          number of students per TA-equivalent: 1:N, where N is the enrollment
+          estimate divided by the TA allocation plus the ULA allocation divided
+          by the conversion factor. It is a dash when there is no estimate or
+          nothing is allocated.
         </p>
 
         <h2 className="my-3 h4" id="recruitments">

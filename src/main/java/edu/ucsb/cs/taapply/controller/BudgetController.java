@@ -67,8 +67,9 @@ public class BudgetController extends ApiController {
   @Operation(
       summary = "Set one or more of a quarter's budget lines",
       description =
-          "Any of the three may be given; the others keep their values. Amounts are dollars and"
-              + " cents and must not be negative. Returns the quarter's summary with the new"
+          "Any of the three may be given, and the conversionTAtoULA (issue #358, how many ULAs count"
+              + " as one TA on the Combined Allocation page; greater than zero, else 400); the"
+              + " others keep their values. Amounts are dollars and cents and must not be negative. Returns the quarter's summary with the new"
               + " figures. The version is the one the page last saw (issue #277): if the budget"
               + " has been saved since, by another tab or admin, nothing is changed and the answer"
               + " is 409 Conflict with the summary as it now stands. Without a version the save"
@@ -83,11 +84,19 @@ public class BudgetController extends ApiController {
       @Parameter(name = "unrestrictedBudget") @RequestParam(required = false)
           BigDecimal unrestrictedBudget,
       @Parameter(name = "tasOnlyBudget") @RequestParam(required = false) BigDecimal tasOnlyBudget,
-      @Parameter(name = "ulasOnlyBudget") @RequestParam(required = false)
-          BigDecimal ulasOnlyBudget) {
+      @Parameter(name = "ulasOnlyBudget") @RequestParam(required = false) BigDecimal ulasOnlyBudget,
+      @Parameter(
+              name = "conversionTAtoULA",
+              description = "how many ULAs count as one TA; greater than zero")
+          @RequestParam(required = false)
+          Double conversionTAtoULA) {
     requireNotNegative("unrestrictedBudget", unrestrictedBudget);
     requireNotNegative("tasOnlyBudget", tasOnlyBudget);
     requireNotNegative("ulasOnlyBudget", ulasOnlyBudget);
+    if (conversionTAtoULA != null
+        && !(conversionTAtoULA > 0 && Double.isFinite(conversionTAtoULA))) {
+      throw new IllegalArgumentException("conversionTAtoULA must be greater than zero");
+    }
 
     Budget budget = budgetService.budgetFor(quarter);
     clientActivityDetector.note(resourceKey(quarter), clientId, identity());
@@ -102,6 +111,9 @@ public class BudgetController extends ApiController {
     }
     if (ulasOnlyBudget != null) {
       budget.setUlasOnlyBudget(BudgetService.money(ulasOnlyBudget));
+    }
+    if (conversionTAtoULA != null) {
+      budget.setConversionTAtoULA(conversionTAtoULA);
     }
     try {
       budgetRepository.save(budget);

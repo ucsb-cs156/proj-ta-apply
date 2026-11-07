@@ -277,6 +277,115 @@ public class BudgetControllerTests extends ControllerTestCase {
     verify(budgetRepository, never()).save(any());
   }
 
+  // ---- the conversion factor (issue #358) ----
+
+  @Test
+  public void a_new_budget_converts_three_ulas_to_one_ta() {
+    assertEquals(3.0, budget("0", "0", "0").getConversionTAtoULA());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_set_the_conversion_factor_and_the_other_lines_keep_their_values()
+      throws Exception {
+    Budget budget = budget("1.00", "2.00", "3.00");
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&conversionTAtoULA=2.5").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(2.5, budget.getConversionTAtoULA());
+    assertEquals(new BigDecimal("2.00"), budget.getTasOnlyBudget());
+    verify(budgetRepository).save(budget);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_save_without_a_conversion_factor_leaves_it_alone() throws Exception {
+    Budget budget = budget("1.00", "2.00", "3.00");
+    budget.setConversionTAtoULA(1.5);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&tasOnlyBudget=7").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(1.5, budget.getConversionTAtoULA());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_conversion_factor_that_is_not_greater_than_zero_is_a_400() throws Exception {
+    for (String bad : List.of("0", "-1", "-0.5", "NaN", "Infinity", "0.0")) {
+      MvcResult response =
+          mockMvc
+              .perform(put("/api/admin/budget?quarter=20264&conversionTAtoULA=" + bad).with(csrf()))
+              .andExpect(status().isBadRequest())
+              .andReturn();
+      assertEquals(
+          "conversionTAtoULA must be greater than zero", responseToJson(response).get("message"));
+    }
+    verify(budgetService, never()).budgetFor(any());
+    verify(budgetRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_conversion_factor_that_is_not_a_number_is_a_400() throws Exception {
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&conversionTAtoULA=abc").with(csrf()))
+        .andExpect(status().isBadRequest());
+    verify(budgetRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_stale_version_stops_a_conversion_factor_change_too() throws Exception {
+    Budget budget = versioned(5);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&version=4&conversionTAtoULA=2").with(csrf()))
+        .andExpect(status().isConflict());
+
+    assertEquals(3.0, budget.getConversionTAtoULA());
+    verify(budgetRepository, never()).save(any());
+  }
+
+  @Test
+  public void logged_out_users_cannot_change_the_conversion_factor() throws Exception {
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&conversionTAtoULA=2").with(csrf()))
+        .andExpect(status().is(403));
+    verify(budgetRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void instructors_cannot_change_the_conversion_factor() throws Exception {
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&conversionTAtoULA=2").with(csrf()))
+        .andExpect(status().is(403));
+    verify(budgetRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void the_summary_carries_the_conversion_factor_under_that_name() throws Exception {
+    Budget budget = budget("1000.00", "0.00", "0.00");
+    budget.setConversionTAtoULA(2.0);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(get("/api/admin/budget?quarter=20264"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.budget.conversionTAtoULA").value(2.0));
+  }
+
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void changing_the_budget_of_a_quarter_with_no_recruitment_is_a_404() throws Exception {

@@ -19,6 +19,9 @@ import lombok.*;
 @Builder
 @Entity(name = "budgets")
 public class Budget {
+  /** What a quarter's conversion factor is until an admin sets it (issue #358). */
+  public static final double DEFAULT_CONVERSION_TA_TO_ULA = 3.0;
+
   /** YYYYQ, e.g. "20264". */
   @Id private String quarter;
 
@@ -36,6 +39,14 @@ public class Budget {
   @Column(name = "ulas_only_budget", nullable = false, precision = 12, scale = 2)
   @Builder.Default
   private BigDecimal ulasOnlyBudget = BigDecimal.ZERO;
+
+  /**
+   * How many ULAs count as one TA when the Combined Allocation page computes the overall
+   * ASE:Student ratio (issue #358). Greater than zero; 3 until an admin sets it.
+   */
+  @Column(name = "conversion_ta_to_ula", nullable = false)
+  @Builder.Default
+  private Double conversionTAtoULA = DEFAULT_CONVERSION_TA_TO_ULA;
 
   /**
    * How many times this budget has been saved (issue #277). JPA checks it and adds one on every

@@ -115,7 +115,31 @@ as "W26 Budget") with three buttons: **Budget** (`/admin/budget/QXX`), **TA allo
 recruitment; greyed out and disabled when there is none). The cards are grouped by quarter, in the
 order each quarter first appears in the sorted list, so the budget card moves with its quarter;
 sorting by anything other than Quarter therefore keeps a quarter's cards together instead of
-interleaving them. It prepares for the Combined Allocation page (issue #358).
+interleaving them. It prepares for the Combined Allocation page (issue #358, below).
+
+## The Combined Allocation page (issue #358)
+
+`/admin/allocations/QXX` (for example `/admin/allocations/W26`; admins only) shows one quarter's TA
+and ULA allocations side by side. It is modelled on `/admin/recruitments/:id/courses/edit`, which
+stays as it is.
+
+- **Rows**: the union of the courses of the quarter's TA and ULA recruitments, one row per enroll
+  code (a course's two lectures are two rows; a section in both recruitments is one row). A
+  section in only one recruitment has blank cells for the other type.
+- **Enrollment Estimate**: one column, read-only. Today each recruitment's course row has its own
+  estimate; a section in both shows the higher of the two (until issue #363 gives a course one
+  value per quarter). All the ratios on the page use this one value.
+- **Columns per type**, only for a type that has a recruitment: Allocation (editable, through the
+  same endpoint and version checks as the Recruitment Courses page, against that type's
+  recruitment), Unrounded Allocation, Delta and TA:student (or ULA:student) ratio.
+- **Only when the quarter has both recruitments**: a table with no header row, *Cost per TA* and
+  *Cost per ULA* (each recruitment's average cost per position, entered on the Budget page) and
+  *TA Cost/ULA Cost* (empty when the cost per ULA is zero or either is unknown); the editable
+  **Nominal TA to ULA conversion factor** (the budget row's `conversionTAtoULA`, greater than
+  zero, 3 until set, saved on change with the budget's version check); and an **ASE:Student Ratio**
+  column, `1 : ( enrollmentEstimate / ( TA allocation + ULA allocation / conversionTAtoULA ) )`,
+  the students per TA-equivalent, shown as "1:N" with a dash when the denominator is zero or there
+  is no estimate.
 
 ## The new recruitment card layout
 
