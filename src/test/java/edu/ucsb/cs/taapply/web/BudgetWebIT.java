@@ -3,10 +3,13 @@ package edu.ucsb.cs.taapply.web;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 import edu.ucsb.cs.taapply.WebTestCase;
+import edu.ucsb.cs.taapply.entity.Budget;
+import edu.ucsb.cs.taapply.entity.BudgetCourse;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
+import edu.ucsb.cs.taapply.repository.BudgetCourseRepository;
 import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.testconfig.IntegrationConfig;
 import java.time.LocalDate;
@@ -34,7 +37,12 @@ public class BudgetWebIT extends WebTestCase {
   private static final String BANNER = "BudgetPage-multiple-tabs";
 
   @Autowired BudgetRepository budgetRepository;
+  @Autowired BudgetCourseRepository budgetCourseRepository;
 
+  /**
+   * A recruitment with CMPSC 156 lecture 07492. The section's enrollment estimate is the quarter's,
+   * one row in budget_courses shared by the two recruitments (issue #363), so it is created once.
+   */
   private Recruitment recruitmentWithOneCourse(RecruitmentType type) {
     Recruitment recruitment =
         recruitmentRepository.save(
@@ -52,9 +60,23 @@ public class BudgetWebIT extends WebTestCase {
             .section("0100")
             .enrollCode("07492")
             .title("ADV APP PROGRAM")
-            .enrollmentEstimate(100)
             .removed(false)
             .build());
+    budgetRepository
+        .findById("20264")
+        .orElseGet(() -> budgetRepository.save(Budget.builder().quarter("20264").build()));
+    budgetCourseRepository
+        .findByQuarterAndEnrollCode("20264", "07492")
+        .orElseGet(
+            () ->
+                budgetCourseRepository.save(
+                    BudgetCourse.builder()
+                        .quarter("20264")
+                        .enrollCode("07492")
+                        .courseId("CMPSC   156")
+                        .section("0100")
+                        .enrollmentEstimate(100)
+                        .build()));
     return recruitment;
   }
 

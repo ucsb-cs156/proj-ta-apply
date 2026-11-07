@@ -30,6 +30,7 @@ public class BudgetService {
   @Autowired BudgetRepository budgetRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired BudgetCourseService budgetCourseService;
 
   /** A quarter with at least one recruitment, and which types it has. */
   public record QuarterSummary(String quarter, boolean hasTa, boolean hasUla) {}
@@ -38,8 +39,8 @@ public class BudgetService {
    * One recruitment's side of the budget.
    *
    * @param totalAllocation the sum of the allocations of its non-removed courses
-   * @param totalEnrollmentEstimate the sum of their enrollment estimates, a missing one counting as
-   *     0
+   * @param totalEnrollmentEstimate the sum of their enrollment estimates (the quarter's, from
+   *     {@code budget_courses}), a missing one counting as 0
    * @param allocationDifference totalAllocation minus totalHiringTarget; 0 when they agree
    * @param studentsPerPosition totalEnrollmentEstimate divided by totalHiringTarget, the n of the
    *     "1:n" ratio; null when there are no estimates
@@ -133,6 +134,8 @@ public class BudgetService {
         recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()
             .filter(row -> !row.isRemoved())
             .toList();
+    // The estimates are the quarter's (issue #363), shared with the other recruitment.
+    budgetCourseService.attach(recruitment.getQuarter(), active);
     int totalAllocation = active.stream().mapToInt(RecruitmentCourse::getAllocation).sum();
     int totalEstimate = active.stream().mapToInt(BudgetService::estimateOf).sum();
     int target = recruitment.getTotalHiringTarget();

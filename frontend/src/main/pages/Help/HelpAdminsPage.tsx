@@ -390,8 +390,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
           Opening the page also refreshes every lecture&apos;s enrollment and
           maximum enrollment from the UCSB schedule while you wait, so the
           figures you plan from are current; if the schedule cannot be reached,
-          the page says so and shows the stored figures. Your own estimate of
-          how many students each lecture will have, the{" "}
+          the page says so and shows the stored figures. The figures are kept
+          once per quarter, shared by the TA and ULA recruitments, and trusted
+          for 24 hours: when every one of them was checked within that time the
+          page shows them as they are and does not ask the schedule again. Your
+          own estimate of how many students each lecture will have, the{" "}
           <strong>Enrollment Estimate</strong>, and the{" "}
           <em>Set enrollment estimates from: max, actual</em> control that fills
           it from the schedule used to be on this page; they are on the{" "}
@@ -531,17 +534,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
           the TA recruitment and the ULA recruitment together: a section that is
           in both recruitments is one row, found by its enroll code, and a
           section that is in only one has blank cells for the other type. The
-          single <strong>Enrollment Estimate</strong> is the higher of the two
-          recruitments&apos; estimates for the section, and every ratio on the
-          page uses it. It is your own estimate of how many students the section
-          will have, the basis for allocating positions: type it in the table
-          and it is saved a second after the last keystroke, or at once when you
-          leave the box; an empty box clears it; and what you type is saved to
-          the section&apos;s course row in <em>each</em> recruitment that has
-          it, so the two agree. For each type that has a recruitment the table
-          has <strong>Allocation</strong> (how many TAs or ULAs of that
-          recruitment the section gets; a whole number, saved as you type it,
-          against the recruitment of that type),{" "}
+          single <strong>Enrollment Estimate</strong> is the section&apos;s one
+          estimate for the quarter, kept once and shared by the TA and ULA
+          recruitments, and every ratio on the page uses it. It is your own
+          estimate of how many students the section will have, the basis for
+          allocating positions: type it in the table and it is saved a second
+          after the last keystroke, or at once when you leave the box; an empty
+          box clears it; and whichever recruitment&apos;s row the page saves it
+          under, both recruitments see the same value. For each type that has a
+          recruitment the table has <strong>Allocation</strong> (how many TAs or
+          ULAs of that recruitment the section gets; a whole number, saved as
+          you type it, against the recruitment of that type),{" "}
           <strong>Unrounded Allocation</strong>, <strong>Delta</strong> and the{" "}
           <strong>TA:student</strong> or <strong>ULA:student</strong> ratio, so
           a quarter with only one recruitment shows only that type&apos;s

@@ -11,11 +11,13 @@ import edu.ucsb.cs.taapply.models.UcsbTimeLocation;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs.taapply.time.AppTime;
 import edu.ucsb.cs156.jobs.services.JobContext;
 import edu.ucsb.cs156.jobs.services.JobContextConsumer;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +48,10 @@ import lombok.extern.slf4j.Slf4j;
  *       response changes no flags, so a bad fetch cannot mark everything stale at once.
  *   <li>A row an admin added by enroll code (issue #125) is refreshed whenever its section is still
  *       in the API, flagged course or not; it goes stale only when the section is gone.
+ *   <li>The enrollment figures are the quarter's, not the recruitment's (issue #363): the one fetch
+ *       of the quarter's offerings also caches them for every section of the quarter on file, in
+ *       this recruitment or the other, through {@link BudgetCourseService#refreshCache}, and a row
+ *       this run adds gets its quarter row there.
  * </ul>
  */
 @Builder
@@ -60,6 +66,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
   private CourseRepository courseRepository;
   private RecruitmentCourseRepository recruitmentCourseRepository;
   private RecruitmentRepository recruitmentRepository;
+  private BudgetCourseService budgetCourseService;
   private JobRateLimit jobRateLimit;
 
   @Override
@@ -106,6 +113,10 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
     // Every lecture in the quarter by enroll code, flagged course or not, for the manually added
     // rows (issue #125).
     Map<String, Offered> offered = new HashMap<>();
+    // The same lectures' sections, for the quarter's enrollment figures (issue #363).
+    Map<String, UcsbSection> sections = new HashMap<>();
+    // The rows this run found and wrote, each of which must have its quarter row.
+    List<RecruitmentCourse> applied = new ArrayList<>();
 
     for (UcsbCourseOffering offering : offerings) {
       ctx.checkCancellation();
@@ -121,6 +132,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
           continue;
         }
         offered.put(section.getEnrollCode(), new Offered(courseId, offering, section));
+        sections.put(section.getEnrollCode(), section);
         if (!wanted.contains(courseId)) {
           continue;
         }
@@ -144,6 +156,7 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
         }
         row.setStale(false);
         recruitmentCourseRepository.save(row);
+        applied.add(row);
 
         if (existing.isPresent()) {
           updated++;
@@ -170,12 +183,20 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
         }
         row.setStale(false);
         recruitmentCourseRepository.save(row);
+        applied.add(row);
         updated++;
         ctx.log(
             String.format(
                 "  %s section %s (added by hand)", found.courseId(), found.section().getSection()));
       }
     }
+
+    // One fetch serves the whole quarter: every section on file, in this recruitment or the other,
+    // gets its enrollment figures from it (issue #363).
+    int cached = budgetCourseService.refreshCache(quarter, applied, sections);
+    ctx.log(
+        String.format(
+            "Cached the enrollment figures of %d section(s) of quarter %s", cached, quarter));
 
     int markedStale = 0;
     if (offerings.isEmpty()) {
@@ -228,7 +249,8 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
 
   /**
    * Copies a lecture's offering details onto a row. Shared with the admin's add-by-enroll-code
-   * endpoint (issue #125), so the two paths cannot drift apart.
+   * endpoint (issue #125), so the two paths cannot drift apart. The enrollment figures are not the
+   * row's (issue #363): the callers cache them in the quarter's {@code budget_courses} row.
    */
   public static void applyOffering(
       RecruitmentCourse row,
@@ -245,8 +267,6 @@ public class PopulateRecruitmentCoursesJob implements JobContextConsumer {
     row.setDays(firstDays(section));
     row.setTime(firstTime(section));
     row.setRoom(firstRoom(section));
-    row.setEnrollment(section.getEnrolledTotal());
-    row.setMaxEnroll(section.getMaxEnroll());
     row.setStatus(statusOf(section));
     row.setSummerSession(section.getSession());
   }

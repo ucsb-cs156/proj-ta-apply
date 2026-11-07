@@ -12,12 +12,14 @@ import static org.mockito.Mockito.when;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
+import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
 import edu.ucsb.cs.taapply.services.AllocationVisibilityService;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import edu.ucsb.cs.taapply.services.fake.FakeAllocationsService.Estimates;
 import java.util.List;
 import java.util.Optional;
@@ -38,23 +40,20 @@ public class FakeAllocationsServiceTests {
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean AllocationService allocationService;
   @MockitoBean AllocationVisibilityService allocationVisibilityService;
+  @MockitoBean BudgetCourseService budgetCourseService;
 
   private Recruitment recruitment;
-  private RecruitmentCourse withNumbers; // max 300, enrollment 250
-  private RecruitmentCourse withoutNumbers; // neither known
+  private RecruitmentCourse first;
+  private RecruitmentCourse second;
   private RecruitmentCourse removed;
   private List<RecruitmentCourse> allocated;
 
-  private static RecruitmentCourse course(
-      long id, Integer max, Integer enrollment, Integer estimate, boolean removed) {
+  private static RecruitmentCourse course(long id, boolean removed) {
     return RecruitmentCourse.builder()
         .id(id)
         .recruitmentId(7L)
         .courseId("CMPSC " + id)
         .enrollCode("EC" + id)
-        .maxEnroll(max)
-        .enrollment(enrollment)
-        .enrollmentEstimate(estimate)
         .removed(removed)
         .build();
   }
@@ -62,16 +61,20 @@ public class FakeAllocationsServiceTests {
   @BeforeEach
   public void setup() {
     recruitment = Recruitment.builder().id(7L).quarter("20261").type(RecruitmentType.TA).build();
-    withNumbers = course(1L, 300, 250, 111, false);
-    withoutNumbers = course(2L, null, null, 222, false);
-    removed = course(3L, 999, 999, 333, true);
-    allocated = List.of(withNumbers, withoutNumbers);
+    first = course(1L, false);
+    second = course(2L, false);
+    removed = course(3L, true);
+    allocated = List.of(first, second);
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(recruitment));
     when(recruitmentCourseRepository.findByRecruitmentId(7L))
-        .thenReturn(List.of(withNumbers, withoutNumbers, removed));
+        .thenReturn(List.of(first, second, removed));
     when(allocationService.autoAllocate(recruitment)).thenReturn(allocated);
   }
 
+  /**
+   * The estimates are the quarter's (issue #363): filled through the budget course service for the
+   * non-removed courses, then both recruitments' shares recomputed, then this one allocated.
+   */
   @Test
   public void it_sets_the_target_fills_estimates_from_the_maximum_and_allocates_in_order() {
     List<RecruitmentCourse> result = service.fake(7L, 5, Estimates.MAX, false);
@@ -80,34 +83,31 @@ public class FakeAllocationsServiceTests {
     assertEquals(5, recruitment.getTotalHiringTarget());
     // Every allocation was overwritten, so edits made against the old ones are refused (#278).
     assertEquals(1, recruitment.getAllocationBulkVersion());
-    assertEquals(300, withNumbers.getEnrollmentEstimate());
-    // A course with no figure keeps the estimate it had; a removed one is never touched.
-    assertEquals(222, withoutNumbers.getEnrollmentEstimate());
-    assertEquals(333, removed.getEnrollmentEstimate());
-    InOrder inOrder =
-        inOrder(recruitmentRepository, recruitmentCourseRepository, allocationService);
+    InOrder inOrder = inOrder(recruitmentRepository, budgetCourseService, allocationService);
     inOrder.verify(recruitmentRepository).save(recruitment);
-    inOrder.verify(recruitmentCourseRepository).save(withNumbers);
+    inOrder
+        .verify(budgetCourseService)
+        .fillEstimates("20261", List.of(first, second), EnrollmentEstimateSource.MAX);
+    inOrder.verify(allocationService).recomputeQuarter("20261");
     inOrder.verify(allocationService).autoAllocate(recruitment);
-    verify(recruitmentCourseRepository, never()).save(withoutNumbers);
-    verify(recruitmentCourseRepository, never()).save(removed);
+    verify(recruitmentCourseRepository, never()).save(any());
   }
 
   @Test
   public void it_can_fill_estimates_from_the_current_enrollment() {
     service.fake(7L, 5, Estimates.ACTUAL, false);
 
-    assertEquals(250, withNumbers.getEnrollmentEstimate());
-    assertEquals(222, withoutNumbers.getEnrollmentEstimate());
-    verify(recruitmentCourseRepository).save(withNumbers);
+    verify(budgetCourseService)
+        .fillEstimates("20261", List.of(first, second), EnrollmentEstimateSource.ACTUAL);
+    verify(allocationService).recomputeQuarter("20261");
   }
 
   @Test
   public void it_can_keep_the_estimates_already_entered() {
     service.fake(7L, 5, Estimates.KEEP, false);
 
-    assertEquals(111, withNumbers.getEnrollmentEstimate());
-    assertEquals(222, withoutNumbers.getEnrollmentEstimate());
+    verify(budgetCourseService, never()).fillEstimates(any(), any(), any());
+    verify(allocationService, never()).recomputeQuarter(any());
     verify(recruitmentCourseRepository, never()).save(any());
     verify(allocationService).autoAllocate(recruitment);
   }

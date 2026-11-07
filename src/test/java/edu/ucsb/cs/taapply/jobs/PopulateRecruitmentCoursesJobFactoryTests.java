@@ -8,6 +8,7 @@ import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.CourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import edu.ucsb.cs156.jobs.services.JobRateLimit;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ public class PopulateRecruitmentCoursesJobFactoryTests {
   @MockitoBean private CourseRepository courseRepository;
   @MockitoBean private RecruitmentCourseRepository recruitmentCourseRepository;
   @MockitoBean private RecruitmentRepository recruitmentRepository;
+  @MockitoBean private BudgetCourseService budgetCourseService;
   @MockitoBean private JobRateLimit jobRateLimit;
 
   @Test
@@ -44,6 +46,7 @@ public class PopulateRecruitmentCoursesJobFactoryTests {
     assertSame(courseRepository, job.getCourseRepository());
     assertSame(recruitmentCourseRepository, job.getRecruitmentCourseRepository());
     assertSame(recruitmentRepository, job.getRecruitmentRepository());
+    assertSame(budgetCourseService, job.getBudgetCourseService());
     assertSame(jobRateLimit, job.getJobRateLimit());
   }
 }

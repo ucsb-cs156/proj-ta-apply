@@ -46,6 +46,9 @@ public class CandidateRankingsControllerTests extends ControllerTestCase {
   @org.springframework.test.context.bean.override.mockito.MockitoBean
   CandidateRankingRepository candidateRankingRepository;
 
+  @org.springframework.test.context.bean.override.mockito.MockitoBean
+  edu.ucsb.cs.taapply.services.BudgetCourseService budgetCourseService;
+
   @org.springframework.test.context.bean.override.mockito.MockitoBean UserRepository userRepository;
 
   @org.springframework.test.context.bean.override.mockito.MockitoBean

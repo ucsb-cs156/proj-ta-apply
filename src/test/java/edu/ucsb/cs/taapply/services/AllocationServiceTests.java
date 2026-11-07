@@ -13,8 +13,10 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,12 +29,18 @@ public class AllocationServiceTests {
 
   @Autowired AllocationService service;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
+  @MockitoBean RecruitmentRepository recruitmentRepository;
+  @MockitoBean BudgetCourseService budgetCourseService;
 
   private static Recruitment recruitment(int target) {
+    return recruitment(7L, RecruitmentType.TA, target);
+  }
+
+  private static Recruitment recruitment(long id, RecruitmentType type, int target) {
     return Recruitment.builder()
-        .id(7L)
+        .id(id)
         .quarter("20261")
-        .type(RecruitmentType.TA)
+        .type(type)
         .totalHiringTarget(target)
         .build();
   }
@@ -129,6 +137,68 @@ public class AllocationServiceTests {
     when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of());
     assertTrue(service.recompute(recruitment(5)).isEmpty());
     verify(recruitmentCourseRepository, never()).save(any());
+  }
+
+  /**
+   * Issue #363: the estimates are the quarter's, read from budget_courses before the arithmetic.
+   */
+  @Test
+  public void recompute_reads_the_quarters_figures_onto_the_active_rows_first() {
+    RecruitmentCourse a = row(1L, "CMPSC     8", "0100", null, 0);
+    RecruitmentCourse removed = row(2L, "CMPSC    16", "0100", 50, 0);
+    removed.setRemoved(true);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(a, removed));
+    // The attach is what gives the row its estimate.
+    org.mockito.Mockito.doAnswer(
+            invocation -> {
+              a.setEnrollmentEstimate(100);
+              return null;
+            })
+        .when(budgetCourseService)
+        .attach("20261", List.of(a));
+
+    List<RecruitmentCourse> result = service.recompute(recruitment(4));
+
+    assertEquals(List.of(a), result);
+    assertEquals(4.0, a.getUnroundedAllocation());
+    verify(budgetCourseService).attach("20261", List.of(a));
+  }
+
+  // ---- recomputeQuarter ----
+
+  @Test
+  public void recomputeQuarter_recomputes_each_recruitment_the_quarter_has() {
+    Recruitment ta = recruitment(7L, RecruitmentType.TA, 2);
+    Recruitment ula = recruitment(8L, RecruitmentType.ULA, 6);
+    when(recruitmentRepository.findByQuarterAndType("20261", RecruitmentType.TA))
+        .thenReturn(Optional.of(ta));
+    when(recruitmentRepository.findByQuarterAndType("20261", RecruitmentType.ULA))
+        .thenReturn(Optional.of(ula));
+    RecruitmentCourse taRow = row(1L, "CMPSC     8", "0100", 100, 0);
+    RecruitmentCourse ulaRow = row(2L, "CMPSC     8", "0100", 100, 0);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(taRow));
+    when(recruitmentCourseRepository.findByRecruitmentId(8L)).thenReturn(List.of(ulaRow));
+
+    service.recomputeQuarter("20261");
+
+    assertEquals(2.0, taRow.getUnroundedAllocation());
+    assertEquals(6.0, ulaRow.getUnroundedAllocation());
+    verify(recruitmentCourseRepository).save(taRow);
+    verify(recruitmentCourseRepository).save(ulaRow);
+  }
+
+  @Test
+  public void recomputeQuarter_skips_a_type_the_quarter_has_no_recruitment_of() {
+    when(recruitmentRepository.findByQuarterAndType("20261", RecruitmentType.TA))
+        .thenReturn(Optional.of(recruitment(7L, RecruitmentType.TA, 2)));
+    when(recruitmentRepository.findByQuarterAndType("20261", RecruitmentType.ULA))
+        .thenReturn(Optional.empty());
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of());
+
+    service.recomputeQuarter("20261");
+
+    verify(recruitmentCourseRepository, times(1)).findByRecruitmentId(any());
+    verify(recruitmentCourseRepository).findByRecruitmentId(7L);
   }
 
   @Test

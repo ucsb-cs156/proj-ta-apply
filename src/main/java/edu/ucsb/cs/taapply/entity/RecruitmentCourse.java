@@ -13,6 +13,11 @@ import lombok.*;
  * instructors who rank candidates independently. Secondary sections (discussions, labs) are not
  * included.
  *
+ * <p>The figures that belong to the section rather than to the recruitment (the enrollment, the
+ * maximum enrollment and the enrollment estimate) are kept once per quarter in {@link BudgetCourse}
+ * (issue #363), since a section can be in both the TA and the ULA recruitment. They are still
+ * fields here, so that the JSON is unchanged, but transient ones: see {@link #attachFigures}.
+ *
  * <p>{@code removed} exists so that an admin's decision to drop a course survives a later Populate.
  * A hard delete would not: the next run cannot tell a course that was deliberately removed from one
  * it has never seen, and would add it straight back.
@@ -65,9 +70,18 @@ public class RecruitmentCourse {
 
   private String room;
 
-  private Integer enrollment;
+  /**
+   * The section's current enrollment, as the UCSB API last reported it. Not a column since issue
+   * #363: the figure is the quarter's, cached once per section in {@code budget_courses} and shared
+   * by the TA and ULA recruitments. {@link #attachFigures} fills it before a row leaves the server;
+   * a row straight from the repository has it null. Setting it changes nothing on file.
+   */
+  @Transient private Integer enrollment;
 
-  private Integer maxEnroll;
+  /**
+   * The section's maximum enrollment; a transient view of {@code budget_courses}, like the above.
+   */
+  @Transient private Integer maxEnroll;
 
   /** open, closed or cancelled. */
   private String status;
@@ -113,11 +127,13 @@ public class RecruitmentCourse {
 
   /**
    * The admin's estimate of how many students the section will have (issue #175), the basis for
-   * allocating positions. Null until entered; the Recruitment Courses page can fill it from {@code
-   * maxEnroll} or {@code enrollment} in one step. A planning figure, so not audited.
+   * allocating positions. Null until entered; the Combined Allocation page can fill it from {@code
+   * maxEnroll} or {@code enrollment} in one step. A planning figure, so not audited. Since issue
+   * #363 there is one estimate per section per quarter, kept in {@code budget_courses} and shared
+   * by the quarter's recruitments; this is a transient view of it, filled by {@link #attachFigures}
+   * and written through {@code BudgetCourseService}, never through this row.
    */
-  @Column(name = "enrollment_estimate")
-  private Integer enrollmentEstimate;
+  @Transient private Integer enrollmentEstimate;
 
   /**
    * How many positions this section would get if they could be split into fractions and were shared
@@ -139,5 +155,16 @@ public class RecruitmentCourse {
   @JsonIgnore
   public boolean isOnOffer() {
     return !removed && !stale && !CANCELLED.equals(status);
+  }
+
+  /**
+   * Fills the three quarter-level figures (enrollment, maximum enrollment and enrollment estimate)
+   * from the section's {@code budget_courses} row, so that the JSON of this row looks as it did
+   * before issue #363 moved them there. Blanks them when the section has no such row.
+   */
+  public void attachFigures(BudgetCourse figures) {
+    enrollment = figures == null ? null : figures.getEnrollment();
+    maxEnroll = figures == null ? null : figures.getMaxEnroll();
+    enrollmentEstimate = figures == null ? null : figures.getEnrollmentEstimate();
   }
 }
