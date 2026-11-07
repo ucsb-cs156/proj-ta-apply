@@ -8,6 +8,7 @@ import { useState } from "react";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import DeveloperModeFooterProvider from "main/components/Nav/DeveloperModeFooterProvider";
 import {
+  DeveloperFooterControls,
   useDeveloperModeFooterControls,
   useDeveloperModeFooterControlsValue,
 } from "main/utils/developerModeFooter";
@@ -67,6 +68,22 @@ describe("developer-mode footer slot", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "toggle page" }));
     expect(screen.getByTestId("slot")).toHaveTextContent("nothing registered");
+  });
+
+  test("the element form registers its controls and renders nothing of its own", () => {
+    const { container } = render(
+      <DeveloperModeFooterProvider>
+        <div data-testid="around">
+          <DeveloperFooterControls
+            controls={<button>From the element</button>}
+          />
+        </div>
+        <SlotReader />
+      </DeveloperModeFooterProvider>,
+    );
+    expect(screen.getByTestId("slot")).toHaveTextContent("From the element");
+    expect(screen.getByTestId("around")).toBeEmptyDOMElement();
+    expect(container.querySelectorAll("button")).toHaveLength(1);
   });
 
   test("when the registered controls change, the slot follows", () => {

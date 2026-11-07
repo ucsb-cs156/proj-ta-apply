@@ -6,52 +6,77 @@ import { toast } from "react-toastify";
 import { apiErrorMessage } from "main/utils/apiError";
 import {
   FAKE_ESTIMATE_CHOICES,
+  fakeAllocationsMessage,
+  fakeTargetLabel,
   isValidFakeTarget,
   maxFakeTarget,
+  type FakeAllocationsRecruitment,
   type FakeEstimates,
 } from "main/utils/fakeAllocations";
 
 type FakeAllocationsModalProps = {
-  recruitmentId: number | string;
-  /** The recruitment's non-removed courses: the default target, and a third of the largest. */
-  courseCount: number;
+  /**
+   * The recruitments to fake, each with a box for its hiring target: one on a recruitment's own
+   * Courses page, the quarter's TA and ULA recruitments on the Combined Allocation page (issue
+   * #358). The estimate source and the visibility box apply to all of them.
+   */
+  recruitments: FakeAllocationsRecruitment[];
   onHide: () => void;
   testIdPrefix?: string;
 };
+
+const keyOf = (recruitmentId: number | string) => String(recruitmentId);
 
 /**
  * Developer Mode's Fake Hiring Targets and Allocations (issue #225): picks a hiring target and
  * where the enrollment estimates come from, then asks the backend to set the target, fill the
  * estimates, auto-allocate across the courses, and, if ticked, let each faculty member see the
- * allocations of their own courses. Mounted only while open.
+ * allocations of their own courses. With several recruitments, one request each, in one click.
+ * Mounted only while open.
  */
 export default function FakeAllocationsModal({
-  recruitmentId,
-  courseCount,
+  recruitments,
   onHide,
   testIdPrefix = "FakeAllocationsModal",
 }: FakeAllocationsModalProps): React.JSX.Element {
-  const [target, setTarget] = useState(String(Math.max(courseCount, 1)));
+  const [targets, setTargets] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      recruitments.map((r) => [
+        keyOf(r.recruitmentId),
+        String(Math.max(r.courseCount, 1)),
+      ]),
+    ),
+  );
   const [estimates, setEstimates] = useState<FakeEstimates>("MAX");
   const [setVisibility, setSetVisibility] = useState(true);
   const queryClient = useQueryClient();
-  const valid = isValidFakeTarget(target, courseCount);
+  const targetOf = (r: FakeAllocationsRecruitment) =>
+    targets[keyOf(r.recruitmentId)];
+  const valid = recruitments.every((r) =>
+    isValidFakeTarget(targetOf(r), r.courseCount),
+  );
 
   const fake = useMutation({
     mutationFn: () =>
-      axios({
-        url: "/api/admin/developer/fakeAllocations",
-        method: "POST",
-        params: {
-          recruitmentId,
-          hiringTarget: Number(target),
-          estimates,
-          setVisibility,
-        },
-      }),
+      Promise.all(
+        recruitments.map((r) =>
+          axios({
+            url: "/api/admin/developer/fakeAllocations",
+            method: "POST",
+            params: {
+              recruitmentId: r.recruitmentId,
+              hiringTarget: Number(targetOf(r)),
+              estimates,
+              setVisibility,
+            },
+          }),
+        ),
+      ),
     onSuccess: () => {
       toast(
-        `Faked a hiring target of ${target} and allocated it across the courses.`,
+        fakeAllocationsMessage(
+          recruitments.map((r) => ({ type: r.type, target: targetOf(r) })),
+        ),
       );
       onHide();
     },
@@ -64,6 +89,8 @@ export default function FakeAllocationsModal({
       queryClient.invalidateQueries({
         queryKey: ["/api/admin/recruitments/all"],
       });
+      // The budget summary carries each recruitment's hiring target (issue #358).
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/budget"] });
     },
     retry: false,
   });
@@ -78,25 +105,35 @@ export default function FakeAllocationsModal({
           Sets the hiring target, fills in the enrollment estimates, and
           auto-allocates the target across the courses, as you would by hand.
         </p>
-        <Form.Group controlId={`${testIdPrefix}-target`} className="mb-3">
-          <Form.Label>Hiring target</Form.Label>
-          <Form.Control
-            type="number"
-            min={1}
-            max={maxFakeTarget(courseCount)}
-            step={1}
-            size="sm"
-            style={{ width: "7em" }}
-            value={target}
-            isInvalid={!valid}
-            onChange={(event) => setTarget(event.target.value)}
-            data-testid={`${testIdPrefix}-target`}
-          />
-          <Form.Control.Feedback type="invalid">
-            Enter a whole number from 1 to {maxFakeTarget(courseCount)} (three
-            per course).
-          </Form.Control.Feedback>
-        </Form.Group>
+        {recruitments.map((r) => {
+          const id = `${testIdPrefix}-target-${keyOf(r.recruitmentId)}`;
+          return (
+            <Form.Group controlId={id} className="mb-3" key={id}>
+              <Form.Label>{fakeTargetLabel(r.type)}</Form.Label>
+              <Form.Control
+                type="number"
+                min={1}
+                max={maxFakeTarget(r.courseCount)}
+                step={1}
+                size="sm"
+                style={{ width: "7em" }}
+                value={targetOf(r)}
+                isInvalid={!isValidFakeTarget(targetOf(r), r.courseCount)}
+                onChange={(event) =>
+                  setTargets((previous) => ({
+                    ...previous,
+                    [keyOf(r.recruitmentId)]: event.target.value,
+                  }))
+                }
+                data-testid={id}
+              />
+              <Form.Control.Feedback type="invalid">
+                Enter a whole number from 1 to {maxFakeTarget(r.courseCount)}{" "}
+                (three per course).
+              </Form.Control.Feedback>
+            </Form.Group>
+          );
+        })}
         <Form.Group className="mb-3" data-testid={`${testIdPrefix}-estimates`}>
           <Form.Label>Enrollment estimates</Form.Label>
           {FAKE_ESTIMATE_CHOICES.map((choice) => (

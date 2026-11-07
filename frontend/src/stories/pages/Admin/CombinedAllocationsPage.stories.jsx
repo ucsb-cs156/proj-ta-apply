@@ -22,12 +22,40 @@ const Template = () => (
   </Routes>
 );
 
-const handlers = (summary, coursesByRecruitment) => [
+/** Alone on both recruitments: no warning. */
+const ALONE = { others: [], heartbeatSeconds: 60, newest: true };
+
+const handlers = (
+  summary,
+  coursesByRecruitment,
+  { presence = ALONE, developerMode = false } = {},
+) => [
   http.get("/api/currentUser", () =>
     HttpResponse.json(apiCurrentUserFixtures.adminUser),
   ),
   http.get("/api/systemInfo", () =>
-    HttpResponse.json(systemInfoFixtures.showingNeither),
+    HttpResponse.json(
+      developerMode
+        ? systemInfoFixtures.developerModeAvailable
+        : systemInfoFixtures.showingNeither,
+    ),
+  ),
+  http.get("/api/developerMode", () =>
+    HttpResponse.json({ available: true, on: developerMode }),
+  ),
+  // Issue #358 part 2: one heartbeat per recruitment of the quarter (the Courses edit page's key).
+  http.post("/api/recruitmentcourses/heartbeat", () =>
+    HttpResponse.json(presence),
+  ),
+  http.post(
+    "/api/recruitmentcourses/leave",
+    () => new HttpResponse(null, { status: 204 }),
+  ),
+  http.post("/api/admin/developer/fakeAllocations", () =>
+    HttpResponse.json([]),
+  ),
+  http.post("/api/admin/developer/fakeRankings", () =>
+    HttpResponse.json({ id: 1, status: "running" }),
   ),
   http.get("/api/admin/budget", () => HttpResponse.json(summary)),
   http.put("/api/admin/budget", () => HttpResponse.json(summary)),
@@ -112,6 +140,51 @@ AllColumns.parameters = {
       5: taCourses,
       6: ulaCourses,
     }),
+  },
+};
+
+/**
+ * F26 while another admin has one of the recruitments' Courses edit pages open (issue #358 part 2):
+ * the shared warning, with this page's noun. This tab was there first, so it is not asked.
+ */
+export const AnotherAdminEditing = Template.bind({});
+AnotherAdminEditing.parameters = {
+  reactRouter: { initialEntries: ["/admin/allocations/F26"] },
+  msw: {
+    handlers: handlers(
+      budgetFixtures.bothTypes,
+      { 5: taCourses, 6: ulaCourses },
+      {
+        presence: {
+          others: [
+            {
+              label: "phtcon@ucsb.edu (Phill Conrad)",
+              samePerson: false,
+              admin: true,
+            },
+          ],
+          heartbeatSeconds: 60,
+          newest: false,
+        },
+      },
+    ),
+  },
+};
+
+/**
+ * F26 with developer mode on (issue #358 part 2): the footer has Fake Hiring Targets and
+ * Allocations and Create Fake Rankings, each acting on both recruitments in one click (rankings
+ * for the TA recruitment only, whose faculty review is the one that is Open).
+ */
+export const DeveloperMode = Template.bind({});
+DeveloperMode.parameters = {
+  reactRouter: { initialEntries: ["/admin/allocations/F26"] },
+  msw: {
+    handlers: handlers(
+      budgetFixtures.bothTypes,
+      { 5: taCourses, 6: ulaCourses },
+      { developerMode: true },
+    ),
   },
 };
 

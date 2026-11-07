@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
 import { Link } from "react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { toast } from "react-toastify";
-import { useBackendMutation } from "main/utils/useBackend";
 import { apiErrorMessage } from "main/utils/apiError";
 import {
   FAKE_RANKING_SCOPES,
@@ -10,7 +11,14 @@ import {
 } from "main/utils/fakeRankings";
 
 type FakeRankingsModalProps = {
-  recruitmentId: number | string;
+  /**
+   * The recruitments whose courses get rankings, one job each in one click: one on a
+   * recruitment's own Courses page, the quarter's recruitments whose faculty review is Open on
+   * the Combined Allocation page (issue #358).
+   */
+  recruitmentIds: (number | string)[];
+  /** Something the page wants said about which recruitments are acted on, if anything. */
+  note?: string;
   onHide: () => void;
   testIdPrefix?: string;
 };
@@ -22,7 +30,8 @@ type FakeRankingsModalProps = {
  * Mounted only while open.
  */
 export default function FakeRankingsModal({
-  recruitmentId,
+  recruitmentIds,
+  note,
   onHide,
   // Stryker disable next-line all : only a default test id
   testIdPrefix = "FakeRankingsModal",
@@ -30,22 +39,29 @@ export default function FakeRankingsModal({
   const [scope, setScope] = useState<FakeRankingScope>("ALL");
   const [includeNotInterested, setIncludeNotInterested] = useState(false);
   const [launched, setLaunched] = useState(false);
+  const queryClient = useQueryClient();
+  const several = recruitmentIds.length > 1;
 
-  const launch = useBackendMutation<
-    { scope: FakeRankingScope; includeNotInterested: boolean },
-    unknown
-  >(
-    (params) => ({
-      url: "/api/admin/developer/fakeRankings",
-      method: "POST",
-      params: { recruitmentId, ...params },
-    }),
-    {
-      onSuccess: () => setLaunched(true),
-      onError: (error) => toast(apiErrorMessage(error)),
-    },
-    ["/api/instructor/recruitments/admin-course-rankings"],
-  );
+  const launch = useMutation({
+    mutationFn: () =>
+      Promise.all(
+        recruitmentIds.map((recruitmentId) =>
+          axios({
+            url: "/api/admin/developer/fakeRankings",
+            method: "POST",
+            params: { recruitmentId, scope, includeNotInterested },
+          }),
+        ),
+      ),
+    onSuccess: () => setLaunched(true),
+    onError: (error) => toast(apiErrorMessage(error)),
+    // Stryker disable next-line all : cache invalidation is not observable from here
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["/api/instructor/recruitments/admin-course-rankings"],
+      }),
+    retry: false,
+  });
 
   if (launched) {
     return (
@@ -60,11 +76,16 @@ export default function FakeRankingsModal({
         </Modal.Header>
         <Modal.Body>
           <p>
-            The fake rankings are being entered by a background job. See the{" "}
+            The fake rankings are being entered by{" "}
+            {several
+              ? "background jobs, one per recruitment"
+              : "a background job"}
+            . See the{" "}
             <Link to="/admin/jobs" data-testid={`${testIdPrefix}-jobs-link`}>
               Jobs page
             </Link>{" "}
-            to follow it. The ranking counts update once it has finished.
+            to follow {several ? "them" : "it"}. The ranking counts update once{" "}
+            {several ? "they have" : "it has"} finished.
           </p>
         </Modal.Body>
         <Modal.Footer>
@@ -91,6 +112,9 @@ export default function FakeRankingsModal({
           interested candidates as its ranking target asks for. Courses that
           already have rankings are left alone.
         </p>
+        {note !== undefined && (
+          <p data-testid={`${testIdPrefix}-note`}>{note}</p>
+        )}
         <Form.Group className="mb-3" data-testid={`${testIdPrefix}-scope`}>
           <Form.Label>Courses to rank</Form.Label>
           {FAKE_RANKING_SCOPES.map((choice) => (
@@ -126,7 +150,7 @@ export default function FakeRankingsModal({
         <Button
           variant="success"
           disabled={launch.isPending}
-          onClick={() => launch.mutate({ scope, includeNotInterested })}
+          onClick={() => launch.mutate()}
           data-testid={`${testIdPrefix}-create`}
         >
           Create Fake Rankings

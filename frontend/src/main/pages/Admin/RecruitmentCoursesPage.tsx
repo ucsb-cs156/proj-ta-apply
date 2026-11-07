@@ -22,7 +22,7 @@ import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignm
 import FakeAllocationsModal from "main/components/Recruitments/FakeAllocationsModal";
 import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
 import { canCreateFakeRankings } from "main/utils/fakeRankings";
-import { useDeveloperModeFooterControls } from "main/utils/developerModeFooter";
+import { DeveloperFooterControls } from "main/utils/developerModeFooter";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import { lastRefreshedText } from "main/utils/lastRefreshed";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
@@ -35,19 +35,6 @@ import {
   MultipleTabsModal,
   useClientActivity,
 } from "main/concurrency";
-
-/**
- * Registers the page's developer-mode controls in the footer. It has to be rendered inside
- * BasicLayout, which provides the footer slot; the page itself sits outside it.
- */
-function DeveloperFooterControls({
-  controls,
-}: {
-  controls: React.ReactNode;
-}): null {
-  useDeveloperModeFooterControls(controls);
-  return null;
-}
 
 /**
  * The course list for one recruitment, in two forms (issue #278).
@@ -667,15 +654,16 @@ export default function RecruitmentCoursesPage({
         )}
         {edit && showFakeAllocations && (
           <FakeAllocationsModal
-            recruitmentId={recruitmentId as string}
-            courseCount={courseCount}
+            recruitments={[
+              { recruitmentId: recruitmentId as string, courseCount },
+            ]}
             onHide={() => setShowFakeAllocations(false)}
             testIdPrefix="RecruitmentCoursesPage-fake-allocations-modal"
           />
         )}
         {edit && showFakeRankings && (
           <FakeRankingsModal
-            recruitmentId={recruitmentId as string}
+            recruitmentIds={[recruitmentId as string]}
             onHide={() => setShowFakeRankings(false)}
             testIdPrefix="RecruitmentCoursesPage-fake-rankings-modal"
           />

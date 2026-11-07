@@ -16,6 +16,11 @@ vi.mock("react-toastify", async (importOriginal) => ({
 const axiosMock = new AxiosMockAdapter(axios);
 
 function renderModal(courseCount = 4, onHide = vi.fn()) {
+  return renderModalFor([{ recruitmentId: 7, courseCount }], onHide);
+}
+
+/** Issue #358: the Combined Allocation page's modal fakes several recruitments at once. */
+function renderModalFor(recruitments, onHide = vi.fn()) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -23,8 +28,7 @@ function renderModal(courseCount = 4, onHide = vi.fn()) {
   render(
     <QueryClientProvider client={queryClient}>
       <FakeAllocationsModal
-        recruitmentId={7}
-        courseCount={courseCount}
+        recruitments={recruitments}
         onHide={onHide}
         testIdPrefix="Fake"
       />
@@ -32,6 +36,11 @@ function renderModal(courseCount = 4, onHide = vi.fn()) {
   );
   return { onHide, invalidate };
 }
+
+const BOTH = [
+  { recruitmentId: 5, courseCount: 4, type: "TA" },
+  { recruitmentId: 6, courseCount: 2, type: "ULA" },
+];
 
 const posts = () =>
   axiosMock.history.post.filter(
@@ -55,7 +64,7 @@ describe("FakeAllocationsModal tests", () => {
       }),
     ).toBeInTheDocument();
     const target = screen.getByLabelText("Hiring target");
-    expect(target).toBe(screen.getByTestId("Fake-target"));
+    expect(target).toBe(screen.getByTestId("Fake-target-7"));
     expect(target).toHaveValue(4);
     expect(target).toHaveAttribute("min", "1");
     expect(target).toHaveAttribute("max", "12");
@@ -98,14 +107,14 @@ describe("FakeAllocationsModal tests", () => {
   test("the default target is at least one even with no courses, and then nothing can be faked", () => {
     renderModal(0);
 
-    expect(screen.getByTestId("Fake-target")).toHaveValue(1);
-    expect(screen.getByTestId("Fake-target")).toHaveClass("is-invalid");
+    expect(screen.getByTestId("Fake-target-7")).toHaveValue(1);
+    expect(screen.getByTestId("Fake-target-7")).toHaveClass("is-invalid");
     expect(screen.getByTestId("Fake-fake")).toBeDisabled();
   });
 
   test("a target outside one to three per course is flagged and cannot be sent", async () => {
     renderModal(4);
-    const target = screen.getByTestId("Fake-target");
+    const target = screen.getByTestId("Fake-target-7");
 
     await userEvent.clear(target);
     await userEvent.type(target, "13");
@@ -148,13 +157,94 @@ describe("FakeAllocationsModal tests", () => {
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: ["/api/admin/recruitments/all"],
     });
+    // Issue #358: the budget summary carries the hiring targets.
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: ["/api/admin/budget"],
+    });
+  });
+
+  test("two recruitments get a box each, named by type and sized to its own courses (issue #358)", async () => {
+    renderModalFor(BOTH);
+
+    const ta = screen.getByLabelText("TA hiring target");
+    const ula = screen.getByLabelText("ULA hiring target");
+    expect(ta).toBe(screen.getByTestId("Fake-target-5"));
+    expect(ula).toBe(screen.getByTestId("Fake-target-6"));
+    expect(ta).toHaveValue(4);
+    expect(ta).toHaveAttribute("max", "12");
+    expect(ula).toHaveValue(2);
+    expect(ula).toHaveAttribute("max", "6");
+    expect(screen.queryByLabelText("Hiring target")).toBeNull();
+
+    // Each box is judged against its own recruitment's courses.
+    await userEvent.clear(ula);
+    await userEvent.type(ula, "7");
+    expect(ula).toHaveClass("is-invalid");
+    expect(ta).not.toHaveClass("is-invalid");
+    expect(
+      screen.getByText("Enter a whole number from 1 to 6 (three per course)."),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("Fake-fake")).toBeDisabled();
+    await userEvent.clear(ula);
+    await userEvent.type(ula, "6");
+    expect(ula).not.toHaveClass("is-invalid");
+    expect(screen.getByTestId("Fake-fake")).toBeEnabled();
+  });
+
+  test("one click posts once per recruitment, each with its own target, and says what was faked (issue #358)", async () => {
+    const { onHide } = renderModalFor(BOTH);
+
+    await userEvent.clear(screen.getByTestId("Fake-target-5"));
+    await userEvent.type(screen.getByTestId("Fake-target-5"), "9");
+    await userEvent.click(screen.getByLabelText("Use current enrollment"));
+    await userEvent.click(screen.getByTestId("Fake-fake"));
+
+    await waitFor(() => expect(posts()).toHaveLength(2));
+    expect(posts().map((r) => r.params)).toEqual([
+      {
+        recruitmentId: 5,
+        hiringTarget: 9,
+        estimates: "ACTUAL",
+        setVisibility: true,
+      },
+      {
+        recruitmentId: 6,
+        hiringTarget: 2,
+        estimates: "ACTUAL",
+        setVisibility: true,
+      },
+    ]);
+    await waitFor(() => expect(onHide).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith(
+      "Faked hiring targets of 9 (TA) and 2 (ULA) and allocated them across the courses.",
+    );
+  });
+
+  test("a refusal for one recruitment is reported once and the modal stays open (issue #358)", async () => {
+    axiosMock
+      .onPost("/api/admin/developer/fakeAllocations")
+      .reply((config) =>
+        config.params.recruitmentId === 6
+          ? [400, { message: "Developer mode is off" }]
+          : [200, []],
+      );
+    const { onHide } = renderModalFor(BOTH);
+
+    await userEvent.click(screen.getByTestId("Fake-fake"));
+
+    await waitFor(() => expect(posts()).toHaveLength(2));
+    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1));
+    expect(mockToast.mock.calls[0][0]).toBe(
+      "Could not fake the allocations: Developer mode is off",
+    );
+    expect(onHide).not.toHaveBeenCalled();
   });
 
   test("the chosen target, estimate source and visibility are what is sent", async () => {
     renderModal(4);
 
-    await userEvent.clear(screen.getByTestId("Fake-target"));
-    await userEvent.type(screen.getByTestId("Fake-target"), "9");
+    await userEvent.clear(screen.getByTestId("Fake-target-7"));
+    await userEvent.type(screen.getByTestId("Fake-target-7"), "9");
     await userEvent.click(screen.getByLabelText("Use current enrollment"));
     expect(screen.getByLabelText("Use current enrollment")).toBeChecked();
     expect(
@@ -215,8 +305,7 @@ describe("FakeAllocationsModal tests", () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
         <FakeAllocationsModal
-          recruitmentId={7}
-          courseCount={2}
+          recruitments={[{ recruitmentId: 7, courseCount: 2 }]}
           onHide={() => {}}
         />
       </QueryClientProvider>,
@@ -224,6 +313,6 @@ describe("FakeAllocationsModal tests", () => {
     expect(
       screen.getByTestId("FakeAllocationsModal-modal"),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("FakeAllocationsModal-target")).toHaveValue(2);
+    expect(screen.getByTestId("FakeAllocationsModal-target-7")).toHaveValue(2);
   });
 });

@@ -20,6 +20,13 @@ type ClientActivityOptions = {
   leaveUrl?: string | null;
   /** The time between heartbeats until the server says how often it wants them. */
   defaultIntervalMs?: number;
+  /**
+   * An identifier to use instead of making one: for a page that is one tab on several things at
+   * once (the Combined Allocation page, issue #358, which is on every recruitment of a quarter), so
+   * that a second hook heartbeats, says goodbye and signs the saves as the same tab as the first.
+   * Read when the hook is first rendered, like the identifier it stands in for.
+   */
+  clientId?: string;
 };
 
 /** What the server last said about the other tabs, and about this tab's place among them. */
@@ -59,10 +66,11 @@ export function useClientActivity({
   heartbeatUrl,
   leaveUrl = null,
   defaultIntervalMs = DEFAULT_HEARTBEAT_MS,
+  clientId: sharedClientId,
 }: ClientActivityOptions) {
   // Made once, with the headers that carry it, so neither ever changes during the life of the hook.
   const [{ clientId, headers }] = useState(() => {
-    const id = crypto.randomUUID();
+    const id = sharedClientId ?? crypto.randomUUID();
     return { clientId: id, headers: { [CLIENT_ID_HEADER]: id } };
   });
   const [standing, setStanding] = useState<Standing>(ALONE);

@@ -989,9 +989,11 @@ describe("CombinedAllocationsPage tests", () => {
       );
 
       await waitFor(() =>
-        expect(axiosMock.history.post.map((r) => r.params)).toEqual([
-          { recruitmentId: 5 },
-        ]),
+        expect(
+          axiosMock.history.post
+            .filter((r) => r.url === "/api/recruitmentcourses/autoAllocate")
+            .map((r) => r.params),
+        ).toEqual([{ recruitmentId: 5 }]),
       );
     });
 
@@ -1010,7 +1012,12 @@ describe("CombinedAllocationsPage tests", () => {
           screen.queryByTestId("CombinedAllocationsPage-auto-assign-modal"),
         ).not.toBeInTheDocument(),
       );
-      expect(axiosMock.history.post).toHaveLength(0);
+      // Only the heartbeats were sent (issue #358 part 2); nothing was allocated.
+      expect(
+        axiosMock.history.post.filter(
+          (r) => r.url === "/api/recruitmentcourses/autoAllocate",
+        ),
+      ).toHaveLength(0);
     });
 
     const summariesUrl = (id) =>

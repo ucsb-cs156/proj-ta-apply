@@ -16,12 +16,12 @@ export default {
   },
 };
 
-const Template = (args) => (
+/** One recruitment, as on a recruitment's own Courses page: one box, "Hiring target". */
+const Template = ({ courseCount }) => (
   <FakeAllocationsModal
-    recruitmentId={1}
+    recruitments={[{ recruitmentId: 1, courseCount }]}
     onHide={() => {}}
     testIdPrefix="Story"
-    {...args}
   />
 );
 
@@ -36,3 +36,18 @@ OneCourse.args = { courseCount: 1 };
 /** No courses: there is nothing to allocate to, so the target is flagged and Fake is disabled. */
 export const NoCourses = Template.bind({});
 NoCourses.args = { courseCount: 0 };
+
+/**
+ * Both recruitments of a quarter, as on the Combined Allocation page (issue #358): a box for each
+ * type's target, sized to its own courses; the estimates and visibility apply to both.
+ */
+export const TwoRecruitments = () => (
+  <FakeAllocationsModal
+    recruitments={[
+      { recruitmentId: 5, courseCount: 4, type: "TA" },
+      { recruitmentId: 6, courseCount: 2, type: "ULA" },
+    ]}
+    onHide={() => {}}
+    testIdPrefix="Story"
+  />
+);

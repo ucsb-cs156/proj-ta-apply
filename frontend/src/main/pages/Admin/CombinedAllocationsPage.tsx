@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import {
   Alert,
   Button,
@@ -34,6 +34,19 @@ import type {
   RecruitmentCourseRankingSummary,
 } from "main/components/Recruitments/RecruitmentCourseTable";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
+import FakeAllocationsModal from "main/components/Recruitments/FakeAllocationsModal";
+import FakeRankingsModal from "main/components/Recruitments/FakeRankingsModal";
+import {
+  canCreateFakeRankings,
+  fakeRankingsNote,
+} from "main/utils/fakeRankings";
+import { DeveloperFooterControls } from "main/utils/developerModeFooter";
+import {
+  MultipleTabsBanner,
+  MultipleTabsModal,
+  mergeStandings,
+  useClientActivity,
+} from "main/concurrency";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import { qyyToYyyyq } from "main/utils/quarterUtilities";
 import { formatDollars } from "main/utils/currency";
@@ -45,8 +58,25 @@ import {
   isValidConversionFactor,
 } from "main/utils/combinedAllocations";
 
-/** The conversion factor's saves name no tab: the page does not heartbeat. */
+/**
+ * The conversion factor's saves name no tab: the page does not heartbeat for the quarter's budget
+ * (`budget:<quarter>`), whose only field it edits is guarded by the budget row's version check, and
+ * a save that named a tab the Budget page never hears a heartbeat from would make that page warn
+ * about a tab that is not there.
+ */
 const NO_HEADERS: Record<string, string> = {};
+
+/** The Courses edit page's heartbeat and goodbye for one recruitment; null without one. */
+const heartbeatUrl = (recruitmentId: number | undefined) =>
+  recruitmentId === undefined
+    ? null
+    : `/api/recruitmentcourses/heartbeat?recruitmentId=${recruitmentId}`;
+const leaveUrl = (recruitmentId: number | undefined) =>
+  recruitmentId === undefined
+    ? null
+    : `/api/recruitmentcourses/leave?recruitmentId=${recruitmentId}`;
+
+type Type = "TA" | "ULA";
 
 /**
  * Admin → Combined Allocation page: /admin/allocations/:qyy (issue #358, for example
@@ -54,6 +84,16 @@ const NO_HEADERS: Record<string, string> = {};
  * row per section, with each type's allocation columns; the allocations are edited here exactly as
  * on each recruitment's Edit Courses page. When the quarter has both recruitments the page also
  * shows what a TA and a ULA cost, the TA to ULA conversion factor, and the ASE:Student ratio.
+ *
+ * The page edits the same allocations and estimates as each recruitment's Courses edit page, so it
+ * heartbeats under that page's key, `courses-edit:<recruitmentId>`, for every recruitment of the
+ * quarter (two heartbeats, one tab), and warns and is warned about the same copies as that page
+ * does (issue #278's pattern). Its saves name the tab the same way. Leave this page goes to the
+ * quarter's Budget page.
+ *
+ * In developer mode the footer has the Courses edit page's Fake Hiring Targets and Allocations and
+ * Create Fake Rankings buttons, each acting on every recruitment of the quarter in one click
+ * (rankings only for a recruitment whose faculty review is Open).
  */
 export default function CombinedAllocationsPage(): React.JSX.Element {
   const { qyy } = useParams();
@@ -77,6 +117,25 @@ function CombinedAllocationsForQuarter({
   );
   const taId = summary?.ta?.recruitmentId;
   const ulaId = summary?.ula?.recruitmentId;
+
+  // One tab on up to two things: the second heartbeat borrows the first's identifier, so every
+  // heartbeat, goodbye and save of this page is the same tab to the server.
+  const taActivity = useClientActivity({
+    heartbeatUrl: heartbeatUrl(taId),
+    leaveUrl: leaveUrl(taId),
+  });
+  const ulaActivity = useClientActivity({
+    heartbeatUrl: heartbeatUrl(ulaId),
+    leaveUrl: leaveUrl(ulaId),
+    clientId: taActivity.clientId,
+  });
+  // Only the recruitments the quarter has have a say; a hook without a URL never hears anything.
+  const activity = mergeStandings([
+    ...(taId === undefined ? [] : [taActivity]),
+    ...(ulaId === undefined ? [] : [ulaActivity]),
+  ]);
+  const requestHeaders = taActivity.headers;
+  const navigate = useNavigate();
 
   // The key starts with the url, as the allocation saves refresh and update the lists under it.
   const courseQuery = (recruitmentId: number | undefined) => ({
@@ -196,6 +255,7 @@ function CombinedAllocationsForQuarter({
               axios({
                 url: "/api/recruitmentcourses/enrollmentEstimates",
                 method: "PUT",
+                headers: requestHeaders,
                 params: { recruitmentId, source },
               }),
             ),
@@ -223,6 +283,7 @@ function CombinedAllocationsForQuarter({
     (type) => ({
       url: "/api/recruitmentcourses/autoAllocate",
       method: "POST",
+      headers: requestHeaders,
       params: { recruitmentId: type === "TA" ? taId : ulaId },
     }),
     {
@@ -246,6 +307,55 @@ function CombinedAllocationsForQuarter({
     yyyyq,
     summary,
     NO_HEADERS,
+  );
+
+  // Developer mode's fake data (issues #225, #220), for every recruitment of the quarter at once:
+  // a hiring target and allocations for each that has a course, and rankings for each whose
+  // faculty review is Open.
+  const [showFakeAllocations, setShowFakeAllocations] = useState(false);
+  const [showFakeRankings, setShowFakeRankings] = useState(false);
+  const sides = (
+    [
+      ["TA", taId, taCourses],
+      ["ULA", ulaId, ulaCourses],
+    ] as const
+  )
+    .filter(([, id]) => id !== undefined)
+    .map(([type, id, list]) => ({
+      type: type as Type,
+      recruitmentId: id as number,
+      // Stryker disable next-line all : the initial data is a list, never undefined
+      courseCount: (list ?? []).length,
+    }));
+  const fakeAllocationTargets = sides.filter((side) => side.courseCount > 0);
+  const reviewStatusOf = (id: number) =>
+    // Stryker disable next-line OptionalChaining : the initial data is a list, never undefined
+    recruitments?.find((r) => r.id === id)?.reviewStatus;
+  const rankable = sides.filter((side) =>
+    canCreateFakeRankings(reviewStatusOf(side.recruitmentId), side.courseCount),
+  );
+  const developerButtons = (
+    <>
+      <Button
+        variant="danger"
+        size="sm"
+        className="me-2"
+        disabled={fakeAllocationTargets.length === 0}
+        onClick={() => setShowFakeAllocations(true)}
+        data-testid="CombinedAllocationsPage-fake-allocations"
+      >
+        Fake Hiring Targets and Allocations
+      </Button>
+      <Button
+        variant="outline-secondary"
+        size="sm"
+        disabled={rankable.length === 0}
+        onClick={() => setShowFakeRankings(true)}
+        data-testid="CombinedAllocationsPage-fake-rankings"
+      >
+        Create Fake Rankings
+      </Button>
+    </>
   );
 
   if (yyyyq === null) {
@@ -289,8 +399,32 @@ function CombinedAllocationsForQuarter({
 
   return (
     <BasicLayout>
+      <DeveloperFooterControls controls={developerButtons} />
       <div className="pt-2" data-testid="CombinedAllocationsPage">
         {header}
+        <MultipleTabsBanner
+          others={activity.others}
+          noun="quarter's allocations"
+          audience="admin"
+          newest={activity.newest}
+          testId="CombinedAllocationsPage-multiple-tabs"
+        />
+        {/* Only the newest tab is asked; the older ones keep the banner alone. */}
+        <MultipleTabsModal
+          others={activity.others}
+          newest={activity.newest}
+          arrivedAt={activity.arrivedAt}
+          noun="quarter's allocations"
+          audience="admin"
+          onLeave={() => {
+            // Stryker disable next-line all : moving away unmounts the page, which says goodbye too
+            taActivity.leave();
+            // Stryker disable next-line all : moving away unmounts the page, which says goodbye too
+            ulaActivity.leave();
+            navigate(`/admin/budget/${qyy}`);
+          }}
+          testId="CombinedAllocationsPage-multiple-tabs-modal"
+        />
         {conflicts.map((conflict) => (
           <Alert
             key={conflict.field}
@@ -500,7 +634,28 @@ function CombinedAllocationsForQuarter({
             choices: columnChoices,
             onHide: (columnId) => toggleColumn(columnId, true),
           }}
+          requestHeaders={requestHeaders}
         />
+        {showFakeAllocations && (
+          <FakeAllocationsModal
+            recruitments={fakeAllocationTargets}
+            onHide={() => setShowFakeAllocations(false)}
+            testIdPrefix="CombinedAllocationsPage-fake-allocations-modal"
+          />
+        )}
+        {showFakeRankings && (
+          <FakeRankingsModal
+            recruitmentIds={rankable.map((side) => side.recruitmentId)}
+            note={fakeRankingsNote(
+              rankable.map((side) => side.type),
+              sides
+                .filter((side) => !rankable.includes(side))
+                .map((side) => side.type),
+            )}
+            onHide={() => setShowFakeRankings(false)}
+            testIdPrefix="CombinedAllocationsPage-fake-rankings-modal"
+          />
+        )}
       </div>
     </BasicLayout>
   );
