@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/358b-fake-data-and-warning","number":373,"title":"Combined Allocation page: developer fake data and the multi-tab edit warning (#358, part 2)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/373"}]
+pull_requests: []
