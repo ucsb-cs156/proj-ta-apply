@@ -2,10 +2,13 @@ package edu.ucsb.cs.taapply.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs.taapply.entity.Application;
@@ -17,12 +20,14 @@ import edu.ucsb.cs.taapply.enums.OtherCampusJob;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.enums.StudentStatus;
 import edu.ucsb.cs.taapply.enums.TrainingCommitment;
+import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.AuditTrailRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -33,6 +38,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 public class ApplicationAuditServiceTests {
 
   @Autowired ApplicationAuditService service;
+  @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean AuditTrailRepository auditTrailRepository;
 
   private static Application application() {
@@ -72,6 +78,45 @@ public class ApplicationAuditServiceTests {
         .newValue(newValue)
         .build();
   }
+
+  // ---- saveAndRecord: the save and its rows, together (issue #377) ----
+
+  /**
+   * The application is saved first and the rows are computed from what the save returned, so a
+   * value the database changes on the way (the version, say) is audited as stored. What comes back
+   * is the saved application, which the controller answers with.
+   */
+  @Test
+  public void save_and_record_saves_then_records_from_the_saved_application_and_returns_it() {
+    Application application = application();
+    ApplicationAuditService.Snapshot before = service.snapshot(application);
+    application.setMajor("Computer Engineering");
+    Application saved = application().toBuilder().major("Computer Engineering").version(3).build();
+    when(applicationRepository.save(application)).thenReturn(saved);
+
+    Application result = service.saveAndRecord(before, application, RecruitmentType.TA);
+
+    assertSame(saved, result);
+    InOrder inOrder = inOrder(applicationRepository, auditTrailRepository);
+    inOrder.verify(applicationRepository).save(application);
+    inOrder
+        .verify(auditTrailRepository)
+        .saveAll(List.of(row(7L, null, "major", "Computer Science", "Computer Engineering")));
+  }
+
+  @Test
+  public void save_and_record_of_an_unchanged_application_saves_it_and_writes_no_rows() {
+    Application application = application();
+    ApplicationAuditService.Snapshot before = service.snapshot(application);
+    when(applicationRepository.save(application)).thenReturn(application);
+
+    assertSame(application, service.saveAndRecord(before, application, RecruitmentType.ULA));
+
+    verify(applicationRepository, times(1)).save(application);
+    verify(auditTrailRepository, never()).saveAll(any());
+  }
+
+  // ---- record ----
 
   @Test
   public void nothing_changed_writes_nothing() {

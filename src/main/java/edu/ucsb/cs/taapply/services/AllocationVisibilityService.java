@@ -2,11 +2,9 @@ package edu.ucsb.cs.taapply.services;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
-import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.time.AppTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Changes who may see a recruitment's allocations (issues #178 and #224). Faculty see the result,
@@ -16,17 +14,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AllocationVisibilityService {
 
-  @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired RecruitmentAuditService recruitmentAuditService;
 
   /**
-   * Sets the recruitment's allocation visibility, saving it and recording the change, in that
-   * order. The first time visibility leaves ADMINS_ONLY the release time is stamped. Choosing the
-   * value the recruitment already has saves and records nothing.
+   * Sets the recruitment's allocation visibility, saving it and recording the change in one
+   * transaction (issue #377). The first time visibility leaves ADMINS_ONLY the release time is
+   * stamped. Choosing the value the recruitment already has saves and records nothing.
    *
    * @return the recruitment, with the new value
    */
-  @Transactional
   public Recruitment change(Recruitment recruitment, AllocationVisibility visibility) {
     if (visibility == recruitment.getAllocationVisibility()) {
       return recruitment;
@@ -37,8 +33,7 @@ public class AllocationVisibilityService {
         && recruitment.getAllocationsReleasedAt() == null) {
       recruitment.setAllocationsReleasedAt(AppTime.now());
     }
-    recruitmentRepository.save(recruitment);
-    recruitmentAuditService.recordChanges(before, recruitment);
+    recruitmentAuditService.saveAndRecordChanges(before, recruitment);
     return recruitment;
   }
 }

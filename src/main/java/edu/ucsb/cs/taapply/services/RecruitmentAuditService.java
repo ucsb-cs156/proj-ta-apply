@@ -3,6 +3,7 @@ package edu.ucsb.cs.taapply.services;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
 import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Writes the audit trail of changes to recruitments themselves (issue #139): a row when one is
@@ -18,14 +20,17 @@ import org.springframework.stereotype.Service;
  * or closed. (The trail of an admin's changes to individual applications is {@link
  * ApplicationAuditService}.)
  *
- * <p>For an edit, the caller takes a {@link #snapshot} before applying it and calls {@link
- * #recordChanges} with it afterwards; only the fields whose value differs get a row, so a request
- * that changes nothing writes nothing. Creation and deletion get just their one row: the values a
- * recruitment was created with are not also written as changes.
+ * <p>Each change goes through one of {@link #saveAndRecordCreated}, {@link #saveAndRecordChanges}
+ * and {@link #deleteAndRecord}, which write the recruitment and its rows in one database
+ * transaction (issue #377): both are committed, or neither is. For an edit, the caller takes a
+ * {@link #snapshot} before applying it and passes it in afterwards; only the fields whose value
+ * differs get a row, so a request that changes nothing writes nothing. Creation and deletion get
+ * just their one row: the values a recruitment was created with are not also written as changes.
  */
 @Service
 public class RecruitmentAuditService {
 
+  @Autowired private RecruitmentRepository recruitmentRepository;
   @Autowired private RecruitmentAuditTrailRepository repository;
 
   /** The fields a change is recorded for, in the order their rows are written. */
@@ -53,6 +58,38 @@ public class RecruitmentAuditService {
     return new Snapshot(recruitment.getId(), fields);
   }
 
+  /**
+   * Saves a new recruitment and records its creation, in one transaction, and returns the
+   * recruitment as saved (with its id).
+   */
+  @Transactional
+  public Recruitment saveAndRecordCreated(Recruitment recruitment) {
+    Recruitment saved = recruitmentRepository.save(recruitment);
+    recordCreated(saved);
+    return saved;
+  }
+
+  /**
+   * Saves an edited recruitment and records every field that differs from the snapshot taken before
+   * the edit, in one transaction, and returns the rows written (empty when nothing changed).
+   */
+  @Transactional
+  public List<RecruitmentAuditTrail> saveAndRecordChanges(Snapshot before, Recruitment after) {
+    recruitmentRepository.save(after);
+    return recordChanges(before, after);
+  }
+
+  /**
+   * Records that the recruitment is being deleted and deletes it, in one transaction, and returns
+   * the row written. The row survives the recruitment: it is the record that it existed.
+   */
+  @Transactional
+  public RecruitmentAuditTrail deleteAndRecord(Recruitment recruitment) {
+    RecruitmentAuditTrail row = recordDeleted(recruitment);
+    recruitmentRepository.delete(recruitment);
+    return row;
+  }
+
   /** Records that the recruitment was just created, and returns the row written. */
   public RecruitmentAuditTrail recordCreated(Recruitment recruitment) {
     return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.CREATED, null, null));
@@ -66,7 +103,8 @@ public class RecruitmentAuditService {
   /**
    * Records every field whose value differs between the snapshot taken before an edit and the
    * recruitment as it is now, one row each, and returns the rows written (empty when nothing
-   * changed).
+   * changed). Writers go through {@link #saveAndRecordChanges}, which calls this inside the
+   * transaction that saves the recruitment.
    */
   public List<RecruitmentAuditTrail> recordChanges(Snapshot before, Recruitment after) {
     Snapshot now = snapshot(after);

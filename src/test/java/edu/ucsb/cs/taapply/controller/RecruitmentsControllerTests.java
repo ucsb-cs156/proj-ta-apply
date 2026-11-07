@@ -110,15 +110,18 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     Recruitment saved = recruitment(1L, "20261", RecruitmentType.TA);
     when(recruitmentRepository.existsByQuarterAndType("20261", RecruitmentType.TA))
         .thenReturn(false);
-    when(recruitmentRepository.save(any())).thenReturn(saved);
+    when(recruitmentAuditService.saveAndRecordCreated(any())).thenReturn(saved);
     PopulateRecruitmentCoursesJob populateJob = PopulateRecruitmentCoursesJob.builder().build();
     when(populateRecruitmentCoursesJobFactory.create(saved)).thenReturn(populateJob);
 
     MvcResult response =
         mockMvc.perform(post(CREATE_URL).with(csrf())).andExpect(status().isOk()).andReturn();
 
+    // Issue #139: the creation goes in the recruitment audit trail, and issue #377: the save and
+    // that row are written together by the audit service, so the controller saves nothing itself.
     ArgumentCaptor<Recruitment> captor = ArgumentCaptor.forClass(Recruitment.class);
-    verify(recruitmentRepository, times(1)).save(captor.capture());
+    verify(recruitmentAuditService, times(1)).saveAndRecordCreated(captor.capture());
+    verify(recruitmentRepository, never()).save(any());
     assertEquals("20261", captor.getValue().getQuarter());
     assertEquals(RecruitmentType.TA, captor.getValue().getType());
     // Applications never open themselves.
@@ -129,8 +132,6 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertNull(captor.getValue().getFacultyRankingDeadline());
 
     verify(jobService, times(1)).runAsJob(populateJob);
-    // Issue #139: the creation goes in the recruitment audit trail.
-    verify(recruitmentAuditService, times(1)).recordCreated(saved);
     assertEquals(mapper.writeValueAsString(saved), response.getResponse().getContentAsString());
   }
 
@@ -143,9 +144,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
 
     mockMvc.perform(post(CREATE_URL).with(csrf())).andExpect(status().isBadRequest());
 
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordCreated(any());
     verify(jobService, never()).runAsJob(any());
-    verify(recruitmentAuditService, never()).recordCreated(any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -158,7 +158,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
                 .with(csrf()))
         .andExpect(status().isBadRequest());
 
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordCreated(any());
   }
 
   // ---- list ----
@@ -200,20 +200,16 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             .andExpect(status().isOk())
             .andReturn();
 
-    ArgumentCaptor<Recruitment> captor = ArgumentCaptor.forClass(Recruitment.class);
-    verify(recruitmentRepository, times(1)).save(captor.capture());
-    assertEquals(ApplicationStatus.OPEN, captor.getValue().getApplicationStatus());
-    assertEquals(LocalDate.now(), captor.getValue().getActualOpeningDate());
-    // Issue #139: the snapshot is taken before the change and the differences recorded after
-    // the save, so the trail shows the status and the stamped date.
-    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
-    inOrder.verify(recruitmentAuditService).snapshot(r);
-    inOrder.verify(recruitmentRepository).save(r);
-    inOrder.verify(recruitmentAuditService).recordChanges(before, r);
     assertEquals(ApplicationStatus.OPEN, r.getApplicationStatus());
+    assertEquals(LocalDate.now(), r.getActualOpeningDate());
+    // Issue #139: the snapshot is taken before the change and the differences recorded with the
+    // save (one transaction, issue #377), so the trail shows the status and the stamped date.
+    InOrder inOrder = inOrder(recruitmentAuditService);
+    inOrder.verify(recruitmentAuditService).snapshot(r);
+    inOrder.verify(recruitmentAuditService).saveAndRecordChanges(before, r);
+    verify(recruitmentRepository, never()).save(any());
     // The updated recruitment comes back, so the page can render the new state.
-    assertEquals(
-        mapper.writeValueAsString(captor.getValue()), response.getResponse().getContentAsString());
+    assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
   }
 
   /**
@@ -233,9 +229,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(put("/api/admin/recruitments/status?id=1&status=OPEN").with(csrf()))
         .andExpect(status().isOk());
 
-    ArgumentCaptor<Recruitment> captor = ArgumentCaptor.forClass(Recruitment.class);
-    verify(recruitmentRepository, times(1)).save(captor.capture());
-    assertEquals(original, captor.getValue().getActualOpeningDate());
+    verify(recruitmentAuditService, times(1)).saveAndRecordChanges(any(), any());
+    assertEquals(original, r.getActualOpeningDate());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -250,11 +245,10 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(put("/api/admin/recruitments/status?id=1&status=CLOSED").with(csrf()))
         .andExpect(status().isOk());
 
-    ArgumentCaptor<Recruitment> captor = ArgumentCaptor.forClass(Recruitment.class);
-    verify(recruitmentRepository, times(1)).save(captor.capture());
-    assertEquals(ApplicationStatus.CLOSED, captor.getValue().getApplicationStatus());
+    verify(recruitmentAuditService, times(1)).saveAndRecordChanges(any(), any());
+    assertEquals(ApplicationStatus.CLOSED, r.getApplicationStatus());
     // Overwritten, unlike the opening date.
-    assertEquals(LocalDate.now(), captor.getValue().getActualClosingDate());
+    assertEquals(LocalDate.now(), r.getActualClosingDate());
   }
 
   /** Issue #281: a Close from a page that is a few seconds stale must not stamp the date again. */
@@ -274,9 +268,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertEquals(original, r.getActualClosingDate());
-    verify(recruitmentRepository, never()).save(any());
     verify(recruitmentAuditService, never()).snapshot(any());
-    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
   }
 
@@ -291,8 +284,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(put("/api/admin/recruitments/status?id=1&status=OPEN").with(csrf()))
         .andExpect(status().isOk());
 
-    verify(recruitmentRepository, never()).save(any());
-    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -304,10 +296,9 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(put("/api/admin/recruitments/status?id=99&status=OPEN").with(csrf()))
         .andExpect(status().isNotFound());
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     verify(recruitmentRepository, never()).bumpAssignmentsVersion(any());
     verify(recruitmentAuditService, never()).snapshot(any());
-    verify(recruitmentAuditService, never()).recordChanges(any(), any());
   }
 
   @Test
@@ -341,10 +332,9 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals("Open", r.getReviewStatus());
     assertEquals(LocalDate.now(), r.getFacultyReviewOpeningDate());
     assertEquals(LocalDate.of(2026, 3, 1), r.getFacultyRankingDeadline());
-    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
+    InOrder inOrder = inOrder(recruitmentAuditService);
     inOrder.verify(recruitmentAuditService).snapshot(r);
-    inOrder.verify(recruitmentRepository).save(r);
-    inOrder.verify(recruitmentAuditService).recordChanges(before, r);
+    inOrder.verify(recruitmentAuditService).saveAndRecordChanges(before, r);
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
   }
 
@@ -372,8 +362,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals("Open", r.getReviewStatus());
     assertEquals(originalOpeningDate, r.getFacultyReviewOpeningDate());
     assertEquals(LocalDate.of(2026, 4, 1), r.getFacultyRankingDeadline());
-    verify(recruitmentRepository).save(r);
-    verify(recruitmentAuditService).recordChanges(before, r);
+    verify(recruitmentAuditService).saveAndRecordChanges(before, r);
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -395,8 +384,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals("Closed", r.getReviewStatus());
     assertEquals(LocalDate.of(2026, 1, 10), r.getFacultyReviewOpeningDate());
     assertEquals(LocalDate.of(2026, 2, 1), r.getFacultyRankingDeadline());
-    verify(recruitmentRepository).save(r);
-    verify(recruitmentAuditService).recordChanges(before, r);
+    verify(recruitmentAuditService).saveAndRecordChanges(before, r);
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -419,8 +407,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals("NotStarted", r.getReviewStatus());
     assertEquals(LocalDate.of(2026, 1, 10), r.getFacultyReviewOpeningDate());
     assertEquals(LocalDate.of(2026, 2, 1), r.getFacultyRankingDeadline());
-    verify(recruitmentRepository).save(r);
-    verify(recruitmentAuditService).recordChanges(before, r);
+    verify(recruitmentAuditService).saveAndRecordChanges(before, r);
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -442,8 +429,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .andExpect(status().isOk());
 
     assertEquals(LocalDate.now(), r.getFacultyReviewOpeningDate());
-    verify(recruitmentRepository).save(r);
-    verify(recruitmentAuditService).recordChanges(before, r);
+    verify(recruitmentAuditService).saveAndRecordChanges(before, r);
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -470,8 +456,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals("Open", r.getReviewStatus());
     assertEquals(openingDate, r.getFacultyReviewOpeningDate());
     assertEquals(LocalDate.of(2026, 2, 15), r.getFacultyRankingDeadline());
-    verify(recruitmentRepository).save(r);
-    verify(recruitmentAuditService).recordChanges(before, r);
+    verify(recruitmentAuditService).saveAndRecordChanges(before, r);
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -481,7 +466,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(put("/api/admin/recruitments/reviewStatus?id=1&status=Open").with(csrf()))
         .andExpect(status().isBadRequest());
     verify(recruitmentRepository, never()).findById(any());
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -491,7 +476,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(put("/api/admin/recruitments/facultyRankingDeadline?id=1").with(csrf()))
         .andExpect(status().isBadRequest());
     verify(recruitmentRepository, never()).findById(any());
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -501,7 +486,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(put("/api/admin/recruitments/reviewStatus?id=1&status=open").with(csrf()))
         .andExpect(status().isBadRequest());
     verify(recruitmentRepository, never()).findById(any());
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -513,7 +498,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
                     + "&facultyRankingDeadline=not-a-date")
                 .with(csrf()))
         .andExpect(status().isBadRequest());
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -535,9 +520,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .andExpect(jsonPath("$.reviewStatus").value("Open"))
         .andExpect(jsonPath("$.facultyRankingDeadline").value("2026-02-01"));
 
-    verify(recruitmentRepository, never()).save(any());
     verify(recruitmentAuditService, never()).snapshot(any());
-    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -559,8 +543,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .andExpect(jsonPath("$.id").value(1))
         .andExpect(jsonPath("$.facultyRankingDeadline").value("2026-02-15"));
     assertEquals(LocalDate.of(2026, 2, 15), r.getFacultyRankingDeadline());
-    verify(recruitmentRepository).save(r);
-    verify(recruitmentAuditService).recordChanges(before, r);
+    verify(recruitmentAuditService).saveAndRecordChanges(before, r);
 
     when(recruitmentRepository.findById(1L)).thenReturn(Optional.of(r));
     mockMvc
@@ -571,9 +554,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(1))
         .andExpect(jsonPath("$.facultyRankingDeadline").value("2026-02-15"));
-    verify(recruitmentRepository, times(1)).save(any());
     verify(recruitmentAuditService, times(1)).snapshot(any());
-    verify(recruitmentAuditService, times(1)).recordChanges(any(), any());
+    verify(recruitmentAuditService, times(1)).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -591,7 +573,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
                     + "&facultyRankingDeadline=2026-02-15")
                 .with(csrf()))
         .andExpect(status().isNotFound());
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     verify(recruitmentAuditService, never()).snapshot(any());
   }
 
@@ -607,7 +589,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
                     + "&facultyRankingDeadline=2026-02-15")
                 .with(csrf()))
         .andExpect(status().is(403));
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @Test
@@ -621,7 +603,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
                     + "&facultyRankingDeadline=2026-02-15")
                 .with(csrf()))
         .andExpect(status().is(403));
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   // ---- delete ----
@@ -732,11 +714,10 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             .andExpect(status().isOk())
             .andReturn();
 
-    verify(recruitmentRepository, times(1)).delete(r);
-    // Issue #139: recorded before the row goes, so the trail says the recruitment existed.
-    InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
-    inOrder.verify(recruitmentAuditService).recordDeleted(r);
-    inOrder.verify(recruitmentRepository).delete(r);
+    // Issue #139: the deletion is recorded so the trail says the recruitment existed; issue #377:
+    // the row and the delete are one transaction in the audit service, not two calls from here.
+    verify(recruitmentAuditService, times(1)).deleteAndRecord(r);
+    verify(recruitmentRepository, never()).delete(any());
     Map<String, Object> json = responseToJson(response);
     assertEquals("Recruitment with id 1 deleted", json.get("message"));
   }
@@ -749,8 +730,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(delete("/api/admin/recruitments/delete?id=99").with(csrf()))
         .andExpect(status().isNotFound());
-    verify(recruitmentRepository, never()).delete(any());
-    verify(recruitmentAuditService, never()).recordDeleted(any());
+    verify(recruitmentAuditService, never()).deleteAndRecord(any());
   }
 
   @Test
@@ -758,7 +738,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     mockMvc
         .perform(delete("/api/admin/recruitments/delete?id=1").with(csrf()))
         .andExpect(status().is(403));
-    verify(recruitmentRepository, never()).delete(any());
+    verify(recruitmentAuditService, never()).deleteAndRecord(any());
   }
 
   // ---- PUT /api/admin/recruitments/avgCostPerPosition (issue #177) ----
@@ -808,7 +788,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(new BigDecimal("12345.68"), r.getAvgCostPerPosition());
     verify(recruitmentRepository, times(1)).save(r);
     verify(recruitmentAuditService, never()).snapshot(any());
-    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     verify(allocationService, never()).recompute(any());
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
   }
@@ -889,9 +869,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
                     .with(csrf()))
             .andExpect(status().isBadRequest())
             .andReturn();
-    verify(recruitmentRepository, never()).save(any());
     verify(recruitmentAuditService, never()).snapshot(any());
-    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     assertNotEquals(true, r.getAssignmentsPublished());
     return (String) responseToJson(response).get("message");
   }
@@ -902,7 +881,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(
             put("/api/admin/recruitments/assignmentsPublished?id=1&published=true").with(csrf()))
         .andExpect(status().is(403));
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"INSTRUCTOR"})
@@ -912,7 +891,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(
             put("/api/admin/recruitments/assignmentsPublished?id=1&published=true").with(csrf()))
         .andExpect(status().is(403));
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -943,10 +922,10 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(true, r.getAssignmentsPublished());
     InOrder inOrder = inOrder(recruitmentAuditService, recruitmentRepository);
     inOrder.verify(recruitmentAuditService).snapshot(r);
-    inOrder.verify(recruitmentRepository).save(r);
+    inOrder.verify(recruitmentAuditService).saveAndRecordChanges(before, r);
     // Issue #280: a page that has not seen this is out of date.
     inOrder.verify(recruitmentRepository).bumpAssignmentsVersion(1L);
-    inOrder.verify(recruitmentAuditService).recordChanges(before, r);
+    verify(recruitmentRepository, never()).save(any());
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
   }
 
@@ -966,9 +945,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .andExpect(status().isOk());
 
     assertEquals(false, r.getAssignmentsPublished());
-    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).saveAndRecordChanges(before, r);
     verify(recruitmentRepository).bumpAssignmentsVersion(1L);
-    verify(recruitmentAuditService).recordChanges(before, r);
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -987,9 +965,8 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
             .andReturn();
 
     assertEquals(true, r.getAssignmentsPublished());
-    verify(recruitmentRepository, never()).save(any());
     verify(recruitmentAuditService, never()).snapshot(any());
-    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
   }
 
@@ -1005,14 +982,14 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
         .perform(
             put("/api/admin/recruitments/assignmentsPublished?id=1&published=false").with(csrf()))
         .andExpect(status().isOk());
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
 
     mockMvc
         .perform(
             put("/api/admin/recruitments/assignmentsPublished?id=1&published=true").with(csrf()))
         .andExpect(status().isOk());
     assertEquals(true, r.getAssignmentsPublished());
-    verify(recruitmentRepository).save(r);
+    verify(recruitmentAuditService).saveAndRecordChanges(any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -1031,7 +1008,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     Map<String, Object> json = responseToJson(response);
     assertEquals("EntityNotFoundException", json.get("type"));
     assertEquals("Recruitment with id 99 not found", json.get("message"));
-    verify(recruitmentRepository, never()).save(any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
   }
 
   // ---- PUT /api/admin/recruitments/totalHiringTarget (issue #174) ----
@@ -1078,7 +1055,7 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
 
     assertEquals(12, r.getTotalHiringTarget());
     verify(recruitmentAuditService, never()).snapshot(any());
-    verify(recruitmentAuditService, never()).recordChanges(any(), any());
+    verify(recruitmentAuditService, never()).saveAndRecordChanges(any(), any());
     assertEquals(mapper.writeValueAsString(r), response.getResponse().getContentAsString());
     // Issue #176: every section's share depends on the target, recomputed after the save.
     InOrder inOrder = inOrder(recruitmentRepository, allocationService);
@@ -1303,14 +1280,14 @@ public class RecruitmentsControllerTests extends ControllerTestCase {
     Recruitment saved = recruitment(1L, "20261", RecruitmentType.TA);
     when(recruitmentRepository.existsByQuarterAndType("20261", RecruitmentType.TA))
         .thenReturn(false);
-    when(recruitmentRepository.save(any())).thenReturn(saved);
+    when(recruitmentAuditService.saveAndRecordCreated(any())).thenReturn(saved);
     when(populateRecruitmentCoursesJobFactory.create(saved))
         .thenReturn(PopulateRecruitmentCoursesJob.builder().build());
 
     mockMvc.perform(post(CREATE_URL).with(csrf())).andExpect(status().isOk());
 
     ArgumentCaptor<Recruitment> captor = ArgumentCaptor.forClass(Recruitment.class);
-    verify(recruitmentRepository).save(captor.capture());
+    verify(recruitmentAuditService).saveAndRecordCreated(captor.capture());
     assertTrue(justNow(captor.getValue().getCreatedAt()));
     assertNull(captor.getValue().getAllocationsReleasedAt());
     assertNull(captor.getValue().getFacultyReviewClosedAt());

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -16,12 +17,14 @@ import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -32,6 +35,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 public class RecruitmentAuditServiceTests {
 
   @Autowired RecruitmentAuditService service;
+  @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentAuditTrailRepository repository;
 
   private static Recruitment recruitment() {
@@ -148,6 +152,73 @@ public class RecruitmentAuditServiceTests {
     assertEquals("2026-02-15", changes.get(0).getNewValue());
     verify(repository).saveAll(changes);
   }
+
+  // ---- the save (or delete) and its rows, together (issue #377) ----
+
+  /** The row carries the id the save gave the recruitment, so the save has to come first. */
+  @Test
+  public void save_and_record_created_saves_first_and_records_the_saved_id() {
+    Recruitment unsaved = Recruitment.builder().quarter("20261").type(RecruitmentType.TA).build();
+    Recruitment saved = recruitment();
+    when(recruitmentRepository.save(unsaved)).thenReturn(saved);
+
+    assertSame(saved, service.saveAndRecordCreated(unsaved));
+
+    ArgumentCaptor<RecruitmentAuditTrail> captor =
+        ArgumentCaptor.forClass(RecruitmentAuditTrail.class);
+    InOrder inOrder = inOrder(recruitmentRepository, repository);
+    inOrder.verify(recruitmentRepository).save(unsaved);
+    inOrder.verify(repository).save(captor.capture());
+    assertEquals(7L, captor.getValue().getRecruitmentId());
+    assertEquals("created", captor.getValue().getWhatChanged());
+  }
+
+  @Test
+  public void save_and_record_changes_saves_then_records_the_differences() {
+    Recruitment r = recruitment();
+    RecruitmentAuditService.Snapshot before = service.snapshot(r);
+    r.setApplicationStatus(ApplicationStatus.OPEN);
+
+    List<RecruitmentAuditTrail> changes = service.saveAndRecordChanges(before, r);
+
+    assertEquals(1, changes.size());
+    assertEquals("applicationStatus", changes.get(0).getWhatChanged());
+    assertEquals("CLOSED", changes.get(0).getOldValue());
+    assertEquals("OPEN", changes.get(0).getNewValue());
+    InOrder inOrder = inOrder(recruitmentRepository, repository);
+    inOrder.verify(recruitmentRepository).save(r);
+    inOrder.verify(repository).saveAll(changes);
+  }
+
+  @Test
+  public void save_and_record_changes_of_an_unchanged_recruitment_saves_it_and_writes_no_rows() {
+    Recruitment r = recruitment();
+    RecruitmentAuditService.Snapshot before = service.snapshot(r);
+
+    assertEquals(List.of(), service.saveAndRecordChanges(before, r));
+
+    verify(recruitmentRepository, times(1)).save(r);
+    verify(repository, never()).saveAll(any());
+  }
+
+  @Test
+  public void delete_and_record_writes_the_deleted_row_and_deletes_the_recruitment() {
+    Recruitment r = recruitment();
+    RecruitmentAuditTrail saved = RecruitmentAuditTrail.builder().id(3L).build();
+    when(repository.save(any())).thenReturn(saved);
+
+    assertSame(saved, service.deleteAndRecord(r));
+
+    ArgumentCaptor<RecruitmentAuditTrail> captor =
+        ArgumentCaptor.forClass(RecruitmentAuditTrail.class);
+    InOrder inOrder = inOrder(repository, recruitmentRepository);
+    inOrder.verify(repository).save(captor.capture());
+    inOrder.verify(recruitmentRepository).delete(r);
+    assertEquals(7L, captor.getValue().getRecruitmentId());
+    assertEquals("deleted", captor.getValue().getWhatChanged());
+  }
+
+  // ---- the rows themselves ----
 
   @Test
   public void creating_writes_one_created_row_with_no_values() {
