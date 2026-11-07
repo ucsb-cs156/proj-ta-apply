@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
@@ -37,6 +38,13 @@ public class RecruitmentAuditServiceTests {
   @Autowired RecruitmentAuditService service;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentAuditTrailRepository repository;
+
+  /** Nobody logged in unless a test says so, so the rows most tests expect have a null editor. */
+  @MockitoBean CurrentUserService currentUserService;
+
+  private void loggedInAs(String email) {
+    when(currentUserService.getUser()).thenReturn(User.builder().id(3L).email(email).build());
+  }
 
   private static Recruitment recruitment() {
     return Recruitment.builder()
@@ -216,6 +224,71 @@ public class RecruitmentAuditServiceTests {
     inOrder.verify(recruitmentRepository).delete(r);
     assertEquals(7L, captor.getValue().getRecruitmentId());
     assertEquals("deleted", captor.getValue().getWhatChanged());
+  }
+
+  // ---- the editor (issue #337) ----
+
+  @Test
+  public void the_created_row_names_the_logged_in_user() {
+    loggedInAs("admin@ucsb.edu");
+    when(repository.save(any())).thenReturn(RecruitmentAuditTrail.builder().id(1L).build());
+
+    service.recordCreated(recruitment());
+
+    ArgumentCaptor<RecruitmentAuditTrail> captor =
+        ArgumentCaptor.forClass(RecruitmentAuditTrail.class);
+    verify(repository).save(captor.capture());
+    assertEquals("created", captor.getValue().getWhatChanged());
+    assertEquals("admin@ucsb.edu", captor.getValue().getEditorEmail());
+  }
+
+  @Test
+  public void the_deleted_row_names_the_logged_in_user() {
+    loggedInAs("admin@ucsb.edu");
+    when(repository.save(any())).thenReturn(RecruitmentAuditTrail.builder().id(2L).build());
+
+    service.recordDeleted(recruitment());
+
+    ArgumentCaptor<RecruitmentAuditTrail> captor =
+        ArgumentCaptor.forClass(RecruitmentAuditTrail.class);
+    verify(repository).save(captor.capture());
+    assertEquals("deleted", captor.getValue().getWhatChanged());
+    assertEquals("admin@ucsb.edu", captor.getValue().getEditorEmail());
+  }
+
+  /** Every row of one edit names the user, and the user is looked up once, not once per row. */
+  @Test
+  public void every_changed_field_s_row_names_the_logged_in_user() {
+    loggedInAs("admin@ucsb.edu");
+    Recruitment r = recruitment();
+    RecruitmentAuditService.Snapshot before = service.snapshot(r);
+    r.setApplicationStatus(ApplicationStatus.OPEN);
+    r.setActualOpeningDate(LocalDate.of(2026, 1, 6));
+
+    List<RecruitmentAuditTrail> changes = service.recordChanges(before, r);
+
+    assertEquals(2, changes.size());
+    assertEquals("admin@ucsb.edu", changes.get(0).getEditorEmail());
+    assertEquals("admin@ucsb.edu", changes.get(1).getEditorEmail());
+    verify(currentUserService, times(1)).getUser();
+  }
+
+  /** With nobody logged in the editor is null, as it is on rows older than the column. */
+  @Test
+  public void with_no_user_logged_in_the_editor_is_null() {
+    when(currentUserService.getUser()).thenReturn(null);
+    when(repository.save(any())).thenReturn(RecruitmentAuditTrail.builder().id(1L).build());
+    Recruitment r = recruitment();
+    RecruitmentAuditService.Snapshot before = service.snapshot(r);
+    r.setApplicationStatus(ApplicationStatus.OPEN);
+
+    assertNull(service.recordChanges(before, r).get(0).getEditorEmail());
+
+    service.recordCreated(r);
+    ArgumentCaptor<RecruitmentAuditTrail> captor =
+        ArgumentCaptor.forClass(RecruitmentAuditTrail.class);
+    verify(repository).save(captor.capture());
+    assertNull(captor.getValue().getEditorEmail());
   }
 
   // ---- the rows themselves ----

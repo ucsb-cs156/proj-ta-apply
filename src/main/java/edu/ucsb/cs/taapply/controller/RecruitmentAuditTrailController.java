@@ -33,7 +33,8 @@ public class RecruitmentAuditTrailController extends ApiController {
 
   /** The columns the page may sort by: every column of the table. */
   public static final Set<String> SORTABLE =
-      Set.of("id", "changedAt", "recruitmentId", "whatChanged", "oldValue", "newValue");
+      Set.of(
+          "id", "changedAt", "recruitmentId", "whatChanged", "oldValue", "newValue", "editorEmail");
 
   /** One page of the trail, in the shape the Audit Trail and Users pages already consume. */
   public static record RecruitmentAuditTrailPageDTO(

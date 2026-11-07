@@ -28,6 +28,10 @@ import lombok.NoArgsConstructor;
  * #CREATED} or {@link #DELETED}, when both values are null. A change to several fields in one
  * request is several rows. There is deliberately no foreign key to the recruitment: the rows about
  * a deleted recruitment are the record that it existed.
+ *
+ * <p>{@code editorEmail} is the email of the admin who made the change (issue #337, changeset 066),
+ * as text rather than a user id: it reads directly in the table, survives the user row being
+ * deleted, and needs no join. It is null on the rows written before the column existed.
  */
 @Data
 @AllArgsConstructor
@@ -61,6 +65,10 @@ public class RecruitmentAuditTrail {
 
   @Column(name = "new_value", length = 4000)
   private String newValue;
+
+  /** The email of the admin who made the change; null on rows older than the column. */
+  @Column(name = "editor_email")
+  private String editorEmail;
 
   /** Stamps the Pacific time at which the row is first saved (issue #293). */
   @PrePersist

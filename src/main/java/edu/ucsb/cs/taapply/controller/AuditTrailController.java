@@ -40,7 +40,8 @@ public class AuditTrailController extends ApiController {
           "taApplicationId",
           "fieldName",
           "oldValue",
-          "newValue");
+          "newValue",
+          "editorEmail");
 
   /** One page of the trail, in the shape the Users page already consumes. */
   public static record AuditTrailPageDTO(

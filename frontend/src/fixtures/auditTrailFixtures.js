@@ -1,5 +1,8 @@
 const auditTrailFixtures = {
-  /** Three changes: a plain field, a join-table row added (no old value), a field blanked. */
+  /**
+   * Three changes: a plain field, a join-table row added (no old value), a field blanked. The
+   * oldest predates the editor's email being recorded (issue #337), so it has none.
+   */
   threeRows: [
     {
       id: 3,
@@ -9,6 +12,7 @@ const auditTrailFixtures = {
       fieldName: "major",
       oldValue: "Computer Science",
       newValue: "Computer Engineering",
+      editorEmail: "admin@ucsb.edu",
     },
     {
       id: 2,
@@ -19,6 +23,7 @@ const auditTrailFixtures = {
       oldValue: null,
       newValue:
         '{"id":21,"ucsbCourse":true,"otherSchool":null,"courseNumber":"CMPSC 16","courseTitle":"Problem Solving I","term":"F25","grade":"A"}',
+      editorEmail: "phtcon@ucsb.edu",
     },
     {
       id: 1,
@@ -28,6 +33,7 @@ const auditTrailFixtures = {
       fieldName: "comments",
       oldValue: "Happy to help with either lecture, whichever needs it most.",
       newValue: null,
+      editorEmail: null,
     },
   ],
 };

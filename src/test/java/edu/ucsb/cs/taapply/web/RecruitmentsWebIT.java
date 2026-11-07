@@ -448,6 +448,11 @@ public class RecruitmentsWebIT extends WebTestCase {
         .hasText("OPEN");
     assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-2-col-whatChanged"))
         .hasText("created");
+    // Issue #337: every row, the creation included, names the admin who made the change.
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-0-col-editorEmail"))
+        .hasText("admin@ucsb.edu");
+    assertThat(page.getByTestId("RecruitmentApplicationsPage-audit-cell-row-2-col-editorEmail"))
+        .hasText("admin@ucsb.edu");
   }
 
   /**

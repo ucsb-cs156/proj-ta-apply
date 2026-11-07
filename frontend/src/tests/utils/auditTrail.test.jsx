@@ -27,6 +27,7 @@ describe("auditTrail utils", () => {
     expect(SORT_OPTIONS.map((o) => o.value)).toEqual([
       "id",
       "editedAt",
+      "editorEmail",
       "taApplicationId",
       "ulaApplicationId",
       "fieldName",
@@ -36,6 +37,7 @@ describe("auditTrail utils", () => {
     expect(SORT_OPTIONS.map((o) => o.label)).toEqual([
       "id",
       "Edited",
+      "Edited By",
       "App (TA id)",
       "App (ULA id)",
       "Field",

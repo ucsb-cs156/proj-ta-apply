@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import edu.ucsb.cs.taapply.entity.AuditTrail;
@@ -50,6 +51,23 @@ public class AuditTrailRepositoryTests {
     assertEquals("CS", found.getOldValue());
     assertEquals("CE", found.getNewValue());
     assertNotNull(found.getEditedAt());
+    assertNull(found.getEditorEmail());
+  }
+
+  /** Issue #337: the editor's email is stored as text, and may be absent (older rows). */
+  @Test
+  public void the_editor_s_email_round_trips_and_may_be_null() {
+    AuditTrail byAdmin = row(7L, null, "major", "CS", "CE");
+    byAdmin.setEditorEmail("admin@ucsb.edu");
+    AuditTrail saved = auditTrailRepository.save(byAdmin);
+    AuditTrail older = auditTrailRepository.save(row(7L, null, "major", "CE", "CS"));
+    entityManager.flush();
+    entityManager.clear();
+
+    assertEquals(
+        "admin@ucsb.edu",
+        auditTrailRepository.findById(saved.getId()).orElseThrow().getEditorEmail());
+    assertNull(auditTrailRepository.findById(older.getId()).orElseThrow().getEditorEmail());
   }
 
   /**

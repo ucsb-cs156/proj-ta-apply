@@ -25,6 +25,7 @@ describe("AuditTrailTable tests", () => {
     expect(headers).toEqual([
       "id",
       "Edited",
+      "Edited By",
       "App",
       "Field",
       "Old Value",
@@ -48,6 +49,37 @@ describe("AuditTrailTable tests", () => {
     expect(
       screen.getByTestId("AuditTrailTable-cell-row-0-col-fieldName"),
     ).toHaveTextContent("major");
+  });
+
+  /** Issue #337: who made the change; a row from before that was recorded has a blank cell. */
+  test("the Edited By column shows the editor's email, blank when there is none", () => {
+    renderTable();
+
+    expect(
+      screen.getByTestId("AuditTrailTable-cell-row-0-col-editorEmail"),
+    ).toHaveTextContent("admin@ucsb.edu");
+    expect(
+      screen.getByTestId("AuditTrailTable-cell-row-1-col-editorEmail"),
+    ).toHaveTextContent("phtcon@ucsb.edu");
+    expect(
+      screen.getByTestId("AuditTrailTable-cell-row-2-col-editorEmail")
+        .textContent,
+    ).toBe("");
+    expect(screen.queryByText("null")).toBeNull();
+    // The column is sized to its content, like the other short ones.
+    expect(
+      screen.getByTestId("AuditTrailTable-header-editorEmail").style.width,
+    ).toBe("1%");
+  });
+
+  test("a row from before the email was recorded at all (no field) is blank too", () => {
+    const { editorEmail: _ignored, ...older } = majorRow;
+    renderTable({ rows: [older] });
+
+    expect(
+      screen.getByTestId("AuditTrailTable-cell-row-0-col-editorEmail")
+        .textContent,
+    ).toBe("");
   });
 
   /** Issue #63: the two id columns are one, "TA 7" or "ULA 9", linking to the application. */
@@ -151,6 +183,17 @@ describe("AuditTrailTable tests", () => {
     expect(
       screen.getByText("New Value of priorCoursework (audit trail row 2)"),
     ).toBeInTheDocument();
+    // The modal is centered and keeps the value's line breaks, wrapping long ones.
+    expect(
+      screen.getByTestId("AuditTrailTable-value-modal"),
+    ).toBeInTheDocument();
+    expect(document.querySelector(".modal-dialog")).toHaveClass(
+      "modal-dialog-centered",
+    );
+    expect(body).toHaveStyle({
+      whiteSpace: "pre-wrap",
+      wordBreak: "break-word",
+    });
 
     await userEvent.click(
       screen.getByTestId("AuditTrailTable-value-modal-close"),
@@ -172,12 +215,20 @@ describe("AuditTrailTable tests", () => {
     expect(
       screen.getByText("Old Value of comments (audit trail row 1)"),
     ).toBeInTheDocument();
+
+    // Escape closes it too (the modal's own hide, not just the Close button).
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("AuditTrailTable-value-modal-body"),
+      ).toBeNull(),
+    );
   });
 
   test("renders an empty table, tolerates a non-array, and takes a test id prefix", () => {
     renderTable({ rows: null, testIdPrefix: "AuditTrailPage-table" });
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(6);
+    expect(screen.getAllByRole("columnheader")).toHaveLength(7);
     expect(
       screen.queryByTestId("AuditTrailPage-table-cell-row-0-col-id"),
     ).toBeNull();

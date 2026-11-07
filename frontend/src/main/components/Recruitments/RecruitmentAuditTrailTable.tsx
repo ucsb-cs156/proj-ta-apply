@@ -6,6 +6,7 @@ import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 /**
  * One change to a recruitment itself (issue #139): its creation or deletion, or one field going
  * from one value to another. Not to be confused with AuditTrailRow, a change to an application.
+ * The editor's email (issue #337) is null on rows written before it was recorded.
  */
 export type RecruitmentAuditTrailRow = {
   id: number;
@@ -14,6 +15,7 @@ export type RecruitmentAuditTrailRow = {
   whatChanged: string;
   oldValue: string | null;
   newValue: string | null;
+  editorEmail?: string | null;
 };
 
 /** One page of rows, in the shape the backend's paged endpoints all use. */
@@ -55,7 +57,16 @@ export default function RecruitmentAuditTrailTable({
       accessorKey: "changedAt",
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<RecruitmentAuditTrailRow, unknown> }) =>
-        formatPacificDateTime(cell.row.original.changedAt),
+        formatPacificDateTime(cell.getValue<string | null>()),
+    },
+    {
+      // Issue #337: who made the change; blank on rows from before it was recorded.
+      header: "Changed By",
+      id: "editorEmail",
+      accessorKey: "editorEmail",
+      meta: shrinkToContent,
+      cell: ({ cell }: { cell: Cell<RecruitmentAuditTrailRow, unknown> }) =>
+        show(cell.getValue()),
     },
     {
       header: "What Changed",
@@ -68,14 +79,14 @@ export default function RecruitmentAuditTrailTable({
       id: "oldValue",
       accessorKey: "oldValue",
       cell: ({ cell }: { cell: Cell<RecruitmentAuditTrailRow, unknown> }) =>
-        show(cell.row.original.oldValue),
+        show(cell.getValue()),
     },
     {
       header: "New Value",
       id: "newValue",
       accessorKey: "newValue",
       cell: ({ cell }: { cell: Cell<RecruitmentAuditTrailRow, unknown> }) =>
-        show(cell.row.original.newValue),
+        show(cell.getValue()),
     },
   ];
 

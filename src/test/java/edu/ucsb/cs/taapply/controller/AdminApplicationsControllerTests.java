@@ -336,6 +336,10 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
     return mapper.writeValueAsString(body);
   }
 
+  /**
+   * A row as the edit should write it. Issue #337: the editor is the logged-in admin, whom the test
+   * configuration's current user service names user@example.org under {@code @WithMockUser}.
+   */
   private static AuditTrail change(
       Long ta, Long ula, String field, String oldValue, String newValue) {
     return AuditTrail.builder()
@@ -344,6 +348,7 @@ public class AdminApplicationsControllerTests extends ControllerTestCase {
         .fieldName(field)
         .oldValue(oldValue)
         .newValue(newValue)
+        .editorEmail("user@example.org")
         .build();
   }
 

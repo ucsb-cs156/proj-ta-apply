@@ -7,9 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
@@ -17,6 +19,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -24,6 +27,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +48,14 @@ public class RecruitmentAuditServiceTransactionTests {
   @Autowired RecruitmentAuditService service;
   @MockitoSpyBean RecruitmentRepository recruitmentRepository;
   @MockitoSpyBean RecruitmentAuditTrailRepository auditTrailRepository;
+  @MockitoBean CurrentUserService currentUserService;
+
+  /** The admin making the change (issue #337). */
+  @BeforeEach
+  public void an_admin_is_logged_in() {
+    when(currentUserService.getUser())
+        .thenReturn(User.builder().id(3L).email("admin@ucsb.edu").build());
+  }
 
   /** Each test commits for real, so each cleans up after itself. */
   @AfterEach
@@ -60,14 +72,18 @@ public class RecruitmentAuditServiceTransactionTests {
     return recruitmentRepository.findById(id).orElseThrow();
   }
 
-  private List<String> whatChanged(Long recruitmentId) {
-    List<String> changes = new ArrayList<>();
+  private List<RecruitmentAuditTrail> rows(Long recruitmentId) {
+    List<RecruitmentAuditTrail> rows = new ArrayList<>();
     for (RecruitmentAuditTrail row : auditTrailRepository.findAll()) {
       if (recruitmentId.equals(row.getRecruitmentId())) {
-        changes.add(row.getWhatChanged());
+        rows.add(row);
       }
     }
-    return changes;
+    return rows;
+  }
+
+  private List<String> whatChanged(Long recruitmentId) {
+    return rows(recruitmentId).stream().map(RecruitmentAuditTrail::getWhatChanged).toList();
   }
 
   // ---- creation ----
@@ -78,6 +94,8 @@ public class RecruitmentAuditServiceTransactionTests {
 
     assertTrue(recruitmentRepository.existsById(saved.getId()));
     assertEquals(List.of("created"), whatChanged(saved.getId()));
+    // Issue #337: the row names the admin, stored in the new column.
+    assertEquals("admin@ucsb.edu", rows(saved.getId()).get(0).getEditorEmail());
   }
 
   /**
@@ -111,6 +129,7 @@ public class RecruitmentAuditServiceTransactionTests {
 
     assertEquals(ApplicationStatus.OPEN, stored(r.getId()).getApplicationStatus());
     assertEquals(List.of("applicationStatus"), whatChanged(r.getId()));
+    assertEquals("admin@ucsb.edu", rows(r.getId()).get(0).getEditorEmail());
   }
 
   /** Side one: the audit rows cannot be written, so the edit must not be in the database. */
@@ -159,6 +178,7 @@ public class RecruitmentAuditServiceTransactionTests {
 
     assertFalse(recruitmentRepository.existsById(r.getId()));
     assertEquals(List.of("deleted"), whatChanged(r.getId()));
+    assertEquals("admin@ucsb.edu", rows(r.getId()).get(0).getEditorEmail());
   }
 
   /** The row is written before the delete, so a failing delete must undo the row. */

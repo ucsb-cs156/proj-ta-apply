@@ -1,0 +1,30 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "066-add-editor-email-to-recruitment-audit-trail",
+        "author": "pc",
+        "comment": "Issue #337: the email of the admin who made each change to a recruitment, as text. Nullable: the rows written before this column existed stay null, and the page shows them blank.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          {
+            "not": {
+              "columnExists": {
+                "tableName": "recruitment_audit_trail",
+                "columnName": "editor_email"
+              }
+            }
+          }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "recruitment_audit_trail",
+              "columns": [{ "column": { "name": "editor_email", "type": "VARCHAR(255)" } }]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 /** Rows of the recruitment audit trail (issue #139): changes to a recruitment itself. */
 const recruitmentAuditTrailFixtures = {
-  /** Creation, then opening: the status change and the stamped date. Newest first, as served. */
+  /**
+   * Creation, then opening: the status change and the stamped date. Newest first, as served. The
+   * creation predates the editor's email being recorded (issue #337), so it has none.
+   */
   threeRows: [
     {
       id: 3,
@@ -9,6 +12,7 @@ const recruitmentAuditTrailFixtures = {
       whatChanged: "actualOpeningDate",
       oldValue: null,
       newValue: "2026-01-06",
+      editorEmail: "admin@ucsb.edu",
     },
     {
       id: 2,
@@ -17,6 +21,7 @@ const recruitmentAuditTrailFixtures = {
       whatChanged: "applicationStatus",
       oldValue: "CLOSED",
       newValue: "OPEN",
+      editorEmail: "admin@ucsb.edu",
     },
     {
       id: 1,
@@ -25,6 +30,7 @@ const recruitmentAuditTrailFixtures = {
       whatChanged: "created",
       oldValue: null,
       newValue: null,
+      editorEmail: null,
     },
   ],
 };
