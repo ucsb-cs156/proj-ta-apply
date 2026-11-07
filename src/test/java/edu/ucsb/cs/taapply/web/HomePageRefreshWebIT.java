@@ -105,8 +105,9 @@ public class HomePageRefreshWebIT extends WebTestCase {
     page.getByTestId("RecruitmentForm-submit").click();
     waitFor(page.getByTestId("HomePageLoggedIn-admin-card-0-quarter"));
 
-    Long recruitmentId = recruitmentRepository.findAll().iterator().next().getId();
-    String instructorCard = "HomePageLoggedIn-instructor-recruitments-card-" + recruitmentId;
+    // Issue #364: the instructor section's card is the quarter's, not the recruitment's.
+    String quarter = recruitmentRepository.findAll().iterator().next().getQuarter();
+    String instructorCard = "HomePageLoggedIn-instructor-recruitments-quarter-" + quarter;
     waitFor(page.getByTestId(instructorCard + "-courses"));
 
     // The course shows in the instructor section.

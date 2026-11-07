@@ -14,12 +14,19 @@ export default function HelpInstructorsPage(): React.JSX.Element {
     <BasicLayout>
       <div className="pt-2" data-testid="HelpInstructorsPage">
         <h1 className="my-4">For Instructors</h1>
-        <p>
+        <p data-testid="HelpInstructorsPage-home-cards">
           When you are signed in, your home page has an{" "}
-          <strong>Instructor</strong> section listing the recruitments that
-          apply to you: each TA or ULA recruitment for a quarter in which you
-          are teaching a course that is recruiting, with that course (or
-          courses) under it.
+          <strong>Instructor</strong> section with one card per quarter, newest
+          first, for each quarter in which you teach a course that is in a TA or
+          ULA recruitment. The card&apos;s header is the quarter; under it is a
+          drop-down for each of your courses in that quarter&apos;s recruitments
+          (a course in both the TA and the ULA recruitment appears once). Open a
+          course to see its enrollment table (Section, Enrolled and Max, plus
+          the Enrollment Estimate and the TA and ULA Allocation once an admin
+          releases them), a note where you will one day be able to comment on
+          your allocations, and then a <strong>TA</strong> card and/or a{" "}
+          <strong>ULA</strong> card: one for each recruitment the course is in,
+          with that recruitment&apos;s status and dates.
         </p>
         <p data-testid="HelpInstructorsPage-steps-link">
           Where your part fits in a recruitment, and what the admin does before
@@ -34,48 +41,50 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           the catalog name on your account.
         </p>
         <p>
-          Each recruitment card shows whether faculty reviews are NotStarted,
-          Open, or Closed, the date reviews were first opened, and the faculty
-          ranking deadline. These dates and status are separate from the
+          Each TA or ULA card shows whether applications are open, whether
+          faculty reviews are NotStarted, Open, or Closed, the application
+          dates, the date reviews were first opened, and the faculty ranking
+          deadline. These review dates and status are separate from the
           application dates.
         </p>
         <p data-testid="HelpInstructorsPage-allocations">
-          Once an admin lets faculty see the allocations, each of your courses
-          shows a small table, both on the card and at the top of its ranking
-          page: the <strong>Hiring Target</strong> (how many TAs or ULAs were
-          allocated to the course), the <strong>Ranking Target</strong> (how
-          many candidates you are asked to rank: twice the hiring target, or
-          every interested candidate if there are fewer),{" "}
-          <strong>Candidates Ranked</strong> so far and{" "}
-          <strong>Rankings Still Needed</strong>. Please rank at least as many
-          as the hiring target, and preferably the whole ranking target. If you
-          have concerns about your course&apos;s target, raise them with the
-          admin once you see it. Until the admin does, nothing about it is
-          shown. Each course you teach also has a <strong>Courses</strong>{" "}
-          button, which opens it (click the course to see the button): the
-          read-only Courses page, listing every course of the recruitment with
-          its instructor, enrollment and meeting times. The{" "}
-          <strong>Columns</strong> menu above the table hides and shows columns,
-          and your choice is remembered in this browser. (The old All
-          allocations page is now this one.)
+          Once an admin lets faculty see a recruitment&apos;s allocations, the
+          course&apos;s enrollment table gains the quarter&apos;s{" "}
+          <strong>Enrollment Estimate</strong> and that recruitment&apos;s{" "}
+          <strong>TA Allocation</strong> or <strong>ULA Allocation</strong>, and
+          the TA or ULA card gains a small table, also shown at the top of the
+          ranking page: the <strong>Hiring Target</strong> (how many TAs or ULAs
+          were allocated to the course; the same number as the allocation), the{" "}
+          <strong>Ranking Target</strong> (how many candidates you are asked to
+          rank: twice the hiring target, or every interested candidate if there
+          are fewer), <strong>Candidates Ranked</strong> so far and{" "}
+          <strong>Rankings Still Needed</strong>. The ranking button sits in the
+          first column of that table. Please rank at least as many as the hiring
+          target, and preferably the whole ranking target. If you have concerns
+          about your course&apos;s target, raise them with the admin once you
+          see it. Until the admin does, nothing about it is shown. The read-only
+          Courses page, listing every course of a recruitment with its
+          instructor, enrollment and meeting times, is being phased out and is
+          no longer linked from the home page.
         </p>
         <p>
           When faculty reviews are open, expand one of your listed courses and
-          choose <strong>Rank Candidates</strong>. After reviews close, the link
-          changes to <strong>View Candidate Rankings</strong>. The course page
-          shows the recruitment dates and the course section; if you teach
-          multiple courses in that recruitment, it also links to your other
-          sections. The table contains real applicants who chose this course or
-          expressed enthusiasm or willingness to consider it. Each section has
-          independent rankings. The table always opens in the default sort: by
-          your ranking (1 first, unranked last), then by course preference
-          (first choice, second choice, enthusiastic, then would consider), then
-          in the order the applications were submitted. The{" "}
-          <strong>Default Sort</strong> button returns to it after you sort by
-          another column, and also re-reads any rankings you have just typed.
-          Click any column heading to sort by that column; course preference
-          sorts from first choice to second choice, enthusiastic, then would
-          consider. Contact an admin if a course or ranking page is unavailable.
+          choose <strong>Rank Candidates</strong> in its TA or ULA card. After
+          reviews close, the link changes to{" "}
+          <strong>View Candidate Rankings</strong>. The course page shows the
+          recruitment dates and the course section; if you teach multiple
+          courses in that recruitment, it also links to your other sections. The
+          table contains real applicants who chose this course or expressed
+          enthusiasm or willingness to consider it. Each section has independent
+          rankings. The table always opens in the default sort: by your ranking
+          (1 first, unranked last), then by course preference (first choice,
+          second choice, enthusiastic, then would consider), then in the order
+          the applications were submitted. The <strong>Default Sort</strong>{" "}
+          button returns to it after you sort by another column, and also
+          re-reads any rankings you have just typed. Click any column heading to
+          sort by that column; course preference sorts from first choice to
+          second choice, enthusiastic, then would consider. Contact an admin if
+          a course or ranking page is unavailable.
         </p>
         <p data-testid="HelpInstructorsPage-ranking-columns">
           The ranking table has a <strong>Columns</strong> menu, like the other
@@ -132,8 +141,9 @@ export default function HelpInstructorsPage(): React.JSX.Element {
           someone you expected to see.
         </p>
         <p data-testid="HelpInstructorsPage-assignments">
-          When the admins have settled who is hired, the recruitment card gains
-          an <strong>Assignments Published</strong> badge and an{" "}
+          When the admins have settled who is hired, the recruitment&apos;s TA
+          or ULA card, in each of your courses, gains an{" "}
+          <strong>Assignments Published</strong> badge and an{" "}
           <strong>Assignments</strong> button. The page it opens is read-only
           and covers every course in the recruitment, not just yours: choose{" "}
           <strong>One Row per course</strong> to see each course with its

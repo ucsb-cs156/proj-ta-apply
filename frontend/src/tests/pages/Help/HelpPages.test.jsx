@@ -426,14 +426,22 @@ describe("Help pages (issue #140)", () => {
     ).toHaveTextContent(
       "The ranking table has a Columns menu, like the other tables, to hide the columns you do not need: untick a column to hide it and tick it again to bring it back, or use Show All and Show None. Each column heading also has a small hide link above it that hides that column. The Ranking, First Name and Last Name columns cannot be hidden, so you can always rank and see whom you are ranking. Your choice is remembered in this browser for all the courses of the recruitment (separately for TA and ULA recruitments). The warning under tied rankings always spans whichever columns are showing.",
     );
+    // Issue #364: the home page is one card per quarter, with a TA and/or ULA card per course.
+    expect(
+      screen.getByTestId("HelpInstructorsPage-home-cards"),
+    ).toHaveTextContent(
+      "your home page has an Instructor section with one card per quarter, newest first, for each quarter in which you teach a course that is in a TA or ULA recruitment. The card's header is the quarter; under it is a drop-down for each of your courses in that quarter's recruitments (a course in both the TA and the ULA recruitment appears once). Open a course to see its enrollment table (Section, Enrolled and Max, plus the Enrollment Estimate and the TA and ULA Allocation once an admin releases them), a note where you will one day be able to comment on your allocations, and then a TA card and/or a ULA card: one for each recruitment the course is in, with that recruitment's status and dates.",
+    );
     // Issue #178: what an instructor sees once allocations are shown.
     const allocations = screen.getByTestId("HelpInstructorsPage-allocations");
     expect(allocations).toHaveTextContent(
-      "Once an admin lets faculty see the allocations, each of your courses shows a small table, both on the card and at the top of its ranking page: the Hiring Target (how many TAs or ULAs were allocated to the course), the Ranking Target (how many candidates you are asked to rank: twice the hiring target, or every interested candidate if there are fewer), Candidates Ranked so far and Rankings Still Needed.",
+      "Once an admin lets faculty see a recruitment's allocations, the course's enrollment table gains the quarter's Enrollment Estimate and that recruitment's TA Allocation or ULA Allocation, and the TA or ULA card gains a small table, also shown at the top of the ranking page: the Hiring Target (how many TAs or ULAs were allocated to the course; the same number as the allocation), the Ranking Target (how many candidates you are asked to rank: twice the hiring target, or every interested candidate if there are fewer), Candidates Ranked so far and Rankings Still Needed. The ranking button sits in the first column of that table.",
     );
     expect(allocations).toHaveTextContent(
-      "If you have concerns about your course's target, raise them with the admin once you see it. Until the admin does, nothing about it is shown. Each course you teach also has a Courses button, which opens it (click the course to see the button): the read-only Courses page, listing every course of the recruitment with its instructor, enrollment and meeting times. The Columns menu above the table hides and shows columns, and your choice is remembered in this browser. (The old All allocations page is now this one.)",
+      "If you have concerns about your course's target, raise them with the admin once you see it. Until the admin does, nothing about it is shown. The read-only Courses page, listing every course of a recruitment with its instructor, enrollment and meeting times, is being phased out and is no longer linked from the home page.",
     );
+    // Issue #364: the Courses button is gone from the home page, so it is no longer described.
+    expect(allocations).not.toHaveTextContent(/Courses button/);
     // Issue #366: the all-courses setting is no longer offered, so it is no longer described.
     expect(allocations).not.toHaveTextContent(/all courses to all faculty/);
     expect(screen.getByText(/faculty ranking deadline/)).toBeInTheDocument();
@@ -455,7 +463,7 @@ describe("Help pages (issue #140)", () => {
     // Issue #180: the published assignments page.
     const assignments = screen.getByTestId("HelpInstructorsPage-assignments");
     expect(assignments).toHaveTextContent(
-      "the recruitment card gains an Assignments Published badge and an Assignments button. The page it opens is read-only and covers every course in the recruitment, not just yours",
+      "the recruitment's TA or ULA card, in each of your courses, gains an Assignments Published badge and an Assignments button. The page it opens is read-only and covers every course in the recruitment, not just yours",
     );
     expect(assignments).toHaveTextContent(
       "not just yours: choose One Row per course to see each course with its instructor and the TAs (or ULAs) assigned to it, or One Row per TA/ULA to see each person with their course. Either view can be saved as a CSV file with the Download CSV buttons.",
@@ -1958,7 +1966,9 @@ describe("Help pages (issue #140)", () => {
     expect(
       (await screen.findByTestId("HelpInstructorsPage")).querySelector("p")
         .textContent,
-    ).toMatch(/your home page has an Instructor section listing/);
+    ).toMatch(
+      /your home page has an Instructor section with one card per quarter/,
+    );
 
     cleanup();
     renderPage(<HelpUlaApplicantsPage />);

@@ -190,30 +190,33 @@ describe("HomePageLoggedIn tests", () => {
     ).toEqual(["Admin", "Instructor", "Student"]);
   });
 
-  /** Issue #127: the recruitments with the instructor's courses, as cards with nested accordions. */
-  test("an instructor with courses gets a card per recruitment", async () => {
+  /**
+   * Issue #127: the recruitments with the instructor's courses, as cards with nested accordions;
+   * since issue #364 one card per quarter, with a TA and/or ULA card inside each course.
+   */
+  test("an instructor with courses gets a card per quarter", async () => {
     renderHome(apiCurrentUserFixtures.instructorUser, {
       instructorRecruitments: instructorRecruitmentsFixtures.twoRecruitments,
     });
 
     expect(
       await screen.findByTestId(
-        "HomePageLoggedIn-instructor-recruitments-card-1-quarter",
+        "HomePageLoggedIn-instructor-recruitments-quarter-20261-quarter",
       ),
     ).toHaveTextContent("W26");
     expect(
       screen.getByTestId(
-        "HomePageLoggedIn-instructor-recruitments-card-1-course-2-header",
+        "HomePageLoggedIn-instructor-recruitments-quarter-20261-course-2-header",
       ).textContent,
     ).toContain("CMPSC   156");
     expect(
       screen.getByTestId(
-        "HomePageLoggedIn-instructor-recruitments-card-1-course-2-body",
+        "HomePageLoggedIn-instructor-recruitments-quarter-20261-course-2-body",
       ),
     ).toHaveTextContent("View Candidate Rankings");
     expect(
       screen.getByTestId(
-        "HomePageLoggedIn-instructor-recruitments-card-1-course-2-view-rankings",
+        "HomePageLoggedIn-instructor-recruitments-quarter-20261-course-2-TA-view-rankings",
       ),
     ).toHaveAttribute("href", "/recruitments/1/courses/2/ranking");
     expect(screen.queryByTestId("HomePageLoggedIn-instructor-none")).toBeNull();

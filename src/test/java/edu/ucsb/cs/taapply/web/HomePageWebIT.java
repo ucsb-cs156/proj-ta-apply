@@ -88,9 +88,13 @@ public class HomePageWebIT extends WebTestCase {
     assertThat(page.getByTestId("HomePageLoggedIn-admin")).not().isVisible();
   }
 
-  /** Issue #127: once an admin has assigned the catalog name, the instructor's courses show. */
+  /**
+   * Issue #127: once an admin has assigned the catalog name, the instructor's courses show. Since
+   * issue #364 the card is the quarter's, and the course holds a TA card with the recruitment's
+   * status.
+   */
   @Test
-  public void an_instructor_with_a_catalog_name_sees_a_card_per_recruitment_with_their_courses()
+  public void an_instructor_with_a_catalog_name_sees_a_card_per_quarter_with_their_courses()
       throws Exception {
     Recruitment recruitment =
         recruitmentRepository.save(
@@ -129,19 +133,38 @@ public class HomePageWebIT extends WebTestCase {
         Instructor.builder().email("instructor@ucsb.edu").catalogName("CONRAD P").build());
     reloadPage(page);
 
-    String card = "HomePageLoggedIn-instructor-recruitments-card-" + recruitment.getId();
-    assertThat(page.getByTestId(card + "-quarter")).containsText("W26");
-    assertThat(page.getByTestId(card + "-applicationStatus")).containsText("OPEN");
-    String header = card + "-course-" + mine.getId() + "-header";
+    // Issue #364: the card is the quarter's, and its header is the quarter alone.
+    String card = "HomePageLoggedIn-instructor-recruitments-quarter-20261";
+    assertThat(page.getByTestId(card + "-quarter")).hasText("W26");
+    assertThat(page.getByTestId(card + "-card").locator(".card-header")).hasText("W26");
+    String course = card + "-course-" + mine.getId();
+    String header = course + "-header";
     assertThat(page.getByTestId(header)).containsText("CMPSC   156");
     assertThat(page.getByTestId(header)).containsText("(0100) ADV APP PROGRAM");
     // Only the instructor's own course, not the colleague's.
     assertThat(page.getByTestId(card + "-courses")).not().containsText("130A");
+    assertThat(page.getByTestId(card + "-courses").locator(".accordion-item")).hasCount(1);
 
-    // Reviews have not started, so no ranking action is offered yet.
     page.getByTestId(header).getByRole(com.microsoft.playwright.options.AriaRole.BUTTON).click();
-    assertThat(page.getByTestId(card + "-course-" + mine.getId() + "-body"))
+    // Nothing released: Section, Enrolled and Max, then the feedback placeholder.
+    assertThat(page.getByTestId(course + "-enrollment").locator("thead th")).hasCount(3);
+    assertThat(page.getByTestId(course + "-section")).hasText("0100");
+    assertThat(page.getByTestId(course + "-feedback"))
+        .containsText("Coming soon: the ability for faculty to provide feedback");
+    // The TA card carries the recruitment's status; there is no ULA recruitment, so no ULA card.
+    assertThat(page.getByTestId(course + "-TA-type")).hasText("TA");
+    assertThat(page.getByTestId(course + "-TA-applicationStatus")).containsText("OPEN");
+    assertThat(page.getByTestId(course + "-TA-tentativeOpeningDate")).hasText("2026-01-05");
+    assertThat(page.getByTestId(course + "-ULA-card")).hasCount(0);
+    // Reviews have not started, so no ranking action is offered yet; and no Courses button.
+    assertThat(page.getByTestId(course + "-TA-not-open"))
         .containsText("Candidate rankings will be available when faculty reviews open.");
+    assertThat(
+            page.getByTestId(course + "-body")
+                .getByRole(
+                    com.microsoft.playwright.options.AriaRole.LINK,
+                    new com.microsoft.playwright.Locator.GetByRoleOptions().setName("Courses")))
+        .hasCount(0);
     assertThat(page.getByTestId("HomePageLoggedIn-instructor-none")).not().isVisible();
   }
 }
