@@ -272,10 +272,40 @@ section when the estimates add up to nothing.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#ranksFor(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">ranksFor</a><wbr>(<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;course)</code></div>
+<div class="col-first even-row-color"><code>void</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#attach(java.lang.String,edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">attach</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;row)</code></div>
 <div class="col-last even-row-color">
+<div class="block">The same for one row.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="../BudgetCourse.html" title="class in edu.ucsb.cs.taapply.entity">BudgetCourse</a></code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#cache(java.lang.String,edu.ucsb.cs.taapply.entity.RecruitmentCourse,edu.ucsb.cs.taapply.models.UcsbSection)" class="member-name-link">cache</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;row,
+ <a href="../../models/UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a>&nbsp;section)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Caches one section's figures from the API's answer for it (Add by enroll code), creating the
+row if need be, and returns the row.</div>
+</div>
+<div class="col-first even-row-color"><code><a href="../BudgetCourse.html" title="class in edu.ucsb.cs.taapply.entity">BudgetCourse</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#ensure(java.lang.String,edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">ensure</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;row)</code></div>
+<div class="col-last even-row-color">
+<div class="block">The row for a recruitment course's section, created (with the quarter's budget, if that is
+missing too) when there is none yet: the case when a recruitment first gets the section, or
+gets it back after removing it.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#ranksFor(edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">ranksFor</a><wbr>(<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;course)</code></div>
+<div class="col-last odd-row-color">
 <div class="block">The ranks one section gave, keyed by application id.</div>
+</div>
+<div class="col-first even-row-color"><code><a href="../BudgetCourse.html" title="class in edu.ucsb.cs.taapply.entity">BudgetCourse</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#setEstimate(java.lang.String,edu.ucsb.cs.taapply.entity.RecruitmentCourse,java.lang.Integer)" class="member-name-link">setEstimate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;estimate)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Sets (or with null clears) the section's one estimate for the quarter, as typed by the admin,
+so with no source; creates the row if need be.</div>
 </div>
 <div class="col-first odd-row-color"><code><a href="../../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a></code></div>
 <div class="col-second odd-row-color"><span class="type-name-label">CourseTargetsService.</span><code><a href="../../services/CourseTargetsService.html#targetsFor(java.lang.Long,edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">targetsFor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,
@@ -289,6 +319,22 @@ section when the estimates add up to nothing.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>void</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#attach(java.lang.String,java.util.Collection)" class="member-name-link">attach</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;rows)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Fills the quarter-level figures of every row from the quarter's table, with one read, so the
+rows' JSON is as it was before the figures moved.</div>
+</div>
+<div class="col-first odd-row-color"><code>int</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#fillEstimates(java.lang.String,java.util.Collection,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource)" class="member-name-link">fillEstimates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;rows,
+ <a href="../../enums/EnrollmentEstimateSource.html" title="enum class in edu.ucsb.cs.taapply.enums">EnrollmentEstimateSource</a>&nbsp;source)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Copies the cached maximum (MAX) or current (ACTUAL) enrollment into the estimate of every given
+section that has that figure, recording the source; a section with no row or no figure keeps
+its estimate.</div>
+</div>
 <div class="col-first even-row-color"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second even-row-color"><span class="type-name-label">AssignmentsService.</span><code><a href="../../services/AssignmentsService.html#headings(java.util.List)" class="member-name-link">headings</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;courses)</code></div>
 <div class="col-last even-row-color">
@@ -296,6 +342,23 @@ section when the estimates add up to nothing.</div>
 the bare course number, plus " (section S)" only when the export has more than one section of
 that course, and ", enroll E" inside the parentheses only in the odd case of two rows with the
 same course and section.</div>
+</div>
+<div class="col-first odd-row-color"><code>boolean</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#isFresh(java.lang.String,java.util.Collection)" class="member-name-link">isFresh</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;rows)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Whether every given recruitment course's figures were checked against the UCSB API within
+<a href="../../services/BudgetCourseService.html#TTL"><code>BudgetCourseService.TTL</code></a>, so a page opening need not call it.</div>
+</div>
+<div class="col-first even-row-color"><code>int</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#refreshCache(java.lang.String,java.util.Collection,java.util.Map)" class="member-name-link">refreshCache</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;rows,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>, <a href="../../models/UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a>&gt;&nbsp;sections)</code></div>
+<div class="col-last even-row-color">
+<div class="block">After a fetch of the whole quarter's offerings (Populate, or the Courses page's refresh): makes
+sure every given recruitment course has its row, re-caches the figures of every row of the
+quarter whose section the fetch found, and stamps every row of the quarter as checked now,
+found or not, so a section the API has dropped does not keep the quarter stale for ever.</div>
 </div>
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>, <a href="../../services/CourseTargetsService.CourseTargets.html" title="class in edu.ucsb.cs.taapply.services">CourseTargetsService.CourseTargets</a>&gt;</code></div>
 <div class="col-second odd-row-color"><span class="type-name-label">CourseTargetsService.</span><code><a href="../../services/CourseTargetsService.html#targetsFor(java.lang.Long,java.util.List)" class="member-name-link">targetsFor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;recruitmentId,

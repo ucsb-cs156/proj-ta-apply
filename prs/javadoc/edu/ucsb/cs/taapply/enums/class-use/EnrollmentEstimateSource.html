@@ -62,6 +62,8 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.enums">edu.ucsb.cs.taapply.enums</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.services">edu.ucsb.cs.taapply.services</a></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <section class="class-uses">
 <ul class="block-list">
@@ -110,6 +112,26 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color">
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
+</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="edu.ucsb.cs.taapply.services">
+<h2>Uses of <a href="../EnrollmentEstimateSource.html" title="enum class in edu.ucsb.cs.taapply.enums">EnrollmentEstimateSource</a> in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a></h2>
+<div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with parameters of type <a href="../EnrollmentEstimateSource.html" title="enum class in edu.ucsb.cs.taapply.enums">EnrollmentEstimateSource</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>int</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#fillEstimates(java.lang.String,java.util.Collection,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource)" class="member-name-link">fillEstimates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;rows,
+ <a href="../EnrollmentEstimateSource.html" title="enum class in edu.ucsb.cs.taapply.enums">EnrollmentEstimateSource</a>&nbsp;source)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Copies the cached maximum (MAX) or current (ACTUAL) enrollment into the estimate of every given
+section that has that figure, recording the source; a section with no row or no figure keeps
+its estimate.</div>
 </div>
 </div>
 </section>

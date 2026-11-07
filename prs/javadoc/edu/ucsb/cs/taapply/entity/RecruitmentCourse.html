@@ -70,6 +70,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#isOnOffer()" tabindex="0">isOnOffer()</a></li>
+<li><a href="#attachFigures(edu.ucsb.cs.taapply.entity.BudgetCourse)" tabindex="0">attachFigures(BudgetCourse)</a></li>
 </ol>
 </li>
 </ol>
@@ -95,6 +96,11 @@ quarter as reported by the UCSB API.
 max enrollment drive how many positions each gets, and two primaries often have different
 instructors who rank candidates independently. Secondary sections (discussions, labs) are not
 included.
+
+<p>The figures that belong to the section rather than to the recruitment (the enrollment, the
+maximum enrollment and the enrollment estimate) are kept once per quarter in <a href="BudgetCourse.html" title="class in edu.ucsb.cs.taapply.entity"><code>BudgetCourse</code></a>
+(issue #363), since a section can be in both the TA and the ULA recruitment. They are still
+fields here, so that the JSON is unchanged, but transient ones: see <a href="#attachFigures(edu.ucsb.cs.taapply.entity.BudgetCourse)"><code>attachFigures(BudgetCourse)</code></a>.
 
 <p><code>removed</code> exists so that an admin's decision to drop a course survives a later Populate.
 A hard delete would not: the next run cannot tell a course that was deliberately removed from one
@@ -144,9 +150,16 @@ it has never seen, and would add it straight back.</div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOnOffer()" class="member-name-link">isOnOffer</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#attachFigures(edu.ucsb.cs.taapply.entity.BudgetCourse)" class="member-name-link">attachFigures</a><wbr>(<a href="BudgetCourse.html" title="class in edu.ucsb.cs.taapply.entity">BudgetCourse</a>&nbsp;figures)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Fills the three quarter-level figures (enrollment, maximum enrollment and enrollment estimate)
+from the section's <code>budget_courses</code> row, so that the JSON of this row looks as it did
+before issue #363 moved them there.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOnOffer()" class="member-name-link">isOnOffer</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Whether applicants should see this row: not removed by an admin, not stale, and not cancelled
 (issue #123).</div>
 </div>
@@ -216,6 +229,17 @@ it has never seen, and would add it straight back.</div>
 <div class="block">Whether applicants should see this row: not removed by an admin, not stale, and not cancelled
 (issue #123). Cancellation is judged when reading rather than by flagging the row, so a
 cancellation the schedule later reverses takes effect at the next Populate with nobody's help.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="attachFigures(edu.ucsb.cs.taapply.entity.BudgetCourse)">
+<h3>attachFigures</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">attachFigures</span><wbr><span class="parameters">(<a href="BudgetCourse.html" title="class in edu.ucsb.cs.taapply.entity">BudgetCourse</a>&nbsp;figures)</span></div>
+<div class="block">Fills the three quarter-level figures (enrollment, maximum enrollment and enrollment estimate)
+from the section's <code>budget_courses</code> row, so that the JSON of this row looks as it did
+before issue #363 moved them there. Blanks them when the section has no such row.</div>
 </div>
 </section>
 </li>

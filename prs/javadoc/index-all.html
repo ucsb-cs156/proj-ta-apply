@@ -272,7 +272,7 @@ logged in: until then both names are null.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AllocationService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">AllocationService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
 <dd>
-<div class="block">The arithmetic behind the allocation columns of the Recruitment Courses page (issue #176): each
+<div class="block">The arithmetic behind the allocation columns of the Combined Allocation page (issue #176): each
 section's fractional share of the hiring target by enrollment estimate, and the first-cut
 allocation an admin can ask for from it.</div>
 </dd>
@@ -556,6 +556,21 @@ assigned to it, and how many places are left (negative when over-assigned).</div
 <dd>
 <div class="block">One column identifying an applicant: its header and how to read it off an application.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#attach(java.lang.String,edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">attach(String, RecruitmentCourse)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">The same for one row.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#attach(java.lang.String,java.util.Collection)" class="member-name-link">attach(String, Collection)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">Fills the quarter-level figures of every row from the quarter's table, with one read, so the
+rows' JSON is as it was before the figures moved.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html#attachFigures(edu.ucsb.cs.taapply.entity.BudgetCourse)" class="member-name-link">attachFigures(BudgetCourse)</a> - Method in class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a></dt>
+<dd>
+<div class="block">Fills the three quarter-level figures (enrollment, maximum enrollment and enrollment estimate)
+from the section's <code>budget_courses</code> row, so that the JSON of this row looks as it did
+before issue #363 moved them there.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/AuditTrail.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">AuditTrail</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
 <dd>
 <div class="block">One change an admin made to one field of a student's application: what the field was called, what
@@ -668,6 +683,25 @@ budget lines and everything derived from them.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/BudgetController.html#%3Cinit%3E()" class="member-name-link">BudgetController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/BudgetController.html" title="class in edu.ucsb.cs.taapply.controller">BudgetController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/BudgetCourse.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">BudgetCourse</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
+<dd>
+<div class="block">One <em>primary section</em> of one course in one quarter, with the facts about the section that
+do not depend on which recruitment it is in (issue #363).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/entity/BudgetCourse.html#%3Cinit%3E()" class="member-name-link">BudgetCourse()</a> - Constructor for class edu.ucsb.cs.taapply.entity.<a href="edu/ucsb/cs/taapply/entity/BudgetCourse.html" title="class in edu.ucsb.cs.taapply.entity">BudgetCourse</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/BudgetCourseRepository.html" class="type-name-link" title="interface in edu.ucsb.cs.taapply.repository">BudgetCourseRepository</a> - Interface in <a href="edu/ucsb/cs/taapply/repository/package-summary.html">edu.ucsb.cs.taapply.repository</a></dt>
+<dd>
+<div class="block">One row per section per quarter, keyed on the quarter and the enroll code (issue #363).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
+<dd>
+<div class="block">The one place that reads and writes <code>budget_courses</code> (issue #363): the quarter's single row
+per section, holding the enrollment estimate and the cached UCSB API figures that the TA and ULA
+recruitments share.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#%3Cinit%3E()" class="member-name-link">BudgetCourseService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetService.html#budgetFor(java.lang.String)" class="member-name-link">budgetFor(String)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.html" title="class in edu.ucsb.cs.taapply.services">BudgetService</a></dt>
 <dd>
 <div class="block">The quarter's budget row, created with every line at zero if this is the first time it is asked
@@ -714,11 +748,20 @@ expected</code> (issue #280).</div>
 <dd>
 <div class="block">Course id, then section, then enrollment code, a null reading as "" in each.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#byEnrollCode(java.lang.String)" class="member-name-link">byEnrollCode(String)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">The quarter's rows keyed by enroll code.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/NoticesController.html#byId(java.lang.Long)" class="member-name-link">byId(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/NoticesController.html" title="class in edu.ucsb.cs.taapply.controller">NoticesController</a></dt>
 <dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:C">C</h2>
 <dl class="index">
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#cache(java.lang.String,edu.ucsb.cs.taapply.entity.RecruitmentCourse,edu.ucsb.cs.taapply.models.UcsbSection)" class="member-name-link">cache(String, RecruitmentCourse, UcsbSection)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">Caches one section's figures from the API's answer for it (Add by enroll code), creating the
+row if need be, and returns the row.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#cancelApplication(java.lang.Long,java.lang.String)" class="member-name-link">cancelApplication(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html#cancellationReason()" class="member-name-link">cancellationReason()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AssignmentsService.CancelledApplication.html" title="class in edu.ucsb.cs.taapply.services">AssignmentsService.CancelledApplication</a></dt>
@@ -1277,6 +1320,12 @@ saved as they type so that nothing they have written is ever lost.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html#%3Cinit%3E()" class="member-name-link">DraftApplicationsController()</a> - Constructor for class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/DraftApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">DraftApplicationsController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#dropIfUnused(java.lang.String,java.lang.String)" class="member-name-link">dropIfUnused(String, String)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">After a recruitment removed the section: deletes the quarter's row for it unless some
+recruitment of the quarter still has the section and has not removed it (decided by the
+maintainer: a section that comes back starts with an empty estimate).</div>
+</dd>
 </dl>
 <h2 class="title" id="I:E">E</h2>
 <dl class="index">
@@ -1397,6 +1446,12 @@ both Summer and Fall are reachable.</div>
 <dt><a href="edu/ucsb/cs/taapply/enums/EnrollmentEstimateSource.html" class="type-name-link" title="enum class in edu.ucsb.cs.taapply.enums">EnrollmentEstimateSource</a> - Enum Class in <a href="edu/ucsb/cs/taapply/enums/package-summary.html">edu.ucsb.cs.taapply.enums</a></dt>
 <dd>
 <div class="block">Which UCSB API figure to copy into every course's enrollment estimate (issue #175).</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#ensure(java.lang.String,edu.ucsb.cs.taapply.entity.RecruitmentCourse)" class="member-name-link">ensure(String, RecruitmentCourse)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">The row for a recruitment course's section, created (with the quarter's budget, if that is
+missing too) when there is none yet: the case when a recruitment first gets the section, or
+gets it back after removing it.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/enums/CourseInterest.html#ENTHUSIASTIC" class="member-name-link">ENTHUSIASTIC</a> - Enum constant in enum class edu.ucsb.cs.taapply.enums.<a href="edu/ucsb/cs/taapply/enums/CourseInterest.html" title="enum class in edu.ucsb.cs.taapply.enums">CourseInterest</a></dt>
 <dd>&nbsp;</dd>
@@ -1726,6 +1781,12 @@ science courses of a few other universities.</div>
 <dd>
 <div class="block">Returns the value of the <code>fields</code> record component.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#fillEstimates(java.lang.String,java.util.Collection,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource)" class="member-name-link">fillEstimates(String, Collection, EnrollmentEstimateSource)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">Copies the cached maximum (MAX) or current (ACTUAL) enrollment into the estimate of every given
+section that has that figure, recording the source; a section with no row or no figure keeps
+its estimate.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/config/SecurityConfig.html#filterChain(org.springframework.security.config.annotation.web.builders.HttpSecurity)" class="member-name-link">filterChain(HttpSecurity)</a> - Method in class edu.ucsb.cs.taapply.config.<a href="edu/ucsb/cs/taapply/config/SecurityConfig.html" title="class in edu.ucsb.cs.taapply.config">SecurityConfig</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/CatalogNameRepository.html#findAllByOrderByNameAsc()" class="member-name-link">findAllByOrderByNameAsc()</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/CatalogNameRepository.html" title="interface in edu.ucsb.cs.taapply.repository">CatalogNameRepository</a></dt>
@@ -1776,6 +1837,12 @@ and started again (issue #318).</div>
 <div class="block">Every row, in any recruitment, whose instructor of record is the given catalog name (issue
 #127).</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/BudgetCourseRepository.html#findByQuarter(java.lang.String)" class="member-name-link">findByQuarter(String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/BudgetCourseRepository.html" title="interface in edu.ucsb.cs.taapply.repository">BudgetCourseRepository</a></dt>
+<dd>
+<div class="block">Every section of the quarter, in no particular order; callers key them by enroll code.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/repository/BudgetCourseRepository.html#findByQuarterAndEnrollCode(java.lang.String,java.lang.String)" class="member-name-link">findByQuarterAndEnrollCode(String, String)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/BudgetCourseRepository.html" title="interface in edu.ucsb.cs.taapply.repository">BudgetCourseRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html#findByQuarterAndType(java.lang.String,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">findByQuarterAndType(String, RecruitmentType)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/RecruitmentRepository.html" title="interface in edu.ucsb.cs.taapply.repository">RecruitmentRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/repository/CandidateRankingRepository.html#findByRecruitmentCourseId(java.lang.Long)" class="member-name-link">findByRecruitmentCourseId(Long)</a> - Method in interface edu.ucsb.cs.taapply.repository.<a href="edu/ucsb/cs/taapply/repository/CandidateRankingRepository.html" title="interface in edu.ucsb.cs.taapply.repository">CandidateRankingRepository</a></dt>
@@ -2534,7 +2601,9 @@ sections, and whether the allocation columns are part of them.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.InstructorRecruitment.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.InstructorRecruitment</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>
-<div class="block">A recruitment as the admin's and student's cards know it, plus the instructor's courses.</div>
+<div class="block">A recruitment as the admin's and student's cards know it, plus the instructor's courses (with
+the quarter's enrollment figures and estimate attached from <code>budget_courses</code>, issue
+#363).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.RankEdit.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.RankEdit</a> - Record Class in <a href="edu/ucsb/cs/taapply/controller/package-summary.html">edu.ucsb.cs.taapply.controller</a></dt>
 <dd>
@@ -2584,6 +2653,11 @@ have logged in: until then both names are null.</div>
 <dt><a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html#isEligible(edu.ucsb.cs.taapply.entity.Recruitment,java.time.LocalDate)" class="member-name-link">isEligible(Recruitment, LocalDate)</a> - Method in class edu.ucsb.cs.taapply.jobs.<a href="edu/ucsb/cs/taapply/jobs/RecruitmentCoursesRefreshScheduler.html" title="class in edu.ucsb.cs.taapply.jobs">RecruitmentCoursesRefreshScheduler</a></dt>
 <dd>
 <div class="block">Whether a recruitment's course list is still worth refreshing today.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#isFresh(java.lang.String,java.util.Collection)" class="member-name-link">isFresh(String, Collection)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">Whether every given recruitment course's figures were checked against the UCSB API within
+<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#TTL"><code>BudgetCourseService.TTL</code></a>, so a page opening need not call it.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html#isInAdminEmails()" class="member-name-link">isInAdminEmails()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminsController.AdminDTO.html" title="class in edu.ucsb.cs.taapply.controller">AdminsController.AdminDTO</a></dt>
 <dd>
@@ -3479,6 +3553,12 @@ the day six months on as still recent.</div>
 recruitment: <code>totalHiringTarget * estimate / total of the estimates</code>, or 0.0 for every
 section when the estimates add up to nothing.</div>
 </dd>
+<dt><a href="edu/ucsb/cs/taapply/services/AllocationService.html#recomputeQuarter(java.lang.String)" class="member-name-link">recomputeQuarter(String)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/AllocationService.html" title="class in edu.ucsb.cs.taapply.services">AllocationService</a></dt>
+<dd>
+<div class="block"><a href="edu/ucsb/cs/taapply/services/AllocationService.html#recompute(edu.ucsb.cs.taapply.entity.Recruitment)"><code>AllocationService.recompute(Recruitment)</code></a> for every recruitment of the quarter, since an enrollment estimate is the
+quarter's (issue #363): a change to one moves the shares of the TA and the ULA recruitment
+alike.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">record(ApplicationAuditService.Snapshot, Application, RecruitmentType)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService</a></dt>
 <dd>
 <div class="block">Records every difference between the snapshot taken before the edit and the application as it
@@ -3669,7 +3749,8 @@ the bottom of its box, and what its title opens (a page or one of the card's mod
 <dt><a href="edu/ucsb/cs/taapply/services/RecruitmentCoursesRefreshService.html#refresh(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">refresh(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentCoursesRefreshService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentCoursesRefreshService</a></dt>
 <dd>
 <div class="block">Rewrites the offering details of every non-removed row whose enroll code the API still lists,
-stamps the recruitment as refreshed, and returns how many rows it rewrote.</div>
+caches the quarter's enrollment figures, stamps the recruitment as refreshed, and returns how
+many rows it rewrote.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#refresh(java.lang.Long)" class="member-name-link">refresh(Long)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
@@ -3680,6 +3761,13 @@ stamps the recruitment as refreshed, and returns how many rows it rewrote.</div>
 <dt><a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html#REFRESH_AFTER" class="member-name-link">REFRESH_AFTER</a> - Static variable in class edu.ucsb.cs.taapply.interceptors.<a href="edu/ucsb/cs/taapply/interceptors/LastOnlineInterceptor.html" title="class in edu.ucsb.cs.taapply.interceptors">LastOnlineInterceptor</a></dt>
 <dd>
 <div class="block">How stale a stamp must be before a request refreshes it.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#refreshCache(java.lang.String,java.util.Collection,java.util.Map)" class="member-name-link">refreshCache(String, Collection, Map)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">After a fetch of the whole quarter's offerings (Populate, or the Courses page's refresh): makes
+sure every given recruitment course has its row, re-caches the figures of every row of the
+quarter whose section the fetch found, and stamps every row of the quarter as checked now,
+found or not, so a section the API has dropped does not keep the quarter stale for ever.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RefreshSetting.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.services">RefreshSetting</a> - Class in <a href="edu/ucsb/cs/taapply/services/package-summary.html">edu.ucsb.cs.taapply.services</a></dt>
 <dd>
@@ -3851,6 +3939,11 @@ ROLE_ADMIN on login without first needing to be added manually through the Admin
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html#setEnrollmentEstimates(java.lang.Long,edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource,java.lang.String)" class="member-name-link">setEnrollmentEstimates(Long, EnrollmentEstimateSource, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentCoursesController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentCoursesController</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#setEstimate(java.lang.String,edu.ucsb.cs.taapply.entity.RecruitmentCourse,java.lang.Integer)" class="member-name-link">setEstimate(String, RecruitmentCourse, Integer)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">Sets (or with null clears) the section's one estimate for the quarter, as typed by the admin,
+so with no source; creates the row if need be.</div>
+</dd>
 <dt><a href="edu/ucsb/cs/taapply/migration/UtcToPacificTimestamps.html#setFileOpener(liquibase.resource.ResourceAccessor)" class="member-name-link">setFileOpener(ResourceAccessor)</a> - Method in class edu.ucsb.cs.taapply.migration.<a href="edu/ucsb/cs/taapply/migration/UtcToPacificTimestamps.html" title="class in edu.ucsb.cs.taapply.migration">UtcToPacificTimestamps</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html#setHidden(java.lang.String,java.lang.Long,java.lang.String,boolean)" class="member-name-link">setHidden(String, Long, String, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/HiddenColumnsController.html" title="class in edu.ucsb.cs.taapply.controller">HiddenColumnsController</a></dt>
@@ -4421,6 +4514,10 @@ a ULA application.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html#trainingCommitmentExplanation()" class="member-name-link">trainingCommitmentExplanation()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.ApplicationFields.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController.ApplicationFields</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>trainingCommitmentExplanation</code> record component.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html#TTL" class="member-name-link">TTL</a> - Static variable in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services">BudgetCourseService</a></dt>
+<dd>
+<div class="block">How long the cached enrollment figures are trusted before a page opening re-fetches them.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CandidateRankingPage.html#type()" class="member-name-link">type()</a> - Method in record class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/InstructorRecruitmentsController.CandidateRankingPage.html" title="class in edu.ucsb.cs.taapply.controller">InstructorRecruitmentsController.CandidateRankingPage</a></dt>
 <dd>

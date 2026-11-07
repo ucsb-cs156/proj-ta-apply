@@ -103,6 +103,10 @@ recruitment's type, that is actually offered in its quarter.
       response changes no flags, so a bad fetch cannot mark everything stale at once.
   <li>A row an admin added by enroll code (issue #125) is refreshed whenever its section is still
       in the API, flagged course or not; it goes stale only when the section is gone.
+  <li>The enrollment figures are the quarter's, not the recruitment's (issue #363): the one fetch
+      of the quarter's offerings also caches them for every section of the quarter on file, in
+      this recruitment or the other, through <a href="../services/BudgetCourseService.html#refreshCache(java.lang.String,java.util.Collection,java.util.Map)"><code>BudgetCourseService.refreshCache(String, Collection, Map)</code></a>, and a row
+      this run adds gets its quarter row there.
 </ul></div>
 </div>
 </section>
@@ -205,7 +209,8 @@ recruitment's type, that is actually offered in its quarter.
  <a href="../models/UcsbCourseOffering.html" title="class in edu.ucsb.cs.taapply.models">UcsbCourseOffering</a>&nbsp;offering,
  <a href="../models/UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a>&nbsp;section)</span></div>
 <div class="block">Copies a lecture's offering details onto a row. Shared with the admin's add-by-enroll-code
-endpoint (issue #125), so the two paths cannot drift apart.</div>
+endpoint (issue #125), so the two paths cannot drift apart. The enrollment figures are not the
+row's (issue #363): the callers cache them in the quarter's <code>budget_courses</code> row.</div>
 </div>
 </section>
 </li>

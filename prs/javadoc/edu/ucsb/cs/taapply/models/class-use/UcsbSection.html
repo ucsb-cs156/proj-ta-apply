@@ -60,6 +60,8 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><a href="#edu.ucsb.cs.taapply.jobs">edu.ucsb.cs.taapply.jobs</a></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><a href="#edu.ucsb.cs.taapply.services">edu.ucsb.cs.taapply.services</a></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <section class="class-uses">
 <ul class="block-list">
@@ -79,6 +81,41 @@ loadScripts(document, 'script');</script>
  <a href="../UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a>&nbsp;section)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Copies a lecture's offering details onto a row.</div>
+</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="edu.ucsb.cs.taapply.services">
+<h2>Uses of <a href="../UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a> in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a></h2>
+<div class="caption"><span>Methods in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with parameters of type <a href="../UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code><a href="../../entity/BudgetCourse.html" title="class in edu.ucsb.cs.taapply.entity">BudgetCourse</a></code></div>
+<div class="col-second even-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#cache(java.lang.String,edu.ucsb.cs.taapply.entity.RecruitmentCourse,edu.ucsb.cs.taapply.models.UcsbSection)" class="member-name-link">cache</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="../../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&nbsp;row,
+ <a href="../UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a>&nbsp;section)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Caches one section's figures from the API's answer for it (Add by enroll code), creating the
+row if need be, and returns the row.</div>
+</div>
+</div>
+<div class="caption"><span>Method parameters in <a href="../../services/package-summary.html">edu.ucsb.cs.taapply.services</a> with type arguments of type <a href="../UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>int</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">BudgetCourseService.</span><code><a href="../../services/BudgetCourseService.html#refreshCache(java.lang.String,java.util.Collection,java.util.Map)" class="member-name-link">refreshCache</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../entity/RecruitmentCourse.html" title="class in edu.ucsb.cs.taapply.entity">RecruitmentCourse</a>&gt;&nbsp;rows,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>, <a href="../UcsbSection.html" title="class in edu.ucsb.cs.taapply.models">UcsbSection</a>&gt;&nbsp;sections)</code></div>
+<div class="col-last even-row-color">
+<div class="block">After a fetch of the whole quarter's offerings (Populate, or the Courses page's refresh): makes
+sure every given recruitment course has its row, re-caches the figures of every row of the
+quarter whose section the fetch found, and stamps every row of the quarter as checked now,
+found or not, so a section the API has dropped does not keep the quarter stale for ever.</div>
 </div>
 </div>
 </section>

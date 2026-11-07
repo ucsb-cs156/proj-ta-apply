@@ -64,6 +64,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#recompute(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">recompute(Recruitment)</a></li>
+<li><a href="#recomputeQuarter(java.lang.String)" tabindex="0">recomputeQuarter(String)</a></li>
 <li><a href="#autoAllocate(edu.ucsb.cs.taapply.entity.Recruitment)" tabindex="0">autoAllocate(Recruitment)</a></li>
 </ol>
 </li>
@@ -83,12 +84,13 @@ loadScripts(document, 'script');</script>
 <div class="type-signature"><span class="annotations">@Service
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">AllocationService</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
-<div class="block">The arithmetic behind the allocation columns of the Recruitment Courses page (issue #176): each
+<div class="block">The arithmetic behind the allocation columns of the Combined Allocation page (issue #176): each
 section's fractional share of the hiring target by enrollment estimate, and the first-cut
 allocation an admin can ask for from it.
 
 <p>Removed sections take no part in either: they are not offered, so they neither claim a share
-nor count in the total of the estimates. A section with no estimate counts as 0 students.</div>
+nor count in the total of the estimates. A section with no estimate counts as 0 students. The
+estimates are the quarter's (issue #363), read from <code>budget_courses</code> through <a href="BudgetCourseService.html#attach(java.lang.String,java.util.Collection)"><code>BudgetCourseService.attach(String, Collection)</code></a>, so the rows this returns carry their figures.</div>
 </div>
 </section>
 <section class="summary">
@@ -129,6 +131,13 @@ the enrollment estimates, and returns the sections in page order.</div>
 <div class="block">Recomputes and stores <code>unroundedAllocation</code> for every non-removed section of the
 recruitment: <code>totalHiringTarget * estimate / total of the estimates</code>, or 0.0 for every
 section when the estimates add up to nothing.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#recomputeQuarter(java.lang.String)" class="member-name-link">recomputeQuarter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block"><a href="#recompute(edu.ucsb.cs.taapply.entity.Recruitment)"><code>recompute(Recruitment)</code></a> for every recruitment of the quarter, since an enrollment estimate is the
+quarter's (issue #363): a change to one moves the shares of the TA and the ULA recruitment
+alike.</div>
 </div>
 </div>
 </div>
@@ -172,6 +181,17 @@ section when the estimates add up to nothing.</div>
 recruitment: <code>totalHiringTarget * estimate / total of the estimates</code>, or 0.0 for every
 section when the estimates add up to nothing. Returns the sections it recomputed, in page
 order.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="recomputeQuarter(java.lang.String)">
+<h3>recomputeQuarter</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">recomputeQuarter</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</span></div>
+<div class="block"><a href="#recompute(edu.ucsb.cs.taapply.entity.Recruitment)"><code>recompute(Recruitment)</code></a> for every recruitment of the quarter, since an enrollment estimate is the
+quarter's (issue #363): a change to one moves the shares of the TA and the ULA recruitment
+alike.</div>
 </div>
 </section>
 </li>

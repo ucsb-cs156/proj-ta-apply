@@ -93,8 +93,8 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Record Components:</dt>
 <dd><code><span id="param-totalAllocation">totalAllocation</span></code> - the sum of the allocations of its non-removed courses</dd>
-<dd><code><span id="param-totalEnrollmentEstimate">totalEnrollmentEstimate</span></code> - the sum of their enrollment estimates, a missing one counting as
-    0</dd>
+<dd><code><span id="param-totalEnrollmentEstimate">totalEnrollmentEstimate</span></code> - the sum of their enrollment estimates (the quarter's, from
+    <code>budget_courses</code>), a missing one counting as 0</dd>
 <dd><code><span id="param-allocationDifference">allocationDifference</span></code> - totalAllocation minus totalHiringTarget; 0 when they agree</dd>
 <dd><code><span id="param-studentsPerPosition">studentsPerPosition</span></code> - totalEnrollmentEstimate divided by totalHiringTarget, the n of the
     "1:n" ratio; null when there are no estimates</dd>

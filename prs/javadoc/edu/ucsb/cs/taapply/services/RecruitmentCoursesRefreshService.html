@@ -88,7 +88,13 @@ the enrollment figures the Recruitment Courses page is planned from are current 
 <p>Narrower than <a href="../jobs/PopulateRecruitmentCoursesJob.html" title="class in edu.ucsb.cs.taapply.jobs"><code>PopulateRecruitmentCoursesJob</code></a> on purpose: it only rewrites the offering
 details of rows that already exist and are still in the API. It adds no rows, marks nothing
 stale, and leaves the admin's own fields (removed, allocation, enrollment estimate) alone. The
-job remains the way to pick up new courses; this is just a fresher read of the ones on file.</div>
+job remains the way to pick up new courses; this is just a fresher read of the ones on file.
+
+<p>The enrollment figures live once per quarter in <code>budget_courses</code> (issue #363), checked
+against the API by every fetch of the quarter's offerings. This refresh is the one that happens
+on every page opening, so it is the one gated by the figures' time to live (<a href="BudgetCourseService.html#TTL"><code>BudgetCourseService.TTL</code></a>): when every figure the page shows was checked within it, the API is not
+called at all. The one call it does make serves the whole quarter: every section of the quarter
+on file, in whichever recruitment, gets its figures from it.</div>
 </div>
 </section>
 <section class="summary">
@@ -121,7 +127,8 @@ job remains the way to pick up new courses; this is just a fresher read of the o
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#refresh(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">refresh</a><wbr>(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Rewrites the offering details of every non-removed row whose enroll code the API still lists,
-stamps the recruitment as refreshed, and returns how many rows it rewrote.</div>
+caches the quarter's enrollment figures, stamps the recruitment as refreshed, and returns how
+many rows it rewrote.</div>
 </div>
 </div>
 </div>
@@ -162,7 +169,9 @@ stamps the recruitment as refreshed, and returns how many rows it rewrote.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">refresh</span><wbr><span class="parameters">(<a href="../entity/Recruitment.html" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a>&nbsp;recruitment)</span></div>
 <div class="block">Rewrites the offering details of every non-removed row whose enroll code the API still lists,
-stamps the recruitment as refreshed, and returns how many rows it rewrote.</div>
+caches the quarter's enrollment figures, stamps the recruitment as refreshed, and returns how
+many rows it rewrote. Does nothing, and returns 0, when the figures of every non-removed row
+are younger than the time to live: the API is not called and the recruitment is not stamped.</div>
 <dl class="notes">
 <dt>Throws:</dt>
 <dd><code><a href="../errors/UpstreamApiException.html" title="class in edu.ucsb.cs.taapply.errors">UpstreamApiException</a></code> - if the API call fails; nothing is changed in that case</dd>

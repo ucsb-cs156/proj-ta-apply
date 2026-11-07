@@ -94,7 +94,8 @@ loadScripts(document, 'script');</script>
 @RestController
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">RecruitmentCoursesController</span>
 <span class="extends-implements">extends <a href="ApiController.html" title="class in edu.ucsb.cs.taapply.controller">ApiController</a></span></div>
-<div class="block">The course list for one recruitment.</div>
+<div class="block">The course list for one recruitment. Every row it answers with carries the quarter's enrollment
+figures and estimate from <code>budget_courses</code> (issue #363), attached by <a href="../services/BudgetCourseService.html" title="class in edu.ucsb.cs.taapply.services"><code>BudgetCourseService</code></a>, so the JSON is as it was when those were the row's own columns.</div>
 </div>
 </section>
 <section class="summary">
