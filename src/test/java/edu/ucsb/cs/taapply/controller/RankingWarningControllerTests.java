@@ -60,6 +60,7 @@ public class RankingWarningControllerTests extends ControllerTestCase {
   @MockitoBean CandidateRankingRepository candidateRankingRepository;
   @MockitoBean UserRepository userRepository;
   @MockitoBean CourseTargetsService courseTargetsService;
+  @MockitoBean edu.ucsb.cs.taapply.services.BudgetCourseService budgetCourseService;
   @MockitoBean CurrentUserService currentUserService;
   @MockitoBean DeveloperModeService developerModeService;
   @MockitoBean RankingVersionService rankingVersionService;

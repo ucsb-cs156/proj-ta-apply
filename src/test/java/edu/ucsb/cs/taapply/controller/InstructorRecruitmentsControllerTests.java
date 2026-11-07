@@ -29,6 +29,7 @@ import edu.ucsb.cs.taapply.repository.InstructorRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService;
 import edu.ucsb.cs.taapply.services.CourseTargetsService.CourseTargets;
 import edu.ucsb.cs.taapply.services.CurrentUserService;
@@ -63,6 +64,7 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
   @MockitoBean CourseTargetsService courseTargetsService;
   @MockitoBean edu.ucsb.cs.taapply.services.RankingVersionService rankingVersionService;
   @MockitoBean edu.ucsb.cs.taapply.concurrency.ClientActivityDetector clientActivityDetector;
+  @MockitoBean BudgetCourseService budgetCourseService;
 
   private static final String EMAIL = "pconrad@ucsb.edu";
   private static final String URL = "/api/instructor/recruitments?email=" + EMAIL;
@@ -202,6 +204,39 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
             InstructorRecruitment.of(ula, List.of(ula156)),
             InstructorRecruitment.of(oldTa, List.of(old)));
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+    // Issue #363: each recruitment's courses get the quarter's figures before they go out.
+    verify(budgetCourseService).attach("20261", List.of(ta8, ta156a, ta156b));
+    verify(budgetCourseService).attach("20261", List.of(ula156));
+    verify(budgetCourseService).attach("20254", List.of(old));
+  }
+
+  /** The figures attached from budget_courses are what the cards show (issue #363). */
+  @WithMockUser(roles = {"INSTRUCTOR"})
+  @Test
+  public void the_cards_show_the_quarters_figures() throws Exception {
+    instructorWithCatalogName("CONRAD P");
+    RecruitmentCourse course = row(3L, 11L, "CMPSC   156", "0100", false);
+    when(recruitmentCourseRepository.findByInstructor("CONRAD P")).thenReturn(List.of(course));
+    Recruitment ta = recruitment(11L, "20261", RecruitmentType.TA);
+    ta.setAllocationVisibility(AllocationVisibility.ALL_COURSES);
+    when(recruitmentRepository.findAllById(Set.of(11L))).thenReturn(List.of(ta));
+    org.mockito.Mockito.doAnswer(
+            invocation -> {
+              course.setEnrollment(100);
+              course.setMaxEnroll(150);
+              course.setEnrollmentEstimate(120);
+              return null;
+            })
+        .when(budgetCourseService)
+        .attach("20261", List.of(course));
+
+    MvcResult response = mockMvc.perform(get(URL)).andExpect(status().isOk()).andReturn();
+
+    JsonNode shown =
+        mapper.readTree(response.getResponse().getContentAsString()).get(0).get("courses").get(0);
+    assertEquals(100, shown.get("enrollment").asInt());
+    assertEquals(150, shown.get("maxEnroll").asInt());
+    assertEquals(120, shown.get("enrollmentEstimate").asInt());
   }
 
   /** The record carries every field the recruitment cards show. */
@@ -1176,6 +1211,23 @@ public class InstructorRecruitmentsControllerTests extends ControllerTestCase {
     assertEquals(3, body.get("courses").size());
     assertEquals(3, body.get("courses").get(1).get("allocation").asInt());
     assertEquals(120, body.get("courses").get(1).get("enrollmentEstimate").asInt());
+  }
+
+  /** Issue #363: the figures are the quarter's, attached to the live rows in page order. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void the_courses_page_reads_the_quarters_figures_onto_the_live_rows() throws Exception {
+    currentUser(EMAIL, true);
+    coursesSetup(AllocationVisibility.ADMINS_ONLY);
+
+    coursesBody();
+
+    @SuppressWarnings("unchecked")
+    org.mockito.ArgumentCaptor<List<RecruitmentCourse>> rows =
+        org.mockito.ArgumentCaptor.forClass(List.class);
+    verify(budgetCourseService).attach(org.mockito.ArgumentMatchers.eq("20261"), rows.capture());
+    assertEquals(
+        List.of(4L, 1L, 2L), rows.getValue().stream().map(RecruitmentCourse::getId).toList());
   }
 
   @WithMockUser(roles = {"ADMIN"})

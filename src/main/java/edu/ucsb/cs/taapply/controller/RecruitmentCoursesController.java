@@ -14,6 +14,7 @@ import edu.ucsb.cs.taapply.models.UcsbSection;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import edu.ucsb.cs.taapply.services.RecruitmentCoursesRefreshService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,7 +38,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** The course list for one recruitment. */
+/**
+ * The course list for one recruitment. Every row it answers with carries the quarter's enrollment
+ * figures and estimate from {@code budget_courses} (issue #363), attached by {@link
+ * BudgetCourseService}, so the JSON is as it was when those were the row's own columns.
+ */
 @Tag(name = "RecruitmentCourses")
 @RequestMapping("/api/recruitmentcourses")
 @RestController
@@ -49,6 +54,7 @@ public class RecruitmentCoursesController extends ApiController {
   @Autowired UCSBCurriculumService ucsbCurriculumService;
   @Autowired RecruitmentCoursesRefreshService recruitmentCoursesRefreshService;
   @Autowired AllocationService allocationService;
+  @Autowired BudgetCourseService budgetCourseService;
   @Autowired ClientActivityDetector clientActivityDetector;
 
   /**
@@ -129,10 +135,16 @@ public class RecruitmentCoursesController extends ApiController {
       @Parameter(name = "includeRemoved") @RequestParam(defaultValue = "false")
           boolean includeRemoved) {
 
-    return recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
-        .filter(course -> includeRemoved || !course.isRemoved())
-        .sorted(BY_COURSE_THEN_SECTION)
-        .toList();
+    List<RecruitmentCourse> rows =
+        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
+            .filter(course -> includeRemoved || !course.isRemoved())
+            .sorted(BY_COURSE_THEN_SECTION)
+            .toList();
+    // An unknown recruitment has no rows to attach anything to, and is an empty list as before.
+    recruitmentRepository
+        .findById(recruitmentId)
+        .ifPresent(recruitment -> budgetCourseService.attach(recruitment.getQuarter(), rows));
+    return rows;
   }
 
   @Operation(
@@ -193,6 +205,8 @@ public class RecruitmentCoursesController extends ApiController {
     row.setRemoved(false);
     row.setStale(false);
     recruitmentCourseRepository.save(row);
+    // The section's figures are the quarter's (issue #363): cached from this very answer.
+    row.attachFigures(budgetCourseService.cache(recruitment.getQuarter(), row, section));
     return row;
   }
 
@@ -201,7 +215,10 @@ public class RecruitmentCoursesController extends ApiController {
       description =
           "Flags the row rather than deleting it, for two reasons: a later Populate must not add a"
               + " removed course straight back, and a removal made by mistake has to be reversible."
-              + " Idempotent in both directions.")
+              + " Idempotent in both directions. The section's quarter row (its enrollment estimate"
+              + " and cached figures, issue #363) is deleted once no recruitment of the quarter has"
+              + " the section any more, and created afresh, with an empty estimate, when one gets it"
+              + " back.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("/removed")
   public RecruitmentCourse setRemoved(
@@ -212,11 +229,18 @@ public class RecruitmentCoursesController extends ApiController {
         recruitmentCourseRepository
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(RecruitmentCourse.class, id));
+    Recruitment recruitment = recruitmentOf(course);
 
     course.setRemoved(removed);
     recruitmentCourseRepository.save(course);
+    if (removed) {
+      budgetCourseService.dropIfUnused(recruitment.getQuarter(), course.getEnrollCode());
+    } else {
+      budgetCourseService.ensure(recruitment.getQuarter(), course);
+    }
     // A removed section leaves the total of the estimates, so every share changes (issue #176).
-    allocationService.recompute(recruitmentOf(course));
+    allocationService.recompute(recruitment);
+    budgetCourseService.attach(recruitment.getQuarter(), course);
     return course;
   }
 
@@ -257,11 +281,14 @@ public class RecruitmentCoursesController extends ApiController {
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException(RecruitmentCourse.class, id));
     clientActivityDetector.note(resourceKey(course.getRecruitmentId()), clientId, identity());
-    // Only an edit that carries the bulk count needs the recruitment to check it against.
-    Recruitment recruitment = expectedBulkVersion == null ? null : recruitmentOf(course);
+    // The recruitment names the quarter whose figures the answer carries (issue #363), and an edit
+    // that carries the bulk count is checked against its count.
+    Recruitment recruitment = recruitmentOf(course);
+    budgetCourseService.attach(recruitment.getQuarter(), course);
 
     boolean bulkMoved =
-        recruitment != null && !expectedBulkVersion.equals(recruitment.getAllocationBulkVersion());
+        expectedBulkVersion != null
+            && !expectedBulkVersion.equals(recruitment.getAllocationBulkVersion());
     boolean rowMoved =
         expectedVersion != null && !expectedVersion.equals(course.getAllocationVersion());
     if (bulkMoved || rowMoved) {
@@ -272,9 +299,10 @@ public class RecruitmentCoursesController extends ApiController {
               ? "All the allocations were changed in another tab or window. Reload to see them."
               : "This allocation was changed in another tab or window. Reload to see it.");
       body.put("reloadAll", bulkMoved);
+      // The count is answered only to an edit that sent one, as before.
       body.put(
           "allocationBulkVersion",
-          recruitment == null ? null : recruitment.getAllocationBulkVersion());
+          expectedBulkVersion == null ? null : recruitment.getAllocationBulkVersion());
       body.put("course", course);
       return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
@@ -291,8 +319,10 @@ public class RecruitmentCoursesController extends ApiController {
           "Rewrites the offering details (enrollment, max enrollment, instructor, times) of every"
               + " course still in the API, while the caller waits, and returns the current list"
               + " without removed rows (issue #175). Unlike Populate it adds no rows and marks"
-              + " nothing stale. 404 for an unknown recruitment; 502 if the API cannot be reached,"
-              + " in which case nothing is changed.")
+              + " nothing stale. The enrollment figures are the quarter's and are cached for 24"
+              + " hours (issue #363): when every course's figures were checked within that time the"
+              + " API is not called and the list is returned as it is. 404 for an unknown"
+              + " recruitment; 502 if the API cannot be reached, in which case nothing is changed.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PostMapping("/refresh")
   public List<RecruitmentCourse> refresh(
@@ -315,7 +345,10 @@ public class RecruitmentCoursesController extends ApiController {
       description =
           "The admin's estimate of how many students the section will have, the basis for"
               + " allocating positions (issue #175). Must not be negative; leave the value out to"
-              + " clear it. A planning figure: not recorded in the audit trail.")
+              + " clear it. The estimate is the section's for the whole quarter (issue #363): set"
+              + " through either recruitment's row, it is the one both recruitments see, and both"
+              + " recruitments' shares are recomputed. A planning figure: not recorded in the audit"
+              + " trail.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("/enrollmentEstimate")
   public RecruitmentCourse setEnrollmentEstimate(
@@ -334,9 +367,10 @@ public class RecruitmentCoursesController extends ApiController {
             .orElseThrow(() -> new EntityNotFoundException(RecruitmentCourse.class, id));
 
     clientActivityDetector.note(resourceKey(course.getRecruitmentId()), clientId, identity());
-    course.setEnrollmentEstimate(enrollmentEstimate);
-    recruitmentCourseRepository.save(course);
-    allocationService.recompute(recruitmentOf(course));
+    Recruitment recruitment = recruitmentOf(course);
+    course.attachFigures(
+        budgetCourseService.setEstimate(recruitment.getQuarter(), course, enrollmentEstimate));
+    allocationService.recomputeQuarter(recruitment.getQuarter());
     return course;
   }
 
@@ -345,8 +379,10 @@ public class RecruitmentCoursesController extends ApiController {
       description =
           "Copies maxEnroll (source=MAX) or enrollment (source=ACTUAL) into the enrollment"
               + " estimate of every non-removed row of the recruitment in one step (issue #175). A"
-              + " row whose source figure is null keeps its estimate. Returns the current list"
-              + " without removed rows. 404 for an unknown recruitment.")
+              + " row whose source figure is null keeps its estimate. The estimates are the"
+              + " quarter's (issue #363), so the other recruitment sees them too and both"
+              + " recruitments' shares are recomputed. Returns the current list without removed"
+              + " rows. 404 for an unknown recruitment.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("/enrollmentEstimates")
   public List<RecruitmentCourse> setEnrollmentEstimates(
@@ -357,18 +393,12 @@ public class RecruitmentCoursesController extends ApiController {
     Recruitment recruitment = recruitment(recruitmentId);
     clientActivityDetector.note(resourceKey(recruitmentId), clientId, identity());
 
-    for (RecruitmentCourse row : recruitmentCourseRepository.findByRecruitmentId(recruitmentId)) {
-      if (row.isRemoved()) {
-        continue;
-      }
-      Integer value =
-          source == EnrollmentEstimateSource.MAX ? row.getMaxEnroll() : row.getEnrollment();
-      if (value != null) {
-        row.setEnrollmentEstimate(value);
-        recruitmentCourseRepository.save(row);
-      }
-    }
-    allocationService.recompute(recruitment);
+    List<RecruitmentCourse> active =
+        recruitmentCourseRepository.findByRecruitmentId(recruitmentId).stream()
+            .filter(row -> !row.isRemoved())
+            .toList();
+    budgetCourseService.fillEstimates(recruitment.getQuarter(), active, source);
+    allocationService.recomputeQuarter(recruitment.getQuarter());
     return allForRecruitment(recruitmentId, false);
   }
 

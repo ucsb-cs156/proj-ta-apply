@@ -18,8 +18,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.ucsb.cs.taapply.ControllerTestCase;
+import edu.ucsb.cs.taapply.entity.BudgetCourse;
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.EnrollmentEstimateSource;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.UpstreamApiException;
 import edu.ucsb.cs.taapply.models.UcsbCourseOffering;
@@ -30,6 +32,7 @@ import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import edu.ucsb.cs.taapply.repository.UserRepository;
 import edu.ucsb.cs.taapply.services.AllocationService;
+import edu.ucsb.cs.taapply.services.BudgetCourseService;
 import edu.ucsb.cs.taapply.services.RecruitmentCoursesRefreshService;
 import edu.ucsb.cs.taapply.services.UCSBCurriculumService;
 import java.util.List;
@@ -37,6 +40,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InOrder;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -56,6 +60,7 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
   @MockitoBean UCSBCurriculumService ucsbCurriculumService;
   @MockitoBean RecruitmentCoursesRefreshService recruitmentCoursesRefreshService;
   @MockitoBean AllocationService allocationService;
+  @MockitoBean BudgetCourseService budgetCourseService;
   @MockitoBean UserRepository userRepository;
 
   private static RecruitmentCourse rc(long id, String courseId, String section, boolean removed) {
@@ -66,6 +71,18 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
         .section(section)
         .enrollCode("EC" + id)
         .removed(removed)
+        .build();
+  }
+
+  /**
+   * The quarter's figures for a section (issue #363), as the budget course service answers them.
+   */
+  private static BudgetCourse figures(Integer enrollment, Integer maxEnroll, Integer estimate) {
+    return BudgetCourse.builder()
+        .quarter("20261")
+        .enrollment(enrollment)
+        .maxEnroll(maxEnroll)
+        .enrollmentEstimate(estimate)
         .build();
   }
 
@@ -125,6 +142,9 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     when(ucsbCurriculumService.getOffering("20261", "07492")).thenReturn(offering156());
     when(recruitmentCourseRepository.findByRecruitmentIdAndEnrollCode(7L, "07492"))
         .thenReturn(Optional.empty());
+    // The figures are the quarter's (issue #363), cached from this answer and attached to the row.
+    when(budgetCourseService.cache(ArgumentMatchers.eq("20261"), any(), any()))
+        .thenReturn(figures(100, 120, 7));
 
     MvcResult response =
         mockMvc
@@ -150,11 +170,19 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     assertEquals("PHELP 3526", saved.getRoom());
     assertEquals(100, saved.getEnrollment());
     assertEquals(120, saved.getMaxEnroll());
+    assertEquals(7, saved.getEnrollmentEstimate());
     assertEquals("open", saved.getStatus());
     assertTrue(saved.isManuallyAdded());
     assertFalse(saved.isRemoved());
     assertFalse(saved.isStale());
     assertEquals(mapper.writeValueAsString(saved), response.getResponse().getContentAsString());
+    ArgumentCaptor<UcsbSection> section = ArgumentCaptor.forClass(UcsbSection.class);
+    InOrder inOrder = inOrder(recruitmentCourseRepository, budgetCourseService);
+    inOrder.verify(recruitmentCourseRepository).save(saved);
+    inOrder
+        .verify(budgetCourseService)
+        .cache(ArgumentMatchers.eq("20261"), ArgumentMatchers.same(saved), section.capture());
+    assertEquals("07492", section.getValue().getEnrollCode());
   }
 
   /** Adding a lecture that is already there, removed and stale, refreshes it and puts it back. */
@@ -180,6 +208,10 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     assertFalse(existing.isRemoved());
     assertFalse(existing.isStale());
     assertTrue(existing.isManuallyAdded());
+    // Its quarter row comes back with it (issue #363); a mocked null answer leaves blanks.
+    verify(budgetCourseService)
+        .cache(ArgumentMatchers.eq("20261"), ArgumentMatchers.same(existing), any());
+    assertNull(existing.getEnrollment());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -359,6 +391,55 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     mockMvc.perform(get("/api/recruitmentcourses/all?recruitmentId=7")).andExpect(status().isOk());
   }
 
+  /** Issue #363: the rows go out with the quarter's figures, attached in the order shown. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void the_list_carries_the_quarters_figures() throws Exception {
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    RecruitmentCourse a = rc(1L, "CMPSC   156", "0200", false);
+    RecruitmentCourse b = rc(2L, "CMPSC   156", "0100", false);
+    RecruitmentCourse removed = rc(3L, "CMPSC     8", "0100", true);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(a, removed, b));
+    org.mockito.Mockito.doAnswer(
+            invocation -> {
+              b.setEnrollment(100);
+              b.setMaxEnroll(150);
+              b.setEnrollmentEstimate(120);
+              return null;
+            })
+        .when(budgetCourseService)
+        .attach("20261", List.of(b, a));
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/recruitmentcourses/all?recruitmentId=7"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    verify(budgetCourseService).attach("20261", List.of(b, a));
+    String json = response.getResponse().getContentAsString();
+    assertEquals(mapper.writeValueAsString(List.of(b, a)), json);
+    assertTrue(json.contains("\"enrollmentEstimate\":120"));
+    assertTrue(json.contains("\"maxEnroll\":150"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_unknown_recruitment_lists_nothing_and_attaches_nothing() throws Exception {
+    when(recruitmentRepository.findById(99L)).thenReturn(Optional.empty());
+    when(recruitmentCourseRepository.findByRecruitmentId(99L)).thenReturn(List.of());
+
+    MvcResult response =
+        mockMvc
+            .perform(get("/api/recruitmentcourses/all?recruitmentId=99"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    assertEquals("[]", response.getResponse().getContentAsString());
+    verify(budgetCourseService, never())
+        .attach(any(), ArgumentMatchers.<List<RecruitmentCourse>>any());
+  }
+
   // ---- PUT /api/recruitmentcourses/removed ----
 
   @Test
@@ -392,10 +473,31 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     ArgumentCaptor<RecruitmentCourse> captor = ArgumentCaptor.forClass(RecruitmentCourse.class);
     verify(recruitmentCourseRepository, times(1)).save(captor.capture());
     assertTrue(captor.getValue().isRemoved());
-    // Issue #176: a removed section leaves the total of the estimates, so the shares change.
-    InOrder inOrder = inOrder(recruitmentCourseRepository, allocationService);
+    // Issue #363: the quarter row goes once no recruitment has the section; then, issue #176: a
+    // removed section leaves the total of the estimates, so the shares change.
+    InOrder inOrder = inOrder(recruitmentCourseRepository, budgetCourseService, allocationService);
     inOrder.verify(recruitmentCourseRepository).save(course);
+    inOrder.verify(budgetCourseService).dropIfUnused("20261", "EC1");
     inOrder.verify(allocationService).recompute(RECRUITMENT);
+    inOrder.verify(budgetCourseService).attach("20261", course);
+    verify(budgetCourseService, never()).ensure(any(), any());
+  }
+
+  /** A row whose recruitment is gone cannot really exist; if it did, nothing is written. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void removing_a_course_of_an_unknown_recruitment_writes_nothing() throws Exception {
+    RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(put("/api/recruitmentcourses/removed?id=1&removed=true").with(csrf()))
+        .andExpect(status().isNotFound());
+
+    verify(recruitmentCourseRepository, never()).save(any());
+    verify(budgetCourseService, never()).dropIfUnused(any(), any());
+    assertFalse(course.isRemoved());
   }
 
   /** A row whose recruitment is gone cannot really exist; if it did, the answer is a 404. */
@@ -436,6 +538,10 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     assertEquals(
         mapper.writeValueAsString(rc(1L, "CMPSC   156", "0100", false)),
         response.getResponse().getContentAsString());
+    // Issue #363: the section gets its quarter row back (with an empty estimate), never deleted.
+    verify(budgetCourseService).ensure("20261", course);
+    verify(budgetCourseService, never()).dropIfUnused(any(), any());
+    verify(budgetCourseService).attach("20261", course);
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -483,6 +589,15 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
   public void admin_can_set_an_allocation() throws Exception {
     RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
     when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    // Issue #363: the answer carries the quarter's figures.
+    org.mockito.Mockito.doAnswer(
+            invocation -> {
+              course.setEnrollmentEstimate(120);
+              return null;
+            })
+        .when(budgetCourseService)
+        .attach("20261", course);
 
     MvcResult response =
         mockMvc
@@ -496,7 +611,24 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     RecruitmentCourse expected = rc(1L, "CMPSC   156", "0100", false);
     expected.setAllocation(3);
     expected.setAllocationVersion(1);
+    expected.setEnrollmentEstimate(120);
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
+  }
+
+  /** The row's foreign key makes its recruitment exist; if it did not, the answer is a 404. */
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void an_allocation_edit_of_a_row_whose_recruitment_is_gone_is_a_404() throws Exception {
+    RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(put("/api/recruitmentcourses/allocation?id=1&allocation=3").with(csrf()))
+        .andExpect(status().isNotFound());
+
+    verify(recruitmentCourseRepository, never()).save(any());
+    assertEquals(0, course.getAllocation());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -505,6 +637,7 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
     course.setAllocation(4);
     when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
 
     mockMvc
         .perform(put("/api/recruitmentcourses/allocation?id=1&allocation=0").with(csrf()))
@@ -662,12 +795,17 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     assertNull(rc(1L, "CMPSC   156", "0100", false).getEnrollmentEstimate());
   }
 
+  /**
+   * Issue #363: the estimate is the quarter's, written through the budget course service, and the
+   * answer is the row with the quarter's figures; both recruitments' shares are recomputed.
+   */
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void admin_can_set_an_estimate() throws Exception {
     RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
     when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(budgetCourseService.setEstimate("20261", course, 140)).thenReturn(figures(100, 150, 140));
 
     MvcResult response =
         mockMvc
@@ -679,21 +817,26 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
 
     assertEquals(140, course.getEnrollmentEstimate());
     RecruitmentCourse expected = rc(1L, "CMPSC   156", "0100", false);
+    expected.setEnrollment(100);
+    expected.setMaxEnroll(150);
     expected.setEnrollmentEstimate(140);
     assertEquals(mapper.writeValueAsString(expected), response.getResponse().getContentAsString());
     // Issue #176: every share depends on the estimates, recomputed after the save.
-    InOrder inOrder = inOrder(recruitmentCourseRepository, allocationService);
-    inOrder.verify(recruitmentCourseRepository).save(course);
-    inOrder.verify(allocationService).recompute(RECRUITMENT);
+    InOrder inOrder = inOrder(budgetCourseService, allocationService);
+    inOrder.verify(budgetCourseService).setEstimate("20261", course, 140);
+    inOrder.verify(allocationService).recomputeQuarter("20261");
+    verify(recruitmentCourseRepository, never()).save(any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void an_estimate_of_zero_is_allowed_and_leaving_it_out_clears_it() throws Exception {
     RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
-    course.setEnrollmentEstimate(50);
     when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
+    when(budgetCourseService.setEstimate("20261", course, 0)).thenReturn(figures(null, null, 0));
+    when(budgetCourseService.setEstimate("20261", course, null))
+        .thenReturn(figures(null, null, null));
 
     mockMvc
         .perform(
@@ -706,7 +849,9 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
         .perform(put("/api/recruitmentcourses/enrollmentEstimate?id=1").with(csrf()))
         .andExpect(status().isOk());
     assertNull(course.getEnrollmentEstimate());
-    verify(recruitmentCourseRepository, times(2)).save(course);
+    verify(budgetCourseService).setEstimate("20261", course, 0);
+    verify(budgetCourseService).setEstimate("20261", course, null);
+    verify(allocationService, times(2)).recomputeQuarter("20261");
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -721,10 +866,26 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
             .andReturn();
 
     verify(recruitmentCourseRepository, never()).findById(any());
-    verify(recruitmentCourseRepository, never()).save(any());
-    verify(allocationService, never()).recompute(any());
+    verify(budgetCourseService, never()).setEstimate(any(), any(), any());
+    verify(allocationService, never()).recomputeQuarter(any());
     assertEquals(
         "enrollmentEstimate must not be negative", responseToJson(response).get("message"));
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void setting_the_estimate_of_a_row_whose_recruitment_is_gone_is_a_404() throws Exception {
+    RecruitmentCourse course = rc(1L, "CMPSC   156", "0100", false);
+    when(recruitmentCourseRepository.findById(1L)).thenReturn(Optional.of(course));
+    when(recruitmentRepository.findById(7L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(
+            put("/api/recruitmentcourses/enrollmentEstimate?id=1&enrollmentEstimate=140")
+                .with(csrf()))
+        .andExpect(status().isNotFound());
+
+    verify(budgetCourseService, never()).setEstimate(any(), any(), any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -741,17 +902,11 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
             .andReturn();
 
     verify(recruitmentCourseRepository, never()).save(any());
+    verify(budgetCourseService, never()).setEstimate(any(), any(), any());
     assertEquals("EntityNotFoundException", responseToJson(response).get("type"));
   }
 
   // ---- PUT /api/recruitmentcourses/enrollmentEstimates (issue #175) ----
-
-  private static RecruitmentCourse withEnrollment(
-      RecruitmentCourse course, Integer enrollment, Integer maxEnroll) {
-    course.setEnrollment(enrollment);
-    course.setMaxEnroll(maxEnroll);
-    return course;
-  }
 
   @Test
   public void logged_out_users_cannot_fill_estimates() throws Exception {
@@ -774,17 +929,19 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
     verify(recruitmentCourseRepository, never()).save(any());
   }
 
-  /** MAX copies maxEnroll; a row with no figure keeps its estimate; a removed row is skipped. */
+  /**
+   * Issue #363: the fill is the budget course service's, for the non-removed rows (it is what skips
+   * a section with no figure); then both recruitments' shares are recomputed, once; and the answer
+   * is the list as the page shows it.
+   */
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void admin_can_fill_estimates_from_max() throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
-    RecruitmentCourse a = withEnrollment(rc(1L, "CMPSC   156", "0100", false), 100, 150);
-    RecruitmentCourse noFigure = withEnrollment(rc(2L, "CMPSC   156", "0200", false), null, null);
-    noFigure.setEnrollmentEstimate(42);
-    RecruitmentCourse removed = withEnrollment(rc(3L, "CMPSC     8", "0100", true), 10, 20);
-    when(recruitmentCourseRepository.findByRecruitmentId(7L))
-        .thenReturn(List.of(a, noFigure, removed));
+    RecruitmentCourse a = rc(1L, "CMPSC   156", "0100", false);
+    RecruitmentCourse b = rc(2L, "CMPSC   156", "0200", false);
+    RecruitmentCourse removed = rc(3L, "CMPSC     8", "0100", true);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(b, removed, a));
 
     MvcResult response =
         mockMvc
@@ -794,28 +951,22 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
             .andExpect(status().isOk())
             .andReturn();
 
-    assertEquals(150, a.getEnrollmentEstimate());
-    assertEquals(42, noFigure.getEnrollmentEstimate());
-    assertNull(removed.getEnrollmentEstimate());
-    verify(recruitmentCourseRepository, times(1)).save(a);
-    verify(recruitmentCourseRepository, never()).save(noFigure);
-    verify(recruitmentCourseRepository, never()).save(removed);
     assertEquals(
-        mapper.writeValueAsString(List.of(a, noFigure)),
-        response.getResponse().getContentAsString());
-    // Issue #176: the shares are recomputed once, after every row has been filled in.
-    InOrder inOrder = inOrder(recruitmentCourseRepository, allocationService);
-    inOrder.verify(recruitmentCourseRepository).save(a);
-    inOrder.verify(allocationService, times(1)).recompute(RECRUITMENT);
+        mapper.writeValueAsString(List.of(a, b)), response.getResponse().getContentAsString());
+    InOrder inOrder = inOrder(budgetCourseService, allocationService);
+    inOrder
+        .verify(budgetCourseService)
+        .fillEstimates("20261", List.of(b, a), EnrollmentEstimateSource.MAX);
+    inOrder.verify(allocationService, times(1)).recomputeQuarter("20261");
+    verify(recruitmentCourseRepository, never()).save(any());
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void admin_can_fill_estimates_from_actual() throws Exception {
     when(recruitmentRepository.findById(7L)).thenReturn(Optional.of(RECRUITMENT));
-    RecruitmentCourse a = withEnrollment(rc(1L, "CMPSC   156", "0100", false), 100, 150);
-    RecruitmentCourse b = withEnrollment(rc(2L, "CMPSC   156", "0200", false), 0, 80);
-    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(a, b));
+    RecruitmentCourse a = rc(1L, "CMPSC   156", "0100", false);
+    when(recruitmentCourseRepository.findByRecruitmentId(7L)).thenReturn(List.of(a));
 
     mockMvc
         .perform(
@@ -823,10 +974,7 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
                 .with(csrf()))
         .andExpect(status().isOk());
 
-    assertEquals(100, a.getEnrollmentEstimate());
-    assertEquals(0, b.getEnrollmentEstimate());
-    verify(recruitmentCourseRepository, times(1)).save(a);
-    verify(recruitmentCourseRepository, times(1)).save(b);
+    verify(budgetCourseService).fillEstimates("20261", List.of(a), EnrollmentEstimateSource.ACTUAL);
   }
 
   @WithMockUser(roles = {"ADMIN"})
@@ -854,7 +1002,8 @@ public class RecruitmentCoursesControllerTests extends ControllerTestCase {
             .andReturn();
 
     verify(recruitmentCourseRepository, never()).findByRecruitmentId(any());
-    verify(allocationService, never()).recompute(any());
+    verify(budgetCourseService, never()).fillEstimates(any(), any(), any());
+    verify(allocationService, never()).recomputeQuarter(any());
     assertEquals("EntityNotFoundException", responseToJson(response).get("type"));
   }
 

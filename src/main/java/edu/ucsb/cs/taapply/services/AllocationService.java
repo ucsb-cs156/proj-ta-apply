@@ -2,24 +2,30 @@ package edu.ucsb.cs.taapply.services;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
+import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.util.Comparator;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * The arithmetic behind the allocation columns of the Recruitment Courses page (issue #176): each
+ * The arithmetic behind the allocation columns of the Combined Allocation page (issue #176): each
  * section's fractional share of the hiring target by enrollment estimate, and the first-cut
  * allocation an admin can ask for from it.
  *
  * <p>Removed sections take no part in either: they are not offered, so they neither claim a share
- * nor count in the total of the estimates. A section with no estimate counts as 0 students.
+ * nor count in the total of the estimates. A section with no estimate counts as 0 students. The
+ * estimates are the quarter's (issue #363), read from {@code budget_courses} through {@link
+ * BudgetCourseService#attach}, so the rows this returns carry their figures.
  */
 @Service
 public class AllocationService {
 
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
+  @Autowired RecruitmentRepository recruitmentRepository;
+  @Autowired BudgetCourseService budgetCourseService;
 
   /** Course id first, then section: the order the page lists rows in, used to break ties. */
   private static final Comparator<RecruitmentCourse> BY_COURSE_THEN_SECTION =
@@ -43,6 +49,17 @@ public class AllocationService {
       recruitmentCourseRepository.save(row);
     }
     return active;
+  }
+
+  /**
+   * {@link #recompute} for every recruitment of the quarter, since an enrollment estimate is the
+   * quarter's (issue #363): a change to one moves the shares of the TA and the ULA recruitment
+   * alike.
+   */
+  public void recomputeQuarter(String quarter) {
+    for (RecruitmentType type : RecruitmentType.values()) {
+      recruitmentRepository.findByQuarterAndType(quarter, type).ifPresent(this::recompute);
+    }
   }
 
   /**
@@ -125,10 +142,14 @@ public class AllocationService {
     return row.getEnrollmentEstimate() == null ? 0 : row.getEnrollmentEstimate();
   }
 
+  /** The non-removed rows in page order, with the quarter's figures attached. */
   private List<RecruitmentCourse> activeRows(Recruitment recruitment) {
-    return recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()
-        .filter(row -> !row.isRemoved())
-        .sorted(BY_COURSE_THEN_SECTION)
-        .toList();
+    List<RecruitmentCourse> active =
+        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()
+            .filter(row -> !row.isRemoved())
+            .sorted(BY_COURSE_THEN_SECTION)
+            .toList();
+    budgetCourseService.attach(recruitment.getQuarter(), active);
+    return active;
   }
 }

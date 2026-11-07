@@ -79,6 +79,12 @@ override is a protocol worth designing separately, and the MVP does not need it.
 
 Liquibase changeset `007-create-recruitment-courses-table.json`.
 
+Since issue #363 (changeset `063-create-budget-courses.json`), `enrollment` and `maxEnroll` are no
+longer columns of this table, and neither is the later `enrollment_estimate`: they are the
+section's for the whole quarter, kept once in `budget_courses` (keyed on quarter and enroll code)
+and shared by the quarter's TA and ULA recruitments. The JSON of a recruitment course still shows
+them, filled from that table.
+
 **A course with several primary sections gets one row per primary.** Two lectures of the same course
 are planned separately: their enrollments drive how many positions each gets, and they often have
 different instructors who rank candidates independently. Secondary sections (discussions, labs) are

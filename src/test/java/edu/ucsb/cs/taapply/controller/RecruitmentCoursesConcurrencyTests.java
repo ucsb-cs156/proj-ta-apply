@@ -50,6 +50,7 @@ public class RecruitmentCoursesConcurrencyTests extends ControllerTestCase {
   @MockitoBean UCSBCurriculumService ucsbCurriculumService;
   @MockitoBean RecruitmentCoursesRefreshService recruitmentCoursesRefreshService;
   @MockitoBean AllocationService allocationService;
+  @MockitoBean edu.ucsb.cs.taapply.services.BudgetCourseService budgetCourseService;
   @MockitoBean UserRepository userRepository;
   @Autowired ResettableDetectorConfig.Resettable detector;
 

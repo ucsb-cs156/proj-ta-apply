@@ -592,7 +592,10 @@ describe("Help pages (issue #140)", () => {
       "a section that is in both recruitments is one row, found by its enroll code",
     );
     expect(page).toHaveTextContent(
-      "the higher of the two recruitments' estimates for the section",
+      "is the section's one estimate for the quarter, kept once and shared by the TA and ULA recruitments, and every ratio on the page uses it",
+    );
+    expect(page).toHaveTextContent(
+      "whichever recruitment's row the page saves it under, both recruitments see the same value",
     );
     expect(page).toHaveTextContent(
       "is where a quarter's enrollment estimates and its TA and ULA allocations are edited, side by side. You reach it from the Allocate TA and ULA slots to Courses button of the quarter's QXX Budget card on your home page (Allocate TA slots to Courses or Allocate ULA slots to Courses when the quarter has one recruitment), from the Allocations link of step 3 and the (see allocations) link of step 5 of each recruitment card's diagram, from the Combined allocations link at the top of the Budget for Quarter page, and from the pointer on each recruitment's view-only Courses page.",
@@ -631,7 +634,7 @@ describe("Help pages (issue #140)", () => {
     expect(columns).toHaveTextContent("Summer Session");
     expect(columns).toHaveTextContent("Total Course Count");
     expect(page).toHaveTextContent(
-      "saved to the section's course row in each recruitment that has it, so the two agree",
+      "whichever recruitment's row the page saves it under, both recruitments see the same value",
     );
     expect(columns).toHaveTextContent("Show All, Show None");
     expect(columns).toHaveTextContent(
@@ -1178,7 +1181,7 @@ describe("Help pages (issue #140)", () => {
     ).toBe(screen.getByTestId("HelpDeveloperPage-simultaneous-combined"));
     const courses = text("courses");
     expect(courses.replace(/\s+/g, " ")).toBe(
-      `The Courses pages. A recruitment's Courses page is split in two. The view-only page (/admin/recruitments/:id/courses) is the default, edits nothing, and neither heartbeats nor warns. The edit page (/admin/recruitments/:id/courses/edit) heartbeats POST /api/recruitmentcourses/heartbeat?recruitmentId=, says goodbye at /leave, and shows the banner and the modal with the noun "page"; Leave this page goes to the view-only page. Since issue #358 the edit page keeps Populate, Add by enroll code, Remove and allocation visibility, none of which name the tab (the hiring target is on the Budget page and Publish Assignments on the Assignments page); the allocation, estimate, fill-estimates and Auto Allocate saves, which name the tab in the X-Client-Id header, are made from the Combined Allocation page (next) under this same key. Only an admin may heartbeat, and the recruitment must exist, before anything is recorded. The version check is not a JPA version, since the course refresh and the estimates also write the row: a separate allocation_version column on recruitment_courses is counted by each allocation edit, and allocation_bulk_version on recruitments is counted by Auto Allocate. An allocation edit sends both as expectedVersion and expectedBulkVersion and gets 409 when either moved; after a bulk conflict the page reads everything again.`,
+      `The Courses pages. A recruitment's Courses page is split in two. The view-only page (/admin/recruitments/:id/courses) is the default, edits nothing, and neither heartbeats nor warns. The edit page (/admin/recruitments/:id/courses/edit) heartbeats POST /api/recruitmentcourses/heartbeat?recruitmentId=, says goodbye at /leave, and shows the banner and the modal with the noun "page"; Leave this page goes to the view-only page. Since issue #358 the edit page keeps Populate, Add by enroll code, Remove and allocation visibility, none of which name the tab (the hiring target is on the Budget page and Publish Assignments on the Assignments page); the allocation, estimate, fill-estimates and Auto Allocate saves, which name the tab in the X-Client-Id header, are made from the Combined Allocation page (next) under this same key. Only an admin may heartbeat, and the recruitment must exist, before anything is recorded. The version check is not a JPA version, since the course refresh also writes the row (and so did the estimates, until issue #363 moved them to budget_courses): a separate allocation_version column on recruitment_courses is counted by each allocation edit, and allocation_bulk_version on recruitments is counted by Auto Allocate. An allocation edit sends both as expectedVersion and expectedBulkVersion and gets 409 when either moved; after a bulk conflict the page reads everything again.`,
     );
     expect(courses).toMatch(/view-only page/);
     expect(courses).toMatch(/\/admin\/recruitments\/:id\/courses\/edit/);

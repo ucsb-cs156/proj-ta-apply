@@ -1,0 +1,105 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "063-create-budget-courses",
+        "author": "pc",
+        "comment": "One row per section per quarter (issue #363), many to one budget: the enrollment estimate and its source, and the UCSB API's enrollment and max enrollment as a cache with when they were last checked. Fills it from the non-removed recruitment_courses rows: a section in both the TA and the ULA recruitment gets the higher of the two estimates (decided by the maintainer; if only one is set, that one; a recruitment_courses row never recorded a source, so the source is null), the checked time is the latest Populate of its recruitments, and a quarter with courses but no budget row yet gets one at zero. Then drops enrollment, max_enroll and enrollment_estimate from recruitment_courses. Roll back with liquibase rollback-count 1: the three columns come back, every recruitment row of a section gets the quarter's values, and the table is dropped.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "tableExists": { "tableName": "budget_courses" } } }
+        ],
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "budget_courses",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "autoIncrement": true,
+                    "constraints": { "nullable": false, "primaryKey": true }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "quarter",
+                    "type": "VARCHAR(255)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "enroll_code",
+                    "type": "VARCHAR(16)",
+                    "constraints": { "nullable": false }
+                  }
+                },
+                { "column": { "name": "course_id", "type": "VARCHAR(255)" } },
+                { "column": { "name": "section", "type": "VARCHAR(16)" } },
+                { "column": { "name": "enrollment", "type": "INT" } },
+                { "column": { "name": "max_enroll", "type": "INT" } },
+                { "column": { "name": "enrollment_refreshed_at", "type": "TIMESTAMP" } },
+                { "column": { "name": "enrollment_estimate", "type": "INT" } },
+                { "column": { "name": "enrollment_estimate_source", "type": "VARCHAR(16)" } }
+              ]
+            }
+          },
+          {
+            "addUniqueConstraint": {
+              "tableName": "budget_courses",
+              "columnNames": "quarter, enroll_code",
+              "constraintName": "uk_budget_courses_quarter_enroll_code"
+            }
+          },
+          {
+            "addForeignKeyConstraint": {
+              "baseTableName": "budget_courses",
+              "baseColumnNames": "quarter",
+              "referencedTableName": "budgets",
+              "referencedColumnNames": "quarter",
+              "constraintName": "fk_budget_courses_budget",
+              "onDelete": "CASCADE"
+            }
+          },
+          {
+            "sql": {
+              "comment": "A quarter whose recruitments have courses but that was never budgeted gets its budget row, at zero and the default conversion factor, so the course rows have a parent.",
+              "sql": "INSERT INTO budgets (quarter) SELECT DISTINCT r.quarter FROM recruitments r WHERE EXISTS (SELECT 1 FROM recruitment_courses rc WHERE rc.recruitment_id = r.id AND rc.removed = FALSE) AND NOT EXISTS (SELECT 1 FROM budgets b WHERE b.quarter = r.quarter)"
+            }
+          },
+          {
+            "sql": {
+              "comment": "One row per quarter and enroll code over the non-removed recruitment rows. MAX ignores nulls, so a section in both recruitments gets the higher estimate, and the one estimate when only one is set.",
+              "sql": "INSERT INTO budget_courses (quarter, enroll_code, course_id, section, enrollment, max_enroll, enrollment_refreshed_at, enrollment_estimate, enrollment_estimate_source) SELECT r.quarter, rc.enroll_code, MIN(rc.course_id), MIN(rc.section), MAX(rc.enrollment), MAX(rc.max_enroll), MAX(r.last_populated_at), MAX(rc.enrollment_estimate), NULL FROM recruitment_courses rc JOIN recruitments r ON r.id = rc.recruitment_id WHERE rc.removed = FALSE GROUP BY r.quarter, rc.enroll_code"
+            }
+          },
+          { "dropColumn": { "tableName": "recruitment_courses", "columnName": "enrollment" } },
+          { "dropColumn": { "tableName": "recruitment_courses", "columnName": "max_enroll" } },
+          {
+            "dropColumn": { "tableName": "recruitment_courses", "columnName": "enrollment_estimate" }
+          }
+        ],
+        "rollback": [
+          {
+            "addColumn": {
+              "tableName": "recruitment_courses",
+              "columns": [
+                { "column": { "name": "enrollment", "type": "INT" } },
+                { "column": { "name": "max_enroll", "type": "INT" } },
+                { "column": { "name": "enrollment_estimate", "type": "INT" } }
+              ]
+            }
+          },
+          {
+            "sql": {
+              "sql": "UPDATE recruitment_courses SET enrollment = (SELECT bc.enrollment FROM budget_courses bc JOIN recruitments r ON r.quarter = bc.quarter WHERE r.id = recruitment_courses.recruitment_id AND bc.enroll_code = recruitment_courses.enroll_code), max_enroll = (SELECT bc.max_enroll FROM budget_courses bc JOIN recruitments r ON r.quarter = bc.quarter WHERE r.id = recruitment_courses.recruitment_id AND bc.enroll_code = recruitment_courses.enroll_code), enrollment_estimate = (SELECT bc.enrollment_estimate FROM budget_courses bc JOIN recruitments r ON r.quarter = bc.quarter WHERE r.id = recruitment_courses.recruitment_id AND bc.enroll_code = recruitment_courses.enroll_code)"
+            }
+          },
+          { "dropTable": { "tableName": "budget_courses" } }
+        ]
+      }
+    }
+  ]
+}

@@ -39,6 +39,7 @@ public class BudgetServiceTests {
   @MockitoBean BudgetRepository budgetRepository;
   @MockitoBean RecruitmentRepository recruitmentRepository;
   @MockitoBean RecruitmentCourseRepository recruitmentCourseRepository;
+  @MockitoBean BudgetCourseService budgetCourseService;
 
   private static final String Q = "20264";
 
@@ -177,6 +178,30 @@ public class BudgetServiceTests {
     assertEquals(new BigDecimal("125000.25"), summary.totalFunds());
     assertEquals(new BigDecimal("3995.25"), summary.bottomLine());
     assertEquals(new BigDecimal("100000"), summary.budget().getUnrestrictedBudget());
+  }
+
+  /** Issue #363: the estimates are the quarter's, read from budget_courses for the live rows. */
+  @Test
+  public void each_side_reads_the_quarters_figures_onto_its_live_rows_first() {
+    Recruitment ta = recruitment(5L, Q, RecruitmentType.TA, 2, null);
+    when(recruitmentRepository.findByQuarterAndType(Q, RecruitmentType.TA))
+        .thenReturn(Optional.of(ta));
+    RecruitmentCourse live = row(1L, null, 1, false);
+    RecruitmentCourse removed = row(3L, 999, 9, true);
+    when(recruitmentCourseRepository.findByRecruitmentId(5L)).thenReturn(List.of(live, removed));
+    org.mockito.Mockito.doAnswer(
+            invocation -> {
+              live.setEnrollmentEstimate(80);
+              return null;
+            })
+        .when(budgetCourseService)
+        .attach(Q, List.of(live));
+
+    Side side = service.summary(Q).ta();
+
+    assertEquals(80, side.totalEnrollmentEstimate());
+    assertEquals(40.0, side.studentsPerPosition());
+    verify(budgetCourseService).attach(Q, List.of(live));
   }
 
   @Test
