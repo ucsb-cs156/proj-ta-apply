@@ -20,4 +20,4 @@ repo_name: "TBD"
 repo: ucsb-cs156/proj-ta-apply
 owner: ucsb-cs156
 repo_name: proj-ta-apply
-pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/375-conversion-version","number":378,"title":"Version the TA to ULA conversion factor separately from the budget lines (#375)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/378"},{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"feat/358c-old-pages-and-help","number":374,"title":"Budget columns leave the Recruitment Courses pages; QXX Budget card and Help point at the Combined Allocation page (#358, part 3)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/374"}]
+pull_requests: [{"author":{"id":"MDQ6VXNlcjExMTkwMTc=","is_bot":false,"login":"pconrad","name":"Phill Conrad"},"headRefName":"dev/375-conversion-version","number":378,"title":"Version the TA to ULA conversion factor separately from the budget lines (#375)","url":"https://github.com/ucsb-cs156/proj-ta-apply/pull/378"}]
