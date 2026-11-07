@@ -59,7 +59,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(java.lang.String,edu.ucsb.cs.taapply.entity.Budget,edu.ucsb.cs.taapply.services.BudgetService.Side,edu.ucsb.cs.taapply.services.BudgetService.Side,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal)" tabindex="0">Summary(String, Budget, BudgetService.Side, BudgetService.Side, BigDecimal, BigDecimal, BigDecimal)</a></li>
+<li><a href="#%3Cinit%3E(java.lang.String,edu.ucsb.cs.taapply.entity.Budget,edu.ucsb.cs.taapply.services.BudgetService.Side,edu.ucsb.cs.taapply.services.BudgetService.Side,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal)" tabindex="0">Summary(String, Budget, BudgetService.Side, BudgetService.Side, BigDecimal, BigDecimal, BigDecimal, BigDecimal)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -71,6 +71,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#budget()" tabindex="0">budget()</a></li>
 <li><a href="#ta()" tabindex="0">ta()</a></li>
 <li><a href="#ula()" tabindex="0">ula()</a></li>
+<li><a href="#estimatedCostPerULAPerQuarter()" tabindex="0">estimatedCostPerULAPerQuarter()</a></li>
 <li><a href="#totalExpenses()" tabindex="0">totalExpenses()</a></li>
 <li><a href="#totalFunds()" tabindex="0">totalFunds()</a></li>
 <li><a href="#bottomLine()" tabindex="0">bottomLine()</a></li>
@@ -91,8 +92,11 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>Record Components:</dt>
+<dd><code><span id="param-estimatedCostPerULAPerQuarter">estimatedCostPerULAPerQuarter</span></code> - the budget's ULA hourly rate times its hours per ULA, to
+    the cent (issue #388); null while either is not yet entered. Shown whether or not the
+    quarter has a ULA recruitment.</dd>
 <dd><code><span id="param-totalExpenses">totalExpenses</span></code> - the two anticipated costs added</dd>
-<dd><code><span id="param-totalFunds">totalFunds</span></code> - the budget's three lines added</dd>
+<dd><code><span id="param-totalFunds">totalFunds</span></code> - the budget's three subzero lines and its other funds for ASEs added</dd>
 <dd><code><span id="param-bottomLine">bottomLine</span></code> - totalFunds minus totalExpenses</dd>
 </dl>
 <dl class="notes">
@@ -101,7 +105,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="horizontal-scroll">
-<div class="type-signature"><span class="modifiers">public static record </span><span class="element-name type-name-label">BudgetService.Summary</span>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter, <a href="../entity/Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a>&nbsp;budget, <a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a>&nbsp;ta, <a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a>&nbsp;ula, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;totalExpenses, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;totalFunds, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;bottomLine)
+<div class="type-signature"><span class="modifiers">public static record </span><span class="element-name type-name-label">BudgetService.Summary</span>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter, <a href="../entity/Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a>&nbsp;budget, <a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a>&nbsp;ta, <a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a>&nbsp;ula, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;estimatedCostPerULAPerQuarter, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;totalExpenses, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;totalFunds, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;bottomLine)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">Everything the page shows for one quarter. <code>ta</code> or <code>ula</code> is null when the quarter
 has no recruitment of that type.</div>
@@ -117,10 +121,11 @@ has no recruitment of that type.</div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,edu.ucsb.cs.taapply.entity.Budget,edu.ucsb.cs.taapply.services.BudgetService.Side,edu.ucsb.cs.taapply.services.BudgetService.Side,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal)" class="member-name-link">Summary</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,edu.ucsb.cs.taapply.entity.Budget,edu.ucsb.cs.taapply.services.BudgetService.Side,edu.ucsb.cs.taapply.services.BudgetService.Side,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal)" class="member-name-link">Summary</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../entity/Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a>&nbsp;budget,
  <a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a>&nbsp;ta,
  <a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a>&nbsp;ula,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;estimatedCostPerULAPerQuarter,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;totalExpenses,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;totalFunds,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;bottomLine)</code></div>
@@ -156,39 +161,44 @@ has no recruitment of that type.</div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#estimatedCostPerULAPerQuarter()" class="member-name-link">estimatedCostPerULAPerQuarter</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <a href="#param-estimatedCostPerULAPerQuarter"><code>estimatedCostPerULAPerQuarter</code></a> record component.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a hash code value for this object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quarter()" class="member-name-link">quarter</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quarter()" class="member-name-link">quarter</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>quarter</code> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ta()" class="member-name-link">ta</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ta()" class="member-name-link">ta</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>ta</code> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#totalExpenses()" class="member-name-link">totalExpenses</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#totalExpenses()" class="member-name-link">totalExpenses</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-totalExpenses"><code>totalExpenses</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#totalFunds()" class="member-name-link">totalFunds</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#totalFunds()" class="member-name-link">totalFunds</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-totalFunds"><code>totalFunds</code></a> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ula()" class="member-name-link">ula</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ula()" class="member-name-link">ula</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>ula</code> record component.</div>
 </div>
 </div>
@@ -209,13 +219,14 @@ has no recruitment of that type.</div>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,edu.ucsb.cs.taapply.entity.Budget,edu.ucsb.cs.taapply.services.BudgetService.Side,edu.ucsb.cs.taapply.services.BudgetService.Side,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal)">
+<section class="detail" id="&lt;init&gt;(java.lang.String,edu.ucsb.cs.taapply.entity.Budget,edu.ucsb.cs.taapply.services.BudgetService.Side,edu.ucsb.cs.taapply.services.BudgetService.Side,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal)">
 <h3>Summary</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">Summary</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="../entity/Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a>&nbsp;budget,
  <a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a>&nbsp;ta,
  <a href="BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a>&nbsp;ula,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;estimatedCostPerULAPerQuarter,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;totalExpenses,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;totalFunds,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;bottomLine)</span></div>
@@ -226,6 +237,7 @@ has no recruitment of that type.</div>
 <dd><code>budget</code> - the value for the <code>budget</code> record component</dd>
 <dd><code>ta</code> - the value for the <code>ta</code> record component</dd>
 <dd><code>ula</code> - the value for the <code>ula</code> record component</dd>
+<dd><code>estimatedCostPerULAPerQuarter</code> - the value for the <a href="#param-estimatedCostPerULAPerQuarter"><code>estimatedCostPerULAPerQuarter</code></a> record component</dd>
 <dd><code>totalExpenses</code> - the value for the <a href="#param-totalExpenses"><code>totalExpenses</code></a> record component</dd>
 <dd><code>totalFunds</code> - the value for the <a href="#param-totalFunds"><code>totalFunds</code></a> record component</dd>
 <dd><code>bottomLine</code> - the value for the <a href="#param-bottomLine"><code>bottomLine</code></a> record component</dd>
@@ -336,6 +348,19 @@ has no recruitment of that type.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the value of the <code>ula</code> record component</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="estimatedCostPerULAPerQuarter()">
+<h3>estimatedCostPerULAPerQuarter</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name">estimatedCostPerULAPerQuarter</span>()</div>
+<div class="block">Returns the value of the <a href="#param-estimatedCostPerULAPerQuarter"><code>estimatedCostPerULAPerQuarter</code></a> record component.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the value of the <a href="#param-estimatedCostPerULAPerQuarter"><code>estimatedCostPerULAPerQuarter</code></a> record component</dd>
 </dl>
 </div>
 </section>

@@ -92,6 +92,8 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>Record Components:</dt>
+<dd><code><span id="param-avgCostPerPosition">avgCostPerPosition</span></code> - the estimated cost of one position per quarter, from the budget
+    (issue #388): on the TA side its cost per TA as entered; on the ULA side its <a href="BudgetService.html#estimatedCostPerUla(edu.ucsb.cs.taapply.entity.Budget)"><code>computed cost per ULA</code></a>; null while unknown</dd>
 <dd><code><span id="param-totalAllocation">totalAllocation</span></code> - the sum of the allocations of its non-removed courses</dd>
 <dd><code><span id="param-totalEnrollmentEstimate">totalEnrollmentEstimate</span></code> - the sum of their enrollment estimates (the quarter's, from
     <code>budget_courses</code>), a missing one counting as 0</dd>
@@ -159,7 +161,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#avgCostPerPosition()" class="member-name-link">avgCostPerPosition</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <code>avgCostPerPosition</code> record component.</div>
+<div class="block">Returns the value of the <a href="#param-avgCostPerPosition"><code>avgCostPerPosition</code></a> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
@@ -235,7 +237,7 @@ loadScripts(document, 'script');</script>
 <dt>Parameters:</dt>
 <dd><code>recruitmentId</code> - the value for the <code>recruitmentId</code> record component</dd>
 <dd><code>totalHiringTarget</code> - the value for the <code>totalHiringTarget</code> record component</dd>
-<dd><code>avgCostPerPosition</code> - the value for the <code>avgCostPerPosition</code> record component</dd>
+<dd><code>avgCostPerPosition</code> - the value for the <a href="#param-avgCostPerPosition"><code>avgCostPerPosition</code></a> record component</dd>
 <dd><code>totalAllocation</code> - the value for the <a href="#param-totalAllocation"><code>totalAllocation</code></a> record component</dd>
 <dd><code>totalEnrollmentEstimate</code> - the value for the <a href="#param-totalEnrollmentEstimate"><code>totalEnrollmentEstimate</code></a> record component</dd>
 <dd><code>allocationDifference</code> - the value for the <a href="#param-allocationDifference"><code>allocationDifference</code></a> record component</dd>
@@ -331,10 +333,10 @@ loadScripts(document, 'script');</script>
 <h3>avgCostPerPosition</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name">avgCostPerPosition</span>()</div>
-<div class="block">Returns the value of the <code>avgCostPerPosition</code> record component.</div>
+<div class="block">Returns the value of the <a href="#param-avgCostPerPosition"><code>avgCostPerPosition</code></a> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <code>avgCostPerPosition</code> record component</dd>
+<dd>the value of the <a href="#param-avgCostPerPosition"><code>avgCostPerPosition</code></a> record component</dd>
 </dl>
 </div>
 </section>

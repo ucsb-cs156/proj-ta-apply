@@ -640,7 +640,7 @@ the enrollment estimates, and returns the sections in page order.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetService.Side.html#avgCostPerPosition()" class="member-name-link">avgCostPerPosition()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Side.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Side</a></dt>
 <dd>
-<div class="block">Returns the value of the <code>avgCostPerPosition</code> record component.</div>
+<div class="block">Returns the value of the <a href="./edu/ucsb/cs/taapply/services/BudgetService.Side.html#param-avgCostPerPosition"><code>avgCostPerPosition</code></a> record component.</div>
 </dd>
 </dl>
 <h2 class="title" id="I:B">B</h2>
@@ -715,7 +715,8 @@ for.</div>
 <dd>
 <div class="block">The figures behind the Budget for Quarter page (issue #177): which quarters have recruitments,
 and for one quarter the budget row, each recruitment's hiring target, cost, allocation and
-enrollment totals, and the anticipated expenses, funds and bottom line.</div>
+enrollment totals, the estimated cost per ULA computed from the budget's rate and hours (issue
+#388), and the anticipated expenses, funds and bottom line.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/BudgetService.html#%3Cinit%3E()" class="member-name-link">BudgetService()</a> - Constructor for class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.html" title="class in edu.ucsb.cs.taapply.services">BudgetService</a></dt>
 <dd>&nbsp;</dd>
@@ -1669,6 +1670,15 @@ gets it back after removing it.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.QuarterRefresh.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/UcsbQuarterService.QuarterRefresh.html" title="class in edu.ucsb.cs.taapply.services">UcsbQuarterService.QuarterRefresh</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetService.html#estimatedCostPerUla(edu.ucsb.cs.taapply.entity.Budget)" class="member-name-link">estimatedCostPerUla(Budget)</a> - Static method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.html" title="class in edu.ucsb.cs.taapply.services">BudgetService</a></dt>
+<dd>
+<div class="block">The estimated cost of one ULA for the quarter (issue #388): the budget's hourly rate times its
+estimated hours per ULA, to the cent; null while either has not been entered.</div>
+</dd>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html#estimatedCostPerULAPerQuarter()" class="member-name-link">estimatedCostPerULAPerQuarter()</a> - Method in record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Summary</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./edu/ucsb/cs/taapply/services/BudgetService.Summary.html#param-estimatedCostPerULAPerQuarter"><code>estimatedCostPerULAPerQuarter</code></a> record component.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/migration/UtcToPacificTimestamps.html#execute(liquibase.database.Database)" class="member-name-link">execute(Database)</a> - Method in class edu.ucsb.cs.taapply.migration.<a href="edu/ucsb/cs/taapply/migration/UtcToPacificTimestamps.html" title="class in edu.ucsb.cs.taapply.migration">UtcToPacificTimestamps</a></dt>
 <dd>&nbsp;</dd>
@@ -4112,7 +4122,7 @@ for; ULA positions are funded for undergraduates only.</div>
 <dd>
 <div class="block">The whole picture for one quarter.</div>
 </dd>
-<dt><a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html#%3Cinit%3E(java.lang.String,edu.ucsb.cs.taapply.entity.Budget,edu.ucsb.cs.taapply.services.BudgetService.Side,edu.ucsb.cs.taapply.services.BudgetService.Side,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal)" class="member-name-link">Summary(String, Budget, BudgetService.Side, BudgetService.Side, BigDecimal, BigDecimal, BigDecimal)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Summary</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html#%3Cinit%3E(java.lang.String,edu.ucsb.cs.taapply.entity.Budget,edu.ucsb.cs.taapply.services.BudgetService.Side,edu.ucsb.cs.taapply.services.BudgetService.Side,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal)" class="member-name-link">Summary(String, Budget, BudgetService.Side, BudgetService.Side, BigDecimal, BigDecimal, BigDecimal, BigDecimal)</a> - Constructor for record class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/BudgetService.Summary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Summary</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>Summary</code> record class.</div>
 </dd>
@@ -4723,7 +4733,7 @@ candidate has been assigned.</div>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html#upcomingRecruitments()" class="member-name-link">upcomingRecruitments()</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicantRecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicantRecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/BudgetController.html#update(java.lang.String,java.lang.Integer,java.lang.Integer,java.lang.String,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.lang.Double)" class="member-name-link">update(String, Integer, Integer, String, BigDecimal, BigDecimal, BigDecimal, Double)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/BudgetController.html" title="class in edu.ucsb.cs.taapply.controller">BudgetController</a></dt>
+<dt><a href="edu/ucsb/cs/taapply/controller/BudgetController.html#update(java.lang.String,java.lang.Integer,java.lang.Integer,java.lang.String,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.lang.Double)" class="member-name-link">update(String, Integer, Integer, String, BigDecimal, BigDecimal, BigDecimal, BigDecimal, BigDecimal, BigDecimal, BigDecimal, Double)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/BudgetController.html" title="class in edu.ucsb.cs.taapply.controller">BudgetController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html#updateAdminComments(java.lang.Long,java.lang.String)" class="member-name-link">updateAdminComments(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/AdminApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">AdminApplicationsController</a></dt>
 <dd>&nbsp;</dd>
@@ -4734,8 +4744,6 @@ candidate has been assigned.</div>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#updateApplication(java.lang.Long,java.lang.Integer,java.lang.String,edu.ucsb.cs.taapply.controller.ApplicationsController.ApplicationFields)" class="member-name-link">updateApplication(Long, Integer, String, ApplicationsController.ApplicationFields)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#updateAssignmentsPublished(java.lang.Long,boolean)" class="member-name-link">updateAssignmentsPublished(Long, boolean)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html#updateAvgCostPerPosition(java.lang.Long,java.math.BigDecimal,java.math.BigDecimal)" class="member-name-link">updateAvgCostPerPosition(Long, BigDecimal, BigDecimal)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/RecruitmentsController.html" title="class in edu.ucsb.cs.taapply.controller">RecruitmentsController</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html#updateComments(java.lang.Long,java.lang.String)" class="member-name-link">updateComments(Long, String)</a> - Method in class edu.ucsb.cs.taapply.controller.<a href="edu/ucsb/cs/taapply/controller/ApplicationsController.html" title="class in edu.ucsb.cs.taapply.controller">ApplicationsController</a></dt>
 <dd>&nbsp;</dd>

@@ -67,6 +67,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#quarters()" tabindex="0">quarters()</a></li>
 <li><a href="#budgetFor(java.lang.String)" tabindex="0">budgetFor(String)</a></li>
 <li><a href="#summary(java.lang.String)" tabindex="0">summary(String)</a></li>
+<li><a href="#estimatedCostPerUla(edu.ucsb.cs.taapply.entity.Budget)" tabindex="0">estimatedCostPerUla(Budget)</a></li>
 <li><a href="#money(java.math.BigDecimal)" tabindex="0">money(BigDecimal)</a></li>
 </ol>
 </li>
@@ -88,8 +89,9 @@ loadScripts(document, 'script');</script>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">The figures behind the Budget for Quarter page (issue #177): which quarters have recruitments,
 and for one quarter the budget row, each recruitment's hiring target, cost, allocation and
-enrollment totals, and the anticipated expenses, funds and bottom line. All money is in dollars
-and cents, as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link"><code>BigDecimal</code></a>s with two decimal places.</div>
+enrollment totals, the estimated cost per ULA computed from the budget's rate and hours (issue
+#388), and the anticipated expenses, funds and bottom line. All money is in dollars and cents, as
+<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link"><code>BigDecimal</code></a>s with two decimal places.</div>
 </div>
 </section>
 <section class="summary">
@@ -152,18 +154,24 @@ and cents, as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.b
 for.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#money(java.math.BigDecimal)" class="member-name-link">money</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;amount)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#estimatedCostPerUla(edu.ucsb.cs.taapply.entity.Budget)" class="member-name-link">estimatedCostPerUla</a><wbr>(<a href="../entity/Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a>&nbsp;budget)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">The estimated cost of one ULA for the quarter (issue #388): the budget's hourly rate times its
+estimated hours per ULA, to the cent; null while either has not been entered.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#money(java.math.BigDecimal)" class="member-name-link">money</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;amount)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Dollars and cents: two decimal places, half up.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="BudgetService.QuarterSummary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.QuarterSummary</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quarters()" class="member-name-link">quarters</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="BudgetService.QuarterSummary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.QuarterSummary</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quarters()" class="member-name-link">quarters</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Every quarter with a recruitment, most recent first.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="BudgetService.Summary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Summary</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#summary(java.lang.String)" class="member-name-link">summary</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="BudgetService.Summary.html" title="class in edu.ucsb.cs.taapply.services">BudgetService.Summary</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#summary(java.lang.String)" class="member-name-link">summary</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The whole picture for one quarter.</div>
 </div>
 </div>
@@ -232,6 +240,16 @@ for. Only quarters with at least one recruitment have a budget.</div>
 <dt>Throws:</dt>
 <dd><code><a href="../errors/EntityNotFoundException.html" title="class in edu.ucsb.cs.taapply.errors">EntityNotFoundException</a></code> - when the quarter has no recruitment</dd>
 </dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="estimatedCostPerUla(edu.ucsb.cs.taapply.entity.Budget)">
+<h3>estimatedCostPerUla</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name">estimatedCostPerUla</span><wbr><span class="parameters">(<a href="../entity/Budget.html" title="class in edu.ucsb.cs.taapply.entity">Budget</a>&nbsp;budget)</span></div>
+<div class="block">The estimated cost of one ULA for the quarter (issue #388): the budget's hourly rate times its
+estimated hours per ULA, to the cent; null while either has not been entered.</div>
 </div>
 </section>
 </li>

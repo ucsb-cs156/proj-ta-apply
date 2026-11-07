@@ -65,7 +65,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#quarters()" tabindex="0">quarters()</a></li>
 <li><a href="#summary(java.lang.String)" tabindex="0">summary(String)</a></li>
-<li><a href="#update(java.lang.String,java.lang.Integer,java.lang.Integer,java.lang.String,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.lang.Double)" tabindex="0">update(String, Integer, Integer, String, BigDecimal, BigDecimal, BigDecimal, Double)</a></li>
+<li><a href="#update(java.lang.String,java.lang.Integer,java.lang.Integer,java.lang.String,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.lang.Double)" tabindex="0">update(String, Integer, Integer, String, BigDecimal, BigDecimal, BigDecimal, BigDecimal, BigDecimal, BigDecimal, BigDecimal, Double)</a></li>
 <li><a href="#heartbeat(java.lang.String,java.lang.String)" tabindex="0">heartbeat(String, String)</a></li>
 <li><a href="#leave(java.lang.String,java.lang.String)" tabindex="0">leave(String, String)</a></li>
 </ol>
@@ -134,13 +134,17 @@ budget lines and everything derived from them. Planning figures, so none of it i
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#summary(java.lang.String)" class="member-name-link">summary</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.springframework.http.ResponseEntity<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#update(java.lang.String,java.lang.Integer,java.lang.Integer,java.lang.String,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.lang.Double)" class="member-name-link">update</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#update(java.lang.String,java.lang.Integer,java.lang.Integer,java.lang.String,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.lang.Double)" class="member-name-link">update</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;quarter,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;version,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;conversionVersion,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;clientId,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;unrestrictedBudget,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;tasOnlyBudget,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;ulasOnlyBudget,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;taCostPerQuarter,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;ulaRateDollarsPerHour,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;estimatedHoursPerULAPerQuarter,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;giftFundsForASEs,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&nbsp;conversionTAtoULA)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
@@ -201,7 +205,7 @@ budget lines and everything derived from them. Planning figures, so none of it i
 </section>
 </li>
 <li>
-<section class="detail" id="update(java.lang.String,java.lang.Integer,java.lang.Integer,java.lang.String,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.lang.Double)">
+<section class="detail" id="update(java.lang.String,java.lang.Integer,java.lang.Integer,java.lang.String,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.math.BigDecimal,java.lang.Double)">
 <h3>update</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -220,6 +224,14 @@ budget lines and everything derived from them. Planning figures, so none of it i
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;tasOnlyBudget,
  @RequestParam(required=false)
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;ulasOnlyBudget,
+ @RequestParam(required=false)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;taCostPerQuarter,
+ @RequestParam(required=false)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;ulaRateDollarsPerHour,
+ @RequestParam(required=false)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;estimatedHoursPerULAPerQuarter,
+ @RequestParam(required=false)
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;giftFundsForASEs,
  @RequestParam(required=false)
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&nbsp;conversionTAtoULA)</span></div>
 </div>
