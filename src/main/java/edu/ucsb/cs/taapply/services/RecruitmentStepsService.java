@@ -68,9 +68,9 @@ public class RecruitmentStepsService {
   public Steps stepsFor(Recruitment recruitment) {
     Long id = recruitment.getId();
     String courses = "/admin/recruitments/" + id + "/courses";
-    // The view-only page is where the "see" links land; step 3's Allocations link is for setting
-    // them, so it goes to the edit page (issue #278).
-    String coursesEdit = courses + "/edit";
+    // The allocations are set, and seen, on the quarter's Combined Allocation page (issue #358);
+    // the other "see" links land on the view-only Courses page (issue #278).
+    String allocations = "/admin/allocations/" + qyy(recruitment.getQuarter());
     boolean applicationsOpen = recruitment.getApplicationStatus() == ApplicationStatus.OPEN;
     boolean reviewsOpen = "Open".equals(recruitment.getReviewStatus());
     int target = recruitment.getTotalHiringTarget();
@@ -107,7 +107,9 @@ public class RecruitmentStepsService {
                 "(see draft applications)", "/admin/recruitments/" + id + "/draft-applications"));
     List<Link> seeApplications = List.of(new Link("(see applications)", applications));
     List<Link> seeRankings = List.of(new Link("(see rankings)", courses));
-    List<Link> seeAssignments = List.of(new Link("(see assignments)", courses));
+    // The assignments themselves, published or not, are on the recruitment's assignments page.
+    List<Link> seeAssignments =
+        List.of(new Link("(see assignments)", "/recruitments/" + id + "/assignments"));
 
     return new Steps(
         id,
@@ -148,7 +150,7 @@ public class RecruitmentStepsService {
                 null,
                 List.of(
                     new Link("Budget", "/admin/budget/" + qyy(recruitment.getQuarter())),
-                    new Link("Allocations", coursesEdit)),
+                    new Link("Allocations", allocations)),
                 null,
                 null,
                 null),
@@ -175,7 +177,7 @@ public class RecruitmentStepsService {
                 null,
                 "allocationVisibility",
                 null,
-                List.of(new Link("(see allocations)", courses)),
+                List.of(new Link("(see allocations)", allocations)),
                 null,
                 null),
             new Step(
@@ -255,7 +257,8 @@ public class RecruitmentStepsService {
 
   /**
    * The quarter as admins write it: "20264" becomes "F26" (W, S, M or F, then the two-digit year).
-   * The frontend has the same conversion; the backend needs it for the Budget page link.
+   * The frontend has the same conversion; the backend needs it for the Budget page and Combined
+   * Allocation page links.
    */
   static String qyy(String yyyyq) {
     String letters = "WSMF";

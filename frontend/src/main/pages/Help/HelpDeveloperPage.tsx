@@ -111,8 +111,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           fills in the enrollment estimates from the schedule&apos;s maximum
           enrollment, from current enrollment, or leaves the ones already
           entered, and then auto-assigns the allocations across the courses,
-          exactly as the <em>Auto assign allocations</em> button does. A
-          checkbox, ticked by default, also sets allocation visibility to{" "}
+          exactly as the Combined Allocation page&apos;s{" "}
+          <em>Auto assign allocations</em> button does. A checkbox, ticked by
+          default, also sets allocation visibility to{" "}
           <strong>Faculty see their own courses</strong>, recorded in the change
           history like any other visibility change. The footer of the Combined
           Allocation page (<code>/admin/allocations/QXX</code>) has the same
@@ -392,14 +393,18 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           nothing, and neither heartbeats nor warns. The edit page (
           <code>/admin/recruitments/:id/courses/edit</code>) heartbeats{" "}
           <code>POST /api/recruitmentcourses/heartbeat?recruitmentId=</code>,
-          says goodbye at <code>/leave</code>, names itself in the{" "}
-          <code>X-Client-Id</code> header of the allocation, estimate and Auto
-          Allocate saves, and shows the banner and the modal with the noun
-          &quot;page&quot;; <em>Leave this page</em> goes to the view-only page.
-          Only an admin may heartbeat, and the recruitment must exist, before
-          anything is recorded. The version check is not a JPA version, since
-          the course refresh and the estimates also write the row: a separate{" "}
-          <code>allocation_version</code> column on{" "}
+          says goodbye at <code>/leave</code>, and shows the banner and the
+          modal with the noun &quot;page&quot;; <em>Leave this page</em> goes to
+          the view-only page. Since issue #358 the edit page keeps Populate, Add
+          by enroll code, Remove and allocation visibility, none of which name
+          the tab (the hiring target is on the Budget page and Publish
+          Assignments on the Assignments page); the allocation, estimate,
+          fill-estimates and Auto Allocate saves, which name the tab in the{" "}
+          <code>X-Client-Id</code> header, are made from the Combined Allocation
+          page (next) under this same key. Only an admin may heartbeat, and the
+          recruitment must exist, before anything is recorded. The version check
+          is not a JPA version, since the course refresh and the estimates also
+          write the row: a separate <code>allocation_version</code> column on{" "}
           <code>recruitment_courses</code> is counted by each allocation edit,
           and <code>allocation_bulk_version</code> on <code>recruitments</code>{" "}
           is counted by Auto Allocate. An allocation edit sends both as{" "}
@@ -450,7 +455,12 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           and <code>unroundedAllocation</code> are left out of the JSON unless
           the recruitment&apos;s allocation visibility is{" "}
           <code>ALL_COURSES</code>, and the table omits the matching columns (
-          <code>AllocationsRelatedColumns</code>) instead of hiding them.
+          <code>AllocationsRelatedColumns</code>) instead of hiding them. Since
+          issue #358 the admin&apos;s own view-only and edit pages omit those
+          five columns too (<code>omitColumns</code>, and{" "}
+          <code>adminColumnChoices</code> leaves them out of the Columns menu):
+          the admin edits them on the Combined Allocation page, and the faculty
+          Courses page is the only table that still shows them, as text.
         </p>
         <h3 className="mt-4 h5" id="state-refresh">
           Refresh instead of a warning: keeping recruitment state fresh
@@ -783,8 +793,9 @@ export default function HelpDeveloperPage(): React.JSX.Element {
             </tr>
             <tr data-testid="HelpDeveloperPage-simultaneous-row-courses-edit">
               <td>
-                Courses edit page (allocations and estimated enrollments); the
-                view-only page never warns
+                Courses edit page (Populate, Remove, visibility; the allocations
+                and estimated enrollments are edited under this key from the
+                Combined Allocation page); the view-only page never warns
               </td>
               <td>The whole edit page for one recruitment</td>
               <td>

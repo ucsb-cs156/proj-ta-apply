@@ -39,22 +39,10 @@ export default {
         http.put("/api/recruitmentcourses/removed", () =>
           HttpResponse.json({}),
         ),
-        http.put("/api/recruitmentcourses/allocation", () =>
-          HttpResponse.json({}),
-        ),
         http.put("/api/admin/recruitments/totalHiringTarget", () =>
           HttpResponse.json({}),
         ),
-        http.put("/api/recruitmentcourses/enrollmentEstimate", () =>
-          HttpResponse.json({}),
-        ),
-        http.put("/api/recruitmentcourses/enrollmentEstimates", () =>
-          HttpResponse.json(notRemoved),
-        ),
         http.post("/api/recruitmentcourses/refresh", () =>
-          HttpResponse.json(notRemoved),
-        ),
-        http.post("/api/recruitmentcourses/autoAllocate", () =>
           HttpResponse.json(notRemoved),
         ),
         http.post("/api/jobs/launch/populateRecruitmentCourses", () =>
@@ -92,12 +80,21 @@ export default {
 
 const Template = () => <RecruitmentCoursesPage />;
 
-/** The view-only page, which is the default (issue #278): nothing on it can be changed. */
+/**
+ * The view-only page, which is the default (issue #278): nothing on it can be changed. Since issue
+ * #358 neither page has the Enrollment Estimate, Allocation, Unrounded Allocation, Delta or ratio
+ * columns, nor "Set enrollment estimates from" or Auto assign: it points to the Combined Allocation
+ * page for them.
+ */
 export const Default = Template.bind({});
 
 const EditTemplate = () => <RecruitmentCoursesPage edit />;
 
-/** The edit page, alone: the figures are boxes, and the Auto Allocate and other controls show. */
+/**
+ * The edit page, alone: Populate, Add by enroll code, Remove, the allocation visibility panel and
+ * the link back to the view-only page. The hiring target is on the Budget page and the Publish
+ * Assignments panel on the Assignments page (issue #358).
+ */
 export const Editing = EditTemplate.bind({});
 Editing.parameters = {
   reactRouter: { initialEntries: ["/admin/recruitments/7/courses/edit"] },

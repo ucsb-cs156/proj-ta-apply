@@ -59,69 +59,64 @@ describe("RecruitmentCards budget cards", () => {
     axiosMock.onGet(/\/steps$/).reply(404, {});
   });
 
-  test("a quarter with both recruitments has one card with three live links", () => {
+  test("a quarter with both recruitments has one card with Budget Planning and the TA and ULA allocation button", () => {
     renderCards([w26Ta, w26Ula]);
     expect(screen.getAllByText("W26 Budget")).toHaveLength(1);
-    expect(screen.getByTestId("Cards-budget-W26-budget")).toHaveAttribute(
-      "href",
-      "/admin/budget/W26",
-    );
-    expect(
-      screen.getByTestId("Cards-budget-W26-ta-allocations"),
-    ).toHaveAttribute("href", "/admin/recruitments/1/courses/edit");
-    expect(
-      screen.getByTestId("Cards-budget-W26-ula-allocations"),
-    ).toHaveAttribute("href", "/admin/recruitments/2/courses/edit");
+    const budget = screen.getByTestId("Cards-budget-W26-budget");
+    expect(budget).toHaveTextContent("Budget Planning");
+    expect(budget).toHaveAttribute("href", "/admin/budget/W26");
+    // Issue #358: one button to the quarter's Combined Allocation page, labelled by its recruitments.
+    const allocate = screen.getByTestId("Cards-budget-W26-allocate");
+    expect(allocate).toHaveTextContent("Allocate TA and ULA slots to Courses");
+    expect(allocate).toHaveAttribute("href", "/admin/allocations/W26");
+    expect(screen.queryByTestId("Cards-budget-W26-ta-allocations")).toBeNull();
+    expect(screen.queryByTestId("Cards-budget-W26-ula-allocations")).toBeNull();
   });
 
-  test("a TA-only quarter greys out ULA allocations, which does not navigate", async () => {
+  test("a TA-only quarter's button says TA slots and navigates to the combined page", async () => {
     renderCards([s26Ta]);
     expect(screen.getByText("S26 Budget")).toBeInTheDocument();
-    const ula = screen.getByTestId("Cards-budget-S26-ula-allocations");
-    expect(ula).toBeDisabled();
-    expect(ula).toHaveAttribute("aria-disabled", "true");
-    expect(ula).not.toHaveAttribute("href");
-    await userEvent.click(ula);
-    expect(screen.getByTestId("where")).toHaveTextContent("/");
-    expect(
-      screen.getByTestId("Cards-budget-S26-ta-allocations"),
-    ).toHaveAttribute("href", "/admin/recruitments/3/courses/edit");
+    const allocate = screen.getByTestId("Cards-budget-S26-allocate");
+    expect(allocate).toHaveTextContent("Allocate TA slots to Courses");
+    expect(allocate).toHaveAttribute("href", "/admin/allocations/S26");
+    await userEvent.click(allocate);
+    expect(screen.getByTestId("where")).toHaveTextContent(
+      "/admin/allocations/S26",
+    );
   });
 
-  test("a ULA-only quarter greys out TA allocations", () => {
+  test("a ULA-only quarter's button says ULA slots", () => {
     renderCards([w26Ula]);
-    const ta = screen.getByTestId("Cards-budget-W26-ta-allocations");
-    expect(ta).toBeDisabled();
-    expect(ta).toHaveAttribute("aria-disabled", "true");
-    expect(ta).not.toHaveAttribute("href");
-    const ula = screen.getByTestId("Cards-budget-W26-ula-allocations");
-    expect(ula).not.toBeDisabled();
-    expect(ula).not.toHaveAttribute("aria-disabled");
+    const allocate = screen.getByTestId("Cards-budget-W26-allocate");
+    expect(allocate).toHaveTextContent("Allocate ULA slots to Courses");
+    expect(allocate).toHaveAttribute("href", "/admin/allocations/W26");
+    expect(allocate).not.toHaveAttribute("aria-disabled");
   });
 
-  test("clicking Budget navigates to the quarter's budget page", async () => {
+  test("clicking Budget Planning navigates to the quarter's budget page", async () => {
     renderCards();
     await userEvent.click(screen.getByTestId("Cards-budget-S26-budget"));
     expect(screen.getByTestId("where")).toHaveTextContent("/admin/budget/S26");
   });
 
-  test("with more than one of a type in a quarter, the highest id is linked", () => {
+  test("with more than one of a type in a quarter, there is still one card and the button is live", () => {
     const a = { ...w26Ta, id: 7 };
     const b = { ...w26Ta, id: 9 };
     const c = { ...w26Ta, id: 8 };
     renderCards([a, b, c]);
-    expect(
-      screen.getByTestId("Cards-budget-W26-ta-allocations"),
-    ).toHaveAttribute("href", "/admin/recruitments/9/courses/edit");
+    expect(screen.getAllByText("W26 Budget")).toHaveLength(1);
+    expect(screen.getByTestId("Cards-budget-W26-allocate")).toHaveTextContent(
+      "Allocate TA slots to Courses",
+    );
   });
 
-  test("the highest id wins whichever order they come in", () => {
+  test("whichever order they come in", () => {
     const a = { ...w26Ula, id: 7 };
     const b = { ...w26Ula, id: 9 };
     renderCards([b, a]);
-    expect(
-      screen.getByTestId("Cards-budget-W26-ula-allocations"),
-    ).toHaveAttribute("href", "/admin/recruitments/9/courses/edit");
+    expect(screen.getByTestId("Cards-budget-W26-allocate")).toHaveTextContent(
+      "Allocate ULA slots to Courses",
+    );
   });
 
   test("each quarter's cards are wrapped together", () => {

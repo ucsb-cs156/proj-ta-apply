@@ -5,6 +5,7 @@ import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
 import { useBackend, useBackendMutation } from "main/utils/useBackend";
 import type { Recruitment } from "main/components/Recruitments/RecruitmentTable";
 import AssignmentsTable from "main/components/Assignments/AssignmentsTable";
+import PublishAssignmentsPanel from "main/components/Recruitments/PublishAssignmentsPanel";
 import CancelledApplicationsTable, {
   type CancelledApplication,
 } from "main/components/Applications/CancelledApplicationsTable";
@@ -173,6 +174,14 @@ export default function AdminAssignmentsPage(): React.JSX.Element {
           {recruitment &&
             `: ${recruitment.type} positions, ${yyyyqToQyy(recruitment.quarter)}`}
         </h1>
+        {/* Issue #358: publishing is done where the assignments are made (the panel used to be at
+            the bottom of the Courses edit page): the button until published, then the line. */}
+        {recruitment && (
+          <PublishAssignmentsPanel
+            recruitment={recruitment}
+            testIdPrefix="AdminAssignmentsPage-publish"
+          />
+        )}
         <MultipleTabsBanner
           others={activity.others}
           noun="assignments page"

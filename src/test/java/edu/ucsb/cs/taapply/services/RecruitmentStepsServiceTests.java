@@ -44,7 +44,16 @@ public class RecruitmentStepsServiceTests {
   private static final List<Link> SEE_DRAFTS =
       List.of(new Link("(see draft applications)", "/admin/recruitments/7/draft-applications"));
   private static final List<Link> SEE_RANKINGS = List.of(new Link("(see rankings)", COURSES));
-  private static final List<Link> SEE_ASSIGNMENTS = List.of(new Link("(see assignments)", COURSES));
+
+  /**
+   * Issue #358: the allocation links go to the quarter's Combined Allocation page (fresh() is F26).
+   */
+  private static final String ALLOCATIONS = "/admin/allocations/F26";
+
+  private static final List<Link> SEE_ALLOCATIONS =
+      List.of(new Link("(see allocations)", ALLOCATIONS));
+  private static final List<Link> SEE_ASSIGNMENTS =
+      List.of(new Link("(see assignments)", "/recruitments/7/assignments"));
 
   /** A recruitment that has only just been created: nothing done but step 1. */
   private static Recruitment fresh() {
@@ -297,8 +306,7 @@ public class RecruitmentStepsServiceTests {
     assertNull(step.href());
     assertNull(step.action());
     assertEquals(
-        List.of(
-            new Link("Budget", "/admin/budget/F26"), new Link("Allocations", COURSES + "/edit")),
+        List.of(new Link("Budget", "/admin/budget/F26"), new Link("Allocations", ALLOCATIONS)),
         step.titleLinks());
   }
 
@@ -334,6 +342,9 @@ public class RecruitmentStepsServiceTests {
       Recruitment r = fresh();
       r.setQuarter(pair[0]);
       assertEquals("/admin/budget/" + pair[1], step(r, 3).titleLinks().get(0).href());
+      // Issue #358: so does the Allocations link, and step 5's (see allocations).
+      assertEquals("/admin/allocations/" + pair[1], step(r, 3).titleLinks().get(1).href());
+      assertEquals("/admin/allocations/" + pair[1], step(r, 5).links().get(0).href());
     }
   }
 
@@ -353,7 +364,7 @@ public class RecruitmentStepsServiceTests {
             null,
             "allocationVisibility",
             null,
-            List.of(new Link("(see allocations)", COURSES)),
+            SEE_ALLOCATIONS,
             null,
             null),
         step(r, 5));
@@ -370,7 +381,7 @@ public class RecruitmentStepsServiceTests {
             null,
             "allocationVisibility",
             null,
-            List.of(new Link("(see allocations)", COURSES)),
+            SEE_ALLOCATIONS,
             null,
             null),
         step(fresh(), 5));
@@ -676,7 +687,7 @@ public class RecruitmentStepsServiceTests {
   public void every_step_but_3_has_its_links_and_3_keeps_its_two_title_links() {
     assertNull(step(fresh(), 3).links());
     assertEquals(2, step(fresh(), 3).titleLinks().size());
-    assertEquals(List.of(new Link("(see allocations)", COURSES)), step(fresh(), 5).links());
+    assertEquals(SEE_ALLOCATIONS, step(fresh(), 5).links());
     assertEquals(SEE_RANKINGS, step(fresh(), 6).links());
     assertEquals(SEE_RANKINGS, step(fresh(), 7).links());
     assertEquals(SEE_ASSIGNMENTS, step(fresh(), 8).links());

@@ -10,8 +10,9 @@ type PublishAssignmentsPanelProps = {
 };
 
 /**
- * The very bottom of the Recruitment Courses page (issue #180): the Publish Assignments button and
- * its confirmation, or, once published, a line saying so with a link to the assignments page.
+ * The top of the admin's Assignments page (issue #180; until issue #358 the very bottom of the
+ * Recruitment Courses page): the Publish Assignments button and its confirmation, or, once
+ * published, a line saying so with a link to the published assignments page.
  */
 export default function PublishAssignmentsPanel({
   recruitment,
@@ -21,7 +22,7 @@ export default function PublishAssignmentsPanel({
 
   if (recruitment.assignmentsPublished === true) {
     return (
-      <p className="mt-4" data-testid={`${testIdPrefix}-published`}>
+      <p className="my-3" data-testid={`${testIdPrefix}-published`}>
         Assignments are published.{" "}
         <Link to={`/recruitments/${recruitment.id}/assignments`}>
           Open the assignments page
@@ -32,7 +33,7 @@ export default function PublishAssignmentsPanel({
   }
 
   return (
-    <div className="mt-4" data-testid={testIdPrefix}>
+    <div className="my-3" data-testid={testIdPrefix}>
       <Button
         variant="outline-dark"
         onClick={() => setShowModal(true)}

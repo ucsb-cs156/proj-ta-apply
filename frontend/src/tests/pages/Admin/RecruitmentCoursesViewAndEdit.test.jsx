@@ -100,7 +100,7 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     expect(
       screen.getByTestId("RecruitmentCoursesPage-edit-text"),
     ).toHaveTextContent(
-      "Click Edit to: change the number of TAs/ULAs expected to be hired; set the expected enrollments for each course; set the number of TAs/ULAs allocated to each course; adjust the visibility of these allocations.",
+      "Click Edit to: populate the course list, add a lecture by enroll code, remove a course, or release allocations to faculty.",
     );
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
     expect(heartbeats()).toHaveLength(0);
@@ -122,14 +122,18 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     ).toBeNull();
   });
 
-  test("the edit page keeps the Populate explanation", async () => {
+  test("the edit page has no explanatory paragraph, description or pointer (issue #358)", async () => {
     renderAt("/admin/recruitments/7/courses/edit");
 
+    await screen.findByTestId("RecruitmentCoursesPage-populate");
     expect(
-      await screen.findByText(/Re-running Populate picks up newly flagged/),
-    ).toBeInTheDocument();
+      screen.queryByText(/Re-running Populate picks up newly flagged/),
+    ).toBeNull();
     expect(
       screen.queryByTestId("RecruitmentCoursesPage-description"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-combined-pointer"),
     ).toBeNull();
   });
 
@@ -176,19 +180,17 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     renderAt("/admin/recruitments/7/courses");
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
 
-    // The figures are text.
+    // Nothing can be typed into: the figures that were boxes are on the Combined Allocation page
+    // since issue #358 and are not here at all.
     expect(
-      screen.getByTestId("RecruitmentCoursesPage-cell-row-0-allocation"),
-    ).toHaveTextContent("2");
+      screen.queryByTestId("RecruitmentCoursesPage-cell-row-0-allocation"),
+    ).toBeNull();
     expect(
-      screen.getByTestId(
-        "RecruitmentCoursesPage-cell-row-0-enrollmentEstimate",
-      ),
-    ).toHaveTextContent("220");
+      screen.queryByTestId("RecruitmentCoursesPage-header-enrollmentEstimate"),
+    ).toBeNull();
     expect(
-      screen.getByTestId("RecruitmentCoursesPage-cell-row-0-allocation")
-        .tagName,
-    ).toBe("SPAN");
+      screen.getByTestId("RecruitmentCoursesPage-cell-row-0-col-enrollment"),
+    ).toHaveTextContent("200");
     expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
     // Every control that changes something is absent.
@@ -241,21 +243,25 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     const back = await screen.findByTestId("RecruitmentCoursesPage-view-link");
     expect(back).toHaveTextContent("Back to the view-only page");
     expect(back).toHaveAttribute("href", "/admin/recruitments/7/courses");
-    for (const id of [
-      "populate",
-      "add-form",
-      "fill-estimates",
-      "auto-assign",
-      "allocation-visibility",
-    ]) {
+    for (const id of ["populate", "add-form", "allocation-visibility"]) {
       expect(
         await screen.findByTestId(`RecruitmentCoursesPage-${id}`),
       ).toBeInTheDocument();
     }
+    // Issue #358: the estimate fill, Auto assign and the boxes are on the Combined Allocation page.
+    for (const id of ["fill-estimates", "auto-assign"]) {
+      expect(screen.queryByTestId(`RecruitmentCoursesPage-${id}`)).toBeNull();
+    }
+    // Issue #358 follow-up: no hiring target box (the Budget page has it), no pointer, and the
+    // Publish Assignments panel is on the Assignments page.
+    expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
     expect(
-      screen.getByTestId("RecruitmentCoursesPage-cell-row-0-allocation")
-        .tagName,
-    ).toBe("INPUT");
+      screen.queryByTestId("RecruitmentCoursesPage-hiring-target"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("RecruitmentCoursesPage-combined-link"),
+    ).toBeNull();
+    expect(screen.queryByTestId("RecruitmentCoursesPage-publish")).toBeNull();
     expect(
       screen.getByTestId(
         "RecruitmentCoursesPage-cell-row-0-col-removed-button",
@@ -266,64 +272,21 @@ describe("Courses view-only and edit pages (issue #278)", () => {
     ).toBeNull();
   });
 
-  test("the edit page heartbeats for its recruitment, and its saves name the same tab", async () => {
-    axiosMock.onPut("/api/recruitmentcourses/allocation").reply(200, {
-      ...notRemoved[0],
-      allocation: 5,
-      allocationVersion: 1,
-    });
+  test("the edit page heartbeats for its recruitment, under the key the Combined Allocation page shares", async () => {
     renderAt("/admin/recruitments/7/courses/edit");
     await waitFor(() => expect(heartbeats()).toHaveLength(1));
     expect(heartbeats()[0].url).toBe(`${HEARTBEAT}?recruitmentId=7`);
-    const id = heartbeats()[0].headers["X-Client-Id"];
-    expect(id).toBeTruthy();
+    expect(heartbeats()[0].headers["X-Client-Id"]).toBeTruthy();
 
+    // Issue #358: the saves that named the tab (allocations, estimates, the estimate fill and
+    // Auto assign) are made from the Combined Allocation page now; nothing here makes them.
     await screen.findByTestId("RecruitmentCoursesPage-cell-row-0-col-courseId");
-    fireEvent.change(
-      screen.getByTestId("RecruitmentCoursesPage-cell-row-0-allocation"),
-      { target: { value: "5" } },
-    );
-    await waitFor(() => expect(axiosMock.history.put).toHaveLength(1));
-    expect(axiosMock.history.put[0].headers["X-Client-Id"]).toBe(id);
-
-    axiosMock
-      .onPost("/api/recruitmentcourses/autoAllocate")
-      .reply(200, notRemoved);
-    fireEvent.click(screen.getByTestId("RecruitmentCoursesPage-auto-assign"));
-    fireEvent.click(
-      await screen.findByTestId("RecruitmentCoursesPage-auto-assign-confirm"),
-    );
-    await waitFor(() =>
-      expect(
-        axiosMock.history.post.find((r) =>
-          r.url.startsWith("/api/recruitmentcourses/autoAllocate"),
-        ),
-      ).toBeDefined(),
-    );
+    expect(axiosMock.history.put).toHaveLength(0);
     expect(
-      axiosMock.history.post.find((r) =>
-        r.url.startsWith("/api/recruitmentcourses/autoAllocate"),
-      ).headers["X-Client-Id"],
-    ).toBe(id);
-
-    axiosMock
-      .onPut("/api/recruitmentcourses/enrollmentEstimates")
-      .reply(200, notRemoved);
-    fireEvent.click(
-      screen.getByTestId("RecruitmentCoursesPage-fill-estimates-max"),
-    );
-    await waitFor(() =>
-      expect(
-        axiosMock.history.put.find((r) =>
-          r.url.startsWith("/api/recruitmentcourses/enrollmentEstimates"),
-        ),
-      ).toBeDefined(),
-    );
-    expect(
-      axiosMock.history.put.find((r) =>
-        r.url.startsWith("/api/recruitmentcourses/enrollmentEstimates"),
-      ).headers["X-Client-Id"],
-    ).toBe(id);
+      axiosMock.history.post.filter(
+        (r) => !r.url.startsWith(HEARTBEAT) && !r.url.includes("/refresh"),
+      ),
+    ).toHaveLength(0);
   });
 
   test("no warning when the edit page is alone", async () => {

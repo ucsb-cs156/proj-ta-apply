@@ -2,6 +2,15 @@
 
 * The InitialDesign.md document only dealt with the design of the application process.
 * The ReviewDesign.md document dealt with the phase where faculty review and rank applications.
+
+> **Where these features live now (issue #358).** Increments 1 to 3 below were built on the
+> RecruitmentCourses page as written. Since issue #358 the enrollment estimates, the "Set enrollment
+> estimates from: max, actual" buttons, the Allocation, Unrounded Allocation, Delta and TA:student
+> ratio columns and the "Auto assign TA allocations" button are on the **Combined Allocation page**,
+> `/admin/allocations/QXX`, for a quarter's TA and ULA recruitments together; the total hiring
+> target is entered on the Budget for Quarter page (and still at the top of the Recruitment Courses
+> edit page). The algorithm and the field meanings below are unchanged; see
+> `AdminUserInterfaceDesign.md`.
   
 We now need to consider the Assignment Phase, where admins assign candidates to 
 positions based on faculty rankings, and the need to cover all of the courses.

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  adminColumnChoices,
   AdminOnlyColumns,
   AllocationsRelatedColumns,
   columnChoices,
@@ -54,6 +55,63 @@ describe("courseColumns", () => {
       "summerSession",
       "removed",
     ]);
+  });
+
+  test("an admin is offered every column but the course number and the budget columns (issue #358)", () => {
+    expect(adminColumnChoices(false, false).map((c) => c.id)).toEqual([
+      "section",
+      "title",
+      "instructor",
+      "instructorEmail",
+      "days",
+      "time",
+      "room",
+      "enrollment",
+      "maxEnroll",
+      "status",
+      "removed",
+    ]);
+    const full = adminColumnChoices(true, true);
+    expect(full.map((c) => c.id)).toEqual([
+      "rankingCount",
+      "section",
+      "title",
+      "instructor",
+      "instructorEmail",
+      "days",
+      "time",
+      "room",
+      "enrollment",
+      "maxEnroll",
+      "status",
+      "summerSession",
+      "removed",
+    ]);
+    // The labels are the shared ones.
+    expect(full.map((c) => c.label)).toEqual([
+      "Rankings",
+      "Section",
+      "Title",
+      "Instructor",
+      "Email",
+      "Days",
+      "Time",
+      "Room",
+      "Enrolled",
+      "Max",
+      "Status",
+      "Summer Session",
+      "Remove / Unremove",
+    ]);
+    for (const id of AllocationsRelatedColumns) {
+      expect(full.map((c) => c.id)).not.toContain(id);
+    }
+    expect(adminColumnChoices(true, false).map((c) => c.id)).not.toContain(
+      "summerSession",
+    );
+    expect(adminColumnChoices(false, true).map((c) => c.id)).not.toContain(
+      "rankingCount",
+    );
   });
 
   test("an instructor is offered no allocation columns unless they are shown to all faculty", () => {

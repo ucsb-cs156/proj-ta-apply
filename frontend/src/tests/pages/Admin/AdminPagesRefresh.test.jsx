@@ -162,20 +162,16 @@ describe("A recruitment's course list refreshes by itself (issue #282)", () => {
   const notRemoved = recruitmentCoursesFixtures.fourCourses.filter(
     (c) => !c.removed,
   );
-  const box = "RecruitmentCoursesPage-cell-row-0-enrollmentEstimate";
+  // Issue #358: the estimates left this page, so the figure watched is the enrollment.
+  const box = "RecruitmentCoursesPage-cell-row-0-col-enrollment";
 
   const withEstimate = (value) =>
-    notRemoved.map((c, i) =>
-      i === 0 ? { ...c, enrollmentEstimate: value } : c,
-    );
+    notRemoved.map((c, i) => (i === 0 ? { ...c, enrollment: value } : c));
 
   beforeEach(() => {
     setup();
     axiosMock.onGet("/api/admin/hiddencolumns").reply(200, []);
     axiosMock.onPost("/api/recruitmentcourses/refresh").reply(200, notRemoved);
-    axiosMock
-      .onPut("/api/recruitmentcourses/enrollmentEstimate")
-      .reply(200, {});
     axiosMock
       .onGet("/api/admin/recruitments/all")
       .reply(200, [{ ...recruitmentsFixtures.threeRecruitments[1], id: 7 }]);
@@ -206,7 +202,7 @@ describe("A recruitment's course list refreshes by itself (issue #282)", () => {
       </QueryClientProvider>,
     );
 
-  test("the view-only page shows another admin's estimate on its own", async () => {
+  test("the view-only page shows another admin's change on its own", async () => {
     axiosMock
       .onGet("/api/recruitmentcourses/all")
       .reply(200, withEstimate(220));
@@ -227,7 +223,7 @@ describe("A recruitment's course list refreshes by itself (issue #282)", () => {
       .onGet("/api/recruitmentcourses/all")
       .reply(200, withEstimate(220));
     renderPage(true);
-    expect(await screen.findByTestId(box)).toHaveValue(220);
+    expect(await screen.findByTestId(box)).toHaveTextContent("220");
     await new Promise((resolve) => setTimeout(resolve, 300));
     const before = gets("/api/recruitmentcourses/all").length;
     axiosMock
@@ -236,6 +232,6 @@ describe("A recruitment's course list refreshes by itself (issue #282)", () => {
     // Longer than the 1 s refresh interval used here: no further read is made.
     await new Promise((resolve) => setTimeout(resolve, 2500));
     expect(gets("/api/recruitmentcourses/all").length).toBe(before);
-    expect(screen.getByTestId(box)).toHaveValue(220);
+    expect(screen.getByTestId(box)).toHaveTextContent("220");
   });
 });

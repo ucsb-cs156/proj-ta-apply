@@ -509,8 +509,13 @@ describe("Help pages (issue #140)", () => {
     const publish = screen.getByTestId("HelpAdminsPage-publish-assignments");
     expect(publish.id).toBe("publish-assignments");
     expect(publish).toHaveTextContent(
-      "the very bottom of the recruitment's Courses page has Publish Assignments. It asks you to confirm: publishing creates a read-only Assignments page for admins and faculty",
+      "the top of the recruitment's Assignments page, where the assignments are made, has Publish Assignments. It asks you to confirm: publishing creates a read-only Assignments page for admins and faculty",
     );
+    // Issue #358 follow-up: the panel moved from the bottom of the Courses edit page.
+    expect(publish).toHaveTextContent(
+      "Once published, the top of the Assignments page says so instead, with a link to the published page; the recruitment card shows an Assignments Published badge",
+    );
+    expect(publish).not.toHaveTextContent("Courses page");
     expect(publish).toHaveTextContent(
       "Assignments can still be changed afterwards, and the page always shows the current ones, but it is best to wait until most are settled.",
     );
@@ -524,7 +529,7 @@ describe("Help pages (issue #140)", () => {
       li.textContent.startsWith("Published Assignments."),
     );
     expect(published).toHaveTextContent(
-      "Shown once Publish Assignments has been clicked at the bottom of the Courses page",
+      "Shown once Publish Assignments has been clicked at the top of the Assignments page",
     );
     expect(
       within(published).getByRole("link", { name: "publishing" }),
@@ -538,17 +543,28 @@ describe("Help pages (issue #140)", () => {
     const heading = document.getElementById("budget");
     expect(heading.tagName).toBe("H2");
     expect(heading).toHaveTextContent("Budget for Quarter");
-    // The menu table's anchor, then the section's link to the page itself.
+    // The menu table's anchor, the hiring-target paragraph's pointer (issue #358), then the
+    // section's link to the page itself, then the Combined Allocation page's pointer.
     expect(
       screen
         .getAllByRole("link", { name: "Budget for Quarter" })
         .map((link) => link.getAttribute("href")),
-    ).toEqual(["#budget", "/admin/budget/selectQuarter"]);
+    ).toEqual([
+      "#budget",
+      "/#budget",
+      "/admin/budget/selectQuarter",
+      "/#budget",
+    ]);
     expect(
       screen.getByText(
         /where the hiring for the quarter is planned holistically/,
       ),
     ).toBeInTheDocument();
+    // Issue #358, part 3: the hiring targets are entered here; the allocations are adjusted on the
+    // Combined Allocation page.
+    expect(heading.nextElementSibling).toHaveTextContent(
+      "The hiring targets of both recruitments are entered here, beside what has been allocated to courses so far; when the two do not agree, the page says so and links to that recruitment's Courses page. The allocations themselves are adjusted on the Combined Allocation page, which the Combined allocations link at the top of the Budget page opens.",
+    );
     const lines = screen.getByTestId("HelpAdminsPage-budget-lines");
     expect(lines.id).toBe("budget-lines");
     expect(lines).toHaveTextContent(
@@ -579,9 +595,22 @@ describe("Help pages (issue #140)", () => {
       "the higher of the two recruitments' estimates for the section",
     );
     expect(page).toHaveTextContent(
-      "Allocation (typed in, and saved, exactly as on the Edit Courses page",
+      "is where a quarter's enrollment estimates and its TA and ULA allocations are edited, side by side. You reach it from the Allocate TA and ULA slots to Courses button of the quarter's QXX Budget card on your home page (Allocate TA slots to Courses or Allocate ULA slots to Courses when the quarter has one recruitment), from the Allocations link of step 3 and the (see allocations) link of step 5 of each recruitment card's diagram, from the Combined allocations link at the top of the Budget for Quarter page, and from the pointer on each recruitment's view-only Courses page.",
     );
-    expect(page).toHaveTextContent("Unrounded Allocation");
+    expect(page).toHaveTextContent(
+      "Allocation (how many TAs or ULAs of that recruitment the section gets; a whole number, saved as you type it, against the recruitment of that type)",
+    );
+    expect(page).toHaveTextContent(
+      "against the recruitment of that type), Unrounded Allocation, Delta and the TA:student or ULA:student ratio, so a quarter with only one recruitment shows only that type's columns.",
+    );
+    // Issue #358, part 3: the guide columns are explained here now, not in the Courses section.
+    const guide = screen.getByTestId(
+      "HelpAdminsPage-combined-allocations-guide",
+    );
+    expect(guide).toHaveTextContent(
+      "Those three columns guide the allocation of each type: Unrounded Allocation is how many positions each section would get if positions could be split into fractions and were shared out by enrollment estimate alone (hover its heading for the note); Delta is that share minus the allocation, green with a plus sign when a section is owed positions and red when it has more than its share; and the TA:student (or ULA:student) ratio is the estimated students per position, 1:N, a dash when there is no estimate or no positions.",
+    );
+    expect(page.nextElementSibling).toBe(guide);
     expect(page).toHaveTextContent("Delta");
     expect(page).toHaveTextContent("TA:student or ULA:student ratio");
     const columns = screen.getByTestId(
@@ -589,6 +618,9 @@ describe("Help pages (issue #140)", () => {
     );
     ["TA Rankings", "ULA Rankings", "Email", "Status", "Max"].forEach((name) =>
       expect(columns).toHaveTextContent(name),
+    );
+    expect(columns).toHaveTextContent(
+      "The table also has the descriptive columns of the Courses pages: TA Rankings and ULA Rankings",
     );
     expect(columns).toHaveTextContent(
       "A column that starts with TA is not shown when the quarter has no TA recruitment, and one that starts with ULA is not shown when it has no ULA recruitment.",
@@ -609,11 +641,24 @@ describe("Help pages (issue #140)", () => {
       "HelpAdminsPage-combined-allocations-controls",
     );
     expect(controls).toHaveTextContent(
-      "Set enrollment estimates from: max, actual sets every section's Enrollment Estimate",
+      "Above the table are two controls. Set enrollment estimates from: max, actual sets every section's Enrollment Estimate",
     );
     expect(controls).toHaveTextContent("in every recruitment of the quarter");
     expect(controls).toHaveTextContent("Auto assign TA allocations");
     expect(controls).toHaveTextContent("Auto assign ULA allocations");
+    expect(controls).toHaveTextContent(
+      "hover one for its note, Automatically allocate the N TAs across courses based on enrollment)",
+    );
+    // Issue #358, part 3: the algorithm and the purpose, moved from the Courses section.
+    expect(controls).toHaveTextContent(
+      "When there are at least as many positions as sections, every section gets at least one, and the rest are given out one at a time to the section furthest under its share, so that the biggest gap between any section's allocation and its share is as small as it can be. When there are fewer positions than sections, each section gets its share rounded",
+    );
+    expect(controls).toHaveTextContent(
+      "The purpose of this feature is to give admins a way to make a first-cut allocation based on enrollment, as close to fair as the numbers allow; it should not necessarily be considered the final allocation. Admins have the flexibility to adjust it up or down based on the particular needs of specific courses and other relevant factors.",
+    );
+    expect(controls).toHaveTextContent(
+      "The total hiring target of each recruitment is not entered here: it is on the Budget for Quarter page.",
+    );
     const both = screen.getByTestId("HelpAdminsPage-combined-allocations-both");
     expect(both).toHaveTextContent("Cost per TA");
     expect(both).toHaveTextContent("Cost per ULA");
@@ -691,7 +736,7 @@ describe("Help pages (issue #140)", () => {
       "from the schedule's maximum enrollment, from current enrollment, or leaves the ones already entered",
     );
     expect(fake).toHaveTextContent(
-      "auto-assigns the allocations across the courses, exactly as the Auto assign allocations button does.",
+      "auto-assigns the allocations across the courses, exactly as the Combined Allocation page's Auto assign allocations button does.",
     );
     expect(fake).toHaveTextContent(
       "A checkbox, ticked by default, also sets allocation visibility to Faculty see their own courses, recorded in the change history like any other visibility change.",
@@ -765,6 +810,10 @@ describe("Help pages (issue #140)", () => {
     );
     expect(text).toHaveTextContent(
       "enrollmentEstimate, allocation and unroundedAllocation are left out of the JSON unless the recruitment's allocation visibility is ALL_COURSES",
+    );
+    // Issue #358, part 3: the admin's own pages omit them too.
+    expect(text).toHaveTextContent(
+      "Since issue #358 the admin's own view-only and edit pages omit those five columns too (omitColumns, and adminColumnChoices leaves them out of the Columns menu): the admin edits them on the Combined Allocation page, and the faculty Courses page is the only table that still shows them, as text.",
     );
   });
 
@@ -1081,7 +1130,7 @@ describe("Help pages (issue #140)", () => {
     expect(
       [...rows[6].querySelectorAll("td")].map((td) => td.textContent),
     ).toEqual([
-      "Courses edit page (allocations and estimated enrollments); the view-only page never warns",
+      "Courses edit page (Populate, Remove, visibility; the allocations and estimated enrollments are edited under this key from the Combined Allocation page); the view-only page never warns",
       "The whole edit page for one recruitment",
       "courses-edit:<recruitmentId>",
       "#288",
@@ -1129,7 +1178,7 @@ describe("Help pages (issue #140)", () => {
     ).toBe(screen.getByTestId("HelpDeveloperPage-simultaneous-combined"));
     const courses = text("courses");
     expect(courses.replace(/\s+/g, " ")).toBe(
-      `The Courses pages. A recruitment's Courses page is split in two. The view-only page (/admin/recruitments/:id/courses) is the default, edits nothing, and neither heartbeats nor warns. The edit page (/admin/recruitments/:id/courses/edit) heartbeats POST /api/recruitmentcourses/heartbeat?recruitmentId=, says goodbye at /leave, names itself in the X-Client-Id header of the allocation, estimate and Auto Allocate saves, and shows the banner and the modal with the noun "page"; Leave this page goes to the view-only page. Only an admin may heartbeat, and the recruitment must exist, before anything is recorded. The version check is not a JPA version, since the course refresh and the estimates also write the row: a separate allocation_version column on recruitment_courses is counted by each allocation edit, and allocation_bulk_version on recruitments is counted by Auto Allocate. An allocation edit sends both as expectedVersion and expectedBulkVersion and gets 409 when either moved; after a bulk conflict the page reads everything again.`,
+      `The Courses pages. A recruitment's Courses page is split in two. The view-only page (/admin/recruitments/:id/courses) is the default, edits nothing, and neither heartbeats nor warns. The edit page (/admin/recruitments/:id/courses/edit) heartbeats POST /api/recruitmentcourses/heartbeat?recruitmentId=, says goodbye at /leave, and shows the banner and the modal with the noun "page"; Leave this page goes to the view-only page. Since issue #358 the edit page keeps Populate, Add by enroll code, Remove and allocation visibility, none of which name the tab (the hiring target is on the Budget page and Publish Assignments on the Assignments page); the allocation, estimate, fill-estimates and Auto Allocate saves, which name the tab in the X-Client-Id header, are made from the Combined Allocation page (next) under this same key. Only an admin may heartbeat, and the recruitment must exist, before anything is recorded. The version check is not a JPA version, since the course refresh and the estimates also write the row: a separate allocation_version column on recruitment_courses is counted by each allocation edit, and allocation_bulk_version on recruitments is counted by Auto Allocate. An allocation edit sends both as expectedVersion and expectedBulkVersion and gets 409 when either moved; after a bulk conflict the page reads everything again.`,
     );
     expect(courses).toMatch(/view-only page/);
     expect(courses).toMatch(/\/admin\/recruitments\/:id\/courses\/edit/);
@@ -1373,7 +1422,7 @@ describe("Help pages (issue #140)", () => {
       "any number of tabs or windows may show it, for you or for other admins, without any warning",
     );
     expect(intro).toHaveTextContent(
-      "Its Edit button, beside the words \u201cClick Edit to: change the number of TAs/ULAs expected to be hired; set the expected enrollments for each course; set the number of TAs/ULAs allocated to each course; adjust the visibility of these allocations\u201d, takes you to the edit page",
+      "Its Edit button, beside the words \u201cClick Edit to: populate the course list, add a lecture by enroll code, remove a course, or release allocations to faculty\u201d, takes you to the edit page, where you use Populate and the other controls; it has a link back to the view-only page. The estimated enrollments and the allocations are edited on the Combined Allocation page, which counts as a tab of this edit page (below).",
     );
     expect(intro).toHaveTextContent(
       "Only one tab or window should have a given recruitment's edit page open at a time, and edit pages of different recruitments never warn each other.",
@@ -1387,6 +1436,9 @@ describe("Help pages (issue #140)", () => {
     const meaning = screen.getByTestId(`${page}-courses-meaning`);
     expect(meaning).toHaveTextContent(
       "use the view-only page in as many tabs as you like",
+    );
+    expect(meaning).toHaveTextContent(
+      "If you go on and change an allocation on the combined page, the system refuses a change made from a copy that is out of date, tells you, and reads the numbers again; whatever you typed there is lost. The tab or window opened last also asks the same question as for rankings",
     );
     expect(meaning).toHaveTextContent(
       "there Leave this page takes you to the view-only Courses page",
@@ -1699,8 +1751,11 @@ describe("Help pages (issue #140)", () => {
       "Each of those columns also has a small hide link at the top right of its heading: one click hides that column without opening the menu, exactly as unticking it there does.",
     );
     expect(columns).toHaveTextContent(
-      "A recruitment's table starts with only the Course Number, Instructor, Enrolled, Max, Enrollment Estimate, Allocation, Unrounded Allocation, Delta and TA:student ratio columns shown, on the view-only page and the edit page alike",
+      "A recruitment's table starts with only the Course Number, Instructor, Enrolled and Max columns shown, on the view-only page and the edit page alike; tick the others (Rankings once reviews have started, Section, Title, Email, Days, Time, Room, Status, and the Remove / Unremove button) in the Columns menu when you need them. The budget columns (Enrollment Estimate, Allocation, Unrounded Allocation, Delta and the TA:student or ULA:student ratio) are not on these pages and not in their Columns menu: they are on the Combined Allocation page, which both pages point to.",
     );
+    expect(
+      within(columns).getByRole("link", { name: "Combined Allocation page" }),
+    ).toHaveAttribute("href", "/#combined-allocations");
     expect(columns).toHaveTextContent(
       "Your choice is kept in this browser, for that recruitment and for both pages, so it is the same on your next visit from the same browser; it is not shared with other admins or other browsers.",
     );
@@ -1758,11 +1813,12 @@ describe("Help pages (issue #140)", () => {
     // Issue #174: the hiring target and per-course allocations, in the Courses section.
     const hiring = screen.getByTestId("HelpAdminsPage-hiring-target");
     expect(hiring.id).toBe("hiring-target");
+    // Issue #358 follow-up: the target is entered on the Budget page; the view page shows it.
     expect(hiring).toHaveTextContent(
-      "Enter the total number of TAs (or ULAs) expected to be hired; it is saved as you type, must be at least 1,",
+      "The hiring target, the total number of TAs (or ULAs) expected to be hired, is entered on the Budget for Quarter page, beside the money; it must be at least 1. The view-only Courses page shows it, read-only, with a running count of how many positions are allocated so far and how many are left to assign, and warns when the allocations add up to more than the target; the edit page does not show it. Each lecture's share of it, its Allocation, is given on the Combined Allocation page.",
     );
     expect(hiring).toHaveTextContent(
-      "warns when the allocations add up to more than the target. Removed lectures keep their number but do not count.",
+      "Combined Allocation page. Removed lectures keep their number but do not count. These are planning figures",
     );
     expect(
       document.getElementById("courses").compareDocumentPosition(hiring) &
@@ -1775,10 +1831,7 @@ describe("Help pages (issue #140)", () => {
       "Opening the page also refreshes every lecture's enrollment and maximum enrollment from the UCSB schedule while you wait",
     );
     expect(estimates).toHaveTextContent(
-      "It is saved a second after you stop typing, or at once when you leave the box; an empty box means no estimate.",
-    );
-    expect(estimates).toHaveTextContent(
-      "Set enrollment estimates from: max or actual",
+      "Your own estimate of how many students each lecture will have, the Enrollment Estimate, and the Set enrollment estimates from: max, actual control that fills it from the schedule used to be on this page; they are on the Combined Allocation page now, where the estimate is shared by the quarter's TA and ULA recruitments.",
     );
     expect(
       hiring.compareDocumentPosition(estimates) &
@@ -1787,15 +1840,12 @@ describe("Help pages (issue #140)", () => {
     // Issue #176: the guide columns and the auto assign button.
     const auto = screen.getByTestId("HelpAdminsPage-auto-assign");
     expect(auto.id).toBe("auto-assign");
+    // Issue #358, part 3: what left the Courses pages, and that everything else stays.
     expect(auto).toHaveTextContent(
-      "Delta is that share minus the allocation, green with a plus sign when a lecture is owed positions and red when it has more than its share",
-    );
-    // Issue #257: at least one each when there are enough positions.
-    expect(auto).toHaveTextContent(
-      "When there are at least as many positions as lectures, every lecture gets at least one, and the rest are given out one at a time to the lecture furthest under its share, so that the biggest gap between any lecture's allocation and its share is as small as it can be. When there are fewer positions than lectures, each lecture gets its share rounded",
+      "Auto assign TA allocations (or ULA), and the Unrounded Allocation, Delta and TA:student ratio columns that guided it, have moved to the Combined Allocation page too, where they are explained. In all, what left the Courses pages is: the Enrollment Estimate, Allocation, Unrounded Allocation, Delta and TA:student / ULA:student ratio columns, Set enrollment estimates from: max, actual, and Auto assign allocations; and from the edit page alone,",
     );
     expect(auto).toHaveTextContent(
-      "The purpose of this feature is to give admins a way to make a first-cut allocation based on enrollment, as close to fair as the numbers allow; it should not necessarily be considered the final allocation. Admins have the flexibility to adjust it up or down based on the particular needs of specific courses and other relevant factors.",
+      "and from the edit page alone, the hiring target block (the target is entered on the Budget for Quarter page), the paragraph explaining Populate, and the Publish Assignments panel, which is now at the top of the recruitment's Assignments page. Everything else stays: Populate, Add by enroll code, Remove / Unremove and Show removed courses, the refresh from the UCSB schedule and the last-refreshed line, the allocation visibility panel, Copy emails of faculty with zero rankings, the Summer Session column, the warning about other tabs, the developer buttons, and the totals row with its Total Course Count and the sums of Enrolled and Max; the view-only page also keeps the read-only hiring target and the pointer to the Combined Allocation page.",
     );
     expect(
       estimates.compareDocumentPosition(auto) &
@@ -1849,6 +1899,10 @@ describe("Help pages (issue #140)", () => {
     expect(buttons[0]).toMatch(
       /^Open Applications \/ Close Applications\. Recruitments do not open/,
     );
+    // Issue #358, part 3: the Courses item points to the Combined Allocation page.
+    expect(buttons[2]).toMatch(
+      /the page says when the list was last refreshed\. Enrollment estimates and allocations are not on this page: it points to the Combined Allocation page, where they are edited for TAs and ULAs together\.$/,
+    );
     expect(buttons[0]).toMatch(
       /primary consideration date\. Closing keeps every application on file, and a closed recruitment can be opened again\. Each button first asks/,
     );
@@ -1869,7 +1923,7 @@ describe("Help pages (issue #140)", () => {
       /^Assignments\. The faculty rankings of every real applicant side by side, one column per lecture, with a Tentative Assignment dropdown on each row/,
     );
     expect(buttons[8]).toMatch(
-      /^Published Assignments\. Shown once Publish Assignments has been clicked at the bottom of the Courses page: the read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\./,
+      /^Published Assignments\. Shown once Publish Assignments has been clicked at the top of the Assignments page: the read-only assignments page that admins and faculty share, with its two CSV downloads \(see publishing above\)\./,
     );
     expect(buttons[9]).toMatch(/^Delete\. Removes the recruitment/);
     expect(
@@ -2034,7 +2088,7 @@ describe("Help pages (issue #140)", () => {
       .querySelectorAll("li");
     expect(steps).toHaveLength(4);
     expect(steps[3]).toHaveTextContent(
-      "Afterwards: Close Applications, plan the hiring on the Courses and Budget for Quarter pages, release each lecture's allocation to its instructor, then Open Faculty Reviews.",
+      "Afterwards: Close Applications, plan the hiring on the Budget for Quarter and Combined Allocation pages, release each lecture's allocation to its instructor, then Open Faculty Reviews.",
     );
   });
 
@@ -2169,13 +2223,23 @@ describe("Help pages (issue #140)", () => {
 });
 
 describe("admin Help: the QXX Budget card (issue #357)", () => {
-  test("describes the card, its three buttons and the greyed-out allocations", async () => {
+  test("describes the card's two buttons: Budget Planning and the allocation button with its three labels (issue #358)", async () => {
     renderPage(<HelpAdminsPage />);
-    expect(await screen.findByText("QXX Budget")).toBeInTheDocument();
-    expect(screen.getByText("TA allocations")).toBeInTheDocument();
-    expect(screen.getByText("ULA allocations")).toBeInTheDocument();
+    const card = (await screen.findByText("QXX Budget")).parentElement;
+    expect(within(card).getByText("Budget Planning")).toBeInTheDocument();
+    expect(card).toHaveTextContent(
+      "with two buttons: Budget Planning opens that quarter's Budget for Quarter page, and one allocation button opens the quarter's Combined Allocation page, where the TA and ULA allocations are edited side by side; its label says which recruitments the quarter has: Allocate TA slots to Courses, Allocate ULA slots to Courses or Allocate TA and ULA slots to Courses.",
+    );
+    expect(card).not.toHaveTextContent("TA allocations and ULA allocations");
+    expect(card).not.toHaveTextContent("greyed out");
+    // The diagram's links, described in the same paragraph.
+    expect(card).toHaveTextContent(
+      "In the diagram, step 3's Allocations and step 5's (see allocations) links open the quarter's Combined Allocation page, and the (see assignments) links of steps 8 and 9 open the recruitment's assignments page.",
+    );
     expect(
-      screen.getByText(/greyed out when the quarter has no recruitment/),
-    ).toBeInTheDocument();
+      within(card).getAllByRole("link", {
+        name: "Combined Allocation page",
+      })[0],
+    ).toHaveAttribute("href", "/#combined-allocations");
   });
 });

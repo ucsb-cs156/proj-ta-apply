@@ -207,7 +207,7 @@ describe("HelpRecruitmentStepsPage tests", () => {
     expect(STEP_EXPLANATIONS.map((s) => s.text)).toEqual([
       "From the Recruitments section of your home page, create a recruitment for a quarter and a type; its course list is filled in from the quarter's schedule.",
       "Applicants can submit applications, and edit them until the primary consideration date.",
-      "Set the hiring target and give each course its share on the Courses page, checking the money on the Budget for Quarter page.",
+      "Set the hiring target on the Budget for Quarter page and give each course its share on the Combined Allocation page.",
       "Applicants can no longer submit or edit; every application is kept, and the recruitment can be opened again.",
       "Choose who sees the allocations: admins only, each faculty member for their own courses, or all faculty for all courses.",
       "Faculty see the candidates for their courses and enter rankings, until the deadline you give.",
