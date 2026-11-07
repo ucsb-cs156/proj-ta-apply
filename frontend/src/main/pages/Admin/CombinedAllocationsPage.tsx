@@ -60,9 +60,9 @@ import {
 
 /**
  * The conversion factor's saves name no tab: the page does not heartbeat for the quarter's budget
- * (`budget:<quarter>`), whose only field it edits is guarded by the budget row's version check, and
- * a save that named a tab the Budget page never hears a heartbeat from would make that page warn
- * about a tab that is not there.
+ * (`budget:<quarter>`), whose only field it edits is guarded by a version check of its own, the
+ * budget row's `conversionVersion` (issue #375), and a save that named a tab the Budget page never
+ * hears a heartbeat from would make that page warn about a tab that is not there.
  */
 const NO_HEADERS: Record<string, string> = {};
 

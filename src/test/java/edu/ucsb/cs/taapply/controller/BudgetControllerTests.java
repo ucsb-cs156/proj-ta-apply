@@ -344,16 +344,167 @@ public class BudgetControllerTests extends ControllerTestCase {
   @WithMockUser(roles = {"ADMIN"})
   @Test
   public void a_stale_version_stops_a_conversion_factor_change_too() throws Exception {
-    Budget budget = versioned(5);
+    // Each count is checked whenever it is given, whatever fields come with it.
+    Budget budget = versioned(5, 2);
     when(budgetService.budgetFor(Q)).thenReturn(budget);
     when(budgetService.summary(Q)).thenReturn(summary(budget));
 
     mockMvc
-        .perform(put("/api/admin/budget?quarter=20264&version=4&conversionTAtoULA=2").with(csrf()))
+        .perform(
+            put("/api/admin/budget?quarter=20264&version=4&conversionVersion=2&conversionTAtoULA=2")
+                .with(csrf()))
         .andExpect(status().isConflict());
 
     assertEquals(3.0, budget.getConversionTAtoULA());
+    assertEquals(2, budget.getConversionVersion());
     verify(budgetRepository, never()).save(any());
+  }
+
+  // ---- the conversion factor's own count (issue #375) ----
+
+  @Test
+  public void a_new_budget_starts_both_counts_at_zero() {
+    Budget budget = Budget.builder().quarter(Q).build();
+    assertEquals(0, budget.getVersion());
+    assertEquals(0, budget.getConversionVersion());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_factor_save_with_the_current_conversion_version_is_applied_and_counts_only_that()
+      throws Exception {
+    Budget budget = versioned(5, 2);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(
+            put("/api/admin/budget?quarter=20264&conversionVersion=2&conversionTAtoULA=2.5")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(2.5, budget.getConversionTAtoULA());
+    assertEquals(3, budget.getConversionVersion());
+    assertEquals(5, budget.getVersion(), "the lines' version is not touched");
+    verify(budgetRepository).save(budget);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_factor_save_with_a_stale_conversion_version_is_a_409_even_if_version_is_current()
+      throws Exception {
+    Budget budget = versioned(5, 2);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/budget?quarter=20264&version=5&conversionVersion=1"
+                        + "&conversionTAtoULA=2.5")
+                    .with(csrf()))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.version").value(5))
+            .andExpect(jsonPath("$.conversionVersion").value(2))
+            .andExpect(jsonPath("$.summary.budget.version").value(5))
+            .andExpect(jsonPath("$.summary.budget.conversionVersion").value(2))
+            .andReturn();
+
+    assertEquals(
+        "This budget was changed in another tab or window. Use theirs, or overwrite with yours.",
+        responseToJson(response).get("message"));
+    assertEquals(3.0, budget.getConversionTAtoULA());
+    assertEquals(2, budget.getConversionVersion());
+    assertEquals(5, budget.getVersion());
+    verify(budgetRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_line_save_with_a_stale_version_is_a_409_even_if_conversion_version_is_current()
+      throws Exception {
+    Budget budget = versioned(5, 2);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(
+            put("/api/admin/budget?quarter=20264&version=4&conversionVersion=2&tasOnlyBudget=7")
+                .with(csrf()))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.version").value(5))
+        .andExpect(jsonPath("$.conversionVersion").value(2));
+
+    assertEquals(new BigDecimal("2.00"), budget.getTasOnlyBudget());
+    assertEquals(5, budget.getVersion());
+    verify(budgetRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_line_save_counts_the_lines_and_not_the_factor_whichever_line_it_is()
+      throws Exception {
+    for (String line : List.of("unrestrictedBudget", "tasOnlyBudget", "ulasOnlyBudget")) {
+      Budget budget = versioned(5, 2);
+      when(budgetService.budgetFor(Q)).thenReturn(budget);
+      when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+      mockMvc
+          .perform(put("/api/admin/budget?quarter=20264&version=5&" + line + "=7").with(csrf()))
+          .andExpect(status().isOk());
+
+      assertEquals(6, budget.getVersion(), line);
+      assertEquals(2, budget.getConversionVersion(), line);
+      assertEquals(3.0, budget.getConversionTAtoULA(), line);
+    }
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_save_that_gives_lines_and_the_factor_counts_both() throws Exception {
+    Budget budget = versioned(5, 2);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(
+            put("/api/admin/budget?quarter=20264&version=5&conversionVersion=2"
+                    + "&unrestrictedBudget=1&ulasOnlyBudget=2&conversionTAtoULA=4")
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(6, budget.getVersion());
+    assertEquals(3, budget.getConversionVersion());
+    assertEquals(4.0, budget.getConversionTAtoULA());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_save_that_gives_nothing_counts_nothing() throws Exception {
+    Budget budget = versioned(5, 2);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&version=5&conversionVersion=2").with(csrf()))
+        .andExpect(status().isOk());
+
+    assertEquals(5, budget.getVersion());
+    assertEquals(2, budget.getConversionVersion());
+    verify(budgetRepository).save(budget);
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void the_summary_carries_both_counts() throws Exception {
+    Budget budget = versioned(5, 2);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(get("/api/admin/budget?quarter=20264"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.budget.version").value(5))
+        .andExpect(jsonPath("$.budget.conversionVersion").value(2));
   }
 
   @Test
@@ -405,14 +556,19 @@ public class BudgetControllerTests extends ControllerTestCase {
   // ---- the version check (issue #277) ----
 
   private static Budget versioned(int version) {
+    return versioned(version, 0);
+  }
+
+  private static Budget versioned(int version, int conversionVersion) {
     Budget budget = budget("1.00", "2.00", "3.00");
     budget.setVersion(version);
+    budget.setConversionVersion(conversionVersion);
     return budget;
   }
 
   @WithMockUser(roles = {"ADMIN"})
   @Test
-  public void a_save_with_the_current_version_is_applied() throws Exception {
+  public void a_save_with_the_current_version_is_applied_and_counts_one_more() throws Exception {
     Budget budget = versioned(4);
     when(budgetService.budgetFor(Q)).thenReturn(budget);
     when(budgetService.summary(Q)).thenReturn(summary(budget));
@@ -422,6 +578,8 @@ public class BudgetControllerTests extends ControllerTestCase {
         .andExpect(status().isOk());
 
     assertEquals(new BigDecimal("7.00"), budget.getTasOnlyBudget());
+    assertEquals(5, budget.getVersion());
+    assertEquals(0, budget.getConversionVersion());
     verify(budgetRepository).save(budget);
   }
 
@@ -439,6 +597,7 @@ public class BudgetControllerTests extends ControllerTestCase {
             .perform(put("/api/admin/budget?quarter=20264&version=4&tasOnlyBudget=7").with(csrf()))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.version").value(5))
+            .andExpect(jsonPath("$.conversionVersion").value(0))
             .andExpect(jsonPath("$.summary.quarter").value(Q))
             .andReturn();
 
@@ -446,23 +605,8 @@ public class BudgetControllerTests extends ControllerTestCase {
         "This budget was changed in another tab or window. Use theirs, or overwrite with yours.",
         responseToJson(response).get("message"));
     assertEquals(new BigDecimal("2.00"), budget.getTasOnlyBudget());
+    assertEquals(5, budget.getVersion());
     verify(budgetRepository, never()).save(any());
-  }
-
-  @WithMockUser(roles = {"ADMIN"})
-  @Test
-  public void a_save_that_loses_the_race_to_another_is_a_409_too() throws Exception {
-    Budget budget = versioned(5);
-    when(budgetService.budgetFor(Q)).thenReturn(budget);
-    when(budgetService.summary(Q)).thenReturn(summary(budget));
-    when(budgetRepository.save(budget))
-        .thenThrow(
-            new org.springframework.orm.ObjectOptimisticLockingFailureException(Budget.class, Q));
-
-    mockMvc
-        .perform(put("/api/admin/budget?quarter=20264&version=5&tasOnlyBudget=7").with(csrf()))
-        .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.version").value(5));
   }
 
   // ---- the multi-tab warning (issue #277) ----

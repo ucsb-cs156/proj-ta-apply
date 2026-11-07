@@ -1110,7 +1110,12 @@ export default function HelpAdminsPage(): React.JSX.Element {
           stored. Choose <strong>Use theirs</strong> to keep what is stored and
           drop what you typed, or <strong>Overwrite</strong> to save what you
           typed over it. This applies to the three budget lines, the average
-          cost per TA and per ULA, and the two hiring targets.
+          cost per TA and per ULA, and the two hiring targets. The{" "}
+          <strong>TA to ULA conversion factor</strong>, which is changed on the
+          Combined Allocation page, is counted separately from the three budget
+          lines: a change to it there never refuses a budget line here, and a
+          change to a budget line here never refuses the factor there. Only a
+          change to the <em>same</em> figure is refused.
         </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-courses">
           <strong>The Courses pages.</strong> A recruitment&apos;s Courses page
@@ -1179,8 +1184,11 @@ export default function HelpAdminsPage(): React.JSX.Element {
           budget figure, not an allocation, and is guarded the Budget
           page&apos;s way instead: if someone else changed it first, your save
           is not made and you choose <strong>Use theirs</strong> or{" "}
-          <strong>Overwrite</strong>. Having the Budget page open does not by
-          itself cause this warning, nor does the combined page cause the Budget
+          <strong>Overwrite</strong>. The factor is counted separately from the
+          three budget lines of the Budget page, so only another change to the
+          factor itself is refused this way; a budget line changed on the Budget
+          page meanwhile is not. Having the Budget page open does not by itself
+          cause this warning, nor does the combined page cause the Budget
           page&apos;s.
         </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-todo">

@@ -180,12 +180,14 @@ Courses pages" below).
   and modal use the noun "quarter's allocations"; *Leave this page* goes to `/admin/budget/QXX`.
   The allocation, estimate, fill-estimates and Auto assign saves name the tab; the conversion
   factor save does not, since the page does not heartbeat `budget:<quarter>` (the factor is guarded
-  by the budget row's version check). Details in `ConcurrentEditMitigationDesign.md`, section (b).
+  by a version check of its own, the budget row's `conversionVersion`, #375, counted apart from the
+  `version` of the three budget lines). Details in `ConcurrentEditMitigationDesign.md`, section (b).
 - **Only when the quarter has both recruitments**: a table with no header row, *Cost per TA* and
   *Cost per ULA* (each recruitment's average cost per position, entered on the Budget page) and
   *TA Cost/ULA Cost* (empty when the cost per ULA is zero or either is unknown); the editable
   **Nominal TA to ULA conversion factor** (the budget row's `conversionTAtoULA`, greater than
-  zero, 3 until set, saved on change with the budget's version check); and an **ASE:Student Ratio**
+  zero, 3 until set, saved on change with its own version check, `conversionVersion`, #375); and an
+  **ASE:Student Ratio**
   column, `1 : ( enrollmentEstimate / ( TA allocation + ULA allocation / conversionTAtoULA ) )`,
   the students per TA-equivalent, shown as "1:N" with a dash when the denominator is zero or there
   is no estimate.

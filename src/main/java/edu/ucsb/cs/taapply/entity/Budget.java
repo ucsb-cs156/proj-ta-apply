@@ -49,9 +49,21 @@ public class Budget {
   private Double conversionTAtoULA = DEFAULT_CONVERSION_TA_TO_ULA;
 
   /**
-   * How many times this budget has been saved (issue #277). JPA checks it and adds one on every
-   * save (optimistic locking), and a save that carries an older count than the budget now has is
-   * refused, so two tabs or admins cannot silently overwrite each other's change.
+   * How many times the three budget lines have been saved (issue #277). The controller compares it
+   * to the one the page last saw and adds one on every save of a line, so a save made from a stale
+   * copy of the Budget page is refused instead of silently overwriting another admin's change. A
+   * change to the conversion factor does not touch it (issue #375).
    */
-  @Version private Integer version;
+  @Column(nullable = false)
+  @Builder.Default
+  private Integer version = 0;
+
+  /**
+   * How many times the conversion factor has been saved (issue #375): the same check as {@link
+   * #version}, kept apart from it so that the Budget page and the Combined Allocation page, which
+   * edit different figures of this row, do not refuse each other's saves.
+   */
+  @Column(name = "conversion_version", nullable = false)
+  @Builder.Default
+  private Integer conversionVersion = 0;
 }

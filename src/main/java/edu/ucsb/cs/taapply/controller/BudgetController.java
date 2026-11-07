@@ -17,7 +17,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -70,17 +69,28 @@ public class BudgetController extends ApiController {
           "Any of the three may be given, and the conversionTAtoULA (issue #358, how many ULAs count"
               + " as one TA on the Combined Allocation page; greater than zero, else 400); the"
               + " others keep their values. Amounts are dollars and cents and must not be"
-              + " negative. Returns the quarter's summary with the new"
-              + " figures. The version is the one the page last saw (issue #277): if the budget"
-              + " has been saved since, by another tab or admin, nothing is changed and the answer"
-              + " is 409 Conflict with the summary as it now stands. Without a version the save"
-              + " is unconditional. A save that names its client (X-Client-Id) also tells the"
-              + " server this tab or window is working on the budget, for the multi-tab warning.")
+              + " negative. Returns the quarter's summary with the new figures. The budget lines"
+              + " and the conversion factor are counted apart (issues #277 and #375): version is"
+              + " the budget's version the page last saw, and goes up by one on every save of a"
+              + " line; conversionVersion is the factor's, and goes up by one on every save of the"
+              + " factor. Each given one is compared only to its own count: if the lines (or the"
+              + " factor) have been saved since, by another tab or admin, nothing is changed and"
+              + " the answer is 409 Conflict with both counts and the summary as it now stands."
+              + " Without a count the save is unconditional. A save that names its client"
+              + " (X-Client-Id) also tells the server this tab or window is working on the budget,"
+              + " for the multi-tab warning.")
   @PreAuthorize("hasRole('ROLE_ADMIN')")
   @PutMapping("")
   public ResponseEntity<Object> update(
       @Parameter(name = "quarter") @RequestParam String quarter,
-      @Parameter(name = "version") @RequestParam(required = false) Integer version,
+      @Parameter(name = "version", description = "the budget lines' count the page last saw")
+          @RequestParam(required = false)
+          Integer version,
+      @Parameter(
+              name = "conversionVersion",
+              description = "the conversion factor's count the page last saw")
+          @RequestParam(required = false)
+          Integer conversionVersion,
       @RequestHeader(value = ConcurrencyHeaders.CLIENT_ID, required = false) String clientId,
       @Parameter(name = "unrestrictedBudget") @RequestParam(required = false)
           BigDecimal unrestrictedBudget,
@@ -99,31 +109,48 @@ public class BudgetController extends ApiController {
       throw new IllegalArgumentException("conversionTAtoULA must be greater than zero");
     }
 
-    Budget budget = budgetService.budgetFor(quarter);
-    clientActivityDetector.note(resourceKey(quarter), clientId, identity());
-    if (version != null && !version.equals(budget.getVersion())) {
-      return conflict(quarter);
-    }
-    if (unrestrictedBudget != null) {
-      budget.setUnrestrictedBudget(BudgetService.money(unrestrictedBudget));
-    }
-    if (tasOnlyBudget != null) {
-      budget.setTasOnlyBudget(BudgetService.money(tasOnlyBudget));
-    }
-    if (ulasOnlyBudget != null) {
-      budget.setUlasOnlyBudget(BudgetService.money(ulasOnlyBudget));
-    }
-    if (conversionTAtoULA != null) {
-      budget.setConversionTAtoULA(conversionTAtoULA);
-    }
-    try {
+    synchronized (COMPARE_AND_SET) {
+      Budget budget = budgetService.budgetFor(quarter);
+      clientActivityDetector.note(resourceKey(quarter), clientId, identity());
+      if (version != null && !version.equals(budget.getVersion())) {
+        return conflict(quarter);
+      }
+      if (conversionVersion != null && !conversionVersion.equals(budget.getConversionVersion())) {
+        return conflict(quarter);
+      }
+      boolean linesChanged = false;
+      if (unrestrictedBudget != null) {
+        budget.setUnrestrictedBudget(BudgetService.money(unrestrictedBudget));
+        linesChanged = true;
+      }
+      if (tasOnlyBudget != null) {
+        budget.setTasOnlyBudget(BudgetService.money(tasOnlyBudget));
+        linesChanged = true;
+      }
+      if (ulasOnlyBudget != null) {
+        budget.setUlasOnlyBudget(BudgetService.money(ulasOnlyBudget));
+        linesChanged = true;
+      }
+      if (linesChanged) {
+        budget.setVersion(budget.getVersion() + 1);
+      }
+      if (conversionTAtoULA != null) {
+        budget.setConversionTAtoULA(conversionTAtoULA);
+        budget.setConversionVersion(budget.getConversionVersion() + 1);
+      }
       budgetRepository.save(budget);
-    } catch (ObjectOptimisticLockingFailureException e) {
-      // Another save got in between reading the budget and writing it.
-      return conflict(quarter);
     }
     return ResponseEntity.ok(budgetService.summary(quarter));
   }
+
+  /**
+   * Makes the read, compare and write of a save one step as far as this server goes, so that two
+   * saves cannot both pass the count check and both be written (the lines and the factor each have
+   * a plain counter, issue #375, not a JPA version). The app runs as one instance (see the design
+   * of issue #270), so that is enough, as it is for the compare-and-set in {@link
+   * RecruitmentsController}.
+   */
+  private static final Object COMPARE_AND_SET = new Object();
 
   @Operation(
       summary =
@@ -180,6 +207,7 @@ public class BudgetController extends ApiController {
         "message",
         "This budget was changed in another tab or window. Use theirs, or overwrite with yours.");
     body.put("version", current.budget().getVersion());
+    body.put("conversionVersion", current.budget().getConversionVersion());
     body.put("summary", current);
     return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
   }
