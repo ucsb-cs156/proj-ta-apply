@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.enums.ClassLevel;
 import edu.ucsb.cs.taapply.enums.CourseInterest;
 import edu.ucsb.cs.taapply.enums.OtherCampusJob;
@@ -40,6 +41,9 @@ public class ApplicationAuditServiceTests {
   @Autowired ApplicationAuditService service;
   @MockitoBean ApplicationRepository applicationRepository;
   @MockitoBean AuditTrailRepository auditTrailRepository;
+
+  /** Nobody logged in unless a test says so, so the rows most tests expect have a null editor. */
+  @MockitoBean CurrentUserService currentUserService;
 
   private static Application application() {
     return Application.builder()
@@ -114,6 +118,42 @@ public class ApplicationAuditServiceTests {
 
     verify(applicationRepository, times(1)).save(application);
     verify(auditTrailRepository, never()).saveAll(any());
+  }
+
+  // ---- the editor (issue #337) ----
+
+  /** Every row of an edit names the logged-in user, plain fields and join-table rows alike. */
+  @Test
+  public void every_row_carries_the_logged_in_user_s_email() {
+    when(currentUserService.getUser())
+        .thenReturn(User.builder().id(3L).email("admin@ucsb.edu").build());
+    Application application = application();
+    ApplicationAuditService.Snapshot before = service.snapshot(application);
+    application.setMajor("Computer Engineering");
+    application.setInterests(new HashMap<>(Map.of("Tutoring", 5, "Grading", 2)));
+
+    List<AuditTrail> changes = service.record(before, application, RecruitmentType.TA);
+
+    assertEquals(2, changes.size());
+    assertEquals("major", changes.get(0).getFieldName());
+    assertEquals("admin@ucsb.edu", changes.get(0).getEditorEmail());
+    assertEquals("interests", changes.get(1).getFieldName());
+    assertEquals("admin@ucsb.edu", changes.get(1).getEditorEmail());
+    verify(auditTrailRepository, times(1)).saveAll(changes);
+  }
+
+  /** With nobody logged in the editor is null, as it is on rows older than the column. */
+  @Test
+  public void with_no_user_logged_in_the_editor_is_null() {
+    when(currentUserService.getUser()).thenReturn(null);
+    Application application = application();
+    ApplicationAuditService.Snapshot before = service.snapshot(application);
+    application.setMajor("Computer Engineering");
+
+    List<AuditTrail> changes = service.record(before, application, RecruitmentType.TA);
+
+    assertEquals(1, changes.size());
+    assertNull(changes.get(0).getEditorEmail());
   }
 
   // ---- record ----

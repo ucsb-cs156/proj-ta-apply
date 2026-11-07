@@ -39,6 +39,7 @@ export const appLabel = (row: AppIds): string => {
 export type SortColumn =
   | "id"
   | "editedAt"
+  | "editorEmail"
   | "ulaApplicationId"
   | "taApplicationId"
   | "fieldName"
@@ -48,6 +49,7 @@ export type SortColumn =
 export const SORT_OPTIONS: { value: SortColumn; label: string }[] = [
   { value: "id", label: "id" },
   { value: "editedAt", label: "Edited" },
+  { value: "editorEmail", label: "Edited By" },
   { value: "taApplicationId", label: "App (TA id)" },
   { value: "ulaApplicationId", label: "App (ULA id)" },
   { value: "fieldName", label: "Field" },

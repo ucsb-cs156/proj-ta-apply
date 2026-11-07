@@ -1199,6 +1199,9 @@ public class ApplicationsWebIT extends WebTestCase {
         .containsText("Computer Science");
     assertThat(page.getByTestId("AdminApplicationPage-audit-cell-row-0-col-newValue"))
         .containsText("Statistics");
+    // Issue #337: each row names the admin who made the edit.
+    assertThat(page.getByTestId("AdminApplicationPage-audit-cell-row-0-col-editorEmail"))
+        .hasText("admin@ucsb.edu");
     // The three courses added are rows too, with a JSON new value and no old value.
     assertThat(page.getByTestId("AdminApplicationPage-audit-cell-row-1-col-fieldName"))
         .containsText("priorCoursework");
@@ -1210,6 +1213,8 @@ public class ApplicationsWebIT extends WebTestCase {
     assertThat(page.getByTestId("AuditTrailPage-total")).containsText("4 changes recorded.");
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-app")).containsText("TA ");
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-app-link")).isVisible();
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-3-col-editorEmail"))
+        .hasText("admin@ucsb.edu");
   }
 
   /**

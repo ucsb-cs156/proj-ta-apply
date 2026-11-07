@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.Recruitment;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.AuditTrailRepository;
@@ -24,6 +26,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,8 +49,16 @@ public class ApplicationAuditServiceTransactionTests {
   @Autowired ApplicationRepository applicationRepository;
   @Autowired RecruitmentRepository recruitmentRepository;
   @MockitoSpyBean AuditTrailRepository auditTrailRepository;
+  @MockitoBean CurrentUserService currentUserService;
 
   private Long applicationId;
+
+  /** The admin making the edit (issue #337). */
+  @BeforeEach
+  public void an_admin_is_logged_in() {
+    when(currentUserService.getUser())
+        .thenReturn(User.builder().id(3L).email("admin@ucsb.edu").build());
+  }
 
   @BeforeEach
   public void an_application_is_on_file() {
@@ -93,6 +104,8 @@ public class ApplicationAuditServiceTransactionTests {
     assertEquals("firstName", rows.get(0).getFieldName());
     assertEquals("Ada", rows.get(0).getOldValue());
     assertEquals("Grace", rows.get(0).getNewValue());
+    // Issue #337: the row names the admin who made the edit, stored in the new column.
+    assertEquals("admin@ucsb.edu", rows.get(0).getEditorEmail());
   }
 
   /** Side one: the audit rows cannot be written, so the edit must not be in the database. */

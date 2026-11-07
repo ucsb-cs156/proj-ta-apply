@@ -122,7 +122,8 @@ public class AuditTrailControllerTests extends ControllerTestCase {
             "taApplicationId",
             "fieldName",
             "oldValue",
-            "newValue")) {
+            "newValue",
+            "editorEmail")) {
       PageRequest request = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, column));
       when(auditTrailRepository.findAll(eq(request)))
           .thenReturn(new PageImpl<>(List.of(), request, 0));
@@ -135,8 +136,8 @@ public class AuditTrailControllerTests extends ControllerTestCase {
             .andExpect(status().is(400))
             .andReturn();
     assertEquals(
-        "Cannot sort by password (expected one of [editedAt, fieldName, id, newValue, oldValue,"
-            + " taApplicationId, ulaApplicationId])",
+        "Cannot sort by password (expected one of [editedAt, editorEmail, fieldName, id, newValue,"
+            + " oldValue, taApplicationId, ulaApplicationId])",
         responseToJson(response).get("message"));
   }
 

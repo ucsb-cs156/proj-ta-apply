@@ -363,7 +363,17 @@ Admins can edit a student's application, and every change is recorded in the aud
   without its rows, and rows are never left behind for a change that failed. The recruitment audit
   trail (issue #139) works the same way through `RecruitmentAuditService.saveAndRecordCreated`,
   `saveAndRecordChanges` and `deleteAndRecord`; controllers call those rather than saving and then
-  auditing. Issue #337 (the editor's email on every row) builds on this single place.
+  auditing.
+* Every row of both trails names the admin who made the change (issue #337): a nullable
+  `editor_email` text column on `audit_trail` (changeset 065) and on `recruitment_audit_trail`
+  (changeset 066). It is the email as text, not a user id, so it reads directly in the table,
+  survives the user row being deleted and needs no join. The two audit services read the
+  logged-in user from `CurrentUserService` themselves, in the one place each writes rows, so every
+  writer records it without being changed: the admin endpoints, `AllocationVisibilityService`, and
+  Developer Mode's fake allocations (the developer's email). Rows written before the column
+  existed are null, and the tables show them blank. Both tables show the column (**Edited By** on
+  the application trail, **Changed By** on the recruitment trail), and the Audit Trail page can
+  sort by it.
 * The read-only view of an application ends with an **Audit Trail** section listing that
   application's rows, oldest first, from `GET /api/admin/audittrail/application?type=&id=`.
 

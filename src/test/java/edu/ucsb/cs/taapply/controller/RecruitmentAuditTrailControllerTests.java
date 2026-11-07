@@ -136,7 +136,14 @@ public class RecruitmentAuditTrailControllerTests extends ControllerTestCase {
   @Test
   public void every_column_can_be_sorted_by() throws Exception {
     assertEquals(
-        List.of("changedAt", "id", "newValue", "oldValue", "recruitmentId", "whatChanged"),
+        List.of(
+            "changedAt",
+            "editorEmail",
+            "id",
+            "newValue",
+            "oldValue",
+            "recruitmentId",
+            "whatChanged"),
         RecruitmentAuditTrailController.SORTABLE.stream().sorted().toList());
     when(repository.findByRecruitmentId(eq(7L), any()))
         .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
@@ -158,7 +165,7 @@ public class RecruitmentAuditTrailControllerTests extends ControllerTestCase {
 
     Map<String, Object> json = responseToJson(response);
     assertEquals(
-        "Cannot sort by quarter (expected one of [changedAt, id, newValue, oldValue,"
+        "Cannot sort by quarter (expected one of [changedAt, editorEmail, id, newValue, oldValue,"
             + " recruitmentId, whatChanged])",
         json.get("message"));
     verify(repository, never()).findByRecruitmentId(any(), any());

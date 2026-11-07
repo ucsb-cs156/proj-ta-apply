@@ -918,12 +918,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
         <p>
           <Link to="/admin/audittrail">Audit Trail</Link> is every change an
           admin has made to a field of a student&apos;s application through the
-          Edit page: which application, which field, and the value before and
-          after. It is paged and can be sorted by any column; a long value is
-          cut short with a <em>[See value]</em> link that shows the whole thing.
-          The trail for one application is also shown on that application&apos;s
-          View page. Its times, like every date and time on this site, are
-          Pacific Time.
+          Edit page: which application, which field, the value before and after,
+          and (<em>Edited By</em>) the email of the admin who made the change.
+          It is paged and can be sorted by any column; a long value is cut short
+          with a <em>[See value]</em> link that shows the whole thing. The trail
+          for one application is also shown on that application&apos;s View
+          page. A recruitment&apos;s own changes (its creation, opening, closing
+          and dates) are listed on its Applications page under Change History,
+          with the same <em>Changed By</em> column. Changes made before the
+          email was recorded show that column blank. Its times, like every date
+          and time on this site, are Pacific Time.
         </p>
 
         <h2

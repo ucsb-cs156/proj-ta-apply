@@ -2,6 +2,7 @@ package edu.ucsb.cs.taapply.services;
 
 import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentAuditTrail;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.repository.RecruitmentAuditTrailRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.util.ArrayList;
@@ -26,12 +27,19 @@ import org.springframework.transaction.annotation.Transactional;
  * {@link #snapshot} before applying it and passes it in afterwards; only the fields whose value
  * differs get a row, so a request that changes nothing writes nothing. Creation and deletion get
  * just their one row: the values a recruitment was created with are not also written as changes.
+ *
+ * <p>Every row carries the email of the logged-in user who made the change (issue #337), read from
+ * {@link CurrentUserService} here rather than passed in by each caller, so every path that writes
+ * rows records it: the admin endpoints, {@link AllocationVisibilityService}, and Developer Mode's
+ * fake allocations. A row written with no user logged in (no path does so today) would carry null,
+ * as the rows from before the column existed do.
  */
 @Service
 public class RecruitmentAuditService {
 
   @Autowired private RecruitmentRepository recruitmentRepository;
   @Autowired private RecruitmentAuditTrailRepository repository;
+  @Autowired private CurrentUserService currentUserService;
 
   /** The fields a change is recorded for, in the order their rows are written. */
   static final Map<String, Function<Recruitment, Object>> FIELDS = new LinkedHashMap<>();
@@ -90,24 +98,33 @@ public class RecruitmentAuditService {
     return row;
   }
 
-  /** Records that the recruitment was just created, and returns the row written. */
+  /**
+   * Records that the recruitment was just created, by the logged-in user, and returns the row
+   * written.
+   */
   public RecruitmentAuditTrail recordCreated(Recruitment recruitment) {
-    return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.CREATED, null, null));
+    return repository.save(
+        row(recruitment.getId(), RecruitmentAuditTrail.CREATED, null, null, editorEmail()));
   }
 
-  /** Records that the recruitment is about to be deleted, and returns the row written. */
+  /**
+   * Records that the recruitment is about to be deleted, by the logged-in user, and returns the row
+   * written.
+   */
   public RecruitmentAuditTrail recordDeleted(Recruitment recruitment) {
-    return repository.save(row(recruitment.getId(), RecruitmentAuditTrail.DELETED, null, null));
+    return repository.save(
+        row(recruitment.getId(), RecruitmentAuditTrail.DELETED, null, null, editorEmail()));
   }
 
   /**
    * Records every field whose value differs between the snapshot taken before an edit and the
-   * recruitment as it is now, one row each, and returns the rows written (empty when nothing
-   * changed). Writers go through {@link #saveAndRecordChanges}, which calls this inside the
-   * transaction that saves the recruitment.
+   * recruitment as it is now, one row each naming the logged-in user as its editor, and returns the
+   * rows written (empty when nothing changed). Writers go through {@link #saveAndRecordChanges},
+   * which calls this inside the transaction that saves the recruitment.
    */
   public List<RecruitmentAuditTrail> recordChanges(Snapshot before, Recruitment after) {
     Snapshot now = snapshot(after);
+    String editor = editorEmail();
     List<RecruitmentAuditTrail> changes = new ArrayList<>();
     before
         .fields()
@@ -115,7 +132,7 @@ public class RecruitmentAuditService {
             (name, old) -> {
               String current = now.fields().get(name);
               if (!Objects.equals(old, current)) {
-                changes.add(row(before.recruitmentId(), name, old, current));
+                changes.add(row(before.recruitmentId(), name, old, current, editor));
               }
             });
     if (!changes.isEmpty()) {
@@ -124,13 +141,20 @@ public class RecruitmentAuditService {
     return changes;
   }
 
+  /** The email of the logged-in user, who is the one making the change; null if there is none. */
+  private String editorEmail() {
+    User user = currentUserService.getUser();
+    return user == null ? null : user.getEmail();
+  }
+
   private static RecruitmentAuditTrail row(
-      Long recruitmentId, String whatChanged, String oldValue, String newValue) {
+      Long recruitmentId, String whatChanged, String oldValue, String newValue, String editor) {
     return RecruitmentAuditTrail.builder()
         .recruitmentId(recruitmentId)
         .whatChanged(whatChanged)
         .oldValue(oldValue)
         .newValue(newValue)
+        .editorEmail(editor)
         .build();
   }
 

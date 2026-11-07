@@ -8,7 +8,10 @@ import type { LegacyColumn } from "main/components/Common/OurTableUtils";
 import { abbreviate, appId, appLabel, isLong } from "main/utils/auditTrail";
 import { adminApplicationPath } from "main/utils/adminApplications";
 
-/** One change an admin made to one field of an application. */
+/**
+ * One change an admin made to one field of an application. The editor's email (issue #337) is
+ * null on rows written before it was recorded, and the table shows those blank.
+ */
 export type AuditTrailRow = {
   id: number;
   editedAt: string | null;
@@ -17,6 +20,7 @@ export type AuditTrailRow = {
   fieldName: string;
   oldValue: string | null;
   newValue: string | null;
+  editorEmail?: string | null;
 };
 
 type AuditTrailTableProps = {
@@ -88,7 +92,16 @@ export default function AuditTrailTable({
       accessorKey: "editedAt",
       meta: shrinkToContent,
       cell: ({ cell }: { cell: Cell<AuditTrailRow, unknown> }) =>
-        formatPacificDateTime(cell.row.original.editedAt),
+        formatPacificDateTime(cell.getValue<string | null>()),
+    },
+    {
+      // Issue #337: who made the change; blank on rows from before it was recorded.
+      header: "Edited By",
+      id: "editorEmail",
+      accessorKey: "editorEmail",
+      meta: shrinkToContent,
+      cell: ({ cell }: { cell: Cell<AuditTrailRow, unknown> }) =>
+        show(cell.getValue()),
     },
     {
       // The TA and ULA ids as one column: "TA 7" or "ULA 9", linking to that application.

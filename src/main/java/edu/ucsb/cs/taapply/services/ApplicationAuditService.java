@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.ucsb.cs.taapply.entity.Application;
 import edu.ucsb.cs.taapply.entity.AuditTrail;
 import edu.ucsb.cs.taapply.entity.PriorCoursework;
+import edu.ucsb.cs.taapply.entity.User;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.repository.ApplicationRepository;
 import edu.ucsb.cs.taapply.repository.AuditTrailRepository;
@@ -35,6 +36,11 @@ import org.springframework.transaction.annotation.Transactional;
  * null new value, and a row that appeared with a null old value; a prior course that was edited
  * therefore shows as one row removed and one added, since the form rebuilds those rows on every
  * save and they carry no identity across it.
+ *
+ * <p>Every row carries the email of the logged-in user who made the change (issue #337), read from
+ * {@link CurrentUserService} here rather than passed in by each caller, so every path that writes
+ * rows records it, Developer Mode's fake data included. A row written with no user logged in (no
+ * path does so today) would carry null, as the rows from before the column existed do.
  */
 @Service
 @Slf4j
@@ -43,6 +49,7 @@ public class ApplicationAuditService {
   @Autowired private ApplicationRepository applicationRepository;
   @Autowired private AuditTrailRepository auditTrailRepository;
   @Autowired private ObjectMapper objectMapper;
+  @Autowired private CurrentUserService currentUserService;
 
   /** The fields an admin may change, with how to read each as a string; null reads as null. */
   private static final Map<String, Function<Application, Object>> FIELDS = new LinkedHashMap<>();
@@ -120,7 +127,7 @@ public class ApplicationAuditService {
    * Saves the edited application and records every difference from the snapshot taken before the
    * edit, in one database transaction, and returns the application as saved. If either write fails,
    * both are rolled back: no edit without its audit rows, no audit rows for an edit that did not
-   * happen (issue #377). Issue #337 will add the editor here, next to the rows it writes.
+   * happen (issue #377). Each row names the logged-in user as its editor (issue #337).
    *
    * <p>A save that loses a race with another save throws {@code
    * ObjectOptimisticLockingFailureException} out of here, as it did when the caller saved itself.
@@ -136,13 +143,15 @@ public class ApplicationAuditService {
 
   /**
    * Records every difference between the snapshot taken before the edit and the application as it
-   * is now, and returns the rows written (empty when nothing changed). Writers go through {@link
-   * #saveAndRecord}, which calls this inside the transaction that saves the application.
+   * is now, each row naming the logged-in user as its editor, and returns the rows written (empty
+   * when nothing changed). Writers go through {@link #saveAndRecord}, which calls this inside the
+   * transaction that saves the application.
    */
   public List<AuditTrail> record(Snapshot before, Application after, RecruitmentType type) {
     Snapshot now = snapshot(after);
     Long taId = type == RecruitmentType.TA ? after.getId() : null;
     Long ulaId = type == RecruitmentType.ULA ? after.getId() : null;
+    String editor = editorEmail();
     List<AuditTrail> changes = new ArrayList<>();
 
     before
@@ -154,7 +163,7 @@ public class ApplicationAuditService {
               }
               String current = now.fields().get(name);
               if (!Objects.equals(old, current)) {
-                changes.add(row(taId, ulaId, name, old, current));
+                changes.add(row(taId, ulaId, name, old, current, editor));
               }
             });
 
@@ -165,12 +174,12 @@ public class ApplicationAuditService {
               Set<String> newRows = now.rows().get(name);
               for (String gone : oldRows) {
                 if (!newRows.contains(gone)) {
-                  changes.add(row(taId, ulaId, name, gone, null));
+                  changes.add(row(taId, ulaId, name, gone, null, editor));
                 }
               }
               for (String added : newRows) {
                 if (!oldRows.contains(added)) {
-                  changes.add(row(taId, ulaId, name, null, added));
+                  changes.add(row(taId, ulaId, name, null, added, editor));
                 }
               }
             });
@@ -181,14 +190,21 @@ public class ApplicationAuditService {
     return changes;
   }
 
+  /** The email of the logged-in user, who is the one making the change; null if there is none. */
+  private String editorEmail() {
+    User user = currentUserService.getUser();
+    return user == null ? null : user.getEmail();
+  }
+
   private static AuditTrail row(
-      Long taId, Long ulaId, String field, String oldValue, String newValue) {
+      Long taId, Long ulaId, String field, String oldValue, String newValue, String editor) {
     return AuditTrail.builder()
         .taApplicationId(taId)
         .ulaApplicationId(ulaId)
         .fieldName(field)
         .oldValue(oldValue)
         .newValue(newValue)
+        .editorEmail(editor)
         .build();
   }
 

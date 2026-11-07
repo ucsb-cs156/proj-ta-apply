@@ -61,6 +61,10 @@ public class AuditTrailWebIT extends WebTestCase {
         .hasText(Pattern.compile("^" + shownAt + "\\d\\d:\\d\\d [AP]M$"));
   }
 
+  /**
+   * Issue #337: the Edited By column. A row seeded without an editor, as every row written before
+   * the column existed was, shows it blank; a row with one shows the email.
+   */
   @Test
   public void an_admin_sees_the_trail_newest_first_and_can_open_a_long_value() throws Exception {
     auditTrailRepository.save(
@@ -76,6 +80,7 @@ public class AuditTrailWebIT extends WebTestCase {
             .fieldName("comments")
             .oldValue("Happy to help with either lecture, whichever needs it most.")
             .newValue(null)
+            .editorEmail("phtcon@ucsb.edu")
             .build());
 
     setupAdminUser();
@@ -96,6 +101,10 @@ public class AuditTrailWebIT extends WebTestCase {
         .containsText("Happy to help w... [See value]");
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-1-col-fieldName"))
         .containsText("major");
+    // Edited By: the email where one was recorded, blank for the older row.
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-0-col-editorEmail"))
+        .hasText("phtcon@ucsb.edu");
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-1-col-editorEmail")).hasText("");
 
     page.getByTestId("AuditTrailPage-table-cell-row-0-col-oldValue-see").click();
     assertThat(page.getByTestId("AuditTrailPage-table-value-modal-body"))
@@ -110,6 +119,11 @@ public class AuditTrailWebIT extends WebTestCase {
     page.getByTestId("AuditTrailPage-direction").selectOption("desc");
     assertThat(page.getByTestId("AuditTrailPage-table-cell-row-0-col-fieldName"))
         .containsText("major");
+
+    // Sorting by Edited By, descending, puts the row with an email before the row without one.
+    page.getByTestId("AuditTrailPage-sort").selectOption("editorEmail");
+    assertThat(page.getByTestId("AuditTrailPage-table-cell-row-0-col-editorEmail"))
+        .hasText("phtcon@ucsb.edu");
   }
 
   @Test

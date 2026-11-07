@@ -3,7 +3,14 @@ import RecruitmentAuditTrailTable from "main/components/Recruitments/Recruitment
 import recruitmentAuditTrailFixtures from "fixtures/recruitmentAuditTrailFixtures";
 
 describe("RecruitmentAuditTrailTable tests", () => {
-  const headers = ["id", "Changed", "What Changed", "Old Value", "New Value"];
+  const headers = [
+    "id",
+    "Changed",
+    "Changed By",
+    "What Changed",
+    "Old Value",
+    "New Value",
+  ];
 
   test("renders the headers and one row per change, in the order given", () => {
     render(
@@ -12,9 +19,9 @@ describe("RecruitmentAuditTrailTable tests", () => {
       />,
     );
 
-    headers.forEach((header) => {
-      expect(screen.getByText(header)).toBeInTheDocument();
-    });
+    expect(
+      [...screen.getAllByRole("columnheader")].map((th) => th.textContent),
+    ).toEqual(headers);
     const cell = (row, col) =>
       screen.getByTestId(
         `RecruitmentAuditTrailTable-cell-row-${row}-col-${col}`,
@@ -33,6 +40,9 @@ describe("RecruitmentAuditTrailTable tests", () => {
     ).toBeNull();
     // Not sortable by clicking: the page orders the rows.
     expect(screen.queryByText("🔼")).toBeNull();
+    expect(
+      screen.getByTestId("RecruitmentAuditTrailTable-header-id-sort-header"),
+    ).not.toHaveStyle({ cursor: "pointer" });
   });
 
   test("a null value is shown blank, not as the word null", () => {
@@ -52,6 +62,34 @@ describe("RecruitmentAuditTrailTable tests", () => {
       screen.getByTestId("Trail-cell-row-2-col-newValue").textContent,
     ).toBe("");
     expect(screen.queryByText("null")).toBeNull();
+  });
+
+  /** Issue #337: who made the change; a row from before that was recorded has a blank cell. */
+  test("the Changed By column shows the editor's email, blank when there is none", () => {
+    render(
+      <RecruitmentAuditTrailTable
+        rows={recruitmentAuditTrailFixtures.threeRows}
+      />,
+    );
+    const cell = (row) =>
+      screen.getByTestId(
+        `RecruitmentAuditTrailTable-cell-row-${row}-col-editorEmail`,
+      );
+    expect(cell(0)).toHaveTextContent("admin@ucsb.edu");
+    expect(cell(1)).toHaveTextContent("admin@ucsb.edu");
+    expect(cell(2).textContent).toBe("");
+    expect(screen.queryByText("null")).toBeNull();
+  });
+
+  test("a row with no editor field at all (older than the column) is blank too", () => {
+    const { editorEmail: _ignored, ...older } =
+      recruitmentAuditTrailFixtures.threeRows[0];
+    render(<RecruitmentAuditTrailTable rows={[older]} />);
+    expect(
+      screen.getByTestId(
+        "RecruitmentAuditTrailTable-cell-row-0-col-editorEmail",
+      ).textContent,
+    ).toBe("");
   });
 
   test("a row without a timestamp gets a blank Changed cell", () => {
@@ -93,7 +131,7 @@ describe("RecruitmentAuditTrailTable tests", () => {
     expect(table).toHaveClass("w-auto");
     expect(table).toHaveClass("table", "table-striped", "table-bordered");
     // The leading columns shrink to their content; the value columns are left to their contents.
-    ["id", "changedAt", "whatChanged"].forEach((id) => {
+    ["id", "changedAt", "editorEmail", "whatChanged"].forEach((id) => {
       expect(
         screen.getByTestId(`RecruitmentAuditTrailTable-header-${id}`).style
           .width,
