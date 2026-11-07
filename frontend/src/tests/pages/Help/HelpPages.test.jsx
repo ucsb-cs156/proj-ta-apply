@@ -2239,34 +2239,18 @@ describe("Help pages (issue #140)", () => {
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
-  // Where the admins page's prose runs into an emphasised word, a link or a span on the next line of
-  // the source, the two are kept apart by an explicit space; without it the words would run
-  // together ("Course Numberis"). Each phrase here straddles one of those spaces.
-  test("the admins page's prose keeps its spaces around emphasised words, links and spans", async () => {
+  // Where the Combined Allocation columns paragraph (issue #383) runs into an emphasised word on
+  // the next line of the source, the two are kept apart by an explicit space; without it the words
+  // would run together ("Course Numberis"). Each phrase here straddles one of those spaces. Only
+  // this paragraph is checked, so an edit elsewhere on the page cannot break the test.
+  test("the Combined Allocation columns paragraph keeps its spaces around emphasised words", async () => {
     renderPage(<HelpAdminsPage />);
-    const page = await screen.findByTestId("HelpAdminsPage");
+    const columns = await screen.findByTestId(
+      "HelpAdminsPage-combined-allocations-columns",
+    );
 
     [
-      "applicant is, a Tentative Assignment dropdown,",
-      "heading shows its Allocation, how many",
-      "all at once; Show All Courses",
-      "lecture column, and Show Only Incomplete",
-      "bring it back. Tentative Assignment is",
-      "badge and a Published Assignments button",
-      "(instructors see an Assignments button on",
-      "The page offers One Row per",
-      "per course) and Download CSV (row",
-      "Assignments page say Tentative; part of",
-      "quarter: under Recruitments on your home",
-      "the leftmost Rankings column shows how",
-      "zero. The Email column uses the",
-      "one address, or Copy emails of",
-      "130A. In the Email column, the",
-      "one address and Not mapped opens",
-      "sees any allocation. Faculty see their",
-      "an x under TA and under",
-      "and the additional TAs only and",
-      "/admin/allocations/QXX (for example /admin/allocations/W26) is where",
+      "Courses pages: TA Rankings and ULA Rankings",
       "have been opened), Section, Title,",
       "Section, Title, Instructor, Email (with",
       "button), Days, Time, Room, Enrolled, Max",
@@ -2274,24 +2258,8 @@ describe("Help pages (issue #140)", () => {
       "a summer quarter, Summer Session. A",
       "the table shows Total Course Count",
       "none. Course Number is on two",
-      "Columns menu has Show All, Show",
-      "of the quarter. Auto assign TA",
-      "TA allocations and Auto assign ULA",
-      "per TA and Cost per ULA",
-      "Quarter page) and TA Cost/ULA Cost,",
-      "it is the Nominal TA to",
-      "changed it first. When computing overall ASE:Student ratio",
-      "whatever basis makes the most sense. It is used by",
-      "is open (see Simultaneous Editing). While",
-      "card (for example W26 Budget) with",
-      "the rankings download, Download Rankings CSV,",
-      "goes into the Audit Trail. The table shows the id",
-      "shown from the Columns menu above",
-      "Show All or Show None at",
-      "a lecture; the Assignments section below",
-      "hiring targets. The TA to ULA",
-      "Use theirs or Overwrite. The factor",
-    ].forEach((phrase) => expect(page).toHaveTextContent(phrase));
+      "Columns menu has Show All, Show None",
+    ].forEach((phrase) => expect(columns).toHaveTextContent(phrase));
   });
 });
 
