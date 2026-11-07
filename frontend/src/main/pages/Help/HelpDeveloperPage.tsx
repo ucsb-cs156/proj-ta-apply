@@ -114,7 +114,13 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           exactly as the <em>Auto assign allocations</em> button does. A
           checkbox, ticked by default, also sets allocation visibility to{" "}
           <strong>Faculty see their own courses</strong>, recorded in the change
-          history like any other visibility change.
+          history like any other visibility change. The footer of the Combined
+          Allocation page (<code>/admin/allocations/QXX</code>) has the same
+          button for the whole quarter: its modal has a hiring target box for
+          each of the quarter&apos;s recruitments that has a course (
+          <em>TA hiring target</em>, <em>ULA hiring target</em>), and one click
+          does the above for both, with the same estimate source and visibility
+          choice.
         </p>
         <p data-testid="HelpDeveloperPage-fake-rankings">
           While developer mode is on, the footer of a recruitment&apos;s Courses
@@ -124,7 +130,12 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           yet or for a random part of them. Each course gets as many interested
           candidates as its ranking target asks for, and a checkbox also ranks
           one or two applicants who did not express interest. Courses that
-          already have rankings are never changed.
+          already have rankings are never changed. The Combined Allocation
+          page&apos;s footer has the same button for the whole quarter: one
+          click launches a job for each of the quarter&apos;s recruitments whose
+          faculty review is Open and which has a course; when only one of the
+          two qualifies the modal says which, and that the other is left alone.
+          The button is disabled while neither qualifies.
         </p>
 
         <h2 className="my-3 h4" id="dates-and-times">
@@ -395,6 +406,33 @@ export default function HelpDeveloperPage(): React.JSX.Element {
           <code>expectedVersion</code> and <code>expectedBulkVersion</code> and
           gets <code>409</code> when either moved; after a bulk conflict the
           page reads everything again.
+        </p>
+        <p data-testid="HelpDeveloperPage-simultaneous-combined">
+          <strong>The Combined Allocation page (issue #358).</strong>{" "}
+          <code>/admin/allocations/QXX</code> edits the same allocations and
+          estimates as the Courses edit pages of the quarter&apos;s TA and ULA
+          recruitments, so it has no key of its own: it heartbeats{" "}
+          <code>POST /api/recruitmentcourses/heartbeat?recruitmentId=</code>{" "}
+          once for each recruitment of the quarter (two heartbeats when it has
+          both), under that page&apos;s key{" "}
+          <code>courses-edit:&lt;recruitmentId&gt;</code>, with one{" "}
+          <code>X-Client-Id</code> for both (<code>useClientActivity</code>{" "}
+          takes a <code>clientId</code> to share), and says goodbye at{" "}
+          <code>/leave</code> for each. So the combined page and the edit pages
+          warn each other about the same allocations. The two answers are put
+          together by <code>mergeStandings</code>: everyone named by either,
+          each person once; the tab is the newest only if both say so, so of two
+          tabs that share a recruitment only the later one is asked and none
+          waits on another that waits on it; and the arrival is the later of the
+          two. The banner and the modal use the noun &quot;quarter&apos;s
+          allocations&quot;; <em>Leave this page</em> goes to the quarter&apos;s
+          Budget page. The allocation, estimate, fill-estimates and Auto
+          Allocate saves name the tab; the conversion factor save, which is{" "}
+          <code>PUT /api/admin/budget</code>, does not, because the page does
+          not heartbeat <code>budget:&lt;quarter&gt;</code>: that field is
+          guarded by the budget row&apos;s version check, and a save that named
+          a tab the Budget page never hears a heartbeat from would make that
+          page warn about a tab that is not there.
         </p>
         <p data-testid="HelpDeveloperPage-courses-columns">
           <strong>Which Courses columns show (issue #300).</strong> The
@@ -759,6 +797,31 @@ export default function HelpDeveloperPage(): React.JSX.Element {
                   rel="noreferrer"
                 >
                   #288
+                </a>
+              </td>
+            </tr>
+            <tr data-testid="HelpDeveloperPage-simultaneous-row-combined">
+              <td>
+                Combined Allocation page (allocations and estimates of both
+                recruitments of a quarter)
+              </td>
+              <td>
+                The Courses edit page of every recruitment of the quarter: one
+                heartbeat per recruitment under that page&apos;s key, with one
+                client id, so the combined page and the edit pages warn each
+                other
+              </td>
+              <td>
+                <code>courses-edit:&lt;recruitmentId&gt;</code> (one per
+                recruitment)
+              </td>
+              <td>
+                <a
+                  href="https://github.com/ucsb-cs156/proj-ta-apply/pull/373"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  #373
                 </a>
               </td>
             </tr>

@@ -154,6 +154,8 @@ type CombinedAllocationTableProps = {
   hideLinks?: HideLinks;
   /** A summer quarter's offerings have a Summer Session; the column exists only then. */
   summer?: boolean;
+  /** Sent with every allocation and estimate save, to name this tab to the multi-tab warning. */
+  requestHeaders?: Record<string, string>;
   testIdPrefix?: string;
 };
 
@@ -189,13 +191,14 @@ export default function CombinedAllocationTable({
   hiddenColumns = [],
   hideLinks,
   summer = false,
+  requestHeaders,
   testIdPrefix = "CombinedAllocationTable",
 }: CombinedAllocationTableProps): React.JSX.Element {
   // Stryker disable BooleanLiteral : the saves refresh the lists by each part of this key on its own, so whether removed courses are included makes no difference here
-  const taSaves = useAllocationSaves(undefined, taBulkVersion, false);
-  const ulaSaves = useAllocationSaves(undefined, ulaBulkVersion, false);
+  const taSaves = useAllocationSaves(requestHeaders, taBulkVersion, false);
+  const ulaSaves = useAllocationSaves(requestHeaders, ulaBulkVersion, false);
   const { estimateDrafts, onEstimateChange, onEstimateBlur } = useEstimateSaves(
-    undefined,
+    requestHeaders,
     false,
   );
   // Stryker restore BooleanLiteral

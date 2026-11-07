@@ -32,3 +32,17 @@ export function useDeveloperModeFooterControls(controls: ReactNode): void {
     return () => setControls(null);
   }, [controls, setControls]);
 }
+
+/**
+ * Registers a page's developer-mode controls in the footer, as an element: for a page that
+ * renders its own BasicLayout, which provides the footer slot, and so has to register from inside
+ * it rather than from the page component itself. Renders nothing.
+ */
+export function DeveloperFooterControls({
+  controls,
+}: {
+  controls: ReactNode;
+}): null {
+  useDeveloperModeFooterControls(controls);
+  return null;
+}

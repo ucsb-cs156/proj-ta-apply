@@ -1546,7 +1546,7 @@ describe("RecruitmentCoursesPage tests", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByTestId(
-        "RecruitmentCoursesPage-fake-allocations-modal-target",
+        "RecruitmentCoursesPage-fake-allocations-modal-target-7",
       ),
     ).toHaveValue(notRemoved.length);
 

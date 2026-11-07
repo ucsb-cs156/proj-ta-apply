@@ -403,6 +403,7 @@ mean something together.
 | #281 | Recruitment settings and workflow steps, for admins, instructors and students | No warning; background refresh plus refetch after each save | None (refresh, not a key) | extension |
 | #282 | Instructors page and the view-only Courses page (the Courses edit page is #278's) | No warning; same background refresh as #281 plus a refetch after each save | None (refresh, not a key) | extension |
 | #302 | Student apply page when editing a submitted application, and the Admin application edit page | One application, edited by its applicant or by an admin | `application:<applicationId>` | extension |
+| #358 (part 2, PR #373) | Combined Allocation page (`/admin/allocations/QXX`) | The Courses edit page of every recruitment of the quarter: one heartbeat per recruitment under that page's key, with one client id, so the combined page and the edit pages warn each other | `courses-edit:<recruitmentId>`, one per recruitment; no key of its own | extension |
 
 ### Two facts that hold for the surveyed screens
 
@@ -615,6 +616,44 @@ the only editor.
 **Risks.** Medium, and larger than it was before the split, because the split changes a page that
 other pages link to. `RecruitmentCourse` rows are also written by the course refresh and by the
 enrollment estimates, which is why the version column is its own.
+
+**The Combined Allocation page (#358, part 2, PR #373).** `/admin/allocations/QXX` edits the same
+allocations and estimates as the edit pages of the quarter's TA and ULA recruitments, through the
+same endpoints, so by the scope principle it is not a new thing but a second copy of two existing
+ones. It therefore has no key of its own: it heartbeats
+`POST /api/recruitmentcourses/heartbeat?recruitmentId=` once for each recruitment of the quarter,
+under `courses-edit:<recruitmentId>`, and says goodbye at `/leave` for each. The two heartbeats
+carry one `X-Client-Id`: `useClientActivity` gained an optional `clientId`, so a second hook borrows
+the first's identifier instead of making one, and every heartbeat, goodbye and save of the page is
+one tab to the server. (Without that, the page's own ULA saves would be recorded under the ULA key
+as a different client of the same person, and the page would warn about itself.) An alternative,
+a key of its own such as `allocations-edit:<quarter>`, was rejected because the old edit pages and
+the combined page would then not warn each other while editing the same rows; the issue's text
+("for example `allocations-edit:QXX`") is an example, and the shared key is what makes the warning
+true.
+
+The two answers are put together by `mergeStandings` (`frontend/src/main/concurrency/merge.ts`), a
+pure function: the others are everyone named by either answer, each person once (the server names
+a person once per key, so someone with the combined page open comes twice); the tab is the newest
+only if **every** answer says so; and the arrival is the later of the two. The `every` rule keeps
+the modal's guarantee: of two tabs that share a key only the later one can be asked, so no tab
+waits on another that waits on it, and a tab that arrived after everyone on the TA key but before
+someone on the ULA key is not asked (that someone is). Only the recruitments the quarter has are
+merged; a hook with no URL never hears from the server and must not count as "not newest".
+
+The banner and the modal use the noun "quarter's allocations" (the people named may be on the old
+edit pages, so "this page" would be wrong); *Leave this page* goes to the quarter's Budget page,
+`/admin/budget/QXX`. The allocation, estimate, fill-estimates and Auto Allocate saves name the tab
+in `X-Client-Id`, through `requestHeaders` on `CombinedAllocationTable` and on the page's two
+mutations. The conversion factor save, `PUT /api/admin/budget`, does **not**: the page does not
+heartbeat `budget:<quarter>`. The factor is a budget figure guarded by the budget row's version
+check (**Use theirs** / **Overwrite**), the Budget page and the combined page otherwise edit
+different things, and a save that named a tab under `budget:<quarter>` without a heartbeat would
+make the Budget page warn, for a window, about a tab that is not there. Heartbeating the budget key
+as well was considered and rejected for the same reason in reverse: every Budget page tab would
+warn whenever anyone had the combined page open. Admin-only, as the edit pages are. The Web IT
+`BudgetWebIT.the_combined_page_and_a_courses_edit_page_warn_each_other` opens the combined page and
+one recruitment's edit page in two windows and sees both banners, with only the later window asked.
 
 ### (c) The faculty rankings for a recruitment course (#279)
 
@@ -1040,6 +1079,11 @@ is a day or less, M a few days, L about a week.
    table and a `409` on both edit endpoints, the key `application:<applicationId>` shared by the
    applicant's page and the admin's edit page, the admin flag on the wire, and the two messages.
    Section (g).
+
+9. **The Combined Allocation page. (S, #358 part 2, PR #373.)** No new key: the page heartbeats under
+   `courses-edit:<recruitmentId>` for every recruitment of the quarter with one client id, and the
+   answers are merged (`mergeStandings`). The one addition to the package is the optional `clientId`
+   of `useClientActivity`. Section (b), "The Combined Allocation page".
 
 After iteration 2 it is worth stopping to look at what the second user of the package needed that the
 first did not, and to fix the package before three more screens depend on it. That is also the moment

@@ -13,6 +13,7 @@ export {
   type Presence,
 } from "./others";
 export { DEFAULT_HEARTBEAT_MS, useClientActivity } from "./useClientActivity";
+export { mergeStandings, type Standing } from "./merge";
 export { sendGoodbye } from "./goodbye";
 export { default as MultipleTabsBanner } from "./MultipleTabsBanner";
 export {

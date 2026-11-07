@@ -101,6 +101,53 @@ public class BudgetWebIT extends WebTestCase {
         4, recruitmentCourseRepository.findByRecruitmentId(ta.getId()).get(0).getAllocation());
   }
 
+  /**
+   * Issue #358 part 2: the Combined Allocation page heartbeats under each recruitment's Courses
+   * edit page key, so it and a recruitment's edit page warn each other about the same allocations.
+   */
+  @Test
+  public void the_combined_page_and_a_courses_edit_page_warn_each_other() throws Exception {
+    Recruitment ta = recruitmentWithOneCourse(RecruitmentType.TA);
+    recruitmentWithOneCourse(RecruitmentType.ULA);
+    setupAdminUser();
+    page.navigate(page.url().replaceAll("(http://localhost:\\d+).*", "$1/admin/allocations/F26"));
+    assertThat(page.getByTestId("CombinedAllocationTable-row-0")).isVisible();
+    assertThat(page.getByTestId("CombinedAllocationsPage-multiple-tabs")).not().isVisible();
+
+    com.microsoft.playwright.BrowserContext other =
+        newContext(
+            new com.microsoft.playwright.Browser.NewContextOptions()
+                .setStorageState(page.context().storageState()));
+    com.microsoft.playwright.Page otherPage = newPage(other);
+    String editPage = "/admin/recruitments/" + ta.getId() + "/courses/edit";
+    otherPage.navigate(page.url().replace("/admin/allocations/F26", editPage));
+    awaitSettled(otherPage);
+    assertThat(otherPage.getByTestId("RecruitmentCoursesPage-view-link")).isVisible();
+
+    var wait =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsVisibleOptions()
+            .setTimeout(20000);
+    assertThat(otherPage.getByTestId("RecruitmentCoursesPage-multiple-tabs")).isVisible(wait);
+    assertThat(page.getByTestId("CombinedAllocationsPage-multiple-tabs")).isVisible(wait);
+    assertThat(page.getByTestId("CombinedAllocationsPage-multiple-tabs"))
+        .containsText(
+            "You are also editing this quarter's allocations in another tab or window. We recommend"
+                + " that only one admin");
+    // The edit page came later, so it is the one asked; the combined page only shows the banner.
+    assertThat(otherPage.getByTestId("RecruitmentCoursesPage-multiple-tabs-modal-leave"))
+        .isVisible();
+    assertThat(page.getByTestId("CombinedAllocationsPage-multiple-tabs-modal-leave"))
+        .not()
+        .isVisible();
+
+    // Closing the edit page lets the combined page's warning go.
+    other.close();
+    var gone =
+        new com.microsoft.playwright.assertions.LocatorAssertions.IsHiddenOptions()
+            .setTimeout(30000);
+    assertThat(page.getByTestId("CombinedAllocationsPage-multiple-tabs")).isHidden(gone);
+  }
+
   @Test
   public void a_second_window_on_the_same_quarter_is_warned_and_asked_and_the_first_is_not_asked()
       throws Exception {
@@ -136,7 +183,8 @@ public class BudgetWebIT extends WebTestCase {
     assertThat(page.getByTestId(BANNER)).isVisible(wait);
     assertThat(page.getByTestId(BANNER))
         .containsText(
-            "You are also editing this budget page in another tab or window. We recommend that only one admin");
+            "You are also editing this budget page in another tab or window. We recommend that only"
+                + " one admin");
     // Only the newer window is asked what to do.
     assertThat(otherPage.getByTestId(BANNER + "-modal-leave")).isVisible();
     assertThat(page.getByTestId(BANNER + "-modal-leave")).not().isVisible();

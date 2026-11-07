@@ -54,6 +54,27 @@ describe("useClientActivity", () => {
     );
   });
 
+  test("a given identifier is used instead of a new one, so two hooks can be one tab (issue #358)", async () => {
+    const OTHER_URL = "/thing/heartbeat?id=2";
+    axiosMock.onPost(URL).reply(200, { others: [] });
+    axiosMock.onPost(OTHER_URL).reply(200, { others: [] });
+    const first = renderHook(() => useClientActivity({ heartbeatUrl: URL }));
+    const id = first.result.current.clientId;
+    const second = renderHook(() =>
+      useClientActivity({ heartbeatUrl: OTHER_URL, clientId: id }),
+    );
+
+    expect(second.result.current.clientId).toBe(id);
+    expect(second.result.current.headers).toEqual({ "X-Client-Id": id });
+    await advance(0);
+    const otherBeats = axiosMock.history.post.filter(
+      (r) => r.url === OTHER_URL,
+    );
+    expect(otherBeats).toHaveLength(1);
+    expect(otherBeats[0].headers?.["X-Client-Id"]).toBe(id);
+    expect(beats()[0].headers?.["X-Client-Id"]).toBe(id);
+  });
+
   test("keeps the identifier out of storage, so a restored tab does not inherit one", () => {
     const local = vi.spyOn(Storage.prototype, "setItem");
     renderHook(() => useClientActivity({ heartbeatUrl: null }));

@@ -586,6 +586,16 @@ export default function HelpAdminsPage(): React.JSX.Element {
           by the conversion factor. It is a dash when there is no estimate or
           nothing is allocated.
         </p>
+        <p data-testid="HelpAdminsPage-combined-allocations-warning">
+          Only one tab or window should edit a quarter&apos;s allocations at a
+          time; the page warns when another one, or either recruitment&apos;s
+          Edit Courses page, is open (see{" "}
+          <Link to="#simultaneous-editing">Simultaneous Editing</Link>). While
+          Developer Mode is on, its footer has the Edit Courses page&apos;s fake
+          data buttons, acting on both recruitments at once; see{" "}
+          <Link to="/help/developer#developer-mode">Developer Mode</Link> on the
+          developer help page.
+        </p>
 
         <h2 className="my-3 h4" id="recruitments">
           Recruitments
@@ -1080,6 +1090,38 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>Leave this page</strong> takes you to the view-only Courses
           page. To look at the numbers without risk, use the view-only page in
           as many tabs as you like.
+        </p>
+        <p data-testid="HelpAdminsPage-simultaneous-editing-combined">
+          <strong>The Combined Allocation page.</strong> The{" "}
+          <Link to="#combined-allocations">Combined Allocation page</Link> edits
+          the same allocations and estimates as the edit pages of the
+          quarter&apos;s TA and ULA recruitments, so it counts as having{" "}
+          <em>both</em> of those edit pages open. If another admin, or another
+          tab of yours, has the combined page of the same quarter open, or the
+          edit page of either of its recruitments, you get a warning that looks
+          like this, and so do they:
+        </p>
+        <MultipleTabsBanner
+          others={EXAMPLE_OTHERS}
+          noun="quarter's allocations"
+          audience="admin"
+          announce={false}
+          testId="HelpAdminsPage-simultaneous-editing-combined-example"
+        />
+        <p data-testid="HelpAdminsPage-simultaneous-editing-combined-meaning">
+          It names everyone who has either recruitment&apos;s allocations open,
+          each person once. The tab or window opened <em>last</em> is asked the
+          same question as for rankings; on this page{" "}
+          <strong>Leave this page</strong> takes you to the quarter&apos;s
+          Budget page. A refused change is handled as on the edit pages: the
+          system tells you, reads the numbers again, and what you typed there is
+          lost. The <strong>Nominal TA to ULA conversion factor</strong> is a
+          budget figure, not an allocation, and is guarded the Budget
+          page&apos;s way instead: if someone else changed it first, your save
+          is not made and you choose <strong>Use theirs</strong> or{" "}
+          <strong>Overwrite</strong>. Having the Budget page open does not by
+          itself cause this warning, nor does the combined page cause the Budget
+          page&apos;s.
         </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-todo">
           <strong>What to do.</strong> If a page looks out of date (for example
