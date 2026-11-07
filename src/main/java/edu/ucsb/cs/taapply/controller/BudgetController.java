@@ -69,7 +69,8 @@ public class BudgetController extends ApiController {
       description =
           "Any of the three may be given, and the conversionTAtoULA (issue #358, how many ULAs count"
               + " as one TA on the Combined Allocation page; greater than zero, else 400); the"
-              + " others keep their values. Amounts are dollars and cents and must not be negative. Returns the quarter's summary with the new"
+              + " others keep their values. Amounts are dollars and cents and must not be"
+              + " negative. Returns the quarter's summary with the new"
               + " figures. The version is the one the page last saw (issue #277): if the budget"
               + " has been saved since, by another tab or admin, nothing is changed and the answer"
               + " is 409 Conflict with the summary as it now stands. Without a version the save"
