@@ -1,0 +1,41 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "067-add-ula-rate-hours-and-gift-funds-to-budgets",
+        "author": "pc",
+        "comment": "The Budget page's costs and funds table (issue #388): every planning cost and fund figure now lives on the budget row. Adds, each nullable, in dollars and cents: the estimated cost per TA per quarter, the ULA hourly rate, the estimated hours per ULA per quarter and the other funds available for ASEs (gift funds). The estimated cost per ULA per quarter is the rate times the hours, computed and never stored. Drops recruitments.avg_cost_per_position, which held the cost per TA on the TA recruitment and the cost per ULA on the ULA recruitment: one shared column could not serve one type only, and the maintainer re-enters the cost per TA on the one open production budget rather than have it copied. Roll back with liquibase rollback-count 1: the four columns are dropped and the recruitments column comes back empty.",
+        "preConditions": [
+          { "onFail": "MARK_RAN" },
+          { "not": { "columnExists": { "tableName": "budgets", "columnName": "ula_rate_dollars_per_hour" } } }
+        ],
+        "changes": [
+          {
+            "addColumn": {
+              "tableName": "budgets",
+              "columns": [
+                { "column": { "name": "ta_cost_per_quarter", "type": "NUMERIC(12,2)" } },
+                { "column": { "name": "ula_rate_dollars_per_hour", "type": "NUMERIC(12,2)" } },
+                { "column": { "name": "estimated_hours_per_ula_per_quarter", "type": "NUMERIC(12,2)" } },
+                { "column": { "name": "gift_funds_for_ases", "type": "NUMERIC(12,2)" } }
+              ]
+            }
+          },
+          { "dropColumn": { "tableName": "recruitments", "columnName": "avg_cost_per_position" } }
+        ],
+        "rollback": [
+          { "dropColumn": { "tableName": "budgets", "columnName": "ta_cost_per_quarter" } },
+          { "dropColumn": { "tableName": "budgets", "columnName": "ula_rate_dollars_per_hour" } },
+          { "dropColumn": { "tableName": "budgets", "columnName": "estimated_hours_per_ula_per_quarter" } },
+          { "dropColumn": { "tableName": "budgets", "columnName": "gift_funds_for_ases" } },
+          {
+            "addColumn": {
+              "tableName": "recruitments",
+              "columns": [{ "column": { "name": "avg_cost_per_position", "type": "NUMERIC(12,2)" } }]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

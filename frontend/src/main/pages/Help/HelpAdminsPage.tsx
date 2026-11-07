@@ -478,11 +478,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
           <strong>TA</strong> and under <strong>ULA</strong> for the
           recruitments it has; the quarter links to its budget page. That page
           is where the hiring for the quarter is planned holistically, against
-          the money available. Enter the estimated average cost of one TA and of
-          one ULA, and the three budget lines; every box is saved as you type,
-          and an entry that is not an amount in dollars and cents is dropped
-          when you leave it. The <strong>hiring targets</strong> of both
-          recruitments are entered here, beside what has been allocated to
+          the money available. The <strong>Costs and funds</strong> table has
+          the costs on the left: the estimated cost of one TA per quarter, the
+          ULA hourly rate and the estimated hours each ULA works per quarter,
+          and under them the estimated cost per ULA per quarter, which is not
+          entered but computed, the rate times the hours. On the right are the
+          funds: the three budget lines and any other funds available for ASEs,
+          such as gift funds. Every box is saved as you type, and an entry that
+          is not an amount in dollars and cents is dropped when you leave it;
+          the boxes show whole dollars, except the hourly rate and the computed
+          cost per ULA, which show cents. The <strong>hiring targets</strong> of
+          both recruitments are entered here, beside what has been allocated to
           courses so far; when the two do not agree, the page says so and links
           to that recruitment&apos;s Courses page. The allocations themselves
           are adjusted on the{" "}
@@ -492,22 +498,24 @@ export default function HelpAdminsPage(): React.JSX.Element {
           recruitment&apos;s own courses, which may differ between TAs and ULAs.
         </p>
         <p id="budget-lines" data-testid="HelpAdminsPage-budget-lines">
-          The three budget lines are the <strong>unrestricted</strong> budget,
-          which may be spent on either TAs or ULAs, and the additional{" "}
-          <strong>TAs only</strong> and <strong>ULAs only</strong> budgets,
-          which may be spent only on positions of that type. Any of the three
-          may include subzero money, gift money or both, and any of them may be
-          zero in a given quarter. For planning, the restricted money is spent
-          first: the cost of the TAs is paid from the TAs-only line, the cost of
-          the ULAs from the ULAs-only line, and whatever is left of either cost
-          comes from the unrestricted pool. The <strong>Budget</strong> section
-          works this out: the anticipated cost of each type is its hiring target
-          times its average cost, the funds are the three lines added, and the
-          bottom line is funds minus expenses, shown green with a plus sign when
-          there is money to spare, red with a minus sign when the plan is over
-          budget, and black when it comes out even. All of these are planning
-          figures, shown in dollars and cents and not recorded in the change
-          history.
+          The three budget lines are the <strong>unrestricted</strong> temp
+          subzero, which may be spent on either TAs or ULAs, and the additional
+          temp subzero for <strong>TAs only</strong> and for{" "}
+          <strong>ULAs only</strong>, which may be spent only on positions of
+          that type; any of the three may be zero in a given quarter. The{" "}
+          <strong>other funds available for ASEs</strong>, such as gift funds,
+          are a fourth line, counted with the three in the total funds. For
+          planning, the restricted money is spent first: the cost of the TAs is
+          paid from the TAs-only line, the cost of the ULAs from the ULAs-only
+          line, and whatever is left of either cost comes from the unrestricted
+          pool. The <strong>Budget</strong> section works this out: the
+          anticipated cost of each type is its hiring target times its estimated
+          cost per position (for ULAs, the computed rate times hours), the funds
+          are the four lines added, and the bottom line is funds minus expenses,
+          shown green with a plus sign when there is money to spare, red with a
+          minus sign when the plan is over budget, and black when it comes out
+          even. All of these are planning figures, shown in dollars and cents
+          and not recorded in the change history.
         </p>
 
         <h2 className="my-3 h4" id="combined-allocations">
@@ -617,8 +625,9 @@ export default function HelpAdminsPage(): React.JSX.Element {
         <p data-testid="HelpAdminsPage-combined-allocations-both">
           When the quarter has <em>both</em> a TA and a ULA recruitment, the
           page also has, at the top, a table of <strong>Cost per TA</strong> and{" "}
-          <strong>Cost per ULA</strong> (each recruitment&apos;s average cost
-          per position, entered on the Budget for Quarter page) and{" "}
+          <strong>Cost per ULA</strong> (the estimated cost per TA entered on
+          the Budget for Quarter page, and the estimated cost per ULA computed
+          there from the ULA hourly rate and hours per quarter) and{" "}
           <strong>TA Cost/ULA Cost</strong>, their ratio, which is empty while
           the cost per ULA is zero. Below it is the{" "}
           <strong>Nominal TA to ULA conversion factor</strong>, which is 3 until
@@ -1112,13 +1121,14 @@ export default function HelpAdminsPage(): React.JSX.Element {
           $45,000.00; you entered $40,000.00.&quot; The page then shows what is
           stored. Choose <strong>Use theirs</strong> to keep what is stored and
           drop what you typed, or <strong>Overwrite</strong> to save what you
-          typed over it. This applies to the three budget lines, the average
-          cost per TA and per ULA, and the two hiring targets. The{" "}
-          <strong>TA to ULA conversion factor</strong>, which is changed on the
-          Combined Allocation page, is counted separately from the three budget
-          lines: a change to it there never refuses a budget line here, and a
-          change to a budget line here never refuses the factor there. Only a
-          change to the <em>same</em> figure is refused.
+          typed over it. This applies to the budget lines (the three temp
+          subzero lines, the estimated cost per TA, the ULA hourly rate, the
+          hours per ULA and the other funds for ASEs) and the two hiring
+          targets. The <strong>TA to ULA conversion factor</strong>, which is
+          changed on the Combined Allocation page, is counted separately from
+          the three budget lines: a change to it there never refuses a budget
+          line here, and a change to a budget line here never refuses the factor
+          there. Only a change to the <em>same</em> figure is refused.
         </p>
         <p data-testid="HelpAdminsPage-simultaneous-editing-courses">
           <strong>The Courses pages.</strong> A recruitment&apos;s Courses page

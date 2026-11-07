@@ -185,7 +185,8 @@ Courses pages" below).
   by a version check of its own, the budget row's `conversionVersion`, #375, counted apart from the
   `version` of the three budget lines). Details in `ConcurrentEditMitigationDesign.md`, section (b).
 - **Only when the quarter has both recruitments**: a table with no header row, *Cost per TA* and
-  *Cost per ULA* (each recruitment's average cost per position, entered on the Budget page) and
+  *Cost per ULA* (the estimated cost per TA entered on the Budget page, and the estimated cost per
+  ULA the Budget page computes from the budget's ULA hourly rate and hours per quarter, #388) and
   *TA Cost/ULA Cost* (empty when the cost per ULA is zero or either is unknown); the editable
   **Nominal TA to ULA conversion factor** (the budget row's `conversionTAtoULA`, greater than
   zero, 3 until set, saved on change with its own version check, `conversionVersion`, #375); and an

@@ -5,6 +5,7 @@ import {
   formatDollars,
   isValidDollars,
   overallRatioDisplay,
+  wholeForInput,
 } from "main/utils/currency";
 
 describe("currency utilities", () => {
@@ -38,6 +39,16 @@ describe("currency utilities", () => {
     expect(dollarsForInput(0)).toBe("0.00");
     expect(dollarsForInput(null)).toBe("");
     expect(dollarsForInput(undefined)).toBe("");
+  });
+
+  test("wholeForInput is the nearest whole number, half up, or empty when there is nothing stored", () => {
+    expect(wholeForInput(12000)).toBe("12000");
+    expect(wholeForInput(20000.25)).toBe("20000");
+    expect(wholeForInput(2500.5)).toBe("2501");
+    expect(wholeForInput(3231.8)).toBe("3232");
+    expect(wholeForInput(0)).toBe("0");
+    expect(wholeForInput(null)).toBe("");
+    expect(wholeForInput(undefined)).toBe("");
   });
 
   test("bottomLineDisplay is green with a plus, red with a minus, or plain zero", () => {

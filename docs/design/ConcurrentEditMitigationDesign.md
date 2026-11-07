@@ -396,7 +396,7 @@ mean something together.
 | Issue | Page | Scope | Resource key | Order |
 |---|---|---|---|---|
 | #273 | Application form draft | One applicant's draft for one recruitment | `draft:<draftId>` | first |
-| #277 | Budget | One quarter's budget: the three budget lines under `version`; the TA to ULA conversion factor, edited on the Combined Allocation page, under its own `conversion_version` (#375), so the two pages never refuse each other's saves (compare-and-set for a recruitment's average cost and hiring target) | `budget:<quarter>` | 2 |
+| #277 | Budget | One quarter's budget: the budget lines (the three subzero lines, and since #388 the cost per TA, the ULA hourly rate, the hours per ULA and the other funds for ASEs) under `version`; the TA to ULA conversion factor, edited on the Combined Allocation page, under its own `conversion_version` (#375), so the two pages never refuse each other's saves (compare-and-set for a recruitment's hiring target) | `budget:<quarter>` | 2 |
 | #278 | Courses allocations and estimated enrollments | The whole edit page for one recruitment | `courses-edit:<recruitmentId>` | 3 |
 | #279 | Faculty rankings | One recruitment course's ranking list | `ranking:<recruitmentCourseId>` | 4 |
 | #280 | Assignments | The whole assignments page for one recruitment | `assignments:<recruitmentId>` | 5 |
@@ -435,8 +435,10 @@ Resource key `budget:<quarter>`, as in the table above.
 
 **What saves.** `BudgetController`, `PUT /api/admin/budget?quarter=`, sets any of the three lines
 (`unrestrictedBudget`, `tasOnlyBudget`, `ulasOnlyBudget`) on the single `budgets` row for the
-quarter. The Budget page (`BudgetPage.tsx`) also edits two values on each recruitment's own row: the
-average cost per position and the total hiring target. Each is a separate request with one value.
+quarter (since #388 also the cost per TA, the ULA rate and hours, and the other funds for ASEs). The
+Budget page (`BudgetPage.tsx`) also edits one value on each recruitment's own row: the total hiring
+target (the average cost per position moved to the budget row in #388). Each is a separate request
+with one value.
 
 **What goes wrong today.** An admin who sets the TAs-only line to 40,000 in one tab and 45,000 in
 another leaves whichever saved last. The summary on screen, computed on the server and returned
@@ -473,10 +475,11 @@ fields came with it. The read, compare and write are one step within the server 
 lock as the compare-and-set below), which is enough for a single instance; that replaces the
 optimistic-lock failure JPA used to raise. `useBudgetSaves` carries `version` for a line and
 `conversionVersion` for the factor, and learns both from every summary it sees, never back down.
-Average cost and hiring
-target use compare-and-set: `PUT /api/admin/recruitments/avgCostPerPosition` and `/totalHiringTarget`
-take an optional `expected`, and answer `409` with the recruitment when the stored value is no
-longer that (a missing `expected` saves unconditionally, which is how a cost not yet entered is
+The hiring
+target uses compare-and-set: `PUT /api/admin/recruitments/totalHiringTarget` (and, until #388 moved
+the cost onto the budget row, `/avgCostPerPosition`)
+takes an optional `expected`, and answers `409` with the recruitment when the stored value is no
+longer that (a missing `expected` saves unconditionally, which is how a figure not yet entered was
 first set). The read, compare and write are one step within the server process (a lock), which is
 enough for a single instance; the key `recruitment:<id>` names the thing compared, though nothing
 is recorded under it. Per figure, a refusal leaves a notice with **Use theirs** and **Overwrite**;
@@ -1075,7 +1078,8 @@ is a day or less, M a few days, L about a week.
    per quarter, one admin at a time in practice, the smallest possible user of the mechanism. Add a
    `version` to `budgets`, a `409` on a stale `PUT /api/admin/budget`, the **Use theirs** and
    **Overwrite** choice, and the banner on the Budget page. Use compare-and-set for the recruitment's
-   average cost and hiring target. It proves the mechanism on a second, unrelated screen and shows
+   average cost and hiring target (the cost has since moved to the budget row, #388, leaving the
+   hiring target). It proves the mechanism on a second, unrelated screen and shows
    whether the package really is free of application knowledge.
 
 3. **Allocations: split the Courses page into view and edit, then guard the edit page. (L, #278.)**

@@ -21,11 +21,6 @@ export type Recruitment = {
   totalHiringTarget?: number;
   /** Counts the Auto Allocate runs (issue #278); an allocation edit carries it to prove it is current. */
   allocationBulkVersion?: number;
-  /**
-   * The estimated average cost of one position of this type, in dollars (issue #177); null until
-   * entered on the Budget for Quarter page.
-   */
-  avgCostPerPosition?: number | null;
   /** Who may see the allocations (issues #178 and #224); admins only by default. */
   allocationVisibility?: AllocationVisibility;
   /** Whether the assignments page and its CSVs are open to admins and faculty (issue #180). */

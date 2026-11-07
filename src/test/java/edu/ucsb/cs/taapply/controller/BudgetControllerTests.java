@@ -78,6 +78,7 @@ public class BudgetControllerTests extends ControllerTestCase {
         budget,
         new Side(5L, 8, new BigDecimal("12000.00"), 9, 400, 1, 50.0, new BigDecimal("96000.00")),
         null,
+        new BigDecimal("3231.80"),
         new BigDecimal("96000.00"),
         new BigDecimal("1000.00"),
         new BigDecimal("-95000.00"));
@@ -275,6 +276,187 @@ public class BudgetControllerTests extends ControllerTestCase {
 
     assertEquals("ulasOnlyBudget must not be negative", responseToJson(response).get("message"));
     verify(budgetRepository, never()).save(any());
+  }
+
+  // ---- the ULA rate, the hours per ULA and the other funds (issue #388) ----
+
+  @Test
+  public void a_new_budget_has_no_costs_rate_hours_or_other_funds_yet() {
+    Budget budget = budget("0", "0", "0");
+    assertEquals(null, budget.getTaCostPerQuarter());
+    assertEquals(null, budget.getUlaRateDollarsPerHour());
+    assertEquals(null, budget.getEstimatedHoursPerULAPerQuarter());
+    assertEquals(null, budget.getGiftFundsForASEs());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void admin_can_set_the_rate_the_hours_and_the_other_funds_at_once_rounded_to_cents()
+      throws Exception {
+    Budget budget = budget("0", "0", "0");
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    Summary summary = summary(budget);
+    when(budgetService.summary(Q)).thenReturn(summary);
+
+    MvcResult response =
+        mockMvc
+            .perform(
+                put("/api/admin/budget?quarter=20264&taCostPerQuarter=13110.004"
+                        + "&ulaRateDollarsPerHour=29.375"
+                        + "&estimatedHoursPerULAPerQuarter=110&giftFundsForASEs=32200.5")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.estimatedCostPerULAPerQuarter").value(3231.80))
+            .andReturn();
+
+    assertEquals(new BigDecimal("13110.00"), budget.getTaCostPerQuarter());
+    assertEquals(new BigDecimal("29.38"), budget.getUlaRateDollarsPerHour());
+    assertEquals(new BigDecimal("110.00"), budget.getEstimatedHoursPerULAPerQuarter());
+    assertEquals(new BigDecimal("32200.50"), budget.getGiftFundsForASEs());
+    // The subzero lines were not given, so they are as they were.
+    assertEquals(new BigDecimal("0"), budget.getUnrestrictedBudget());
+    InOrder inOrder = inOrder(budgetRepository, budgetService);
+    inOrder.verify(budgetRepository).save(budget);
+    inOrder.verify(budgetService).summary(Q);
+    assertEquals(mapper.writeValueAsString(summary), response.getResponse().getContentAsString());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void each_of_the_rate_the_hours_and_the_other_funds_is_set_on_its_own_and_the_rest_kept()
+      throws Exception {
+    Budget budget = budget("1.00", "2.00", "3.00");
+    budget.setUlaRateDollarsPerHour(new BigDecimal("10.00"));
+    budget.setEstimatedHoursPerULAPerQuarter(new BigDecimal("20.00"));
+    budget.setGiftFundsForASEs(new BigDecimal("30.00"));
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&ulaRateDollarsPerHour=11").with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals(new BigDecimal("11.00"), budget.getUlaRateDollarsPerHour());
+    assertEquals(new BigDecimal("20.00"), budget.getEstimatedHoursPerULAPerQuarter());
+    assertEquals(new BigDecimal("30.00"), budget.getGiftFundsForASEs());
+
+    mockMvc
+        .perform(
+            put("/api/admin/budget?quarter=20264&estimatedHoursPerULAPerQuarter=22").with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals(new BigDecimal("11.00"), budget.getUlaRateDollarsPerHour());
+    assertEquals(new BigDecimal("22.00"), budget.getEstimatedHoursPerULAPerQuarter());
+    assertEquals(new BigDecimal("30.00"), budget.getGiftFundsForASEs());
+
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&giftFundsForASEs=0").with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals(new BigDecimal("11.00"), budget.getUlaRateDollarsPerHour());
+    assertEquals(new BigDecimal("22.00"), budget.getEstimatedHoursPerULAPerQuarter());
+    assertEquals(new BigDecimal("0.00"), budget.getGiftFundsForASEs());
+
+    // A subzero line leaves all three alone.
+    mockMvc
+        .perform(put("/api/admin/budget?quarter=20264&tasOnlyBudget=5").with(csrf()))
+        .andExpect(status().isOk());
+    assertEquals(new BigDecimal("11.00"), budget.getUlaRateDollarsPerHour());
+    assertEquals(new BigDecimal("22.00"), budget.getEstimatedHoursPerULAPerQuarter());
+    assertEquals(new BigDecimal("0.00"), budget.getGiftFundsForASEs());
+    assertEquals(new BigDecimal("5.00"), budget.getTasOnlyBudget());
+    assertEquals(new BigDecimal("1.00"), budget.getUnrestrictedBudget());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_negative_rate_hours_or_other_funds_is_a_400_and_nothing_is_read_or_saved()
+      throws Exception {
+    for (String field :
+        List.of(
+            "taCostPerQuarter",
+            "ulaRateDollarsPerHour",
+            "estimatedHoursPerULAPerQuarter",
+            "giftFundsForASEs")) {
+      MvcResult response =
+          mockMvc
+              .perform(
+                  put("/api/admin/budget?quarter=20264&" + field + "=-0.01&tasOnlyBudget=5")
+                      .with(csrf()))
+              .andExpect(status().isBadRequest())
+              .andReturn();
+      assertEquals(field + " must not be negative", responseToJson(response).get("message"));
+    }
+    verify(budgetService, never()).budgetFor(any());
+    verify(budgetRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void the_rate_the_hours_and_the_other_funds_are_lines_counted_under_version()
+      throws Exception {
+    for (String line :
+        List.of(
+            "taCostPerQuarter",
+            "ulaRateDollarsPerHour",
+            "estimatedHoursPerULAPerQuarter",
+            "giftFundsForASEs")) {
+      Budget budget = versioned(5, 2);
+      when(budgetService.budgetFor(Q)).thenReturn(budget);
+      when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+      mockMvc
+          .perform(put("/api/admin/budget?quarter=20264&version=5&" + line + "=7").with(csrf()))
+          .andExpect(status().isOk());
+      assertEquals(6, budget.getVersion(), line);
+      assertEquals(2, budget.getConversionVersion(), line);
+
+      // And a stale version refuses it, leaving the figure as it was.
+      mockMvc
+          .perform(put("/api/admin/budget?quarter=20264&version=5&" + line + "=8").with(csrf()))
+          .andExpect(status().isConflict());
+      assertEquals(6, budget.getVersion(), line);
+    }
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void a_stale_version_leaves_the_rate_the_hours_and_the_other_funds_as_they_were()
+      throws Exception {
+    Budget budget = versioned(5, 2);
+    when(budgetService.budgetFor(Q)).thenReturn(budget);
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(
+            put("/api/admin/budget?quarter=20264&version=4&taCostPerQuarter=0"
+                    + "&ulaRateDollarsPerHour=1&estimatedHoursPerULAPerQuarter=2&giftFundsForASEs=3")
+                .with(csrf()))
+        .andExpect(status().isConflict());
+
+    assertEquals(null, budget.getTaCostPerQuarter());
+    assertEquals(null, budget.getUlaRateDollarsPerHour());
+    assertEquals(null, budget.getEstimatedHoursPerULAPerQuarter());
+    assertEquals(null, budget.getGiftFundsForASEs());
+    verify(budgetRepository, never()).save(any());
+  }
+
+  @WithMockUser(roles = {"ADMIN"})
+  @Test
+  public void the_summary_carries_the_rate_the_hours_the_other_funds_and_the_computed_cost()
+      throws Exception {
+    Budget budget = budget("1000.00", "0.00", "0.00");
+    budget.setTaCostPerQuarter(new BigDecimal("13110.00"));
+    budget.setUlaRateDollarsPerHour(new BigDecimal("29.38"));
+    budget.setEstimatedHoursPerULAPerQuarter(new BigDecimal("110.00"));
+    budget.setGiftFundsForASEs(new BigDecimal("32200.00"));
+    when(budgetService.summary(Q)).thenReturn(summary(budget));
+
+    mockMvc
+        .perform(get("/api/admin/budget?quarter=20264"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.budget.taCostPerQuarter").value(13110.00))
+        .andExpect(jsonPath("$.budget.ulaRateDollarsPerHour").value(29.38))
+        .andExpect(jsonPath("$.budget.estimatedHoursPerULAPerQuarter").value(110.00))
+        .andExpect(jsonPath("$.budget.giftFundsForASEs").value(32200.00))
+        .andExpect(jsonPath("$.estimatedCostPerULAPerQuarter").value(3231.80));
   }
 
   // ---- the conversion factor (issue #358) ----

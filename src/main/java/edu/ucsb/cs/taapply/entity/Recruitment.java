@@ -4,7 +4,6 @@ import edu.ucsb.cs.taapply.enums.AllocationVisibility;
 import edu.ucsb.cs.taapply.enums.ApplicationStatus;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.*;
@@ -90,14 +89,6 @@ public class Recruitment {
   @Column(name = "allocation_bulk_version", nullable = false)
   @Builder.Default
   private Integer allocationBulkVersion = 0;
-
-  /**
-   * The estimated average cost of one position of this recruitment's type, in dollars and cents
-   * (issue #177): per TA on a TA recruitment, per ULA on a ULA recruitment. Entered on the Budget
-   * for Quarter page; null until it has been. A planning figure, not audited.
-   */
-  @Column(name = "avg_cost_per_position", precision = 12, scale = 2)
-  private BigDecimal avgCostPerPosition;
 
   /**
    * Who may see the allocations of this recruitment's courses (issue #224): admins only (the

@@ -32,9 +32,6 @@ const handlers = (summary, presence = { others: [], heartbeatSeconds: 5 }) => [
   ),
   http.get("/api/admin/budget", () => HttpResponse.json(summary)),
   http.put("/api/admin/budget", () => HttpResponse.json(summary)),
-  http.put("/api/admin/recruitments/avgCostPerPosition", () =>
-    HttpResponse.json({}),
-  ),
   http.put("/api/admin/recruitments/totalHiringTarget", () =>
     HttpResponse.json({}),
   ),
