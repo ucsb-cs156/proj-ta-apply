@@ -89,8 +89,9 @@ a join table (a prior course, a topic rating, an interest) is stored as the JSON
 row. A null old value means the field was blank, or a row was added; a null new value means the
 admin blanked an optional field, or deleted a row.
 
-<p>Nothing writes rows yet: the admin edit that will is a later feature. The table and its page
-come first so that feature has somewhere to record what it does.</div>
+<p><code>editorEmail</code> is the email of the admin who made the change (issue #337, changeset 065),
+as text rather than a user id: it reads directly in the table, survives the user row being
+deleted, and needs no join. It is null on the rows written before the column existed.</div>
 </div>
 </section>
 <section class="summary">

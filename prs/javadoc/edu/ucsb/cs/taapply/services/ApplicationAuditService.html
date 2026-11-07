@@ -97,7 +97,12 @@ row of the join tables (a prior course, a topic rating, an interest level, a cou
 the JSON of that row. Rows are compared as a set, so a row that disappeared is recorded with a
 null new value, and a row that appeared with a null old value; a prior course that was edited
 therefore shows as one row removed and one added, since the form rebuilds those rows on every
-save and they carry no identity across it.</div>
+save and they carry no identity across it.
+
+<p>Every row carries the email of the logged-in user who made the change (issue #337), read from
+<a href="CurrentUserService.html" title="class in edu.ucsb.cs.taapply.services"><code>CurrentUserService</code></a> here rather than passed in by each caller, so every path that writes
+rows records it, Developer Mode's fake data included. A row written with no user logged in (no
+path does so today) would carry null, as the rows from before the column existed do.</div>
 </div>
 </section>
 <section class="summary">
@@ -149,7 +154,8 @@ save and they carry no identity across it.</div>
  <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Records every difference between the snapshot taken before the edit and the application as it
-is now, and returns the rows written (empty when nothing changed).</div>
+is now, each row naming the logged-in user as its editor, and returns the rows written (empty
+when nothing changed).</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saveAndRecord(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">saveAndRecord</a><wbr>(<a href="ApplicationAuditService.Snapshot.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService.Snapshot</a>&nbsp;before,
@@ -214,7 +220,7 @@ edit, in one database transaction, and returns the application as saved.</div>
 <div class="block">Saves the edited application and records every difference from the snapshot taken before the
 edit, in one database transaction, and returns the application as saved. If either write fails,
 both are rolled back: no edit without its audit rows, no audit rows for an edit that did not
-happen (issue #377). Issue #337 will add the editor here, next to the rows it writes.
+happen (issue #377). Each row names the logged-in user as its editor (issue #337).
 
 <p>A save that loses a race with another save throws <code>
 ObjectOptimisticLockingFailureException</code> out of here, as it did when the caller saved itself.</div>
@@ -229,7 +235,9 @@ ObjectOptimisticLockingFailureException</code> out of here, as it did when the c
  <a href="../entity/Application.html" title="class in edu.ucsb.cs.taapply.entity">Application</a>&nbsp;after,
  <a href="../enums/RecruitmentType.html" title="enum class in edu.ucsb.cs.taapply.enums">RecruitmentType</a>&nbsp;type)</span></div>
 <div class="block">Records every difference between the snapshot taken before the edit and the application as it
-is now, and returns the rows written (empty when nothing changed). Writers go through <a href="#saveAndRecord(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)"><code>saveAndRecord(ApplicationAuditService.Snapshot, Application, RecruitmentType)</code></a>, which calls this inside the transaction that saves the application.</div>
+is now, each row naming the logged-in user as its editor, and returns the rows written (empty
+when nothing changed). Writers go through <a href="#saveAndRecord(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)"><code>saveAndRecord(ApplicationAuditService.Snapshot, Application, RecruitmentType)</code></a>, which calls this inside the
+transaction that saves the application.</div>
 </div>
 </section>
 </li>

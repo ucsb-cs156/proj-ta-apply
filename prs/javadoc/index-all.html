@@ -3567,7 +3567,8 @@ alike.</div>
 <dt><a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html#record(edu.ucsb.cs.taapply.services.ApplicationAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Application,edu.ucsb.cs.taapply.enums.RecruitmentType)" class="member-name-link">record(ApplicationAuditService.Snapshot, Application, RecruitmentType)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/ApplicationAuditService.html" title="class in edu.ucsb.cs.taapply.services">ApplicationAuditService</a></dt>
 <dd>
 <div class="block">Records every difference between the snapshot taken before the edit and the application as it
-is now, and returns the rows written (empty when nothing changed).</div>
+is now, each row naming the logged-in user as its editor, and returns the rows written (empty
+when nothing changed).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html#record(java.lang.String,java.lang.String,edu.ucsb.cs.taapply.concurrency.ClientIdentity)" class="member-name-link">record(String, String, ClientIdentity)</a> - Method in interface edu.ucsb.cs.taapply.concurrency.<a href="edu/ucsb/cs/taapply/concurrency/ClientActivityDetector.html" title="interface in edu.ucsb.cs.taapply.concurrency">ClientActivityDetector</a></dt>
 <dd>
@@ -3578,16 +3579,18 @@ is now, and returns the rows written (empty when nothing changed).</div>
 <dt><a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html#recordChanges(edu.ucsb.cs.taapply.services.RecruitmentAuditService.Snapshot,edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordChanges(RecruitmentAuditService.Snapshot, Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService</a></dt>
 <dd>
 <div class="block">Records every field whose value differs between the snapshot taken before an edit and the
-recruitment as it is now, one row each, and returns the rows written (empty when nothing
-changed).</div>
+recruitment as it is now, one row each naming the logged-in user as its editor, and returns the
+rows written (empty when nothing changed).</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html#recordCreated(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordCreated(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService</a></dt>
 <dd>
-<div class="block">Records that the recruitment was just created, and returns the row written.</div>
+<div class="block">Records that the recruitment was just created, by the logged-in user, and returns the row
+written.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html#recordDeleted(edu.ucsb.cs.taapply.entity.Recruitment)" class="member-name-link">recordDeleted(Recruitment)</a> - Method in class edu.ucsb.cs.taapply.services.<a href="edu/ucsb/cs/taapply/services/RecruitmentAuditService.html" title="class in edu.ucsb.cs.taapply.services">RecruitmentAuditService</a></dt>
 <dd>
-<div class="block">Records that the recruitment is about to be deleted, and returns the row written.</div>
+<div class="block">Records that the recruitment is about to be deleted, by the logged-in user, and returns the row
+written.</div>
 </dd>
 <dt><a href="edu/ucsb/cs/taapply/entity/Recruitment.html" class="type-name-link" title="class in edu.ucsb.cs.taapply.entity">Recruitment</a> - Class in <a href="edu/ucsb/cs/taapply/entity/package-summary.html">edu.ucsb.cs.taapply.entity</a></dt>
 <dd>

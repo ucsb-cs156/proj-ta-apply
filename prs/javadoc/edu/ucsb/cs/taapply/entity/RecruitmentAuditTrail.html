@@ -95,7 +95,11 @@ student's application are a different table, <a href="AuditTrail.html" title="cl
 <code>primaryConsiderationDate</code>, <code>actualOpeningDate</code>, <code>actualClosingDate</code>, <code>
 reviewStatus</code>, <code>facultyReviewOpeningDate</code>, <code>facultyRankingDeadline</code>), or is <a href="#CREATED"><code>CREATED</code></a> or <a href="#DELETED"><code>DELETED</code></a>, when both values are null. A change to several fields in one
 request is several rows. There is deliberately no foreign key to the recruitment: the rows about
-a deleted recruitment are the record that it existed.</div>
+a deleted recruitment are the record that it existed.
+
+<p><code>editorEmail</code> is the email of the admin who made the change (issue #337, changeset 066),
+as text rather than a user id: it reads directly in the table, survives the user row being
+deleted, and needs no join. It is null on the rows written before the column existed.</div>
 </div>
 </section>
 <section class="summary">
