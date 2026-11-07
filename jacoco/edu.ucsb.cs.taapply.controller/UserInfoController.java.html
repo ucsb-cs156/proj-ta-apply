@@ -13,11 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 <span class="fc" id="L14">public class UserInfoController extends ApiController {</span>
 
+  @Override
   @Operation(summary = &quot;Get information about current user&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
   @GetMapping(&quot;&quot;)
   public CurrentUser getCurrentUser() {
-<span class="fc" id="L20">    return super.getCurrentUser();</span>
+<span class="fc" id="L21">    return super.getCurrentUser();</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
