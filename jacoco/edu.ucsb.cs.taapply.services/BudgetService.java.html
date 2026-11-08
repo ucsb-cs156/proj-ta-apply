@@ -5,7 +5,6 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
-import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.math.BigDecimal;
@@ -26,15 +25,15 @@ import org.springframework.stereotype.Service;
  * {@link BigDecimal}s with two decimal places.
  */
 @Service
-<span class="fc" id="L29">public class BudgetService {</span>
+<span class="fc" id="L28">public class BudgetService {</span>
 
-  @Autowired BudgetRepository budgetRepository;
+  @Autowired BudgetCreationService budgetCreationService;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired BudgetCourseService budgetCourseService;
 
   /** A quarter with at least one recruitment, and which types it has. */
-<span class="fc" id="L37">  public record QuarterSummary(String quarter, boolean hasTa, boolean hasUla) {}</span>
+<span class="fc" id="L36">  public record QuarterSummary(String quarter, boolean hasTa, boolean hasUla) {}</span>
 
   /**
    * One recruitment's side of the budget.
@@ -50,7 +49,7 @@ import org.springframework.stereotype.Service;
    *     &quot;1:n&quot; ratio; null when there are no estimates
    * @param anticipatedCost totalHiringTarget times avgCostPerPosition; 0 while the cost is unknown
    */
-<span class="fc" id="L53">  public record Side(</span>
+<span class="fc" id="L52">  public record Side(</span>
       Long recruitmentId,
       Integer totalHiringTarget,
       BigDecimal avgCostPerPosition,
@@ -71,7 +70,7 @@ import org.springframework.stereotype.Service;
    * @param totalFunds the budget's three subzero lines and its other funds for ASEs added
    * @param bottomLine totalFunds minus totalExpenses
    */
-<span class="fc" id="L74">  public record Summary(</span>
+<span class="fc" id="L73">  public record Summary(</span>
       String quarter,
       Budget budget,
       Side ta,
@@ -83,24 +82,25 @@ import org.springframework.stereotype.Service;
 
   /** Every quarter with a recruitment, most recent first. */
   public List&lt;QuarterSummary&gt; quarters() {
-<span class="fc" id="L86">    Map&lt;String, boolean[]&gt; byQuarter = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L87" title="All 2 branches covered.">    for (Recruitment recruitment : recruitmentRepository.findAllByOrderByQuarterDescTypeAsc()) {</span>
-<span class="fc" id="L88">      boolean[] types = byQuarter.computeIfAbsent(recruitment.getQuarter(), q -&gt; new boolean[2]);</span>
-<span class="fc bfc" id="L89" title="All 2 branches covered.">      if (recruitment.getType() == RecruitmentType.TA) {</span>
-<span class="fc" id="L90">        types[0] = true;</span>
+<span class="fc" id="L85">    Map&lt;String, boolean[]&gt; byQuarter = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">    for (Recruitment recruitment : recruitmentRepository.findAllByOrderByQuarterDescTypeAsc()) {</span>
+<span class="fc" id="L87">      boolean[] types = byQuarter.computeIfAbsent(recruitment.getQuarter(), q -&gt; new boolean[2]);</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">      if (recruitment.getType() == RecruitmentType.TA) {</span>
+<span class="fc" id="L89">        types[0] = true;</span>
       } else {
-<span class="fc" id="L92">        types[1] = true;</span>
+<span class="fc" id="L91">        types[1] = true;</span>
       }
-<span class="fc" id="L94">    }</span>
-<span class="fc" id="L95">    List&lt;QuarterSummary&gt; result = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L96">    byQuarter.forEach(</span>
-<span class="fc" id="L97">        (quarter, types) -&gt; result.add(new QuarterSummary(quarter, types[0], types[1])));</span>
-<span class="fc" id="L98">    return result;</span>
+<span class="fc" id="L93">    }</span>
+<span class="fc" id="L94">    List&lt;QuarterSummary&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L95">    byQuarter.forEach(</span>
+<span class="fc" id="L96">        (quarter, types) -&gt; result.add(new QuarterSummary(quarter, types[0], types[1])));</span>
+<span class="fc" id="L97">    return result;</span>
   }
 
   /**
-   * The quarter's budget row, created with every line at zero if this is the first time it is asked
-   * for. Only quarters with at least one recruitment have a budget.
+   * The quarter's budget row, created if this is the first time it is asked for, as a copy of the
+   * most recent earlier quarter's (issue #384; see {@link BudgetCreationService}). Only quarters
+   * with at least one recruitment have a budget.
    *
    * @throws EntityNotFoundException when the quarter has no recruitment
    */
@@ -109,9 +109,7 @@ import org.springframework.stereotype.Service;
 <span class="fc bfc" id="L109" title="All 2 branches covered.">        &amp;&amp; recruitmentRepository.findByQuarterAndType(quarter, RecruitmentType.ULA).isEmpty()) {</span>
 <span class="fc" id="L110">      throw new EntityNotFoundException(&quot;No recruitment for quarter %s&quot;.formatted(quarter));</span>
     }
-<span class="fc" id="L112">    return budgetRepository</span>
-<span class="fc" id="L113">        .findById(quarter)</span>
-<span class="fc" id="L114">        .orElseGet(() -&gt; budgetRepository.save(Budget.builder().quarter(quarter).build()));</span>
+<span class="fc" id="L112">    return budgetCreationService.findOrCreate(quarter);</span>
   }
 
   /**
@@ -120,24 +118,24 @@ import org.springframework.stereotype.Service;
    * @throws EntityNotFoundException when the quarter has no recruitment
    */
   public Summary summary(String quarter) {
-<span class="fc" id="L123">    Budget budget = budgetFor(quarter);</span>
-<span class="fc" id="L124">    Side ta = sideFor(quarter, RecruitmentType.TA, budget);</span>
-<span class="fc" id="L125">    Side ula = sideFor(quarter, RecruitmentType.ULA, budget);</span>
-<span class="fc" id="L126">    BigDecimal totalExpenses = costOf(ta).add(costOf(ula));</span>
-<span class="fc" id="L127">    BigDecimal totalFunds =</span>
-<span class="fc" id="L128">        money(budget.getUnrestrictedBudget())</span>
-<span class="fc" id="L129">            .add(money(budget.getTasOnlyBudget()))</span>
-<span class="fc" id="L130">            .add(money(budget.getUlasOnlyBudget()))</span>
-<span class="fc" id="L131">            .add(money(orZero(budget.getGiftFundsForASEs())));</span>
-<span class="fc" id="L132">    return new Summary(</span>
+<span class="fc" id="L121">    Budget budget = budgetFor(quarter);</span>
+<span class="fc" id="L122">    Side ta = sideFor(quarter, RecruitmentType.TA, budget);</span>
+<span class="fc" id="L123">    Side ula = sideFor(quarter, RecruitmentType.ULA, budget);</span>
+<span class="fc" id="L124">    BigDecimal totalExpenses = costOf(ta).add(costOf(ula));</span>
+<span class="fc" id="L125">    BigDecimal totalFunds =</span>
+<span class="fc" id="L126">        money(budget.getUnrestrictedBudget())</span>
+<span class="fc" id="L127">            .add(money(budget.getTasOnlyBudget()))</span>
+<span class="fc" id="L128">            .add(money(budget.getUlasOnlyBudget()))</span>
+<span class="fc" id="L129">            .add(money(orZero(budget.getGiftFundsForASEs())));</span>
+<span class="fc" id="L130">    return new Summary(</span>
         quarter,
         budget,
         ta,
         ula,
-<span class="fc" id="L137">        estimatedCostPerUla(budget),</span>
+<span class="fc" id="L135">        estimatedCostPerUla(budget),</span>
         totalExpenses,
         totalFunds,
-<span class="fc" id="L140">        totalFunds.subtract(totalExpenses));</span>
+<span class="fc" id="L138">        totalFunds.subtract(totalExpenses));</span>
   }
 
   /**
@@ -145,62 +143,62 @@ import org.springframework.stereotype.Service;
    * estimated hours per ULA, to the cent; null while either has not been entered.
    */
   public static BigDecimal estimatedCostPerUla(Budget budget) {
-<span class="fc" id="L148">    BigDecimal rate = budget.getUlaRateDollarsPerHour();</span>
-<span class="fc" id="L149">    BigDecimal hours = budget.getEstimatedHoursPerULAPerQuarter();</span>
-<span class="fc bfc" id="L150" title="All 4 branches covered.">    return rate == null || hours == null ? null : money(rate.multiply(hours));</span>
+<span class="fc" id="L146">    BigDecimal rate = budget.getUlaRateDollarsPerHour();</span>
+<span class="fc" id="L147">    BigDecimal hours = budget.getEstimatedHoursPerULAPerQuarter();</span>
+<span class="fc bfc" id="L148" title="All 4 branches covered.">    return rate == null || hours == null ? null : money(rate.multiply(hours));</span>
   }
 
   private Side sideFor(String quarter, RecruitmentType type, Budget budget) {
-<span class="fc" id="L154">    Optional&lt;Recruitment&gt; recruitment = recruitmentRepository.findByQuarterAndType(quarter, type);</span>
-<span class="fc" id="L155">    return recruitment.map(found -&gt; side(found, budget)).orElse(null);</span>
+<span class="fc" id="L152">    Optional&lt;Recruitment&gt; recruitment = recruitmentRepository.findByQuarterAndType(quarter, type);</span>
+<span class="fc" id="L153">    return recruitment.map(found -&gt; side(found, budget)).orElse(null);</span>
   }
 
   private Side side(Recruitment recruitment, Budget budget) {
-<span class="fc" id="L159">    List&lt;RecruitmentCourse&gt; active =</span>
-<span class="fc" id="L160">        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
-<span class="fc bfc" id="L161" title="All 2 branches covered.">            .filter(row -&gt; !row.isRemoved())</span>
-<span class="fc" id="L162">            .toList();</span>
+<span class="fc" id="L157">    List&lt;RecruitmentCourse&gt; active =</span>
+<span class="fc" id="L158">        recruitmentCourseRepository.findByRecruitmentId(recruitment.getId()).stream()</span>
+<span class="fc bfc" id="L159" title="All 2 branches covered.">            .filter(row -&gt; !row.isRemoved())</span>
+<span class="fc" id="L160">            .toList();</span>
     // The estimates are the quarter's (issue #363), shared with the other recruitment.
-<span class="fc" id="L164">    budgetCourseService.attach(recruitment.getQuarter(), active);</span>
-<span class="fc" id="L165">    int totalAllocation = active.stream().mapToInt(RecruitmentCourse::getAllocation).sum();</span>
-<span class="fc" id="L166">    int totalEstimate = active.stream().mapToInt(BudgetService::estimateOf).sum();</span>
-<span class="fc" id="L167">    int target = recruitment.getTotalHiringTarget();</span>
+<span class="fc" id="L162">    budgetCourseService.attach(recruitment.getQuarter(), active);</span>
+<span class="fc" id="L163">    int totalAllocation = active.stream().mapToInt(RecruitmentCourse::getAllocation).sum();</span>
+<span class="fc" id="L164">    int totalEstimate = active.stream().mapToInt(BudgetService::estimateOf).sum();</span>
+<span class="fc" id="L165">    int target = recruitment.getTotalHiringTarget();</span>
     // Both costs are the budget's (issue #388): the cost per TA as entered, the cost per ULA
     // computed from the rate and the hours.
     BigDecimal perPosition =
-<span class="fc bfc" id="L171" title="All 2 branches covered.">        recruitment.getType() == RecruitmentType.ULA</span>
-<span class="fc" id="L172">            ? estimatedCostPerUla(budget)</span>
-<span class="fc" id="L173">            : budget.getTaCostPerQuarter();</span>
+<span class="fc bfc" id="L169" title="All 2 branches covered.">        recruitment.getType() == RecruitmentType.ULA</span>
+<span class="fc" id="L170">            ? estimatedCostPerUla(budget)</span>
+<span class="fc" id="L171">            : budget.getTaCostPerQuarter();</span>
     BigDecimal cost =
-<span class="fc bfc" id="L175" title="All 2 branches covered.">        perPosition == null</span>
-<span class="fc" id="L176">            ? money(BigDecimal.ZERO)</span>
-<span class="fc" id="L177">            : money(perPosition.multiply(BigDecimal.valueOf(target)));</span>
-<span class="fc" id="L178">    return new Side(</span>
-<span class="fc" id="L179">        recruitment.getId(),</span>
-<span class="fc" id="L180">        target,</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">        perPosition == null</span>
+<span class="fc" id="L174">            ? money(BigDecimal.ZERO)</span>
+<span class="fc" id="L175">            : money(perPosition.multiply(BigDecimal.valueOf(target)));</span>
+<span class="fc" id="L176">    return new Side(</span>
+<span class="fc" id="L177">        recruitment.getId(),</span>
+<span class="fc" id="L178">        target,</span>
         perPosition,
         totalAllocation,
         totalEstimate,
         totalAllocation - target,
-<span class="fc bfc" id="L185" title="All 2 branches covered.">        totalEstimate == 0 ? null : (double) totalEstimate / target,</span>
+<span class="fc bfc" id="L183" title="All 2 branches covered.">        totalEstimate == 0 ? null : (double) totalEstimate / target,</span>
         cost);
   }
 
   private static BigDecimal costOf(Side side) {
-<span class="fc bfc" id="L190" title="All 2 branches covered.">    return side == null ? money(BigDecimal.ZERO) : side.anticipatedCost();</span>
+<span class="fc bfc" id="L188" title="All 2 branches covered.">    return side == null ? money(BigDecimal.ZERO) : side.anticipatedCost();</span>
   }
 
   private static BigDecimal orZero(BigDecimal amount) {
-<span class="fc bfc" id="L194" title="All 2 branches covered.">    return amount == null ? BigDecimal.ZERO : amount;</span>
+<span class="fc bfc" id="L192" title="All 2 branches covered.">    return amount == null ? BigDecimal.ZERO : amount;</span>
   }
 
   private static int estimateOf(RecruitmentCourse row) {
-<span class="fc bfc" id="L198" title="All 2 branches covered.">    return row.getEnrollmentEstimate() == null ? 0 : row.getEnrollmentEstimate();</span>
+<span class="fc bfc" id="L196" title="All 2 branches covered.">    return row.getEnrollmentEstimate() == null ? 0 : row.getEnrollmentEstimate();</span>
   }
 
   /** Dollars and cents: two decimal places, half up. */
   public static BigDecimal money(BigDecimal amount) {
-<span class="fc" id="L203">    return amount.setScale(2, RoundingMode.HALF_UP);</span>
+<span class="fc" id="L201">    return amount.setScale(2, RoundingMode.HALF_UP);</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

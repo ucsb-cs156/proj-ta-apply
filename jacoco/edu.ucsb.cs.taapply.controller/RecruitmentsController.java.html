@@ -93,20 +93,26 @@ import org.springframework.web.bind.annotation.RestController;
 <span class="fc" id="L93">          String.format(&quot;A %s recruitment already exists for quarter %s&quot;, type, quarter));</span>
     }
 
-    // The save and its audit row are one transaction (issue #377).
-<span class="fc" id="L97">    Recruitment recruitment =</span>
-<span class="fc" id="L98">        recruitmentAuditService.saveAndRecordCreated(</span>
-<span class="fc" id="L99">            Recruitment.builder()</span>
-<span class="fc" id="L100">                .quarter(quarter)</span>
-<span class="fc" id="L101">                .type(type)</span>
-<span class="fc" id="L102">                .applicationStatus(ApplicationStatus.CLOSED)</span>
-<span class="fc" id="L103">                .tentativeOpeningDate(tentativeOpeningDate)</span>
-<span class="fc" id="L104">                .primaryConsiderationDate(primaryConsiderationDate)</span>
-<span class="fc" id="L105">                .createdAt(AppTime.now())</span>
-<span class="fc" id="L106">                .build());</span>
+    Recruitment.RecruitmentBuilder recruitment =
+<span class="fc" id="L97">        Recruitment.builder()</span>
+<span class="fc" id="L98">            .quarter(quarter)</span>
+<span class="fc" id="L99">            .type(type)</span>
+<span class="fc" id="L100">            .applicationStatus(ApplicationStatus.CLOSED)</span>
+<span class="fc" id="L101">            .tentativeOpeningDate(tentativeOpeningDate)</span>
+<span class="fc" id="L102">            .primaryConsiderationDate(primaryConsiderationDate)</span>
+<span class="fc" id="L103">            .createdAt(AppTime.now());</span>
+    // The hiring target starts as the one of the same type's recruitment in the most recent
+    // earlier quarter, if there is one (issue #384); otherwise the default. Whoever creates the
+    // recruitment, the Create Recruitment form or Developer Mode's auto-create, comes through here.
+<span class="fc" id="L107">    recruitmentRepository</span>
+<span class="fc" id="L108">        .findFirstByQuarterLessThanAndTypeOrderByQuarterDesc(quarter, type)</span>
+<span class="fc" id="L109">        .ifPresent(previous -&gt; recruitment.totalHiringTarget(previous.getTotalHiringTarget()));</span>
 
-<span class="fc" id="L108">    jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(recruitment));</span>
-<span class="fc" id="L109">    return recruitment;</span>
+    // The save and its audit row are one transaction (issue #377).
+<span class="fc" id="L112">    Recruitment saved = recruitmentAuditService.saveAndRecordCreated(recruitment.build());</span>
+
+<span class="fc" id="L114">    jobService.runAsJob(populateRecruitmentCoursesJobFactory.create(saved));</span>
+<span class="fc" id="L115">    return saved;</span>
   }
 
   @Operation(
@@ -124,43 +130,43 @@ import org.springframework.web.bind.annotation.RestController;
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate facultyRankingDeadline) {
 
-<span class="fc bfc" id="L127" title="All 2 branches covered.">    if (!REVIEW_STATUSES.contains(status)) {</span>
-<span class="fc" id="L128">      throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">    if (!REVIEW_STATUSES.contains(status)) {</span>
+<span class="fc" id="L134">      throw new IllegalArgumentException(</span>
           &quot;reviewStatus must be exactly NotStarted, Open, or Closed&quot;);
     }
-<span class="fc bfc" id="L131" title="All 4 branches covered.">    if (&quot;Open&quot;.equals(status) &amp;&amp; facultyRankingDeadline == null) {</span>
-<span class="fc" id="L132">      throw new IllegalArgumentException(&quot;facultyRankingDeadline is required when opening reviews&quot;);</span>
+<span class="fc bfc" id="L137" title="All 4 branches covered.">    if (&quot;Open&quot;.equals(status) &amp;&amp; facultyRankingDeadline == null) {</span>
+<span class="fc" id="L138">      throw new IllegalArgumentException(&quot;facultyRankingDeadline is required when opening reviews&quot;);</span>
     }
 
-<span class="fc" id="L135">    Recruitment recruitment =</span>
+<span class="fc" id="L141">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L137">            .findById(id)</span>
-<span class="fc" id="L138">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc" id="L143">            .findById(id)</span>
+<span class="fc" id="L144">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
 
-<span class="fc bfc" id="L140" title="All 2 branches covered.">    boolean statusChanged = !status.equals(recruitment.getReviewStatus());</span>
-<span class="fc" id="L141">    boolean openingDateMissing =</span>
-<span class="fc bfc" id="L142" title="All 4 branches covered.">        &quot;Open&quot;.equals(status) &amp;&amp; recruitment.getFacultyReviewOpeningDate() == null;</span>
-<span class="fc" id="L143">    boolean deadlineChanged =</span>
-<span class="fc bfc" id="L144" title="All 2 branches covered.">        &quot;Open&quot;.equals(status)</span>
-<span class="fc bfc" id="L145" title="All 2 branches covered.">            &amp;&amp; !facultyRankingDeadline.equals(recruitment.getFacultyRankingDeadline());</span>
-<span class="fc bfc" id="L146" title="All 6 branches covered.">    if (!statusChanged &amp;&amp; !openingDateMissing &amp;&amp; !deadlineChanged) {</span>
-<span class="fc" id="L147">      return recruitment;</span>
-    }
-
-<span class="fc" id="L150">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
-<span class="fc bfc" id="L151" title="All 4 branches covered.">    if (&quot;Open&quot;.equals(status) &amp;&amp; recruitment.getFacultyReviewOpeningDate() == null) {</span>
-<span class="fc" id="L152">      recruitment.setFacultyReviewOpeningDate(AppTime.today());</span>
-    }
-<span class="fc" id="L154">    recruitment.setReviewStatus(status);</span>
-<span class="fc bfc" id="L155" title="All 2 branches covered.">    if (&quot;Open&quot;.equals(status)) {</span>
-<span class="fc" id="L156">      recruitment.setFacultyRankingDeadline(facultyRankingDeadline);</span>
-    }
-<span class="fc bfc" id="L158" title="All 2 branches covered.">    if (&quot;Closed&quot;.equals(status)) {</span>
-<span class="fc" id="L159">      recruitment.setFacultyReviewClosedAt(AppTime.now());</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">    boolean statusChanged = !status.equals(recruitment.getReviewStatus());</span>
+<span class="fc" id="L147">    boolean openingDateMissing =</span>
+<span class="fc bfc" id="L148" title="All 4 branches covered.">        &quot;Open&quot;.equals(status) &amp;&amp; recruitment.getFacultyReviewOpeningDate() == null;</span>
+<span class="fc" id="L149">    boolean deadlineChanged =</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">        &quot;Open&quot;.equals(status)</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">            &amp;&amp; !facultyRankingDeadline.equals(recruitment.getFacultyRankingDeadline());</span>
+<span class="fc bfc" id="L152" title="All 6 branches covered.">    if (!statusChanged &amp;&amp; !openingDateMissing &amp;&amp; !deadlineChanged) {</span>
+<span class="fc" id="L153">      return recruitment;</span>
     }
 
-<span class="fc" id="L162">    recruitmentAuditService.saveAndRecordChanges(before, recruitment);</span>
-<span class="fc" id="L163">    return recruitment;</span>
+<span class="fc" id="L156">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
+<span class="fc bfc" id="L157" title="All 4 branches covered.">    if (&quot;Open&quot;.equals(status) &amp;&amp; recruitment.getFacultyReviewOpeningDate() == null) {</span>
+<span class="fc" id="L158">      recruitment.setFacultyReviewOpeningDate(AppTime.today());</span>
+    }
+<span class="fc" id="L160">    recruitment.setReviewStatus(status);</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">    if (&quot;Open&quot;.equals(status)) {</span>
+<span class="fc" id="L162">      recruitment.setFacultyRankingDeadline(facultyRankingDeadline);</span>
+    }
+<span class="fc bfc" id="L164" title="All 2 branches covered.">    if (&quot;Closed&quot;.equals(status)) {</span>
+<span class="fc" id="L165">      recruitment.setFacultyReviewClosedAt(AppTime.now());</span>
+    }
+
+<span class="fc" id="L168">    recruitmentAuditService.saveAndRecordChanges(before, recruitment);</span>
+<span class="fc" id="L169">    return recruitment;</span>
   }
 
   @Operation(summary = &quot;Change the faculty ranking deadline for a recruitment&quot;)
@@ -173,18 +179,18 @@ import org.springframework.web.bind.annotation.RestController;
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate facultyRankingDeadline) {
 
-<span class="fc" id="L176">    Recruitment recruitment =</span>
+<span class="fc" id="L182">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L178">            .findById(id)</span>
-<span class="fc" id="L179">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
-<span class="fc bfc" id="L180" title="All 2 branches covered.">    if (facultyRankingDeadline.equals(recruitment.getFacultyRankingDeadline())) {</span>
-<span class="fc" id="L181">      return recruitment;</span>
+<span class="fc" id="L184">            .findById(id)</span>
+<span class="fc" id="L185">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">    if (facultyRankingDeadline.equals(recruitment.getFacultyRankingDeadline())) {</span>
+<span class="fc" id="L187">      return recruitment;</span>
     }
 
-<span class="fc" id="L184">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
-<span class="fc" id="L185">    recruitment.setFacultyRankingDeadline(facultyRankingDeadline);</span>
-<span class="fc" id="L186">    recruitmentAuditService.saveAndRecordChanges(before, recruitment);</span>
-<span class="fc" id="L187">    return recruitment;</span>
+<span class="fc" id="L190">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
+<span class="fc" id="L191">    recruitment.setFacultyRankingDeadline(facultyRankingDeadline);</span>
+<span class="fc" id="L192">    recruitmentAuditService.saveAndRecordChanges(before, recruitment);</span>
+<span class="fc" id="L193">    return recruitment;</span>
   }
 
   @Operation(
@@ -200,39 +206,39 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;totalHiringTarget&quot;) @RequestParam Integer totalHiringTarget,
       @Parameter(name = &quot;expected&quot;) @RequestParam(required = false) Integer expected) {
 
-<span class="fc bfc" id="L203" title="All 2 branches covered.">    if (totalHiringTarget &lt; 1) {</span>
-<span class="fc" id="L204">      throw new IllegalArgumentException(&quot;totalHiringTarget must be at least 1&quot;);</span>
+<span class="fc bfc" id="L209" title="All 2 branches covered.">    if (totalHiringTarget &lt; 1) {</span>
+<span class="fc" id="L210">      throw new IllegalArgumentException(&quot;totalHiringTarget must be at least 1&quot;);</span>
     }
 
-<span class="fc" id="L207">    Recruitment recruitment =</span>
+<span class="fc" id="L213">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L209">            .findById(id)</span>
-<span class="fc" id="L210">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc" id="L215">            .findById(id)</span>
+<span class="fc" id="L216">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
 
-<span class="fc" id="L212">    synchronized (COMPARE_AND_SET) {</span>
-<span class="fc bfc" id="L213" title="All 4 branches covered.">      if (expected != null &amp;&amp; !expected.equals(recruitment.getTotalHiringTarget())) {</span>
-<span class="fc" id="L214">        return staleValue(recruitment, &quot;hiring target&quot;);</span>
+<span class="fc" id="L218">    synchronized (COMPARE_AND_SET) {</span>
+<span class="fc bfc" id="L219" title="All 4 branches covered.">      if (expected != null &amp;&amp; !expected.equals(recruitment.getTotalHiringTarget())) {</span>
+<span class="fc" id="L220">        return staleValue(recruitment, &quot;hiring target&quot;);</span>
       }
-<span class="fc" id="L216">      recruitment.setTotalHiringTarget(totalHiringTarget);</span>
-<span class="fc" id="L217">      recruitmentRepository.save(recruitment);</span>
-<span class="fc" id="L218">    }</span>
+<span class="fc" id="L222">      recruitment.setTotalHiringTarget(totalHiringTarget);</span>
+<span class="fc" id="L223">      recruitmentRepository.save(recruitment);</span>
+<span class="fc" id="L224">    }</span>
     // Every section's fractional share depends on the target (issue #176).
-<span class="fc" id="L220">    allocationService.recompute(recruitment);</span>
-<span class="fc" id="L221">    return ResponseEntity.ok(recruitment);</span>
+<span class="fc" id="L226">    allocationService.recompute(recruitment);</span>
+<span class="fc" id="L227">    return ResponseEntity.ok(recruitment);</span>
   }
 
   /**
    * Makes the read, compare and write of a compare-and-set one step as far as this server goes. The
    * app runs as one instance (see the design of issue #270), so that is enough.
    */
-<span class="fc" id="L228">  private static final Object COMPARE_AND_SET = new Object();</span>
+<span class="fc" id="L234">  private static final Object COMPARE_AND_SET = new Object();</span>
 
   /** What a refused compare-and-set tells the page: why, and the recruitment as it now stands. */
   private static ResponseEntity&lt;Object&gt; staleValue(Recruitment current, String what) {
-<span class="fc" id="L232">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L233">    body.put(&quot;message&quot;, &quot;The %s was changed in another tab or window.&quot;.formatted(what));</span>
-<span class="fc" id="L234">    body.put(&quot;recruitment&quot;, current);</span>
-<span class="fc" id="L235">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
+<span class="fc" id="L238">    Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L239">    body.put(&quot;message&quot;, &quot;The %s was changed in another tab or window.&quot;.formatted(what));</span>
+<span class="fc" id="L240">    body.put(&quot;recruitment&quot;, current);</span>
+<span class="fc" id="L241">    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);</span>
   }
 
   @Operation(
@@ -250,11 +256,11 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;visibility&quot;) @RequestParam AllocationVisibility visibility) {
 
-<span class="fc" id="L253">    Recruitment recruitment =</span>
+<span class="fc" id="L259">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L255">            .findById(id)</span>
-<span class="fc" id="L256">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
-<span class="fc" id="L257">    return allocationVisibilityService.change(recruitment, visibility);</span>
+<span class="fc" id="L261">            .findById(id)</span>
+<span class="fc" id="L262">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc" id="L263">    return allocationVisibilityService.change(recruitment, visibility);</span>
   }
 
   @Operation(
@@ -275,38 +281,38 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;published&quot;) @RequestParam boolean published) {
 
-<span class="fc" id="L278">    Recruitment recruitment =</span>
+<span class="fc" id="L284">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L280">            .findById(id)</span>
-<span class="fc" id="L281">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc" id="L286">            .findById(id)</span>
+<span class="fc" id="L287">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
 
-<span class="fc bfc" id="L283" title="All 2 branches covered.">    if (Boolean.TRUE.equals(recruitment.getAssignmentsPublished()) == published) {</span>
-<span class="fc" id="L284">      return recruitment;</span>
+<span class="fc bfc" id="L289" title="All 2 branches covered.">    if (Boolean.TRUE.equals(recruitment.getAssignmentsPublished()) == published) {</span>
+<span class="fc" id="L290">      return recruitment;</span>
     }
 
-<span class="fc bfc" id="L287" title="All 2 branches covered.">    if (published) {</span>
-<span class="fc" id="L288">      String unmet =</span>
-<span class="fc" id="L289">          HiringDecisions.unmetPrerequisite(recruitment, assignmentsService.anyAssigned(id));</span>
-<span class="fc bfc" id="L290" title="All 2 branches covered.">      if (unmet != null) {</span>
-<span class="fc" id="L291">        throw new IllegalArgumentException(unmet);</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">    if (published) {</span>
+<span class="fc" id="L294">      String unmet =</span>
+<span class="fc" id="L295">          HiringDecisions.unmetPrerequisite(recruitment, assignmentsService.anyAssigned(id));</span>
+<span class="fc bfc" id="L296" title="All 2 branches covered.">      if (unmet != null) {</span>
+<span class="fc" id="L297">        throw new IllegalArgumentException(unmet);</span>
       }
     }
 
-<span class="fc" id="L295">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
-<span class="fc" id="L296">    recruitment.setAssignmentsPublished(published);</span>
-<span class="fc bfc" id="L297" title="All 2 branches covered.">    if (published) {</span>
-<span class="fc" id="L298">      recruitment.setAssignmentsPublishedAt(AppTime.now());</span>
+<span class="fc" id="L301">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
+<span class="fc" id="L302">    recruitment.setAssignmentsPublished(published);</span>
+<span class="fc bfc" id="L303" title="All 2 branches covered.">    if (published) {</span>
+<span class="fc" id="L304">      recruitment.setAssignmentsPublishedAt(AppTime.now());</span>
     }
-<span class="fc" id="L300">    recruitmentAuditService.saveAndRecordChanges(before, recruitment);</span>
-<span class="fc" id="L301">    recruitmentRepository.bumpAssignmentsVersion(id);</span>
-<span class="fc" id="L302">    return recruitment;</span>
+<span class="fc" id="L306">    recruitmentAuditService.saveAndRecordChanges(before, recruitment);</span>
+<span class="fc" id="L307">    recruitmentRepository.bumpAssignmentsVersion(id);</span>
+<span class="fc" id="L308">    return recruitment;</span>
   }
 
   @Operation(summary = &quot;List all recruitments, most recent quarter first&quot;)
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @GetMapping(&quot;/all&quot;)
   public List&lt;Recruitment&gt; allRecruitments() {
-<span class="fc" id="L309">    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();</span>
+<span class="fc" id="L315">    return recruitmentRepository.findAllByOrderByQuarterDescTypeAsc();</span>
   }
 
   @Operation(
@@ -322,28 +328,28 @@ import org.springframework.web.bind.annotation.RestController;
       @Parameter(name = &quot;id&quot;) @RequestParam Long id,
       @Parameter(name = &quot;status&quot;) @RequestParam ApplicationStatus status) {
 
-<span class="fc" id="L325">    Recruitment recruitment =</span>
+<span class="fc" id="L331">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L327">            .findById(id)</span>
-<span class="fc" id="L328">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc" id="L333">            .findById(id)</span>
+<span class="fc" id="L334">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
 
-<span class="fc bfc" id="L330" title="All 2 branches covered.">    if (recruitment.getApplicationStatus() == status) {</span>
-<span class="fc" id="L331">      return recruitment;</span>
+<span class="fc bfc" id="L336" title="All 2 branches covered.">    if (recruitment.getApplicationStatus() == status) {</span>
+<span class="fc" id="L337">      return recruitment;</span>
     }
 
-<span class="fc" id="L334">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
-<span class="fc" id="L335">    LocalDate today = AppTime.today();</span>
-<span class="fc bfc" id="L336" title="All 2 branches covered.">    if (status == ApplicationStatus.OPEN) {</span>
-<span class="fc bfc" id="L337" title="All 2 branches covered.">      if (recruitment.getActualOpeningDate() == null) {</span>
-<span class="fc" id="L338">        recruitment.setActualOpeningDate(today);</span>
+<span class="fc" id="L340">    RecruitmentAuditService.Snapshot before = recruitmentAuditService.snapshot(recruitment);</span>
+<span class="fc" id="L341">    LocalDate today = AppTime.today();</span>
+<span class="fc bfc" id="L342" title="All 2 branches covered.">    if (status == ApplicationStatus.OPEN) {</span>
+<span class="fc bfc" id="L343" title="All 2 branches covered.">      if (recruitment.getActualOpeningDate() == null) {</span>
+<span class="fc" id="L344">        recruitment.setActualOpeningDate(today);</span>
       }
     } else {
-<span class="fc" id="L341">      recruitment.setActualClosingDate(today);</span>
+<span class="fc" id="L347">      recruitment.setActualClosingDate(today);</span>
     }
-<span class="fc" id="L343">    recruitment.setApplicationStatus(status);</span>
+<span class="fc" id="L349">    recruitment.setApplicationStatus(status);</span>
 
-<span class="fc" id="L345">    recruitmentAuditService.saveAndRecordChanges(before, recruitment);</span>
-<span class="fc" id="L346">    return recruitment;</span>
+<span class="fc" id="L351">    recruitmentAuditService.saveAndRecordChanges(before, recruitment);</span>
+<span class="fc" id="L352">    return recruitment;</span>
   }
 
   @Operation(
@@ -356,20 +362,20 @@ import org.springframework.web.bind.annotation.RestController;
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @GetMapping(&quot;/applicationCounts&quot;)
   public Map&lt;Long, Long&gt; applicationCounts() {
-<span class="fc" id="L359">    Map&lt;Long, Long&gt; counts = new TreeMap&lt;&gt;();</span>
-<span class="fc" id="L360">    boolean developerModeOn = developerModeService.isOn();</span>
-<span class="fc bfc" id="L361" title="All 2 branches covered.">    for (Recruitment recruitment : recruitmentRepository.findAll()) {</span>
-<span class="fc" id="L362">      counts.put(</span>
-<span class="fc" id="L363">          recruitment.getId(),</span>
-<span class="fc" id="L364">          applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId()).stream()</span>
-<span class="fc" id="L365">              .filter(application -&gt; ApplicationVisibility.isReal(application, developerModeOn))</span>
+<span class="fc" id="L365">    Map&lt;Long, Long&gt; counts = new TreeMap&lt;&gt;();</span>
+<span class="fc" id="L366">    boolean developerModeOn = developerModeService.isOn();</span>
+<span class="fc bfc" id="L367" title="All 2 branches covered.">    for (Recruitment recruitment : recruitmentRepository.findAll()) {</span>
+<span class="fc" id="L368">      counts.put(</span>
+<span class="fc" id="L369">          recruitment.getId(),</span>
+<span class="fc" id="L370">          applicationRepository.findByRecruitmentIdOrderByIdAsc(recruitment.getId()).stream()</span>
+<span class="fc" id="L371">              .filter(application -&gt; ApplicationVisibility.isReal(application, developerModeOn))</span>
               // One per applicant: a cancelled application and the new one that followed it
               // (issue #318) are one person's, not two.
-<span class="fc" id="L368">              .map(Application::getEmail)</span>
-<span class="fc" id="L369">              .distinct()</span>
-<span class="fc" id="L370">              .count());</span>
-<span class="fc" id="L371">    }</span>
-<span class="fc" id="L372">    return counts;</span>
+<span class="fc" id="L374">              .map(Application::getEmail)</span>
+<span class="fc" id="L375">              .distinct()</span>
+<span class="fc" id="L376">              .count());</span>
+<span class="fc" id="L377">    }</span>
+<span class="fc" id="L378">    return counts;</span>
   }
 
   @Operation(
@@ -380,13 +386,13 @@ import org.springframework.web.bind.annotation.RestController;
   @PreAuthorize(&quot;hasRole('ROLE_ADMIN')&quot;)
   @DeleteMapping(&quot;/delete&quot;)
   public Object deleteRecruitment(@Parameter(name = &quot;id&quot;) @RequestParam Long id) {
-<span class="fc" id="L383">    Recruitment recruitment =</span>
+<span class="fc" id="L389">    Recruitment recruitment =</span>
         recruitmentRepository
-<span class="fc" id="L385">            .findById(id)</span>
-<span class="fc" id="L386">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
+<span class="fc" id="L391">            .findById(id)</span>
+<span class="fc" id="L392">            .orElseThrow(() -&gt; new EntityNotFoundException(Recruitment.class, id));</span>
 
-<span class="fc" id="L388">    recruitmentAuditService.deleteAndRecord(recruitment);</span>
-<span class="fc" id="L389">    return genericMessage(&quot;Recruitment with id %s deleted&quot;.formatted(id));</span>
+<span class="fc" id="L394">    recruitmentAuditService.deleteAndRecord(recruitment);</span>
+<span class="fc" id="L395">    return genericMessage(&quot;Recruitment with id %s deleted&quot;.formatted(id));</span>
   }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
