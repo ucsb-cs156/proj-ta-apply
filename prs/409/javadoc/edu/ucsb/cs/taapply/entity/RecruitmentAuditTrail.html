@@ -86,14 +86,16 @@ loadScripts(document, 'script');</script>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">One change to a recruitment itself (issue #139): its creation, its deletion, or one field going
 from one value to another, with the value before and after as strings. The admin's Applications
-page for the recruitment lists these rows.
+page for the recruitment lists these rows; the Budget page lists the hiring-target rows of the
+quarter's two recruitments (issue #391).
 
 <p>This is the audit trail for <em>recruitments</em>. Changes an admin makes to an individual
 student's application are a different table, <a href="AuditTrail.html" title="class in edu.ucsb.cs.taapply.entity"><code>AuditTrail</code></a>.
 
 <p><code>whatChanged</code> names the field (<code>applicationStatus</code>, <code>tentativeOpeningDate</code>,
 <code>primaryConsiderationDate</code>, <code>actualOpeningDate</code>, <code>actualClosingDate</code>, <code>
-reviewStatus</code>, <code>facultyReviewOpeningDate</code>, <code>facultyRankingDeadline</code>), or is <a href="#CREATED"><code>CREATED</code></a> or <a href="#DELETED"><code>DELETED</code></a>, when both values are null. A change to several fields in one
+reviewStatus</code>, <code>facultyReviewOpeningDate</code>, <code>facultyRankingDeadline</code>, <code>
+allocationVisibility</code>, <code>assignmentsPublished</code>, <code>totalHiringTarget</code>), or is <a href="#CREATED"><code>CREATED</code></a> or <a href="#DELETED"><code>DELETED</code></a>, when both values are null. A change to several fields in one
 request is several rows. There is deliberately no foreign key to the recruitment: the rows about
 a deleted recruitment are the record that it existed.
 
