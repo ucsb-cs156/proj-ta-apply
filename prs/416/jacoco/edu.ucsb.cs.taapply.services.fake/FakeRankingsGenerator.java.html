@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FakeRankingsGenerator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">taapply</a> &gt; <a href="index.source.html" class="el_package">edu.ucsb.cs.taapply.services.fake</a> &gt; <span class="el_source">FakeRankingsGenerator.java</span></div><h1>FakeRankingsGenerator.java</h1><pre class="source lang-java linenums">package edu.ucsb.cs.taapply.services.fake;
+
+import edu.ucsb.cs.taapply.entity.Application;
+import edu.ucsb.cs.taapply.entity.CandidateRanking;
+import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
+import edu.ucsb.cs.taapply.services.AssignmentsService;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import org.springframework.stereotype.Service;
+
+/**
+ * Builds the fake faculty rankings of Developer Mode (issue #220). Pure: it reads what it is given
+ * and returns unsaved rows, drawing every choice from the supplied {@link Random}, so a seeded
+ * source fixes the outcome.
+ *
+ * &lt;p&gt;For each chosen course it ranks as many interested candidates as the course's Ranking Target
+ * asks for: twice the allocation (at least one), but never more than there are interested
+ * candidates. Since issue #414 the candidates are ranked by interest tier, as an instructor would
+ * rank them: those whose first choice the course is come first, then those whose second choice it
+ * is, then the Enthusiastic, then Would Consider; within a tier the order is random. The target is
+ * filled from the tiers in that order, so a Would Consider candidate is ranked only when the first
+ * three tiers together hold fewer candidates than the target, and never while a candidate of a
+ * higher tier is left unranked. With {@code includeNotInterested} it also ranks one or two
+ * applicants who did not express interest, as an instructor who ranks beyond the list might; they
+ * go last, after every interested candidate. Ranks are 1..n in that order.
+ */
+@Service
+<span class="fc" id="L32">public class FakeRankingsGenerator {</span>
+
+  /** At most this many not-interested applicants are added to a course when asked for. */
+  static final int MAX_NOT_INTERESTED = 2;
+
+  /** The interest tiers, strongest first, as {@link AssignmentsService#preference} names them. */
+<span class="fc" id="L38">  static final List&lt;String&gt; TIERS =</span>
+<span class="fc" id="L39">      Arrays.asList(</span>
+          AssignmentsService.FIRST_CHOICE,
+          AssignmentsService.SECOND_CHOICE,
+          AssignmentsService.ENTHUSIASTIC,
+          AssignmentsService.WOULD_CONSIDER);
+
+  /** The tier of an applicant who expressed no interest in the course. */
+  static final int NOT_INTERESTED = -1;
+
+  /**
+   * @param courses the recruitment's sections
+   * @param applications the applications that count as real
+   * @param alreadyRanked ids of the sections that already have rankings; they are left alone
+   */
+  public List&lt;CandidateRanking&gt; generate(
+      List&lt;RecruitmentCourse&gt; courses,
+      List&lt;Application&gt; applications,
+      Set&lt;Long&gt; alreadyRanked,
+      FakeRankingScope scope,
+      boolean includeNotInterested,
+      Random random) {
+<span class="fc" id="L60">    List&lt;RecruitmentCourse&gt; candidates =</span>
+        new ArrayList&lt;&gt;(
+<span class="fc" id="L62">            courses.stream()</span>
+<span class="fc" id="L63">                .filter(RecruitmentCourse::isOnOffer)</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">                .filter(course -&gt; !alreadyRanked.contains(course.getId()))</span>
+<span class="fc" id="L65">                .toList());</span>
+<span class="fc" id="L66">    List&lt;RecruitmentCourse&gt; chosen = choose(candidates, scope, random);</span>
+
+<span class="fc" id="L68">    List&lt;CandidateRanking&gt; rankings = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">    for (RecruitmentCourse course : chosen) {</span>
+<span class="fc" id="L70">      rankings.addAll(rankCourse(course, applications, includeNotInterested, random));</span>
+<span class="fc" id="L71">    }</span>
+<span class="fc" id="L72">    return rankings;</span>
+  }
+
+  /** All the courses, or a random non-empty part of them (strictly fewer when there are two+). */
+  static List&lt;RecruitmentCourse&gt; choose(
+      List&lt;RecruitmentCourse&gt; courses, FakeRankingScope scope, Random random) {
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    if (scope == FakeRankingScope.ALL) {</span>
+<span class="fc" id="L79">      return courses;</span>
+    }
+<span class="fc" id="L81">    Collections.shuffle(courses, random);</span>
+<span class="fc" id="L82">    return courses.subList(0, someCount(courses.size(), random));</span>
+  }
+
+  /** Between 1 and size-1 (or size, when that is below 2), never more than size. */
+  static int someCount(int size, Random random) {
+<span class="fc" id="L87">    return Math.min(size, 1 + random.nextInt(Math.max(1, size - 1)));</span>
+  }
+
+  /** How many interested candidates to rank: twice the allocation (at least 1), capped. */
+  static int target(Integer allocation, int interested) {
+<span class="fc bfc" id="L92" title="All 2 branches covered.">    int allocated = allocation == null ? 0 : allocation;</span>
+<span class="fc" id="L93">    return Math.min(Math.max(1, 2 * allocated), interested);</span>
+  }
+
+  /**
+   * The interest tier of an applicant for a course: the index in {@link #TIERS} (0 for a first
+   * choice, 3 for Would Consider), or {@link #NOT_INTERESTED} when they expressed none.
+   */
+  static int tier(Application application, String courseId) {
+<span class="fc" id="L101">    return TIERS.indexOf(AssignmentsService.preference(application, courseId));</span>
+  }
+
+  private List&lt;CandidateRanking&gt; rankCourse(
+      RecruitmentCourse course,
+      List&lt;Application&gt; applications,
+      boolean includeNotInterested,
+      Random random) {
+<span class="fc" id="L109">    List&lt;List&lt;Application&gt;&gt; tiers = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">    for (String ignored : TIERS) {</span>
+<span class="fc" id="L111">      tiers.add(new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L112">    }</span>
+<span class="fc" id="L113">    List&lt;Application&gt; notInterested = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">    for (Application application : applications) {</span>
+<span class="fc" id="L115">      int tier = tier(application, course.getCourseId());</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">      if (tier == NOT_INTERESTED) {</span>
+<span class="fc" id="L117">        notInterested.add(application);</span>
+      } else {
+<span class="fc" id="L119">        tiers.get(tier).add(application);</span>
+      }
+<span class="fc" id="L121">    }</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">    for (List&lt;Application&gt; tier : tiers) {</span>
+<span class="fc" id="L123">      Collections.shuffle(tier, random);</span>
+<span class="fc" id="L124">    }</span>
+<span class="fc" id="L125">    Collections.shuffle(notInterested, random);</span>
+
+<span class="fc" id="L127">    int interested = tiers.stream().mapToInt(List::size).sum();</span>
+<span class="fc" id="L128">    int target = target(course.getAllocation(), interested);</span>
+<span class="fc" id="L129">    List&lt;Application&gt; ranked = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">    for (List&lt;Application&gt; tier : tiers) {</span>
+<span class="fc" id="L131">      ranked.addAll(tier.subList(0, Math.min(tier.size(), target - ranked.size())));</span>
+<span class="fc" id="L132">    }</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">    if (includeNotInterested) {</span>
+<span class="fc" id="L134">      int extra = Math.min(notInterested.size(), 1 + random.nextInt(MAX_NOT_INTERESTED));</span>
+<span class="fc" id="L135">      ranked.addAll(notInterested.subList(0, extra));</span>
+    }
+
+<span class="fc" id="L138">    List&lt;CandidateRanking&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">    for (int i = 0; i &lt; ranked.size(); i++) {</span>
+<span class="fc" id="L140">      rows.add(</span>
+<span class="fc" id="L141">          CandidateRanking.builder()</span>
+<span class="fc" id="L142">              .recruitmentCourseId(course.getId())</span>
+<span class="fc" id="L143">              .applicationId(ranked.get(i).getId())</span>
+<span class="fc" id="L144">              .rank(i + 1)</span>
+<span class="fc" id="L145">              .build());</span>
+    }
+<span class="fc" id="L147">    return rows;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
