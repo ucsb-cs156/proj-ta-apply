@@ -1286,7 +1286,20 @@
 <a name='L1221'></a><a href='#L1221'>1221</a>
 <a name='L1222'></a><a href='#L1222'>1222</a>
 <a name='L1223'></a><a href='#L1223'>1223</a>
-<a name='L1224'></a><a href='#L1224'>1224</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1224'></a><a href='#L1224'>1224</a>
+<a name='L1225'></a><a href='#L1225'>1225</a>
+<a name='L1226'></a><a href='#L1226'>1226</a>
+<a name='L1227'></a><a href='#L1227'>1227</a>
+<a name='L1228'></a><a href='#L1228'>1228</a>
+<a name='L1229'></a><a href='#L1229'>1229</a>
+<a name='L1230'></a><a href='#L1230'>1230</a>
+<a name='L1231'></a><a href='#L1231'>1231</a>
+<a name='L1232'></a><a href='#L1232'>1232</a>
+<a name='L1233'></a><a href='#L1233'>1233</a>
+<a name='L1234'></a><a href='#L1234'>1234</a>
+<a name='L1235'></a><a href='#L1235'>1235</a>
+<a name='L1236'></a><a href='#L1236'>1236</a>
+<a name='L1237'></a><a href='#L1237'>1237</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1311,6 +1324,11 @@
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2509,6 +2527,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Link } from "react-router";
 import { Table } from "react-bootstrap";
 import BasicLayout from "main/layouts/BasicLayout/BasicLayout";
@@ -2593,16 +2619,21 @@ export default function HelpAdminsPage(): React.JSX.Element {
           the same fields as the rankings CSV: who each applicant is, a{" "}
           &lt;strong&gt;Tentative Assignment&lt;/strong&gt; dropdown, then one column per
           lecture holding that lecture&amp;apos;s faculty ranking of the applicant.
-          Test applications and applications the student cancelled are left out.
-          Every column sorts. Sorting by a lecture uses the same order as the
-          faculty ranking page: the ranked applicants first, from rank 1 down,
-          then the unranked ones by the student&amp;apos;s preference (1st choice,
-          2nd choice, Enthusiastic, Would Consider, then Not Interested/Not
-          Applicable); applicants who tie stay in the order they applied.
-          Clicking the heading again reverses that order. Each lecture column is
-          ordered by that lecture&amp;apos;s own rank and preference, so an
-          applicant ranked for one lecture but not another is placed separately
-          in each. Under each lecture&amp;apos;s name the heading shows its{" "}
+          A lecture is named by its course number alone (16, 5A), with the
+          section added only when the recruitment has more than one section of
+          that course (8 (0100), 8 (0200)), as in the rankings CSV; the
+          headings, the dropdown and the Columns menu all use these names, in a
+          fixed-width font with the numbers lined up. Test applications and
+          applications the student cancelled are left out. Every column sorts.
+          Sorting by a lecture uses the same order as the faculty ranking page:
+          the ranked applicants first, from rank 1 down, then the unranked ones
+          by the student&amp;apos;s preference (1st choice, 2nd choice,
+          Enthusiastic, Would Consider, then Not Interested/Not Applicable);
+          applicants who tie stay in the order they applied. Clicking the
+          heading again reverses that order. Each lecture column is ordered by
+          that lecture&amp;apos;s own rank and preference, so an applicant ranked
+          for one lecture but not another is placed separately in each. Under
+          each lecture&amp;apos;s name the heading shows its{" "}
           &lt;strong&gt;Allocation&lt;/strong&gt;, how many applicants are{" "}
           &lt;strong&gt;Assigned&lt;/strong&gt; to it so far, and how many places are{" "}
           &lt;strong&gt;Left&lt;/strong&gt;, in red when more have been assigned than
@@ -2659,8 +2690,8 @@ export default function HelpAdminsPage(): React.JSX.Element {
           always shows the current ones, but it is best to wait until most are
           settled. Once published, the top of the Assignments page says so
           instead, with a link to the published page; the recruitment card shows
-          an &lt;strong&gt;Assignments Published&lt;/strong&gt; badge and a{" "}
-          &lt;strong&gt;Published Assignments&lt;/strong&gt; button (instructors see an{" "}
+          an &lt;strong&gt;Assignments Published&lt;/strong&gt; badge beside its{" "}
+          &lt;strong&gt;View Assignments&lt;/strong&gt; button (instructors see an{" "}
           &lt;strong&gt;Assignments&lt;/strong&gt; button on their card), and publishing is
           written to the recruitment&amp;apos;s change history. The page offers{" "}
           &lt;em&gt;One Row per course&lt;/em&gt; (course number, instructor, instructor
@@ -3188,15 +3219,20 @@ export default function HelpAdminsPage(): React.JSX.Element {
           &lt;Link to="/help/recruitment-steps"&gt;Recruitment Steps&lt;/Link&gt; diagram
           (collapsed to a one-line summary on older cards, expanded on the
           latest TA and ULA recruitments). Its boxes carry the lifecycle
-          actions, and the card has Courses, Draft Applications and Applications
-          buttons. In the diagram, step 3&amp;apos;s &lt;em&gt;Allocations&lt;/em&gt; and step
-          5&amp;apos;s &lt;em&gt;(see allocations)&lt;/em&gt; links open the quarter&amp;apos;s{" "}
+          actions, and the card has Courses, Draft Applications, Applications,
+          Make Assignments and View Assignments buttons:{" "}
+          &lt;strong&gt;Make Assignments&lt;/strong&gt; opens the page where candidates are
+          assigned to slots, and &lt;strong&gt;View Assignments&lt;/strong&gt; the read-only
+          assignments page that admins and faculty share (it says the
+          assignments are not published yet until they are). In the diagram,
+          step 3&amp;apos;s &lt;em&gt;Allocations&lt;/em&gt; and step 5&amp;apos;s{" "}
+          &lt;em&gt;(see allocations)&lt;/em&gt; links open the quarter&amp;apos;s{" "}
           &lt;Link to="#combined-allocations"&gt;Combined Allocation page&lt;/Link&gt;, and
-          the &lt;em&gt;(see assignments)&lt;/em&gt; links of steps 8 and 9 open the
-          recruitment&amp;apos;s assignments page. Above each quarter&amp;apos;s
-          recruitment card, or pair of cards when the quarter has both a TA and
-          a ULA recruitment, is a &lt;strong&gt;QXX Budget&lt;/strong&gt; card (for example{" "}
-          &lt;em&gt;W26 Budget&lt;/em&gt;) with two buttons:{" "}
+          the same two assignment pages are under steps 8 and 9 as{" "}
+          &lt;em&gt;Make Assignments&lt;/em&gt; and &lt;em&gt;View Assignments&lt;/em&gt;. Above each
+          quarter&amp;apos;s recruitment card, or pair of cards when the quarter has
+          both a TA and a ULA recruitment, is a &lt;strong&gt;QXX Budget&lt;/strong&gt; card
+          (for example &lt;em&gt;W26 Budget&lt;/em&gt;) with two buttons:{" "}
           &lt;strong&gt;Budget Planning&lt;/strong&gt; opens that quarter&amp;apos;s Budget for
           Quarter page, and one allocation button opens the quarter&amp;apos;s
           Combined Allocation page, where the TA and ULA allocations are edited
@@ -3329,14 +3365,17 @@ export default function HelpAdminsPage(): React.JSX.Element {
             &lt;em&gt;Tentative Assignment&lt;/em&gt; dropdown on each row for pencilling
             the applicant into a lecture; the{" "}
             &lt;a href="#assignments"&gt;Assignments&lt;/a&gt; section below has the
-            details. The card reaches it from step 8 of the diagram.
+            details. The card&amp;apos;s &lt;strong&gt;Make Assignments&lt;/strong&gt; button
+            opens it, as does step 8 of the diagram.
           &lt;/li&gt;
           &lt;li&gt;
-            &lt;strong&gt;Published Assignments.&lt;/strong&gt; Shown once{" "}
-            &lt;em&gt;Publish Assignments&lt;/em&gt; has been clicked at the top of the
-            Assignments page: the read-only assignments page that admins and
-            faculty share, with its two CSV downloads (see{" "}
-            &lt;a href="#publish-assignments"&gt;publishing&lt;/a&gt; above).
+            &lt;strong&gt;View Assignments.&lt;/strong&gt; The read-only assignments page
+            that admins and faculty share, with its two CSV downloads (see{" "}
+            &lt;a href="#publish-assignments"&gt;publishing&lt;/a&gt; above). The
+            card&amp;apos;s &lt;strong&gt;View Assignments&lt;/strong&gt; button and step 9 of
+            the diagram open it; until &lt;em&gt;Publish Assignments&lt;/em&gt; has been
+            clicked at the top of the Assignments page it says the assignments
+            are not published yet.
           &lt;/li&gt;
           &lt;li&gt;
             &lt;strong&gt;Delete.&lt;/strong&gt; Removes the recruitment, its course list
@@ -3739,7 +3778,7 @@ export default function HelpAdminsPage(): React.JSX.Element {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-08T01:52:50.628Z
+                at 2026-11-08T01:54:27.588Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
