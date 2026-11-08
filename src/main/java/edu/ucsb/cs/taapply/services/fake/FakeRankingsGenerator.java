@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 
 /**
@@ -106,10 +108,11 @@ public class FakeRankingsGenerator {
       List<Application> applications,
       boolean includeNotInterested,
       Random random) {
-    List<List<Application>> tiers = new ArrayList<>();
-    for (int i = 0; i < TIERS.size(); i++) {
-      tiers.add(new ArrayList<>());
-    }
+    // One empty list per tier. (Not a counted loop: its bound would be an unkillable mutant.)
+    List<List<Application>> tiers =
+        Stream.generate(() -> new ArrayList<Application>())
+            .limit(TIERS.size())
+            .collect(Collectors.toList());
     List<Application> notInterested = new ArrayList<>();
     for (Application application : applications) {
       int tier = tier(application, course.getCourseId());
