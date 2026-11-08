@@ -149,9 +149,10 @@ function RecruitmentCard({
 }
 
 /**
- * What a course's accordion item holds (issue #364): the enrollment table (with a TA Allocation and
- * a ULA Allocation column always, issue #410), the placeholder for the allocation feedback to come,
- * then the TA card and the ULA card for each recruitment it is in.
+ * What a course's accordion item holds (issue #364): the enrollment table (always all six columns
+ * since issue #410, Enrollment Estimate and the two Allocations reading TBD or N/A until there is a
+ * number), the placeholder for the allocation feedback to come, then the TA card and the ULA card
+ * for each recruitment it is in.
  */
 function CourseBody({
   course,
