@@ -7,15 +7,17 @@ import lombok.*;
 /**
  * The money available for one quarter's TA and ULA hiring, for the Budget for Quarter page (issue
  * #177). One row per quarter, keyed on the quarter in YYYYQ form like {@link Recruitment#quarter},
- * created the first time an admin opens the quarter's budget page.
+ * created the first time anything needs it: when a recruitment of the quarter first gets a course,
+ * or when an admin first opens the quarter's budget page (see {@code BudgetCreationService}).
  *
  * <p>The three temp subzero lines may each be zero in a given quarter; other funds for ASEs, such
  * as gift funds, are a line of their own (issue #388). For planning, the restricted lines are spent
  * first and anything further comes from the unrestricted pool. The row also holds the estimated
  * cost per TA per quarter, the ULA hourly rate and the estimated hours per ULA per quarter (issue
  * #388), the last two's product being the estimated cost per ULA per quarter: computed, never
- * stored. Every planning figure but the hiring targets lives here, so that issue #384 can copy a
- * quarter's budget from the last one. Planning figures: changes are not audited.
+ * stored. Every planning figure but the hiring targets lives here, and a new quarter's row starts
+ * as a copy of the most recent earlier quarter's (issue #384), the two version counters apart.
+ * Planning figures: changes are not audited.
  */
 @Data
 @AllArgsConstructor

@@ -5,7 +5,6 @@ import edu.ucsb.cs.taapply.entity.Recruitment;
 import edu.ucsb.cs.taapply.entity.RecruitmentCourse;
 import edu.ucsb.cs.taapply.enums.RecruitmentType;
 import edu.ucsb.cs.taapply.errors.EntityNotFoundException;
-import edu.ucsb.cs.taapply.repository.BudgetRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentCourseRepository;
 import edu.ucsb.cs.taapply.repository.RecruitmentRepository;
 import java.math.BigDecimal;
@@ -28,7 +27,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class BudgetService {
 
-  @Autowired BudgetRepository budgetRepository;
+  @Autowired BudgetCreationService budgetCreationService;
   @Autowired RecruitmentRepository recruitmentRepository;
   @Autowired RecruitmentCourseRepository recruitmentCourseRepository;
   @Autowired BudgetCourseService budgetCourseService;
@@ -99,8 +98,9 @@ public class BudgetService {
   }
 
   /**
-   * The quarter's budget row, created with every line at zero if this is the first time it is asked
-   * for. Only quarters with at least one recruitment have a budget.
+   * The quarter's budget row, created if this is the first time it is asked for, as a copy of the
+   * most recent earlier quarter's (issue #384; see {@link BudgetCreationService}). Only quarters
+   * with at least one recruitment have a budget.
    *
    * @throws EntityNotFoundException when the quarter has no recruitment
    */
@@ -109,9 +109,7 @@ public class BudgetService {
         && recruitmentRepository.findByQuarterAndType(quarter, RecruitmentType.ULA).isEmpty()) {
       throw new EntityNotFoundException("No recruitment for quarter %s".formatted(quarter));
     }
-    return budgetRepository
-        .findById(quarter)
-        .orElseGet(() -> budgetRepository.save(Budget.builder().quarter(quarter).build()));
+    return budgetCreationService.findOrCreate(quarter);
   }
 
   /**

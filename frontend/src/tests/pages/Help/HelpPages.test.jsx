@@ -576,6 +576,10 @@ describe("Help pages (issue #140)", () => {
     expect(heading.nextElementSibling).toHaveTextContent(
       "the estimated cost per ULA per quarter, which is not entered but computed, the rate times the hours",
     );
+    // Issue #384: a new quarter's budget is copied from the most recent earlier quarter's.
+    expect(heading.nextElementSibling).toHaveTextContent(
+      "A new quarter's budget starts as a copy of the most recent earlier quarter's: its costs, funds and conversion factor, and each recruitment's hiring target from the same type of recruitment in that quarter; change whatever differs.",
+    );
     expect(lines).toHaveTextContent(
       "its estimated cost per position (for ULAs, the computed rate times hours), the funds are the four lines added",
     );
